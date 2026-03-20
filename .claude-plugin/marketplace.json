@@ -1,0 +1,17 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "a-horde-o-bees",
+  "description": "Claude Code plugins for agent discipline, workflow conventions, and project navigation",
+  "owner": {
+    "name": "a-horde-o-bees"
+  },
+  "plugins": [
+    {
+      "name": "ocd",
+      "source": "./ocd",
+      "description": "Deterministic enforcement of permissions, rules, and structural conventions with agent-facing project navigation",
+      "category": "development",
+      "version": "0.0.7"
+    }
+  ]
+}

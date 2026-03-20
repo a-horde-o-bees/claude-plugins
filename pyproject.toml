@@ -1,0 +1,13 @@
+[project]
+name = "claude-plugin-dev"
+version = "0.1.0"
+requires-python = ">=3.12"
+
+[tool.pytest.ini_options]
+pythonpath = ["ocd/scripts", "ocd"]
+testpaths = ["ocd/tests", "ocd/skills/navigator/scripts/tests"]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+]
