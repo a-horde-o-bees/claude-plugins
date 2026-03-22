@@ -16,6 +16,10 @@ Every commit must bump the `z` version in `.claude-plugin/plugin.json` for each 
 2. Commit changes
 3. Developer runs `/plugin marketplace update a-horde-o-bees` then `/reload-plugins` to test
 
+## Architectural Enforcement
+
+ocd plugin rules (installed via `/ocd-init`) enforce architectural principles (script naming, deterministic/non-deterministic split, CLI design). CLAUDE.md covers only project-specific procedures not addressed by those rules.
+
 ## README Scopes
 
 - **Project root `README.md`** — developer and contributor facing: marketplace info, installation for users and local dev, architecture, design principles, naming conventions, versioning

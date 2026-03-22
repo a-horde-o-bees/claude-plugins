@@ -99,7 +99,9 @@ Then install individual plugins:
 
 ### Naming conventions
 
-**Files deployed to projects** use a plugin-name prefix for namespace isolation (e.g., `ocd-agent-authoring.md`). Prevents collision with other plugins or user files in `.claude/rules/`.
+**Rule files deployed to `.claude/rules/`** use a plugin-name prefix for namespace isolation (e.g., `ocd-agent-authoring.md`). Prevents collision with other plugins or user files.
+
+**Supporting files deployed to projects** live under `.claude/<plugin>/`, with skill-specific files under `.claude/<plugin>/<skill>/`. Directory nesting provides namespace isolation — no prefix needed.
 
 **Plugin-internal files** don't use the prefix — already namespaced by living inside the plugin directory.
 
