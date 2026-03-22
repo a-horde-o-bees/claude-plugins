@@ -114,7 +114,7 @@ def init_navigator(plugin_root: Path, project_dir: Path) -> list[str]:
         sys.path.pop(0)
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(
         prog="ocd_init.py",
         description="Initialize ocd conventions and skill infrastructure in current project.",

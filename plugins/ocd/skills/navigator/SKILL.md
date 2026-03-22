@@ -4,14 +4,7 @@ description: Scan project directory and populate navigator database with file an
 argument-hint: "[directory-path] [--delegate] (defaults to project root)"
 ---
 
-# /navigator
-
-## File Map
-
-### Dependencies
-```
-skills/navigator/references/description-guidelines.md
-```
+# /ocd-navigator
 
 Scan filesystem and populate navigator database. Deterministic operations (add/remove/change detection) are handled by `python3 ${CLAUDE_PLUGIN_ROOT}/skills/navigator/scripts/navigator_cli.py scan`. Description writing is handled by agent, working depth-first via `python3 ${CLAUDE_PLUGIN_ROOT}/skills/navigator/scripts/navigator_cli.py get-undescribed`.
 

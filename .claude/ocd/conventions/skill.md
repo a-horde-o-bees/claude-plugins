@@ -42,7 +42,6 @@ Standard sections:
 | Section | Description |
 |---------|-------------|
 | `# /skill-name` | Title matching slash command |
-| `## File Map` | Dependencies and created files (see markdown.md File Map pattern) |
 | Description paragraph | What skill does (also serves as `description` fallback if no frontmatter) |
 | `## Process Model` | Conceptual model of how skill operates and why (optional — for skills with non-obvious mechanics) |
 | `## Trigger` | When user invokes this skill |
@@ -74,6 +73,21 @@ skill-name/
 ```
 
 Keep SKILL.md under 500 lines. Move detailed reference material to separate files.
+
+## File Enumeration
+
+Skills that accept a path argument and can operate on directories must use navigator CLI for file enumeration — never invent ad-hoc file listing (glob, `git ls-files`, agent judgment).
+
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/navigator/scripts/navigator_cli.py list <path> [--pattern "*.py"]
+```
+
+Navigator applies project-wide exclude rules (`.git`, `.venv`, `__pycache__`, etc.) and traversal limits deterministically. `--pattern` filters by basename glob and is repeatable for OR-combined matching.
+
+Skills should:
+- Accept `--pattern` as a passthrough argument when the user wants to scope to specific file types
+- Ignore `--pattern` when target is a single file (nothing to filter)
+- Document `--pattern` in `argument-hint` frontmatter when supported
 
 ## Sub-Agent Interactivity Constraint
 

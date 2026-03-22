@@ -200,7 +200,7 @@ def format_skills_section(plugin_root: Path, project_dir: Path) -> list[str]:
     return lines
 
 
-def main():
+def main() -> None:
     plugin_root = get_plugin_root()
     project_dir = get_project_dir()
     claude_home = get_claude_home()

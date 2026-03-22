@@ -1,18 +1,10 @@
 ---
 name: ocd-conventions
 description: Manage and enforce project conventions; --check reformats files to conform using deterministic pattern matching and a single sequential agent
-argument-hint: "--check [path | /skill-name | project] [--focus \"specific instruction\"] [--all] [--delegate]"
+argument-hint: "--check [path | /skill-name | project] [--pattern \"*.py\"] [--focus \"specific instruction\"] [--all] [--delegate]"
 ---
 
 # /ocd-conventions
-
-## File Map
-
-### Dependencies
-```
-CLAUDE.md
-.claude/ocd/conventions/ (convention definitions)
-```
 
 Manage and enforce project conventions. Convention CLI deterministically discovers applicable conventions per target, then single agent applies them across all targets sequentially. Deterministic discovery + non-deterministic application.
 
@@ -30,19 +22,25 @@ User runs `/ocd-conventions`
 
 ## Resolve Arguments
 
-1. Strip `--delegate`, `--all`, and `--focus "..."` from `$ARGUMENTS` if present
+1. Strip `--delegate`, `--all`, `--focus "..."`, and `--pattern "..."` from `$ARGUMENTS` if present; collect all `--pattern` values
 2. If remaining arguments empty:
   1. Respond with skill description and argument-hint, then stop
 3. Else if `project`:
   1. Treat as `.` — project root directory
 4. Else if starts with `/`:
-  1. All files in `.claude/skills/{name}/` directory (replace hyphens with underscores for directory name)
+  1. Target directory is `.claude/skills/{name}/` (replace hyphens with underscores for directory name)
 5. Else if path:
-  1. If file — single file is sole target
-  2. If directory — all files in directory recursively
-6. If `--all` not present:
+  1. If file — single file is sole target; ignore `--pattern` if present; skip to step 7
+  2. If directory — target directory is the path
+6. Enumerate directory targets — run navigator CLI to get filtered file list
+  ```bash
+  python3 ${CLAUDE_PLUGIN_ROOT}/skills/navigator/scripts/navigator_cli.py list <directory> [--pattern "..."]
+  ```
+  - Pass through any `--pattern` values collected in step 1
+  - Output is one file path per line, pre-filtered by navigator exclude rules and pattern filters
+7. If `--all` not present:
   1. Apply boundary rule — remove matching files from target list
-7. Deduplicate target list
+8. Deduplicate target list
 
 ## Delegate Execution
 
@@ -60,14 +58,16 @@ User runs `/ocd-conventions`
 4. Check line counts — count lines in each target file
   1. If any target exceeds 500 lines:
     1. Report auto-fail for that target, remove from target list
-5. Discover conventions — run convention CLI to find applicable conventions for all targets
-  ```bash
-  python3 ${CLAUDE_PLUGIN_ROOT}/skills/conventions/scripts/convention_cli.py get <target-paths>
-  ```
-  1. If no conventions match any target:
-    1. Report "no conventions apply" and stop
-  2. Collect convention content output — pass to agent as pre-discovered criteria
-6. Spawn single agent — one agent processes all targets sequentially with conformity reformat prompt, including discovered convention content
+5. Discover criteria — collect rules and conventions to pass as evaluation criteria
+  1. Collect rules — read all `.claude/rules/ocd-*.md` files
+  2. Discover conventions — run convention CLI to find applicable conventions for all targets
+    ```bash
+    python3 ${CLAUDE_PLUGIN_ROOT}/skills/conventions/scripts/convention_cli.py get <target-paths>
+    ```
+  3. If no rules exist and no conventions match:
+    1. Report "no criteria apply" and stop
+  4. Combine as pre-discovered criteria — rules first, then conventions; rules can dictate interpretation of conventions
+6. Spawn single agent — one agent processes all targets sequentially with conformity reformat prompt, including discovered criteria
 7. Review changes — run `git diff` after agent completes, review for correctness before presenting
 8. Present results — per-target summary of changes applied, criteria used, and any issues requiring user judgment
 
@@ -76,7 +76,7 @@ User runs `/ocd-conventions`
 Every file referenced during reformatting falls into one of two roles:
 
 - Target is file being reformatted
-- Criteria are convention files matched by convention CLI — passed to agent as pre-discovered context
+- Criteria are conventions matched by convention CLI plus rules from `.claude/rules/ocd-*.md` — passed to agent as pre-discovered context
 
 ### Boundary Rule
 
@@ -98,8 +98,8 @@ Focus: `{focus_instruction}`
 Evaluate and fix only aspects related to this focus. Skip unrelated conventions.
 `{end if}`
 
-Applicable conventions (pre-discovered — these are your evaluation criteria):
-`{convention_content}`
+Applicable criteria (pre-discovered — conventions and rules are your evaluation criteria):
+`{criteria_content}`
 
 Target files to reformat (process in order):
 `{target_list}`
@@ -107,8 +107,8 @@ Target files to reformat (process in order):
 For EACH target file:
 
 1. Read target file
-2. Evaluate target file against all applicable conventions from above
-3. For each convention:
+2. Evaluate target file against all applicable criteria from above
+3. For each convention or rule:
   1. Assess conformity with specific rule citations
   2. Apply fixes for any non-conformities found
 4. After convention conformity, evaluate and fix internal consistency:
@@ -120,7 +120,7 @@ For EACH target file:
 After processing ALL targets, provide consolidated report:
 1. Per-target: changes applied with brief rationale
 2. Per-target: issues NOT fixed because they require user judgment (semantic ambiguity, structural decisions)
-3. All convention files used as evaluation criteria (once, not per-target)
+3. All criteria files used (conventions and rules, once, not per-target)
 ```
 
 ### Interpreting Results
@@ -134,7 +134,7 @@ After processing ALL targets, provide consolidated report:
 
 - Per-target: changes applied with brief rationale
 - Per-target: issues not fixed because they require user judgment (semantic ambiguity, structural decisions)
-- All convention files used as evaluation criteria (once, not per-target)
+- All criteria files used (conventions and rules, once, not per-target)
 
 ## Rules
 

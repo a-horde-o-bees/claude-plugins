@@ -62,12 +62,12 @@ def register_commands(subparsers: argparse._SubParsersAction) -> None:
     parser.add_argument(
         "--conventions-dir",
         default=None,
-        help=f"Path to conventions directory (default: .claude/ocd/conventions/)",
+        help="Path to conventions directory (default: .claude/ocd/conventions/)",
     )
     parser.add_argument(
         "--cache-db",
         default=None,
-        help=f"Path to cache database (default: .claude/ocd/cache.db)",
+        help="Path to cache database (default: .claude/ocd/cache.db)",
     )
 
     commands = parser.add_subparsers(dest="command")
@@ -99,19 +99,19 @@ def register_commands(subparsers: argparse._SubParsersAction) -> None:
     list_p.set_defaults(_dispatch=_dispatch_list)
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(
         description="Match file paths against convention patterns and return applicable conventions.",
     )
     parser.add_argument(
         "--conventions-dir",
         default=None,
-        help=f"Path to conventions directory (default: .claude/ocd/conventions/)",
+        help="Path to conventions directory (default: .claude/ocd/conventions/)",
     )
     parser.add_argument(
         "--cache-db",
         default=None,
-        help=f"Path to cache database (default: .claude/ocd/cache.db)",
+        help="Path to cache database (default: .claude/ocd/cache.db)",
     )
 
     commands = parser.add_subparsers(dest="command")
@@ -119,7 +119,12 @@ def main():
 
     get_p = commands.add_parser(
         "get",
-        help="Return content of all conventions matching the given file paths.",
+        help=(
+            "Return content of all conventions matching the given file paths. "
+            "Call before creating or modifying files to load applicable conventions. "
+            "Output is delimited sections: === filename.md === followed by content. "
+            "Empty result means no conventions apply."
+        ),
     )
     get_p.add_argument(
         "files",
@@ -130,7 +135,10 @@ def main():
 
     list_p = commands.add_parser(
         "list",
-        help="Show all available conventions and their match patterns.",
+        help=(
+            "Show all available conventions and their match patterns. "
+            "Output is one line per convention: filename followed by pattern."
+        ),
     )
     list_p.set_defaults(_dispatch=_dispatch_list)
 

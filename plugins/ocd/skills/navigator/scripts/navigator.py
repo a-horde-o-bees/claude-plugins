@@ -180,7 +180,7 @@ def init_db(db_path: str) -> str:
         conn.close()
 
 
-def show_path(db_path: str, target_path: str) -> str:
+def describe_path(db_path: str, target_path: str) -> str:
     """Show entry at path. Files return description. Directories return description and children."""
     target_path = target_path.rstrip("/")
     if target_path == ".":
@@ -249,6 +249,70 @@ def show_path(db_path: str, target_path: str) -> str:
         conn.close()
 
 
+def _walk_filesystem(
+    conn: sqlite3.Connection, target_path: str
+) -> dict[str, str]:
+    """Walk filesystem with rule-based pruning.
+
+    Loads exclude and shallow rules from database, walks target_path,
+    and returns filtered entries. Excluded paths are omitted entirely.
+    Shallow directories are listed but not descended into.
+
+    Returns dict mapping path to entry type ("file" or "directory").
+    """
+    pattern_rows = conn.execute(
+        "SELECT path, exclude, traverse, description FROM entries "
+        "WHERE path LIKE '%*%'"
+    ).fetchall()
+
+    exclude_rules = [r for r in pattern_rows if r["exclude"]]
+    shallow_rules = [r for r in pattern_rows if not r["exclude"] and not r["traverse"]]
+
+    disk_entries: dict[str, str] = {}
+    scan_root = target_path if target_path else "."
+
+    for dirpath, dirnames, filenames in os.walk(scan_root):
+        rel_dir = os.path.normpath(dirpath)
+        if rel_dir == ".":
+            rel_dir = ""
+
+        shallow_dirs = []
+        remaining_dirs = []
+        for d in dirnames:
+            d_path = os.path.join(rel_dir, d) if rel_dir else d
+            if _matches_any_rule(d_path, exclude_rules):
+                continue
+            concrete = conn.execute(
+                "SELECT traverse FROM entries "
+                "WHERE path = ? AND traverse = 0",
+                (d_path,),
+            ).fetchone()
+            if concrete or _matches_any_rule(d_path, shallow_rules):
+                shallow_dirs.append(d)
+            else:
+                remaining_dirs.append(d)
+
+        dirnames[:] = remaining_dirs
+
+        for d in shallow_dirs:
+            d_path = os.path.join(rel_dir, d) if rel_dir else d
+            disk_entries[d_path] = "directory"
+
+        if rel_dir and rel_dir != target_path:
+            disk_entries[rel_dir] = "directory"
+
+        for filename in filenames:
+            file_path = os.path.join(rel_dir, filename) if rel_dir else filename
+            if not _matches_any_rule(file_path, exclude_rules):
+                disk_entries[file_path] = "file"
+
+        for dirname in dirnames:
+            dir_path = os.path.join(rel_dir, dirname) if rel_dir else dirname
+            disk_entries[dir_path] = "directory"
+
+    return disk_entries
+
+
 def scan_path(db_path: str, target_path: str) -> str:
     """Sync filesystem to database. Auto-adds missing, auto-removes stale.
     Reports entries needing descriptions. Returns formatted report."""
@@ -258,14 +322,13 @@ def scan_path(db_path: str, target_path: str) -> str:
 
     conn = get_connection(db_path)
     try:
-        # Load pattern-based rules from database
+        disk_entries = _walk_filesystem(conn, target_path)
+
+        # Load prescribed rules for auto-descriptions
         pattern_rows = conn.execute(
             "SELECT path, exclude, traverse, description FROM entries "
             "WHERE path LIKE '%*%'"
         ).fetchall()
-
-        exclude_rules = [r for r in pattern_rows if r["exclude"]]
-        shallow_rules = [r for r in pattern_rows if not r["exclude"] and not r["traverse"]]
         prescribed_rules = [r for r in pattern_rows if not r["exclude"] and r["description"]]
 
         # Load concrete entries from database
@@ -283,50 +346,6 @@ def scan_path(db_path: str, target_path: str) -> str:
 
         for row in rows:
             db_entries[row["path"]] = row["git_hash"]
-
-        # Walk filesystem
-        disk_entries = {}
-        scan_root = target_path if target_path else "."
-
-        for dirpath, dirnames, filenames in os.walk(scan_root):
-            rel_dir = os.path.normpath(dirpath)
-            if rel_dir == ".":
-                rel_dir = ""
-
-            # Classify directories: excluded, shallow, or normal
-            shallow_dirs = []
-            remaining_dirs = []
-            for d in dirnames:
-                d_path = os.path.join(rel_dir, d) if rel_dir else d
-                if _matches_any_rule(d_path, exclude_rules):
-                    continue
-                concrete = conn.execute(
-                    "SELECT traverse FROM entries "
-                    "WHERE path = ? AND traverse = 0",
-                    (d_path,),
-                ).fetchone()
-                if concrete or _matches_any_rule(d_path, shallow_rules):
-                    shallow_dirs.append(d)
-                else:
-                    remaining_dirs.append(d)
-
-            dirnames[:] = remaining_dirs
-
-            for d in shallow_dirs:
-                d_path = os.path.join(rel_dir, d) if rel_dir else d
-                disk_entries[d_path] = "directory"
-
-            if rel_dir and rel_dir != target_path:
-                disk_entries[rel_dir] = "directory"
-
-            for filename in filenames:
-                file_path = os.path.join(rel_dir, filename) if rel_dir else filename
-                if not _matches_any_rule(file_path, exclude_rules):
-                    disk_entries[file_path] = "file"
-
-            for dirname in dirnames:
-                dir_path = os.path.join(rel_dir, dirname) if rel_dir else dirname
-                disk_entries[dir_path] = "directory"
 
         # Auto-add missing entries
         added = []
@@ -408,6 +427,39 @@ def scan_path(db_path: str, target_path: str) -> str:
         conn.close()
 
 
+def list_files(
+    db_path: str, target_path: str, patterns: list[str] | None = None
+) -> str:
+    """List non-excluded file paths under target_path.
+
+    Walks filesystem using navigator rules (exclude, traverse). Returns
+    files only (not directories), sorted, one per line. If patterns
+    provided, keeps only paths where basename matches any pattern via
+    fnmatch.
+
+    Returns empty string if no files match.
+    """
+    target_path = target_path.rstrip("/")
+    if target_path == ".":
+        target_path = ""
+
+    conn = get_connection(db_path)
+    try:
+        disk_entries = _walk_filesystem(conn, target_path)
+    finally:
+        conn.close()
+
+    files = sorted(p for p, t in disk_entries.items() if t == "file")
+
+    if patterns:
+        files = [
+            f for f in files
+            if any(fnmatch.fnmatch(Path(f).name, pat) for pat in patterns)
+        ]
+
+    return "\n".join(files)
+
+
 def get_undescribed(db_path: str) -> str:
     """Return deepest directory with undescribed or stale entries.
     Uses [?] for new entries, [~] for stale. Agent calls repeatedly until no work remaining."""
@@ -435,7 +487,7 @@ def get_undescribed(db_path: str) -> str:
 
         # Render with progress header
         header = f"[{len(work_entries)} remaining across {len(work_dirs)} directories]"
-        body = show_path(db_path, deepest)
+        body = describe_path(db_path, deepest)
         return f"{header}\n{body}"
     finally:
         conn.close()
@@ -553,7 +605,7 @@ def remove_entry(
                 "SELECT entry_type FROM entries WHERE path = ?", (entry_path,)
             ).fetchone()
             if existing and existing["entry_type"] == "file":
-                return f"Error: -r not valid for file entries. Use remove without -r."
+                return f"Error: --recursive not valid for file entries. Use remove without --recursive."
             result = conn.execute(
                 "DELETE FROM entries WHERE path = ? OR path LIKE ?",
                 (entry_path, entry_path + "/%"),

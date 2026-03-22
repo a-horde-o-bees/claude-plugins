@@ -12,11 +12,12 @@ from ...navigator import (
     get_connection,
     get_undescribed,
     init_db,
+    list_files,
     remove_entry,
     scan_path,
     search_entries,
     set_entry,
-    show_path,
+    describe_path,
     SCHEMA,
 )
 
@@ -322,27 +323,27 @@ class TestInitDb:
             ctx.SEED_PATH = original
 
 
-# --- show_path ---
+# --- describe_path ---
 
 
-class TestShowPath:
+class TestDescribePath:
     def test_file_with_description(self, populated_db):
-        result = show_path(populated_db, "src/main.py")
+        result = describe_path(populated_db, "src/main.py")
         assert "src/main.py" in result
         assert "Application entry point" in result
 
     def test_file_null_description(self, populated_db):
-        result = show_path(populated_db, "src/lib/core.py")
+        result = describe_path(populated_db, "src/lib/core.py")
         assert "[?]" in result
 
     def test_file_empty_description(self, populated_db):
-        result = show_path(populated_db, "src/config.py")
+        result = describe_path(populated_db, "src/config.py")
         assert "src/config.py" in result
         assert "[?]" not in result
         assert "config" not in result.split("\n")[1] if len(result.split("\n")) > 1 else True
 
     def test_directory_lists_children(self, populated_db):
-        result = show_path(populated_db, "src/lib")
+        result = describe_path(populated_db, "src/lib")
         assert "src/lib/" in result
         assert "Library modules" in result
         assert "src/lib/utils.py" in result
@@ -356,11 +357,11 @@ class TestShowPath:
         )
         conn.commit()
         conn.close()
-        result = show_path(db_path, "mydir")
+        result = describe_path(db_path, "mydir")
         assert "[?]" in result
 
     def test_directory_children_sorted_dirs_first(self, populated_db):
-        result = show_path(populated_db, "src")
+        result = describe_path(populated_db, "src")
         lines = result.split("\n")
         child_lines = [l for l in lines if l.startswith("- ")]
         # lib/ (directory) should come before .py files
@@ -369,11 +370,11 @@ class TestShowPath:
         assert lib_idx < main_idx
 
     def test_children_null_show_question_mark(self, populated_db):
-        result = show_path(populated_db, "src/lib")
+        result = describe_path(populated_db, "src/lib")
         assert "core.py [?]" in result
 
     def test_children_empty_no_marker(self, populated_db):
-        result = show_path(populated_db, "src")
+        result = describe_path(populated_db, "src")
         # config.py has empty string description — no [?], no description text
         config_line = [l for l in result.split("\n") if "config.py" in l][0]
         assert "[?]" not in config_line
@@ -395,16 +396,16 @@ class TestShowPath:
         )
         conn.commit()
         conn.close()
-        result = show_path(db_path, "dir")
+        result = describe_path(db_path, "dir")
         assert "visible" in result
         assert "hidden" not in result
 
     def test_not_found(self, db_path):
-        result = show_path(db_path, "nonexistent")
+        result = describe_path(db_path, "nonexistent")
         assert "(no entries)" in result
 
     def test_dot_path(self, populated_db):
-        result = show_path(populated_db, ".")
+        result = describe_path(populated_db, ".")
         assert "./" in result
 
 
@@ -600,6 +601,108 @@ class TestGetUndescribed:
         result = get_undescribed(db_path)
         assert "dir/" in result
         assert "[?]" in result
+
+
+# --- list_files ---
+
+
+class TestListFiles:
+    @pytest.fixture
+    def list_tree(self, tmp_path):
+        """Create filesystem tree with database and seed rules for list testing."""
+        project = tmp_path / "project"
+        project.mkdir()
+        (project / "main.py").write_text("print('hello')")
+        (project / "README.md").write_text("# Readme")
+        src = project / "src"
+        src.mkdir()
+        (src / "app.py").write_text("class App: pass")
+        (src / "config.py").write_text("CONFIG = {}")
+        (src / "notes.md").write_text("# Notes")
+        cache = project / "__pycache__"
+        cache.mkdir()
+        (cache / "main.cpython.pyc").write_text("bytecode")
+        tests = project / "tests"
+        tests.mkdir()
+        (tests / "test_main.py").write_text("def test(): pass")
+
+        db = str(tmp_path / "list.db")
+        conn = get_connection(db)
+        conn.executescript(SCHEMA)
+        conn.execute(
+            "INSERT INTO entries (path, entry_type, exclude) "
+            "VALUES ('**/__pycache__', NULL, 1)"
+        )
+        conn.execute(
+            "INSERT INTO entries (path, entry_type, exclude, traverse, description) "
+            "VALUES ('**/tests', NULL, 0, 0, 'Test suites')"
+        )
+        conn.commit()
+        conn.close()
+
+        return {"project": project, "db": db}
+
+    def test_lists_all_files(self, list_tree):
+        result = list_files(list_tree["db"], str(list_tree["project"]))
+        lines = result.strip().split("\n")
+        paths = [Path(p).name for p in lines]
+        assert "main.py" in paths
+        assert "README.md" in paths
+        assert "app.py" in paths
+        assert "config.py" in paths
+        assert "notes.md" in paths
+
+    def test_excludes_pycache_files(self, list_tree):
+        result = list_files(list_tree["db"], str(list_tree["project"]))
+        assert "main.cpython.pyc" not in result
+
+    def test_no_directories_in_output(self, list_tree):
+        result = list_files(list_tree["db"], str(list_tree["project"]))
+        lines = result.strip().split("\n")
+        for line in lines:
+            assert not line.endswith("/")
+            assert "src" != Path(line).name or Path(line).suffix
+
+    def test_pattern_filters_by_extension(self, list_tree):
+        result = list_files(
+            list_tree["db"], str(list_tree["project"]), patterns=["*.py"]
+        )
+        lines = result.strip().split("\n")
+        for line in lines:
+            assert line.endswith(".py")
+        paths = [Path(p).name for p in lines]
+        assert "main.py" in paths
+        assert "app.py" in paths
+
+    def test_pattern_excludes_non_matching(self, list_tree):
+        result = list_files(
+            list_tree["db"], str(list_tree["project"]), patterns=["*.py"]
+        )
+        assert "README.md" not in result
+        assert "notes.md" not in result
+
+    def test_multiple_patterns(self, list_tree):
+        result = list_files(
+            list_tree["db"], str(list_tree["project"]),
+            patterns=["*.py", "*.md"],
+        )
+        lines = result.strip().split("\n")
+        assert len(lines) == 5
+
+    def test_pattern_no_match(self, list_tree):
+        result = list_files(
+            list_tree["db"], str(list_tree["project"]), patterns=["*.rs"]
+        )
+        assert result == ""
+
+    def test_sorted_output(self, list_tree):
+        result = list_files(list_tree["db"], str(list_tree["project"]))
+        lines = result.strip().split("\n")
+        assert lines == sorted(lines)
+
+    def test_shallow_dir_contents_excluded(self, list_tree):
+        result = list_files(list_tree["db"], str(list_tree["project"]))
+        assert "test_main.py" not in result
 
 
 # --- scan_path ---
@@ -929,30 +1032,30 @@ class TestStaleBehavior:
         result = get_undescribed(populated_db)
         assert "No work remaining" in result
 
-    def test_show_path_stale_file(self, populated_db):
+    def test_describe_path_stale_file(self, populated_db):
         conn = get_connection(populated_db)
         conn.execute("UPDATE entries SET stale = 1 WHERE path = 'src/main.py'")
         conn.commit()
         conn.close()
 
-        result = show_path(populated_db, "src/main.py")
+        result = describe_path(populated_db, "src/main.py")
         assert "[~] Application entry point" in result
 
-    def test_show_path_stale_directory(self, populated_db):
+    def test_describe_path_stale_directory(self, populated_db):
         conn = get_connection(populated_db)
         conn.execute("UPDATE entries SET stale = 1 WHERE path = 'src/lib'")
         conn.commit()
         conn.close()
 
-        result = show_path(populated_db, "src/lib")
+        result = describe_path(populated_db, "src/lib")
         assert "[~] Library modules" in result
 
-    def test_show_path_stale_child(self, populated_db):
+    def test_describe_path_stale_child(self, populated_db):
         conn = get_connection(populated_db)
         conn.execute("UPDATE entries SET stale = 1 WHERE path = 'src/main.py'")
         conn.commit()
         conn.close()
 
-        result = show_path(populated_db, "src")
+        result = describe_path(populated_db, "src")
         main_line = [l for l in result.split("\n") if "main.py" in l][0]
         assert "[~] Application entry point" in main_line

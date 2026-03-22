@@ -10,6 +10,8 @@ Two layers, fixed evaluation order:
    directories. Approves operations that settings would allow.
 """
 
+from __future__ import annotations
+
 import json
 import os
 import re
@@ -21,7 +23,7 @@ import sys
 # ===========================================================================
 
 
-def approve():
+def approve() -> None:
     json.dump(
         {
             "hookSpecificOutput": {
@@ -33,7 +35,7 @@ def approve():
     )
 
 
-def block(reason):
+def block(reason: str) -> None:
     json.dump({"decision": "block", "reason": reason}, sys.stdout)
 
 
@@ -42,7 +44,7 @@ def block(reason):
 # ===========================================================================
 
 
-def load_settings_file(path):
+def load_settings_file(path: str) -> dict:
     try:
         with open(path) as f:
             return json.load(f)
@@ -50,7 +52,7 @@ def load_settings_file(path):
         return {}
 
 
-def merge_settings(global_settings, project_settings):
+def merge_settings(global_settings: dict, project_settings: dict) -> dict:
     """Merge global and project settings. Union of allow/deny lists and
     additionalDirectories. Project values appear after global values."""
     global_perms = global_settings.get("permissions", {})
@@ -80,7 +82,7 @@ def merge_settings(global_settings, project_settings):
     }
 
 
-def load_merged_settings(project_dir):
+def load_merged_settings(project_dir: str) -> dict:
     global_path = os.path.expanduser("~/.claude/settings.json")
     project_path = os.path.join(project_dir, ".claude", "settings.json")
     return merge_settings(
@@ -89,7 +91,7 @@ def load_merged_settings(project_dir):
     )
 
 
-def get_project_dir():
+def get_project_dir() -> str:
     return os.path.realpath(
         os.environ.get("CLAUDE_PROJECT_DIR", os.getcwd())
     )
@@ -100,18 +102,18 @@ def get_project_dir():
 # ===========================================================================
 
 
-def resolve_path(file_path, project_dir):
+def resolve_path(file_path: str, project_dir: str) -> str:
     if not os.path.isabs(file_path):
         return os.path.realpath(os.path.join(project_dir, file_path))
     return os.path.realpath(file_path)
 
 
-def is_within_directory(abs_path, directory):
+def is_within_directory(abs_path: str, directory: str) -> bool:
     directory = os.path.realpath(directory)
     return abs_path.startswith(directory + os.sep) or abs_path == directory
 
 
-def get_allowed_directories(project_dir, settings):
+def get_allowed_directories(project_dir: str, settings: dict) -> set[str]:
     """Build set of allowed directories from merged settings."""
     dirs = {project_dir}
     for d in settings.get("permissions", {}).get("additionalDirectories", []):
@@ -124,19 +126,19 @@ def get_allowed_directories(project_dir, settings):
     return dirs
 
 
-def is_within_allowed_dirs(abs_path, project_dir, settings):
+def is_within_allowed_dirs(abs_path: str, project_dir: str, settings: dict) -> bool:
     for directory in get_allowed_directories(project_dir, settings):
         if is_within_directory(abs_path, directory):
             return True
     return False
 
 
-def is_tool_in_list(tool_name, rule_list):
+def is_tool_in_list(tool_name: str, rule_list: list) -> bool:
     """Check if a tool name appears as a blanket entry in a rule list."""
     return tool_name in rule_list
 
 
-def match_bash_pattern(command, pattern_str):
+def match_bash_pattern(command: str, pattern_str: str) -> bool:
     """Match a command against a Bash(pattern) rule.
 
     Patterns:
@@ -156,7 +158,7 @@ def match_bash_pattern(command, pattern_str):
     return command.split()[0] == inner if command else False
 
 
-def is_bash_allowed(command, settings):
+def is_bash_allowed(command: str, settings: dict) -> bool:
     """Check if a Bash command matches any allow pattern in settings."""
     allow_list = settings.get("permissions", {}).get("allow", [])
     for rule in allow_list:
@@ -170,7 +172,7 @@ def is_bash_allowed(command, settings):
     return False
 
 
-def is_bash_denied(command, settings):
+def is_bash_denied(command: str, settings: dict) -> bool:
     """Check if a Bash command matches any deny pattern in settings."""
     deny_list = settings.get("permissions", {}).get("deny", [])
     for rule in deny_list:
@@ -184,7 +186,7 @@ def is_bash_denied(command, settings):
     return False
 
 
-def is_path_denied(file_path, tool_name, settings):
+def is_path_denied(file_path: str, tool_name: str, settings: dict) -> bool:
     """Check if a file path matches any deny pattern for a tool."""
     deny_list = settings.get("permissions", {}).get("deny", [])
     for rule in deny_list:
@@ -202,7 +204,7 @@ def is_path_denied(file_path, tool_name, settings):
     return False
 
 
-def _glob_match(path, pattern):
+def _glob_match(path: str, pattern: str) -> bool:
     """Minimal glob match for deny rules — supports ** and * wildcards."""
     regex = re.escape(pattern)
     regex = regex.replace(r"\*\*", "DOUBLESTAR")
@@ -217,14 +219,14 @@ def _glob_match(path, pattern):
 # ===========================================================================
 
 
-def strip_quoted_strings(command):
+def strip_quoted_strings(command: str) -> str:
     """Remove single- and double-quoted strings for operator detection."""
     result = re.sub(r"'[^']*'", "", command)
     result = re.sub(r'"(?:[^"\\]|\\.)*"', "", result)
     return result
 
 
-def check_hardcoded_blocks(command):
+def check_hardcoded_blocks(command: str) -> str | None:
     """Return a blocking reason if command violates a hardcoded rule."""
     # cd / pushd / popd — directory changes break approval pipeline
     if re.match(r"^(cd|pushd|popd)\b", command):
@@ -268,7 +270,7 @@ def check_hardcoded_blocks(command):
 # ===========================================================================
 
 
-def check_edit_write(tool_name, tool_input, project_dir, settings):
+def check_edit_write(tool_name: str, tool_input: dict, project_dir: str, settings: dict) -> None:
     file_path = tool_input.get("file_path", "")
     if not file_path:
         return
@@ -287,7 +289,7 @@ def check_edit_write(tool_name, tool_input, project_dir, settings):
             approve()
 
 
-def check_bash_dynamic(command, settings):
+def check_bash_dynamic(command: str, settings: dict) -> None:
     # Deny rules take precedence
     if is_bash_denied(command, settings):
         return
@@ -302,7 +304,7 @@ def check_bash_dynamic(command, settings):
 # ===========================================================================
 
 
-def main():
+def main() -> None:
     hook_input = json.load(sys.stdin)
     tool_name = hook_input.get("tool_name", "")
     tool_input = hook_input.get("tool_input", {})
