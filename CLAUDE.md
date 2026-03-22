@@ -16,6 +16,11 @@ Every commit must bump the `z` version in `.claude-plugin/plugin.json` for each 
 2. Commit changes
 3. Developer runs `/plugin marketplace update a-horde-o-bees` then `/reload-plugins` to test
 
+## README Scopes
+
+- **Project root `README.md`** — developer and contributor facing: marketplace info, installation for users and local dev, architecture, design principles, naming conventions, versioning
+- **Plugin `README.md`** (e.g., `plugins/ocd/README.md`) — user facing: what the plugin does, how to install, configure, use, and override it; no internal architecture or contributor details
+
 ## Testing
 
 - Run tests via `.venv/bin/python3 -m pytest -v`
