@@ -8,7 +8,11 @@ import argparse
 import os
 from pathlib import Path
 
-from . import convention
+# Support both package import and direct execution
+try:
+    from . import convention
+except ImportError:
+    import convention  # type: ignore[import-not-found]
 
 
 DEFAULT_CONVENTIONS_DIR = os.path.join(

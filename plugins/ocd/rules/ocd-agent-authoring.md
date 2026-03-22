@@ -15,6 +15,7 @@ Conventions for content consumed by agents: skills, conventions, plans, actions,
 - Use verbose names that convey purpose; capture full meaning in descriptions
 - Do not truncate for visual format
 - Script names match domain concept — `navigator_cli.py` not `cli.py` or `pt.py`
+- Skill frontmatter `name` field uses plugin-name prefix — `ocd-navigator` not `navigator`; surfaces plugin name during search
 
 ### Content Rules
 
@@ -25,6 +26,16 @@ Conventions for content consumed by agents: skills, conventions, plans, actions,
 
 - Deterministic operations belong in CLI scripts; non-deterministic steps (judgment, context-dependent decisions, natural language generation) remain as agent-executed workflow instructions in SKILL.md
 - When continuing a session that was mid-skill, re-read SKILL.md from disk before resuming — carried-over context may be stale
+
+## Conventions
+
+Before creating or modifying files, check for applicable conventions:
+
+```
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/conventions/scripts/convention_cli.py get <file> [<file> ...]
+```
+
+Pass all target file paths in a single call. If output is non-empty, read and follow returned conventions before proceeding.
 
 ## Structural Principles
 

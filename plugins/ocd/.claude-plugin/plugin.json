@@ -1,6 +1,6 @@
 {
   "name": "ocd",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "description": "Deterministic enforcement of permissions, rules, and structural conventions with agent-facing project navigation",
   "author": {
     "name": "a-horde-o-bees"

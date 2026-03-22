@@ -1,5 +1,5 @@
 ---
-name: check-efficacy
+name: ocd-check-efficacy
 description: Test whether documentation enables blank-context agent to execute task correctly
 argument-hint: "[/skill-name | scenario description] [--multi]"
 ---
