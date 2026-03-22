@@ -48,11 +48,11 @@ Then install individual plugins:
 
 ## Versioning
 
-Plugin versions follow `0.x.y` format:
+Plugin versions follow `x.y.z` format:
 
-- `0` — leading zero until a change breaks previous setups
-- `x` — increments on public release (cohesive, ready for consumers); resets `y` to `0`
-- `y` — increments on every development commit; required for local plugin reload to detect changes
+- `x` — major version; starts at `0` until a change breaks previous setups
+- `y` — increments on public release (cohesive, ready for consumers); resets `z` to `0`
+- `z` — increments on every development commit; required for local plugin reload to detect changes
 
 ## License
 

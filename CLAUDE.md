@@ -2,17 +2,17 @@
 
 ## Versioning
 
-Plugin versions follow `0.x.y` format in each plugin's `.claude-plugin/plugin.json`:
+Plugin versions follow `x.y.z` format in each plugin's `.claude-plugin/plugin.json`:
 
-- `0` — leading zero until a change breaks previous setups
-- `x` — increments on public release; cohesive set of changes ready for consumers; resets `y` to `0`
-- `y` — increments on every commit during development; required for local plugin reload to detect changes
+- `x` — major version; starts at `0` until a change breaks previous setups
+- `y` — increments on public release; cohesive set of changes ready for consumers; resets `z` to `0`
+- `z` — increments on every commit during development; required for local plugin reload to detect changes
 
 ## Commit Workflow
 
-Every commit must bump the `y` version in `.claude-plugin/plugin.json` for each plugin that has changes. This enables the local plugin reload cycle:
+Every commit must bump the `z` version in `.claude-plugin/plugin.json` for each plugin that has changes. This enables the local plugin reload cycle:
 
-1. Bump `y` in affected plugin's `.claude-plugin/plugin.json`
+1. Bump `z` in affected plugin's `.claude-plugin/plugin.json`
 2. Commit changes
 3. Developer runs `/plugin marketplace update a-horde-o-bees` then `/reload-plugins` to test
 
