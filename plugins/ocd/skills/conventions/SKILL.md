@@ -1,7 +1,7 @@
 ---
 name: ocd-conventions
 description: Manage and enforce project conventions; --check reformats files to conform using deterministic pattern matching and a single sequential agent
-argument-hint: "--check [file-path | /skill-name | .claude/] [--focus \"specific instruction\"] [--all] [--delegate]"
+argument-hint: "--check [path | /skill-name | project] [--focus \"specific instruction\"] [--all] [--delegate]"
 ---
 
 # /ocd-conventions
@@ -33,12 +33,13 @@ User runs `/ocd-conventions`
 1. Strip `--delegate`, `--all`, and `--focus "..."` from `$ARGUMENTS` if present
 2. If remaining arguments empty:
   1. Respond with skill description and argument-hint, then stop
-3. Else if file path:
-  1. Single file is sole target
+3. Else if `project`:
+  1. Treat as `.` — project root directory
 4. Else if starts with `/`:
   1. All files in `.claude/skills/{name}/` directory (replace hyphens with underscores for directory name)
-5. Else if directory path:
-  1. All files in directory recursively
+5. Else if path:
+  1. If file — single file is sole target
+  2. If directory — all files in directory recursively
 6. If `--all` not present:
   1. Apply boundary rule — remove matching files from target list
 7. Deduplicate target list

@@ -1,10 +1,10 @@
 ---
-name: ocd-check-efficacy
-description: Test whether documentation enables blank-context agent to execute task correctly
-argument-hint: "[/skill-name | scenario description] [--multi]"
+name: ocd-efficacy
+description: Documentation efficacy testing; --check spawns blank-context agent to verify documentation enables correct task execution
+argument-hint: "--check [/skill-name | scenario description] [--multi]"
 ---
 
-# /check-efficacy
+# /ocd-efficacy
 
 Test whether documentation enables blank-context agent to describe correct execution of task. Spawns agent that inherits CLAUDE.md automatically — ability to follow Discovery instructions, navigate references, and plan execution IS test. Evaluation only — agent describes what it would do, does not execute changes.
 
@@ -14,7 +14,15 @@ Supports single-scenario and multi-scenario modes.
 
 ## Trigger
 
-User runs `/check-efficacy`.
+User runs `/ocd-efficacy`.
+
+## Route
+
+1. If `--check` not in `$ARGUMENTS`:
+  1. Respond with skill description and argument-hint, then stop
+2. Else:
+  1. Strip `--check` from `$ARGUMENTS`
+  2. Proceed to Workflow
 
 ## Workflow
 

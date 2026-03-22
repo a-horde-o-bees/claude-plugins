@@ -1,15 +1,17 @@
 """Plugin status report.
 
-Displays a single status line showing:
-- Installed plugin version
-- Init status (whether rule files exist in project)
-- Version mismatch (for local-directory marketplaces only)
+Derives all state deterministically from filesystem:
+- Plugin version and marketplace version comparison
+- Rule states via diff of source vs deployed files
+- Skill states via per-skill infrastructure checks
 
-No network calls, no automated updates — informational only.
+No state file, no network calls, no automated updates.
 """
 
+import importlib
 import json
 import os
+import sys
 from pathlib import Path
 
 
@@ -51,31 +53,10 @@ def get_plugin_name(plugin_root: Path) -> str:
     return data.get("name", "ocd")
 
 
-def check_init_status(plugin_root: Path, project_dir: Path) -> str:
-    """Check if init has been run by verifying manifest files exist."""
-    manifest = read_json(plugin_root / "references" / "init_manifest.json")
-    files = manifest.get("files", [])
-
-    if not files:
-        return "unknown"
-
-    found = sum(1 for f in files if (project_dir / f).exists())
-
-    if found == 0:
-        return "not initialized"
-    if found < len(files):
-        return f"partial init ({found}/{len(files)} files)"
-    return "initialized"
-
-
 def find_marketplace_source(
     plugin_name: str, plugin_root: Path, claude_home: Path,
 ) -> tuple[str | None, str | None]:
     """Find source version for local-directory marketplaces.
-
-    Reads installed_plugins.json to find the marketplace name,
-    then known_marketplaces.json to find the source path,
-    then reads the source plugin.json for its version.
 
     Returns (source_version, marketplace_name) tuple.
     Both None if not a local marketplace or if any lookup fails.
@@ -83,7 +64,6 @@ def find_marketplace_source(
     installed = read_json(claude_home / "plugins" / "installed_plugins.json")
     plugins = installed.get("plugins", {})
 
-    # Find marketplace name from installed_plugins key (format: "name@marketplace")
     marketplace_name = None
     plugin_root_str = str(plugin_root)
     for key, entries in plugins.items():
@@ -99,7 +79,6 @@ def find_marketplace_source(
     if not marketplace_name:
         return None, None
 
-    # Look up marketplace source
     known = read_json(claude_home / "plugins" / "known_marketplaces.json")
     marketplace = known.get(marketplace_name, {})
     source = marketplace.get("source", {})
@@ -111,7 +90,6 @@ def find_marketplace_source(
     if not marketplace_path.is_dir():
         return None, marketplace_name
 
-    # Read marketplace manifest to find plugin source path
     manifest = read_json(marketplace_path / ".claude-plugin" / "marketplace.json")
     for plugin_entry in manifest.get("plugins", []):
         if plugin_entry.get("name") == plugin_name:
@@ -123,6 +101,105 @@ def find_marketplace_source(
     return None, marketplace_name
 
 
+def format_header(
+    plugin_name: str,
+    installed_version: str,
+    source_version: str | None,
+    marketplace_name: str | None,
+) -> str:
+    """Format header line with version and update status."""
+    parts = [f"{plugin_name} v{installed_version}"]
+
+    if source_version and source_version != installed_version:
+        parts.append(f"update available: v{source_version}")
+    elif source_version:
+        parts.append("up to date")
+
+    return " | ".join(parts)
+
+
+def format_rules_section(plugin_root: Path, project_dir: Path) -> list[str]:
+    """Format rules section using diff-based state check."""
+    scripts_dir = plugin_root / "scripts"
+    sys.path.insert(0, str(scripts_dir))
+    try:
+        import rules_state
+        importlib.reload(rules_state)
+        results = rules_state.check_rules(str(plugin_root), str(project_dir))
+    except Exception as e:
+        return [f"  Error checking rules: {e}"]
+    finally:
+        sys.path.pop(0)
+        sys.modules.pop("rules_state", None)
+
+    if not results:
+        return ["  No rules found in plugin"]
+
+    lines = []
+    for r in results:
+        lines.append(f"  {r['state']:<12}{r['rule']}")
+    return lines
+
+
+def discover_skills(plugin_root: Path) -> list[str]:
+    """Discover available skills from SKILL.md files."""
+    skills_dir = plugin_root / "skills"
+    if not skills_dir.is_dir():
+        return []
+
+    skills = []
+    for skill_md in sorted(skills_dir.glob("*/SKILL.md")):
+        skills.append(skill_md.parent.name)
+    return skills
+
+
+def run_skill_state_check(plugin_root: Path, skill: str, project_dir: Path) -> dict | None:
+    """Run a skill's state.py check if it exists. Returns result dict or None."""
+    state_script = plugin_root / "skills" / skill / "scripts" / "state.py"
+    if not state_script.exists():
+        return None
+
+    scripts_dir = state_script.parent
+    sys.path.insert(0, str(scripts_dir))
+    try:
+        import state
+        importlib.reload(state)
+        return state.check_state(str(project_dir))
+    except Exception as e:
+        return {
+            "state": "error",
+            "details": [f"State check failed: {e}"],
+            "actions": [],
+        }
+    finally:
+        sys.path.pop(0)
+        sys.modules.pop("state", None)
+
+
+def format_skills_section(plugin_root: Path, project_dir: Path) -> list[str]:
+    """Format skills section with per-skill state checks."""
+    skills = discover_skills(plugin_root)
+
+    if not skills:
+        return ["  No skills found in plugin"]
+
+    lines = []
+    for skill in skills:
+        result = run_skill_state_check(plugin_root, skill, project_dir)
+
+        if result is None:
+            lines.append(f"  {skill}")
+            continue
+
+        lines.append(f"  {skill}: {result['state']}")
+        for detail in result.get("details", []):
+            lines.append(f"    {detail}")
+        for action in result.get("actions", []):
+            lines.append(f"    Action: {action}")
+
+    return lines
+
+
 def main():
     plugin_root = get_plugin_root()
     project_dir = get_project_dir()
@@ -131,34 +208,24 @@ def main():
     plugin_name = get_plugin_name(plugin_root)
     installed_version = get_installed_version(plugin_root)
 
-    # Init status
-    init_status = check_init_status(plugin_root, project_dir)
-
-    # Version comparison (local-directory marketplaces only)
     source_version, marketplace_name = find_marketplace_source(
         plugin_name, plugin_root, claude_home,
     )
 
-    # Build status line
-    parts = [f"{plugin_name} v{installed_version}"]
+    header = format_header(
+        plugin_name, installed_version, source_version, marketplace_name,
+    )
+    print(header)
 
-    if init_status == "not initialized":
-        parts.append("not initialized (run /ocd-init)")
-    elif init_status.startswith("partial"):
-        parts.append(f"{init_status} (run /ocd-init)")
-    else:
-        parts.append(init_status)
+    print()
+    print("Rules")
+    for line in format_rules_section(plugin_root, project_dir):
+        print(line)
 
-    if source_version and source_version != installed_version:
-        parts.append(
-            f"update available: v{source_version}"
-            f" (run /plugin marketplace update {marketplace_name}"
-            f" then /plugin install {plugin_name})"
-        )
-    elif source_version:
-        parts.append("up to date")
-
-    print(" | ".join(parts))
+    print()
+    print("Skills")
+    for line in format_skills_section(plugin_root, project_dir):
+        print(line)
 
 
 if __name__ == "__main__":
