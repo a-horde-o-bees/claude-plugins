@@ -1,6 +1,6 @@
-"""SessionStart hook: report plugin status to user.
+"""Plugin status report.
 
-Displays a single status line at session start showing:
+Displays a single status line showing:
 - Installed plugin version
 - Init status (whether rule files exist in project)
 - Version mismatch (for local-directory marketplaces only)

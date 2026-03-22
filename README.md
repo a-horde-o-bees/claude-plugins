@@ -18,20 +18,33 @@ Use at your own discretion. If something breaks, the LICENSE applies.
 
 ### Local development
 
-Clone the repo and add the marketplace from your local path:
+Clone the repo:
+
+```
+git clone https://github.com/a-horde-o-bees/claude-plugins.git
+```
+
+Register the local directory as a marketplace:
 
 ```
 /plugin marketplace add a-horde-o-bees --path /path/to/claude-plugins
-/plugin install ocd
 ```
 
-After making changes to plugin source, sync and reinstall, then restart Claude session:
+Install a plugin (first time or after source changes):
 
 ```
 /plugin marketplace update a-horde-o-bees
 /plugin uninstall ocd
 /plugin install ocd
 ```
+
+Restart Claude session so hooks and commands load, then initialize in target project:
+
+```
+/{plugin}-init
+```
+
+Restart Claude session again so deployed rules auto-load into context.
 
 Remove a plugin or the marketplace:
 
@@ -46,13 +59,16 @@ Add this marketplace by URL (requires access to the repository):
 
 ```
 /plugin marketplace add a-horde-o-bees --url https://github.com/a-horde-o-bees/claude-plugins.git
-```
-
-Then install individual plugins:
-
-```
 /plugin install ocd
 ```
+
+After installing, restart Claude session so hooks and commands load, then initialize the plugin in target project:
+
+```
+/{plugin}-init
+```
+
+Restart Claude session again so deployed rules auto-load into context.
 
 > **Note:** This repo is currently private. External installation requires repository access.
 
@@ -84,7 +100,7 @@ Then install individual plugins:
 
 **Opt-in convention delivery via `.claude/rules/`.** Rules deploy to the standard auto-loading directory. Users explicitly run init to adopt conventions. Existing files are never overwritten — user customizations are preserved.
 
-**SessionStart hook for user awareness.** Displays plugin version, init status, and available updates at session start. Informational only — no automated updates or network calls. Agent discoverability comes from skill list entries.
+**Status command for user awareness.** `/ocd-status` displays plugin version, init status, and available updates on demand. Informational only — no automated updates or network calls. Agent discoverability comes from skill list entries.
 
 **Plugin data lives in `.claude/<plugin>/`.** Files that support plugin operation (databases, caches, conventions) are stored under `.claude/<plugin>/` in the project directory, not in the user's project tree. Rule files deploy to `.claude/rules/` per the standard convention.
 

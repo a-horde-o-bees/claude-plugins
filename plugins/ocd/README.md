@@ -9,7 +9,7 @@ Deterministic enforcement of permissions, rules, and structural conventions for 
 /ocd-init
 ```
 
-Restart Claude session after init to load rules.
+Restart Claude session after init to load rules. Run `/ocd-status` to verify plugin version, init state, and update availability.
 
 `/ocd-init` deploys convention rules to `.claude/rules/` (auto-loaded every session with CLAUDE.md-level strength) and initializes the navigator database.
 
