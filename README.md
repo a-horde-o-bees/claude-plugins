@@ -25,18 +25,12 @@ Clone the repo and add the marketplace from your local path:
 /plugin install ocd
 ```
 
-After making changes to plugin source, sync and reinstall:
+After making changes to plugin source, sync and reinstall, then restart Claude session:
 
 ```
 /plugin marketplace update a-horde-o-bees
 /plugin uninstall ocd
 /plugin install ocd
-```
-
-Reload plugins without restarting the session:
-
-```
-/reload-plugins
 ```
 
 Remove a plugin or the marketplace:

@@ -10,11 +10,7 @@ Plugin versions follow `x.y.z` format in each plugin's `.claude-plugin/plugin.js
 
 ## Commit Workflow
 
-Every commit must bump the `z` version in `.claude-plugin/plugin.json` for each plugin that has changes. This enables the local plugin reload cycle:
-
-1. Bump `z` in affected plugin's `.claude-plugin/plugin.json`
-2. Commit changes
-3. Developer runs `/plugin marketplace update a-horde-o-bees`, then `/plugin uninstall ocd` and `/plugin install ocd` to reinstall
+Every commit must bump the `z` version in `.claude-plugin/plugin.json` for each plugin that has changes.
 
 ## Architectural Enforcement
 
