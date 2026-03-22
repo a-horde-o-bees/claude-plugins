@@ -105,7 +105,7 @@ def init_navigator(plugin_root: Path, project_dir: Path) -> list[str]:
 
     try:
         import navigator
-        db_path = project_dir / "docs" / "ocd" / "navigator" / "navigator.db"
+        db_path = project_dir / ".claude" / "ocd" / "navigator" / "navigator.db"
         result = navigator.init_db(str(db_path))
         return [f"  {result}"]
     except Exception as e:

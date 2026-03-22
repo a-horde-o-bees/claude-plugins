@@ -49,7 +49,7 @@ PreToolUse hook on Bash, Edit, and Write tools. Two evaluation layers:
 
 `/ocd-navigator` — maintenance workflow for the project navigation database. Scans filesystem, detects changes, and guides description writing for project files and directories.
 
-The navigator database (`docs/ocd/navigator/navigator.db`) indexes project structure with human-written descriptions so agents can find files by purpose without reading every file. Agents use the CLI tool inline during tasks; the skill is for maintenance only.
+The navigator database (`.claude/ocd/navigator/navigator.db`) indexes project structure with human-written descriptions so agents can find files by purpose without reading every file. Agents use the CLI tool inline during tasks; the skill is for maintenance only.
 
 #### Navigator CLI
 
@@ -72,12 +72,15 @@ Agent-facing entry point at `skills/navigator/scripts/navigator_cli.py`. Agents 
 ocd/
   .claude-plugin/plugin.json           # Plugin manifest
   hooks/
-    hooks.json                          # PreToolUse registration
+    hooks.json                          # SessionStart and PreToolUse registration
   commands/
     init.md                             # /ocd-init command
   scripts/
-    override_approvals.py               # Permission enforcement hook
+    session_status.py                   # SessionStart hook: version, init, update status
+    override_approvals.py               # PreToolUse hook: permission enforcement
     init.py                             # Rule deployment and DB initialization
+  references/
+    init_manifest.json                  # Files created by init (used by session status hook)
   rules/                                # Convention templates (deployed to .claude/rules/)
     ocd-agent-authoring.md
     ocd-communication.md
@@ -97,7 +100,9 @@ ocd/
 
 **Opt-in convention delivery via `.claude/rules/`.** Rules deploy to the standard auto-loading directory. Users explicitly run `/ocd-init` to adopt conventions. Existing files are never overwritten — user customizations are preserved.
 
-**No SessionStart hooks for discoverability.** SessionStart hook messages appear as passive log lines that agents don't act on. Discoverability comes from skill list entries (visible via `/ocd`) instead.
+**SessionStart hook for user awareness.** Displays plugin version, init status, and available updates at session start. Informational only — no automated updates or network calls. Agent discoverability comes from skill list entries (visible via `/ocd`).
+
+**Plugin data lives in `.claude/ocd/`.** Files that support plugin operation (navigator database, conventions) are stored under `.claude/ocd/` in the project directory, not in the user's project tree. Rule files deploy to `.claude/rules/` per the standard convention.
 
 **Agent-facing tools are first-class interfaces.** Scripts that agents call directly use the `_cli` suffix and follow agent-facing design conventions: long-form flags, agent-oriented help text (when to call, output format, what to call next), structured output with parseable markers, corrective error messages.
 

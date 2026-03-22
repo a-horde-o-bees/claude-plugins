@@ -1,6 +1,6 @@
 # Navigator
 
-SQLite database (`docs/ocd/navigator/navigator.db`) indexes project structure — files, folders, and descriptions — so agents can find what they need without reading every file.
+SQLite database (`.claude/ocd/navigator/navigator.db`) indexes project structure — files, folders, and descriptions — so agents can find what they need without reading every file.
 
 ## CLI
 

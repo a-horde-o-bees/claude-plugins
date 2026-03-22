@@ -26,7 +26,7 @@ except ImportError:
     import navigator  # type: ignore[import-not-found]
 
 
-DEFAULT_DB = "docs/ocd/navigator/navigator.db"
+DEFAULT_DB = ".claude/ocd/navigator/navigator.db"
 
 
 def _dispatch_init(args):
