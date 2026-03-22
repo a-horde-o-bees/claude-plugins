@@ -1,10 +1,10 @@
 ---
-name: ocd-check-conventions
-description: Reformat files to conform with conventions using deterministic pattern matching and a single sequential agent
-argument-hint: "[file-path | /skill-name | .claude/] [--focus \"specific instruction\"] [--all] [--delegate]"
+name: ocd-conventions
+description: Manage and enforce project conventions; --check reformats files to conform using deterministic pattern matching and a single sequential agent
+argument-hint: "--check [file-path | /skill-name | .claude/] [--focus \"specific instruction\"] [--all] [--delegate]"
 ---
 
-# /ocd-check-conventions
+# /ocd-conventions
 
 ## File Map
 
@@ -14,11 +14,19 @@ CLAUDE.md
 .claude/ocd/conventions/ (convention definitions)
 ```
 
-Reformat target files to conform with project conventions. Convention CLI deterministically discovers applicable conventions per target, then single agent applies them across all targets sequentially. Deterministic discovery + non-deterministic application.
+Manage and enforce project conventions. Convention CLI deterministically discovers applicable conventions per target, then single agent applies them across all targets sequentially. Deterministic discovery + non-deterministic application.
 
 ## Trigger
 
-User runs `/ocd-check-conventions`
+User runs `/ocd-conventions`
+
+## Route
+
+1. If `--check` not in `$ARGUMENTS`:
+  1. Respond with skill description and argument-hint, then stop
+2. Else:
+  1. Strip `--check` from `$ARGUMENTS`
+  2. Proceed to Resolve Arguments
 
 ## Resolve Arguments
 
@@ -38,27 +46,29 @@ User runs `/ocd-check-conventions`
 ## Delegate Execution
 
 1. When `--delegate` is in `$ARGUMENTS`:
-  1. Resolve Arguments
-  2. Spawn single background agent with Workflow section, Rules section, Report section, and resolved arguments
-  3. Present agent's report as-is
+  1. Route
+  2. Resolve Arguments
+  3. Spawn single background agent with Workflow section, Rules section, Report section, and resolved arguments
+  4. Present agent's report as-is
 
 ## Workflow
 
-1. Resolve Arguments
-2. Extract focus — if `--focus "..."` present, extract quoted text as focus instruction
-3. Check line counts — count lines in each target file
+1. Route
+2. Resolve Arguments
+3. Extract focus — if `--focus "..."` present, extract quoted text as focus instruction
+4. Check line counts — count lines in each target file
   1. If any target exceeds 500 lines:
     1. Report auto-fail for that target, remove from target list
-4. Discover conventions — run convention CLI to find applicable conventions for all targets
+5. Discover conventions — run convention CLI to find applicable conventions for all targets
   ```bash
   python3 ${CLAUDE_PLUGIN_ROOT}/skills/conventions/scripts/convention_cli.py get <target-paths>
   ```
   1. If no conventions match any target:
     1. Report "no conventions apply" and stop
   2. Collect convention content output — pass to agent as pre-discovered criteria
-5. Spawn single agent — one agent processes all targets sequentially with conformity reformat prompt, including discovered convention content
-6. Review changes — run `git diff` after agent completes, review for correctness before presenting
-7. Present results — per-target summary of changes applied, criteria used, and any issues requiring user judgment
+6. Spawn single agent — one agent processes all targets sequentially with conformity reformat prompt, including discovered convention content
+7. Review changes — run `git diff` after agent completes, review for correctness before presenting
+8. Present results — per-target summary of changes applied, criteria used, and any issues requiring user judgment
 
 ### File Roles
 
