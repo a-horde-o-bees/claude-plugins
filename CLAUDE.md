@@ -1,0 +1,23 @@
+# Project Instructions
+
+## Versioning
+
+Plugin versions follow `0.x.y` format in each plugin's `.claude-plugin/plugin.json`:
+
+- `0` — leading zero until a change breaks previous setups
+- `x` — increments on public release; cohesive set of changes ready for consumers; resets `y` to `0`
+- `y` — increments on every commit during development; required for local plugin reload to detect changes
+
+## Commit Workflow
+
+Every commit must bump the `y` version in `.claude-plugin/plugin.json` for each plugin that has changes. This enables the local plugin reload cycle:
+
+1. Bump `y` in affected plugin's `.claude-plugin/plugin.json`
+2. Commit changes
+3. Developer runs `/plugin marketplace update a-horde-o-bees` then `/reload-plugins` to test
+
+## Testing
+
+- Run tests via `.venv/bin/python3 -m pytest -v`
+- Run only tests affected by current changes, scoped to narrowest relevant test file
+- All test paths configured in `pyproject.toml`

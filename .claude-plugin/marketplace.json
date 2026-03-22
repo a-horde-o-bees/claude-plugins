@@ -8,10 +8,9 @@
   "plugins": [
     {
       "name": "ocd",
-      "source": "./ocd",
+      "source": "./plugins/ocd",
       "description": "Deterministic enforcement of permissions, rules, and structural conventions with agent-facing project navigation",
-      "category": "development",
-      "version": "0.0.7"
+      "category": "development"
     }
   ]
 }

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Initialize ocd conventions and skill infrastructure in a project.
 
 Copies rule files from plugin to .claude/rules/ and initializes
@@ -73,6 +72,32 @@ def deploy_rules(plugin_root: Path, project_dir: Path, only: list[str] | None = 
     return lines
 
 
+def deploy_conventions(
+    plugin_root: Path, project_dir: Path, overwrite: bool = False,
+) -> list[str]:
+    """Copy convention templates from plugin to .claude/ocd/conventions/. Returns status lines."""
+    templates_src = plugin_root / "templates" / "conventions"
+    conventions_dst = project_dir / ".claude" / "ocd" / "conventions"
+    conventions_dst.mkdir(parents=True, exist_ok=True)
+
+    lines = []
+
+    if not templates_src.is_dir():
+        lines.append("  No convention templates found in plugin")
+        return lines
+
+    for src in sorted(templates_src.glob("*.md")):
+        dst = conventions_dst / src.name
+        if dst.exists() and not overwrite:
+            lines.append(f"  Skipped (exists): {src.name}")
+            continue
+        action = "Overwritten" if dst.exists() else "Deployed"
+        shutil.copy2(src, dst)
+        lines.append(f"  {action}: {src.name}")
+
+    return lines
+
+
 def init_navigator(plugin_root: Path, project_dir: Path) -> list[str]:
     """Initialize navigator database. Returns status lines."""
     scripts_dir = plugin_root / "skills" / "navigator" / "scripts"
@@ -105,6 +130,11 @@ def main():
         default=None,
         help="Comma-separated list of capabilities to deploy (e.g., agent-authoring,navigator)",
     )
+    parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Overwrite existing convention files with plugin defaults",
+    )
     args = parser.parse_args()
 
     plugin_root = get_plugin_root()
@@ -118,6 +148,13 @@ def main():
     print("Rules:")
     rule_lines = deploy_rules(plugin_root, project_dir, only=only)
     for line in rule_lines:
+        print(line)
+    print()
+
+    # Deploy conventions
+    print("Conventions:")
+    conv_lines = deploy_conventions(plugin_root, project_dir, overwrite=args.overwrite)
+    for line in conv_lines:
         print(line)
     print()
 
