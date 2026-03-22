@@ -20,6 +20,16 @@ Every commit must bump the `z` version in `.claude-plugin/plugin.json` for each 
 
 ocd plugin rules (installed via `/ocd-init`) enforce architectural principles (script naming, deterministic/non-deterministic split, CLI design). CLAUDE.md covers only project-specific procedures not addressed by those rules.
 
+## Project File Deployment
+
+Plugin-generated files deployed to user projects follow this structure:
+
+- Rule files → `.claude/rules/<plugin>-<name>.md` (prefix for namespace isolation)
+- Supporting files → `.claude/<plugin>/` (directory nesting for isolation, no prefix)
+- Skill-specific files → `.claude/<plugin>/<skill>/`
+
+Never place plugin data in the user's project tree outside `.claude/`.
+
 ## README Scopes
 
 - **Project root `README.md`** — developer and contributor facing: marketplace info, installation for users and local dev, architecture, design principles, naming conventions, versioning
