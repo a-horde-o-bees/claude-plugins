@@ -12,6 +12,8 @@ Plugin versions follow `x.y.z` format in each plugin's `.claude-plugin/plugin.js
 
 Every commit must bump the `z` version in `.claude-plugin/plugin.json` for each plugin that has changes.
 
+Always review untracked files during commit preparation. Never ignore or skip untracked files — they may be in-progress work or project-specific data that should be tracked. Surface all untracked files to the user for review before committing.
+
 ## Architectural Enforcement
 
 ocd plugin rules (installed via `/ocd-init`) enforce architectural principles (script naming, deterministic/non-deterministic split, CLI design). CLAUDE.md covers only project-specific procedures not addressed by those rules.
