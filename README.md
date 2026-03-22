@@ -18,16 +18,31 @@ Use at your own discretion. If something breaks, the LICENSE applies.
 
 ### Local development
 
-Clone the repo and install the marketplace from your local path:
+Clone the repo and add the marketplace from your local path:
 
 ```
 /plugin marketplace add a-horde-o-bees --path /path/to/claude-plugins
-```
-
-Then install individual plugins:
-
-```
 /plugin install ocd
+```
+
+After making changes to plugin source, sync and reinstall:
+
+```
+/plugin marketplace update a-horde-o-bees
+/plugin install ocd
+```
+
+Reload plugins without restarting the session:
+
+```
+/reload-plugins
+```
+
+Remove a plugin or the marketplace:
+
+```
+/plugin uninstall ocd
+/plugin marketplace remove a-horde-o-bees
 ```
 
 ### External users
