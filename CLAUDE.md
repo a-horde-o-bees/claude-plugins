@@ -14,7 +14,7 @@ Every commit must bump the `z` version in `.claude-plugin/plugin.json` for each 
 
 1. Bump `z` in affected plugin's `.claude-plugin/plugin.json`
 2. Commit changes
-3. Developer runs `/plugin marketplace update a-horde-o-bees` then `/reload-plugins` to test
+3. Developer runs `/plugin marketplace update a-horde-o-bees`, then `/plugin uninstall ocd` and `/plugin install ocd` to reinstall
 
 ## Architectural Enforcement
 

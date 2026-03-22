@@ -29,6 +29,7 @@ After making changes to plugin source, sync and reinstall:
 
 ```
 /plugin marketplace update a-horde-o-bees
+/plugin uninstall ocd
 /plugin install ocd
 ```
 
