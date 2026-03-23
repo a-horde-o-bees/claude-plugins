@@ -47,7 +47,9 @@ def _dispatch_describe(args: argparse.Namespace) -> None:
 
 def _dispatch_list(args: argparse.Namespace) -> None:
     _auto_scan(args)
-    result = navigator.list_files(args.db, args.path, patterns=args.pattern)
+    result = navigator.list_files(
+        args.db, args.path, patterns=args.pattern, excludes=args.exclude,
+    )
     if result:
         print(result)
 
@@ -199,10 +201,14 @@ def build_parser() -> argparse.ArgumentParser:
             "Pattern filtering matches against basename (filename only).\n"
             "Multiple --pattern flags are OR-combined.\n"
             "\n"
+            "Exclude filtering matches against full path.\n"
+            "Multiple --exclude flags are OR-combined.\n"
+            "\n"
             "Examples:\n"
             "  list .                        — all non-excluded files\n"
             "  list . --pattern '*.py'       — Python files only\n"
-            "  list src --pattern '*.py' --pattern '*.md'"
+            "  list src --pattern '*.py' --pattern '*.md'\n"
+            "  list . --exclude '.claude/*'  — exclude .claude/ tree"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
         parents=[db_parent],
@@ -214,6 +220,10 @@ def build_parser() -> argparse.ArgumentParser:
     list_p.add_argument(
         "--pattern", action="append", default=None,
         help="Glob pattern to filter by basename (repeatable, OR-combined)",
+    )
+    list_p.add_argument(
+        "--exclude", action="append", default=None,
+        help="Glob pattern to exclude by full path (repeatable, OR-combined)",
     )
     list_p.set_defaults(_dispatch=_dispatch_list)
 

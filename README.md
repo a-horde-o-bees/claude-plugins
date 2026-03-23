@@ -16,7 +16,53 @@ Use at your own discretion. If something breaks, the LICENSE applies.
 
 ## Installation
 
-### Local development
+### Local development (--plugin-dir)
+
+Clone the repo:
+
+```
+git clone https://github.com/a-horde-o-bees/claude-plugins.git
+```
+
+Launch Claude with the plugin loaded directly from source:
+
+```
+claude --plugin-dir {PATH_TO_REPO}/plugins/ocd
+```
+
+Optional shell alias:
+
+```
+alias claude-dev='claude --plugin-dir {PATH_TO_REPO}/plugins/ocd'
+```
+
+After making source changes, hot-reload within the session:
+
+```
+/reload-plugins
+```
+
+If rules or convention templates changed, re-run init in target project:
+
+```
+/ocd-init --force
+```
+
+Useful flags:
+
+- `--debug` — plugin loading diagnostics
+- `--bare` — skip hooks, LSP, plugin sync, auto-memory, CLAUDE.md for scripted testing
+- `claude plugin validate {PATH_TO_PLUGIN}` — validate manifest without a session
+
+Notes:
+
+- `--plugin-dir` is session-only; no `settings.json` equivalent yet
+- When a `--plugin-dir` plugin shares a name with an installed marketplace plugin, the local copy takes precedence for that session
+- Multiple plugins: `claude --plugin-dir ./plugin-one --plugin-dir ./plugin-two`
+
+### Local development (marketplace)
+
+Alternative workflow using the local marketplace registration. Requires two session restarts per change cycle — one after install (hooks/commands), one after init (rules).
 
 Clone the repo:
 

@@ -428,14 +428,18 @@ def scan_path(db_path: str, target_path: str) -> str:
 
 
 def list_files(
-    db_path: str, target_path: str, patterns: list[str] | None = None
+    db_path: str,
+    target_path: str,
+    patterns: list[str] | None = None,
+    excludes: list[str] | None = None,
 ) -> str:
     """List non-excluded file paths under target_path.
 
     Walks filesystem using navigator rules (exclude, traverse). Returns
     files only (not directories), sorted, one per line. If patterns
     provided, keeps only paths where basename matches any pattern via
-    fnmatch.
+    fnmatch. If excludes provided, removes paths where any path component
+    matches any exclude pattern via fnmatch.
 
     Returns empty string if no files match.
     """
@@ -455,6 +459,12 @@ def list_files(
         files = [
             f for f in files
             if any(fnmatch.fnmatch(Path(f).name, pat) for pat in patterns)
+        ]
+
+    if excludes:
+        files = [
+            f for f in files
+            if not any(fnmatch.fnmatch(f, pat) for pat in excludes)
         ]
 
     return "\n".join(files)

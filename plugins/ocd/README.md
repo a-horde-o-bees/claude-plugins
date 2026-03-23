@@ -11,18 +11,7 @@ Deterministic enforcement of permissions, rules, and structural conventions for 
 
 Restart Claude session after init to load rules. Run `/ocd-status` to verify plugin version, init state, and update availability.
 
-`/ocd-init` deploys convention rules to `.claude/rules/` (auto-loaded every session with CLAUDE.md-level strength) and initializes the navigator database.
-
-### Selective adoption
-
-```
-/ocd-init --only agent-authoring
-/ocd-init --only navigator
-/ocd-init --only communication,workflow
-/ocd-init --rules-only
-```
-
-Each capability deploys its rule file independently. `--rules-only` skips infrastructure initialization (navigator database).
+`/ocd-init` deploys rules to `.claude/rules/`, convention templates, and initializes skill infrastructure. Use `--force` to overwrite existing files with plugin defaults.
 
 ## Capabilities
 

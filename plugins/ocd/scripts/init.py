@@ -1,13 +1,13 @@
-"""Initialize ocd conventions and skill infrastructure in a project.
+"""Initialize ocd rules and skill infrastructure in a project.
 
-Copies rule files from plugin to .claude/rules/ and initializes
-navigator database. Deterministic operations only — no agent judgment.
+Deploys rule files from plugin to .claude/rules/, then discovers and
+runs each skill's init.py for infrastructure setup.
 """
 
 import argparse
 import os
 import shutil
-import sys
+import subprocess
 from pathlib import Path
 
 
@@ -21,76 +21,15 @@ def get_project_dir() -> Path:
     return Path(os.environ.get("CLAUDE_PROJECT_DIR", os.getcwd()))
 
 
-CAPABILITIES = {
-    "agent-authoring": {
-        "rule": "ocd-agent-authoring.md",
-    },
-    "communication": {
-        "rule": "ocd-communication.md",
-    },
-    "workflow": {
-        "rule": "ocd-workflow.md",
-    },
-    "navigator": {
-        "rule": "ocd-navigator.md",
-        "init_db": True,
-    },
-}
-
-
-def deploy_rules(
-    plugin_root: Path, project_dir: Path, only: list[str] | None = None, force: bool = False,
-) -> list[str]:
-    """Copy rule files from plugin to .claude/rules/. Returns status lines."""
+def deploy_rules(plugin_root: Path, project_dir: Path, force: bool = False) -> list[str]:
+    """Copy all rule files from plugin to .claude/rules/. Returns status lines."""
     rules_src = plugin_root / "rules"
     rules_dst = project_dir / ".claude" / "rules"
     rules_dst.mkdir(parents=True, exist_ok=True)
 
     lines = []
-
-    if only:
-        rule_files = []
-        for name in only:
-            cap = CAPABILITIES.get(name)
-            if cap and "rule" in cap:
-                rule_files.append(cap["rule"])
-            else:
-                lines.append(f"  Unknown capability: {name}")
-    else:
-        rule_files = [cap["rule"] for cap in CAPABILITIES.values() if "rule" in cap]
-
-    for filename in rule_files:
-        src = rules_src / filename
-        dst = rules_dst / filename
-        if not src.exists():
-            lines.append(f"  Missing source: {filename}")
-            continue
-        if dst.exists() and not force:
-            lines.append(f"  Skipped (exists): {filename}")
-            continue
-        action = "Overwritten" if dst.exists() else "Deployed"
-        shutil.copy2(src, dst)
-        lines.append(f"  {action}: {filename}")
-
-    return lines
-
-
-def deploy_conventions(
-    plugin_root: Path, project_dir: Path, force: bool = False,
-) -> list[str]:
-    """Copy convention templates from plugin to .claude/ocd/conventions/. Returns status lines."""
-    templates_src = plugin_root / "templates" / "conventions"
-    conventions_dst = project_dir / ".claude" / "ocd" / "conventions"
-    conventions_dst.mkdir(parents=True, exist_ok=True)
-
-    lines = []
-
-    if not templates_src.is_dir():
-        lines.append("  No convention templates found in plugin")
-        return lines
-
-    for src in sorted(templates_src.glob("*.md")):
-        dst = conventions_dst / src.name
+    for src in sorted(rules_src.glob("*.md")):
+        dst = rules_dst / src.name
         if dst.exists() and not force:
             lines.append(f"  Skipped (exists): {src.name}")
             continue
@@ -101,37 +40,30 @@ def deploy_conventions(
     return lines
 
 
-def init_navigator(plugin_root: Path, project_dir: Path) -> list[str]:
-    """Initialize navigator database. Returns status lines."""
-    scripts_dir = plugin_root / "skills" / "navigator" / "scripts"
-    sys.path.insert(0, str(scripts_dir))
+def discover_skill_inits(plugin_root: Path) -> list[Path]:
+    """Find all skills/*/scripts/init.py files."""
+    skills_dir = plugin_root / "skills"
+    if not skills_dir.is_dir():
+        return []
+    return sorted(skills_dir.glob("*/scripts/init.py"))
 
-    try:
-        import navigator
-        db_path = project_dir / ".claude" / "ocd" / "navigator" / "navigator.db"
-        result = navigator.init_db(str(db_path))
-        return [f"  {result}"]
-    except Exception as e:
-        return [f"  Error: {e}"]
-    finally:
-        sys.path.pop(0)
+
+def run_skill_init(init_script: Path, force: bool = False) -> list[str]:
+    """Run a skill's init.py and return output lines."""
+    cmd = ["python3", str(init_script)]
+    if force:
+        cmd.append("--force")
+    result = subprocess.run(cmd, capture_output=True, text=True, env=os.environ)
+    output = result.stdout.strip()
+    if result.returncode != 0 and result.stderr:
+        output = result.stderr.strip()
+    return output.splitlines() if output else []
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(
         prog="ocd_init.py",
-        description="Initialize ocd conventions and skill infrastructure in current project.",
-    )
-    parser.add_argument(
-        "--rules-only",
-        action="store_true",
-        help="Deploy rules only, skip infrastructure initialization",
-    )
-    parser.add_argument(
-        "--only",
-        type=str,
-        default=None,
-        help="Comma-separated list of capabilities to deploy (e.g., agent-authoring,navigator)",
+        description="Initialize ocd rules and skill infrastructure in current project.",
     )
     parser.add_argument(
         "--force",
@@ -142,44 +74,30 @@ def main() -> None:
 
     plugin_root = get_plugin_root()
     project_dir = get_project_dir()
-    only = [s.strip() for s in args.only.split(",")] if args.only else None
 
     print("ocd init")
     print()
 
-    # Deploy rules
+    # Deploy rules (cross-cutting)
     print("Rules:")
-    rule_lines = deploy_rules(plugin_root, project_dir, only=only, force=args.force)
-    for line in rule_lines:
+    for line in deploy_rules(plugin_root, project_dir, force=args.force):
         print(line)
     print()
 
-    # Deploy conventions
-    print("Conventions:")
-    conv_lines = deploy_conventions(plugin_root, project_dir, force=args.force)
-    for line in conv_lines:
-        print(line)
-    print()
-
-    # Initialize infrastructure
-    if args.rules_only:
-        print("Infrastructure: skipped (--rules-only)")
+    # Run each skill's init
+    skill_inits = discover_skill_inits(plugin_root)
+    if skill_inits:
+        for init_script in skill_inits:
+            skill_name = init_script.parent.parent.name
+            print(f"{skill_name.capitalize()}:")
+            lines = run_skill_init(init_script, force=args.force)
+            for line in lines:
+                print(f"  {line}")
+            print()
     else:
-        caps_with_infra = {k: v for k, v in CAPABILITIES.items() if v.get("init_db")}
-        if only:
-            caps_with_infra = {k: v for k, v in caps_with_infra.items() if k in only}
+        print("Skills: no init scripts found")
+        print()
 
-        if caps_with_infra:
-            print("Infrastructure:")
-            for name in caps_with_infra:
-                if name == "navigator":
-                    lines = init_navigator(plugin_root, project_dir)
-                    for line in lines:
-                        print(line)
-        else:
-            print("Infrastructure: none required")
-
-    print()
     print("Done. Restart Claude session to load new rules.")
 
 

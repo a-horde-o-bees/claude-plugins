@@ -1,7 +1,7 @@
 ---
 name: ocd-init
 description: Initialize ocd conventions and skill infrastructure in current project
-argument-hint: "[--rules-only | --only capability1,capability2]"
+argument-hint: "[--force]"
 ---
 
 Run init script to deploy conventions and initialize infrastructure:

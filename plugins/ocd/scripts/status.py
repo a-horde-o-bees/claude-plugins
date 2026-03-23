@@ -3,7 +3,7 @@
 Derives all state deterministically from filesystem:
 - Plugin version and marketplace version comparison
 - Rule states via diff of source vs deployed files
-- Skill states via per-skill infrastructure checks
+- Skill states via per-skill init.py --status
 
 No state file, no network calls, no automated updates.
 """
@@ -11,6 +11,7 @@ No state file, no network calls, no automated updates.
 import importlib
 import json
 import os
+import subprocess
 import sys
 from pathlib import Path
 
@@ -153,49 +154,43 @@ def discover_skills(plugin_root: Path) -> list[str]:
     return skills
 
 
-def run_skill_state_check(plugin_root: Path, skill: str, project_dir: Path) -> dict | None:
-    """Run a skill's state.py check if it exists. Returns result dict or None."""
-    state_script = plugin_root / "skills" / skill / "scripts" / "state.py"
-    if not state_script.exists():
-        return None
-
-    scripts_dir = state_script.parent
-    sys.path.insert(0, str(scripts_dir))
-    try:
-        import state
-        importlib.reload(state)
-        return state.check_state(str(project_dir))
-    except Exception as e:
-        return {
-            "state": "error",
-            "details": [f"State check failed: {e}"],
-            "actions": [],
-        }
-    finally:
-        sys.path.pop(0)
-        sys.modules.pop("state", None)
+def discover_skill_inits(plugin_root: Path) -> dict[str, Path]:
+    """Find all skills/*/scripts/init.py files. Returns {skill_name: path}."""
+    skills_dir = plugin_root / "skills"
+    if not skills_dir.is_dir():
+        return {}
+    result = {}
+    for init_script in sorted(skills_dir.glob("*/scripts/init.py")):
+        result[init_script.parent.parent.name] = init_script
+    return result
 
 
-def format_skills_section(plugin_root: Path, project_dir: Path) -> list[str]:
-    """Format skills section with per-skill state checks."""
+def format_skills_section(plugin_root: Path) -> list[str]:
+    """Format skills section by calling each skill's init.py --status."""
     skills = discover_skills(plugin_root)
 
     if not skills:
         return ["  No skills found in plugin"]
 
+    skill_inits = discover_skill_inits(plugin_root)
     lines = []
-    for skill in skills:
-        result = run_skill_state_check(plugin_root, skill, project_dir)
 
-        if result is None:
+    for skill in skills:
+        init_script = skill_inits.get(skill)
+        if init_script is None:
             lines.append(f"  {skill}")
             continue
 
-        lines.append(f"  {skill}: {result['state']}")
-        for detail in result.get("details", []):
-            lines.append(f"    {detail}")
-        for action in result.get("actions", []):
-            lines.append(f"    Action: {action}")
+        result = subprocess.run(
+            ["python3", str(init_script), "--status"],
+            capture_output=True, text=True, env=os.environ,
+        )
+        output = result.stdout.strip()
+        if output:
+            for line in output.splitlines():
+                lines.append(f"  {line}")
+        else:
+            lines.append(f"  {skill}")
 
     return lines
 
@@ -224,7 +219,7 @@ def main() -> None:
 
     print()
     print("Skills")
-    for line in format_skills_section(plugin_root, project_dir):
+    for line in format_skills_section(plugin_root):
         print(line)
 
 

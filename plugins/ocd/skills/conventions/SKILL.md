@@ -34,13 +34,12 @@ User runs `/ocd-conventions`
   2. If directory — target directory is path
 6. Enumerate directory targets — run navigator CLI to get filtered file list
   ```bash
-  python3 ${CLAUDE_PLUGIN_ROOT}/skills/navigator/scripts/navigator_cli.py list <directory> [--pattern "..."]
+  python3 ${CLAUDE_PLUGIN_ROOT}/skills/navigator/scripts/navigator_cli.py list <directory> [--pattern "..."] [--exclude "..."]
   ```
   - Pass through any `--pattern` values collected in step 1
-  - Output is one file path per line, pre-filtered by navigator exclude rules and pattern filters
-7. If `--all` not present:
-  1. Apply boundary rule — remove matching files from target list
-8. Deduplicate target list
+  - If `--all` not present, apply boundary rule via `--exclude ".claude/*"`
+  - Output is one file path per line, pre-filtered by navigator exclude rules, pattern filters, and exclude filters
+7. Deduplicate target list
 
 ## Delegate Execution
 
@@ -78,13 +77,7 @@ Every file referenced during reformatting falls into one of two roles:
 
 ### Boundary Rule
 
-Convention architecture files are excluded from target list by default:
-
-- `.claude/ocd/conventions/**` — Convention definitions
-- `.claude/rules/ocd-*` — Rule definitions
-- Root `CLAUDE.md` — Project instructions
-
-Use `--all` to include these files in target list.
+Files under `.claude/` are excluded from target list by default — convention definitions, rule definitions, and project instructions live there. Use `--all` to include `.claude/` files in target list, or pass a `.claude/` path as explicit target to check specific files.
 
 ### Conformity Reformat Prompt
 
