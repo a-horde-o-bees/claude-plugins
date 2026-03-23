@@ -70,6 +70,11 @@ User runs `/ocd-navigator`.
     1. Run `python3 ${CLAUDE_PLUGIN_ROOT}/skills/navigator/scripts/navigator_cli.py set <directory> --description "..."`
   6. Run `python3 ${CLAUDE_PLUGIN_ROOT}/skills/navigator/scripts/navigator_cli.py get-undescribed` for next directory
 
+### Report
+
+- Scan results — added, removed, changed counts
+- Entries described — total count of files and directories described
+
 ## Rules
 
 - Depth-first by design — `get-undescribed` returns deepest directory first; describe children before parents so directory descriptions reflect contents. Depth-first guarantees all child entries within returned directory are leaf entries (files or `traverse=0` directories) — child directories with their own undescribed entries are processed in earlier iterations. If `[?]` child directory appears within returned directory listing, treat as unexpected output and STOP.
@@ -77,8 +82,3 @@ User runs `/ocd-navigator`.
 - No description length limit — follow Description Guidelines guidance, not brevity constraints
 - Directories with `traverse=0` are listed but not entered — describe directory itself, not its contents
 - `set` always clears stale marker — whether description changes or stays the same, running `set` marks entry as reviewed against current file contents
-
-## Report
-
-- Scan results — added, removed, changed counts
-- Entries described — total count of files and directories described

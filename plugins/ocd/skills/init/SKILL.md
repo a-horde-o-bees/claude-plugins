@@ -4,6 +4,8 @@ description: Initialize ocd conventions and skill infrastructure in current proj
 argument-hint: "[--force]"
 ---
 
+# /ocd-init
+
 Run init script to deploy conventions and initialize infrastructure:
 
 ```bash

@@ -1,5 +1,7 @@
 """Unit tests for override_approvals hook."""
 
+from pathlib import Path
+
 import override_approvals as hook
 
 
@@ -213,21 +215,103 @@ class TestGlobMatch:
 class TestIsWithinAllowedDirs:
     def test_project_dir(self) -> None:
         settings = {"permissions": {"additionalDirectories": []}}
-        assert hook.is_within_allowed_dirs("/project/foo.py", "/project", settings) is True
+        assert hook.is_within_allowed_dirs(Path("/project/foo.py"), Path("/project"), settings) is True
 
     def test_outside_project(self) -> None:
         settings = {"permissions": {"additionalDirectories": []}}
-        assert hook.is_within_allowed_dirs("/other/foo.py", "/project", settings) is False
+        assert hook.is_within_allowed_dirs(Path("/other/foo.py"), Path("/project"), settings) is False
 
     def test_additional_directory(self) -> None:
         settings = {"permissions": {"additionalDirectories": ["/extra"]}}
-        assert hook.is_within_allowed_dirs("/extra/foo.py", "/project", settings) is True
+        assert hook.is_within_allowed_dirs(Path("/extra/foo.py"), Path("/project"), settings) is True
 
     def test_relative_dot_directory(self) -> None:
         settings = {"permissions": {"additionalDirectories": ["."]}}
-        project = "/home/dev/projects/myproject"
-        path = project + "/sub/file.py"
+        project = Path("/home/dev/projects/myproject")
+        path = project / "sub" / "file.py"
         assert hook.is_within_allowed_dirs(path, project, settings) is True
+
+
+class TestResolvePath:
+    def test_relative_path(self) -> None:
+        result = hook.resolve_path("foo/bar.py", Path("/project"))
+        assert result == Path("/project/foo/bar.py")
+
+    def test_absolute_path(self) -> None:
+        result = hook.resolve_path("/absolute/bar.py", Path("/project"))
+        assert result == Path("/absolute/bar.py")
+
+    def test_dot_relative(self) -> None:
+        result = hook.resolve_path("./foo/bar.py", Path("/project"))
+        assert result == Path("/project/foo/bar.py")
+
+    def test_parent_traversal(self) -> None:
+        result = hook.resolve_path("foo/../bar.py", Path("/project"))
+        assert result == Path("/project/bar.py")
+
+    def test_double_parent_traversal(self) -> None:
+        result = hook.resolve_path("a/b/../../c.py", Path("/project"))
+        assert result == Path("/project/c.py")
+
+
+class TestIsWithinDirectory:
+    def test_file_in_directory(self) -> None:
+        assert hook.is_within_directory(Path("/project/foo.py"), Path("/project")) is True
+
+    def test_file_in_subdirectory(self) -> None:
+        assert hook.is_within_directory(Path("/project/a/b/c.py"), Path("/project")) is True
+
+    def test_directory_equals_target(self) -> None:
+        assert hook.is_within_directory(Path("/project"), Path("/project")) is True
+
+    def test_outside_directory(self) -> None:
+        assert hook.is_within_directory(Path("/other/foo.py"), Path("/project")) is False
+
+    def test_prefix_attack(self) -> None:
+        """'/project-evil/foo' must NOT match '/project'."""
+        assert hook.is_within_directory(Path("/project-evil/foo.py"), Path("/project")) is False
+
+    def test_sibling_directory(self) -> None:
+        assert hook.is_within_directory(Path("/projects/other/f.py"), Path("/projects/myapp")) is False
+
+    def test_root_directory(self) -> None:
+        assert hook.is_within_directory(Path("/anything/at/all"), Path("/")) is True
+
+    def test_trailing_slash(self) -> None:
+        assert hook.is_within_directory(Path("/project/foo.py"), Path("/project/")) is True
+
+
+class TestGetAllowedDirectories:
+    def test_project_dir_always_included(self) -> None:
+        settings = {"permissions": {"additionalDirectories": []}}
+        dirs = hook.get_allowed_directories(Path("/project"), settings)
+        assert Path("/project") in dirs
+
+    def test_absolute_additional(self) -> None:
+        settings = {"permissions": {"additionalDirectories": ["/extra"]}}
+        dirs = hook.get_allowed_directories(Path("/project"), settings)
+        assert Path("/extra") in dirs
+
+    def test_tilde_expansion(self) -> None:
+        settings = {"permissions": {"additionalDirectories": ["~/projects"]}}
+        dirs = hook.get_allowed_directories(Path("/project"), settings)
+        expected = Path.home() / "projects"
+        assert expected in dirs
+
+    def test_relative_resolved_against_project(self) -> None:
+        settings = {"permissions": {"additionalDirectories": ["../sibling"]}}
+        dirs = hook.get_allowed_directories(Path("/home/dev/project"), settings)
+        assert Path("/home/dev/sibling") in dirs
+
+    def test_dot_resolves_to_project(self) -> None:
+        settings = {"permissions": {"additionalDirectories": ["."]}}
+        project = Path("/home/dev/projects/myproject")
+        dirs = hook.get_allowed_directories(project, settings)
+        assert project in dirs
+
+    def test_empty_settings(self) -> None:
+        dirs = hook.get_allowed_directories(Path("/project"), {})
+        assert dirs == {Path("/project")}
 
 
 class TestIsToolInList:

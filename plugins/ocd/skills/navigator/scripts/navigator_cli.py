@@ -1,22 +1,3 @@
-"""Navigator CLI.
-
-Presentation layer: argument parsing and dispatch wrappers only.
-Business logic lives in navigator.py.
-
-Usage:
-    python3 navigator_cli.py <command> [options]
-
-Commands:
-    init              Create database with schema and seed rules
-    describe <path>   Show entry at path with descriptions and markers
-    list [path]       List file paths under path; no descriptions, supports --pattern filtering
-    scan [path]       Sync filesystem to database; auto-adds, auto-removes, detects changes
-    get-undescribed   Return deepest directory with undescribed entries; call repeatedly until done
-    set <path>        Create or update entry description, exclusion, or traversal flags
-    remove <path>     Remove entries from database
-    search            Search entry descriptions by keyword
-"""
-
 import argparse
 import sys
 
@@ -107,14 +88,14 @@ def build_parser() -> argparse.ArgumentParser:
         description=(
             "Index of project files and directories with descriptions that\n"
             "answer: should I read this file? Each entry conveys scope and\n"
-            "role so agents can route to the right file without opening it.\n"
+            "role so agents can route to right file without opening it.\n"
             "Complements Grep/Glob which search file contents — navigator\n"
             "search finds files by what they do.\n"
             "\n"
             "All commands except init and scan auto-scan before execution\n"
             "to ensure fresh data.\n"
             "\n"
-            "Workflow: describe navigates the tree with descriptions,\n"
+            "Workflow: describe navigates tree with descriptions,\n"
             "list enumerates file paths for tool consumption,\n"
             "search finds entries by description, set writes descriptions.\n"
             "\n"
@@ -147,7 +128,7 @@ def build_parser() -> argparse.ArgumentParser:
         "init",
         help="Create database with schema and seed rules",
         description=(
-            "Create the navigator database and populate seed rules from\n"
+            "Create navigator database and populate seed rules from\n"
             "navigator_seed.csv. Idempotent — safe to run multiple times.\n"
             "Seed rules define glob patterns for directories and files with\n"
             "standardized roles (e.g., __pycache__ excluded, tests/ listed\n"
@@ -173,7 +154,7 @@ def build_parser() -> argparse.ArgumentParser:
             "  [?] markers indicate entries needing descriptions.\n"
             "  [~] markers indicate stale entries needing re-evaluation.\n"
             "\n"
-            "Use when exploring an unfamiliar area of the codebase.\n"
+            "Use when exploring unfamiliar area of codebase.\n"
             "Follow up with Grep/Glob once you know where to look."
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -187,7 +168,7 @@ def build_parser() -> argparse.ArgumentParser:
         "list",
         help="List file paths under path; no descriptions, supports --pattern filtering",
         description=(
-            "Enumerate non-excluded file paths under a directory. Returns\n"
+            "Enumerate non-excluded file paths under directory. Returns\n"
             "one path per line, sorted, no descriptions or markers.\n"
             "Auto-scans before execution.\n"
             "\n"
@@ -232,7 +213,7 @@ def build_parser() -> argparse.ArgumentParser:
         "scan",
         help="Sync filesystem to database; auto-adds, auto-removes, detects changes",
         description=(
-            "Walk the filesystem and sync to database. New files and directories\n"
+            "Walk filesystem and sync to database. New files and directories\n"
             "are added (with NULL description), deleted paths are removed, and\n"
             "changed files are flagged. Respects seed rules for exclusions and\n"
             "traversal limits.\n"
@@ -246,7 +227,7 @@ def build_parser() -> argparse.ArgumentParser:
             "  Added N, removed N[, changed N][, staled N parent(s)]\n"
             "\n"
             "Other commands auto-scan before execution, so explicit scan\n"
-            "is rarely needed. Use when you want to see the scan report."
+            "is rarely needed. Use when you want to see scan report."
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
         parents=[db_parent],
@@ -262,13 +243,13 @@ def build_parser() -> argparse.ArgumentParser:
         "get-undescribed",
         help="Return deepest directory with undescribed entries; call repeatedly until done",
         description=(
-            "Returns one directory per call — the deepest with undescribed\n"
-            "entries. Output is a directory listing with [?] markers on entries\n"
+            "Returns one directory per call — deepest with undescribed\n"
+            "entries. Output is directory listing with [?] markers on entries\n"
             "needing descriptions. Described siblings provide context.\n"
             "Auto-scans before execution.\n"
             "\n"
             "Call repeatedly until output is 'No work remaining.' — this is\n"
-            "the stop condition. Depth-first order ensures children are\n"
+            "stop condition. Depth-first order ensures children are\n"
             "described before parents.\n"
             "\n"
             "Output format:\n"
@@ -276,9 +257,9 @@ def build_parser() -> argparse.ArgumentParser:
             "  <directory listing with [?] and [~] markers>\n"
             "\n"
             "Directories with traverse=0 (e.g., tests/) are listed but their\n"
-            "children never appear — describe the directory itself only.\n"
+            "children never appear — describe directory itself only.\n"
             "\n"
-            "Output paths match the format expected by `set` — use directly."
+            "Output paths match format expected by `set` — use directly."
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
         parents=[db_parent],
@@ -290,7 +271,7 @@ def build_parser() -> argparse.ArgumentParser:
         "set",
         help="Create or update entry description, exclusion, or traversal flags",
         description=(
-            "Write a description for a file or directory, or update its scan\n"
+            "Write description for file or directory, or update its scan\n"
             "behavior flags. Primary tool for resolving [?] entries after scan.\n"
             "Auto-scans before execution.\n"
             "\n"
@@ -299,8 +280,8 @@ def build_parser() -> argparse.ArgumentParser:
             '  Empty string    Self-explanatory name; marks as reviewed (use "")\n'
             "  Non-empty       Description of file's purpose\n"
             "\n"
-            "Setting a description also clears the stale marker and updates\n"
-            "the stored hash — marks entry as reviewed against current contents.\n"
+            "Setting description also clears stale marker and updates\n"
+            "stored hash — marks entry as reviewed against current contents.\n"
             "\n"
             "Descriptions answer: should I read this file? Convey scope and role,\n"
             "not internals or content listings."
@@ -325,7 +306,7 @@ def build_parser() -> argparse.ArgumentParser:
         "remove",
         help="Remove entries from database",
         description=(
-            "Remove entries from the database. Rarely needed — scan handles\n"
+            "Remove entries from database. Rarely needed — scan handles\n"
             "cleanup of deleted files automatically. Use for manual corrections\n"
             "when database state diverges from filesystem.\n"
             "Auto-scans before execution.\n"
@@ -358,7 +339,7 @@ def build_parser() -> argparse.ArgumentParser:
             "  - <path> - <description>\n"
             "\n"
             "Complements Grep/Glob which search file contents and names.\n"
-            "Use search when you know the purpose but not the path."
+            "Use search when you know purpose but not path."
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
         parents=[db_parent],

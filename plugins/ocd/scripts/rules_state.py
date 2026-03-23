@@ -7,7 +7,7 @@ Deterministic diff-based evaluation — no state file needed.
 from pathlib import Path
 
 
-def check_rules(plugin_root: str, project_dir: str) -> list[dict]:
+def check_rules(plugin_root: Path, project_dir: Path) -> list[dict]:
     """Compare source rules against deployed rules.
 
     For each rule in plugin source:
@@ -17,8 +17,8 @@ def check_rules(plugin_root: str, project_dir: str) -> list[dict]:
 
     Returns list of {"rule": name, "state": state} dicts, sorted by rule name.
     """
-    source_dir = Path(plugin_root) / "rules"
-    deploy_dir = Path(project_dir) / ".claude" / "rules"
+    source_dir = plugin_root / "rules"
+    deploy_dir = project_dir / ".claude" / "rules"
 
     results = []
 

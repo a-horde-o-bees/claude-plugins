@@ -13,9 +13,9 @@ Two layers, fixed evaluation order:
 from __future__ import annotations
 
 import json
-import os
 import re
 import sys
+from pathlib import Path
 
 
 # ===========================================================================
@@ -44,7 +44,7 @@ def block(reason: str) -> None:
 # ===========================================================================
 
 
-def load_settings_file(path: str) -> dict:
+def load_settings_file(path: Path) -> dict:
     try:
         with open(path) as f:
             return json.load(f)
@@ -82,19 +82,18 @@ def merge_settings(global_settings: dict, project_settings: dict) -> dict:
     }
 
 
-def load_merged_settings(project_dir: str) -> dict:
-    global_path = os.path.expanduser("~/.claude/settings.json")
-    project_path = os.path.join(project_dir, ".claude", "settings.json")
+def load_merged_settings(project_dir: Path) -> dict:
+    global_path = Path.home() / ".claude" / "settings.json"
+    project_path = project_dir / ".claude" / "settings.json"
     return merge_settings(
         load_settings_file(global_path),
         load_settings_file(project_path),
     )
 
 
-def get_project_dir() -> str:
-    return os.path.realpath(
-        os.environ.get("CLAUDE_PROJECT_DIR", os.getcwd())
-    )
+def get_project_dir() -> Path:
+    import os
+    return Path(os.environ.get("CLAUDE_PROJECT_DIR", os.getcwd())).resolve()
 
 
 # ===========================================================================
@@ -102,31 +101,32 @@ def get_project_dir() -> str:
 # ===========================================================================
 
 
-def resolve_path(file_path: str, project_dir: str) -> str:
-    if not os.path.isabs(file_path):
-        return os.path.realpath(os.path.join(project_dir, file_path))
-    return os.path.realpath(file_path)
+def resolve_path(file_path: str, project_dir: Path) -> Path:
+    p = Path(file_path)
+    if not p.is_absolute():
+        return (project_dir / p).resolve()
+    return p.resolve()
 
 
-def is_within_directory(abs_path: str, directory: str) -> bool:
-    directory = os.path.realpath(directory)
-    return abs_path.startswith(directory + os.sep) or abs_path == directory
+def is_within_directory(abs_path: Path, directory: Path) -> bool:
+    resolved = directory.resolve()
+    return abs_path == resolved or resolved in abs_path.parents
 
 
-def get_allowed_directories(project_dir: str, settings: dict) -> set[str]:
+def get_allowed_directories(project_dir: Path, settings: dict) -> set[Path]:
     """Build set of allowed directories from merged settings."""
     dirs = {project_dir}
     for d in settings.get("permissions", {}).get("additionalDirectories", []):
-        expanded = os.path.expanduser(d)
-        if not os.path.isabs(expanded):
-            expanded = os.path.realpath(os.path.join(project_dir, expanded))
+        expanded = Path(d).expanduser()
+        if not expanded.is_absolute():
+            expanded = (project_dir / expanded).resolve()
         else:
-            expanded = os.path.realpath(expanded)
+            expanded = expanded.resolve()
         dirs.add(expanded)
     return dirs
 
 
-def is_within_allowed_dirs(abs_path: str, project_dir: str, settings: dict) -> bool:
+def is_within_allowed_dirs(abs_path: Path, project_dir: Path, settings: dict) -> bool:
     for directory in get_allowed_directories(project_dir, settings):
         if is_within_directory(abs_path, directory):
             return True
@@ -270,17 +270,17 @@ def check_hardcoded_blocks(command: str) -> str | None:
 # ===========================================================================
 
 
-def check_edit_write(tool_name: str, tool_input: dict, project_dir: str, settings: dict) -> None:
+def check_edit_write(tool_name: str, tool_input: dict, project_dir: Path, settings: dict) -> None:
     file_path = tool_input.get("file_path", "")
     if not file_path:
         return
 
     abs_path = resolve_path(file_path, project_dir)
 
-    # Deny rules take precedence
+    # Deny rules take precedence — check both original and resolved paths as strings
     if is_path_denied(file_path, tool_name, settings):
         return
-    if is_path_denied(abs_path, tool_name, settings):
+    if is_path_denied(str(abs_path), tool_name, settings):
         return
 
     # Check tool is in allow list and path is within allowed directories

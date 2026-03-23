@@ -9,16 +9,16 @@ import sys
 from pathlib import Path
 
 
-def get_project_dir() -> str:
+def get_project_dir() -> Path:
     import os
-    return os.environ.get("CLAUDE_PROJECT_DIR", os.getcwd())
+    return Path(os.environ.get("CLAUDE_PROJECT_DIR", os.getcwd()))
 
 
-def get_db_path(project_dir: str) -> Path:
-    return Path(project_dir) / ".claude" / "ocd" / "navigator" / "navigator.db"
+def get_db_path(project_dir: Path) -> Path:
+    return project_dir / ".claude" / "ocd" / "navigator" / "navigator.db"
 
 
-def init(project_dir: str) -> list[str]:
+def init(project_dir: Path) -> list[str]:
     """Initialize navigator database. Returns status lines."""
     scripts_dir = Path(__file__).parent
     sys.path.insert(0, str(scripts_dir))
@@ -33,7 +33,7 @@ def init(project_dir: str) -> list[str]:
         sys.path.pop(0)
 
 
-def status(project_dir: str) -> dict:
+def status(project_dir: Path) -> dict:
     """Check navigator infrastructure state.
 
     Returns dict with:

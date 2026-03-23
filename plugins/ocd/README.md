@@ -47,7 +47,7 @@ Agent-facing entry point at `skills/navigator/scripts/navigator_cli.py`. Agents 
 | Command | Purpose |
 |---------|---------|
 | `describe <path>` | Navigate structure; directories list children with descriptions |
-| `list [path] [--pattern "*.py"]` | Enumerate non-excluded file paths for tool consumption |
+| `list [path] [--pattern "*.py"] [--exclude ".claude/*"]` | Enumerate non-excluded file paths for tool consumption |
 | `search --pattern <term>` | Find files by purpose across project |
 | `scan [path]` | Sync filesystem to database after changes |
 | `get-undescribed` | Find entries needing descriptions (used by /ocd-navigator skill) |

@@ -46,7 +46,15 @@ logger = logging.getLogger(__name__)
 
 ### Path Handling
 
-Use `pathlib.Path` throughout. Avoid string concatenation for file paths. When user input is interpolated into file paths, validate containment with `Path.is_relative_to()` to prevent path traversal.
+Use `pathlib.Path` throughout:
+
+- Function parameters that represent filesystem paths accept `Path`, not `str` — push `str`-to-`Path` conversion to process boundaries (CLI argument parsing, environment variables, subprocess interfaces)
+- Functions that return filesystem paths return `Path`
+- Use `/` operator for path construction, not string concatenation or `os.path.join()`
+- Use `Path` methods (`resolve()`, `expanduser()`, `is_absolute()`, `parents`) over `os.path` equivalents
+- Exception: pattern-matching interfaces (glob patterns, regex on paths) operate on `str` representations since they match text, not filesystem objects
+
+When user input is interpolated into file paths, validate containment with `Path.is_relative_to()` to prevent path traversal.
 
 ### Error Handling
 

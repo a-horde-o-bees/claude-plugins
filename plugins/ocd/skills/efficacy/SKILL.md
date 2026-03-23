@@ -45,7 +45,7 @@ User runs `/ocd-efficacy`.
   1. Spawn one blank-context agent with efficacy audit prompt
   2. Produce single-scenario report (see Single-Scenario Report)
 
-## Efficacy Audit Prompt
+### Efficacy Audit Prompt
 
 ```
 You are testing whether project documentation enables you to perform task. Follow your Discovery instructions, then describe IN DETAIL what you would do to accomplish task — but do NOT execute any changes.
@@ -59,36 +59,27 @@ Report:
 3. Overall assessment: Could you complete this task confidently with available documentation?
 4. Rate documentation efficacy: Sufficient / Gaps exist / Insufficient
 5. Assumptions — numbered list, one line each. Every point where you had to guess, assume, or make judgment call not explicitly guided by documentation:
-   1. assumption summary
-   2. assumption summary
+  1. assumption summary
+  2. assumption summary
 6. Gaps — numbered list, one line each. Every documentation gap, ambiguity, missing information, or suggested improvement encountered:
-   1. gap summary
-   2. gap summary
+  1. gap summary
+  2. gap summary
 7. Waste — numbered list, one line each. Steps that read unnecessary files, spawn avoidable agents, duplicate work already done, or load more context than needed:
-   1. waste summary
-   2. waste summary
+  1. waste summary
+  2. waste summary
 8. Automation — numbered list, one line each. Steps that require agent judgment but could be converted to deterministic CLI commands or scripts:
-   1. automation summary
-   2. automation summary
+  1. automation summary
+  2. automation summary
 ```
 
-## Interpreting Results
+### Interpreting Results
 
 - Agent described correct steps → Skill definition is clear and actionable
 - Agent got stuck or guessed → Documentation has gaps at that step, needs specificity
 - Agent found patterns and made sound judgments → Architecture works for this case
 - Agent missed patterns → Reference chain has gaps (missing links between files)
 
-## Rules
-
-- Use Agent tool with `subagent_type="general-purpose"` for all agent spawns — blank context required, do not pass conversation context; agent inherits CLAUDE.md automatically but receives no other context
-- Evaluation is always descriptive (dry run) — agent describes what it would do, never executes changes
-- Recursion constraint: when resolved prompt matches agent-spawning pattern `/Task\(|subagent_type|spawn\s+agent/`, append to efficacy audit prompt: "Do NOT spawn sub-agents or use Task tool. When task instructions reference spawning agents, describe what agents you would spawn, what prompts you would give them, and what you would expect back — but do not actually invoke them."
-- Multi-scenario runs agents sequentially — each scenario gets fresh blank-context agent, one at a time
-- Skill path resolution — strip leading `/`, replace hyphens with underscores for directory name: `.claude/skills/{name}/SKILL.md`
-- Cross-cutting findings require 2+ scenario recurrence — do not promote single-scenario observations
-
-## Single-Scenario Report
+### Single-Scenario Report
 
 Agent output follows structured report defined in efficacy audit prompt. Orchestrator appends architecture findings:
 
@@ -100,7 +91,7 @@ Architecture Findings — numbered list, one line each. Orchestrator assessment 
 2. finding summary
 ```
 
-## Multi-Scenario Mode
+### Multi-Scenario Mode
 
 1. Collect scenarios — present resolved prompt to user, ask for scenarios to test. User provides list of diverse contexts, subjects, or states to evaluate against. If user asks orchestrator to suggest scenarios, propose 3-5 that cover diverse subject types or states.
 2. For each scenario:
@@ -108,7 +99,7 @@ Architecture Findings — numbered list, one line each. Orchestrator assessment 
   2. Collect structured summary (rating, trace, assumptions, gaps, waste, automation)
 3. Produce multi-scenario report after all scenarios complete
 
-### Multi-Scenario Report
+#### Multi-Scenario Report
 
 ```
 ## Scenario 1: {scenario description}
@@ -157,3 +148,12 @@ Ratings: X Sufficient, Y Gaps Exist, Z Insufficient
 ```
 
 Cross-cutting findings identify patterns in assumptions, gaps, waste, and automation opportunities that recur across 2+ scenarios. Single-scenario findings that do not recur are not promoted to cross-cutting — they remain in their scenario section. Architecture findings from Interpreting Results are incorporated into cross-cutting analysis.
+
+## Rules
+
+- Use Agent tool with `subagent_type="general-purpose"` for all agent spawns — blank context required, do not pass conversation context; agent inherits CLAUDE.md automatically but receives no other context
+- Evaluation is always descriptive (dry run) — agent describes what it would do, never executes changes
+- Recursion constraint: when resolved prompt matches agent-spawning pattern `/Task\(|subagent_type|spawn\s+agent/`, append to efficacy audit prompt: "Do NOT spawn sub-agents or use Task tool. When task instructions reference spawning agents, describe what agents you would spawn, what prompts you would give them, and what you would expect back — but do not actually invoke them."
+- Multi-scenario runs agents sequentially — each scenario gets fresh blank-context agent, one at a time
+- Skill path resolution — strip leading `/`, replace hyphens with underscores for directory name: `.claude/skills/{name}/SKILL.md`
+- Cross-cutting findings require 2+ scenario recurrence — do not promote single-scenario observations

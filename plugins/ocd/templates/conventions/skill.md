@@ -48,7 +48,7 @@ Standard sections:
 | `## Resolve Arguments` | Argument parsing and validation, before Workflow |
 | `## Route` | Select which Workflow to execute based on resolved arguments (optional — only for multi-path skills) |
 | `## Delegate Execution` | Instructions for `--delegate` agent delegation (optional — only for self-contained skills) |
-| `## Workflow` | Numbered steps using Process Flow Notation; encapsulates everything an agent needs to execute, including `### Report` subheading |
+| `## Workflow` | Numbered steps using Process Flow Notation; encapsulates everything agent needs to execute, including `### Report` subheading |
 | `## Rules` | Constraints and guardrails |
 
 Not all sections required — simple skills may only need title, description, and rules list.
@@ -76,14 +76,14 @@ Keep SKILL.md under 500 lines. Move detailed reference material to separate file
 
 ## Workflow Encapsulation
 
-Workflow section is self-contained — everything an agent needs to execute belongs inside it. This includes:
+Workflow section is self-contained — everything agent needs to execute belongs inside it. This includes:
 
 - Numbered steps using Process Flow Notation
 - `### Report` subheading defining output format
 - Prompt templates (e.g., conformity reformat prompt) used by agent spawning steps
 - Supporting subsections (e.g., interpreting results, file roles)
 
-An agent given a Workflow section and Rules section can execute without referencing other parts of SKILL.md.
+Agent given Workflow section and Rules section can execute without referencing other parts of SKILL.md.
 
 ### Multi-Path Workflows
 
@@ -103,7 +103,7 @@ Skills with distinct execution paths use separate Workflow sections instead of c
 - Output format for alternate path
 ```
 
-Routing logic (which path to execute) belongs in Resolve Arguments or an optional `## Route` section — not inside Workflow sections. Agent receives one complete Workflow without needing to filter irrelevant branches.
+Routing logic (which path to execute) belongs in Resolve Arguments or optional `## Route` section — not inside Workflow sections. Agent receives one complete Workflow without needing to filter irrelevant branches.
 
 Single-path skills use `## Workflow` without suffix.
 

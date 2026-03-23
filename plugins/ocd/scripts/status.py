@@ -126,7 +126,7 @@ def format_rules_section(plugin_root: Path, project_dir: Path) -> list[str]:
     try:
         import rules_state
         importlib.reload(rules_state)
-        results = rules_state.check_rules(str(plugin_root), str(project_dir))
+        results = rules_state.check_rules(plugin_root, project_dir)
     except Exception as e:
         return [f"  Error checking rules: {e}"]
     finally:

@@ -77,7 +77,7 @@ Every file referenced during reformatting falls into one of two roles:
 
 ### Boundary Rule
 
-Files under `.claude/` are excluded from target list by default — convention definitions, rule definitions, and project instructions live there. Use `--all` to include `.claude/` files in target list, or pass a `.claude/` path as explicit target to check specific files.
+Files under `.claude/` are excluded from target list by default — convention definitions, rule definitions, and project instructions live there. Use `--all` to include `.claude/` files in target list, or pass `.claude/` path as explicit target to check specific files.
 
 ### Conformity Reformat Prompt
 
@@ -121,6 +121,22 @@ After processing ALL targets, provide consolidated report:
 - Convention CLI returned no matches → Pattern definitions need broader coverage
 - Agent couldn't determine applicability → Convention scope needs refinement
 
+### Report
+
+- Per-target: changes applied with brief rationale
+- Per-target: issues not fixed because they require user judgment (semantic ambiguity, structural decisions)
+- All criteria files used (conventions and rules, once, not per-target)
+
+### Running
+
+```
+Agent(
+  subagent_type="general-purpose",
+  prompt="<filled conformity reformat prompt with convention content, target list, and optional focus>",
+  description="Conformity: <target summary>"
+)
+```
+
 ## Rules
 
 - Use Agent tool with `subagent_type="general-purpose"` for agent spawn
@@ -131,19 +147,3 @@ After processing ALL targets, provide consolidated report:
 - Target files exceeding 500 lines auto-fail without processing — file needs to be divided before conformity reformatting is meaningful
 - All convention rules are required by default. Rules described as "recommended" or "optional" in convention text are reported but do not block.
 - When `--focus` is provided, agent evaluates and fixes only aspects related to focus instruction — skip unrelated conventions entirely
-
-## Report
-
-- Per-target: changes applied with brief rationale
-- Per-target: issues not fixed because they require user judgment (semantic ambiguity, structural decisions)
-- All criteria files used (conventions and rules, once, not per-target)
-
-## Running
-
-```
-Agent(
-  subagent_type="general-purpose",
-  prompt="<filled conformity reformat prompt with convention content, target list, and optional focus>",
-  description="Conformity: <target summary>"
-)
-```

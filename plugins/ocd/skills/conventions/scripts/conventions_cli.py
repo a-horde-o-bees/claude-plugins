@@ -15,26 +15,19 @@ except ImportError:
     import conventions  # type: ignore[import-not-found]
 
 
-DEFAULT_CONVENTIONS_DIR = os.path.join(
-    os.environ.get("CLAUDE_PROJECT_DIR", os.getcwd()),
-    ".claude", "ocd", "conventions",
-)
+_PROJECT_DIR = Path(os.environ.get("CLAUDE_PROJECT_DIR", os.getcwd()))
 
-DEFAULT_RULES_DIR = os.path.join(
-    os.environ.get("CLAUDE_PROJECT_DIR", os.getcwd()),
-    ".claude", "rules",
-)
+DEFAULT_CONVENTIONS_DIR = _PROJECT_DIR / ".claude" / "ocd" / "conventions"
 
-DEFAULT_CACHE_DB = os.path.join(
-    os.environ.get("CLAUDE_PROJECT_DIR", os.getcwd()),
-    ".claude", "ocd", "cache.db",
-)
+DEFAULT_RULES_DIR = _PROJECT_DIR / ".claude" / "rules"
+
+DEFAULT_CACHE_DB = _PROJECT_DIR / ".claude" / "ocd" / "cache.db"
 
 
 def _dispatch_get(args: argparse.Namespace) -> None:
-    conventions_dir = args.conventions_dir or DEFAULT_CONVENTIONS_DIR
-    rules_dir = args.rules_dir or DEFAULT_RULES_DIR
-    cache_db = args.cache_db or DEFAULT_CACHE_DB
+    conventions_dir = Path(args.conventions_dir) if args.conventions_dir else DEFAULT_CONVENTIONS_DIR
+    rules_dir = Path(args.rules_dir) if args.rules_dir else DEFAULT_RULES_DIR
+    cache_db = Path(args.cache_db) if args.cache_db else DEFAULT_CACHE_DB
 
     rules = conventions.collect_rules(rules_dir)
     matched = conventions.match_conventions(conventions_dir, cache_db, args.files)
@@ -49,8 +42,8 @@ def _dispatch_get(args: argparse.Namespace) -> None:
 
 
 def _dispatch_list(args: argparse.Namespace) -> None:
-    conventions_dir = args.conventions_dir or DEFAULT_CONVENTIONS_DIR
-    cache_db = args.cache_db or DEFAULT_CACHE_DB
+    conventions_dir = Path(args.conventions_dir) if args.conventions_dir else DEFAULT_CONVENTIONS_DIR
+    cache_db = Path(args.cache_db) if args.cache_db else DEFAULT_CACHE_DB
 
     patterns = conventions.sync_patterns(cache_db, conventions_dir)
 

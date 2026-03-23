@@ -3,6 +3,8 @@ name: ocd-status
 description: Show plugin version, rule states, skill infrastructure status, and actionable next steps
 ---
 
+# /ocd-status
+
 Run status script and report output to user:
 
 ```bash

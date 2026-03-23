@@ -7,7 +7,6 @@ Caches pattern metadata in SQLite to avoid re-reading files on every call.
 
 import hashlib
 import logging
-import os
 import re
 import fnmatch
 import sqlite3
@@ -24,10 +23,10 @@ CREATE TABLE IF NOT EXISTS convention_patterns (
 """
 
 
-def _compute_git_hash(file_path: str) -> str | None:
+def _compute_git_hash(file_path: Path) -> str | None:
     """Compute git-compatible blob hash for a file."""
     try:
-        data = Path(file_path).read_bytes()
+        data = file_path.read_bytes()
     except (OSError, IsADirectoryError):
         return None
     header = f"blob {len(data)}\0".encode()
@@ -39,10 +38,10 @@ def _ensure_schema(conn: sqlite3.Connection) -> None:
     conn.executescript(CACHE_SCHEMA)
 
 
-def get_cache_connection(db_path: str) -> sqlite3.Connection:
+def get_cache_connection(db_path: Path) -> sqlite3.Connection:
     """Open cache database connection."""
-    Path(db_path).parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(db_path)
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(str(db_path))
     conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA busy_timeout=5000")
     conn.row_factory = sqlite3.Row
@@ -50,11 +49,10 @@ def get_cache_connection(db_path: str) -> sqlite3.Connection:
     return conn
 
 
-def _extract_pattern(file_path: str) -> str | None:
+def _extract_pattern(file_path: Path) -> str | None:
     """Extract pattern field from YAML frontmatter."""
     try:
-        with open(file_path) as f:
-            content = f.read()
+        content = file_path.read_text()
     except OSError:
         return None
 
@@ -71,7 +69,7 @@ def _extract_pattern(file_path: str) -> str | None:
     return None
 
 
-def sync_patterns(db_path: str, conventions_dir: str) -> dict[str, str]:
+def sync_patterns(db_path: Path, conventions_dir: Path) -> dict[str, str]:
     """Sync convention file patterns to cache. Returns {path: pattern} map.
 
     Reads frontmatter only for files whose git hash has changed.
@@ -85,11 +83,10 @@ def sync_patterns(db_path: str, conventions_dir: str) -> dict[str, str]:
             cached[row["path"]] = {"git_hash": row["git_hash"], "pattern": row["pattern"]}
 
         # Scan convention files on disk
-        disk_files = {}
-        conv_path = Path(conventions_dir)
-        if conv_path.is_dir():
-            for f in sorted(conv_path.glob("*.md")):
-                disk_files[str(f)] = True
+        disk_files: dict[str, Path] = {}
+        if conventions_dir.is_dir():
+            for f in sorted(conventions_dir.glob("*.md")):
+                disk_files[str(f)] = f
 
         # Remove stale cache entries
         for path in list(cached):
@@ -99,26 +96,26 @@ def sync_patterns(db_path: str, conventions_dir: str) -> dict[str, str]:
 
         # Update changed or new entries
         result = {}
-        for path in disk_files:
-            current_hash = _compute_git_hash(path)
+        for path_str, path_obj in disk_files.items():
+            current_hash = _compute_git_hash(path_obj)
             if current_hash is None:
                 continue
 
-            cache_entry = cached.get(path)
+            cache_entry = cached.get(path_str)
             if cache_entry and cache_entry["git_hash"] == current_hash:
-                result[path] = cache_entry["pattern"]
+                result[path_str] = cache_entry["pattern"]
                 continue
 
-            pattern = _extract_pattern(path)
+            pattern = _extract_pattern(path_obj)
             if pattern is None:
                 continue
 
             conn.execute(
                 "INSERT OR REPLACE INTO convention_patterns (path, git_hash, pattern) "
                 "VALUES (?, ?, ?)",
-                (path, current_hash, pattern),
+                (path_str, current_hash, pattern),
             )
-            result[path] = pattern
+            result[path_str] = pattern
 
         conn.commit()
         return result
@@ -126,7 +123,7 @@ def sync_patterns(db_path: str, conventions_dir: str) -> dict[str, str]:
         conn.close()
 
 
-def match_conventions(conventions_dir: str, db_path: str, file_paths: list[str]) -> list[str]:
+def match_conventions(conventions_dir: Path, db_path: Path, file_paths: list[str]) -> list[str]:
     """Match file paths against convention patterns. Returns list of matching convention file paths.
 
     Each convention declares a glob pattern in frontmatter. All conventions whose
@@ -137,7 +134,7 @@ def match_conventions(conventions_dir: str, db_path: str, file_paths: list[str])
     matched = []
     for conv_path, pattern in patterns.items():
         for file_path in file_paths:
-            basename = os.path.basename(file_path)
+            basename = Path(file_path).name
             if fnmatch.fnmatch(basename, pattern) or fnmatch.fnmatch(file_path, pattern):
                 matched.append(conv_path)
                 break
@@ -145,9 +142,8 @@ def match_conventions(conventions_dir: str, db_path: str, file_paths: list[str])
     return sorted(matched)
 
 
-def collect_rules(rules_dir: str) -> list[str]:
+def collect_rules(rules_dir: Path) -> list[str]:
     """Collect ocd rule file paths from rules directory. Returns sorted paths."""
-    rules_path = Path(rules_dir)
-    if not rules_path.is_dir():
+    if not rules_dir.is_dir():
         return []
-    return sorted(str(f) for f in rules_path.glob("ocd-*.md"))
+    return sorted(str(f) for f in rules_dir.glob("ocd-*.md"))

@@ -9,9 +9,9 @@ import shutil
 from pathlib import Path
 
 
-def get_project_dir() -> str:
+def get_project_dir() -> Path:
     import os
-    return os.environ.get("CLAUDE_PROJECT_DIR", os.getcwd())
+    return Path(os.environ.get("CLAUDE_PROJECT_DIR", os.getcwd()))
 
 
 def get_plugin_root() -> Path:
@@ -23,11 +23,11 @@ def get_plugin_root() -> Path:
     return Path(__file__).parent.parent.parent.parent
 
 
-def get_conventions_dir(project_dir: str) -> Path:
-    return Path(project_dir) / ".claude" / "ocd" / "conventions"
+def get_conventions_dir(project_dir: Path) -> Path:
+    return project_dir / ".claude" / "ocd" / "conventions"
 
 
-def init(plugin_root: Path, project_dir: str, force: bool = False) -> list[str]:
+def init(plugin_root: Path, project_dir: Path, force: bool = False) -> list[str]:
     """Deploy convention templates. Returns status lines."""
     templates_src = plugin_root / "templates" / "conventions"
     conventions_dst = get_conventions_dir(project_dir)
@@ -69,7 +69,7 @@ def _has_valid_pattern(file_path: Path) -> bool:
     return False
 
 
-def status(project_dir: str) -> dict:
+def status(project_dir: Path) -> dict:
     """Check conventions infrastructure state.
 
     Returns dict with:
