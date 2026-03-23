@@ -38,7 +38,9 @@ CAPABILITIES = {
 }
 
 
-def deploy_rules(plugin_root: Path, project_dir: Path, only: list[str] | None = None) -> list[str]:
+def deploy_rules(
+    plugin_root: Path, project_dir: Path, only: list[str] | None = None, force: bool = False,
+) -> list[str]:
     """Copy rule files from plugin to .claude/rules/. Returns status lines."""
     rules_src = plugin_root / "rules"
     rules_dst = project_dir / ".claude" / "rules"
@@ -63,17 +65,18 @@ def deploy_rules(plugin_root: Path, project_dir: Path, only: list[str] | None = 
         if not src.exists():
             lines.append(f"  Missing source: {filename}")
             continue
-        if dst.exists():
+        if dst.exists() and not force:
             lines.append(f"  Skipped (exists): {filename}")
             continue
+        action = "Overwritten" if dst.exists() else "Deployed"
         shutil.copy2(src, dst)
-        lines.append(f"  Deployed: {filename}")
+        lines.append(f"  {action}: {filename}")
 
     return lines
 
 
 def deploy_conventions(
-    plugin_root: Path, project_dir: Path, overwrite: bool = False,
+    plugin_root: Path, project_dir: Path, force: bool = False,
 ) -> list[str]:
     """Copy convention templates from plugin to .claude/ocd/conventions/. Returns status lines."""
     templates_src = plugin_root / "templates" / "conventions"
@@ -88,7 +91,7 @@ def deploy_conventions(
 
     for src in sorted(templates_src.glob("*.md")):
         dst = conventions_dst / src.name
-        if dst.exists() and not overwrite:
+        if dst.exists() and not force:
             lines.append(f"  Skipped (exists): {src.name}")
             continue
         action = "Overwritten" if dst.exists() else "Deployed"
@@ -131,9 +134,9 @@ def main() -> None:
         help="Comma-separated list of capabilities to deploy (e.g., agent-authoring,navigator)",
     )
     parser.add_argument(
-        "--overwrite",
+        "--force",
         action="store_true",
-        help="Overwrite existing convention files with plugin defaults",
+        help="Overwrite existing rules and conventions with plugin defaults",
     )
     args = parser.parse_args()
 
@@ -146,14 +149,14 @@ def main() -> None:
 
     # Deploy rules
     print("Rules:")
-    rule_lines = deploy_rules(plugin_root, project_dir, only=only)
+    rule_lines = deploy_rules(plugin_root, project_dir, only=only, force=args.force)
     for line in rule_lines:
         print(line)
     print()
 
     # Deploy conventions
     print("Conventions:")
-    conv_lines = deploy_conventions(plugin_root, project_dir, overwrite=args.overwrite)
+    conv_lines = deploy_conventions(plugin_root, project_dir, force=args.force)
     for line in conv_lines:
         print(line)
     print()
