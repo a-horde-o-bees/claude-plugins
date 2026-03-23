@@ -10,4 +10,4 @@ Run init script to deploy conventions and initialize infrastructure:
 python3 ${CLAUDE_PLUGIN_ROOT}/scripts/init.py $ARGUMENTS
 ```
 
-Report the output to the user.
+Report output to user.

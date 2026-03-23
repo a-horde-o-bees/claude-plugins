@@ -1,6 +1,7 @@
-"""Convention operations.
+"""Conventions operations.
 
 Matches file paths against convention pattern rules stored in frontmatter.
+Collects rule files from project rules directory.
 Caches pattern metadata in SQLite to avoid re-reading files on every call.
 """
 
@@ -144,20 +145,9 @@ def match_conventions(conventions_dir: str, db_path: str, file_paths: list[str])
     return sorted(matched)
 
 
-def get_convention_content(convention_paths: list[str]) -> str:
-    """Read and format convention file contents with delimiters."""
-    sections = []
-    for path in convention_paths:
-        name = Path(path).name
-        try:
-            with open(path) as f:
-                content = f.read()
-        except OSError:
-            sections.append(f"=== {name} ===\n[error: could not read file]")
-            continue
-
-        # Strip frontmatter
-        stripped = re.sub(r"^---\s*\n.*?\n---\s*\n", "", content, count=1, flags=re.DOTALL)
-        sections.append(f"=== {name} ===\n{stripped.strip()}")
-
-    return "\n\n".join(sections)
+def collect_rules(rules_dir: str) -> list[str]:
+    """Collect ocd rule file paths from rules directory. Returns sorted paths."""
+    rules_path = Path(rules_dir)
+    if not rules_path.is_dir():
+        return []
+    return sorted(str(f) for f in rules_path.glob("ocd-*.md"))

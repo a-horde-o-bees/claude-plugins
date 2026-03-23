@@ -1,1 +1,1 @@
-# Convention skill package.
+# Conventions skill package.

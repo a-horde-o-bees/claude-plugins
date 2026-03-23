@@ -10,7 +10,7 @@ Scan filesystem and populate navigator database. Deterministic operations (add/r
 
 ## Process Model
 
-Navigator maintains a SQLite index of project files and directories with human-written descriptions. Two concerns are separated: structural sync (deterministic) and description writing (agent judgment).
+Navigator maintains SQLite index of project files and directories with human-written descriptions. Two concerns are separated: structural sync (deterministic) and description writing (agent judgment).
 
 1. Scan — CLI compares filesystem against database using git object hashes
   - New files are added with NULL description
@@ -25,11 +25,11 @@ Navigator maintains a SQLite index of project files and directories with human-w
   - `set` records description and clears stale marker, updating stored hash to current — entry is now reviewed against current contents
   - Loop terminates when no NULL or stale entries remain
 
-Depth-first ordering is structural, not a preference — parent directory descriptions are derived from their children's descriptions, so children must be finalized first. Each `get-undescribed` call returns only leaf-level work within the returned directory; child directories with their own undescribed entries appear in earlier iterations.
+Depth-first ordering is structural, not preference — parent directory descriptions are derived from their children's descriptions, so children must be finalized first. Each `get-undescribed` call returns only leaf-level work within returned directory; child directories with their own undescribed entries appear in earlier iterations.
 
 ## Trigger
 
-User runs `/navigator`.
+User runs `/ocd-navigator`.
 
 ## Resolve Arguments
 
@@ -51,7 +51,7 @@ User runs `/navigator`.
 1. Read `${CLAUDE_PLUGIN_ROOT}/skills/navigator/references/description-guidelines.md` for Description Guidelines
 2. Run `python3 ${CLAUDE_PLUGIN_ROOT}/skills/navigator/scripts/navigator_cli.py scan <target>` — syncs filesystem to database, reports added/removed/changed counts
 3. While `python3 ${CLAUDE_PLUGIN_ROOT}/skills/navigator/scripts/navigator_cli.py get-undescribed` does not return "No work remaining.":
-  1. If output is unexpected (not a directory listing, error message, or unrecognized format):
+  1. If output is unexpected (not directory listing, error message, or unrecognized format):
     1. STOP and report output to user for feedback before continuing
   2. Review returned directory listing — `[?]` entries need new descriptions, `[~]` entries have stale descriptions that need re-evaluation. Described siblings provide context.
   3. For each `[?]` entry:
@@ -72,7 +72,7 @@ User runs `/navigator`.
 
 ## Rules
 
-- Depth-first by design — `get-undescribed` returns deepest directory first; describe children before parents so directory descriptions reflect contents. Depth-first guarantees all child entries within a returned directory are leaf entries (files or `traverse=0` directories) — child directories with their own undescribed entries are processed in earlier iterations. If a `[?]` child directory appears within a returned directory listing, treat as unexpected output and STOP.
+- Depth-first by design — `get-undescribed` returns deepest directory first; describe children before parents so directory descriptions reflect contents. Depth-first guarantees all child entries within returned directory are leaf entries (files or `traverse=0` directories) — child directories with their own undescribed entries are processed in earlier iterations. If `[?]` child directory appears within returned directory listing, treat as unexpected output and STOP.
 - Preserve existing descriptions that already conform to guidelines — do not overwrite unless they violate Description Guidelines rules
 - No description length limit — follow Description Guidelines guidance, not brevity constraints
 - Directories with `traverse=0` are listed but not entered — describe directory itself, not its contents

@@ -12,15 +12,15 @@ Bash commands are governed by `.claude/settings.json` (project) and `~/.claude/s
 
 ## Agents
 
-- Minimize agent count — each agent independently loads context and rediscovers the project, so fewer agents means less token overhead; default to single agent processing tasks sequentially within one context; multiple agents require explicit user direction or permission
+- Minimize agent count — each agent independently loads context and rediscovers project, so fewer agents means less token overhead; default to single agent processing tasks sequentially within one context; multiple agents require explicit user direction or permission
 - After all file-modifying agents complete, run `git diff` to review changes before presenting results to user
 
 ## Testing
 
 - Run only tests directly affected by current changes, scoped to narrowest relevant test file; run broader suites only when explicitly requested
-- Run integration tests only when the user explicitly requests it
+- Run integration tests only when user explicitly requests it
 
 ## Code Practices
 
-- Before writing new functions, check whether the codebase already provides what is needed — do not duplicate existing functionality or bypass library abstractions with ad-hoc implementations
+- Before writing new functions, check whether codebase already provides what is needed — do not duplicate existing functionality or bypass library abstractions with ad-hoc implementations
 - Verify assumptions before building on them — test with minimal calls, inspect actual responses, confirm data shapes before writing transform logic

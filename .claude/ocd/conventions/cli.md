@@ -11,14 +11,14 @@ Conventions for agent-facing CLI scripts. Internal scripts (called by plugin hoo
 - Long-form flags only — `--description`, `--recursive`, not `-d`, `-r`
 - Flag names state what they mean — no abbreviations, no ambiguous single-letter shortcuts
 - Positional arguments for primary operand (path, target); flags for modifiers
-- Required vs optional clearly expressed through the CLI framework, not convention
+- Required vs optional clearly expressed through CLI framework, not convention
 
 ## Help and Usage Text
 
 Help text answers agent questions:
 
-- **When to call** — conditions under which this command is the right choice vs alternatives
-- **What output looks like** — structure, markers, delimiters the agent will parse
+- **When to call** — conditions under which this command is right choice vs alternatives
+- **What output looks like** — structure, markers, delimiters agent will parse
 - **How to interpret results** — what markers mean, what empty results imply
 - **What to call next** — workflow sequencing
 - **Stop conditions** — explicit termination criteria for loops
@@ -26,7 +26,7 @@ Help text answers agent questions:
 Do not include:
 - Installation instructions
 - Human-oriented examples ("try running...")
-- Flag syntax that the CLI framework already shows
+- Flag syntax that CLI framework already shows
 
 ## Output Format
 
@@ -48,7 +48,7 @@ Errors guide agent to self-correct without user intervention.
 
 ## Documentation as Code
 
-The CLI executable itself is documentation. `--help` output must be complete enough that an agent reading it can use the tool correctly without external reference:
+CLI executable itself is documentation. `--help` output must be complete enough that agent reading it can use tool correctly without external reference:
 
 - Help descriptions explain workflow context, not just syntax
 - Subcommand help text includes output format and interpretation

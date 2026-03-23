@@ -14,7 +14,7 @@ All function signatures include type hints for parameters and return values. Use
 def find_record(name: str, include_deleted: bool = False) -> dict | None:
 ```
 
-Forward references and cross-module types — use `from __future__ import annotations` with `TYPE_CHECKING` guard. This makes all annotations lazy strings, avoiding circular imports and forward reference issues. Never use quoted string annotations (`-> "ClassName"`) — the `__future__` import handles this uniformly.
+Forward references and cross-module types — use `from __future__ import annotations` with `TYPE_CHECKING` guard. Makes all annotations lazy strings, avoiding circular imports and forward reference issues. Never use quoted string annotations (`-> "ClassName"`) — `__future__` import handles this uniformly.
 
 ```python
 from __future__ import annotations
@@ -27,13 +27,13 @@ if TYPE_CHECKING:
 def process_data(client: ModuleAPI, source: str) -> None:
 ```
 
-Type aliases — define aliases when the same union type appears across multiple function signatures in a module. Keep aliases in the module that uses them, not centralized.
+Type aliases — define aliases when same union type appears across multiple function signatures in module. Keep aliases in module that uses them, not centralized.
 
 Use `@dataclass` for value objects that group related fields. Prefer over plain dicts when shape is known and reused.
 
 ### Logging
 
-Every module that does I/O, makes network calls, or has decision points worth tracing uses a module-level logger:
+Every module that does I/O, makes network calls, or has decision points worth tracing uses module-level logger:
 
 ```python
 import logging
@@ -42,7 +42,7 @@ logger = logging.getLogger(__name__)
 
 - Use `logger.info/warning/debug/error` — never `logging.info` (root logger) or `print()` for operational output
 - Only CLI/presentation layers use `print()` and `input()` for user-facing output
-- No `logging.basicConfig()` in libraries or modules — only the entry point configures logging
+- No `logging.basicConfig()` in libraries or modules — only entry point configures logging
 
 ### Path Handling
 
@@ -50,7 +50,7 @@ Use `pathlib.Path` throughout. Avoid string concatenation for file paths. When u
 
 ### Error Handling
 
-Validation logic raises exceptions — no `print()` + `sys.exit()` in non-CLI code. CLI dispatch layer catches errors and exits cleanly with the error message.
+Validation logic raises exceptions — no `print()` + `sys.exit()` in non-CLI code. CLI dispatch layer catches errors and exits cleanly with error message.
 
 ## Post-Refactor Cleanup
 

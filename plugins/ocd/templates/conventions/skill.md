@@ -46,16 +46,16 @@ Standard sections:
 | `## Process Model` | Conceptual model of how skill operates and why (optional — for skills with non-obvious mechanics) |
 | `## Trigger` | When user invokes this skill |
 | `## Resolve Arguments` | Argument parsing and validation, before Workflow |
+| `## Route` | Select which Workflow to execute based on resolved arguments (optional — only for multi-path skills) |
 | `## Delegate Execution` | Instructions for `--delegate` agent delegation (optional — only for self-contained skills) |
-| `## Workflow` | Numbered steps using Process Flow Notation |
+| `## Workflow` | Numbered steps using Process Flow Notation; encapsulates everything an agent needs to execute, including `### Report` subheading |
 | `## Rules` | Constraints and guardrails |
-| `## Report` | Output format for skill results |
 
 Not all sections required — simple skills may only need title, description, and rules list.
 
-Process Model is optional — only for skills where the workflow's correctness depends on mechanics that are not self-evident from the steps themselves.
+Process Model is optional — only for skills where workflow correctness depends on mechanics not self-evident from steps themselves.
 
-Resolve Arguments separates argument parsing from Workflow — Workflow assumes arguments are already resolved. Delegate Execution is optional — only for skills that are fully autonomous (no user interaction mid-workflow). Report defines the output format used by both inline execution and delegated agents.
+Resolve Arguments separates argument parsing from Workflow — Workflow assumes arguments are already resolved. Delegate Execution is optional — only for skills that are fully autonomous (no user interaction mid-workflow).
 
 String substitution variables available in body:
 - `$ARGUMENTS` — All arguments passed when invoking skill
@@ -74,9 +74,42 @@ skill-name/
 
 Keep SKILL.md under 500 lines. Move detailed reference material to separate files.
 
+## Workflow Encapsulation
+
+Workflow section is self-contained — everything an agent needs to execute belongs inside it. This includes:
+
+- Numbered steps using Process Flow Notation
+- `### Report` subheading defining output format
+- Prompt templates (e.g., conformity reformat prompt) used by agent spawning steps
+- Supporting subsections (e.g., interpreting results, file roles)
+
+An agent given a Workflow section and Rules section can execute without referencing other parts of SKILL.md.
+
+### Multi-Path Workflows
+
+Skills with distinct execution paths use separate Workflow sections instead of conditional branching within one Workflow. Each path is self-contained with its own steps, report format, and any supporting subsections.
+
+```
+## Workflow: Default
+1. Step
+2. Step
+### Report
+- Output format for default path
+
+## Workflow: Alternate Mode
+1. Step
+2. Step
+### Report
+- Output format for alternate path
+```
+
+Routing logic (which path to execute) belongs in Resolve Arguments or an optional `## Route` section — not inside Workflow sections. Agent receives one complete Workflow without needing to filter irrelevant branches.
+
+Single-path skills use `## Workflow` without suffix.
+
 ## File Enumeration
 
-Skills that accept a path argument and can operate on directories must use navigator CLI for file enumeration — never invent ad-hoc file listing (glob, `git ls-files`, agent judgment).
+Skills that accept path argument and can operate on directories must use navigator CLI for file enumeration — never invent ad-hoc file listing (glob, `git ls-files`, agent judgment).
 
 ```bash
 python3 ${CLAUDE_PLUGIN_ROOT}/skills/navigator/scripts/navigator_cli.py list <path> [--pattern "*.py"]
@@ -85,8 +118,8 @@ python3 ${CLAUDE_PLUGIN_ROOT}/skills/navigator/scripts/navigator_cli.py list <pa
 Navigator applies project-wide exclude rules (`.git`, `.venv`, `__pycache__`, etc.) and traversal limits deterministically. `--pattern` filters by basename glob and is repeatable for OR-combined matching.
 
 Skills should:
-- Accept `--pattern` as a passthrough argument when the user wants to scope to specific file types
-- Ignore `--pattern` when target is a single file (nothing to filter)
+- Accept `--pattern` as passthrough argument when user wants to scope to specific file types
+- Ignore `--pattern` when target is single file (nothing to filter)
 - Document `--pattern` in `argument-hint` frontmatter when supported
 
 ## Sub-Agent Interactivity Constraint

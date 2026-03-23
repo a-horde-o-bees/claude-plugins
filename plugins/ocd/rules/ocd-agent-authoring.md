@@ -8,7 +8,7 @@ Conventions for content consumed by agents: skills, conventions, plans, actions,
 
 - Omit grammar articles (a, an, the) — agents parse structure, not prose
 - Prioritize completeness over brevity — missing information causes incorrect assumptions
-- Include examples only when a rule is ambiguous without one
+- Include examples only when rule is ambiguous without one
 
 ### Naming
 
@@ -25,26 +25,26 @@ Conventions for content consumed by agents: skills, conventions, plans, actions,
 ## Skill Architecture
 
 - Deterministic operations belong in CLI scripts; non-deterministic steps (judgment, context-dependent decisions, natural language generation) remain as agent-executed workflow instructions in SKILL.md
-- When continuing a session that was mid-skill, re-read SKILL.md from disk before resuming — carried-over context may be stale
+- When continuing session that was mid-skill, re-read SKILL.md from disk before resuming — carried-over context may be stale
 
 ## Conventions
 
 Before creating or modifying files, check for applicable conventions:
 
 ```
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/conventions/scripts/convention_cli.py get <file> [<file> ...]
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/conventions/scripts/conventions_cli.py get <file> [<file> ...]
 ```
 
-Pass all target file paths in a single call. If output is non-empty, read and follow returned conventions before proceeding.
+Pass all target file paths in single call. Output is one file path per line (rules and matched conventions). If output is non-empty, read and follow returned files before proceeding.
 
 ## Structural Principles
 
-- Structural decisions must be deterministic — divide, group, and organize based on functional principles that produce the same result regardless of who evaluates them or when; do not use subjective thresholds ("too big", "complex enough", "feels painful") as triggers for structural action
-- Every change must be followed through as if the old way never existed; no compatibility shims, no split conventions; if a refactor touches a function, variable, path, or pattern, update every reference to match
+- Structural decisions must be deterministic — divide, group, and organize based on functional principles that produce same result regardless of who evaluates them or when; do not use subjective thresholds ("too big", "complex enough", "feels painful") as triggers for structural action
+- Every change must be followed through as if old way never existed; no compatibility shims, no split conventions; if refactor touches function, variable, path, or pattern, update every reference to match
 
 ## Process Flow Notation
 
-Notation for workflow documents: skills, conventions, plans, actions. Required in always-on context — agents must parse and follow this notation during execution, not only when authoring. Not a convention candidate.
+Notation for workflow documents: skills, conventions, plans, actions. Required in always-on context — agents must parse and follow this notation during execution, not only when authoring. Not convention candidate.
 
 ### Structure
 
@@ -59,7 +59,7 @@ Numbers are ordered execution or evaluation. Bullets are unordered sub-items.
   - Unordered sub-item
 ```
 
-Em dash (`—`) separates step label from description. Label is the action verb or short imperative; description elaborates. Semicolons add qualifications, context, or constraints inline after the action. Hyphen (`-`) is reserved for bullet sub-items.
+Em dash (`—`) separates step label from description. Label is action verb or short imperative; description elaborates. Semicolons add qualifications, context, or constraints inline after action. Hyphen (`-`) is reserved for bullet sub-items.
 
 ```
 1. Label — description of action; supporting context; constraint or exception
@@ -67,7 +67,7 @@ Em dash (`—`) separates step label from description. Label is the action verb 
 
 ### Conditionals
 
-`If X:`/`Else if X:`/`Else:` prefix. `If/Else if` is mutually exclusive — stop at first match. Chain may end with `Else if` or `Else`. `Else` is universal fallback when all prior conditions fail. Repeated `If/If` at same level is independent evaluation — multiple conditions may fire. A standalone `If` with no `Else` is valid — the alternative is "proceed to next step." Never mix the two forms in the same chain — a chain is either `If/Else if` (mutually exclusive) or `If/If` (independent), not both.
+`If X:`/`Else if X:`/`Else:` prefix. `If/Else if` is mutually exclusive — stop at first match. Chain may end with `Else if` or `Else`. `Else` is universal fallback when all prior conditions fail. Repeated `If/If` at same level is independent evaluation — multiple conditions may fire. Standalone `If` with no `Else` is valid — alternative is "proceed to next step." Never mix two forms in same chain — chain is either `If/Else if` (mutually exclusive) or `If/If` (independent), not both.
 
 ```
 1. If condition:
@@ -80,7 +80,7 @@ Em dash (`—`) separates step label from description. Label is the action verb 
 
 ### Iteration and Events
 
-`For each X:` prefix iterates over a collection. `While X:` prefix repeats while condition holds. `When X:` prefix is an event-triggered step — reactive to a state change rather than evaluated at a fixed point in sequence.
+`For each X:` prefix iterates over collection. `While X:` prefix repeats while condition holds. `When X:` prefix is event-triggered step — reactive to state change rather than evaluated at fixed point in sequence.
 
 ```
 1. While condition:
@@ -133,7 +133,7 @@ Subprocesses are extracted under their own heading with own steps, referenced by
 
 ### Grouping Headings
 
-Grouping headings organize contiguous steps within a single process. Steps continue numbering across headings — heading is a label, not a numbering reset. Heading depth is one level below the parent process heading.
+Grouping headings organize contiguous steps within single process. Steps continue numbering across headings — heading is label, not numbering reset. Heading depth is one level below parent process heading.
 
 ```
 ## Agent Workflow
@@ -153,13 +153,13 @@ Grouping headings organize contiguous steps within a single process. Steps conti
 
 ### Agent-facing vs internal scripts
 
-Agent-facing CLIs are executables that agents call directly during tasks. They are the primary interface between agents and deterministic operations. Internal scripts are implementation details called by plugin infrastructure (hooks, commands) — agents never invoke them.
+Agent-facing CLIs are executables that agents call directly during tasks. They are primary interface between agents and deterministic operations. Internal scripts are implementation details called by plugin infrastructure (hooks, commands) — agents never invoke them.
 
 Naming convention:
 - `<name>_cli.py` (or `<name>_cli.sh`, etc.) — agent-facing entry point; agents call it directly, read its `--help`, and parse its output
 - `<name>.py` (or `<name>.sh`, etc.) — internal library or internal script; called by plugin hooks, commands, or other scripts
 
-Absence of a `_cli` file for a domain concept indicates missing CLI capabilities — deterministic operations should have an agent-facing entry point.
+Absence of `_cli` file for domain concept indicates missing CLI capabilities — deterministic operations should have agent-facing entry point.
 
 ### Interpreter
 

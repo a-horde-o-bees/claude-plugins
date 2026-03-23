@@ -1,6 +1,6 @@
 ---
 name: ocd-conventions
-description: Manage and enforce project conventions; --check reformats files to conform using deterministic pattern matching and a single sequential agent
+description: Manage and enforce project conventions; --check reformats files to conform using deterministic pattern matching and single sequential agent
 argument-hint: "--check [path | /skill-name | project] [--pattern \"*.py\"] [--focus \"specific instruction\"] [--all] [--delegate]"
 ---
 
@@ -31,7 +31,7 @@ User runs `/ocd-conventions`
   1. Target directory is `.claude/skills/{name}/` (replace hyphens with underscores for directory name)
 5. Else if path:
   1. If file — single file is sole target; ignore `--pattern` if present; skip to step 7
-  2. If directory — target directory is the path
+  2. If directory — target directory is path
 6. Enumerate directory targets — run navigator CLI to get filtered file list
   ```bash
   python3 ${CLAUDE_PLUGIN_ROOT}/skills/navigator/scripts/navigator_cli.py list <directory> [--pattern "..."]
@@ -58,16 +58,14 @@ User runs `/ocd-conventions`
 4. Check line counts — count lines in each target file
   1. If any target exceeds 500 lines:
     1. Report auto-fail for that target, remove from target list
-5. Discover criteria — collect rules and conventions to pass as evaluation criteria
-  1. Collect rules — read all `.claude/rules/ocd-*.md` files
-  2. Discover conventions — run convention CLI to find applicable conventions for all targets
-    ```bash
-    python3 ${CLAUDE_PLUGIN_ROOT}/skills/conventions/scripts/convention_cli.py get <target-paths>
-    ```
-  3. If no rules exist and no conventions match:
+5. Discover criteria — run conventions CLI to get all applicable rules and conventions
+  ```
+  python3 ${CLAUDE_PLUGIN_ROOT}/skills/conventions/scripts/conventions_cli.py get <target-paths>
+  ```
+  1. Output is one file path per line (rules first, then matched conventions)
+  2. If no output:
     1. Report "no criteria apply" and stop
-  4. Combine as pre-discovered criteria — rules first, then conventions; rules can dictate interpretation of conventions
-6. Spawn single agent — one agent processes all targets sequentially with conformity reformat prompt, including discovered criteria
+6. Spawn single agent — one agent processes all targets sequentially with conformity reformat prompt; pass criteria file paths for agent to read directly
 7. Review changes — run `git diff` after agent completes, review for correctness before presenting
 8. Present results — per-target summary of changes applied, criteria used, and any issues requiring user judgment
 
@@ -76,7 +74,7 @@ User runs `/ocd-conventions`
 Every file referenced during reformatting falls into one of two roles:
 
 - Target is file being reformatted
-- Criteria are conventions matched by convention CLI plus rules from `.claude/rules/ocd-*.md` — passed to agent as pre-discovered context
+- Criteria are file paths returned by conventions CLI (rules and matched conventions) — passed to agent for direct reading
 
 ### Boundary Rule
 
@@ -86,7 +84,7 @@ Convention architecture files are excluded from target list by default:
 - `.claude/rules/ocd-*` — Rule definitions
 - Root `CLAUDE.md` — Project instructions
 
-Use `--all` to include these files in the target list.
+Use `--all` to include these files in target list.
 
 ### Conformity Reformat Prompt
 
@@ -98,8 +96,8 @@ Focus: `{focus_instruction}`
 Evaluate and fix only aspects related to this focus. Skip unrelated conventions.
 `{end if}`
 
-Applicable criteria (pre-discovered — conventions and rules are your evaluation criteria):
-`{criteria_content}`
+Criteria files to read (rules and conventions — your evaluation criteria):
+`{criteria_paths}`
 
 Target files to reformat (process in order):
 `{target_list}`
@@ -107,7 +105,7 @@ Target files to reformat (process in order):
 For EACH target file:
 
 1. Read target file
-2. Evaluate target file against all applicable criteria from above
+2. Evaluate target file against all criteria read above
 3. For each convention or rule:
   1. Assess conformity with specific rule citations
   2. Apply fixes for any non-conformities found
@@ -130,22 +128,22 @@ After processing ALL targets, provide consolidated report:
 - Convention CLI returned no matches → Pattern definitions need broader coverage
 - Agent couldn't determine applicability → Convention scope needs refinement
 
-## Report
-
-- Per-target: changes applied with brief rationale
-- Per-target: issues not fixed because they require user judgment (semantic ambiguity, structural decisions)
-- All criteria files used (conventions and rules, once, not per-target)
-
 ## Rules
 
 - Use Agent tool with `subagent_type="general-purpose"` for agent spawn
-- Do not pass conversation context to spawned agent — agent inherits CLAUDE.md automatically but receives no other context beyond the conformity reformat prompt
+- Do not pass conversation context to spawned agent — agent inherits CLAUDE.md automatically but receives no other context beyond conformity reformat prompt
 - Single agent processes all targets sequentially — never spawn parallel agents per target
 - Agent applies fixes directly — reformatting, not just reporting
 - Agent preserves semantic meaning — changes are stylistic and structural, never altering what file communicates
 - Target files exceeding 500 lines auto-fail without processing — file needs to be divided before conformity reformatting is meaningful
 - All convention rules are required by default. Rules described as "recommended" or "optional" in convention text are reported but do not block.
 - When `--focus` is provided, agent evaluates and fixes only aspects related to focus instruction — skip unrelated conventions entirely
+
+## Report
+
+- Per-target: changes applied with brief rationale
+- Per-target: issues not fixed because they require user judgment (semantic ambiguity, structural decisions)
+- All criteria files used (conventions and rules, once, not per-target)
 
 ## Running
 

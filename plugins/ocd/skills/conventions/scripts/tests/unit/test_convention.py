@@ -1,4 +1,4 @@
-"""Unit tests for convention module."""
+"""Unit tests for conventions module."""
 
 from __future__ import annotations
 
@@ -8,28 +8,42 @@ from collections.abc import Generator
 
 import pytest
 
-from skills.conventions.scripts.convention import (
+from skills.conventions.scripts.conventions import (
     _extract_pattern,
     sync_patterns,
     match_conventions,
-    get_convention_content,
+    collect_rules,
 )
 
 
 @pytest.fixture
 def tmp_env() -> Generator[dict[str, str], None, None]:
-    """Create temp directory with conventions dir and cache db path."""
+    """Create temp directory with conventions dir, rules dir, and cache db path."""
     with tempfile.TemporaryDirectory() as tmpdir:
         conv_dir = os.path.join(tmpdir, "conventions")
         os.makedirs(conv_dir)
+        rules_dir = os.path.join(tmpdir, "rules")
+        os.makedirs(rules_dir)
         db_path = os.path.join(tmpdir, "cache.db")
-        yield {"tmpdir": tmpdir, "conv_dir": conv_dir, "db_path": db_path}
+        yield {
+            "tmpdir": tmpdir,
+            "conv_dir": conv_dir,
+            "rules_dir": rules_dir,
+            "db_path": db_path,
+        }
 
 
 def _write_convention(conv_dir: str, name: str, pattern: str, content: str = "# Test") -> str:
     path = os.path.join(conv_dir, name)
     with open(path, "w") as f:
         f.write(f'---\npattern: "{pattern}"\n---\n\n{content}\n')
+    return path
+
+
+def _write_rule(rules_dir: str, name: str, content: str = "# Rule") -> str:
+    path = os.path.join(rules_dir, name)
+    with open(path, "w") as f:
+        f.write(f"{content}\n")
     return path
 
 
@@ -188,27 +202,27 @@ class TestMatchConventions:
             assert len(matched) == 1, f"Expected match for {filename}"
 
 
-class TestGetConventionContent:
-    def test_strips_frontmatter(self, tmp_env: dict[str, str]) -> None:
-        path = _write_convention(
-            tmp_env["conv_dir"], "python.md", "*.py", "# Python\n\nContent here."
-        )
+class TestCollectRules:
+    def test_collects_ocd_rules(self, tmp_env: dict[str, str]) -> None:
+        _write_rule(tmp_env["rules_dir"], "ocd-workflow.md", "# Workflow")
+        _write_rule(tmp_env["rules_dir"], "ocd-agent-authoring.md", "# Agent Authoring")
 
-        content = get_convention_content([path])
-        assert "=== python.md ===" in content
-        assert "# Python" in content
-        assert "Content here." in content
-        assert "pattern:" not in content
-        assert "---" not in content
+        rules = collect_rules(tmp_env["rules_dir"])
+        names = [os.path.basename(p) for p in rules]
+        assert names == ["ocd-agent-authoring.md", "ocd-workflow.md"]
 
-    def test_multiple_conventions(self, tmp_env: dict[str, str]) -> None:
-        path1 = _write_convention(tmp_env["conv_dir"], "a.md", "*.py", "# A")
-        path2 = _write_convention(tmp_env["conv_dir"], "b.md", "*.md", "# B")
+    def test_ignores_non_ocd_rules(self, tmp_env: dict[str, str]) -> None:
+        _write_rule(tmp_env["rules_dir"], "ocd-workflow.md", "# Workflow")
+        _write_rule(tmp_env["rules_dir"], "other-rule.md", "# Other")
 
-        content = get_convention_content([path1, path2])
-        assert "=== a.md ===" in content
-        assert "=== b.md ===" in content
+        rules = collect_rules(tmp_env["rules_dir"])
+        names = [os.path.basename(p) for p in rules]
+        assert names == ["ocd-workflow.md"]
 
-    def test_handles_missing_file(self, tmp_env: dict[str, str]) -> None:
-        content = get_convention_content(["/nonexistent/file.md"])
-        assert "[error: could not read file]" in content
+    def test_empty_directory(self, tmp_env: dict[str, str]) -> None:
+        rules = collect_rules(tmp_env["rules_dir"])
+        assert rules == []
+
+    def test_nonexistent_directory(self, tmp_env: dict[str, str]) -> None:
+        rules = collect_rules(os.path.join(tmp_env["tmpdir"], "nonexistent"))
+        assert rules == []
