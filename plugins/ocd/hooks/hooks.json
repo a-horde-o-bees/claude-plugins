@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/scripts/override_approvals.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/scripts/auto_approval.py",
             "timeout": 10
           }
         ]

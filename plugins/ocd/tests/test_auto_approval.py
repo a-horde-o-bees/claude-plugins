@@ -1,8 +1,8 @@
-"""Unit tests for override_approvals hook."""
+"""Unit tests for auto_approval hook."""
 
 from pathlib import Path
 
-import override_approvals as hook
+import auto_approval as hook
 
 
 # =========================================================================
