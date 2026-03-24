@@ -10,14 +10,7 @@ Plugin versions follow `x.y.z` format in each plugin's `.claude-plugin/plugin.js
 
 ## Commit Workflow
 
-Use `/ocd-commit` to commit changes. Skill analyzes working tree, groups changes by topic, and executes commits sequentially with version bumps.
-
-Core rules (enforced by skill):
-
-- Every commit bumps `z` version in `.claude-plugin/plugin.json` for each plugin with changes
-- Always surface untracked files for user review — never skip or ignore
-- Group changes by topic when multiple coherent topics exist in working tree
-- Commit messages describe end-state results, not change history
+Use `/ocd-commit` to commit changes.
 
 ## Architectural Enforcement
 
