@@ -40,18 +40,22 @@ def deploy_rules(plugin_root: Path, project_dir: Path, force: bool = False) -> l
     return lines
 
 
-def discover_skill_inits(plugin_root: Path) -> list[Path]:
-    """Find all skills/*/scripts/init.py files."""
+def discover_skill_clis(plugin_root: Path) -> list[tuple[str, Path]]:
+    """Find all skills/*/scripts/*_cli.py files. Returns [(skill_name, path)]."""
     skills_dir = plugin_root / "skills"
     if not skills_dir.is_dir():
         return []
-    return sorted(skills_dir.glob("*/scripts/init.py"))
+    result = []
+    for cli_path in sorted(skills_dir.glob("*/scripts/*_cli.py")):
+        skill_name = cli_path.parent.parent.name
+        result.append((skill_name, cli_path))
+    return result
 
 
-def run_skill_init(init_script: Path, force: bool = False) -> list[str]:
-    """Run a skill's init.py and return output lines."""
-    cmd = ["python3", str(init_script)]
-    if force:
+def run_skill_cli(cli_path: Path, subcommand: str, force: bool = False) -> list[str]:
+    """Run a skill's CLI subcommand and return output lines."""
+    cmd = ["python3", str(cli_path), subcommand]
+    if force and subcommand == "init":
         cmd.append("--force")
     result = subprocess.run(cmd, capture_output=True, text=True, env=os.environ)
     output = result.stdout.strip()
@@ -84,18 +88,17 @@ def main() -> None:
         print(line)
     print()
 
-    # Run each skill's init
-    skill_inits = discover_skill_inits(plugin_root)
-    if skill_inits:
-        for init_script in skill_inits:
-            skill_name = init_script.parent.parent.name
+    # Run each skill's init via CLI
+    skill_clis = discover_skill_clis(plugin_root)
+    if skill_clis:
+        for skill_name, cli_path in skill_clis:
             print(f"{skill_name.capitalize()}:")
-            lines = run_skill_init(init_script, force=args.force)
+            lines = run_skill_cli(cli_path, "init", force=args.force)
             for line in lines:
                 print(f"  {line}")
             print()
     else:
-        print("Skills: no init scripts found")
+        print("Skills: no CLI scripts found")
         print()
 
     print("Done. Restart Claude session to load new rules.")

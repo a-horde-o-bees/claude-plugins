@@ -1,7 +1,7 @@
 """Navigator CLI.
 
 Presentation layer: argument parsing and dispatch wrappers only.
-Business logic lives in navigator.py and skill_resolver.py.
+Business logic lives in navigator.py, skill_resolver.py, and _init.py.
 """
 
 import argparse
@@ -11,9 +11,11 @@ import sys
 try:
     from . import navigator
     from . import skill_resolver
+    from . import _init
 except ImportError:
     import navigator  # type: ignore[import-not-found]
     import skill_resolver  # type: ignore[import-not-found]
+    import _init  # type: ignore[import-not-found]
 
 
 DEFAULT_DB = ".claude/ocd/navigator/navigator.db"
@@ -23,10 +25,6 @@ def _auto_scan(args: argparse.Namespace) -> None:
     """Run scan before command execution. Silent — discards output."""
     path = getattr(args, "path", None) or "."
     navigator.scan_path(args.db, path)
-
-
-def _dispatch_init(args: argparse.Namespace) -> None:
-    print(navigator.init_db(args.db))
 
 
 def _dispatch_describe(args: argparse.Namespace) -> None:
@@ -80,6 +78,22 @@ def _dispatch_remove(args: argparse.Namespace) -> None:
 def _dispatch_search(args: argparse.Namespace) -> None:
     _auto_scan(args)
     print(navigator.search_entries(args.db, args.pattern))
+
+
+def _dispatch_init(args: argparse.Namespace) -> None:
+    project_dir = _init.get_project_dir()
+    for line in _init.init(project_dir):
+        print(line)
+
+
+def _dispatch_status(_args: argparse.Namespace) -> None:
+    project_dir = _init.get_project_dir()
+    result = _init.status(project_dir)
+    print(f"navigator: {result['state']}")
+    for detail in result.get("details", []):
+        print(f"  {detail}")
+    for action in result.get("actions", []):
+        print(f"  Action: {action}")
 
 
 def _dispatch_resolve_skill(args: argparse.Namespace) -> None:
@@ -156,14 +170,24 @@ def build_parser() -> argparse.ArgumentParser:
         description=(
             "Create navigator database and populate seed rules from\n"
             "navigator_seed.csv. Idempotent — safe to run multiple times.\n"
-            "Seed rules define glob patterns for directories and files with\n"
-            "standardized roles (e.g., __pycache__ excluded, tests/ listed\n"
-            "but not traversed)."
+            "Uses $CLAUDE_PROJECT_DIR for database location."
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        parents=[db_parent],
     )
     init_p.set_defaults(_dispatch=_dispatch_init)
+
+    # status
+    status_p = commands.add_parser(
+        "status",
+        help="Report navigator infrastructure state",
+        description=(
+            "Check database existence, schema, entry counts, and\n"
+            "undescribed/stale entries. Returns state (operational,\n"
+            "adopted, error) with actionable next steps."
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    status_p.set_defaults(_dispatch=_dispatch_status)
 
     # describe
     describe_p = commands.add_parser(

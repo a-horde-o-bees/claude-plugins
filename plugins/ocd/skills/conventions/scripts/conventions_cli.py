@@ -1,7 +1,7 @@
 """Conventions CLI.
 
 Presentation layer: argument parsing and dispatch wrappers only.
-Business logic lives in conventions.py.
+Business logic lives in conventions.py and _init.py.
 """
 
 import argparse
@@ -12,8 +12,10 @@ from pathlib import Path
 # Support both package import and direct execution
 try:
     from . import conventions
+    from . import _init
 except ImportError:
     import conventions  # type: ignore[import-not-found]
+    import _init  # type: ignore[import-not-found]
 
 
 _PROJECT_DIR = Path(os.environ.get("CLAUDE_PROJECT_DIR", os.getcwd()))
@@ -109,6 +111,24 @@ def _dispatch_list_self(args: argparse.Namespace) -> None:
             print(f"  {path}")
 
 
+def _dispatch_init(args: argparse.Namespace) -> None:
+    project_dir = _init.get_project_dir()
+    plugin_root = _init.get_plugin_root()
+    force = getattr(args, "force", False)
+    for line in _init.init(plugin_root, project_dir, force=force):
+        print(line)
+
+
+def _dispatch_status(_args: argparse.Namespace) -> None:
+    project_dir = _init.get_project_dir()
+    result = _init.status(project_dir)
+    print(f"conventions: {result['state']}")
+    for detail in result.get("details", []):
+        print(f"  {detail}")
+    for action in result.get("actions", []):
+        print(f"  Action: {action}")
+
+
 def _add_common_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--manifest",
@@ -152,6 +172,35 @@ def _add_subcommands(commands: argparse._SubParsersAction) -> None:
         ),
     )
     ls_p.set_defaults(_dispatch=_dispatch_list_self)
+
+    init_p = commands.add_parser(
+        "init",
+        help="Deploy convention templates and manifest to project",
+        description=(
+            "Deploy convention files from plugin templates to\n"
+            ".claude/ocd/conventions/. Idempotent — skips existing\n"
+            "files unless --force is set."
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    init_p.add_argument(
+        "--force", action="store_true",
+        help="Overwrite existing convention files",
+    )
+    init_p.set_defaults(_dispatch=_dispatch_init)
+
+    status_p = commands.add_parser(
+        "status",
+        help="Report conventions infrastructure state",
+        description=(
+            "Check manifest existence, validate convention files\n"
+            "against disk, report missing or untracked files.\n"
+            "Returns state (operational, adopted, error) with\n"
+            "actionable next steps."
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    status_p.set_defaults(_dispatch=_dispatch_status)
 
 
 def register_commands(subparsers: argparse._SubParsersAction) -> None:

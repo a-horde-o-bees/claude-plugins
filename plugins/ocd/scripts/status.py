@@ -154,35 +154,35 @@ def discover_skills(plugin_root: Path) -> list[str]:
     return skills
 
 
-def discover_skill_inits(plugin_root: Path) -> dict[str, Path]:
-    """Find all skills/*/scripts/init.py files. Returns {skill_name: path}."""
+def discover_skill_clis(plugin_root: Path) -> dict[str, Path]:
+    """Find all skills/*/scripts/*_cli.py files. Returns {skill_name: path}."""
     skills_dir = plugin_root / "skills"
     if not skills_dir.is_dir():
         return {}
     result = {}
-    for init_script in sorted(skills_dir.glob("*/scripts/init.py")):
-        result[init_script.parent.parent.name] = init_script
+    for cli_path in sorted(skills_dir.glob("*/scripts/*_cli.py")):
+        result[cli_path.parent.parent.name] = cli_path
     return result
 
 
 def format_skills_section(plugin_root: Path) -> list[str]:
-    """Format skills section by calling each skill's init.py --status."""
+    """Format skills section by calling each skill's CLI status subcommand."""
     skills = discover_skills(plugin_root)
 
     if not skills:
         return ["  No skills found in plugin"]
 
-    skill_inits = discover_skill_inits(plugin_root)
+    skill_clis = discover_skill_clis(plugin_root)
     lines = []
 
     for skill in skills:
-        init_script = skill_inits.get(skill)
-        if init_script is None:
+        cli_path = skill_clis.get(skill)
+        if cli_path is None:
             lines.append(f"  {skill}")
             continue
 
         result = subprocess.run(
-            ["python3", str(init_script), "--status"],
+            ["python3", str(cli_path), "status"],
             capture_output=True, text=True, env=os.environ,
         )
         output = result.stdout.strip()
