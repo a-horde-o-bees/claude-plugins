@@ -57,6 +57,23 @@ def _get_claude_home() -> Path:
     return Path.home() / ".claude"
 
 
+def _get_plugin_root() -> Path | None:
+    """Return plugin root from environment or script location.
+
+    Falls back to deriving from script path when CLAUDE_PLUGIN_ROOT
+    is not set (common in agent Bash commands where only hook execution
+    context receives the variable).
+    """
+    env = os.environ.get("CLAUDE_PLUGIN_ROOT")
+    if env:
+        return Path(env)
+    # Derive from script location: skills/navigator/scripts/skill_resolver.py → plugin root
+    script_root = Path(__file__).parent.parent.parent.parent
+    if (script_root / ".claude-plugin" / "plugin.json").is_file():
+        return script_root
+    return None
+
+
 def _get_marketplace_skill_dirs() -> list[Path]:
     """Read installed_plugins.json and return skill directories from installed plugins."""
     installed_path = _get_claude_home() / "plugins" / "installed_plugins.json"
@@ -93,7 +110,7 @@ def resolve_skill(name: str) -> Path | None:
     Returns absolute Path to SKILL.md or None if not found.
     """
     project_dir = Path(os.environ.get("CLAUDE_PROJECT_DIR", os.getcwd()))
-    plugin_root = os.environ.get("CLAUDE_PLUGIN_ROOT")
+    plugin_root = _get_plugin_root()
 
     # 1. Personal skills
     personal_skills = _get_claude_home() / "skills"
@@ -109,7 +126,7 @@ def resolve_skill(name: str) -> Path | None:
 
     # 3. Plugin dir (--plugin-dir)
     if plugin_root:
-        plugin_skills = Path(plugin_root) / "skills"
+        plugin_skills = plugin_root / "skills"
         result = _search_skills_dir(plugin_skills, name)
         if result:
             return result
@@ -129,7 +146,7 @@ def list_skills() -> list[dict[str, str]]:
     Returns list of {name, source, path} dicts in priority order.
     """
     project_dir = Path(os.environ.get("CLAUDE_PROJECT_DIR", os.getcwd()))
-    plugin_root = os.environ.get("CLAUDE_PLUGIN_ROOT")
+    plugin_root = _get_plugin_root()
 
     results: list[dict[str, str]] = []
     seen_names: set[str] = set()
@@ -153,7 +170,7 @@ def list_skills() -> list[dict[str, str]]:
     _collect(_get_claude_home() / "skills", "personal")
     _collect(project_dir / ".claude" / "skills", "project")
     if plugin_root:
-        _collect(Path(plugin_root) / "skills", "plugin-dir")
+        _collect(plugin_root / "skills", "plugin-dir")
     for marketplace_dir in _get_marketplace_skill_dirs():
         _collect(marketplace_dir, "marketplace")
 
