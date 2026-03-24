@@ -254,10 +254,10 @@ class TestInitDb:
             "**/tests,directory,0,0,Test suites\n"
         )
         db = str(tmp_path / "seeded.db")
-        from ... import navigator as ctx
-        original = ctx.SEED_PATH
+        from ... import _db as db_ctx
+        original = db_ctx.SEED_PATH
         try:
-            ctx.SEED_PATH = csv_path
+            db_ctx.SEED_PATH = csv_path
             result = init_db(db)
             assert "2 added" in result
             conn = get_connection(db)
@@ -265,7 +265,7 @@ class TestInitDb:
             assert len(rows) == 2
             conn.close()
         finally:
-            ctx.SEED_PATH = original
+            db_ctx.SEED_PATH = original
 
     def test_upserts_changed_seed_rules(self, tmp_path):
         csv_path = tmp_path / "seed.csv"
@@ -274,10 +274,10 @@ class TestInitDb:
             "**/tests,directory,0,0,Test suites\n"
         )
         db = str(tmp_path / "upsert.db")
-        from ... import navigator as ctx
-        original = ctx.SEED_PATH
+        from ... import _db as db_ctx
+        original = db_ctx.SEED_PATH
         try:
-            ctx.SEED_PATH = csv_path
+            db_ctx.SEED_PATH = csv_path
             init_db(db)
             # Change the seed rule
             csv_path.write_text(
@@ -293,7 +293,7 @@ class TestInitDb:
             assert row[0] == "Updated description"
             conn.close()
         finally:
-            ctx.SEED_PATH = original
+            db_ctx.SEED_PATH = original
 
     def test_adds_new_seed_rules(self, tmp_path):
         csv_path = tmp_path / "seed.csv"
@@ -302,10 +302,10 @@ class TestInitDb:
             "**/tests,directory,0,0,Test suites\n"
         )
         db = str(tmp_path / "add.db")
-        from ... import navigator as ctx
-        original = ctx.SEED_PATH
+        from ... import _db as db_ctx
+        original = db_ctx.SEED_PATH
         try:
-            ctx.SEED_PATH = csv_path
+            db_ctx.SEED_PATH = csv_path
             init_db(db)
             # Add a new seed rule
             csv_path.write_text(
@@ -320,7 +320,7 @@ class TestInitDb:
             assert len(rows) == 2
             conn.close()
         finally:
-            ctx.SEED_PATH = original
+            db_ctx.SEED_PATH = original
 
 
 # --- describe_path ---
