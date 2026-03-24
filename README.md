@@ -48,6 +48,15 @@ If rules or convention templates changed, re-run init in target project:
 /ocd-init --force
 ```
 
+Rules are loaded into agent context at session start. After deploying rule changes with `/ocd-init --force`, exit and resume to pick them up:
+
+```
+/exit
+claude --resume
+```
+
+`--resume` continues the most recent conversation with fresh context — rules, settings, and hooks reload while conversation history is preserved. Use this whenever deployed rules or conventions change mid-session.
+
 Useful flags:
 
 - `--debug` — plugin loading diagnostics
