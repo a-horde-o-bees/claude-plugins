@@ -5,7 +5,7 @@ description: Show plugin version, rule states, skill infrastructure status, and 
 
 # /ocd-status
 
-Report plugin infrastructure state with analysis.
+Report plugin infrastructure state.
 
 ## Trigger
 
@@ -18,9 +18,7 @@ User runs `/ocd-status`
   python3 ${CLAUDE_PLUGIN_ROOT}/scripts/status.py
   ```
 2. Present output to user as-is
-3. Analyze output — add observations that are actionable or non-obvious from raw output
 
 ### Report
 
 - Script output presented as-is
-- Observations that are actionable or non-obvious from raw output

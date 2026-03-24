@@ -4,7 +4,6 @@ description: >
   Commit working tree changes grouped by topic. Analyzes pending changes,
   groups by topic for readable history, drafts messages describing end-state
   results, and executes commits sequentially with version bumps.
-argument-hint: "[message]"
 ---
 
 # /ocd-commit
@@ -16,12 +15,6 @@ Fully automated — analyzes changes, groups by topic, drafts messages, executes
 ## Trigger
 
 User runs `/ocd-commit`
-
-## Route
-
-1. If `$ARGUMENTS` contains message text:
-  1. Set single-group mode with provided message
-2. Proceed to Workflow
 
 ## Workflow
 
@@ -36,9 +29,7 @@ User runs `/ocd-commit`
     1. Surface exceptions to user before committing — they may belong to group or need exclusion
   2. Else:
     1. Proceed without user approval
-3. If single-group mode:
-  1. Treat all changes as single group with provided message; skip to step 5
-4. Group changes by topic — goal is readable history where each commit is focused window into related changes
+3. Group changes by topic — goal is readable history where each commit is focused window into related changes
   1. Evaluate changed files for coherent topics — consider:
     - Skill directory — files in same skill are likely same topic
     - Template and deployed pairs — template with its deployed copy
@@ -52,15 +43,15 @@ User runs `/ocd-commit`
     2. Order commits — dependencies first, consumers after
   4. If grouping is ambiguous:
     1. Keep together — consequences of grouping related changes are negligible compared to splitting incorrectly
-5. Draft commit messages — one per group
+4. Draft commit messages — one per group
   1. Describe end-state results, not change journey
   2. Follow project's recent commit message style
-6. Determine version bumps — identify which plugins have changes per group
-7. For each commit group (in order):
+5. Determine version bumps — identify which plugins have changes per group
+6. For each commit group (in order):
   1. Bump version — read current version from plugin.json, increment z, write back
   2. Stage files — `git add` specific files for this group plus plugin.json
   3. Commit with drafted message; append co-author trailer
-8. Verify — run `git status`; report remaining changes or clean tree
+7. Verify — run `git status`; report remaining changes or clean tree
 
 ### Report
 
@@ -81,4 +72,3 @@ User runs `/ocd-commit`
 - Stage specific files by name — never use `git add -A` or `git add .`
 - Co-author trailer required: `Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>`
 - Commit order matters — if group B depends on changes in group A (e.g., convention before skill that uses it), commit A first
-- When user provides message argument, treat all changes as single group — skip topic analysis
