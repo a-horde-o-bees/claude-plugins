@@ -9,214 +9,262 @@ from pathlib import Path
 import pytest
 
 from skills.conventions.scripts.conventions import (
-    _extract_pattern,
-    sync_patterns,
-    match_conventions,
-    collect_rules,
+    load_manifest,
+    list_patterns,
+    list_matching,
+    topological_order,
+    validate_manifest,
 )
 
 
 @pytest.fixture
 def tmp_env() -> Generator[dict[str, Path], None, None]:
-    """Create temp directory with conventions dir, rules dir, and cache db path."""
+    """Create temp directory with conventions dir, rules dir, and manifest path."""
     with tempfile.TemporaryDirectory() as tmpdir:
         root = Path(tmpdir)
-        conv_dir = root / "conventions"
-        conv_dir.mkdir()
-        rules_dir = root / "rules"
-        rules_dir.mkdir()
-        db_path = root / "cache.db"
+        conv_dir = root / ".claude" / "ocd" / "conventions"
+        conv_dir.mkdir(parents=True)
+        rules_dir = root / ".claude" / "rules"
+        rules_dir.mkdir(parents=True)
+        manifest_path = conv_dir / "manifest.yaml"
         yield {
-            "tmpdir": root,
+            "root": root,
             "conv_dir": conv_dir,
             "rules_dir": rules_dir,
-            "db_path": db_path,
+            "manifest": manifest_path,
         }
 
 
-def _write_convention(conv_dir: Path, name: str, pattern: str, content: str = "# Test") -> Path:
-    path = conv_dir / name
-    path.write_text(f'---\npattern: "{pattern}"\n---\n\n{content}\n')
-    return path
+def _write_manifest(manifest_path: Path, conventions: dict[str, dict]) -> None:
+    """Write a manifest.yaml file."""
+    lines = ["conventions:"]
+    for path, entry in conventions.items():
+        lines.append(f"  {path}:")
+        lines.append(f'    pattern: "{entry.get("pattern", "*")}"')
+        deps = entry.get("dependencies", [])
+        deps_str = ", ".join(deps)
+        lines.append(f"    dependencies: [{deps_str}]")
+    manifest_path.write_text("\n".join(lines) + "\n")
 
 
-def _write_rule(rules_dir: Path, name: str, content: str = "# Rule") -> Path:
-    path = rules_dir / name
+def _write_file(root: Path, rel_path: str, content: str = "# Content") -> Path:
+    """Write a file at a relative path under root."""
+    path = root / rel_path
+    path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(f"{content}\n")
     return path
 
 
-class TestExtractPattern:
-    def test_extracts_pattern_from_frontmatter(self, tmp_env: dict[str, Path]) -> None:
-        path = _write_convention(tmp_env["conv_dir"], "python.md", "*.py")
-        assert _extract_pattern(path) == "*.py"
-
-    def test_returns_none_without_frontmatter(self, tmp_env: dict[str, Path]) -> None:
-        path = tmp_env["conv_dir"] / "no_front.md"
-        path.write_text("# No Frontmatter\nContent.\n")
-        assert _extract_pattern(path) is None
-
-    def test_returns_none_for_missing_pattern_field(self, tmp_env: dict[str, Path]) -> None:
-        path = tmp_env["conv_dir"] / "no_pattern.md"
-        path.write_text("---\nname: test\n---\n\n# Content\n")
-        assert _extract_pattern(path) is None
-
-    def test_handles_single_quoted_pattern(self, tmp_env: dict[str, Path]) -> None:
-        path = tmp_env["conv_dir"] / "single.md"
-        path.write_text("---\npattern: '*.py'\n---\n\n# Content\n")
-        assert _extract_pattern(path) == "*.py"
-
-    def test_handles_unquoted_pattern(self, tmp_env: dict[str, Path]) -> None:
-        path = tmp_env["conv_dir"] / "unquoted.md"
-        path.write_text("---\npattern: *.py\n---\n\n# Content\n")
-        assert _extract_pattern(path) == "*.py"
-
-    def test_returns_none_for_nonexistent_file(self) -> None:
-        assert _extract_pattern(Path("/nonexistent/file.md")) is None
+# =========================================================================
+# Manifest loading
+# =========================================================================
 
 
-class TestSyncPatterns:
-    def test_syncs_new_files(self, tmp_env: dict[str, Path]) -> None:
-        _write_convention(tmp_env["conv_dir"], "python.md", "*.py")
-        _write_convention(tmp_env["conv_dir"], "cli.md", "*_cli.*")
+class TestLoadManifest:
+    def test_loads_manifest(self, tmp_env: dict[str, Path]) -> None:
+        _write_manifest(tmp_env["manifest"], {
+            ".claude/rules/ocd-auth.md": {"pattern": "*", "dependencies": []},
+            ".claude/ocd/conventions/python.md": {"pattern": "*.py", "dependencies": [".claude/rules/ocd-auth.md"]},
+        })
+        result = load_manifest(tmp_env["manifest"])
+        assert len(result) == 2
+        assert result[".claude/rules/ocd-auth.md"]["pattern"] == "*"
+        assert result[".claude/ocd/conventions/python.md"]["dependencies"] == [".claude/rules/ocd-auth.md"]
 
-        patterns = sync_patterns(tmp_env["db_path"], tmp_env["conv_dir"])
+    def test_missing_manifest(self, tmp_env: dict[str, Path]) -> None:
+        with pytest.raises(FileNotFoundError):
+            load_manifest(tmp_env["manifest"])
 
-        names = {Path(k).name: v for k, v in patterns.items()}
-        assert names == {"python.md": "*.py", "cli.md": "*_cli.*"}
-
-    def test_uses_cache_on_second_call(self, tmp_env: dict[str, Path]) -> None:
-        _write_convention(tmp_env["conv_dir"], "python.md", "*.py")
-
-        patterns1 = sync_patterns(tmp_env["db_path"], tmp_env["conv_dir"])
-        patterns2 = sync_patterns(tmp_env["db_path"], tmp_env["conv_dir"])
-
-        assert patterns1 == patterns2
-
-    def test_removes_stale_cache_entries(self, tmp_env: dict[str, Path]) -> None:
-        path = _write_convention(tmp_env["conv_dir"], "python.md", "*.py")
-        sync_patterns(tmp_env["db_path"], tmp_env["conv_dir"])
-
-        path.unlink()
-        patterns = sync_patterns(tmp_env["db_path"], tmp_env["conv_dir"])
-
-        assert len(patterns) == 0
-
-    def test_updates_changed_files(self, tmp_env: dict[str, Path]) -> None:
-        _write_convention(tmp_env["conv_dir"], "python.md", "*.py")
-        sync_patterns(tmp_env["db_path"], tmp_env["conv_dir"])
-
-        # Overwrite with new pattern
-        _write_convention(tmp_env["conv_dir"], "python.md", "*.pyw")
-        patterns = sync_patterns(tmp_env["db_path"], tmp_env["conv_dir"])
-
-        names = {Path(k).name: v for k, v in patterns.items()}
-        assert names["python.md"] == "*.pyw"
-
-    def test_empty_directory(self, tmp_env: dict[str, Path]) -> None:
-        patterns = sync_patterns(tmp_env["db_path"], tmp_env["conv_dir"])
-        assert patterns == {}
-
-    def test_nonexistent_directory(self, tmp_env: dict[str, Path]) -> None:
-        patterns = sync_patterns(
-            tmp_env["db_path"], tmp_env["tmpdir"] / "nonexistent"
-        )
-        assert patterns == {}
-
-    def test_skips_files_without_pattern(self, tmp_env: dict[str, Path]) -> None:
-        path = tmp_env["conv_dir"] / "no_pattern.md"
-        path.write_text("---\nname: test\n---\n\n# No pattern field\n")
-
-        patterns = sync_patterns(tmp_env["db_path"], tmp_env["conv_dir"])
-        assert len(patterns) == 0
+    def test_empty_manifest(self, tmp_env: dict[str, Path]) -> None:
+        tmp_env["manifest"].write_text("conventions:\n")
+        result = load_manifest(tmp_env["manifest"])
+        assert result == {}
 
 
-class TestMatchConventions:
+# =========================================================================
+# Pattern listing
+# =========================================================================
+
+
+class TestListPatterns:
+    def test_lists_all(self, tmp_env: dict[str, Path]) -> None:
+        _write_manifest(tmp_env["manifest"], {
+            ".claude/rules/ocd-auth.md": {"pattern": "*"},
+            ".claude/ocd/conventions/python.md": {"pattern": "*.py"},
+        })
+        result = list_patterns(tmp_env["manifest"])
+        assert len(result) == 2
+        assert result[0] == (".claude/ocd/conventions/python.md", "*.py")
+        assert result[1] == (".claude/rules/ocd-auth.md", "*")
+
+    def test_empty(self, tmp_env: dict[str, Path]) -> None:
+        tmp_env["manifest"].write_text("conventions:\n")
+        assert list_patterns(tmp_env["manifest"]) == []
+
+
+# =========================================================================
+# File matching
+# =========================================================================
+
+
+class TestListMatching:
     def test_matches_by_extension(self, tmp_env: dict[str, Path]) -> None:
-        _write_convention(tmp_env["conv_dir"], "python.md", "*.py")
-
-        matched = match_conventions(
-            tmp_env["conv_dir"], tmp_env["db_path"], ["foo.py"]
-        )
-        assert [Path(p).name for p in matched] == ["python.md"]
+        _write_manifest(tmp_env["manifest"], {
+            ".claude/ocd/conventions/python.md": {"pattern": "*.py"},
+        })
+        result = list_matching(tmp_env["manifest"], ["foo.py"])
+        assert "foo.py" in result
+        assert ".claude/ocd/conventions/python.md" in result["foo.py"]
 
     def test_matches_by_filename(self, tmp_env: dict[str, Path]) -> None:
-        _write_convention(tmp_env["conv_dir"], "skill.md", "SKILL.md")
+        _write_manifest(tmp_env["manifest"], {
+            ".claude/ocd/conventions/skill.md": {"pattern": "SKILL.md"},
+        })
+        result = list_matching(tmp_env["manifest"], ["SKILL.md"])
+        assert "SKILL.md" in result
 
-        matched = match_conventions(
-            tmp_env["conv_dir"], tmp_env["db_path"], ["SKILL.md"]
-        )
-        assert [Path(p).name for p in matched] == ["skill.md"]
-
-    def test_multiple_patterns_match(self, tmp_env: dict[str, Path]) -> None:
-        _write_convention(tmp_env["conv_dir"], "python.md", "*.py")
-        _write_convention(tmp_env["conv_dir"], "cli.md", "*_cli.*")
-
-        matched = match_conventions(
-            tmp_env["conv_dir"], tmp_env["db_path"], ["foo_cli.py"]
-        )
-        names = [Path(p).name for p in matched]
-        assert "python.md" in names
-        assert "cli.md" in names
+    def test_multiple_conventions_match(self, tmp_env: dict[str, Path]) -> None:
+        _write_manifest(tmp_env["manifest"], {
+            ".claude/ocd/conventions/python.md": {"pattern": "*.py"},
+            ".claude/ocd/conventions/cli.md": {"pattern": "*_cli.*"},
+        })
+        result = list_matching(tmp_env["manifest"], ["foo_cli.py"])
+        assert len(result["foo_cli.py"]) == 2
 
     def test_no_match(self, tmp_env: dict[str, Path]) -> None:
-        _write_convention(tmp_env["conv_dir"], "python.md", "*.py")
+        _write_manifest(tmp_env["manifest"], {
+            ".claude/ocd/conventions/python.md": {"pattern": "*.py"},
+        })
+        result = list_matching(tmp_env["manifest"], ["foo.js"])
+        assert result == {}
 
-        matched = match_conventions(
-            tmp_env["conv_dir"], tmp_env["db_path"], ["foo.js"]
-        )
-        assert matched == []
+    def test_wildcard_matches_everything(self, tmp_env: dict[str, Path]) -> None:
+        _write_manifest(tmp_env["manifest"], {
+            ".claude/rules/ocd-auth.md": {"pattern": "*"},
+        })
+        result = list_matching(tmp_env["manifest"], ["anything.txt"])
+        assert "anything.txt" in result
 
-    def test_multiple_input_files(self, tmp_env: dict[str, Path]) -> None:
-        _write_convention(tmp_env["conv_dir"], "python.md", "*.py")
-        _write_convention(tmp_env["conv_dir"], "markdown.md", "*.md")
-
-        matched = match_conventions(
-            tmp_env["conv_dir"], tmp_env["db_path"], ["foo.py", "bar.md"]
-        )
-        names = [Path(p).name for p in matched]
-        assert "python.md" in names
-        assert "markdown.md" in names
-
-    def test_deduplicates_matches(self, tmp_env: dict[str, Path]) -> None:
-        _write_convention(tmp_env["conv_dir"], "python.md", "*.py")
-
-        matched = match_conventions(
-            tmp_env["conv_dir"], tmp_env["db_path"], ["foo.py", "bar.py"]
-        )
-        assert len(matched) == 1
-
-    def test_cli_pattern_matches_any_extension(self, tmp_env: dict[str, Path]) -> None:
-        _write_convention(tmp_env["conv_dir"], "cli.md", "*_cli.*")
-
-        for filename in ["foo_cli.py", "bar_cli.sh", "baz_cli.rb"]:
-            matched = match_conventions(
-                tmp_env["conv_dir"], tmp_env["db_path"], [filename]
-            )
-            assert len(matched) == 1, f"Expected match for {filename}"
+    def test_multiple_files(self, tmp_env: dict[str, Path]) -> None:
+        _write_manifest(tmp_env["manifest"], {
+            ".claude/ocd/conventions/python.md": {"pattern": "*.py"},
+            ".claude/ocd/conventions/markdown.md": {"pattern": "*.md"},
+        })
+        result = list_matching(tmp_env["manifest"], ["foo.py", "bar.md"])
+        assert len(result) == 2
 
 
-class TestCollectRules:
-    def test_collects_ocd_rules(self, tmp_env: dict[str, Path]) -> None:
-        _write_rule(tmp_env["rules_dir"], "ocd-workflow.md", "# Workflow")
-        _write_rule(tmp_env["rules_dir"], "ocd-agent-authoring.md", "# Agent Authoring")
+# =========================================================================
+# Topological ordering
+# =========================================================================
 
-        rules = collect_rules(tmp_env["rules_dir"])
-        names = [Path(p).name for p in rules]
-        assert names == ["ocd-agent-authoring.md", "ocd-workflow.md"]
 
-    def test_ignores_non_ocd_rules(self, tmp_env: dict[str, Path]) -> None:
-        _write_rule(tmp_env["rules_dir"], "ocd-workflow.md", "# Workflow")
-        _write_rule(tmp_env["rules_dir"], "other-rule.md", "# Other")
+class TestTopologicalOrder:
+    def test_single_root(self, tmp_env: dict[str, Path]) -> None:
+        _write_manifest(tmp_env["manifest"], {
+            ".claude/rules/ocd-auth.md": {"pattern": "*", "dependencies": []},
+        })
+        levels = topological_order(tmp_env["manifest"])
+        assert len(levels) == 1
+        assert levels[0] == [".claude/rules/ocd-auth.md"]
 
-        rules = collect_rules(tmp_env["rules_dir"])
-        names = [Path(p).name for p in rules]
-        assert names == ["ocd-workflow.md"]
+    def test_two_independent_roots(self, tmp_env: dict[str, Path]) -> None:
+        _write_manifest(tmp_env["manifest"], {
+            ".claude/rules/ocd-a.md": {"pattern": "*", "dependencies": []},
+            ".claude/rules/ocd-b.md": {"pattern": "*", "dependencies": []},
+        })
+        levels = topological_order(tmp_env["manifest"])
+        assert len(levels) == 1
+        assert len(levels[0]) == 2
 
-    def test_empty_directory(self, tmp_env: dict[str, Path]) -> None:
-        rules = collect_rules(tmp_env["rules_dir"])
-        assert rules == []
+    def test_linear_chain(self, tmp_env: dict[str, Path]) -> None:
+        _write_manifest(tmp_env["manifest"], {
+            ".claude/rules/ocd-a.md": {"pattern": "*", "dependencies": []},
+            ".claude/ocd/conventions/b.md": {"pattern": "*.b", "dependencies": [".claude/rules/ocd-a.md"]},
+            ".claude/ocd/conventions/c.md": {"pattern": "*.c", "dependencies": [".claude/ocd/conventions/b.md"]},
+        })
+        levels = topological_order(tmp_env["manifest"])
+        assert len(levels) == 3
+        assert levels[0] == [".claude/rules/ocd-a.md"]
+        assert levels[1] == [".claude/ocd/conventions/b.md"]
+        assert levels[2] == [".claude/ocd/conventions/c.md"]
 
-    def test_nonexistent_directory(self, tmp_env: dict[str, Path]) -> None:
-        rules = collect_rules(tmp_env["tmpdir"] / "nonexistent")
-        assert rules == []
+    def test_diamond_dependency(self, tmp_env: dict[str, Path]) -> None:
+        _write_manifest(tmp_env["manifest"], {
+            ".claude/rules/ocd-a.md": {"pattern": "*", "dependencies": []},
+            ".claude/ocd/conventions/b.md": {"pattern": "*.b", "dependencies": [".claude/rules/ocd-a.md"]},
+            ".claude/ocd/conventions/c.md": {"pattern": "*.c", "dependencies": [".claude/rules/ocd-a.md"]},
+            ".claude/ocd/conventions/d.md": {"pattern": "*.d", "dependencies": [".claude/ocd/conventions/b.md", ".claude/ocd/conventions/c.md"]},
+        })
+        levels = topological_order(tmp_env["manifest"])
+        assert len(levels) == 3
+        assert levels[0] == [".claude/rules/ocd-a.md"]
+        assert sorted(levels[1]) == [".claude/ocd/conventions/b.md", ".claude/ocd/conventions/c.md"]
+        assert levels[2] == [".claude/ocd/conventions/d.md"]
+
+    def test_detects_cycle(self, tmp_env: dict[str, Path]) -> None:
+        _write_manifest(tmp_env["manifest"], {
+            ".claude/ocd/conventions/a.md": {"pattern": "*.a", "dependencies": [".claude/ocd/conventions/b.md"]},
+            ".claude/ocd/conventions/b.md": {"pattern": "*.b", "dependencies": [".claude/ocd/conventions/a.md"]},
+        })
+        with pytest.raises(ValueError, match="cycle"):
+            topological_order(tmp_env["manifest"])
+
+    def test_missing_dependency(self, tmp_env: dict[str, Path]) -> None:
+        _write_manifest(tmp_env["manifest"], {
+            ".claude/rules/ocd-a.md": {"pattern": "*", "dependencies": [".claude/rules/nonexistent.md"]},
+        })
+        with pytest.raises(ValueError, match="nonexistent"):
+            topological_order(tmp_env["manifest"])
+
+    def test_empty_manifest(self, tmp_env: dict[str, Path]) -> None:
+        tmp_env["manifest"].write_text("conventions:\n")
+        assert topological_order(tmp_env["manifest"]) == []
+
+    def test_deterministic_ordering(self, tmp_env: dict[str, Path]) -> None:
+        _write_manifest(tmp_env["manifest"], {
+            ".claude/rules/ocd-z.md": {"pattern": "*", "dependencies": []},
+            ".claude/rules/ocd-a.md": {"pattern": "*", "dependencies": []},
+            ".claude/rules/ocd-m.md": {"pattern": "*", "dependencies": []},
+        })
+        levels = topological_order(tmp_env["manifest"])
+        assert levels[0] == sorted(levels[0])
+
+
+# =========================================================================
+# Manifest validation
+# =========================================================================
+
+
+class TestValidateManifest:
+    def test_all_present(self, tmp_env: dict[str, Path]) -> None:
+        _write_file(tmp_env["root"], ".claude/rules/ocd-auth.md")
+        _write_file(tmp_env["root"], ".claude/ocd/conventions/python.md")
+        _write_manifest(tmp_env["manifest"], {
+            ".claude/rules/ocd-auth.md": {"pattern": "*"},
+            ".claude/ocd/conventions/python.md": {"pattern": "*.py"},
+        })
+        result = validate_manifest(tmp_env["manifest"])
+        assert result["missing"] == []
+        assert result["untracked"] == []
+
+    def test_missing_file(self, tmp_env: dict[str, Path]) -> None:
+        _write_manifest(tmp_env["manifest"], {
+            ".claude/rules/ocd-auth.md": {"pattern": "*"},
+        })
+        result = validate_manifest(tmp_env["manifest"])
+        assert ".claude/rules/ocd-auth.md" in result["missing"]
+
+    def test_untracked_file(self, tmp_env: dict[str, Path]) -> None:
+        _write_file(tmp_env["root"], ".claude/ocd/conventions/extra.md")
+        _write_manifest(tmp_env["manifest"], {
+            ".claude/rules/ocd-auth.md": {"pattern": "*"},
+        })
+        result = validate_manifest(tmp_env["manifest"])
+        assert ".claude/ocd/conventions/extra.md" in result["untracked"]
+
+    def test_manifest_itself_not_untracked(self, tmp_env: dict[str, Path]) -> None:
+        """manifest.yaml should not appear as untracked (it's not .md)."""
+        _write_manifest(tmp_env["manifest"], {})
+        result = validate_manifest(tmp_env["manifest"])
+        assert result["untracked"] == []

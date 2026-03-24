@@ -1,12 +1,19 @@
 """Conventions skill init and status.
 
-Deploys convention templates and reports infrastructure state.
+Deploys convention templates and manifest, reports infrastructure state.
 """
 
 import argparse
-import re
 import shutil
+import sys
 from pathlib import Path
+
+# Support both package import and direct execution
+try:
+    from . import conventions
+except ImportError:
+    sys.path.insert(0, str(Path(__file__).parent))
+    import conventions  # type: ignore[import-not-found]
 
 
 def get_project_dir() -> Path:
@@ -27,8 +34,12 @@ def get_conventions_dir(project_dir: Path) -> Path:
     return project_dir / ".claude" / "ocd" / "conventions"
 
 
+def get_manifest_path(project_dir: Path) -> Path:
+    return get_conventions_dir(project_dir) / "manifest.yaml"
+
+
 def init(plugin_root: Path, project_dir: Path, force: bool = False) -> list[str]:
-    """Deploy convention templates. Returns status lines."""
+    """Deploy convention templates and manifest. Returns status lines."""
     templates_src = plugin_root / "templates" / "conventions"
     conventions_dst = get_conventions_dir(project_dir)
     conventions_dst.mkdir(parents=True, exist_ok=True)
@@ -39,7 +50,10 @@ def init(plugin_root: Path, project_dir: Path, force: bool = False) -> list[str]
         lines.append("No convention templates found in plugin")
         return lines
 
-    for src in sorted(templates_src.glob("*.md")):
+    # Deploy all template files (*.md and manifest.yaml)
+    for src in sorted(templates_src.iterdir()):
+        if not src.is_file():
+            continue
         dst = conventions_dst / src.name
         if dst.exists() and not force:
             lines.append(f"Skipped (exists): {src.name}")
@@ -51,56 +65,55 @@ def init(plugin_root: Path, project_dir: Path, force: bool = False) -> list[str]
     return lines
 
 
-def _has_valid_pattern(file_path: Path) -> bool:
-    """Check if file has valid pattern field in YAML frontmatter."""
-    try:
-        content = file_path.read_text()
-    except OSError:
-        return False
-
-    match = re.match(r"^---\s*\n(.*?)\n---\s*\n", content, re.DOTALL)
-    if not match:
-        return False
-
-    for line in match.group(1).splitlines():
-        if line.strip().startswith("pattern:"):
-            return True
-
-    return False
-
-
 def status(project_dir: Path) -> dict:
     """Check conventions infrastructure state.
 
     Returns dict with:
-    - state: "operational" | "adopted"
+    - state: "operational" | "adopted" | "error"
     - details: list of human-readable status lines
     - actions: list of actionable commands
     """
-    conventions_dir = get_conventions_dir(project_dir)
+    manifest_path = get_manifest_path(project_dir)
 
-    if not conventions_dir.is_dir():
+    if not manifest_path.exists():
         return {
             "state": "adopted",
-            "details": ["Convention files: not found"],
-            "actions": ["Run /ocd-init to deploy convention files"],
+            "details": ["Manifest: not found"],
+            "actions": ["Run /ocd-init to deploy conventions"],
         }
 
-    md_files = sorted(conventions_dir.glob("*.md"))
-
-    if not md_files:
+    try:
+        manifest = conventions.load_manifest(manifest_path)
+    except Exception as e:
         return {
-            "state": "adopted",
-            "details": ["Convention files: none"],
-            "actions": ["Run /ocd-init to deploy convention files"],
+            "state": "error",
+            "details": [f"Manifest: {e}"],
+            "actions": ["Run /ocd-init --force to redeploy conventions"],
         }
 
-    valid_count = sum(1 for f in md_files if _has_valid_pattern(f))
+    validation = conventions.validate_manifest(manifest_path)
+    missing = validation["missing"]
+    untracked = validation["untracked"]
+
+    details = [f"Conventions: {len(manifest)} in manifest"]
+    actions = []
+
+    if missing:
+        details.append(f"Missing from disk: {', '.join(Path(p).name for p in missing)}")
+        actions.append("Run /ocd-init to deploy missing convention files")
+
+    if untracked:
+        details.append(f"Untracked: {', '.join(Path(p).name for p in untracked)}")
+        actions.append("Add untracked files to manifest.yaml or remove from conventions dir")
+
+    state = "operational"
+    if missing:
+        state = "error"
 
     return {
-        "state": "operational",
-        "details": [f"Convention files: {len(md_files)} ({valid_count} with valid patterns)"],
-        "actions": [],
+        "state": state,
+        "details": details,
+        "actions": actions,
     }
 
 

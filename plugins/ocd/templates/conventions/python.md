@@ -1,7 +1,3 @@
----
-pattern: "*.py"
----
-
 # Python Conventions
 
 ## Code Style

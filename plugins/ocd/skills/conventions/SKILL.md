@@ -1,7 +1,7 @@
 ---
 name: ocd-conventions
 description: Manage and enforce project conventions; --check reformats files to conform using deterministic pattern matching and single sequential agent
-argument-hint: "--check [path | /skill-name | project] [--pattern \"*.py\"] [--focus \"specific instruction\"] [--all] [--delegate]"
+argument-hint: "--check [path | /skill-name | project | --self] [--pattern \"*.py\"] [--focus \"specific instruction\"] [--all] [--delegate]"
 ---
 
 # /ocd-conventions
@@ -16,7 +16,12 @@ User runs `/ocd-conventions`
 
 1. If `--check` not in `$ARGUMENTS`:
   1. Respond with skill description and argument-hint, then stop
-2. Else:
+2. If `--self` in `$ARGUMENTS`:
+  1. If `--delegate` in `$ARGUMENTS`:
+    1. Respond with error: "--self does not support --delegate; self-evaluation requires interactive review between levels" and stop
+  2. Strip `--check` and `--self` from `$ARGUMENTS`
+  3. Proceed to Workflow: Self-Evaluation
+3. Else:
   1. Strip `--check` from `$ARGUMENTS`
   2. Proceed to Resolve Arguments
 
@@ -49,7 +54,7 @@ User runs `/ocd-conventions`
   3. Spawn single background agent with Workflow section, Rules section, Report section, and resolved arguments
   4. Present agent's report as-is
 
-## Workflow
+## Workflow: Conformity
 
 1. Route
 2. Resolve Arguments
@@ -57,13 +62,14 @@ User runs `/ocd-conventions`
 4. Check line counts — count lines in each target file
   1. If any target exceeds 500 lines:
     1. Report auto-fail for that target, remove from target list
-5. Discover criteria — run conventions CLI to get all applicable rules and conventions
+5. Discover criteria — run conventions CLI to get matching conventions for target files
   ```
-  python3 ${CLAUDE_PLUGIN_ROOT}/skills/conventions/scripts/conventions_cli.py get <target-paths>
+  python3 ${CLAUDE_PLUGIN_ROOT}/skills/conventions/scripts/conventions_cli.py list-matching <target-paths>
   ```
-  1. Output is one file path per line (rules first, then matched conventions)
+  1. Output groups: target file followed by indented convention paths
   2. If no output:
     1. Report "no criteria apply" and stop
+  3. Collect unique convention paths across all targets as criteria set
 6. Spawn single agent — one agent processes all targets sequentially with conformity reformat prompt; pass criteria file paths for agent to read directly
 7. Review changes — run `git diff` after agent completes, review for correctness before presenting
 8. Present results — per-target summary of changes applied, criteria used, and any issues requiring user judgment
@@ -137,6 +143,38 @@ Agent(
 )
 ```
 
+## Workflow: Self-Evaluation
+
+Evaluate rules and conventions against each other in dependency order. Files at each level are evaluated against criteria from all prior validated levels. Interactive — present findings per level, wait for user approval before proceeding.
+
+1. Get evaluation order — run conventions CLI `list-self` command
+  ```
+  python3 ${CLAUDE_PLUGIN_ROOT}/skills/conventions/scripts/conventions_cli.py list-self
+  ```
+  - If error (cycle detected or missing dependency): report error to user and stop
+  - Output is levels (Level 0, Level 1, ...) with file paths
+2. Present DAG overview to user — show levels with file names, confirm before starting
+3. Initialize criteria set — empty list
+4. For each level (starting at Level 0):
+  1. If criteria set is empty (Level 0):
+    1. Evaluate files for internal consistency only — terminology, cross-references, completeness
+  2. Else:
+    1. Evaluate each file against all criteria in criteria set
+    2. For each criterion, assess conformity with specific citations
+    3. Evaluate internal consistency — terminology, cross-references, completeness
+  3. Present findings for current level — per-file summary of conformity issues found
+  4. Wait for user — user reviews findings and either approves, requests fixes, or directs changes
+  5. When user approves level:
+    1. Add all files from current level to criteria set
+    2. Proceed to next level
+5. After all levels complete — present summary of full evaluation
+
+### Report
+
+- Per-level: files evaluated, criteria used, issues found
+- Per-file: conformity issues with specific rule/convention citations
+- Summary: total levels, total files, total issues found and resolved
+
 ## Rules
 
 - Use Agent tool with `subagent_type="general-purpose"` for agent spawn
@@ -147,3 +185,5 @@ Agent(
 - Target files exceeding 500 lines auto-fail without processing — file needs to be divided before conformity reformatting is meaningful
 - All convention rules are required by default. Rules described as "recommended" or "optional" in convention text are reported but do not block.
 - When `--focus` is provided, agent evaluates and fixes only aspects related to focus instruction — skip unrelated conventions entirely
+- Self-evaluation (`--self`) is interactive — present findings per level, wait for user approval before advancing; never batch all levels into single report
+- Self-evaluation does not support `--delegate` — interactive review between levels is structurally required

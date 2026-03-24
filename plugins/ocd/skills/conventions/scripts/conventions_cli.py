@@ -6,6 +6,7 @@ Business logic lives in conventions.py.
 
 import argparse
 import os
+import sys
 from pathlib import Path
 
 # Support both package import and direct execution
@@ -17,88 +18,105 @@ except ImportError:
 
 _PROJECT_DIR = Path(os.environ.get("CLAUDE_PROJECT_DIR", os.getcwd()))
 
-DEFAULT_CONVENTIONS_DIR = _PROJECT_DIR / ".claude" / "ocd" / "conventions"
-
-DEFAULT_RULES_DIR = _PROJECT_DIR / ".claude" / "rules"
-
-DEFAULT_CACHE_DB = _PROJECT_DIR / ".claude" / "ocd" / "cache.db"
+DEFAULT_MANIFEST = _PROJECT_DIR / ".claude" / "ocd" / "conventions" / "manifest.yaml"
 
 
-def _dispatch_get(args: argparse.Namespace) -> None:
-    conventions_dir = Path(args.conventions_dir) if args.conventions_dir else DEFAULT_CONVENTIONS_DIR
-    rules_dir = Path(args.rules_dir) if args.rules_dir else DEFAULT_RULES_DIR
-    cache_db = Path(args.cache_db) if args.cache_db else DEFAULT_CACHE_DB
+def _dispatch_list_patterns(args: argparse.Namespace) -> None:
+    manifest = Path(args.manifest) if args.manifest else DEFAULT_MANIFEST
 
-    rules = conventions.collect_rules(rules_dir)
-    matched = conventions.match_conventions(conventions_dir, cache_db, args.files)
-
-    all_paths = rules + matched
-    if not all_paths:
-        print(f"No criteria match: {', '.join(args.files)}")
-        return
-
-    for path in all_paths:
-        print(path)
-
-
-def _dispatch_list(args: argparse.Namespace) -> None:
-    conventions_dir = Path(args.conventions_dir) if args.conventions_dir else DEFAULT_CONVENTIONS_DIR
-    cache_db = Path(args.cache_db) if args.cache_db else DEFAULT_CACHE_DB
-
-    patterns = conventions.sync_patterns(cache_db, conventions_dir)
+    try:
+        patterns = conventions.list_patterns(manifest)
+    except FileNotFoundError:
+        print("Error: manifest.yaml not found. Run /ocd-init to deploy.", file=sys.stderr)
+        sys.exit(1)
 
     if not patterns:
         print("No conventions found.")
         return
 
-    for path, pattern in sorted(patterns.items(), key=lambda x: Path(x[0]).name):
-        name = Path(path).name
-        print(f"{name}  {pattern}")
+    for path, pattern in patterns:
+        print(f"{path}  {pattern}")
+
+
+def _dispatch_list_matching(args: argparse.Namespace) -> None:
+    manifest = Path(args.manifest) if args.manifest else DEFAULT_MANIFEST
+
+    try:
+        matches = conventions.list_matching(manifest, args.files)
+    except FileNotFoundError:
+        print("Error: manifest.yaml not found. Run /ocd-init to deploy.", file=sys.stderr)
+        sys.exit(1)
+
+    if not matches:
+        print(f"No criteria match: {', '.join(args.files)}")
+        return
+
+    for file_path, conv_paths in sorted(matches.items()):
+        print(f"{file_path} follows:")
+        for conv_path in conv_paths:
+            print(f"  {conv_path}")
+
+
+def _dispatch_list_self(args: argparse.Namespace) -> None:
+    manifest = Path(args.manifest) if args.manifest else DEFAULT_MANIFEST
+
+    try:
+        levels = conventions.topological_order(manifest)
+    except FileNotFoundError:
+        print("Error: manifest.yaml not found. Run /ocd-init to deploy.", file=sys.stderr)
+        sys.exit(1)
+    except ValueError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    for i, level in enumerate(levels):
+        print(f"Level {i}:")
+        for path in level:
+            print(f"  {path}")
 
 
 def _add_common_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
-        "--conventions-dir",
+        "--manifest",
         default=None,
-        help="Path to conventions directory (default: .claude/ocd/conventions/)",
-    )
-    parser.add_argument(
-        "--rules-dir",
-        default=None,
-        help="Path to rules directory (default: .claude/rules/)",
-    )
-    parser.add_argument(
-        "--cache-db",
-        default=None,
-        help="Path to cache database (default: .claude/ocd/cache.db)",
+        help="Path to manifest.yaml (default: .claude/ocd/conventions/manifest.yaml)",
     )
 
 
 def _add_subcommands(commands: argparse._SubParsersAction) -> None:
-    get_p = commands.add_parser(
-        "get",
+    lp_p = commands.add_parser(
+        "list-patterns",
         help=(
-            "Return file paths for all rules and conventions matching given file paths. "
-            "Rules (.claude/rules/ocd-*.md) are always included. "
-            "Conventions are pattern-matched against input file paths. "
-            "Output is one file path per line. Empty result means no criteria apply."
+            "Show all conventions with their match patterns. "
+            "Output is one line per convention: relative path followed by pattern."
         ),
     )
-    get_p.add_argument(
+    lp_p.set_defaults(_dispatch=_dispatch_list_patterns)
+
+    lm_p = commands.add_parser(
+        "list-matching",
+        help=(
+            "Return conventions matching given file paths, grouped by target file. "
+            "Output groups: target file followed by indented convention paths. "
+            "Empty result means no criteria apply."
+        ),
+    )
+    lm_p.add_argument(
         "files",
         nargs="+",
         help="File paths to match against convention patterns",
     )
-    get_p.set_defaults(_dispatch=_dispatch_get)
+    lm_p.set_defaults(_dispatch=_dispatch_list_matching)
 
-    list_p = commands.add_parser(
-        "list",
+    ls_p = commands.add_parser(
+        "list-self",
         help=(
-            "Show all available conventions and their match patterns. "
-            "Output is one line per convention: filename followed by pattern."
+            "Topologically sort conventions by dependency order for self-evaluation. "
+            "Level 0 has no dependencies (roots), Level 1 depends only on Level 0, etc. "
+            "Files within same level are independent. Detects and reports cycles."
         ),
     )
-    list_p.set_defaults(_dispatch=_dispatch_list)
+    ls_p.set_defaults(_dispatch=_dispatch_list_self)
 
 
 def register_commands(subparsers: argparse._SubParsersAction) -> None:
@@ -115,7 +133,7 @@ def register_commands(subparsers: argparse._SubParsersAction) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Discover rules and conventions applicable to target file paths.",
+        description="Manage convention patterns, matching, and dependency ordering.",
     )
     _add_common_args(parser)
 

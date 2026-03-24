@@ -1,7 +1,3 @@
----
-pattern: "*_cli.*"
----
-
 # CLI Conventions
 
 Conventions for agent-facing CLI scripts. Internal scripts (called by plugin hooks or other scripts, not by agents) follow standard engineering practices but do not need agent-oriented help text or output formatting.

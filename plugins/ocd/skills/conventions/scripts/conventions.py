@@ -1,149 +1,151 @@
 """Conventions operations.
 
-Matches file paths against convention pattern rules stored in frontmatter.
-Collects rule files from project rules directory.
-Caches pattern metadata in SQLite to avoid re-reading files on every call.
+Reads manifest.yaml for convention patterns and dependencies.
+Matches file paths against patterns. Produces topological ordering
+for self-evaluation.
 """
 
-import hashlib
-import logging
-import re
 import fnmatch
-import sqlite3
 from pathlib import Path
 
-logger = logging.getLogger(__name__)
 
-CACHE_SCHEMA = """
-CREATE TABLE IF NOT EXISTS convention_patterns (
-    path TEXT PRIMARY KEY,
-    git_hash TEXT NOT NULL,
-    pattern TEXT NOT NULL
-);
-"""
+def load_manifest(manifest_path: Path) -> dict[str, dict]:
+    """Load manifest.yaml. Returns {relative_path: {pattern, dependencies}} map.
 
-
-def _compute_git_hash(file_path: Path) -> str | None:
-    """Compute git-compatible blob hash for a file."""
-    try:
-        data = file_path.read_bytes()
-    except (OSError, IsADirectoryError):
-        return None
-    header = f"blob {len(data)}\0".encode()
-    return hashlib.sha1(header + data).hexdigest()
-
-
-def _ensure_schema(conn: sqlite3.Connection) -> None:
-    """Create cache table if missing."""
-    conn.executescript(CACHE_SCHEMA)
-
-
-def get_cache_connection(db_path: Path) -> sqlite3.Connection:
-    """Open cache database connection."""
-    db_path.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(str(db_path))
-    conn.execute("PRAGMA journal_mode=WAL")
-    conn.execute("PRAGMA busy_timeout=5000")
-    conn.row_factory = sqlite3.Row
-    _ensure_schema(conn)
-    return conn
-
-
-def _extract_pattern(file_path: Path) -> str | None:
-    """Extract pattern field from YAML frontmatter."""
-    try:
-        content = file_path.read_text()
-    except OSError:
-        return None
-
-    match = re.match(r"^---\s*\n(.*?)\n---\s*\n", content, re.DOTALL)
-    if not match:
-        return None
-
-    for line in match.group(1).splitlines():
-        line = line.strip()
-        if line.startswith("pattern:"):
-            value = line[len("pattern:"):].strip()
-            return value.strip('"').strip("'")
-
-    return None
-
-
-def sync_patterns(db_path: Path, conventions_dir: Path) -> dict[str, str]:
-    """Sync convention file patterns to cache. Returns {path: pattern} map.
-
-    Reads frontmatter only for files whose git hash has changed.
-    Removes cache entries for files no longer on disk.
+    Simple parser for the specific manifest structure — no PyYAML dependency.
+    Raises FileNotFoundError if manifest does not exist.
     """
-    conn = get_cache_connection(db_path)
-    try:
-        # Load cached entries
-        cached = {}
-        for row in conn.execute("SELECT path, git_hash, pattern FROM convention_patterns"):
-            cached[row["path"]] = {"git_hash": row["git_hash"], "pattern": row["pattern"]}
+    content = manifest_path.read_text()
+    result: dict[str, dict] = {}
 
-        # Scan convention files on disk
-        disk_files: dict[str, Path] = {}
-        if conventions_dir.is_dir():
-            for f in sorted(conventions_dir.glob("*.md")):
-                disk_files[str(f)] = f
+    current_path = None
+    for line in content.splitlines():
+        stripped = line.strip()
+        if not stripped or stripped == "conventions:":
+            continue
 
-        # Remove stale cache entries
-        for path in list(cached):
-            if path not in disk_files:
-                conn.execute("DELETE FROM convention_patterns WHERE path = ?", (path,))
-                del cached[path]
+        # Entry key: "  .claude/rules/ocd-auth.md:"
+        indent = len(line) - len(line.lstrip())
+        if indent == 2 and stripped.endswith(":"):
+            current_path = stripped[:-1]
+            result[current_path] = {"pattern": "", "dependencies": []}
+            continue
 
-        # Update changed or new entries
-        result = {}
-        for path_str, path_obj in disk_files.items():
-            current_hash = _compute_git_hash(path_obj)
-            if current_hash is None:
-                continue
+        if current_path is None:
+            continue
 
-            cache_entry = cached.get(path_str)
-            if cache_entry and cache_entry["git_hash"] == current_hash:
-                result[path_str] = cache_entry["pattern"]
-                continue
+        # Pattern: '    pattern: "*.py"'
+        if stripped.startswith("pattern:"):
+            value = stripped[len("pattern:"):].strip()
+            result[current_path]["pattern"] = value.strip('"').strip("'")
 
-            pattern = _extract_pattern(path_obj)
-            if pattern is None:
-                continue
+        # Dependencies: '    dependencies: [.claude/rules/ocd-auth.md, .claude/ocd/conventions/cli.md]'
+        elif stripped.startswith("dependencies:"):
+            value = stripped[len("dependencies:"):].strip()
+            value = value.strip("[]")
+            if value:
+                result[current_path]["dependencies"] = [
+                    item.strip().strip('"').strip("'") for item in value.split(",")
+                ]
 
-            conn.execute(
-                "INSERT OR REPLACE INTO convention_patterns (path, git_hash, pattern) "
-                "VALUES (?, ?, ?)",
-                (path_str, current_hash, pattern),
-            )
-            result[path_str] = pattern
-
-        conn.commit()
-        return result
-    finally:
-        conn.close()
+    return result
 
 
-def match_conventions(conventions_dir: Path, db_path: Path, file_paths: list[str]) -> list[str]:
-    """Match file paths against convention patterns. Returns list of matching convention file paths.
+def list_patterns(manifest_path: Path) -> list[tuple[str, str]]:
+    """Return all conventions with their patterns. Returns [(path, pattern)] sorted by path."""
+    manifest = load_manifest(manifest_path)
+    return sorted((path, entry["pattern"]) for path, entry in manifest.items())
 
-    Each convention declares a glob pattern in frontmatter. All conventions whose
-    pattern matches any of the input file paths are returned, deduplicated.
+
+def list_matching(manifest_path: Path, file_paths: list[str]) -> dict[str, list[str]]:
+    """Match target files against convention patterns.
+
+    Returns {target_file: [matching_convention_paths]} map. Only files
+    with at least one match are included.
     """
-    patterns = sync_patterns(db_path, conventions_dir)
+    manifest = load_manifest(manifest_path)
+    result: dict[str, list[str]] = {}
 
-    matched = []
-    for conv_path, pattern in patterns.items():
-        for file_path in file_paths:
-            basename = Path(file_path).name
+    for file_path in file_paths:
+        basename = Path(file_path).name
+        matches = []
+        for conv_path, entry in manifest.items():
+            pattern = entry["pattern"]
             if fnmatch.fnmatch(basename, pattern) or fnmatch.fnmatch(file_path, pattern):
-                matched.append(conv_path)
-                break
+                matches.append(conv_path)
+        if matches:
+            result[file_path] = sorted(matches)
 
-    return sorted(matched)
+    return result
 
 
-def collect_rules(rules_dir: Path) -> list[str]:
-    """Collect ocd rule file paths from rules directory. Returns sorted paths."""
-    if not rules_dir.is_dir():
+def topological_order(manifest_path: Path) -> list[list[str]]:
+    """Topologically sort conventions by dependency order.
+
+    Returns list of levels. Each level is a list of convention paths.
+    Level 0 contains roots (no dependencies). Level N depends only on
+    levels 0..N-1. Paths within same level are sorted alphabetically.
+
+    Raises ValueError on missing dependencies or cycles.
+    """
+    manifest = load_manifest(manifest_path)
+
+    if not manifest:
         return []
-    return sorted(str(f) for f in rules_dir.glob("ocd-*.md"))
+
+    # Validate dependencies exist
+    all_paths = set(manifest)
+    for path, entry in manifest.items():
+        for dep in entry["dependencies"]:
+            if dep not in all_paths:
+                raise ValueError(f"{path} depends on {dep}, which was not found in manifest")
+
+    # Kahn's algorithm with level tracking
+    in_degree = {path: len(entry["dependencies"]) for path, entry in manifest.items()}
+
+    levels: list[list[str]] = []
+    current = sorted(p for p in in_degree if in_degree[p] == 0)
+
+    while current:
+        levels.append(current)
+        next_level = []
+        for node in current:
+            for path, entry in manifest.items():
+                if node in entry["dependencies"]:
+                    in_degree[path] -= 1
+                    if in_degree[path] == 0:
+                        next_level.append(path)
+        current = sorted(set(next_level))
+
+    remaining = [p for p in in_degree if in_degree[p] > 0]
+    if remaining:
+        raise ValueError(f"Dependency cycle detected among: {', '.join(sorted(remaining))}")
+
+    return levels
+
+
+def validate_manifest(manifest_path: Path) -> dict:
+    """Validate manifest against disk. Returns {missing: [...], untracked: [...]}.
+
+    missing: paths in manifest but not on disk
+    untracked: .md files in conventions dir not in manifest
+    """
+    # manifest is at .claude/ocd/conventions/manifest.yaml — 4 levels to project root
+    project_dir = manifest_path.parent.parent.parent.parent
+    manifest = load_manifest(manifest_path)
+    conventions_dir = manifest_path.parent
+
+    missing = []
+    for path in manifest:
+        full_path = project_dir / path
+        if not full_path.exists():
+            missing.append(path)
+
+    untracked = []
+    if conventions_dir.is_dir():
+        manifest_basenames = {Path(p).name for p in manifest}
+        for f in sorted(conventions_dir.glob("*.md")):
+            if f.name not in manifest_basenames:
+                untracked.append(str(f.relative_to(project_dir)))
+
+    return {"missing": missing, "untracked": untracked}
