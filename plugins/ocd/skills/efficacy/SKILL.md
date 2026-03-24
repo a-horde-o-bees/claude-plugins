@@ -37,7 +37,7 @@ User runs `/ocd-efficacy`
   1. If matches `/Task\(|subagent_type|spawn\s+agent/`:
     1. Append recursion constraint (see Rules)
 5. Resolve scenarios
-  1. If subject is skill path:
+  1. If subject is skill (resolved via `/skill-name` or explicit SKILL.md path):
     1. Read target skill's Route section
     2. Identify distinct routes — each unique path through Route that leads to a different Workflow or EXIT constitutes a scenario
     3. Construct one scenario per route — describe arguments that exercise that path

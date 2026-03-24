@@ -34,8 +34,9 @@ User runs `/ocd-conventions`
     2. If exit code 1: EXIT — report skill not found
     3. Set target directory to parent of resolved SKILL.md path
   5. Else if path:
-    1. If file: set single file as sole target; skip to step 5
-    2. If directory: set target directory to path
+    1. If file named `SKILL.md`: set target directory to parent directory (treat as skill target)
+    2. Else if file: set single file as sole target; skip to step 5
+    3. If directory: set target directory to path
   6. Else:
     1. EXIT — unrecognized argument
 4. Enumerate targets — run navigator CLI to get filtered file list
