@@ -2,6 +2,10 @@
 
 Conventions for agent-facing CLI scripts. Internal scripts (called by plugin hooks or other scripts, never by agents) follow standard engineering practices but do not need agent-oriented help text or output formatting.
 
+## Separation of Concerns
+
+CLI scripts are presentation only — argument parsing, output formatting, and dispatch wrappers. No business logic, database connections, or domain operations in CLI files. Delegates to supporting modules (`{name}.py`, `_{purpose}.py`) for all operations. CLI docstring declares its supporting modules: `"Business logic lives in {name}.py."`.
+
 ## Flag and Argument Design
 
 - Long-form flags only — `--description`, `--recursive`, not `-d`, `-r`

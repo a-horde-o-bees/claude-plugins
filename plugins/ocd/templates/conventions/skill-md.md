@@ -218,4 +218,5 @@ Discovery locations (highest priority wins):
 | Enterprise | Managed settings |
 | Personal | `~/.claude/skills/*/SKILL.md` |
 | Project | `.claude/skills/*/SKILL.md` |
-| Plugin | `<plugin>/skills/*/SKILL.md` |
+| Plugin (--plugin-dir) | `<plugin>/skills/*/SKILL.md` — local development; shadows marketplace for same plugin |
+| Plugin (marketplace) | `~/.claude/plugins/` → installed plugin `installPath` → `skills/*/SKILL.md` |

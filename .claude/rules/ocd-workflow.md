@@ -12,7 +12,7 @@ Bash commands are governed by `.claude/settings.json` (project) and `~/.claude/s
 
 ## Agents
 
-- Minimize agent count — each agent independently loads context and rediscovers project, so fewer agents means less token overhead; default to single agent processing tasks sequentially within one context; multiple agents require explicit user direction or permission
+- Minimize agent count — each agent independently loads context and rediscovers project, so fewer agents means less token overhead; default to single agent processing tasks sequentially within one context; multiple agents require explicit user direction, permission, or skill-defined concurrency
 - After all file-modifying agents complete, run `git diff` to review changes before presenting results to user
 
 ## Testing
