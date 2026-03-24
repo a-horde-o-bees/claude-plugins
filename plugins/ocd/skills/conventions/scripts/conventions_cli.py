@@ -38,6 +38,22 @@ def _dispatch_list_patterns(args: argparse.Namespace) -> None:
         print(f"{path}  {pattern}")
 
 
+def _line_count_tag(file_path: str, warn_threshold: int, fail_threshold: int) -> str:
+    """Return line count tag if file exceeds threshold. Empty string otherwise."""
+    if not warn_threshold and not fail_threshold:
+        return ""
+    try:
+        line_count = len((_PROJECT_DIR / file_path).read_text().splitlines())
+    except (FileNotFoundError, PermissionError, OSError):
+        return ""
+
+    if fail_threshold and line_count > fail_threshold:
+        return f"[fail: {line_count} lines]"
+    if warn_threshold and line_count > warn_threshold:
+        return f"[warn: {line_count} lines]"
+    return ""
+
+
 def _dispatch_list_matching(args: argparse.Namespace) -> None:
     manifest = Path(args.manifest) if args.manifest else DEFAULT_MANIFEST
 
@@ -51,8 +67,26 @@ def _dispatch_list_matching(args: argparse.Namespace) -> None:
         print(f"No criteria match: {', '.join(args.files)}")
         return
 
+    settings = conventions.load_settings(manifest)
+    warn_threshold = settings.get("lines_warn_threshold", 0)
+    fail_threshold = settings.get("lines_fail_threshold", 0)
+
+    # Unique criteria header
+    all_criteria: set[str] = set()
+    for conv_paths in matches.values():
+        all_criteria.update(conv_paths)
+    print("Criteria:")
+    for criteria_path in sorted(all_criteria):
+        print(f"  {criteria_path}")
+    print()
+
+    # Per-file matches with line count tags
     for file_path, conv_paths in sorted(matches.items()):
-        print(f"{file_path} follows:")
+        tag = _line_count_tag(file_path, warn_threshold, fail_threshold)
+        if tag:
+            print(f"{file_path} {tag} follows:")
+        else:
+            print(f"{file_path} follows:")
         for conv_path in conv_paths:
             print(f"  {conv_path}")
 
@@ -96,8 +130,9 @@ def _add_subcommands(commands: argparse._SubParsersAction) -> None:
     lm_p = commands.add_parser(
         "list-matching",
         help=(
-            "Return conventions matching given file paths, grouped by target file. "
-            "Output groups: target file followed by indented convention paths. "
+            "Return conventions matching given file paths. "
+            "Output: unique criteria header followed by per-file convention groups. "
+            "Files exceeding line thresholds from manifest settings are tagged. "
             "Empty result means no criteria apply."
         ),
     )

@@ -54,6 +54,47 @@ def load_manifest(manifest_path: Path) -> dict[str, dict]:
     return result
 
 
+def load_settings(manifest_path: Path) -> dict:
+    """Load settings section from manifest.yaml. Returns {key: value} map.
+
+    Settings are optional. Returns empty dict if no settings section exists
+    or manifest file is missing.
+    """
+    try:
+        content = manifest_path.read_text()
+    except FileNotFoundError:
+        return {}
+
+    result: dict = {}
+    in_settings = False
+
+    for line in content.splitlines():
+        stripped = line.strip()
+        if not stripped:
+            continue
+        indent = len(line) - len(line.lstrip())
+
+        if indent == 0 and stripped == "settings:":
+            in_settings = True
+            continue
+        elif indent == 0 and stripped.endswith(":"):
+            in_settings = False
+            continue
+
+        if not in_settings:
+            continue
+
+        if indent == 2 and ":" in stripped:
+            key, _, value = stripped.partition(":")
+            value = value.strip()
+            try:
+                result[key.strip()] = int(value)
+            except ValueError:
+                result[key.strip()] = value
+
+    return result
+
+
 def list_patterns(manifest_path: Path) -> list[tuple[str, str]]:
     """Return all conventions with their patterns. Returns [(path, pattern)] sorted by path."""
     manifest = load_manifest(manifest_path)

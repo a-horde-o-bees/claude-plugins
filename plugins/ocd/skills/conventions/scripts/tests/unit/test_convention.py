@@ -10,6 +10,7 @@ import pytest
 
 from skills.conventions.scripts.conventions import (
     load_manifest,
+    load_settings,
     list_patterns,
     list_matching,
     topological_order,
@@ -35,9 +36,19 @@ def tmp_env() -> Generator[dict[str, Path], None, None]:
         }
 
 
-def _write_manifest(manifest_path: Path, conventions: dict[str, dict]) -> None:
-    """Write a manifest.yaml file."""
-    lines = ["conventions:"]
+def _write_manifest(
+    manifest_path: Path,
+    conventions: dict[str, dict],
+    settings: dict[str, int | str] | None = None,
+) -> None:
+    """Write a manifest.yaml file with optional settings section."""
+    lines = []
+    if settings:
+        lines.append("settings:")
+        for key, value in settings.items():
+            lines.append(f"  {key}: {value}")
+        lines.append("")
+    lines.append("conventions:")
     for path, entry in conventions.items():
         lines.append(f"  {path}:")
         lines.append(f'    pattern: "{entry.get("pattern", "*")}"')
@@ -53,6 +64,44 @@ def _write_file(root: Path, rel_path: str, content: str = "# Content") -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(f"{content}\n")
     return path
+
+
+# =========================================================================
+# Settings loading
+# =========================================================================
+
+
+class TestLoadSettings:
+    def test_loads_settings(self, tmp_env: dict[str, Path]) -> None:
+        _write_manifest(
+            tmp_env["manifest"],
+            {".claude/rules/ocd-auth.md": {"pattern": "*"}},
+            settings={"lines_warn_threshold": 500, "lines_fail_threshold": 2000},
+        )
+        result = load_settings(tmp_env["manifest"])
+        assert result["lines_warn_threshold"] == 500
+        assert result["lines_fail_threshold"] == 2000
+
+    def test_missing_settings_section(self, tmp_env: dict[str, Path]) -> None:
+        _write_manifest(tmp_env["manifest"], {
+            ".claude/rules/ocd-auth.md": {"pattern": "*"},
+        })
+        result = load_settings(tmp_env["manifest"])
+        assert result == {}
+
+    def test_missing_manifest_file(self, tmp_env: dict[str, Path]) -> None:
+        result = load_settings(tmp_env["manifest"])
+        assert result == {}
+
+    def test_settings_do_not_affect_conventions(self, tmp_env: dict[str, Path]) -> None:
+        _write_manifest(
+            tmp_env["manifest"],
+            {".claude/rules/ocd-auth.md": {"pattern": "*", "dependencies": []}},
+            settings={"lines_warn_threshold": 500},
+        )
+        conventions_result = load_manifest(tmp_env["manifest"])
+        assert len(conventions_result) == 1
+        assert conventions_result[".claude/rules/ocd-auth.md"]["pattern"] == "*"
 
 
 # =========================================================================
