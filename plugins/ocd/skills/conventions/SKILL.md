@@ -16,96 +16,90 @@ User runs `/ocd-conventions`
 
 1. If `--check` not in `$ARGUMENTS`:
   1. Respond with skill description and argument-hint, then stop
-2. If `self` in `$ARGUMENTS`:
-  1. If `--delegate` in `$ARGUMENTS`:
-    1. Respond with error: "self does not support --delegate; self-evaluation requires interactive review between levels" and stop
-  2. Strip `--check` and `self` from `$ARGUMENTS`
-  3. Proceed to Workflow: Self-Evaluation
-3. Else:
-  1. Strip `--check` from `$ARGUMENTS`
-  2. Proceed to Resolve Arguments
-
-## Resolve Arguments
-
-1. Strip `--delegate`, `--all`, `--focus "..."`, and `--pattern "..."` from `$ARGUMENTS` if present; collect all `--pattern` values
-2. If remaining arguments empty:
-  1. Respond with skill description and argument-hint, then stop
-3. Else if `project`:
-  1. Treat as `.` — project root directory
-4. Else if starts with `/`:
-  1. Target directory is `.claude/skills/{name}/` (replace hyphens with underscores for directory name)
-5. Else if path:
-  1. If file:
-    1. Set single file as sole target; ignore `--pattern` if present; skip to step 7
-  2. If directory:
-    1. Set target directory to path
-6. Enumerate directory targets — run navigator CLI to get filtered file list
+2. Strip flags — extract `--check`, `--delegate`, `--all`, `--focus "..."`, and `--pattern "..."` from `$ARGUMENTS`; collect `--pattern` values and `--focus` text
+3. Resolve target — validate remaining arguments, resolve paths
+  1. If remaining arguments empty:
+    1. EXIT — respond with skill description and argument-hint
+  2. If `self`:
+    1. If `--delegate`:
+      1. EXIT — self-evaluation is interactive and cannot be delegated
+    2. Select Workflow: Self-Evaluation; proceed to step 7
+  3. Else if `project`:
+    1. Set target directory to `.` (project root)
+  4. Else if starts with `/`:
+    1. Resolve path — `.claude/skills/{name}/` (strip leading `/`, replace hyphens with underscores)
+    2. If path does not exist:
+      1. EXIT — report skill not found at resolved path
+  5. Else if path:
+    1. If file: set single file as sole target; skip to step 5
+    2. If directory: set target directory to path
+  6. Else:
+    1. EXIT — unrecognized argument
+4. Enumerate targets — run navigator CLI to get filtered file list
   ```bash
   python3 ${CLAUDE_PLUGIN_ROOT}/skills/navigator/scripts/navigator_cli.py list <directory> [--pattern "..."] [--exclude "..."]
   ```
-  - Pass through any `--pattern` values collected in step 1
+  - Pass through `--pattern` values from step 2
   - If `--all` not present, apply boundary rule via `--exclude ".claude/*"`
-  - Output is one file path per line, pre-filtered by navigator exclude rules, pattern filters, and exclude filters
-7. Deduplicate target list
-
-## Delegate Execution
-
-1. When `--delegate` is in `$ARGUMENTS`:
-  1. Route
-  2. Resolve Arguments
-  3. Spawn single background agent with Workflow section, Rules section, Report section, and resolved arguments
-  4. Present agent's report as-is
-
-## Workflow: Conformity
-
-1. Extract focus — if `--focus "..."` present, extract quoted text as focus instruction
-2. Check line counts — count lines in each target file
-  1. If any target exceeds 500 lines:
-    1. Report auto-fail for that target, remove from target list
-3. Discover criteria — run conventions CLI to get matching conventions for target files
+  - Explicit file paths bypass boundary rule — passing `.claude/` path as target in step 3.5 checks that path without exclusion
+5. Deduplicate target list
+6. Discover criteria — run conventions CLI
   ```
   python3 ${CLAUDE_PLUGIN_ROOT}/skills/conventions/scripts/conventions_cli.py list-matching <target-paths>
   ```
-  1. Output groups: target file followed by indented convention paths
-  2. If no output:
-    1. Report "no criteria apply" and stop
-  3. Collect unique convention paths across all targets as criteria set
-4. Spawn single agent — one agent processes all targets sequentially with conformity reformat prompt; pass criteria file paths for agent to read directly
-5. Review changes — run `git diff` after agent completes, review for correctness before presenting
-6. Present results — per-target summary of changes applied, criteria used, and any issues requiring user judgment
+  - Output: `Criteria:` header with deduplicated convention paths, then per-file groups with line count tags
+  - If no criteria match: report "no criteria apply" and stop
+  - Files tagged `[fail: N lines]` auto-fail — report to user, remove from target list
+  - Files tagged `[warn: N lines]` proceed with warning noted
+7. Dispatch
+  1. If `--delegate`:
+    1. Resolve all prompt template placeholders in selected Workflow
+    2. Spawn background agent with resolved Workflow and Rules
+    3. Present agent report as-is
+  2. Else:
+    1. Proceed to selected Workflow (default: Workflow: Conformity)
+
+## Workflow: Conformity
+
+1. Extract focus — if `--focus` present, use focus text from Route
+2. Build conformity reformat prompt — resolve all placeholders:
+  - `{criteria_section}` — `Criteria:` block from `list-matching` output (deduplicated convention paths)
+  - `{per_file_criteria}` — per-file groups from `list-matching` output (each target with its matching conventions)
+  - `{focus_instruction}` — focus text if present, omit block otherwise
+3. Spawn single agent with resolved prompt
+4. Review changes — run `git diff` after agent completes; review for correctness before presenting
+5. Present results — per-target summary of changes applied, criteria used, and issues requiring user judgment
 
 ### File Roles
 
 Every file referenced during reformatting falls into one of two roles:
 
 - Target is file being reformatted
-- Criteria are file paths returned by conventions CLI (rules and matched conventions) — passed to agent for direct reading
-
-### Boundary Rule
-
-Files under `.claude/` are excluded from target list by default — convention definitions, rule definitions, and project instructions live there. Use `--all` to include `.claude/` files in target list, or pass `.claude/` path as explicit target to check specific files.
+- Criteria are convention and rule files listed in `Criteria:` header — agent reads each once, then applies per-file based on grouping
 
 ### Conformity Reformat Prompt
+
+Orchestrator resolves all placeholders before passing to agent. Agent receives fully resolved prompt with no template variables.
 
 ```
 You are reformatting files to conform with project conventions. Process each target file sequentially.
 
-`{if focus_instruction}`
-Focus: `{focus_instruction}`
+{if focus_instruction}
+Focus: {focus_instruction}
 Evaluate and fix only aspects related to this focus. Skip unrelated conventions.
-`{end if}`
+{end if}
 
 Criteria files to read (rules and conventions — your evaluation criteria):
-`{criteria_paths}`
+{criteria_section}
 
-Target files to reformat (process in order):
-`{target_list}`
+Target files to reformat, each with applicable criteria:
+{per_file_criteria}
 
 For EACH target file:
 
 1. Read target file
-2. Evaluate target file against all criteria read above
-3. For each convention or rule:
+2. Evaluate target file against its listed criteria
+3. For each applicable convention or rule:
   1. Assess conformity with specific rule citations
   2. Apply fixes for any non-conformities found
 4. After convention conformity, evaluate and fix internal consistency:
@@ -138,14 +132,14 @@ After processing ALL targets, provide consolidated report:
 ```
 Agent(
   subagent_type="general-purpose",
-  prompt="<filled conformity reformat prompt with convention content, target list, and optional focus>",
+  prompt="<fully resolved conformity reformat prompt>",
   description="Conformity: <target summary>"
 )
 ```
 
 ## Workflow: Self-Evaluation
 
-Evaluate rules and conventions against each other in dependency order. Files at each level are evaluated against criteria from all prior validated levels. Interactive — present findings per level, wait for user approval before proceeding.
+Evaluate rules and conventions against each other in dependency order. Report-only — present findings per level for user review, do not apply fixes. Files at each level are evaluated against criteria from all prior validated levels.
 
 1. Get evaluation order — run conventions CLI `list-self` command
   ```
@@ -153,38 +147,46 @@ Evaluate rules and conventions against each other in dependency order. Files at 
   ```
   1. If error (cycle detected or missing dependency):
     1. Report error to user and stop
-  2. Output is levels (Level 0, Level 1, ...) with file paths
+  - Output is levels (Level 0, Level 1, ...) with file paths
 2. Present DAG overview to user — show levels with file names, confirm before starting
-3. Initialize criteria set — empty list
-4. For each level (starting at Level 0):
+3. If `--focus` present:
+  1. Note focus scope — evaluation narrows to focus-related aspects; if focus applicability is ambiguous for self-evaluation context, ask user for clarification before proceeding
+4. Initialize criteria set — empty list
+5. For each level (starting at Level 0):
   1. If criteria set is empty (Level 0):
     1. Evaluate files for internal consistency only — terminology, cross-references, completeness
   2. Else:
     1. Evaluate each file against all criteria in criteria set
     2. For each criterion, assess conformity with specific citations
     3. Evaluate internal consistency — terminology, cross-references, completeness
-  3. Present findings for current level — per-file summary of conformity issues found
-  4. Wait for user — user reviews findings and either approves, requests fixes, or directs changes
-  5. When user approves level:
+  3. If `--focus` present:
+    1. Skip evaluation of aspects unrelated to focus
+  4. Present findings for current level — per-file summary of conformity issues found
+  5. Wait for user — user reviews findings and either approves, requests changes, or directs next steps
+  6. When user approves level:
     1. Add all files from current level to criteria set
     2. Proceed to next level
-5. After all levels complete — present summary of full evaluation
+6. After all levels complete — present summary of full evaluation
 
 ### Report
 
 - Per-level: files evaluated, criteria used, issues found
 - Per-file: conformity issues with specific rule/convention citations
-- Summary: total levels, total files, total issues found and resolved
+- Summary: total levels, total files, total issues found
 
 ## Rules
 
 - Use Agent tool with `subagent_type="general-purpose"` for agent spawn
-- Do not pass conversation context to spawned agent — agent inherits CLAUDE.md automatically but receives no other context beyond conformity reformat prompt
+- Do not pass conversation context to spawned agent — agent inherits CLAUDE.md automatically but receives no other context beyond resolved prompt
 - Single agent processes all targets sequentially — never spawn parallel agents per target
-- Agent applies fixes directly — reformatting, not just reporting
+- Agent applies fixes directly in Conformity workflow — reformatting, not just reporting
+- Self-evaluation is report-only — present findings, do not apply fixes; user directs any changes after reviewing
 - Agent preserves semantic meaning — changes are stylistic and structural, never altering what file communicates
-- Target files exceeding 500 lines auto-fail without processing — file needs to be divided before conformity reformatting is meaningful
+- Files tagged `[fail: N lines]` in `list-matching` output auto-fail without processing — reported to user with line count
+- Files tagged `[warn: N lines]` proceed with size noted — agent may need to use targeted reads for large files
+- Line count thresholds are configurable in manifest.yaml `settings` section (`lines_warn_threshold`, `lines_fail_threshold`)
 - All convention rules are required by default. Rules described as "recommended" or "optional" in convention text are reported but do not block.
-- When `--focus` is provided, agent evaluates and fixes only aspects related to focus instruction — skip unrelated conventions entirely
-- Self-evaluation (`self`) is interactive — present findings per level, wait for user approval before advancing; never batch all levels into single report
+- `--focus` is accepted in all routes — Conformity agent evaluates only focus-related aspects; Self-Evaluation narrows scope to focus; orchestrator asks user for clarification when focus applicability is ambiguous
+- `--delegate` spawns background agent with fully resolved Workflow and Rules — orchestration (Route) always runs in main conversation
 - Self-evaluation does not support `--delegate` — interactive review between levels is structurally required
+- Orchestrator resolves all prompt template placeholders before agent handoff — agents receive fully resolved prompts with no template variables
