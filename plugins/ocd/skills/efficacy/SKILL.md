@@ -1,7 +1,7 @@
 ---
 name: ocd-efficacy
 description: Documentation efficacy testing; --check spawns blank-context agent to verify documentation enables correct task execution
-argument-hint: "--check [/skill-name | scenario description] [--delegate]"
+argument-hint: "--check [/skill-name | scenario description] [--intent \"natural language goal\"] [--delegate]"
 ---
 
 # /ocd-efficacy
@@ -18,28 +18,34 @@ User runs `/ocd-efficacy`
 
 1. If `--check` not in `$ARGUMENTS`:
   1. Respond with skill description and argument-hint, then stop
-2. Strip flags — extract `--check` and `--delegate` from `$ARGUMENTS`
-3. Resolve subject — validate remaining arguments, resolve paths
+2. Strip flags — extract `--check`, `--delegate`, and `--intent "..."` from `$ARGUMENTS`
+3. If `--intent` present:
+  1. Interpret intent — evaluate intent text against available pipeline controls: subject resolution, scenario construction, and agent scope instruction
+  2. Derive adjustments — translate intent into concrete changes to downstream steps; adjustments may include changing subject, refining scenario construction, or adding scope instruction to efficacy audit prompt
+  3. If adjustments conflict with explicit arguments:
+    1. Surface conflict and work with user to resolve
+  4. Present adjustments and ask user for confirmation before proceeding
+  5. Apply confirmed adjustments — merge into pipeline state for downstream steps
+4. Resolve subject — validate remaining arguments, resolve paths
   1. If remaining arguments empty:
     1. EXIT — respond with skill description and argument-hint
-  2. If subject starts with `/`:
-    1. Resolve skill path — run navigator CLI `resolve-skill` with skill name (strip leading `/`)
-      ```
-      python3 ${CLAUDE_PLUGIN_ROOT}/skills/navigator/scripts/navigator_cli.py resolve-skill <name>
-      ```
-    2. If exit code 1: EXIT — report skill not found
-    3. Read resolved SKILL.md as resolved prompt
-  3. Else if subject is path to SKILL.md file:
-    1. Read file as resolved prompt
-  4. Else:
+  2. If subject starts with `/` or file named `SKILL.md`:
+    1. If starts with `/`:
+      1. Resolve skill path — run navigator CLI `resolve-skill` with skill name (strip leading `/`)
+        ```
+        python3 ${CLAUDE_PLUGIN_ROOT}/skills/navigator/scripts/navigator_cli.py resolve-skill <name>
+        ```
+      2. If exit code 1: EXIT — report skill not found
+    2. Read resolved SKILL.md as resolved prompt
+  3. Else:
     1. Subject text is resolved prompt
-4. Check recursion constraint — evaluate resolved prompt for agent-spawning patterns
+5. Check recursion constraint — evaluate resolved prompt for agent-spawning patterns
   1. If matches `/Task\(|subagent_type|spawn\s+agent/`:
     1. Append recursion constraint (see Rules)
-5. Resolve scenarios
+6. Resolve scenarios
   1. If subject is skill (resolved via `/skill-name` or explicit SKILL.md path):
     1. Read target skill's Route section
-    2. Identify distinct routes — each unique path through Route that leads to a different Workflow or EXIT constitutes a scenario
+    2. Identify distinct routes — each unique path through Route that leads to different Workflow or EXIT constitutes scenario
     3. Construct one scenario per route — describe arguments that exercise that path
   2. Else:
     1. Evaluate whether subject warrants multiple scenarios — consider whether prompt implies multiple test paths, whether common testing patterns apply, or whether different contexts would produce meaningfully different results
@@ -49,8 +55,8 @@ User runs `/ocd-efficacy`
       1. Ask user for clarification — explain interpretation and propose options
     4. Else:
       1. Single scenario — resolved prompt as-is
-6. Present scenarios to user for confirmation or modification before executing
-7. Dispatch
+7. Present scenarios to user for confirmation or modification before executing
+8. Dispatch
   1. If `--delegate`:
     1. Resolve all prompt template placeholders in Workflow
     2. Spawn background agent with resolved Workflow, subsections, and Rules
@@ -160,6 +166,9 @@ Report:
 - Agents spawn in parallel — each scenario gets independent blank-context agent; no shared state or dependencies between scenarios
 - Skill path resolution via navigator `resolve-skill` — searches personal, project, plugin-dir, marketplace in Claude Code priority order
 - Cross-cutting findings require 2+ scenario recurrence — do not promote single-scenario observations
-- Route discovery for skill paths identifies distinct routes through Route section — each unique path that leads to a different Workflow or EXIT is a scenario
+- Route discovery for skill paths identifies distinct routes through Route section — each unique path that leads to different Workflow or EXIT is scenario
 - Scenarios are always presented to user for confirmation before execution — orchestrator does not proceed without user approval of scenario list
 - `--delegate` spawns background agent with resolved Workflow and Rules — scenario resolution (Route) always runs in main conversation; only workflow execution is delegated
+- `--intent` evaluation occurs in Route before deterministic pipeline steps — orchestrator interprets intent, derives adjustments (subject, scenario refinement, agent scope instruction), and presents for user confirmation before proceeding
+- When `--intent` conflicts with explicit arguments, orchestrator surfaces conflict and works with user to resolve — no implicit precedence
+- Without `--intent`, Route executes deterministically from explicit arguments alone — no interpretation step, no confirmation pause

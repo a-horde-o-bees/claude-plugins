@@ -6,10 +6,20 @@ argument-hint: "[--force]"
 
 # /ocd-init
 
-Run init script to deploy conventions and initialize infrastructure:
+Initialize ocd conventions and skill infrastructure in current project.
 
-```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/scripts/init.py $ARGUMENTS
-```
+## Trigger
 
-Report output to user.
+User runs `/ocd-init`
+
+## Workflow
+
+1. Run init script — deploy conventions and initialize infrastructure
+  ```bash
+  python3 ${CLAUDE_PLUGIN_ROOT}/scripts/init.py $ARGUMENTS
+  ```
+2. Present script output to user
+
+### Report
+
+- Script output presented as-is

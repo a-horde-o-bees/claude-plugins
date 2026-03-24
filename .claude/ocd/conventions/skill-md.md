@@ -71,21 +71,30 @@ Reusable argument patterns for skills that accept paths, spawn agents, or scope 
 |----------|------|-------------|
 | `--check` | Gate | Required to trigger execution; without it, skill responds with description and usage hint |
 | `--delegate` | Dispatch modifier | Route spawns background agent with resolved Workflow instead of executing inline |
-| `--focus "..."` | Scope modifier | Narrows evaluation to focus-related aspects; orchestrator adapts behavior intelligently, asks user for clarification when ambiguous |
+| `--intent "..."` | Intent signal | Natural language expression of user goal; orchestrator interprets before deterministic pipeline, translates into concrete adjustments (target scoping, pattern filtering, convention narrowing), announces adjustments, and asks user for confirmation before proceeding; without `--intent`, pipeline runs deterministically from explicit flags alone |
 | `--pattern "..."` | Filter | Passthrough to navigator CLI for file enumeration; repeatable for OR-combined matching; ignored when target is single file |
 | `--all` | Boundary override | Includes `.claude/` files in target enumeration; without it, `.claude/` excluded by default |
 
 ### Skill Target Resolution
 
-Skills that accept a skill as a target recognize three forms:
+Skills that accept a skill as a target consolidate skill detection into single branch using logical OR — both forms resolve to same outcome:
 
 | Form | Example | Resolution |
 |------|---------|------------|
-| `/skill-name` | `/ocd-conventions` | Run navigator `resolve-skill` to find SKILL.md path |
-| Explicit SKILL.md path | `plugins/ocd/skills/conventions/SKILL.md` | Read file directly; treat parent directory as skill directory |
+| `/skill-name` or explicit SKILL.md path | `/ocd-conventions` or `plugins/ocd/skills/conventions/SKILL.md` | Skill target — resolve SKILL.md path, use parent as skill directory |
 | Other path or text | `src/` or `"description"` | Skill-specific handling (file target, directory target, or literal text) |
 
-Skill name resolution uses navigator CLI to search all discovery locations in priority order:
+Route pattern for skill detection:
+
+```
+1. If starts with `/` or file named `SKILL.md`:
+  1. If starts with `/`:
+    1. Resolve skill path — run navigator CLI `resolve-skill` (strip leading `/`)
+    2. If exit code 1: EXIT — report skill not found
+  2. Use resolved SKILL.md path (parent directory as skill directory)
+```
+
+Navigator CLI resolves skill names across all discovery locations in priority order:
 
 ```
 python3 ${CLAUDE_PLUGIN_ROOT}/skills/navigator/scripts/navigator_cli.py resolve-skill <name>
@@ -103,20 +112,28 @@ Route resolves arguments and selects Workflow regardless of `--delegate`. Dispat
 1. If `--check` not in `$ARGUMENTS`:
   1. Respond with skill description and argument-hint, then stop
 2. Strip flags — extract standard arguments from `$ARGUMENTS`
-3. Resolve target — validate remaining arguments, resolve paths
+3. If `--intent` present:
+  1. Interpret intent — evaluate intent text against available pipeline controls (target resolution, file enumeration patterns, criteria scoping, workflow selection)
+  2. Derive adjustments — translate intent into concrete changes to downstream steps
+  3. If adjustments conflict with explicit flags:
+    1. Surface conflict and work with user to resolve
+  4. Present adjustments and ask user for confirmation before proceeding
+4. Resolve target — validate remaining arguments, resolve paths
   1. If remaining arguments empty:
     1. EXIT — respond with skill description and argument-hint
-  2. If starts with `/`:
-    1. Resolve skill path via navigator `resolve-skill` (strip leading `/`)
-    2. If exit code 1: EXIT — report skill not found
-  3. Else if path to SKILL.md file:
-    1. Read file directly; treat as skill target
-  4. Else if path:
-    1. Handle as file or directory target
+  2. If starts with `/` or file named `SKILL.md`:
+    1. If starts with `/`:
+      1. Resolve skill path via navigator `resolve-skill` (strip leading `/`)
+      2. If exit code 1: EXIT — report skill not found
+    2. Use resolved SKILL.md path (parent directory as skill directory)
+  3. Else if file:
+    1. Handle as single file target
+  4. Else if directory:
+    1. Handle as directory target
   5. Else:
     1. Handle as literal text or EXIT on unrecognized argument
-4. Discover criteria or prepare inputs for selected Workflow
-5. Dispatch
+5. Discover criteria or prepare inputs for selected Workflow
+6. Dispatch
   1. If `--delegate`:
     1. Resolve all prompt template placeholders in selected Workflow
     2. Spawn background agent with resolved Workflow and Rules
@@ -128,7 +145,9 @@ Route resolves arguments and selects Workflow regardless of `--delegate`. Dispat
 ### Constraints
 
 - `--delegate` requires Workflow to be fully autonomous — no interactive checkpoints; skills with interactive workflows (e.g., level-by-level user approval) must reject `--delegate` in Route
-- `--focus` is accepted in all routes — each Workflow adapts scope based on focus text; when focus applicability is ambiguous, orchestrator asks user before proceeding
+- `--intent` evaluation occurs in Route before deterministic pipeline steps — orchestrator interprets intent, derives adjustments to target resolution, file enumeration, or criteria scoping, and presents adjustments for user confirmation before proceeding
+- When `--intent` conflicts with explicit flags (e.g., `--intent "only Python" --pattern "*.md"`), orchestrator surfaces conflict and works with user to resolve — no implicit precedence between intent-derived and explicit flag values
+- Without `--intent`, Route executes deterministically from explicit flags alone — no interpretation step, no confirmation pause
 - `--pattern` is only meaningful for directory targets — Route ignores it when target resolves to single file
 
 ## Directory Structure

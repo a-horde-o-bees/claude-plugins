@@ -29,22 +29,21 @@ Depth-first ordering is structural, not preference — parent directory descript
 
 ## Trigger
 
-User runs `/ocd-navigator`.
+User runs `/ocd-navigator`
 
-## Resolve Arguments
+## Route
 
 1. Strip `--delegate` from `$ARGUMENTS` if present
 2. If remaining arguments empty:
   1. Target directory = project root
 3. Else:
   1. Target directory = specified directory path
-
-## Delegate Execution
-
-1. When `--delegate` is in `$ARGUMENTS`:
-  1. Resolve Arguments
-  2. Spawn single background agent with Workflow section, Rules section, Report section, and resolved arguments
-  3. Present agent's report as-is
+4. Dispatch
+  1. If `--delegate`:
+    1. Spawn single background agent with Workflow section, Rules section, and resolved arguments
+    2. Present agent report as-is
+  2. Else:
+    1. Proceed to Workflow
 
 ## Workflow
 
@@ -53,7 +52,7 @@ User runs `/ocd-navigator`.
 3. While `python3 ${CLAUDE_PLUGIN_ROOT}/skills/navigator/scripts/navigator_cli.py get-undescribed` does not return "No work remaining.":
   1. If output is unexpected (not directory listing, error message, or unrecognized format):
     1. STOP and report output to user for feedback before continuing
-  2. Review returned directory listing — `[?]` entries need new descriptions, `[~]` entries have stale descriptions that need re-evaluation. Described siblings provide context.
+  2. Review returned directory listing — `[?]` entries need new descriptions, `[~]` entries have stale descriptions that need re-evaluation; described siblings provide context
   3. For each `[?]` entry:
     1. Read file
     2. Write description following Description Guidelines
@@ -68,7 +67,6 @@ User runs `/ocd-navigator`.
       2. Run `python3 ${CLAUDE_PLUGIN_ROOT}/skills/navigator/scripts/navigator_cli.py set <path> --description "..."`
   5. Describe directory — informed by all children now visible in listing
     1. Run `python3 ${CLAUDE_PLUGIN_ROOT}/skills/navigator/scripts/navigator_cli.py set <directory> --description "..."`
-  6. Run `python3 ${CLAUDE_PLUGIN_ROOT}/skills/navigator/scripts/navigator_cli.py get-undescribed` for next directory
 
 ### Report
 
@@ -81,4 +79,4 @@ User runs `/ocd-navigator`.
 - Preserve existing descriptions that already conform to guidelines — do not overwrite unless they violate Description Guidelines rules
 - No description length limit — follow Description Guidelines guidance, not brevity constraints
 - Directories with `traverse=0` are listed but not entered — describe directory itself, not its contents
-- `set` always clears stale marker — whether description changes or stays the same, running `set` marks entry as reviewed against current file contents
+- `set` always clears stale marker — whether description changes or stays same, running `set` marks entry as reviewed against current file contents
