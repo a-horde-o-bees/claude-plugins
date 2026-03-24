@@ -82,6 +82,10 @@ def _dispatch_search(args: argparse.Namespace) -> None:
 
 def _dispatch_init(args: argparse.Namespace) -> None:
     project_dir = _init.get_project_dir()
+    if getattr(args, "force", False):
+        db_path = _init.get_db_path(project_dir)
+        if db_path.exists():
+            db_path.unlink()
     for line in _init.init(project_dir):
         print(line)
 
@@ -176,7 +180,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     init_p.add_argument(
         "--force", action="store_true",
-        help="Accepted for interface consistency (init is always idempotent)",
+        help="Delete existing database before reinitializing; without --force, init is idempotent",
     )
     init_p.set_defaults(_dispatch=_dispatch_init)
 

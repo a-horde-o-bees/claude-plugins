@@ -218,7 +218,7 @@ def scan_path(db_path: str, target_path: str) -> str:
                         )
                     else:
                         conn.execute(
-                            "UPDATE entries SET stale = 1, git_hash = ? "
+                            "UPDATE entries SET stale = CASE WHEN description IS NOT NULL THEN 1 ELSE 0 END, git_hash = ? "
                             "WHERE path = ?",
                             (current_hash, path),
                         )
