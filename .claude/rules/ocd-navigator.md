@@ -19,8 +19,6 @@ All commands except `init` and `scan` auto-scan before execution to ensure fresh
 | `get-undescribed` | During `/navigator` skill only; returns deepest directory with undescribed entries |
 | `set <path> --description "..."` | During `/navigator` skill only; write or update entry description |
 | `init --db <path>` | One-time setup; creates database with schema and seed rules |
-| `resolve-skill <name>` | Resolve skill name (e.g., `ocd-conventions`) to SKILL.md path; searches all discovery locations in Claude Code priority order; exits 1 if not found |
-| `list-skills` | List all discoverable skills with source (personal, project, plugin-dir, marketplace) and path; higher-priority sources shadow lower ones |
 
 ## When to Use Navigator vs Other Tools
 
