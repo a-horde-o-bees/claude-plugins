@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 def load_manifest(manifest_path: Path) -> dict[str, dict]:
     """Load manifest.yaml. Returns {relative_path: {pattern, dependencies}} map.
 
-    Simple parser for the specific manifest structure — no PyYAML dependency.
+    Simple parser for specific manifest structure — no PyYAML dependency.
     Raises FileNotFoundError if manifest does not exist.
     """
     content = manifest_path.read_text()
@@ -126,7 +126,7 @@ def list_matching(manifest_path: Path, file_paths: list[str]) -> dict[str, list[
 def topological_order(manifest_path: Path) -> list[list[str]]:
     """Topologically sort conventions by dependency order.
 
-    Returns list of levels. Each level is a list of convention paths.
+    Returns list of levels. Each level is list of convention paths.
     Level 0 contains roots (no dependencies). Level N depends only on
     levels 0..N-1. Paths within same level are sorted alphabetically.
 
