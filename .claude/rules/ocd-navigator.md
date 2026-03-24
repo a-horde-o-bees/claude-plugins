@@ -13,7 +13,7 @@ All commands except `init` and `scan` auto-scan before execution to ensure fresh
 | Command | When to Use |
 |---------|-------------|
 | `describe <path>` | Navigate project structure; directories list children with descriptions, files show description; start with `describe .` for top-level overview |
-| `list [path] [--pattern "*.py"]` | Enumerate non-excluded file paths for tool consumption; supports repeatable `--pattern` for basename filtering; one path per line, no descriptions |
+| `list [path] [--pattern "*.py"] [--exclude ".claude/*"]` | Enumerate non-excluded file paths for tool consumption; supports repeatable `--pattern` for basename filtering and `--exclude` for full-path exclusion; one path per line, no descriptions |
 | `search --pattern <keyword>` | Find files by purpose when you know what something does but not where it lives; complements Grep/Glob which search file contents and names |
 | `scan <path>` | Explicit filesystem sync; other commands auto-scan so explicit scan is rarely needed; use when you want to see scan report |
 | `get-undescribed` | During `/navigator` skill only; returns deepest directory with undescribed entries |

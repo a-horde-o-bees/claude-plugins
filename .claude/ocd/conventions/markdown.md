@@ -1,5 +1,0 @@
----
-pattern: "*.md"
----
-
-# Markdown Conventions
