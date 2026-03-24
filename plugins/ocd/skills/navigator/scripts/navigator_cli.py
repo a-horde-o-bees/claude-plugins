@@ -174,6 +174,10 @@ def build_parser() -> argparse.ArgumentParser:
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
+    init_p.add_argument(
+        "--force", action="store_true",
+        help="Accepted for interface consistency (init is always idempotent)",
+    )
     init_p.set_defaults(_dispatch=_dispatch_init)
 
     # status
