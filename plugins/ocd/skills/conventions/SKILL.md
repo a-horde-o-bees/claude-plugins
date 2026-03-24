@@ -27,9 +27,12 @@ User runs `/ocd-conventions`
   3. Else if `project`:
     1. Set target directory to `.` (project root)
   4. Else if starts with `/`:
-    1. Resolve path — `.claude/skills/{name}/` (strip leading `/`, replace hyphens with underscores)
-    2. If path does not exist:
-      1. EXIT — report skill not found at resolved path
+    1. Resolve skill path — run navigator CLI `resolve-skill` with skill name (strip leading `/`)
+      ```
+      python3 ${CLAUDE_PLUGIN_ROOT}/skills/navigator/scripts/navigator_cli.py resolve-skill <name>
+      ```
+    2. If exit code 1: EXIT — report skill not found
+    3. Set target directory to parent of resolved SKILL.md path
   5. Else if path:
     1. If file: set single file as sole target; skip to step 5
     2. If directory: set target directory to path

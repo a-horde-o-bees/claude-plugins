@@ -1,7 +1,7 @@
 """Navigator CLI.
 
 Presentation layer: argument parsing and dispatch wrappers only.
-Business logic lives in navigator.py.
+Business logic lives in navigator.py and skill_resolver.py.
 """
 
 import argparse
@@ -10,8 +10,10 @@ import sys
 # Support both package import and direct execution
 try:
     from . import navigator
+    from . import skill_resolver
 except ImportError:
     import navigator  # type: ignore[import-not-found]
+    import skill_resolver  # type: ignore[import-not-found]
 
 
 DEFAULT_DB = ".claude/ocd/navigator/navigator.db"
@@ -78,6 +80,24 @@ def _dispatch_remove(args: argparse.Namespace) -> None:
 def _dispatch_search(args: argparse.Namespace) -> None:
     _auto_scan(args)
     print(navigator.search_entries(args.db, args.pattern))
+
+
+def _dispatch_resolve_skill(args: argparse.Namespace) -> None:
+    result = skill_resolver.resolve_skill(args.name)
+    if result:
+        print(result)
+    else:
+        print(f"Skill not found: {args.name}", file=sys.stderr)
+        sys.exit(1)
+
+
+def _dispatch_list_skills(_args: argparse.Namespace) -> None:
+    skills = skill_resolver.list_skills()
+    if not skills:
+        print("No skills found.")
+        return
+    for skill in skills:
+        print(f"{skill['name']}  [{skill['source']}]  {skill['path']}")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -355,6 +375,45 @@ def build_parser() -> argparse.ArgumentParser:
         help="Case-insensitive substring pattern",
     )
     search_p.set_defaults(_dispatch=_dispatch_search)
+
+    # resolve-skill
+    rs_p = commands.add_parser(
+        "resolve-skill",
+        help="Resolve skill name to SKILL.md path; searches all discovery locations in priority order",
+        description=(
+            "Resolve a skill name (e.g., ocd-conventions) to its SKILL.md\n"
+            "file path. Searches discovery locations in Claude Code priority\n"
+            "order — first match wins:\n"
+            "\n"
+            "  1. Personal:    ~/.claude/skills/\n"
+            "  2. Project:     .claude/skills/\n"
+            "  3. Plugin dir:  $CLAUDE_PLUGIN_ROOT/skills/\n"
+            "  4. Marketplace: ~/.claude/plugins/ installed paths\n"
+            "\n"
+            "Matches by frontmatter name field in SKILL.md.\n"
+            "Exits with code 1 if skill is not found."
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    rs_p.add_argument("name", help="Skill name to resolve (e.g., ocd-conventions)")
+    rs_p.set_defaults(_dispatch=_dispatch_resolve_skill)
+
+    # list-skills
+    ls_p = commands.add_parser(
+        "list-skills",
+        help="List all discoverable skills with source and path",
+        description=(
+            "List all skills found across discovery locations. Shows skill\n"
+            "name, source (personal, project, plugin-dir, marketplace),\n"
+            "and file path. Higher-priority sources shadow lower ones —\n"
+            "shadowed skills are not listed.\n"
+            "\n"
+            "Output format:\n"
+            "  <name>  [<source>]  <path>"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    ls_p.set_defaults(_dispatch=_dispatch_list_skills)
 
     return parser
 
