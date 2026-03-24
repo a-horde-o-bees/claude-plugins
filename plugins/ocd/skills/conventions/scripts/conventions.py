@@ -6,7 +6,10 @@ for self-evaluation.
 """
 
 import fnmatch
+import logging
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 def load_manifest(manifest_path: Path) -> dict[str, dict]:

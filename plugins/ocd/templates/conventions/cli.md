@@ -1,6 +1,6 @@
 # CLI Conventions
 
-Conventions for agent-facing CLI scripts. Internal scripts (called by plugin hooks or other scripts, not by agents) follow standard engineering practices but do not need agent-oriented help text or output formatting.
+Conventions for agent-facing CLI scripts. Internal scripts (called by plugin hooks or other scripts, never by agents) follow standard engineering practices but do not need agent-oriented help text or output formatting.
 
 ## Flag and Argument Design
 
@@ -13,7 +13,7 @@ Conventions for agent-facing CLI scripts. Internal scripts (called by plugin hoo
 
 Help text answers agent questions:
 
-- **When to call** — conditions under which this command is right choice vs alternatives
+- **When to call** — conditions under which command is preferred over alternatives
 - **What output looks like** — structure, markers, delimiters agent will parse
 - **How to interpret results** — what markers mean, what empty results imply
 - **What to call next** — workflow sequencing
@@ -44,12 +44,7 @@ Errors guide agent to self-correct without user intervention.
 
 ## Documentation as Code
 
-CLI executable itself is documentation. `--help` output must be complete enough that agent reading it can use tool correctly without external reference:
+`--help` output must be complete enough that agent reading it can use tool correctly without external reference:
 
 - Help descriptions explain workflow context, not just syntax
 - Subcommand help text includes output format and interpretation
-
-## Interpreter
-
-- `python3` not `python` — explicit interpreter version
-- No shebangs, no execute permissions — scripts are invoked via interpreter prefix

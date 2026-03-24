@@ -1,7 +1,7 @@
 ---
 name: ocd-conventions
 description: Manage and enforce project conventions; --check reformats files to conform using deterministic pattern matching and single sequential agent
-argument-hint: "--check [path | /skill-name | project | --self] [--pattern \"*.py\"] [--focus \"specific instruction\"] [--all] [--delegate]"
+argument-hint: "--check [path | /skill-name | project | self] [--pattern \"*.py\"] [--focus \"specific instruction\"] [--all] [--delegate]"
 ---
 
 # /ocd-conventions
@@ -16,10 +16,10 @@ User runs `/ocd-conventions`
 
 1. If `--check` not in `$ARGUMENTS`:
   1. Respond with skill description and argument-hint, then stop
-2. If `--self` in `$ARGUMENTS`:
+2. If `self` in `$ARGUMENTS`:
   1. If `--delegate` in `$ARGUMENTS`:
-    1. Respond with error: "--self does not support --delegate; self-evaluation requires interactive review between levels" and stop
-  2. Strip `--check` and `--self` from `$ARGUMENTS`
+    1. Respond with error: "self does not support --delegate; self-evaluation requires interactive review between levels" and stop
+  2. Strip `--check` and `self` from `$ARGUMENTS`
   3. Proceed to Workflow: Self-Evaluation
 3. Else:
   1. Strip `--check` from `$ARGUMENTS`
@@ -35,8 +35,10 @@ User runs `/ocd-conventions`
 4. Else if starts with `/`:
   1. Target directory is `.claude/skills/{name}/` (replace hyphens with underscores for directory name)
 5. Else if path:
-  1. If file — single file is sole target; ignore `--pattern` if present; skip to step 7
-  2. If directory — target directory is path
+  1. If file:
+    1. Set single file as sole target; ignore `--pattern` if present; skip to step 7
+  2. If directory:
+    1. Set target directory to path
 6. Enumerate directory targets — run navigator CLI to get filtered file list
   ```bash
   python3 ${CLAUDE_PLUGIN_ROOT}/skills/navigator/scripts/navigator_cli.py list <directory> [--pattern "..."] [--exclude "..."]
@@ -56,13 +58,11 @@ User runs `/ocd-conventions`
 
 ## Workflow: Conformity
 
-1. Route
-2. Resolve Arguments
-3. Extract focus — if `--focus "..."` present, extract quoted text as focus instruction
-4. Check line counts — count lines in each target file
+1. Extract focus — if `--focus "..."` present, extract quoted text as focus instruction
+2. Check line counts — count lines in each target file
   1. If any target exceeds 500 lines:
     1. Report auto-fail for that target, remove from target list
-5. Discover criteria — run conventions CLI to get matching conventions for target files
+3. Discover criteria — run conventions CLI to get matching conventions for target files
   ```
   python3 ${CLAUDE_PLUGIN_ROOT}/skills/conventions/scripts/conventions_cli.py list-matching <target-paths>
   ```
@@ -70,9 +70,9 @@ User runs `/ocd-conventions`
   2. If no output:
     1. Report "no criteria apply" and stop
   3. Collect unique convention paths across all targets as criteria set
-6. Spawn single agent — one agent processes all targets sequentially with conformity reformat prompt; pass criteria file paths for agent to read directly
-7. Review changes — run `git diff` after agent completes, review for correctness before presenting
-8. Present results — per-target summary of changes applied, criteria used, and any issues requiring user judgment
+4. Spawn single agent — one agent processes all targets sequentially with conformity reformat prompt; pass criteria file paths for agent to read directly
+5. Review changes — run `git diff` after agent completes, review for correctness before presenting
+6. Present results — per-target summary of changes applied, criteria used, and any issues requiring user judgment
 
 ### File Roles
 
@@ -151,8 +151,9 @@ Evaluate rules and conventions against each other in dependency order. Files at 
   ```
   python3 ${CLAUDE_PLUGIN_ROOT}/skills/conventions/scripts/conventions_cli.py list-self
   ```
-  - If error (cycle detected or missing dependency): report error to user and stop
-  - Output is levels (Level 0, Level 1, ...) with file paths
+  1. If error (cycle detected or missing dependency):
+    1. Report error to user and stop
+  2. Output is levels (Level 0, Level 1, ...) with file paths
 2. Present DAG overview to user — show levels with file names, confirm before starting
 3. Initialize criteria set — empty list
 4. For each level (starting at Level 0):
@@ -185,5 +186,5 @@ Evaluate rules and conventions against each other in dependency order. Files at 
 - Target files exceeding 500 lines auto-fail without processing — file needs to be divided before conformity reformatting is meaningful
 - All convention rules are required by default. Rules described as "recommended" or "optional" in convention text are reported but do not block.
 - When `--focus` is provided, agent evaluates and fixes only aspects related to focus instruction — skip unrelated conventions entirely
-- Self-evaluation (`--self`) is interactive — present findings per level, wait for user approval before advancing; never batch all levels into single report
+- Self-evaluation (`self`) is interactive — present findings per level, wait for user approval before advancing; never batch all levels into single report
 - Self-evaluation does not support `--delegate` — interactive review between levels is structurally required

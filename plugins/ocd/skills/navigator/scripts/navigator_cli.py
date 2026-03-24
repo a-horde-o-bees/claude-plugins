@@ -1,3 +1,9 @@
+"""Navigator CLI.
+
+Presentation layer: argument parsing and dispatch wrappers only.
+Business logic lives in navigator.py.
+"""
+
 import argparse
 import sys
 

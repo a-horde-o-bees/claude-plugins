@@ -51,7 +51,13 @@ Not all sections required — simple skills may only need title, description, an
 
 Process Model is optional — only for skills where workflow correctness depends on mechanics not self-evident from steps themselves.
 
-Resolve Arguments separates argument parsing from Workflow — Workflow assumes arguments are already resolved. Delegate Execution is optional — only for skills that are fully autonomous (no user interaction mid-workflow).
+### Orchestration vs Execution Boundary
+
+Sections before Workflow are orchestration — main conversation agent resolves arguments, selects route, and packages inputs. Workflow sections are execution — self-contained blocks that run with resolved inputs, either by orchestrator directly or by delegated agent.
+
+Orchestration sections (Trigger, Resolve Arguments, Route, Delegate Execution) prepare inputs. Workflow sections contain everything needed to execute, including Report and supporting subsections. Workflows never re-resolve arguments or re-route — they assume orchestration is complete.
+
+When delegating to agents, orchestrator passes only selected Workflow section and Rules — never full SKILL.md body. Agents receive resolved inputs and execution instructions without exposure to alternative workflows, routing logic, or argument parsing. This insulates agents from unnecessary context and prevents them from re-executing orchestration steps.
 
 String substitution variables available in body:
 - `$ARGUMENTS` — All arguments passed when invoking skill
@@ -120,11 +126,11 @@ Skills should:
 
 ## Sub-Agent Interactivity Constraint
 
-AskUserQuestion only works in main conversation context. Sub-agents spawned via Task tool run autonomously — they cannot prompt user mid-execution.
+AskUserQuestion only works in main conversation context. Agents spawned via Agent tool run autonomously — they cannot prompt user mid-execution.
 
-Design rule: Skills that spawn sub-agents must be fully autonomous — no interactive checkpoints inside delegated work. Preferred approach is report pattern: skill runs autonomously, collects all findings, presents report with recommendations. User decides next steps after reviewing.
+Design rule: skills that spawn agents must be fully autonomous — no interactive checkpoints inside delegated work. Preferred approach is report pattern: skill runs autonomously, collects all findings, presents report with recommendations. User decides next steps after reviewing.
 
-When interactive decisions are unavoidable mid-workflow, use orchestration pattern — structure them as orchestration steps in main conversation between autonomous sub-agent calls.
+When interactive decisions are unavoidable mid-workflow, use orchestration pattern — structure them as orchestration steps in main conversation between autonomous agent calls.
 
 ## Discovery and Loading
 

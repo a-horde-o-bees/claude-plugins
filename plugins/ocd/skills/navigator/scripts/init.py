@@ -4,9 +4,12 @@ Initializes navigator database and reports infrastructure state.
 """
 
 import argparse
+import logging
 import sqlite3
 import sys
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 def get_project_dir() -> Path:

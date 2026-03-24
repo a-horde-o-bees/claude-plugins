@@ -2,18 +2,15 @@ conventions:
   .claude/rules/ocd-agent-authoring.md:
     pattern: "*"
     dependencies: []
-  .claude/ocd/conventions/markdown.md:
-    pattern: "*.md"
-    dependencies: [.claude/rules/ocd-agent-authoring.md]
   .claude/ocd/conventions/cli.md:
     pattern: "*_cli.*"
     dependencies: [.claude/rules/ocd-agent-authoring.md]
-  .claude/ocd/conventions/markdown.claude.md:
+  .claude/ocd/conventions/claude-md.md:
     pattern: "CLAUDE.md"
-    dependencies: [.claude/ocd/conventions/markdown.md]
-  .claude/ocd/conventions/markdown.skill.md:
+    dependencies: [.claude/rules/ocd-agent-authoring.md]
+  .claude/ocd/conventions/skill-md.md:
     pattern: "SKILL.md"
-    dependencies: [.claude/ocd/conventions/markdown.md]
+    dependencies: [.claude/rules/ocd-agent-authoring.md]
   .claude/ocd/conventions/python.md:
     pattern: "*.py"
-    dependencies: [.claude/ocd/conventions/cli.md]
+    dependencies: [.claude/rules/ocd-agent-authoring.md]

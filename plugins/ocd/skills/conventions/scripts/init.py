@@ -4,9 +4,12 @@ Deploys convention templates and manifest, reports infrastructure state.
 """
 
 import argparse
+import logging
 import shutil
 import sys
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 # Support both package import and direct execution
 try:

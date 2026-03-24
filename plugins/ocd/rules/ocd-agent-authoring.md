@@ -24,7 +24,7 @@ Conventions for content consumed by agents: skills, conventions, plans, actions,
 
 ## Skill Architecture
 
-- Deterministic operations belong in CLI scripts; non-deterministic steps (judgment, context-dependent decisions, natural language generation) remain as agent-executed workflow instructions in SKILL.md
+- Deterministic operations belong in CLI scripts; non-deterministic steps (judgment, context-dependent decisions, natural language generation) stay in SKILL.md as agent-executed workflow instructions
 - When continuing session that was mid-skill, re-read SKILL.md from disk before resuming — carried-over context may be stale
 
 ## Conventions
@@ -32,10 +32,10 @@ Conventions for content consumed by agents: skills, conventions, plans, actions,
 Before creating or modifying files, check for applicable conventions:
 
 ```
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/conventions/scripts/conventions_cli.py get <file> [<file> ...]
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/conventions/scripts/conventions_cli.py list-matching <file> [<file> ...]
 ```
 
-Pass all target file paths in single call. Output is one file path per line (rules and matched conventions). If output is non-empty, read and follow returned files before proceeding.
+Pass all target file paths in single call. Output groups each target file with its matching convention paths. If output is non-empty, read and follow returned convention files before proceeding.
 
 ## Structural Principles
 

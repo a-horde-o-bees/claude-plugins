@@ -22,26 +22,28 @@ User runs `/ocd-efficacy`.
   1. Respond with skill description and argument-hint, then stop
 2. Else:
   1. Strip `--check` from `$ARGUMENTS`
-  2. Proceed to Workflow
+  2. Proceed to Resolve Arguments
+
+## Resolve Arguments
+
+1. Extract `--multi` flag from `$ARGUMENTS` if present
+2. If remaining arguments empty:
+  1. Respond with skill description and argument-hint, then stop
+3. If subject starts with `/`:
+  1. Resolve skill path (see Rules), read SKILL.md as resolved prompt
+4. Else:
+  1. Subject text is resolved prompt
+5. Check recursion constraint — evaluate resolved prompt for agent-spawning patterns
+  1. If matches `/Task\(|subagent_type|spawn\s+agent/`:
+    1. Append recursion constraint (see Rules)
 
 ## Workflow
 
-1. Parse arguments — extract `--multi` flag and resolve prompt from `$ARGUMENTS`
-  1. If empty (no arguments, no flag):
-    1. Respond with skill description and argument-hint, then stop
-  2. Strip `--multi` from arguments if present; remaining text is subject
-  3. If subject starts with `/`:
-    1. Resolve skill path (see Rules), read SKILL.md as resolved prompt
-  4. Else:
-    1. Subject text is resolved prompt
-2. Check recursion constraint — evaluate resolved prompt for agent-spawning patterns
-  1. If matches `/Task\(|subagent_type|spawn\s+agent/`:
-    1. Append recursion constraint (see Rules)
-3. If `--multi`:
+1. If `--multi`:
   1. Collect scenarios (see Multi-Scenario Mode)
   2. Spawn one blank-context agent per scenario, sequentially
   3. Produce multi-scenario report (see Multi-Scenario Report)
-4. Else:
+2. Else:
   1. Spawn one blank-context agent with efficacy audit prompt
   2. Produce single-scenario report (see Single-Scenario Report)
 
