@@ -81,6 +81,8 @@ scripts/
 
 `_helpers.py` — pure utility functions with no dependency on module state. Functions take data in and return data out. Create when utility functions are shared across multiple files in the package.
 
+`_init.py` — initialization and status logic. Contains `init()` for infrastructure setup and `status()` for health checks. CLI exposes these as `init` and `status` subcommands. Standard for any skill that requires infrastructure (database, deployed files, configuration).
+
 `_{domain}.py` — focused on single functional domain. Named for what it does (`_scanner.py`, `_db.py`, `_formatter.py`). Create when a functional domain within a module has clear boundaries and its functions are primarily called by each other or by the parent facade.
 
 ### Facade Role
