@@ -75,6 +75,24 @@ Reusable argument patterns for skills that accept paths, spawn agents, or scope 
 | `--pattern "..."` | Filter | Passthrough to navigator CLI for file enumeration; repeatable for OR-combined matching; ignored when target is single file |
 | `--all` | Boundary override | Includes `.claude/` files in target enumeration; without it, `.claude/` excluded by default |
 
+### Skill Target Resolution
+
+Skills that accept a skill as a target recognize three forms:
+
+| Form | Example | Resolution |
+|------|---------|------------|
+| `/skill-name` | `/ocd-conventions` | Run navigator `resolve-skill` to find SKILL.md path |
+| Explicit SKILL.md path | `plugins/ocd/skills/conventions/SKILL.md` | Read file directly; treat parent directory as skill directory |
+| Other path or text | `src/` or `"description"` | Skill-specific handling (file target, directory target, or literal text) |
+
+Skill name resolution uses navigator CLI to search all discovery locations in priority order:
+
+```
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/navigator/scripts/navigator_cli.py resolve-skill <name>
+```
+
+Exits with code 1 if skill not found. Skills should EXIT with error when resolution fails.
+
 ### Route Dispatch Pattern
 
 Route resolves arguments and selects Workflow regardless of `--delegate`. Dispatch step determines delivery mechanism — inline execution or background agent handoff.
@@ -85,9 +103,18 @@ Route resolves arguments and selects Workflow regardless of `--delegate`. Dispat
 1. If `--check` not in `$ARGUMENTS`:
   1. Respond with skill description and argument-hint, then stop
 2. Strip flags — extract standard arguments from `$ARGUMENTS`
-3. Resolve target — validate remaining arguments, resolve paths, enumerate files
-  1. If arguments invalid:
-    1. EXIT — report error
+3. Resolve target — validate remaining arguments, resolve paths
+  1. If remaining arguments empty:
+    1. EXIT — respond with skill description and argument-hint
+  2. If starts with `/`:
+    1. Resolve skill path via navigator `resolve-skill` (strip leading `/`)
+    2. If exit code 1: EXIT — report skill not found
+  3. Else if path to SKILL.md file:
+    1. Read file directly; treat as skill target
+  4. Else if path:
+    1. Handle as file or directory target
+  5. Else:
+    1. Handle as literal text or EXIT on unrecognized argument
 4. Discover criteria or prepare inputs for selected Workflow
 5. Dispatch
   1. If `--delegate`:
