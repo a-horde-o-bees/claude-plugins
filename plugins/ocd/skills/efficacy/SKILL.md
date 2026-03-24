@@ -45,44 +45,6 @@ User runs `/ocd-efficacy`
 6. Present scenarios to user for confirmation or modification before executing
 7. Dispatch — proceed to Workflow with resolved scenarios
 
-## Components
-
-Components serve workflow below — they are not executed independently.
-
-### Efficacy Audit Prompt
-
-```
-You are testing whether project documentation enables you to perform task. Follow your Discovery instructions, then describe IN DETAIL what you would do to accomplish task — but do NOT execute any changes.
-
-Task:
-`{resolved_prompt}`
-
-Report:
-1. List each file you read and why, in order
-2. Trace — as you reason through execution, write each step as process flow using numbered steps for sequence, indented bullets for conditionals (If X: action), and `async` prefix for parallel work. Include documentation citations inline as `(file:line)` or `(file:section)`. Do not write verbose prose — process flow IS step-by-step walkthrough. Maintain consistent depth across all phases — do not front-load detail on early steps and compress later ones. Each phase or major section should show same level of substep granularity, including domain-specific examples where task context makes them available (e.g., specific candidates, dimensions, or categories that would emerge).
-3. Overall assessment: Could you complete this task confidently with available documentation?
-4. Rate documentation efficacy: Sufficient / Gaps exist / Insufficient
-5. Assumptions — numbered list, one line each. Every point where you had to guess, assume, or make judgment call not explicitly guided by documentation:
-  1. assumption summary
-  2. assumption summary
-6. Gaps — numbered list, one line each. Every documentation gap, ambiguity, missing information, or suggested improvement encountered:
-  1. gap summary
-  2. gap summary
-7. Waste — numbered list, one line each. Steps that read unnecessary files, spawn avoidable agents, duplicate work already done, or load more context than needed:
-  1. waste summary
-  2. waste summary
-8. Automation — numbered list, one line each. Steps that require agent judgment but could be converted to deterministic CLI commands or scripts:
-  1. automation summary
-  2. automation summary
-```
-
-### Interpreting Results
-
-- Agent described correct steps → Skill definition is clear and actionable
-- Agent got stuck or guessed → Documentation has gaps at that step, needs specificity
-- Agent found patterns and made sound judgments → Architecture works for this case
-- Agent missed patterns → Reference chain has gaps (missing links between files)
-
 ## Workflow
 
 1. For each scenario:
@@ -140,6 +102,40 @@ Ratings: X Sufficient, Y Gaps Exist, Z Insufficient
 ```
 
 Cross-cutting findings identify patterns in assumptions, gaps, waste, and automation opportunities that recur across 2+ scenarios. Single-scenario findings that do not recur are not promoted to cross-cutting — they remain in their scenario section.
+
+### Efficacy Audit Prompt
+
+```
+You are testing whether project documentation enables you to perform task. Follow your Discovery instructions, then describe IN DETAIL what you would do to accomplish task — but do NOT execute any changes.
+
+Task:
+`{resolved_prompt}`
+
+Report:
+1. List each file you read and why, in order
+2. Trace — as you reason through execution, write each step as process flow using numbered steps for sequence, indented bullets for conditionals (If X: action), and `async` prefix for parallel work. Include documentation citations inline as `(file:line)` or `(file:section)`. Do not write verbose prose — process flow IS step-by-step walkthrough. Maintain consistent depth across all phases — do not front-load detail on early steps and compress later ones. Each phase or major section should show same level of substep granularity, including domain-specific examples where task context makes them available (e.g., specific candidates, dimensions, or categories that would emerge).
+3. Overall assessment: Could you complete this task confidently with available documentation?
+4. Rate documentation efficacy: Sufficient / Gaps exist / Insufficient
+5. Assumptions — numbered list, one line each. Every point where you had to guess, assume, or make judgment call not explicitly guided by documentation:
+  1. assumption summary
+  2. assumption summary
+6. Gaps — numbered list, one line each. Every documentation gap, ambiguity, missing information, or suggested improvement encountered:
+  1. gap summary
+  2. gap summary
+7. Waste — numbered list, one line each. Steps that read unnecessary files, spawn avoidable agents, duplicate work already done, or load more context than needed:
+  1. waste summary
+  2. waste summary
+8. Automation — numbered list, one line each. Steps that require agent judgment but could be converted to deterministic CLI commands or scripts:
+  1. automation summary
+  2. automation summary
+```
+
+### Interpreting Results
+
+- Agent described correct steps → Skill definition is clear and actionable
+- Agent got stuck or guessed → Documentation has gaps at that step, needs specificity
+- Agent found patterns and made sound judgments → Architecture works for this case
+- Agent missed patterns → Reference chain has gaps (missing links between files)
 
 ## Rules
 

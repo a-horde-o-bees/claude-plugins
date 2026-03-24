@@ -11,7 +11,7 @@ argument-hint: "[message]"
 
 Commit working tree changes grouped by topic. Analyzes modified, deleted, and untracked files, proposes topic-based groupings, and executes commits sequentially. Each commit bumps plugin version and describes end-state results, not change history.
 
-Runs entirely in main conversation — no agent delegation. Every step is interactive with user confirmation.
+Runs entirely in main conversation — no agent delegation. Proceeds autonomously when grouping and messages are clear; asks user for clarification only when genuinely ambiguous.
 
 ## Trigger
 
@@ -36,16 +36,21 @@ User runs `/ocd-commit`
     - Tests with code — test files group with code they test
     - Plugin infrastructure — plugin.json, hooks, init scripts
   2. If all changes are single topic:
-    1. Propose single commit with topic summary
+    1. Single commit with topic summary
   3. Else:
-    1. Propose multiple commits — topic label and file list per group
-    2. Suggest commit order — dependencies first, consumers after
-  4. Present proposed grouping to user for confirmation or modification
-  5. User confirms, modifies, or regroups
+    1. Multiple commits — topic label and file list per group
+    2. Order commits — dependencies first, consumers after
+  4. If grouping is ambiguous (files could reasonably belong to multiple topics):
+    1. Ask user for clarification — present options with rationale
+  5. Else:
+    1. Proceed with resolved grouping
 5. Draft commit messages — one per group
   1. Describe end-state results, not change journey
   2. Follow project's recent commit message style
-  3. Present messages to user for confirmation
+  3. If message is ambiguous or topic is unclear:
+    1. Ask user for clarification
+  4. Else:
+    1. Proceed with drafted messages
 6. Determine version bumps — identify which plugins have changes per group
 7. Dispatch — proceed to Workflow with resolved groups, messages, and version targets
 
@@ -71,6 +76,7 @@ User runs `/ocd-commit`
 - Never force push or run destructive git operations
 - Stage specific files by name — never use `git add -A` or `git add .`
 - Co-author trailer required: `Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>`
+- No minimum commit size — a single-file change is a valid commit if it represents a distinct topic
 - Single commit when all changes are one coherent topic — do not split artificially
 - Commit order matters — if group B depends on changes in group A (e.g., convention before skill that uses it), commit A first
 - When user provides message argument, treat all changes as single group — skip topic analysis
