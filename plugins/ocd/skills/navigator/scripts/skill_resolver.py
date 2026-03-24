@@ -58,19 +58,23 @@ def _get_claude_home() -> Path:
 
 
 def _get_plugin_root() -> Path | None:
-    """Return plugin root from environment or script location.
+    """Return plugin root from environment or persisted file.
 
-    Falls back to deriving from script path when CLAUDE_PLUGIN_ROOT
-    is not set (common in agent Bash commands where only hook execution
-    context receives the variable).
+    Checks CLAUDE_PLUGIN_ROOT env var first (available in hook context),
+    then reads .claude/ocd/.plugin_root (written by SessionStart hook
+    for agent Bash commands where env var is not available).
     """
     env = os.environ.get("CLAUDE_PLUGIN_ROOT")
     if env:
         return Path(env)
-    # Derive from script location: skills/navigator/scripts/skill_resolver.py → plugin root
-    script_root = Path(__file__).parent.parent.parent.parent
-    if (script_root / ".claude-plugin" / "plugin.json").is_file():
-        return script_root
+    project_dir = Path(os.environ.get("CLAUDE_PROJECT_DIR", os.getcwd()))
+    plugin_root_file = project_dir / ".claude" / "ocd" / ".plugin_root"
+    try:
+        value = plugin_root_file.read_text().strip()
+        if value:
+            return Path(value)
+    except (FileNotFoundError, PermissionError):
+        pass
     return None
 
 
