@@ -2,16 +2,16 @@
 name: ocd-commit
 description: >
   Commit working tree changes grouped by topic. Analyzes pending changes,
-  proposes coherent groupings, drafts messages describing end-state results,
-  and executes commits sequentially with version bumps.
+  groups by topic for readable history, drafts messages describing end-state
+  results, and executes commits sequentially with version bumps.
 argument-hint: "[message]"
 ---
 
 # /ocd-commit
 
-Commit working tree changes grouped by topic. Analyzes modified, deleted, and untracked files, proposes topic-based groupings, and executes commits sequentially. Each commit bumps plugin version and describes end-state results, not change history.
+Commit working tree changes grouped by topic for readable git history. Each commit represents one coherent topic — making it easy to find how a specific change was implemented when examining history later. Grouping separates unrelated changes so each commit is a narrow, focused window into what was done and why.
 
-Runs entirely in main conversation — no agent delegation. Proceeds autonomously when grouping and messages are clear; asks user for clarification only when genuinely ambiguous.
+Fully automated — analyzes changes, groups by topic, drafts messages, executes commits. No user confirmation needed for grouping or messages. When grouping is ambiguous, keep changes together rather than splitting incorrectly.
 
 ## Trigger
 
@@ -25,10 +25,13 @@ User runs `/ocd-commit`
     1. EXIT — report clean working tree
   3. Run `git diff --stat` — understand scope of changes
   4. Run `git log --oneline -5` — capture recent commit message style
-2. Surface untracked files — present all untracked files to user; confirm which to include or exclude; never skip or ignore untracked files
+2. Include untracked files — group with related changes using same topic logic as modified files
+  1. If any untracked file seems suspicious (e.g., large generated directories missing from .gitignore, credentials, build artifacts):
+    1. Surface exceptions to user before committing — they may belong to a group or need exclusion
+  2. If no exceptions: proceed without user approval
 3. If `$ARGUMENTS` contains message text:
   1. Treat all changes as single group with provided message; skip to step 5
-4. Group changes by topic
+4. Group changes by topic — goal is readable history where each commit is a focused window into related changes
   1. Evaluate changed files for coherent topics — consider:
     - Skill directory — files in same skill are likely same topic
     - Template and deployed pairs — template with its deployed copy
@@ -36,30 +39,23 @@ User runs `/ocd-commit`
     - Tests with code — test files group with code they test
     - Plugin infrastructure — plugin.json, hooks, init scripts
   2. If all changes are single topic:
-    1. Single commit with topic summary
+    1. Single commit
   3. Else:
-    1. Multiple commits — topic label and file list per group
+    1. Multiple commits — one per topic
     2. Order commits — dependencies first, consumers after
-  4. If grouping is ambiguous (files could reasonably belong to multiple topics):
-    1. Ask user for clarification — present options with rationale
-  5. Else:
-    1. Proceed with resolved grouping
+  4. If grouping is ambiguous — keep together; consequences of grouping related changes together are negligible compared to splitting incorrectly
 5. Draft commit messages — one per group
   1. Describe end-state results, not change journey
   2. Follow project's recent commit message style
-  3. If message is ambiguous or topic is unclear:
-    1. Ask user for clarification
-  4. Else:
-    1. Proceed with drafted messages
 6. Determine version bumps — identify which plugins have changes per group
-7. Dispatch — proceed to Workflow with resolved groups, messages, and version targets
+7. Dispatch — proceed to Workflow
 
 ## Workflow
 
 1. For each commit group (in order):
   1. Bump version — read current version from plugin.json, increment z, write back
   2. Stage files — `git add` specific files for this group plus plugin.json
-  3. Commit with confirmed message; append co-author trailer
+  3. Commit with drafted message; append co-author trailer
 2. Verify — run `git status`; report remaining changes or clean tree
 
 ### Report
@@ -69,14 +65,16 @@ User runs `/ocd-commit`
 
 ## Rules
 
-- Never skip untracked files — always surface for user review before committing
+- Purpose of grouping is readable history — each commit should be a focused window into related changes so specific implementations are easy to find later
+- When grouping is ambiguous, keep changes together — do not split; a slightly broad commit is better than an incorrectly split one
+- No minimum commit size — a single-file change is a valid commit if it represents a distinct topic
+- Single commit when all changes are one coherent topic — do not split artificially
+- Untracked files are grouped with related changes — only surface to user when suspicious (generated directories, credentials, build artifacts)
 - Every commit bumps z version in `.claude-plugin/plugin.json` for each plugin with changes in that commit
 - Commit messages describe end-state results — what the code does now, not what was changed or why during the session
 - Never amend previous commits unless user explicitly requests it
 - Never force push or run destructive git operations
 - Stage specific files by name — never use `git add -A` or `git add .`
 - Co-author trailer required: `Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>`
-- No minimum commit size — a single-file change is a valid commit if it represents a distinct topic
-- Single commit when all changes are one coherent topic — do not split artificially
 - Commit order matters — if group B depends on changes in group A (e.g., convention before skill that uses it), commit A first
 - When user provides message argument, treat all changes as single group — skip topic analysis
