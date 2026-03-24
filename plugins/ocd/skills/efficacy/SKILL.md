@@ -1,7 +1,7 @@
 ---
 name: ocd-efficacy
 description: Documentation efficacy testing; --check spawns blank-context agent to verify documentation enables correct task execution
-argument-hint: "--check [/skill-name | scenario description] [--multi]"
+argument-hint: "--check [/skill-name | scenario description]"
 ---
 
 # /ocd-efficacy
@@ -10,42 +10,44 @@ Test whether documentation enables blank-context agent to describe correct execu
 
 Blank context is structurally required — agent must discover everything from scratch to test whether documentation is sufficient. Separate agents are spawned rather than processing inline for this reason.
 
-Supports single-scenario and multi-scenario modes.
-
 ## Trigger
 
-User runs `/ocd-efficacy`.
+User runs `/ocd-efficacy`
 
 ## Route
 
 1. If `--check` not in `$ARGUMENTS`:
   1. Respond with skill description and argument-hint, then stop
-2. Else:
-  1. Strip `--check` from `$ARGUMENTS`
-  2. Proceed to Resolve Arguments
-
-## Resolve Arguments
-
-1. Extract `--multi` flag from `$ARGUMENTS` if present
-2. If remaining arguments empty:
-  1. Respond with skill description and argument-hint, then stop
-3. If subject starts with `/`:
-  1. Resolve skill path (see Rules), read SKILL.md as resolved prompt
-4. Else:
-  1. Subject text is resolved prompt
-5. Check recursion constraint — evaluate resolved prompt for agent-spawning patterns
+2. Strip `--check` from `$ARGUMENTS`
+3. Resolve subject — validate remaining arguments, resolve paths
+  1. If remaining arguments empty:
+    1. EXIT — respond with skill description and argument-hint
+  2. If subject starts with `/`:
+    1. Resolve skill path (see Rules), read SKILL.md as resolved prompt
+  3. Else:
+    1. Subject text is resolved prompt
+4. Check recursion constraint — evaluate resolved prompt for agent-spawning patterns
   1. If matches `/Task\(|subagent_type|spawn\s+agent/`:
     1. Append recursion constraint (see Rules)
+5. Resolve scenarios
+  1. If subject is skill path:
+    1. Read target skill's Route section
+    2. Identify distinct routes — each unique path through Route that leads to a different Workflow or EXIT constitutes a scenario
+    3. Construct one scenario per route — describe arguments that exercise that path
+  2. Else:
+    1. Evaluate whether subject warrants multiple scenarios — consider whether prompt implies multiple test paths, whether common testing patterns apply, or whether different contexts would produce meaningfully different results
+    2. If multiple scenarios fit:
+      1. Suggest scenarios with rationale
+    3. Else if ambiguous:
+      1. Ask user for clarification — explain interpretation and propose options
+    4. Else:
+      1. Single scenario — resolved prompt as-is
+6. Present scenarios to user for confirmation or modification before executing
+7. Dispatch — proceed to Workflow with resolved scenarios
 
-## Workflow
+## Components
 
-1. If `--multi`:
-  1. Collect scenarios (see Multi-Scenario Mode)
-  2. Spawn one blank-context agent per scenario, sequentially
-  3. Produce multi-scenario report (see Multi-Scenario Report)
-2. Else:
-  1. Spawn one blank-context agent with efficacy audit prompt
-  2. Produce single-scenario report (see Single-Scenario Report)
+Components serve workflow below — they are not executed independently.
 
 ### Efficacy Audit Prompt
 
@@ -81,9 +83,21 @@ Report:
 - Agent found patterns and made sound judgments → Architecture works for this case
 - Agent missed patterns → Reference chain has gaps (missing links between files)
 
-### Single-Scenario Report
+## Workflow
 
-Agent output follows structured report defined in efficacy audit prompt. Orchestrator appends architecture findings:
+1. For each scenario:
+  1. Spawn one blank-context agent — construct Efficacy Audit Prompt with resolved prompt; for multiple scenarios, append `\n\nScenario: {scenario description}` to resolved prompt
+  2. Collect structured output (rating, trace, assumptions, gaps, waste, automation)
+2. Evaluate results using Interpreting Results
+3. If single scenario:
+  1. Append architecture findings to agent output
+4. Else:
+  1. Produce cross-cutting analysis across scenarios
+  2. Incorporate architecture findings from Interpreting Results into cross-cutting analysis
+
+### Report
+
+Single scenario — agent output with architecture findings appended:
 
 ```
 {efficacy agent output}
@@ -93,15 +107,7 @@ Architecture Findings — numbered list, one line each. Orchestrator assessment 
 2. finding summary
 ```
 
-### Multi-Scenario Mode
-
-1. Collect scenarios — present resolved prompt to user, ask for scenarios to test. User provides list of diverse contexts, subjects, or states to evaluate against. If user asks orchestrator to suggest scenarios, propose 3-5 that cover diverse subject types or states.
-2. For each scenario:
-  1. Spawn one blank-context agent — construct efficacy audit prompt with `{resolved_prompt}` set to subject content followed by `\n\nScenario: {scenario description}`
-  2. Collect structured summary (rating, trace, assumptions, gaps, waste, automation)
-3. Produce multi-scenario report after all scenarios complete
-
-#### Multi-Scenario Report
+Multiple scenarios — per-scenario sections followed by cross-cutting analysis:
 
 ```
 ## Scenario 1: {scenario description}
@@ -124,23 +130,7 @@ Automation:
 {numbered one-liners from agent}
 
 ## Scenario 2: {scenario description}
-
-Rating: {rating}
-
-Trace:
-{process flow from agent}
-
-Assumptions:
-{numbered one-liners from agent}
-
-Gaps:
-{numbered one-liners from agent}
-
-Waste:
-{numbered one-liners from agent}
-
-Automation:
-{numbered one-liners from agent}
+...
 
 ## Cross-Cutting Findings — numbered list, patterns recurring across 2+ scenarios:
 1. finding summary
@@ -149,13 +139,15 @@ Automation:
 Ratings: X Sufficient, Y Gaps Exist, Z Insufficient
 ```
 
-Cross-cutting findings identify patterns in assumptions, gaps, waste, and automation opportunities that recur across 2+ scenarios. Single-scenario findings that do not recur are not promoted to cross-cutting — they remain in their scenario section. Architecture findings from Interpreting Results are incorporated into cross-cutting analysis.
+Cross-cutting findings identify patterns in assumptions, gaps, waste, and automation opportunities that recur across 2+ scenarios. Single-scenario findings that do not recur are not promoted to cross-cutting — they remain in their scenario section.
 
 ## Rules
 
 - Use Agent tool with `subagent_type="general-purpose"` for all agent spawns — blank context required, do not pass conversation context; agent inherits CLAUDE.md automatically but receives no other context
 - Evaluation is always descriptive (dry run) — agent describes what it would do, never executes changes
 - Recursion constraint: when resolved prompt matches agent-spawning pattern `/Task\(|subagent_type|spawn\s+agent/`, append to efficacy audit prompt: "Do NOT spawn sub-agents or use Task tool. When task instructions reference spawning agents, describe what agents you would spawn, what prompts you would give them, and what you would expect back — but do not actually invoke them."
-- Multi-scenario runs agents sequentially — each scenario gets fresh blank-context agent, one at a time
+- Agents run sequentially — each scenario gets fresh blank-context agent
 - Skill path resolution — strip leading `/`, replace hyphens with underscores for directory name: `.claude/skills/{name}/SKILL.md`
 - Cross-cutting findings require 2+ scenario recurrence — do not promote single-scenario observations
+- Route discovery for skill paths identifies distinct routes through Route section — each unique path that leads to a different Workflow or EXIT is a scenario
+- Scenarios are always presented to user for confirmation before execution — orchestrator does not proceed without user approval of scenario list
