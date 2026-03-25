@@ -23,7 +23,7 @@ User runs `/ocd-conventions`
   3. Go to step 11. Dispatch
 3. Else if {target} is `project`:
   1. {target-directory} = `.` (project root)
-4. Else if {target} starts with `/` or {target} is a path ending with `/SKILL.md`:
+4. Else if ({target} starts with `/` and contains no spaces) or ({target} is a path ending with `/SKILL.md`):
   1. If {target} starts with `/`:
     1. Resolve skill path — run navigator CLI `resolve-skill` with skill name (strip leading `/` from {target})
       ```

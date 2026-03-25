@@ -6,7 +6,7 @@ argument-hint: "--target </skill-name | natural language scenario> [--auto] [--d
 
 # /ocd-efficacy
 
-Evaluate whether documentation enables correct task execution. Agents spawn with no conversation history to truthfully evaluate instructions without prior context influencing assessment. Holistic examination reviews raw document as single target. Per-scenario examination delegates to coordinating agent that spawns parallel evaluators per execution path. Auto mode iteratively evaluates and fixes straightforward issues until convergence, reporting complex issues for user review. Mode is routing choice — evaluation protocol is shared.
+Evaluate whether documentation enables correct task execution. Agents spawn with no conversation history to truthfully evaluate instructions without prior context influencing assessment. Holistic examination reviews raw document as single target. Per-scenario examination delegates to coordinating agent that spawns parallel evaluators per execution path. Auto mode iteratively evaluates and fixes straightforward issues until convergence, reporting complex issues for user review. --delegate runs workflow in background. Mode is routing choice — evaluation protocol is shared.
 
 ## Trigger
 
@@ -16,7 +16,7 @@ User runs `/ocd-efficacy`
 
 1. If not --target:
   1. EXIT — respond with skill description and argument-hint
-2. If {target} starts with `/` or {target} is a path ending with `/SKILL.md`:
+2. If ({target} starts with `/` and contains no spaces) or ({target} is a path ending with `/SKILL.md`):
   1. If {target} starts with `/`:
     1. {skill-path} = resolve skill path — run navigator CLI `resolve-skill` with skill name (strip leading `/` from {target})
       ```
@@ -50,18 +50,18 @@ User runs `/ocd-efficacy`
 3. Else:
   1. If --auto:
     1. EXIT — --auto requires file target (/skill-name or SKILL.md path)
-  2. If {target} warrants multiple scenarios — prompt implies multiple test paths, common testing patterns, or meaningfully different contexts:
+  2. If {target} implies multiple test paths, common testing patterns, or meaningfully different contexts:
     1. Suggest scenarios with rationale; present for user confirmation via AskUserQuestion before proceeding
     2. {scenarios} = list of scenario prefaces paired with {target}
       - Preface format — see `_scenario-preface.md`
     3. {selected-workflow} = Per-Scenario
-  3. Else if ambiguous:
-    1. Ask user for clarification — explain interpretation and propose options
-    2. Assign {scenario} or {scenarios} and {selected-workflow} based on clarified input
-  4. Else:
+  3. Else if {target} is single clear evaluation subject:
     1. {scenario} = {target}
     2. {selected-workflow} = Holistic
-4. Dispatch
+  4. Else:
+    1. Ask user for clarification — explain interpretation and propose options
+    2. Assign {scenario} or {scenarios} and {selected-workflow} based on clarified input
+4. Dispatch {selected-workflow}
   - If --delegate: agent spawn in Workflow runs in background
 
 ## Workflow: Holistic
@@ -84,19 +84,22 @@ Iterative fix-and-verify loop. Orchestrator evaluates, triages findings, fixes s
   2. If output is non-empty: EXIT — commit pending changes before running --auto
 2. {baseline} = `git rev-parse HEAD`
 3. {iteration} = 0
-4. While {iteration} < 5:
+4. Read `_triage-criteria.md`
+5. While {iteration} < 5:
   1. {scenario} = re-read {skill-path} from disk
   2. Spawn evaluation agent with {scenario} and instructions:
     1. Read `_evaluation-protocol.md` and `_problem-list.md`
     2. Follow evaluation protocol against {scenario}
-  3. Read `_triage-criteria.md`
-  4. Triage findings — classify each as straightforward or complex
-  5. If no straightforward findings: STOP — converged
-  6. Apply straightforward fixes directly to {skill-path}
-  7. {iteration} = {iteration} + 1
-5. Run `git diff {baseline}` to capture all changes
-6. Evaluate diff — group changes by topic, ignore intermediate mutations
-7. Present report
+  3. Triage findings — classify each as straightforward or complex
+  4. If no straightforward findings:
+    1. {converged} = true
+    2. STOP
+  5. Apply straightforward fixes directly to {skill-path}
+  6. {iteration} = {iteration} + 1
+6. {converged} = false
+7. Run `git diff {baseline}` to capture all changes
+8. Evaluate diff — group changes by topic, ignore intermediate mutations
+9. Present report
 
 ### Report
 
@@ -122,13 +125,13 @@ Per-scenario findings from each sub-agent. Cross-cutting analysis of findings re
 ## Rules
 
 - Agents spawn with no conversation history — project rules and CLAUDE.md load automatically; only Workflow instructions and scenario content are passed explicitly
-- Evaluation is always descriptive (dry run) — recursion constraint lives in `_evaluation-protocol.md`, applied to evaluating agents; coordinating agents never read evaluation files
-- Coordinating agent in Per-Scenario Workflow spawns sub-agents — passes evaluation file references to sub-agents without reading them
+- Evaluation is always descriptive (dry run) — recursion constraint lives in `_evaluation-protocol.md`, applied to evaluating agents
+- Coordinating agent in Per-Scenario Workflow spawns sub-agents with evaluation file references
 - Cross-cutting findings require 2+ scenario recurrence — do not promote single-scenario observations
 - --delegate makes all agent spawns in Workflow run in background — orchestration (Route) always runs in main conversation
 - Scenario description is agent-determined, no prescribed format
 - Natural language {target} routing is inherently non-deterministic — agent judgment determines whether target warrants multiple scenarios, is ambiguous, or maps to single scenario
-- Holistic, per-scenario, and auto are routing choices selected during Route
+- Holistic and per-scenario are user-selected modes; auto is flag-driven routing via --auto
 - User always confirms proposed scenarios before per-scenario evaluation proceeds
 - --auto requires file target (/skill-name or SKILL.md path) and clean working tree
 - --auto triage uses `_triage-criteria.md` — straightforward fixes require no user input, complex issues are reported
