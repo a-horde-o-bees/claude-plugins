@@ -1,3 +1,7 @@
+---
+type: template
+---
+
 # Python Conventions
 
 ## Code Style

@@ -1,3 +1,7 @@
+---
+type: deployed
+---
+
 # Workflow
 
 Execution discipline for agent task processing.

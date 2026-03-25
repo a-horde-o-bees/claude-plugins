@@ -36,6 +36,17 @@ def get_manifest_path(project_dir: Path) -> Path:
     return get_conventions_dir(project_dir) / "manifest.yaml"
 
 
+def stamp_deployed(path: Path) -> None:
+    """Replace type: template with type: deployed in frontmatter only."""
+    content = path.read_text()
+    if not content.startswith("---\n"):
+        return
+    end = content.index("\n---\n", 4)
+    frontmatter = content[: end + 5]
+    stamped = frontmatter.replace("type: template", "type: deployed")
+    path.write_text(stamped + content[end + 5 :])
+
+
 def init(plugin_root: Path, project_dir: Path, force: bool = False) -> list[str]:
     """Deploy convention templates and manifest. Returns status lines."""
     templates_src = plugin_root / "templates" / "conventions"
@@ -52,13 +63,17 @@ def init(plugin_root: Path, project_dir: Path, force: bool = False) -> list[str]
         if not src.is_file():
             continue
         dst = conventions_dst / src.name
+        # Compare using deployed content (template with stamp applied)
+        src_deployed = src.read_bytes().replace(b"type: template", b"type: deployed", 1)
         if not dst.exists():
             shutil.copy2(src, dst)
+            stamp_deployed(dst)
             lines.append(f"New: {src.name}")
-        elif src.read_bytes() == dst.read_bytes():
+        elif src_deployed == dst.read_bytes():
             lines.append(f"Current: {src.name}")
         elif force:
             shutil.copy2(src, dst)
+            stamp_deployed(dst)
             lines.append(f"Replaced: {src.name}")
         else:
             lines.append(f"Outdated: {src.name}")

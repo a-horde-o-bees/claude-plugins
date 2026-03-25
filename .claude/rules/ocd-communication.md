@@ -1,3 +1,7 @@
+---
+type: deployed
+---
+
 # Communication
 
 Interaction style between agent and user.
