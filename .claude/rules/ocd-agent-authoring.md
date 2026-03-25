@@ -149,6 +149,86 @@ Grouping headings organize contiguous steps within single process. Steps continu
 4. Action
 ```
 
+## Skill Argument Notation
+
+Notation for skill `argument-hint` frontmatter and workflow argument references. Defines how skills declare arguments and how workflows reference argument values during execution. Required in always-on context — agents must parse argument hints to understand skill interfaces and follow `{flag}` references to resolve values during workflow execution.
+
+### Argument Hint Format
+
+`argument-hint` field in SKILL.md frontmatter declares skill arguments using CLI-style format. Agents read this to understand what arguments skill accepts, which are required, and what values they expect.
+
+Format elements:
+
+| Required | Optional | Description |
+|----------|----------|-------------|
+| `<value>` | `[value]` | Value placeholder |
+| `<x \| y>` | `[x \| y]` | Choice — one of listed alternatives |
+| N/A | `[--flag]` | Boolean flag — presence means true, absence means false |
+| `--flag <value>` | `[--flag <value>]` | Flag with value — flag consumes following value |
+| N/A | `[--flag <value> ...]` | Repeatable — flag may appear multiple times, each with own value |
+
+Angle brackets `<>` denote required values. Square brackets `[]` denote optional elements and drop inner angle brackets. Boolean and repeatable flags are always optional.
+
+Examples:
+
+```
+--target <path | /skill-name | project | self> [--pattern <glob>] [--intent <text>] [--all] [--delegate]
+```
+
+- `--target` — required flag with required choice value; must be one of: path, /skill-name, `project`, or `self`
+- `[--pattern <glob>]` — optional flag with value; if present, consumes glob text
+- `[--intent <text>]` — optional flag with value; if present, consumes text
+- `[--all]` — optional boolean flag; presence means include all
+- `[--delegate]` — optional boolean flag; presence means delegate execution
+
+```
+--target </skill-name | natural language scenario> [--delegate]
+```
+
+- `--target` — required flag with required choice value; skill name or free text
+- `[--delegate]` — optional boolean flag
+
+### Workflow Argument References
+
+Workflows reference argument values using `{flag}` notation — curly braces around flag name (without `--` prefix). This binds workflow steps to specific argument values declared in argument-hint, making data flow explicit.
+
+`{flag}` always resolves to value associated with flag:
+- For boolean flags — `{flag}` resolves to existence (true if present, false if absent)
+- For value flags — `{flag}` resolves to text value passed with flag
+- For repeatable flags — `{flag}` in singular context is collection; `{flag}` inside `For each {flag}:` resolves to current item
+
+Reference patterns in workflow steps:
+
+```
+1. If {target} starts with `/`:
+  1. Resolve skill path from {target}
+2. Else if {target} is `project`:
+  1. Set target directory to project root
+```
+
+```
+1. If {intent} exists:
+  1. Interpret {intent} against available pipeline controls
+  2. Present adjustments for confirmation
+```
+
+```
+1. If {pattern} exists:
+  1. For each {pattern}:
+    1. Pass {pattern} to navigator CLI as filter
+```
+
+```
+1. If {delegate} exists:
+  1. Spawn background agent
+2. Else:
+  1. Execute inline
+```
+
+### Relationship to Process Flow Notation
+
+Skill Argument Notation extends Process Flow Notation for skill-specific constructs. PFN defines how to write workflow steps (conditionals, iteration, flow control). Argument notation defines how those steps reference skill inputs. Both are required context — PFN for step structure, argument notation for data flow within steps.
+
 ## CLI Design
 
 ### Agent-facing vs internal scripts

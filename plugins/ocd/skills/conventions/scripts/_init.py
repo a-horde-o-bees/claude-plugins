@@ -55,7 +55,10 @@ def init(plugin_root: Path, project_dir: Path, force: bool = False) -> list[str]
         if dst.exists() and not force:
             lines.append(f"Skipped (exists): {src.name}")
             continue
-        action = "Overwritten" if dst.exists() else "Deployed"
+        if dst.exists() and src.read_bytes() == dst.read_bytes():
+            lines.append(f"Current: {src.name}")
+            continue
+        action = "Replaced" if dst.exists() else "New"
         shutil.copy2(src, dst)
         lines.append(f"{action}: {src.name}")
 
