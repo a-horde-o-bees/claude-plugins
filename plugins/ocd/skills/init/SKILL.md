@@ -22,4 +22,4 @@ User runs `/ocd-init`
 
 ### Report
 
-- Script output presented as-is
+- Script output presented as-is — no summarization, no reformatting
