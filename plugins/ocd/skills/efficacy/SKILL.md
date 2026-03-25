@@ -1,12 +1,12 @@
 ---
 name: ocd-efficacy
 description: Documentation efficacy testing; evaluates whether documentation enables correct task execution via holistic or per-scenario examination
-argument-hint: "--target </skill-name | natural language scenario> [--delegate]"
+argument-hint: "--target </skill-name | natural language scenario> [--auto] [--delegate]"
 ---
 
 # /ocd-efficacy
 
-Evaluate whether documentation enables correct task execution. Agents spawn with no conversation history to truthfully evaluate instructions without prior context influencing assessment. Holistic examination reviews raw document as single target. Per-scenario examination delegates to coordinating agent that spawns parallel evaluators per execution path. Mode is routing choice — evaluation protocol is shared.
+Evaluate whether documentation enables correct task execution. Agents spawn with no conversation history to truthfully evaluate instructions without prior context influencing assessment. Holistic examination reviews raw document as single target. Per-scenario examination delegates to coordinating agent that spawns parallel evaluators per execution path. Auto mode iteratively evaluates and fixes straightforward issues until convergence, reporting complex issues for user review. Mode is routing choice — evaluation protocol is shared.
 
 ## Trigger
 
@@ -26,13 +26,16 @@ User runs `/ocd-efficacy`
   2. Else:
     1. {skill-path} = {target}
   3. {target} = contents of {skill-path}
-  4. Present mode choice to user via AskUserQuestion with options:
+  4. If --auto:
+    1. {selected-workflow} = Auto
+    2. Go to step 4. Dispatch
+  5. Present mode choice to user via AskUserQuestion with options:
     1. Holistic — raw document, single agent examination
     2. Per-scenario — coordinating agent spawns parallel evaluators per execution path
-  5. If holistic:
+  6. If holistic:
     1. {scenario} = {target}
     2. {selected-workflow} = Holistic
-  6. Else if per-scenario:
+  7. Else if per-scenario:
     1. Identify scenarios — read target skill's Route section
       1. Each unique path through Route that leads to different Workflow constitutes scenario; skip EXIT routes reached by argument validation
       2. Construct one scenario per route:
@@ -42,18 +45,20 @@ User runs `/ocd-efficacy`
     4. {scenarios} = list of scenario prefaces paired with {target}
       - Preface format — see Scenario Preface in Components
     5. {selected-workflow} = Per-Scenario
-  7. Else:
+  8. Else:
     1. Interpret user response and resolve to workflow selection
 3. Else:
-  1. If {target} warrants multiple scenarios — prompt implies multiple test paths, common testing patterns, or meaningfully different contexts:
+  1. If --auto:
+    1. EXIT — --auto requires file target (/skill-name or SKILL.md path)
+  2. If {target} warrants multiple scenarios — prompt implies multiple test paths, common testing patterns, or meaningfully different contexts:
     1. Suggest scenarios with rationale; present for user confirmation via AskUserQuestion before proceeding
     2. {scenarios} = list of scenario prefaces paired with {target}
       - Preface format — see Scenario Preface in Components
     3. {selected-workflow} = Per-Scenario
-  2. Else if ambiguous:
+  3. Else if ambiguous:
     1. Ask user for clarification — explain interpretation and propose options
     2. Assign {scenario} or {scenarios} and {selected-workflow} based on clarified input
-  3. Else:
+  4. Else:
     1. {scenario} = {target}
     2. {selected-workflow} = Holistic
 4. Dispatch — proceed to {selected-workflow}
@@ -98,6 +103,24 @@ Format for scenario evaluation targets. Prepended to {target} content to frame a
 
 `Scenario: evaluate the following as if these were the arguments passed: {scenario-arguments}`
 
+### Triage Criteria
+
+Classifies evaluation findings for Auto workflow. Orchestrator applies these criteria to each finding from evaluation agent report.
+
+Straightforward — fix is deterministic from document and referenced conventions; no new design decisions or external context required:
+- PFN notation errors
+- Unbound or unassigned variables
+- Missing flow control steps
+- Wording that contradicts its own context
+- Redundant content
+- Internal consistency (cross-references, terminology)
+
+Complex — fix requires design decisions, new conventions, external context, or evaluator may be wrong:
+- Structural changes to how workflows operate
+- Issues that cascade beyond immediate file
+- Issues where proposed fix conflicts with prior decisions
+- Judgments about whether something is actually a problem
+
 ## Workflow: Holistic
 
 1. Spawn agent with Evaluation Protocol, Problem List, and {scenario}
@@ -106,6 +129,32 @@ Format for scenario evaluation targets. Prepended to {target} content to frame a
 ### Report
 
 Agent findings with trace, assessment, and per-issue descriptions with recommended actions.
+
+## Workflow: Auto
+
+Iterative fix-and-verify loop. Orchestrator evaluates, triages findings, fixes straightforward issues, and re-evaluates until convergence.
+
+1. Check precondition — working tree must be clean
+  1. Run `git status --porcelain`
+  2. If output is non-empty: EXIT — commit pending changes before running --auto
+2. {baseline} = `git rev-parse HEAD`
+3. {iteration} = 0
+4. While {iteration} < 5:
+  1. {scenario} = re-read {skill-path} from disk
+  2. Spawn evaluation agent with Evaluation Protocol, Problem List, and {scenario}
+  3. Triage findings using Triage Criteria — classify each as straightforward or complex
+  4. If no straightforward findings: STOP — converged
+  5. Apply straightforward fixes directly to {skill-path}
+  6. {iteration} = {iteration} + 1
+5. Run `git diff {baseline}` to capture all changes
+6. Evaluate diff — group changes by topic, ignore intermediate mutations
+7. Present report
+
+### Report
+
+- Changes applied: grouped by topic from diff
+- Complex issues: findings requiring user judgment, with descriptions and recommended actions
+- Iterations completed and convergence status
 
 ## Workflow: Per-Scenario
 
@@ -129,5 +178,8 @@ Per-scenario findings from each sub-agent. Cross-cutting analysis of findings re
 - --delegate makes all agent spawns in Workflow run in background — orchestration (Route) always runs in main conversation
 - Scenario description is agent-determined, no prescribed format
 - Natural language {target} routing is inherently non-deterministic — agent judgment determines whether target warrants multiple scenarios, is ambiguous, or maps to single scenario
-- Holistic and per-scenario are routing choices selected during Route
+- Holistic, per-scenario, and auto are routing choices selected during Route
 - User always confirms proposed scenarios before per-scenario evaluation proceeds
+- --auto requires file target (/skill-name or SKILL.md path) and clean working tree
+- --auto triage uses Triage Criteria — straightforward fixes require no user input, complex issues are reported
+- --auto converges when no straightforward findings remain; iteration limit is safeguard, not target
