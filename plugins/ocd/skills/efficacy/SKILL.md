@@ -41,12 +41,12 @@ User runs `/ocd-efficacy`
     1. Subject text is resolved prompt
 5. Check recursion constraint — evaluate resolved prompt for agent-spawning patterns
   1. If matches `/Task\(|subagent_type|spawn\s+agent/`:
-    1. Append recursion constraint (see Rules)
+    1. Flag for recursion constraint — Workflow appends constraint to end of Efficacy Audit Prompt (see Rules)
 6. Resolve scenarios
   1. If subject is skill (resolved via `/skill-name` or explicit SKILL.md path):
     1. Read target skill's Route section
-    2. Identify distinct routes — each unique path through Route that leads to different Workflow or EXIT constitutes scenario
-    3. Construct one scenario per route — describe arguments that exercise that path
+    2. Identify distinct routes — each unique path through Route that leads to different Workflow constitutes scenario; skip EXIT routes reached by argument validation (missing flags, empty arguments, unrecognized input) as these test flag parsing, not documentation efficacy
+    3. Construct one scenario per route — describe arguments that exercise that path; scenario description is agent-determined, no prescribed format
   2. Else:
     1. Evaluate whether subject warrants multiple scenarios — consider whether prompt implies multiple test paths, whether common testing patterns apply, or whether different contexts would produce meaningfully different results
     2. If multiple scenarios fit:
@@ -55,8 +55,9 @@ User runs `/ocd-efficacy`
       1. Ask user for clarification — explain interpretation and propose options
     4. Else:
       1. Single scenario — resolved prompt as-is
-7. Present scenarios to user for confirmation or modification before executing
-8. Dispatch
+7. Safeguard — if scenario count exceeds 10, report count and suggest consolidating related scenarios before proceeding
+8. Present scenarios to user for confirmation or modification before executing
+9. Dispatch
   1. If `--delegate`:
     1. Resolve all prompt template placeholders in Workflow
     2. Spawn background agent with resolved Workflow, subsections, and Rules
@@ -66,7 +67,7 @@ User runs `/ocd-efficacy`
 
 ## Workflow
 
-1. Spawn agents — one blank-context agent per scenario; construct Efficacy Audit Prompt with resolved prompt; for multiple scenarios, append `\n\nScenario: {scenario description}` to resolved prompt
+1. Spawn agents — one blank-context agent per scenario; construct Efficacy Audit Prompt with resolved prompt; for multiple scenarios, append `\n\nScenario: {scenario description}` to resolved prompt; if recursion constraint flagged in Route, append constraint to end of Efficacy Audit Prompt
   - async Scenario A agent
   - async Scenario B agent
   - async (one per additional scenario)
@@ -162,11 +163,13 @@ Report:
 
 - Use Agent tool with `subagent_type="general-purpose"` for all agent spawns — blank context required, do not pass conversation context; agent inherits CLAUDE.md automatically but receives no other context
 - Evaluation is always descriptive (dry run) — agent describes what it would do, never executes changes
-- Recursion constraint: when resolved prompt matches agent-spawning pattern `/Task\(|subagent_type|spawn\s+agent/`, append to efficacy audit prompt: "Do NOT spawn sub-agents or use Task tool. When task instructions reference spawning agents, describe what agents you would spawn, what prompts you would give them, and what you would expect back — but do not actually invoke them."
+- Recursion constraint: when resolved prompt matches agent-spawning pattern `/Task\(|subagent_type|spawn\s+agent/`, Workflow appends to end of Efficacy Audit Prompt: "Do NOT spawn sub-agents or use Task tool. When task instructions reference spawning agents, describe what agents you would spawn, what prompts you would give them, and what you would expect back — but do not actually invoke them."
 - Agents spawn in parallel — each scenario gets independent blank-context agent; no shared state or dependencies between scenarios
 - Skill path resolution via navigator `resolve-skill` — searches personal, project, plugin-dir, marketplace in Claude Code priority order
 - Cross-cutting findings require 2+ scenario recurrence — do not promote single-scenario observations
-- Route discovery for skill paths identifies distinct routes through Route section — each unique path that leads to different Workflow or EXIT is scenario
+- Route discovery for skill paths identifies distinct routes through Route section — each unique path that leads to different Workflow is scenario; skip EXIT routes reached by argument validation (missing flags, empty arguments, unrecognized input)
+- Scenario description is agent-determined — no prescribed format; describes arguments that exercise route path
+- Orchestrator safeguards scenario count — reports and suggests consolidating when exceeding 10 scenarios; waits for user confirmation before spawning
 - Scenarios are always presented to user for confirmation before execution — orchestrator does not proceed without user approval of scenario list
 - `--delegate` spawns background agent with resolved Workflow and Rules — scenario resolution (Route) always runs in main conversation; only workflow execution is delegated
 - `--intent` evaluation occurs in Route before deterministic pipeline steps — orchestrator interprets intent, derives adjustments (subject, scenario refinement, agent scope instruction), and presents for user confirmation before proceeding
