@@ -6,7 +6,7 @@ argument-hint: "--target </skill-name | natural language scenario> [--delegate]"
 
 # /ocd-efficacy
 
-Evaluate whether documentation enables correct task execution. Holistic examination reviews raw document as single target. Per-scenario examination delegates to coordinating agent that spawns parallel evaluators per execution path. Mode is routing choice — evaluation protocol is shared.
+Evaluate whether documentation enables correct task execution. Agents spawn with no conversation history to truthfully evaluate instructions without prior context influencing assessment. Holistic examination reviews raw document as single target. Per-scenario examination delegates to coordinating agent that spawns parallel evaluators per execution path. Mode is routing choice — evaluation protocol is shared.
 
 ## Trigger
 
@@ -16,7 +16,7 @@ User runs `/ocd-efficacy`
 
 1. If not --target:
   1. EXIT — respond with skill description and argument-hint
-2. If {target} starts with `/` or file named `SKILL.md`:
+2. If {target} starts with `/` or {target} ends with `/SKILL.md`:
   1. If {target} starts with `/`:
     1. {skill-path} = resolve skill path — run navigator CLI `resolve-skill` with skill name (strip leading `/` from {target})
       ```
@@ -27,10 +27,11 @@ User runs `/ocd-efficacy`
     1. {skill-path} = {target}
   3. {target} = contents of {skill-path}
   4. Present mode choice to user:
-    - Holistic — raw document, single agent examination
-    - Per-scenario — coordinating agent spawns parallel evaluators per execution path
+    1. Holistic — raw document, single agent examination
+    2. Per-scenario — coordinating agent spawns parallel evaluators per execution path
   5. If holistic:
     1. {scenario} = {target}
+    2. {selected-workflow} = Holistic
   6. If per-scenario:
     1. Identify scenarios — read target skill's Route section
       1. Each unique path through Route that leads to different Workflow constitutes scenario; skip EXIT routes reached by argument validation
@@ -38,27 +39,27 @@ User runs `/ocd-efficacy`
     2. Safeguard — if scenario count exceeds 10, report count and suggest consolidating
     3. Present scenarios to user for confirmation or modification
     4. {scenarios} = list of scenario prefaces paired with {target}
-      - Preface format: `Scenario: evaluate the following as if these were the arguments passed: {scenario-arguments}`
+      - Preface format — see Scenario Preface in Components
+    5. {selected-workflow} = Per-Scenario
 3. Else:
   1. If {target} warrants multiple scenarios — prompt implies multiple test paths, common testing patterns, or meaningfully different contexts:
-    1. Suggest scenarios with rationale; present for confirmation
+    1. Suggest scenarios with rationale; present for user confirmation before proceeding
     2. {scenarios} = list of scenario prefaces paired with {target}
+      - Preface format — see Scenario Preface in Components
+    3. {selected-workflow} = Per-Scenario
   2. Else if ambiguous:
     1. Ask user for clarification — explain interpretation and propose options
   3. Else:
     1. {scenario} = {target}
-4. Dispatch
-  1. If --delegate:
-    1. Spawn background agent with selected Workflow, referenced Components, and Rules
-    2. Present agent report as-is
-  2. Else:
-    1. Proceed to selected Workflow
+    2. {selected-workflow} = Holistic
+4. Dispatch — proceed to {selected-workflow}
+  - If --delegate: agent spawn in Workflow runs in background
 
 ## Components
 
 ### Evaluation Protocol
 
-Steps and constraints for leaf evaluating agents. Passed to agents as execution instructions. Includes recursion constraint — evaluating agents must not execute changes or spawn further agents.
+Steps and constraints for evaluating agents. Includes recursion constraint — evaluating agents must not execute changes or spawn further agents.
 
 Do NOT execute any changes. Do NOT spawn sub-agents or use Task tool. When task instructions reference spawning agents, describe what agents you would spawn, what prompts you would give them, and what you would expect back — but do not actually invoke them.
 
@@ -87,9 +88,15 @@ Guides what evaluating agents look for. Not exhaustive — agents report any iss
 - Overengineering — such as over-prescribed steps that could be left to agent judgment, unnecessary parameterization
 - Artifacts — such as defunct references to removed features, stale cross-references
 
+### Scenario Preface
+
+Format for scenario evaluation targets. Prepended to {target} content to frame agent's reading of document.
+
+`Scenario: evaluate the following as if these were the arguments passed: {scenario-arguments}`
+
 ## Workflow: Holistic
 
-1. Spawn blank-context agent with Evaluation Protocol, Problem List, and {scenario}
+1. Spawn agent with Evaluation Protocol, Problem List, and {scenario}
 2. Present agent report
 
 ### Report
@@ -98,7 +105,7 @@ Agent findings with trace, assessment, and per-issue descriptions with recommend
 
 ## Workflow: Per-Scenario
 
-1. Spawn blank-context coordinating agent with {scenarios}, Evaluation Protocol, and Problem List
+1. Spawn coordinating agent with {scenarios}, Evaluation Protocol, and Problem List
   - Coordinating agent spawns one sub-agent per scenario — each sub-agent receives Evaluation Protocol, Problem List, and one scenario (preface + {target})
   - Coordinating agent collects sub-agent reports
   - Coordinating agent produces consolidated report with cross-cutting analysis
@@ -110,11 +117,12 @@ Per-scenario findings from each sub-agent. Cross-cutting analysis of findings re
 
 ## Rules
 
-- Use Agent tool with `subagent_type="general-purpose"` for all agent spawns — blank context required; agent inherits CLAUDE.md automatically but receives no other context
-- Evaluation is always descriptive (dry run) — recursion constraint lives in Evaluation Protocol, applied to leaf evaluating agents
+- Agents spawn with no conversation history — project rules and CLAUDE.md load automatically; only Workflow, referenced Components, and scenario content are passed explicitly
+- Evaluation is always descriptive (dry run) — recursion constraint lives in Evaluation Protocol, applied to evaluating agents
 - Coordinating agent in Per-Scenario Workflow spawns sub-agents — recursion constraint does not apply to coordinating agent
 - Cross-cutting findings require 2+ scenario recurrence — do not promote single-scenario observations
-- --delegate spawns background agent with selected Workflow, referenced Components, and Rules — mode selection and scenario resolution (Route) always run in main conversation
+- --delegate makes Workflow agent spawn run in background — mode selection and scenario resolution (Route) always run in main conversation
 - Scenario description is agent-determined, no prescribed format
 - Deterministic {target} values (`/skill-name`, SKILL.md paths) reassign {target} to file contents; all other {target} values pass through as literal text
 - Holistic and per-scenario are routing choices selected during Route
+- User always confirms proposed scenarios before per-scenario evaluation proceeds
