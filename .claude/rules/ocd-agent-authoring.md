@@ -63,7 +63,7 @@ Numbers are ordered execution or evaluation. Bullets are unordered sub-items.
   - Unordered sub-item
 ```
 
-Em dash (`—`) separates step label from description. Label is action verb or short imperative; description elaborates. Semicolons add qualifications, context, or constraints inline after action. Hyphen (`-`) is reserved for bullet sub-items.
+Em dash (`—`) separates step label from optional description. Label is action verb or short imperative; description elaborates context, purpose, or constraints — never an imperative action that could be executed independently. Include em dash descriptions only when they add value to an agent reading the step; omit when the label or children are self-evident. Semicolons add qualifications, context, or constraints inline after action. Hyphen (`-`) is reserved for bullet sub-items.
 
 ```
 1. Label — description of action; supporting context; constraint or exception
