@@ -19,10 +19,11 @@ User runs `/ocd-conventions`
 2. If {target} is `self`:
   1. If --delegate:
     1. EXIT — self-evaluation is interactive and cannot be delegated
-  2. Go to step 11. Dispatch Workflow: Self-Evaluation
+  2. {selected-workflow} = Self-Evaluation
+  3. Go to step 11. Dispatch
 3. Else if {target} is `project`:
   1. {target-directory} = `.` (project root)
-4. Else if {target} starts with `/` or file named `SKILL.md`:
+4. Else if {target} starts with `/` or {target} is a path ending with `/SKILL.md`:
   1. If {target} starts with `/`:
     1. Resolve skill path — run navigator CLI `resolve-skill` with skill name (strip leading `/` from {target})
       ```
@@ -54,74 +55,30 @@ User runs `/ocd-conventions`
 10. Safeguard — check target count
   1. If target count exceeds 20:
     1. Report count and suggest narrowing via AskUserQuestion with options: proceed, narrow with --pattern, or specify more specific path
+  2. {selected-workflow} = Conformity
 11. Dispatch
   1. If --delegate:
-    1. Resolve all prompt template placeholders in Workflow: Conformity
-    2. Spawn background agents with resolved Workflow and Rules
-    3. Present agent reports as-is
+    1. Spawn background agent with {selected-workflow} and Rules — agents read component files at execution time
+    2. Present agent reports as-is
   2. Else:
-    1. Proceed to Workflow: Conformity
+    1. Proceed to {selected-workflow}
 
 ## Workflow: Conformity
 
 1. For each target file:
   1. {target-path} = current target file path
-2. Spawn parallel agents — one per target file with resolved Conformity Reformat Prompt
-  - async Agent per target file
+2. For each {target-path}, spawn agent with instructions:
+  1. Read `_conformity-prompt.md`
+  2. Apply to {target-path}
+  - async agent per target file
 3. Review changes — run `git diff` after all agents complete; review for correctness before presenting
 4. Present results — per-target summary of changes applied, criteria used, and issues requiring user judgment
-
-### Conformity Reformat Prompt
-
-Orchestrator resolves `{target-path}` per file before passing to agent. Agent discovers its own criteria via conventions CLI.
-
-```
-You are reformatting a file to conform with project conventions.
-
-Target file: {target-path}
-
-1. Discover criteria — run conventions CLI to find applicable conventions and rules
-  ```
-  python3 ${CLAUDE_PLUGIN_ROOT}/skills/conventions/scripts/conventions_cli.py list-matching {target-path}
-  ```
-  1. If no criteria match: report "no criteria apply" and stop
-  2. If file tagged `[fail: N lines]`: report auto-fail with line count and stop
-  3. If file tagged `[warn: N lines]`: note warning, proceed with targeted reads for large file
-2. Read all criteria files listed in output
-3. Read target file
-4. Evaluate target file against its criteria
-5. For each applicable convention or rule:
-  1. Assess conformity with specific rule citations
-  2. Apply fixes for any non-conformities found
-6. After convention conformity, evaluate and fix internal consistency:
-  1. Terminology — ensure same concepts use same terms throughout
-  2. Cross-references — ensure internal references (section names, step numbers) match their targets
-  3. Completeness — ensure no references to concepts, steps, or sections that do not exist
-7. Apply all fixes directly to target file using Edit tool. Preserve semantic meaning — reformat and rephrase, never change what file communicates.
-
-After processing, provide report:
-1. Changes applied with brief rationale
-2. Issues NOT fixed because they require user judgment (semantic ambiguity, structural decisions)
-3. Criteria files used
-```
 
 ### Report
 
 - Per-target: changes applied with brief rationale
 - Per-target: issues not fixed because they require user judgment (semantic ambiguity, structural decisions)
 - All criteria files used (deduplicated across agents)
-
-### Running
-
-```
-For each target:
-  Agent(
-    subagent_type="general-purpose",
-    prompt="<resolved conformity reformat prompt>",
-    description="Conformity: <target filename>",
-    run_in_background=true
-  )
-```
 
 ## Workflow: Self-Evaluation
 
@@ -158,9 +115,8 @@ Evaluate rules and conventions against each other in dependency order. Report-on
 
 ## Rules
 
-- Use Agent tool with `subagent_type="general-purpose"` for agent spawn
-- Do not pass conversation context to spawned agent — agent inherits CLAUDE.md automatically but receives no other context beyond resolved prompt
-- One agent per target file — parallel execution gives each file full attention; agent discovers its own criteria via conventions CLI
+- Do not pass conversation context to spawned agent — agent inherits CLAUDE.md automatically but receives no other context beyond workflow instructions
+- One agent per target file — parallel execution gives each file full attention; agent reads `_conformity-prompt.md` and discovers its own criteria via conventions CLI
 - Agent applies fixes directly in Conformity workflow — reformatting, not just reporting
 - Orchestrator safeguards target count — reports and suggests narrowing when exceeding 20 files; waits for user confirmation before spawning
 - Self-evaluation is report-only — present findings, do not apply fixes; user directs any changes after reviewing
@@ -172,6 +128,5 @@ Evaluate rules and conventions against each other in dependency order. Report-on
 - Natural language {target} evaluation occurs in Route as fallback after deterministic matches — orchestrator interprets goal, derives adjustments, and presents for user confirmation before proceeding
 - When natural language adjustments conflict with other provided flags, orchestrator surfaces conflict and works with user to resolve — no implicit precedence
 - Deterministic {target} values (`project`, `self`, paths, `/skill-name`) execute without interpretation or confirmation
-- --delegate spawns background agent with fully resolved Workflow and Rules — orchestration (Route) always runs in main conversation
+- --delegate spawns background agent with Workflow and Rules — agents read component files at execution time; orchestration (Route) always runs in main conversation
 - Self-evaluation does not support --delegate — interactive review between levels is structurally required
-- Orchestrator resolves all prompt template placeholders before agent handoff — agents receive fully resolved prompts with no template variables
