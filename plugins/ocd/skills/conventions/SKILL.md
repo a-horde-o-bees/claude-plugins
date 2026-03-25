@@ -20,7 +20,7 @@ User runs `/ocd-conventions`
   1. If --delegate:
     1. EXIT — self-evaluation is interactive and cannot be delegated
   2. {selected-workflow} = Self-Evaluation
-  3. Go to step 11. Dispatch
+  3. Go to step 12. Dispatch
 3. Else if {target} is `project`:
   1. {target-directory} = `.` (project root)
 4. Else if ({target} starts with `/` and contains no spaces) or ({target} is a path ending with `/SKILL.md`):
@@ -30,9 +30,12 @@ User runs `/ocd-conventions`
       python3 ${CLAUDE_PLUGIN_ROOT}/skills/navigator/scripts/navigator_cli.py resolve-skill <name>
       ```
     2. If exit code 1: EXIT — report skill not found
-  2. {target-directory} = parent of resolved SKILL.md path
+    3. {target-directory} = parent of resolved skill path
+  2. Else:
+    1. {target-directory} = parent directory of {target}
 5. Else if {target} is file path:
-  1. {target-file} = {target}; skip to Deduplicate
+  1. {target-file} = {target}
+  2. Go to step 9. Deduplicate target list
 6. Else if {target} is directory path:
   1. {target-directory} = {target}
 7. Else:
@@ -43,20 +46,19 @@ User runs `/ocd-conventions`
   4. Present proposed passes and ask user for confirmation via AskUserQuestion before proceeding
   5. For each confirmed pass:
     1. Assign derived variables ({target-directory}) for pass
-    2. Execute steps 8-11 with assigned variables
+    2. Execute steps 8-12 with assigned variables
 8. Enumerate targets — run navigator CLI to get filtered file list
   ```bash
-  python3 ${CLAUDE_PLUGIN_ROOT}/skills/navigator/scripts/navigator_cli.py list {target-directory} [--pattern "..."] [--exclude "..."]
+  python3 ${CLAUDE_PLUGIN_ROOT}/skills/navigator/scripts/navigator_cli.py list {target-directory} --exclude ".claude/*" [--pattern "..."]
   ```
   - If --pattern: For each --pattern, pass {pattern} to navigator CLI
-  - Apply boundary rule via `--exclude ".claude/*"`
   - {target-file} bypasses enumeration — file target from step 5 checks that path without exclusion
 9. Deduplicate target list
-10. Safeguard — check target count
+10. {selected-workflow} = Conformity
+11. Safeguard — check target count
   1. If target count exceeds 20:
     1. Report count and suggest narrowing via AskUserQuestion with options: proceed, narrow with --pattern, or specify more specific path
-  2. {selected-workflow} = Conformity
-11. Dispatch
+12. Dispatch
   1. If --delegate:
     1. Spawn background agent with {selected-workflow} and Rules — agents read component files at execution time
     2. Present agent reports as-is
@@ -65,20 +67,17 @@ User runs `/ocd-conventions`
 
 ## Workflow: Conformity
 
-1. For each target file:
-  1. {target-path} = current target file path
-2. For each {target-path}, spawn agent with instructions:
+1. For each target file, spawn agent with {target-path} and instructions:
   1. Read `_conformity-instructions.md`
   2. Apply to {target-path}
   - async agent per target file
-3. Review changes — run `git diff` after all agents complete; review for correctness before presenting
-4. Present results — per-target summary of changes applied, criteria used, and issues requiring user judgment
+2. Review changes — run `git diff` after all agents complete; review for correctness before presenting
+3. Present results — per-target summary of changes applied, criteria used, and issues requiring user judgment
 
 ### Report
 
-- Per-target: changes applied with brief rationale
-- Per-target: issues not fixed because they require user judgment (semantic ambiguity, structural decisions)
-- All criteria files used (deduplicated across agents)
+- Agent reports follow format defined in `_conformity-instructions.md`
+- Orchestrator deduplicates criteria files across agents
 
 ## Workflow: Self-Evaluation
 

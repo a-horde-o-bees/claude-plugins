@@ -14,12 +14,14 @@ Reformat target file to conform with project conventions.
 4. Evaluate target file against its criteria
 5. For each applicable convention or rule:
   1. Assess conformity with specific rule citations
-  2. Apply fixes for any non-conformities found
-6. After convention conformity, evaluate and fix internal consistency:
+  2. Identify fixes for non-conformities found
+  - All rules are required unless convention text explicitly marks them as "recommended" or "optional"; report optional non-conformities but do not fix
+6. After convention conformity, evaluate internal consistency:
   1. Terminology — ensure same concepts use same terms throughout
   2. Cross-references — ensure internal references (section names, step numbers) match their targets
   3. Completeness — ensure no references to concepts, steps, or sections that do not exist
-7. Apply all fixes directly to target file using Edit tool. Preserve semantic meaning — reformat and rephrase, never change what file communicates.
+  4. Identify fixes for inconsistencies found
+7. Apply all identified fixes directly to target file using Edit tool. Preserve semantic meaning — reformat and rephrase, never change what file communicates.
 
 After processing, provide report:
 1. Changes applied with brief rationale
