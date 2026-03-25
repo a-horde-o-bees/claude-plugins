@@ -77,29 +77,31 @@ Agent findings with comprehension, trace, assessment, and per-issue Defect/Obser
 
 ## Workflow: Auto
 
-Iterative fix-and-verify loop. Orchestrator evaluates, triages findings, fixes straightforward issues, and re-evaluates until convergence.
+Iterative fix-and-verify loop. Coordinating agent spawns evaluation agents, triages findings, fixes Defects, and re-evaluates until convergence.
 
 1. Check precondition — working tree must be clean
   1. Run `git status --porcelain`
   2. If output is non-empty: EXIT — commit pending changes before running --auto
 2. {baseline} = `git rev-parse HEAD`
-3. {iteration} = 0
-4. {converged} = false
-5. Read `_triage-criteria.md`
-6. While {iteration} < 5:
-  1. {scenario} = re-read {skill-path} from disk
-  2. Spawn evaluation agent with {scenario} and instructions:
-    1. Read `_evaluation-protocol.md` and `_problem-list.md`
-    2. Follow evaluation protocol against {scenario}
-  3. {iteration} = {iteration} + 1
-  4. Triage findings using `_triage-criteria.md` — map evaluator Defect/Observation classifications to auto-fix or report
-  5. If no Defects:
-    1. {converged} = true
-    2. STOP
-  6. Apply Defect fixes directly to {skill-path}
-7. Run `git diff {baseline}` to capture all changes
-8. Evaluate diff — group changes by topic, ignore intermediate mutations
-9. Present report — include {converged} status
+3. Spawn coordinating agent with {skill-path}, {baseline}, and instructions:
+  1. Read `_triage-criteria.md`
+  2. {iteration} = 0
+  3. {converged} = false
+  4. While {iteration} < 5:
+    1. {scenario} = re-read {skill-path} from disk
+    2. Spawn evaluation agent with {scenario} and instructions:
+      1. Read `_evaluation-protocol.md` and `_problem-list.md`
+      2. Follow evaluation protocol against {scenario}
+    3. {iteration} = {iteration} + 1
+    4. Triage findings using `_triage-criteria.md` — map evaluator Defect/Observation classifications to auto-fix or report
+    5. If no Defects:
+      1. {converged} = true
+      2. STOP
+    6. Apply Defect fixes directly to {skill-path}
+  5. Run `git diff {baseline}` to capture all changes
+  6. Evaluate diff — group changes by topic, ignore intermediate mutations
+  7. Report findings with {converged} status
+4. Present coordinating agent report
 
 ### Report
 
