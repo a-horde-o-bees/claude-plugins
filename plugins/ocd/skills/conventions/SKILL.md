@@ -68,7 +68,7 @@ User runs `/ocd-conventions`
 1. For each target file:
   1. {target-path} = current target file path
 2. For each {target-path}, spawn agent with instructions:
-  1. Read `_conformity-prompt.md`
+  1. Read `_conformity-instructions.md`
   2. Apply to {target-path}
   - async agent per target file
 3. Review changes — run `git diff` after all agents complete; review for correctness before presenting
@@ -116,7 +116,7 @@ Evaluate rules and conventions against each other in dependency order. Report-on
 ## Rules
 
 - Do not pass conversation context to spawned agent — agent inherits CLAUDE.md automatically but receives no other context beyond workflow instructions
-- One agent per target file — parallel execution gives each file full attention; agent reads `_conformity-prompt.md` and discovers its own criteria via conventions CLI
+- One agent per target file — parallel execution gives each file full attention; agent reads `_conformity-instructions.md` and discovers its own criteria via conventions CLI
 - Agent applies fixes directly in Conformity workflow — reformatting, not just reporting
 - Orchestrator safeguards target count — reports and suggests narrowing when exceeding 20 files; waits for user confirmation before spawning
 - Self-evaluation is report-only — present findings, do not apply fixes; user directs any changes after reviewing

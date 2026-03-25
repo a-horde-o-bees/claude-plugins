@@ -1,4 +1,4 @@
-# Conformity Reformat Prompt
+# Conformity Instructions
 
 Reformat target file to conform with project conventions.
 
