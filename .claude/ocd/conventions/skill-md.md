@@ -1,3 +1,7 @@
+---
+type: deployed
+---
+
 # SKILL.md Conventions
 
 SKILL.md defines slash command behavior. Claude Code parses frontmatter for metadata and loads markdown body when skill is invoked. Skills are user-triggered interactive workflows.
@@ -140,6 +144,7 @@ Route evaluates {target} and selects Workflow regardless of --delegate. Dispatch
 ### Constraints
 
 - --delegate requires Workflow to be fully autonomous — no interactive checkpoints; skills with interactive workflows (e.g., level-by-level user approval) must reject --delegate in Route
+- --delegate causes all agent spawns within Workflow to run in background — orchestrator hides underlying processes from user
 - Natural language {target} evaluation occurs in Route as fallback after deterministic matches — orchestrator interprets goal, derives adjustments, assigns variables, and presents for user confirmation before proceeding
 - When natural language adjustments conflict with other provided flags, orchestrator surfaces conflict and works with user to resolve — no implicit precedence
 - Deterministic {target} values execute without interpretation or confirmation
@@ -249,6 +254,10 @@ When interactive decisions are unavoidable mid-workflow, use orchestration patte
 When workflow steps present choices or request confirmation in main conversation, use `AskUserQuestion` tool with `options` parameter — not freeform text with numbered lists. Structured options give user selectable choices instead of requiring typed responses.
 
 Does not apply to open-ended questions requiring freeform input or sub-agent contexts (AskUserQuestion only works in main conversation).
+
+Else handling for unexpected responses:
+- Orchestrator context — Else may jump forward or backward to appropriate step; do not prescribe specific outcomes
+- Steps processable by either orchestrator or spawned agent — Else defaults to EXIT; spawned agents cannot prompt user for alternative input
 
 ## Discovery and Loading
 
