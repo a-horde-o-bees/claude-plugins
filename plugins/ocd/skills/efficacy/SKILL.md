@@ -1,12 +1,12 @@
 ---
 name: ocd-efficacy
-description: Documentation efficacy testing; iterates between holistic review and per-scenario evaluation to identify issues in documentation
+description: Documentation efficacy testing; evaluates whether documentation enables correct task execution via holistic or per-scenario examination
 argument-hint: "--target </skill-name | natural language scenario> [--delegate]"
 ---
 
 # /ocd-efficacy
 
-Test whether documentation enables correct task execution. Two-phase iterative evaluation: holistic review catches structural issues across full document, per-scenario evaluation catches issues that surface when walking specific execution paths. Phases alternate until user stops.
+Evaluate whether documentation enables correct task execution. Holistic examination reviews raw document as single target. Per-scenario examination delegates to coordinating agent that spawns parallel evaluators per execution path. Mode is routing choice — evaluation protocol is shared.
 
 ## Trigger
 
@@ -18,63 +18,64 @@ User runs `/ocd-efficacy`
   1. EXIT — respond with skill description and argument-hint
 2. If {target} starts with `/` or file named `SKILL.md`:
   1. If {target} starts with `/`:
-    1. Resolve skill path — run navigator CLI `resolve-skill` with skill name (strip leading `/` from {target})
+    1. {skill-path} = resolve skill path — run navigator CLI `resolve-skill` with skill name (strip leading `/` from {target})
       ```
       python3 ${CLAUDE_PLUGIN_ROOT}/skills/navigator/scripts/navigator_cli.py resolve-skill <name>
       ```
     2. If exit code 1: EXIT — report skill not found
-  2. {target} = contents of resolved SKILL.md
-  3. Resolve scenarios — read target skill's Route section
-    1. Identify distinct routes — each unique path through Route that leads to different Workflow constitutes scenario; skip EXIT routes reached by argument validation (missing flags, empty arguments, unrecognized input)
-    2. Construct one scenario per route — describe arguments that exercise that path
+  2. Else:
+    1. {skill-path} = {target}
+  3. {target} = contents of {skill-path}
+  4. Present mode choice to user:
+    - Holistic — raw document, single agent examination
+    - Per-scenario — coordinating agent spawns parallel evaluators per execution path
+  5. If holistic:
+    1. {scenario} = {target}
+  6. If per-scenario:
+    1. Identify scenarios — read target skill's Route section
+      1. Each unique path through Route that leads to different Workflow constitutes scenario; skip EXIT routes reached by argument validation
+      2. Construct one scenario per route — describe arguments that exercise that path
+    2. Safeguard — if scenario count exceeds 10, report count and suggest consolidating
+    3. Present scenarios to user for confirmation or modification
+    4. {scenarios} = list of scenario prefaces paired with {target}
+      - Preface format: `Scenario: evaluate the following as if these were the arguments passed: {scenario-arguments}`
 3. Else:
-  1. {target} = {target}
-  2. Evaluate whether {target} warrants multiple scenarios — consider whether prompt implies multiple test paths, common testing patterns, or meaningfully different contexts
-    1. If multiple scenarios fit:
-      1. Suggest scenarios with rationale
-    2. Else if ambiguous:
-      1. Ask user for clarification — explain interpretation and propose options
-    3. Else:
-      1. Single scenario — {target} as-is
-4. Safeguard — if scenario count exceeds 10, report count and suggest consolidating
-5. Present scenarios to user for confirmation or modification before executing
-6. Dispatch
+  1. If {target} warrants multiple scenarios — prompt implies multiple test paths, common testing patterns, or meaningfully different contexts:
+    1. Suggest scenarios with rationale; present for confirmation
+    2. {scenarios} = list of scenario prefaces paired with {target}
+  2. Else if ambiguous:
+    1. Ask user for clarification — explain interpretation and propose options
+  3. Else:
+    1. {scenario} = {target}
+4. Dispatch
   1. If --delegate:
-    1. Spawn background agent with resolved Workflow and Rules
+    1. Spawn background agent with selected Workflow, referenced Components, and Rules
     2. Present agent report as-is
   2. Else:
-    1. Proceed to Workflow
+    1. Proceed to selected Workflow
 
-## Workflow
+## Components
 
-### Phase 1: Holistic Review
+### Evaluation Protocol
 
-1. Spawn single agent with Holistic Audit Prompt using {target}
-2. Present findings to user
-3. Wait for user — user reviews findings, resolves issues, or directs next steps
-4. If user resolves issues:
-  1. {target} = updated document contents
-  2. User chooses: run Phase 2, repeat Phase 1, or stop
+Steps and constraints for leaf evaluating agents. Passed to agents as execution instructions. Includes recursion constraint — evaluating agents must not execute changes or spawn further agents.
 
-### Phase 2: Per-Scenario Evaluation
+Do NOT execute any changes. Do NOT spawn sub-agents or use Task tool. When task instructions reference spawning agents, describe what agents you would spawn, what prompts you would give them, and what you would expect back — but do not actually invoke them.
 
-5. For each scenario:
-  1. {scenario-target} = {target}
-  2. If multiple scenarios:
-    1. Append `\n\nScenario: {scenario-description}` to {scenario-target}
-6. Spawn parallel agents — one blank-context agent per scenario with Per-Scenario Audit Prompt using {scenario-target}
-  - async Scenario A agent
-  - async Scenario B agent
-  - async (one per additional scenario)
-7. Collect agent reports and present results — for multiple scenarios, add cross-cutting analysis of findings recurring across 2+ scenarios
-8. Wait for user — user reviews findings, resolves issues, or directs next steps
-9. If user resolves issues:
-  1. {target} = updated document contents
-  2. User chooses: run Phase 1, repeat Phase 2, or stop
+1. Read full document
+2. Trace — reason through execution, write each step as process flow using numbered steps for sequence, indented bullets for conditionals (If X: action), and `async` prefix for parallel work; include documentation citations inline as `(file:line)` or `(file:section)`; do not write verbose prose — process flow IS step-by-step walkthrough; maintain consistent depth across all phases
+3. List each file you read and why, in order
+4. Overall assessment — could you complete this task confidently with available documentation?
+5. Issues found — for each issue, describe:
+  1. What issue is — complete thought, not category label
+  2. Where it occurs — file, section, line, or step reference
+  3. Recommended action to fix
+
+Look for: assumptions, inferences, gaps, waste, automation opportunities, simplification, redundancy, overengineering, and artifacts. These are examples, not exhaustive — report any issue regardless of category.
 
 ### Problem List
 
-Guides what agents look for during both phases. Not exhaustive — agents report any issue found, not only those matching listed examples.
+Guides what evaluating agents look for. Not exhaustive — agents report any issue found, not only those matching listed examples.
 
 - Assumptions — points where agent had to guess or make judgment calls not explicitly guided by documentation
 - Inferences — variables, references, or values resolved by inference rather than explicit assignment; unbound variables; undefined terms used as if defined; implicit data flow between steps
@@ -86,55 +87,34 @@ Guides what agents look for during both phases. Not exhaustive — agents report
 - Overengineering — over-prescribed steps that could be left to agent judgment, unnecessary parameterization
 - Artifacts — defunct references to removed features, stale cross-references
 
-### Holistic Audit Prompt
+## Workflow: Holistic
 
-```
-You are reviewing documentation for structural issues. Read the full document, then report every issue you find. Do NOT execute any changes. Do NOT spawn sub-agents or use Task tool. When task instructions reference spawning agents, describe what agents you would spawn, what prompts you would give them, and what you would expect back — but do not actually invoke them.
-
-Document:
-`{target}`
-
-For each issue found, describe:
-1. What the issue is — complete thought, not a category label
-2. Where it occurs — file, section, line, or step reference
-3. Recommended action to fix
-
-Look for: assumptions, inferences, gaps, waste, automation opportunities, simplification, redundancy, overengineering, and artifacts. These are examples, not an exhaustive list — report any issue regardless of category.
-```
-
-### Per-Scenario Audit Prompt
-
-```
-You are testing whether project documentation enables you to perform task. Follow your Discovery instructions, then describe IN DETAIL what you would do to accomplish task — but do NOT execute any changes. Do NOT spawn sub-agents or use Task tool. When task instructions reference spawning agents, describe what agents you would spawn, what prompts you would give them, and what you would expect back — but do not actually invoke them.
-
-Task:
-`{scenario-target}`
-
-Report:
-1. List each file you read and why, in order
-2. Trace — as you reason through execution, write each step as process flow using numbered steps for sequence, indented bullets for conditionals (If X: action), and `async` prefix for parallel work. Include documentation citations inline as `(file:line)` or `(file:section)`. Do not write verbose prose — process flow IS step-by-step walkthrough. Maintain consistent depth across all phases.
-3. Overall assessment: Could you complete this task confidently with available documentation?
-4. Issues found — for each issue, describe:
-  1. What the issue is — complete thought, not a category label
-  2. Where it occurs — file, section, line, or step reference
-  3. Recommended action to fix
-
-Look for: assumptions, inferences, gaps, waste, automation opportunities, simplification, redundancy, overengineering, and artifacts. These are examples, not an exhaustive list — report any issue regardless of category.
-```
+1. Spawn blank-context agent with Evaluation Protocol, Problem List, and {scenario}
+2. Present agent report
 
 ### Report
 
-Holistic — agent findings with per-issue descriptions and recommended actions.
+Agent findings with trace, assessment, and per-issue descriptions with recommended actions.
 
-Per-scenario — per-scenario agent output with trace, rating, and issues. Multiple scenarios include cross-cutting analysis of findings recurring across 2+ scenarios.
+## Workflow: Per-Scenario
+
+1. Spawn blank-context coordinating agent with {scenarios}, Evaluation Protocol, and Problem List
+  - Coordinating agent spawns one sub-agent per scenario — each sub-agent receives Evaluation Protocol, Problem List, and one scenario (preface + {target})
+  - Coordinating agent collects sub-agent reports
+  - Coordinating agent produces consolidated report with cross-cutting analysis
+2. Present coordinating agent report
+
+### Report
+
+Per-scenario findings from each sub-agent. Cross-cutting analysis of findings recurring across 2+ scenarios — do not promote single-scenario observations.
 
 ## Rules
 
 - Use Agent tool with `subagent_type="general-purpose"` for all agent spawns — blank context required; agent inherits CLAUDE.md automatically but receives no other context
-- Evaluation is always descriptive (dry run) — recursion prevention embedded in audit prompts as permanent directive
-- Per-scenario agents spawn in parallel — each scenario gets independent blank-context agent; no shared state between scenarios
+- Evaluation is always descriptive (dry run) — recursion constraint lives in Evaluation Protocol, applied to leaf evaluating agents
+- Coordinating agent in Per-Scenario Workflow spawns sub-agents — recursion constraint does not apply to coordinating agent
 - Cross-cutting findings require 2+ scenario recurrence — do not promote single-scenario observations
-- --delegate spawns background agent with resolved Workflow and Rules — scenario resolution (Route) always runs in main conversation
+- --delegate spawns background agent with selected Workflow, referenced Components, and Rules — mode selection and scenario resolution (Route) always run in main conversation
 - Scenario description is agent-determined, no prescribed format
 - Deterministic {target} values (`/skill-name`, SKILL.md paths) reassign {target} to file contents; all other {target} values pass through as literal text
-- Phases alternate at user direction — orchestrator does not auto-advance between phases
+- Holistic and per-scenario are routing choices selected during Route
