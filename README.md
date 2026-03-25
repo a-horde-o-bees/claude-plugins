@@ -42,20 +42,26 @@ After making source changes, hot-reload within the session:
 /reload-plugins
 ```
 
-If rules or convention templates changed, re-run init in target project:
+Check if deployed rules and conventions are up to date:
+
+```
+/ocd-init
+```
+
+Init reports each file as `Current`, `Outdated`, or `New`. If any files are outdated, force-update:
 
 ```
 /ocd-init --force
 ```
 
-Rules are loaded into agent context at session start. After deploying rule changes with `/ocd-init --force`, exit and resume to pick them up:
+If rules were `Replaced` or `New`, exit and resume to load them into context:
 
 ```
 /exit
 claude --resume
 ```
 
-`--resume` continues the most recent conversation with fresh context — rules, settings, and hooks reload while conversation history is preserved. Use this whenever deployed rules or conventions change mid-session.
+`--resume` continues the most recent conversation with fresh context — rules, settings, and hooks reload while conversation history is preserved. Only needed when rule files change; convention-only updates take effect immediately.
 
 Useful flags:
 
@@ -153,7 +159,7 @@ Restart Claude session again so deployed rules auto-load into context.
 
 **Deterministic operations in scripts, not agent judgment.** File copying, database initialization, permission checking — handled by scripts called via Bash. Skills contain only non-deterministic parts: judgment calls, context-dependent decisions, natural language generation.
 
-**Opt-in convention delivery via `.claude/rules/`.** Rules deploy to the standard auto-loading directory. Users explicitly run init to adopt conventions. Existing files are never overwritten — user customizations are preserved.
+**Opt-in convention delivery via `.claude/rules/`.** Rules deploy to the standard auto-loading directory. Users explicitly run init to adopt conventions. Without `--force`, existing files are preserved — init reports `Outdated` when deployed files differ from plugin templates.
 
 **Status command for user awareness.** `/ocd-status` displays plugin version, init status, and available updates on demand. Informational only — no automated updates or network calls. Agent discoverability comes from skill list entries.
 
