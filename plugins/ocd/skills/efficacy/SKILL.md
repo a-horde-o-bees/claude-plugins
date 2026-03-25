@@ -32,15 +32,18 @@ User runs `/ocd-efficacy`
   5. If holistic:
     1. {scenario} = {target}
     2. {selected-workflow} = Holistic
-  6. If per-scenario:
+  6. Else if per-scenario:
     1. Identify scenarios — read target skill's Route section
       1. Each unique path through Route that leads to different Workflow constitutes scenario; skip EXIT routes reached by argument validation
-      2. Construct one scenario per route — describe arguments that exercise that path
+      2. Construct one scenario per route:
+        1. {scenario-arguments} = description of arguments that exercise route path
     2. Safeguard — if scenario count exceeds 10, report count and suggest consolidating
     3. Present scenarios to user for confirmation via AskUserQuestion
     4. {scenarios} = list of scenario prefaces paired with {target}
       - Preface format — see Scenario Preface in Components
     5. {selected-workflow} = Per-Scenario
+  7. Else:
+    1. Interpret user response and resolve to workflow selection
 3. Else:
   1. If {target} warrants multiple scenarios — prompt implies multiple test paths, common testing patterns, or meaningfully different contexts:
     1. Suggest scenarios with rationale; present for user confirmation via AskUserQuestion before proceeding
@@ -49,6 +52,7 @@ User runs `/ocd-efficacy`
     3. {selected-workflow} = Per-Scenario
   2. Else if ambiguous:
     1. Ask user for clarification — explain interpretation and propose options
+    2. Assign {scenario} or {scenarios} and {selected-workflow} based on clarified input
   3. Else:
     1. {scenario} = {target}
     2. {selected-workflow} = Holistic
@@ -63,7 +67,7 @@ Steps and constraints for evaluating agents. Includes recursion constraint — e
 
 Do NOT execute any changes. Do NOT spawn sub-agents or use Task tool. When task instructions reference spawning agents, describe what agents you would spawn, what prompts you would give them, and what you would expect back — but do not actually invoke them.
 
-1. Read full document
+1. Read target
 2. Trace — reason through execution, write each step as process flow using numbered steps for sequence, indented bullets for conditionals (If X: action), and `async` prefix for parallel work; include documentation citations inline as `(file:line)` or `(file:section)`; do not write verbose prose — process flow IS step-by-step walkthrough; maintain consistent depth across all phases
 3. List each file you read and why, in order
 4. Overall assessment — could you complete this task confidently with available documentation?
@@ -105,10 +109,11 @@ Agent findings with trace, assessment, and per-issue descriptions with recommend
 
 ## Workflow: Per-Scenario
 
-1. Spawn coordinating agent with {scenarios}, Evaluation Protocol, and Problem List
-  - Coordinating agent spawns one sub-agent per scenario — each sub-agent receives Evaluation Protocol, Problem List, and one scenario (preface + {target})
-  - Coordinating agent collects sub-agent reports
-  - Coordinating agent produces consolidated report with cross-cutting analysis
+1. Spawn coordinating agent with {scenarios}, Evaluation Protocol, Problem List, and following instructions:
+  1. For each scenario in {scenarios}:
+    1. Spawn sub-agent with Evaluation Protocol, Problem List, and scenario (preface + {target})
+  2. Collect sub-agent reports
+  3. Produce consolidated report with cross-cutting analysis
 2. Present coordinating agent report
 
 ### Report
@@ -121,8 +126,8 @@ Per-scenario findings from each sub-agent. Cross-cutting analysis of findings re
 - Evaluation is always descriptive (dry run) — recursion constraint lives in Evaluation Protocol, applied to evaluating agents
 - Coordinating agent in Per-Scenario Workflow spawns sub-agents — recursion constraint does not apply to coordinating agent
 - Cross-cutting findings require 2+ scenario recurrence — do not promote single-scenario observations
-- --delegate makes Workflow agent spawn run in background — mode selection and scenario resolution (Route) always run in main conversation
+- --delegate makes all agent spawns in Workflow run in background — orchestration (Route) always runs in main conversation
 - Scenario description is agent-determined, no prescribed format
-- Deterministic {target} values (`/skill-name`, SKILL.md paths) reassign {target} to file contents; all other {target} values pass through as literal text
+- Natural language {target} routing is inherently non-deterministic — agent judgment determines whether target warrants multiple scenarios, is ambiguous, or maps to single scenario
 - Holistic and per-scenario are routing choices selected during Route
 - User always confirms proposed scenarios before per-scenario evaluation proceeds
