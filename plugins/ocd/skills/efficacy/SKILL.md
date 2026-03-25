@@ -26,7 +26,7 @@ User runs `/ocd-efficacy`
   2. Else:
     1. {skill-path} = {target}
   3. {target} = contents of {skill-path}
-  4. Present mode choice to user:
+  4. Present mode choice to user via AskUserQuestion with options:
     1. Holistic — raw document, single agent examination
     2. Per-scenario — coordinating agent spawns parallel evaluators per execution path
   5. If holistic:
@@ -37,13 +37,13 @@ User runs `/ocd-efficacy`
       1. Each unique path through Route that leads to different Workflow constitutes scenario; skip EXIT routes reached by argument validation
       2. Construct one scenario per route — describe arguments that exercise that path
     2. Safeguard — if scenario count exceeds 10, report count and suggest consolidating
-    3. Present scenarios to user for confirmation or modification
+    3. Present scenarios to user for confirmation via AskUserQuestion
     4. {scenarios} = list of scenario prefaces paired with {target}
       - Preface format — see Scenario Preface in Components
     5. {selected-workflow} = Per-Scenario
 3. Else:
   1. If {target} warrants multiple scenarios — prompt implies multiple test paths, common testing patterns, or meaningfully different contexts:
-    1. Suggest scenarios with rationale; present for user confirmation before proceeding
+    1. Suggest scenarios with rationale; present for user confirmation via AskUserQuestion before proceeding
     2. {scenarios} = list of scenario prefaces paired with {target}
       - Preface format — see Scenario Preface in Components
     3. {selected-workflow} = Per-Scenario

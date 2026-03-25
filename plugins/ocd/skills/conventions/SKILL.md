@@ -39,7 +39,7 @@ User runs `/ocd-conventions`
   2. Derive adjustments — translate into one or more execution passes; each pass is a set of resolved variables ({target-directory}, --pattern values) that exercises part of goal
   3. If adjustments conflict with other provided flags:
     1. Surface conflict and work with user to resolve
-  4. Present proposed passes and ask user for confirmation before proceeding
+  4. Present proposed passes and ask user for confirmation via AskUserQuestion before proceeding
   5. For each confirmed pass:
     1. Assign derived variables ({target-directory}) for pass
     2. Execute steps 8-11 with assigned variables
@@ -53,8 +53,7 @@ User runs `/ocd-conventions`
 9. Deduplicate target list
 10. Safeguard — check target count
   1. If target count exceeds 20:
-    1. Report count and suggest narrowing with --pattern or more specific path
-    2. Wait for user confirmation before proceeding
+    1. Report count and suggest narrowing via AskUserQuestion with options: proceed, narrow with --pattern, or specify more specific path
 11. Dispatch
   1. If --delegate:
     1. Resolve all prompt template placeholders in Workflow: Conformity
@@ -135,7 +134,7 @@ Evaluate rules and conventions against each other in dependency order. Report-on
   1. If error (cycle detected or missing dependency):
     1. Report error to user and stop
   - Output is levels (Level 0, Level 1, ...) with file paths
-2. Present DAG overview to user — show levels with file names, confirm before starting
+2. Present DAG overview to user via AskUserQuestion — show levels with file names, confirm before starting
 3. Initialize criteria set — empty list
 4. For each level (starting at Level 0):
   1. If criteria set is empty (Level 0):
@@ -145,7 +144,7 @@ Evaluate rules and conventions against each other in dependency order. Report-on
     2. For each criterion, assess conformity with specific citations
     3. Evaluate internal consistency — terminology, cross-references, completeness
   3. Present findings for current level — per-file summary of conformity issues found
-  4. Wait for user — user reviews findings and either approves, requests changes, or directs next steps
+  4. Wait for user via AskUserQuestion with options: approve level, request changes
   5. When user approves level:
     1. Add all files from current level to criteria set
     2. Proceed to next level

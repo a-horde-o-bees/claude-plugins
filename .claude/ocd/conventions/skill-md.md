@@ -244,6 +244,12 @@ Design rule: skills that spawn agents must be fully autonomous — no interactiv
 
 When interactive decisions are unavoidable mid-workflow, use orchestration pattern — structure them as orchestration steps in main conversation between autonomous agent calls.
 
+## User Choices and Confirmations
+
+When workflow steps present choices or request confirmation in main conversation, use `AskUserQuestion` tool with `options` parameter — not freeform text with numbered lists. Structured options give user selectable choices instead of requiring typed responses.
+
+Does not apply to open-ended questions requiring freeform input or sub-agent contexts (AskUserQuestion only works in main conversation).
+
 ## Discovery and Loading
 
 Claude Code uses three-level progressive loading:
