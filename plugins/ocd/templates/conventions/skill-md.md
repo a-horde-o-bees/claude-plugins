@@ -56,11 +56,11 @@ Process Model is optional — only for skills where workflow correctness depends
 
 ### Orchestration vs Execution Boundary
 
-Sections before Workflow are orchestration — main conversation agent resolves arguments, selects route, and packages inputs. Workflow sections are execution — self-contained blocks that run with resolved inputs, either by orchestrator directly or by delegated agent.
+Sections before Workflow are orchestration — main conversation agent resolves arguments, selects route, and packages inputs. Workflow sections are execution — self-contained blocks run by spawned agents with resolved inputs.
 
-Orchestration sections (Trigger, Route) prepare inputs. Route is central orchestration section — resolves arguments, validates inputs, selects Workflow, and dispatches. `--delegate` is a dispatch modifier handled within Route: spawn background agent with resolved Workflow instead of executing inline. Workflow sections contain everything needed to execute, including Report and supporting subsections. Workflows never re-resolve arguments or re-route — they assume orchestration is complete.
+Orchestration sections (Trigger, Route) prepare inputs. Route is central orchestration section — resolves arguments, validates inputs, selects Workflow, and dispatches. Workflow sections contain everything needed to execute, including Report and supporting subsections. Workflows never re-resolve arguments or re-route — they assume orchestration is complete.
 
-When delegating to agents, orchestrator resolves all prompt template placeholders before handoff — agents receive fully resolved prompts with no template variables. Orchestrator passes selected Workflow section and Rules — never full SKILL.md body. Agents receive resolved inputs and execution instructions without exposure to alternative workflows, routing logic, or argument parsing. System-managed variables (`$ARGUMENTS`, `${CLAUDE_SESSION_ID}`) and environment variables (`${CLAUDE_PLUGIN_ROOT}`) are resolved mechanically by Claude Code and shell respectively — orchestrator resolves skill-defined placeholders in Workflow prompt templates.
+Dispatch spawns an agent with selected Workflow section and Rules. Agent receives resolved inputs and execution instructions without exposure to alternative workflows, routing logic, or argument parsing. Workflow agent may spawn additional agents internally (evaluation agents, per-file agents) which it coordinates. System-managed variables (`$ARGUMENTS`, `${CLAUDE_SESSION_ID}`) and environment variables (`${CLAUDE_PLUGIN_ROOT}`) are resolved mechanically by Claude Code and shell respectively.
 
 Orchestrator does not pre-read component files to inline content. Workflow steps dictate when component files are read and by whom — each executor reads what it needs at execution time. This keeps agent context precisely scoped.
 
@@ -76,7 +76,7 @@ Reusable argument patterns for skills that accept targets, spawn agents, or scop
 | Argument | Role | Description |
 |----------|------|-------------|
 | `--target` | Gate + subject | Required flag carrying target value; presence triggers execution, value identifies what to operate on; without it, skill responds with description and usage hint |
-| `[--delegate]` | Dispatch modifier | Route spawns background agent with resolved Workflow instead of executing inline |
+| `[--delegate]` | Dispatch modifier | Workflow agent spawns in background instead of foreground |
 | `[--pattern <glob> ...]` | Filter | Passthrough to navigator CLI for file enumeration; repeatable for OR-combined matching; ignored when target is single file |
 | `[--all]` | Boundary override | Includes `.claude/` files in target enumeration; without it, `.claude/` excluded by default |
 
@@ -114,7 +114,7 @@ Exits with code 1 if skill not found. Skills should EXIT with error when resolut
 
 ### Route Dispatch Pattern
 
-Route evaluates {target} and selects Workflow regardless of --delegate. Dispatch step determines delivery mechanism — inline execution or background agent handoff.
+Route evaluates {target} and selects Workflow. Dispatch spawns Workflow agent — --delegate controls whether spawn is foreground or background.
 
 ```
 ## Route
@@ -134,19 +134,15 @@ Route evaluates {target} and selects Workflow regardless of --delegate. Dispatch
   4. Else:
     1. Interpret {target} as natural language goal — derive adjustments, assign variables, present for confirmation
 3. Prepare inputs for selected Workflow
-4. Dispatch
-  1. If --delegate:
-    1. Resolve all prompt template placeholders in selected Workflow
-    2. Spawn background agent with resolved Workflow and Rules — agent reads component files at execution time
-    3. Present agent report as-is
-  2. Else:
-    1. Proceed to selected Workflow
+4. Dispatch {selected-workflow}
+  - If --delegate: Workflow agent spawns in background
 ```
 
 ### Constraints
 
-- --delegate requires Workflow to be fully autonomous — no interactive checkpoints; skills with interactive workflows (e.g., level-by-level user approval) must reject --delegate in Route
-- --delegate causes all agent spawns within Workflow to run in background — orchestrator hides underlying processes from user
+- Dispatch always spawns an agent for Workflow execution — orchestrator handles Route, agent handles Workflow
+- --delegate makes Workflow agent spawn run in background; without --delegate, spawn runs in foreground
+- --delegate requires Workflow to be fully autonomous — no interactive checkpoints; skills with interactive workflows must reject --delegate in Route
 - Natural language {target} evaluation occurs in Route as fallback after deterministic matches — orchestrator interprets goal, derives adjustments, assigns variables, and presents for user confirmation before proceeding
 - When natural language adjustments conflict with other provided flags, orchestrator surfaces conflict and works with user to resolve — no implicit precedence
 - Deterministic {target} values execute without interpretation or confirmation
@@ -249,17 +245,17 @@ Skills should:
 - Ignore `--pattern` when target is single file (nothing to filter)
 - Document `--pattern` in `argument-hint` frontmatter when supported
 
-## Sub-Agent Interactivity Constraint
+## User Interaction Boundary
 
-AskUserQuestion only works in main conversation context. Agents spawned via Agent tool run autonomously — they cannot prompt user mid-execution.
+User interaction (AskUserQuestion, clarification, confirmation) only works in orchestrator context — Route and main conversation. Workflow agents run autonomously and cannot prompt user mid-execution.
 
-Design rule: skills that spawn agents must be fully autonomous — no interactive checkpoints inside delegated work. Preferred approach is report pattern: skill runs autonomously, collects all findings, presents report with recommendations. User decides next steps after reviewing.
+Orchestrator handles all user-facing decisions before dispatching Workflow agent. Workflow agents collect findings and report back — user decides next steps after reviewing the report.
 
-When interactive decisions are unavoidable mid-workflow, use orchestration pattern — structure them as orchestration steps in main conversation between autonomous agent calls.
+When interactive decisions span multiple Workflow executions, structure them as orchestrator steps between agent calls. Each agent call is autonomous; orchestrator mediates between calls in main conversation.
 
 ## User Choices and Confirmations
 
-When workflow steps present choices or request confirmation in main conversation, use `AskUserQuestion` tool with `options` parameter — not freeform text with numbered lists. Structured options give user selectable choices instead of requiring typed responses.
+When orchestrator steps present choices or request confirmation, use `AskUserQuestion` tool with `options` parameter — not freeform text with numbered lists. Structured options give user selectable choices instead of requiring typed responses.
 
 Does not apply to open-ended questions requiring freeform input or sub-agent contexts (AskUserQuestion only works in main conversation).
 
