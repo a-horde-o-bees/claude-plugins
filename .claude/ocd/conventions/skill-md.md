@@ -47,7 +47,7 @@ Standard sections:
 | `## Trigger` | When user invokes this skill |
 | `## Route` | Central orchestration section — resolve arguments, validate inputs, select Workflow, dispatch (inline or delegated); handles `--delegate` as dispatch modifier |
 | `## Workflow` | Numbered steps using Process Flow Notation; encapsulates everything agent needs to execute, including `### Report` subheading |
-| `## Components` | Reusable content blocks (prompts, evaluation criteria) shared across multiple workflows; serve workflows, never executed independently (optional — only for multi-path skills with shared content) |
+| `## Components` | Reusable content blocks shared across multiple workflows; prefer extracted `_{name}.md` files over inline sections (optional — only for multi-path skills with shared content) |
 | `## Rules` | Constraints and guardrails |
 
 Not all sections required — simple skills may only need title, description, and rules list.
@@ -60,7 +60,9 @@ Sections before Workflow are orchestration — main conversation agent resolves 
 
 Orchestration sections (Trigger, Route) prepare inputs. Route is central orchestration section — resolves arguments, validates inputs, selects Workflow, and dispatches. `--delegate` is a dispatch modifier handled within Route: spawn background agent with resolved Workflow instead of executing inline. Workflow sections contain everything needed to execute, including Report and supporting subsections. Workflows never re-resolve arguments or re-route — they assume orchestration is complete.
 
-When delegating to agents, orchestrator resolves all prompt template placeholders before handoff — agents receive fully resolved prompts with no template variables. Orchestrator passes selected Workflow section, referenced Components, and Rules — never full SKILL.md body. Agents receive resolved inputs and execution instructions without exposure to alternative workflows, routing logic, or argument parsing. System-managed variables (`$ARGUMENTS`, `${CLAUDE_SESSION_ID}`) and environment variables (`${CLAUDE_PLUGIN_ROOT}`) are resolved mechanically by Claude Code and shell respectively — orchestrator resolves skill-defined placeholders in Workflow prompt templates.
+When delegating to agents, orchestrator resolves all prompt template placeholders before handoff — agents receive fully resolved prompts with no template variables. Orchestrator passes selected Workflow section and Rules — never full SKILL.md body. Agents receive resolved inputs and execution instructions without exposure to alternative workflows, routing logic, or argument parsing. System-managed variables (`$ARGUMENTS`, `${CLAUDE_SESSION_ID}`) and environment variables (`${CLAUDE_PLUGIN_ROOT}`) are resolved mechanically by Claude Code and shell respectively — orchestrator resolves skill-defined placeholders in Workflow prompt templates.
+
+Orchestrator does not pre-read component files to inline content. Workflow steps dictate when component files are read and by whom — each executor reads what it needs at execution time. This keeps agent context precisely scoped.
 
 String substitution variables available in body:
 - `$ARGUMENTS` — All arguments passed when invoking skill
@@ -135,7 +137,7 @@ Route evaluates {target} and selects Workflow regardless of --delegate. Dispatch
 4. Dispatch
   1. If --delegate:
     1. Resolve all prompt template placeholders in selected Workflow
-    2. Spawn background agent with resolved Workflow and Rules
+    2. Spawn background agent with resolved Workflow and Rules — agent reads component files at execution time
     3. Present agent report as-is
   2. Else:
     1. Proceed to selected Workflow
@@ -154,24 +156,25 @@ Route evaluates {target} and selects Workflow regardless of --delegate. Dispatch
 
 ```
 skill-name/
-├── SKILL.md           # Main instructions (required)
-├── references/        # Detailed reference docs (optional)
-├── examples/          # Example output (optional)
-└── scripts/           # Executable scripts (optional)
+├── SKILL.md               # Main instructions (required)
+├── _component-name.md     # Extracted component (optional)
+├── references/            # Detailed reference docs (optional)
+├── examples/              # Example output (optional)
+└── scripts/               # Executable scripts (optional)
 ```
 
-Keep SKILL.md under 500 lines. Move detailed reference material to separate files.
+Keep SKILL.md under 500 lines. Move detailed reference material to separate files. Extract components to `_{name}.md` files alongside SKILL.md to reduce SKILL.md size and scope agent context.
 
 ## Workflow Encapsulation
 
-Workflow section is self-contained — everything agent needs to execute belongs inside it or is bundled alongside it. This includes:
+Workflow section is self-contained — everything agent needs to execute belongs inside it or is referenced by it. This includes:
 
 - Numbered steps using Process Flow Notation
 - `### Report` subheading defining output format
-- Prompt templates used by agent spawning steps (inline or via component reference)
+- Explicit file read steps for extracted components (`Read _component.md`)
 - Supporting subsections (e.g., file roles, interpreting results)
 
-Agent given Workflow section, referenced Components, and Rules section can execute without referencing other parts of SKILL.md.
+Agent given Workflow section and Rules section can execute without referencing other parts of SKILL.md. Component files are read at execution time by the agent running the workflow, not pre-loaded by the orchestrator.
 
 ### Multi-Path Workflows
 
@@ -197,34 +200,39 @@ Single-path skills use `## Workflow` without suffix.
 
 ### Components
 
-`## Components` section contains reusable content blocks (prompts, evaluation criteria, reference material) shared across multiple workflows. Components serve workflows — they are never executed independently.
+Components are reusable content blocks (prompts, evaluation criteria, reference material) shared across multiple workflows. Components serve workflows — they are never executed independently.
 
-Workflows reference components by name, same as PFN subprocess references. Orchestrator identifies referenced components, resolves transitively (components may reference other components), and bundles them alongside the workflow when dispatching. Agent receives distinct sections — orchestrator does not inline component content into workflow text.
+Prefer extracted `_{name}.md` files alongside SKILL.md over inline `## Components` sections. Extracted files scope agent context — each agent reads only files it needs, and intermediary agents (coordinators, dispatchers) pass file references without loading content they do not use.
 
 ```
-## Components
+skill-name/
+├── SKILL.md
+├── _instructions.md
+└── _criteria.md
+```
 
-### Audit Prompt
-<prompt content>
+Workflows include explicit read steps for extracted components:
 
-### Evaluation Criteria
-<criteria content>
-
+```
 ## Workflow: Mode A
-1. Spawn agent with Audit Prompt
-2. Evaluate using Evaluation Criteria
+1. Spawn agent with {target} and instructions:
+  1. Read `_instructions.md` and `_criteria.md`
+  2. Follow instructions against {target}
 ### Report
 - Mode A specific format
 
 ## Workflow: Mode B
-1. For each item:
-  1. Spawn agent with Audit Prompt
-2. Evaluate using Evaluation Criteria
+1. Spawn coordinating agent with {targets} and instructions:
+  1. For each target in {targets}:
+    1. Spawn sub-agent with target and instructions:
+      1. Read `_instructions.md` and `_criteria.md`
+      2. Follow instructions against target
+  2. Collect sub-agent reports
 ### Report
 - Mode B specific format
 ```
 
-When content is used by only one workflow, keep it as a workflow subsection — components are for content shared across 2+ workflows. Minor duplication across workflows (e.g., slightly different report formats with common elements) is acceptable for clarity of each workflow's needs.
+When content is used by only one workflow, keep it as a workflow subsection — components are for content shared across 2+ workflows. Underscore prefix signals internal (consistent with `_{purpose}.py` pattern for internal modules).
 
 ## File Enumeration
 
