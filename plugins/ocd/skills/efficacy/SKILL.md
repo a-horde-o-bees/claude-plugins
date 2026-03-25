@@ -84,8 +84,9 @@ Iterative fix-and-verify loop. Orchestrator evaluates, triages findings, fixes s
   2. If output is non-empty: EXIT — commit pending changes before running --auto
 2. {baseline} = `git rev-parse HEAD`
 3. {iteration} = 0
-4. Read `_triage-criteria.md`
-5. While {iteration} < 5:
+4. {converged} = false
+5. Read `_triage-criteria.md`
+6. While {iteration} < 5:
   1. {scenario} = re-read {skill-path} from disk
   2. Spawn evaluation agent with {scenario} and instructions:
     1. Read `_evaluation-protocol.md` and `_problem-list.md`
@@ -96,10 +97,9 @@ Iterative fix-and-verify loop. Orchestrator evaluates, triages findings, fixes s
     2. STOP
   5. Apply straightforward fixes directly to {skill-path}
   6. {iteration} = {iteration} + 1
-6. {converged} = false
 7. Run `git diff {baseline}` to capture all changes
 8. Evaluate diff — group changes by topic, ignore intermediate mutations
-9. Present report
+9. Present report — include {converged} status
 
 ### Report
 

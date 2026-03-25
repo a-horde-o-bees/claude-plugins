@@ -12,6 +12,7 @@ Straightforward — fix is deterministic from document and referenced convention
 
 Complex — fix requires design decisions, new conventions, external context, or evaluator may be wrong:
 - Structural changes to how workflows operate
+- Changes to control flow within loops, STOP/EXIT paths, or variable scope across loop boundaries
 - Issues that cascade beyond immediate file
 - Issues where proposed fix conflicts with prior decisions
 - Judgments about whether something is actually a problem
