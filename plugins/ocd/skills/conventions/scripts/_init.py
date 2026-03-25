@@ -52,15 +52,16 @@ def init(plugin_root: Path, project_dir: Path, force: bool = False) -> list[str]
         if not src.is_file():
             continue
         dst = conventions_dst / src.name
-        if dst.exists() and not force:
-            lines.append(f"Skipped (exists): {src.name}")
-            continue
-        if dst.exists() and src.read_bytes() == dst.read_bytes():
+        if not dst.exists():
+            shutil.copy2(src, dst)
+            lines.append(f"New: {src.name}")
+        elif src.read_bytes() == dst.read_bytes():
             lines.append(f"Current: {src.name}")
-            continue
-        action = "Replaced" if dst.exists() else "New"
-        shutil.copy2(src, dst)
-        lines.append(f"{action}: {src.name}")
+        elif force:
+            shutil.copy2(src, dst)
+            lines.append(f"Replaced: {src.name}")
+        else:
+            lines.append(f"Outdated: {src.name}")
 
     return lines
 

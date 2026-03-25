@@ -30,15 +30,16 @@ def deploy_rules(plugin_root: Path, project_dir: Path, force: bool = False) -> l
     lines = []
     for src in sorted(rules_src.glob("*.md")):
         dst = rules_dst / src.name
-        if dst.exists() and not force:
-            lines.append(f"  Skipped (exists): {src.name}")
-            continue
-        if dst.exists() and src.read_bytes() == dst.read_bytes():
+        if not dst.exists():
+            shutil.copy2(src, dst)
+            lines.append(f"  New: {src.name}")
+        elif src.read_bytes() == dst.read_bytes():
             lines.append(f"  Current: {src.name}")
-            continue
-        action = "Replaced" if dst.exists() else "New"
-        shutil.copy2(src, dst)
-        lines.append(f"  {action}: {src.name}")
+        elif force:
+            shutil.copy2(src, dst)
+            lines.append(f"  Replaced: {src.name}")
+        else:
+            lines.append(f"  Outdated: {src.name}")
 
     return lines
 
@@ -87,7 +88,8 @@ def main() -> None:
 
     # Deploy rules (cross-cutting)
     print("Rules:")
-    for line in deploy_rules(plugin_root, project_dir, force=args.force):
+    rule_lines = deploy_rules(plugin_root, project_dir, force=args.force)
+    for line in rule_lines:
         print(line)
     print()
 
@@ -104,7 +106,11 @@ def main() -> None:
         print("Skills: no CLI scripts found")
         print()
 
-    print("Done. Restart Claude session to load new rules.")
+    rules_changed = any("New:" in l or "Replaced:" in l for l in rule_lines)
+    if rules_changed:
+        print("Done. Restart Claude session to load new rules.")
+    else:
+        print("Done.")
 
 
 if __name__ == "__main__":
