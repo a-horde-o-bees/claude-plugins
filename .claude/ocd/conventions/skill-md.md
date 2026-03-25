@@ -89,7 +89,7 @@ Route pattern for {target} evaluation:
 ```
 1. If not --target:
   1. EXIT — respond with skill description and argument-hint
-2. If {target} starts with `/` or file named `SKILL.md`:
+2. If ({target} starts with `/` and contains no spaces) or ({target} is a path ending with `/SKILL.md`):
   1. If {target} starts with `/`:
     1. Resolve skill path — run navigator CLI `resolve-skill` (strip leading `/` from {target})
     2. If exit code 1: EXIT — report skill not found
@@ -122,7 +122,7 @@ Route evaluates {target} and selects Workflow regardless of --delegate. Dispatch
 1. If not --target:
   1. EXIT — respond with skill description and argument-hint
 2. Evaluate {target} against deterministic matches
-  1. If {target} starts with `/` or file named `SKILL.md`:
+  1. If ({target} starts with `/` and contains no spaces) or ({target} is a path ending with `/SKILL.md`):
     1. If {target} starts with `/`:
       1. Resolve skill path via navigator `resolve-skill` (strip leading `/` from {target})
       2. If exit code 1: EXIT — report skill not found
