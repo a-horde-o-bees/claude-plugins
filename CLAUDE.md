@@ -12,9 +12,15 @@ Plugin versions follow `x.y.z` format in each plugin's `.claude-plugin/plugin.js
 
 Use `/ocd-commit` to commit changes.
 
-## Architectural Enforcement
+## Content Boundaries
 
-ocd plugin rules (installed via `/ocd-init`) enforce architectural principles (script naming, deterministic/non-deterministic split, CLI design). CLAUDE.md covers only project-specific procedures not addressed by those rules.
+Three layers of documentation serve different purposes:
+
+- **CLAUDE.md** — project-specific procedures; applies only to this repository (versioning, commit workflow, test commands, deployment structure)
+- **Rules** — always-on agent behavior; loaded into every conversation, apply regardless of what file is being edited; shape how agent operates (writing style, communication, workflow discipline, notation systems)
+- **Conventions** — file-type-specific content standards; matched to files by pattern, applied when creating or modifying matching files; shape what conforming files look like (Python style, CLI content, SKILL.md structure)
+
+Rules govern agent behavior (always needed). Conventions govern file content (needed when touching matching files). If guidance applies regardless of which file is being edited, it belongs in a rule. If it applies only when working with a specific file type, it belongs in a convention.
 
 ## Project File Deployment
 
@@ -25,6 +31,12 @@ Plugin-generated files deployed to user projects follow this structure:
 - Skill-specific files → `.claude/<plugin>/<skill>/`
 
 Never place plugin data in the user's project tree outside `.claude/`.
+
+## Template vs Deployed Files
+
+Rules and conventions use a template→deployed model. Source files (`plugins/<plugin>/rules/`, `plugins/<plugin>/templates/conventions/`) carry `type: template` frontmatter. Deployed copies (`.claude/rules/`, `.claude/<plugin>/conventions/`) carry `type: deployed`.
+
+Edit templates, never deployed copies. Test changes by running `/ocd-init --force` to deploy from templates — do not modify deployed files directly.
 
 ## README Scopes
 
