@@ -65,34 +65,38 @@ String substitution variables available in body:
 
 ## Standard Arguments
 
-Reusable argument patterns for skills that accept paths, spawn agents, or scope evaluation. Not all arguments apply to every skill — include only those relevant to skill's domain.
+Reusable argument patterns for skills that accept targets, spawn agents, or scope evaluation. Not all arguments apply to every skill — include only those relevant to skill's domain. Arguments follow Skill Argument Notation defined in agent-authoring rules.
 
 | Argument | Role | Description |
 |----------|------|-------------|
-| `--check` | Gate | Required to trigger execution; without it, skill responds with description and usage hint |
-| `--delegate` | Dispatch modifier | Route spawns background agent with resolved Workflow instead of executing inline |
-| `--intent "..."` | Intent signal | Natural language expression of user goal; orchestrator interprets before deterministic pipeline, translates into concrete adjustments (target scoping, pattern filtering, convention narrowing), announces adjustments, and asks user for confirmation before proceeding; without `--intent`, pipeline runs deterministically from explicit flags alone |
-| `--pattern "..."` | Filter | Passthrough to navigator CLI for file enumeration; repeatable for OR-combined matching; ignored when target is single file |
-| `--all` | Boundary override | Includes `.claude/` files in target enumeration; without it, `.claude/` excluded by default |
+| `--target` | Gate + subject | Required flag carrying target value; presence triggers execution, value identifies what to operate on; without it, skill responds with description and usage hint |
+| `[--delegate]` | Dispatch modifier | Route spawns background agent with resolved Workflow instead of executing inline |
+| `[--pattern <glob> ...]` | Filter | Passthrough to navigator CLI for file enumeration; repeatable for OR-combined matching; ignored when target is single file |
+| `[--all]` | Boundary override | Includes `.claude/` files in target enumeration; without it, `.claude/` excluded by default |
 
-### Skill Target Resolution
+### Target Resolution
 
-Skills that accept a skill as a target consolidate skill detection into single branch using logical OR — both forms resolve to same outcome:
+{target} is evaluated against deterministic matches first. Unmatched values fall through to natural language interpretation where orchestrator derives adjustments and confirms with user before proceeding.
 
-| Form | Example | Resolution |
-|------|---------|------------|
-| `/skill-name` or explicit SKILL.md path | `/ocd-conventions` or `plugins/ocd/skills/conventions/SKILL.md` | Skill target — resolve SKILL.md path, use parent as skill directory |
-| Other path or text | `src/` or `"description"` | Skill-specific handling (file target, directory target, or literal text) |
-
-Route pattern for skill detection:
+Route pattern for {target} evaluation:
 
 ```
-1. If starts with `/` or file named `SKILL.md`:
-  1. If starts with `/`:
-    1. Resolve skill path — run navigator CLI `resolve-skill` (strip leading `/`)
+1. If not --target:
+  1. EXIT — respond with skill description and argument-hint
+2. If {target} starts with `/` or file named `SKILL.md`:
+  1. If {target} starts with `/`:
+    1. Resolve skill path — run navigator CLI `resolve-skill` (strip leading `/` from {target})
     2. If exit code 1: EXIT — report skill not found
-  2. Use resolved SKILL.md path (parent directory as skill directory)
+  2. {target-directory} = parent of resolved SKILL.md path
+3. Else if {target} is file path:
+  1. {target-file} = {target}
+4. Else if {target} is directory path:
+  1. {target-directory} = {target}
+5. Else:
+  1. Interpret {target} as natural language goal — derive adjustments, assign variables, present for user confirmation
 ```
+
+Skills define their own deterministic {target} values (e.g., `project`, `self`) as additional branches before the natural language fallback.
 
 Navigator CLI resolves skill names across all discovery locations in priority order:
 
@@ -104,37 +108,28 @@ Exits with code 1 if skill not found. Skills should EXIT with error when resolut
 
 ### Route Dispatch Pattern
 
-Route resolves arguments and selects Workflow regardless of `--delegate`. Dispatch step determines delivery mechanism — inline execution or background agent handoff.
+Route evaluates {target} and selects Workflow regardless of --delegate. Dispatch step determines delivery mechanism — inline execution or background agent handoff.
 
 ```
 ## Route
 
-1. If `--check` not in `$ARGUMENTS`:
-  1. Respond with skill description and argument-hint, then stop
-2. Strip flags — extract standard arguments from `$ARGUMENTS`
-3. If `--intent` present:
-  1. Interpret intent — evaluate intent text against available pipeline controls (target resolution, file enumeration patterns, criteria scoping, workflow selection)
-  2. Derive adjustments — translate intent into concrete changes to downstream steps
-  3. If adjustments conflict with explicit flags:
-    1. Surface conflict and work with user to resolve
-  4. Present adjustments and ask user for confirmation before proceeding
-4. Resolve target — validate remaining arguments, resolve paths
-  1. If remaining arguments empty:
-    1. EXIT — respond with skill description and argument-hint
-  2. If starts with `/` or file named `SKILL.md`:
-    1. If starts with `/`:
-      1. Resolve skill path via navigator `resolve-skill` (strip leading `/`)
+1. If not --target:
+  1. EXIT — respond with skill description and argument-hint
+2. Evaluate {target} against deterministic matches
+  1. If {target} starts with `/` or file named `SKILL.md`:
+    1. If {target} starts with `/`:
+      1. Resolve skill path via navigator `resolve-skill` (strip leading `/` from {target})
       2. If exit code 1: EXIT — report skill not found
-    2. Use resolved SKILL.md path (parent directory as skill directory)
-  3. Else if file:
-    1. Handle as single file target
-  4. Else if directory:
-    1. Handle as directory target
-  5. Else:
-    1. Handle as literal text or EXIT on unrecognized argument
-5. Discover criteria or prepare inputs for selected Workflow
-6. Dispatch
-  1. If `--delegate`:
+    2. {target-directory} = parent of resolved SKILL.md path
+  2. Else if {target} is file path:
+    1. {target-file} = {target}
+  3. Else if {target} is directory path:
+    1. {target-directory} = {target}
+  4. Else:
+    1. Interpret {target} as natural language goal — derive adjustments, assign variables, present for confirmation
+3. Prepare inputs for selected Workflow
+4. Dispatch
+  1. If --delegate:
     1. Resolve all prompt template placeholders in selected Workflow
     2. Spawn background agent with resolved Workflow and Rules
     3. Present agent report as-is
@@ -144,11 +139,11 @@ Route resolves arguments and selects Workflow regardless of `--delegate`. Dispat
 
 ### Constraints
 
-- `--delegate` requires Workflow to be fully autonomous — no interactive checkpoints; skills with interactive workflows (e.g., level-by-level user approval) must reject `--delegate` in Route
-- `--intent` evaluation occurs in Route before deterministic pipeline steps — orchestrator interprets intent, derives adjustments to target resolution, file enumeration, or criteria scoping, and presents adjustments for user confirmation before proceeding
-- When `--intent` conflicts with explicit flags (e.g., `--intent "only Python" --pattern "*.md"`), orchestrator surfaces conflict and works with user to resolve — no implicit precedence between intent-derived and explicit flag values
-- Without `--intent`, Route executes deterministically from explicit flags alone — no interpretation step, no confirmation pause
-- `--pattern` is only meaningful for directory targets — Route ignores it when target resolves to single file
+- --delegate requires Workflow to be fully autonomous — no interactive checkpoints; skills with interactive workflows (e.g., level-by-level user approval) must reject --delegate in Route
+- Natural language {target} evaluation occurs in Route as fallback after deterministic matches — orchestrator interprets goal, derives adjustments, assigns variables, and presents for user confirmation before proceeding
+- When natural language adjustments conflict with other provided flags, orchestrator surfaces conflict and works with user to resolve — no implicit precedence
+- Deterministic {target} values execute without interpretation or confirmation
+- --pattern is only meaningful for directory targets — Route ignores it when target resolves to single file
 
 ## Directory Structure
 

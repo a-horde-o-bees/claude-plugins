@@ -95,7 +95,7 @@ Any `{prefix}:` places all associated actions as indented children. Never inline
 
 ### Flow Control
 
-`STOP` is early exit from loop, always followed by reason. `EXIT` is early exit from current process, always followed by reason.
+`STOP` is early exit from loop, always followed by reason. `EXIT` is early exit from current process, always followed by reason. `Go to step N. Label` jumps forward or backward to numbered step — always includes both step number and label to survive renumbering.
 
 ```
 1. While condition:
@@ -104,7 +104,22 @@ Any `{prefix}:` places all associated actions as indented children. Never inline
     1. STOP and report reason
 2. If condition:
   1. EXIT and report reason
+3. If condition:
+  1. Go to step 6. Dispatch
 ```
+
+### Assignment
+
+`{name} = value` sets named variable for use in downstream steps. Variable names use curly braces and dashes (same as argument value references). Assignment is an action within a step — appears after step number or as child of conditional.
+
+```
+1. {target-directory} = parent of resolved SKILL.md path
+2. If condition:
+  1. {selected-workflow} = Self-Evaluation
+3. Pass {target-directory} to navigator CLI
+```
+
+Variables must be assigned before use. Unassigned variable references are authoring errors — efficacy testing should flag them.
 
 ### Concurrency
 
@@ -172,12 +187,11 @@ Angle brackets `<>` denote required values. Square brackets `[]` denote optional
 Examples:
 
 ```
---target <path | /skill-name | project | self> [--pattern <glob>] [--intent <text>] [--all] [--delegate]
+--target <path | /skill-name | project | self | natural language goal> [--pattern <glob> ...] [--all] [--delegate]
 ```
 
-- `--target` — required flag with required choice value; must be one of: path, /skill-name, `project`, or `self`
-- `[--pattern <glob>]` — optional flag with value; if present, consumes glob text
-- `[--intent <text>]` — optional flag with value; if present, consumes text
+- `--target` — required flag with required choice value; must be one of: path, /skill-name, `project`, `self`, or natural language goal
+- `[--pattern <glob> ...]` — optional repeatable flag with value; each occurrence consumes glob text
 - `[--all]` — optional boolean flag; presence means include all
 - `[--delegate]` — optional boolean flag; presence means delegate execution
 
@@ -190,12 +204,16 @@ Examples:
 
 ### Workflow Argument References
 
-Workflows reference argument values using `{flag}` notation — curly braces around flag name (without `--` prefix). This binds workflow steps to specific argument values declared in argument-hint, making data flow explicit.
+Workflows reference arguments using two forms — `--flag` for flag existence and `{flag}` for flag value. This separates presence checks from value resolution, making data flow explicit.
+
+`--flag` refers to flag itself — existence, iteration over instances:
+- Conditions check presence — `If --flag:` or `If not --flag:`
+- Iteration over repeatable instances — `For each --flag:`
 
 `{flag}` always resolves to value associated with flag:
-- For boolean flags — `{flag}` resolves to existence (true if present, false if absent)
 - For value flags — `{flag}` resolves to text value passed with flag
-- For repeatable flags — `{flag}` in singular context is collection; `{flag}` inside `For each {flag}:` resolves to current item
+- For repeatable flags — `{flag}` inside `For each --flag:` resolves to current item's value
+- Boolean flags have no value — use `--flag` only, never `{flag}`
 
 Reference patterns in workflow steps:
 
@@ -207,19 +225,13 @@ Reference patterns in workflow steps:
 ```
 
 ```
-1. If {intent} exists:
-  1. Interpret {intent} against available pipeline controls
-  2. Present adjustments for confirmation
-```
-
-```
-1. If {pattern} exists:
-  1. For each {pattern}:
+1. If --pattern:
+  1. For each --pattern:
     1. Pass {pattern} to navigator CLI as filter
 ```
 
 ```
-1. If {delegate} exists:
+1. If --delegate:
   1. Spawn background agent
 2. Else:
   1. Execute inline
