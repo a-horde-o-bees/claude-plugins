@@ -1,13 +1,22 @@
 # Problem List
 
-Guides what evaluating agents look for. Not exhaustive — agents report any issue found, not only those matching listed examples.
+Two tiers guide what evaluating agents look for. Not exhaustive — agents report any issue found regardless of whether it matches a listed example.
 
-- Assumptions — such as points where agent had to guess or make judgment calls not explicitly guided by documentation
-- Inferences — such as variables, references, or values resolved by inference rather than explicit assignment; unbound variables; undefined terms used as if defined; implicit data flow between steps
-- Gaps — such as missing information, ambiguity, undefined behavior
-- Waste — such as unnecessary file reads, avoidable agent spawns, duplicated work, excessive context loading
-- Automation — such as steps requiring agent judgment that could be deterministic CLI commands or scripts
-- Simplification — such as streamlining opportunities, overly verbose instructions
-- Redundancy — such as repeated content, rules restating what workflow already says
-- Overengineering — such as over-prescribed steps that could be left to agent judgment, unnecessary parameterization
-- Artifacts — such as defunct references to removed features, stale cross-references
+## Defects
+
+Will cause incorrect execution. Deterministic to identify and fix.
+
+- Unbound or unassigned variables — variable referenced but never assigned, or assigned in unreachable branch
+- PFN notation errors — If/Else if chain violations, missing colon suffixes, incorrect indentation semantics
+- Missing flow control — unreachable steps, branches with no assignment before consumption, missing Else in chains that require it
+- Conditions that do not match stated intent — condition text contradicts what surrounding steps expect it to protect against
+- Cross-references to nonexistent targets — step numbers, section names, or file paths that do not exist
+
+## Observations
+
+Require judgment to act on. Report but never auto-fix.
+
+- Ambiguity that has not caused a defect but could under different execution
+- Redundancy that could drift out of sync between source and restated location
+- Simplification opportunities where fewer steps could achieve same outcome
+- Wording that could be clearer without changing behavior

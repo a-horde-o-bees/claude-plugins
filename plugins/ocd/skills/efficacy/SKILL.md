@@ -16,7 +16,7 @@ User runs `/ocd-efficacy`
 
 1. If not --target:
   1. EXIT — respond with skill description and argument-hint
-2. If ({target} starts with `/` and contains no spaces) or ({target} is a path ending with `/SKILL.md`):
+2. If ({target} starts with `/` and contains no spaces) or ({target} ends with `/SKILL.md`):
   1. If {target} starts with `/`:
     1. {skill-path} = resolve skill path — run navigator CLI `resolve-skill` with skill name (strip leading `/` from {target})
       ```
@@ -73,7 +73,7 @@ User runs `/ocd-efficacy`
 
 ### Report
 
-Agent findings with trace, assessment, and per-issue descriptions with recommended actions.
+Agent findings with comprehension, trace, assessment, and per-issue Defect/Observation classifications with recommended actions.
 
 ## Workflow: Auto
 
@@ -91,21 +91,21 @@ Iterative fix-and-verify loop. Orchestrator evaluates, triages findings, fixes s
   2. Spawn evaluation agent with {scenario} and instructions:
     1. Read `_evaluation-protocol.md` and `_problem-list.md`
     2. Follow evaluation protocol against {scenario}
-  3. Triage findings — classify each as straightforward or complex
-  4. If no straightforward findings:
+  3. {iteration} = {iteration} + 1
+  4. Triage findings using `_triage-criteria.md` — map evaluator Defect/Observation classifications to auto-fix or report
+  5. If no Defects:
     1. {converged} = true
     2. STOP
-  5. Apply straightforward fixes directly to {skill-path}
-  6. {iteration} = {iteration} + 1
+  6. Apply Defect fixes directly to {skill-path}
 7. Run `git diff {baseline}` to capture all changes
 8. Evaluate diff — group changes by topic, ignore intermediate mutations
 9. Present report — include {converged} status
 
 ### Report
 
-- Changes applied: grouped by topic from diff
-- Complex issues: findings requiring user judgment, with descriptions and recommended actions
-- Iterations completed and convergence status
+- Defect fixes applied: grouped by topic from diff
+- Observations: findings requiring user judgment, with descriptions and recommended actions
+- Iterations completed (evaluation rounds, including final convergence evaluation) and convergence status
 
 ## Workflow: Per-Scenario
 
@@ -128,11 +128,11 @@ Per-scenario findings from each sub-agent. Cross-cutting analysis of findings re
 - Evaluation is always descriptive (dry run) — recursion constraint lives in `_evaluation-protocol.md`, applied to evaluating agents
 - Coordinating agent in Per-Scenario Workflow spawns sub-agents with evaluation file references
 - Cross-cutting findings require 2+ scenario recurrence — do not promote single-scenario observations
-- --delegate makes all agent spawns in Workflow run in background — orchestration (Route) always runs in main conversation
+- Route always runs in main conversation; --delegate applies only to Workflow agent spawns
 - Scenario description is agent-determined, no prescribed format
 - Natural language {target} routing is inherently non-deterministic — agent judgment determines whether target warrants multiple scenarios, is ambiguous, or maps to single scenario
 - Holistic and per-scenario are user-selected modes; auto is flag-driven routing via --auto
 - User always confirms proposed scenarios before per-scenario evaluation proceeds
 - --auto requires file target (/skill-name or SKILL.md path) and clean working tree
-- --auto triage uses `_triage-criteria.md` — straightforward fixes require no user input, complex issues are reported
-- --auto converges when no straightforward findings remain; iteration limit is safeguard, not target
+- --auto triage uses `_triage-criteria.md` — Defects are auto-fixed, Observations are reported for user review
+- --auto converges when no Defects remain; iteration limit is safeguard, not target
