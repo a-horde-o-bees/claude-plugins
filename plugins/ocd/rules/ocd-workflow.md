@@ -24,6 +24,12 @@ Bash commands are governed by `.claude/settings.json` (project) and `~/.claude/s
 - Run only tests directly affected by current changes, scoped to narrowest relevant test file; run broader suites only when explicitly requested
 - Run integration tests only when user explicitly requests it
 
+## Decisions
+
+- Record architectural decisions in `decisions/` when alternatives were considered and rejected, or when reasoning is not derivable from code or conventions
+- Do not record implementation details, choices dictated by convention, or standard patterns obvious from reading code
+- Update existing decision files when direction changes — reorganize to reflect current understanding, do not append conflicting entries
+
 ## Code Practices
 
 - Before writing new functions, check whether codebase already provides what is needed — do not duplicate existing functionality or bypass library abstractions with ad-hoc implementations
