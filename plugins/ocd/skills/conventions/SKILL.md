@@ -59,14 +59,15 @@ User runs `/ocd-conventions`
   1. If target count exceeds 20:
     1. Report count and suggest narrowing via AskUserQuestion with options: proceed, narrow with --pattern, or specify more specific path
 12. Dispatch {selected-workflow}
-  - If --delegate: Workflow agent spawns in background
+  1. If --delegate:
+    1. Spawn workflow agent in background
 
 ## Workflow: Conformity
 
 1. Spawn coordinating agent with target file list and instructions:
-  1. For each target file, spawn agent with {target-path} and instructions:
+  1. For each target file, spawn agent with {target-file} and instructions:
     1. Read `_conformity-instructions.md`
-    2. Apply to {target-path}
+    2. Apply to {target-file}
     - async agent per target file
   2. Review changes — run `git diff` after all agents complete; review for correctness
   3. Report results — per-target summary of changes applied, criteria used, issues requiring user judgment; deduplicate criteria files across agents
