@@ -58,26 +58,24 @@ User runs `/ocd-conventions`
 11. Safeguard — check target count
   1. If target count exceeds 20:
     1. Report count and suggest narrowing via AskUserQuestion with options: proceed, narrow with --pattern, or specify more specific path
-12. Dispatch
-  1. If --delegate:
-    1. Spawn background agent with {selected-workflow} and Rules — agents read component files at execution time
-    2. Present agent reports as-is
-  2. Else:
-    1. Proceed to {selected-workflow}
+12. Dispatch {selected-workflow}
+  - If --delegate: Workflow agent spawns in background
 
 ## Workflow: Conformity
 
-1. For each target file, spawn agent with {target-path} and instructions:
-  1. Read `_conformity-instructions.md`
-  2. Apply to {target-path}
-  - async agent per target file
-2. Review changes — run `git diff` after all agents complete; review for correctness before presenting
-3. Present results — per-target summary of changes applied, criteria used, and issues requiring user judgment
+1. Spawn coordinating agent with target file list and instructions:
+  1. For each target file, spawn agent with {target-path} and instructions:
+    1. Read `_conformity-instructions.md`
+    2. Apply to {target-path}
+    - async agent per target file
+  2. Review changes — run `git diff` after all agents complete; review for correctness
+  3. Report results — per-target summary of changes applied, criteria used, issues requiring user judgment; deduplicate criteria files across agents
+2. Present coordinating agent report
 
 ### Report
 
 - Agent reports follow format defined in `_conformity-instructions.md`
-- Orchestrator deduplicates criteria files across agents
+- Coordinating agent deduplicates criteria files across agents
 
 ## Workflow: Self-Evaluation
 
