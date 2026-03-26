@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+#
+# Propagate shared files from ocd to all non-ocd plugins.
+#
+# Canonical sources live in plugins/ocd/. Every plugin ships its own
+# copy so it can be installed independently. This hook keeps copies
+# in sync when canonicals change.
+#
+# Propagated files:
+#   rules/ocd-agent-authoring.md  — agent behavior rule (to rules/)
+#   scripts/plugin.py             — generic plugin framework (to scripts/)
+#   scripts/plugin_cli.py         — CLI entry point (to scripts/)
+
+set -euo pipefail
+
+# Map of canonical paths to target subdirectories within each plugin
+SHARED_FILES=(
+    "plugins/ocd/rules/ocd-agent-authoring.md:rules"
+    "plugins/ocd/scripts/plugin.py:scripts"
+    "plugins/ocd/scripts/plugin_cli.py:scripts"
+)
+
+staged=$(git diff --cached --name-only)
+
+for entry in "${SHARED_FILES[@]}"; do
+    canonical="${entry%%:*}"
+    target_subdir="${entry##*:}"
+
+    # Only act if the canonical file is staged
+    if ! echo "$staged" | grep -qx "$canonical"; then
+        continue
+    fi
+
+    filename="$(basename "$canonical")"
+
+    # Copy to all non-ocd plugins that have the target subdirectory
+    for plugin_dir in plugins/*/; do
+        plugin_name="$(basename "$plugin_dir")"
+        [ "$plugin_name" = "ocd" ] && continue
+
+        dest_dir="${plugin_dir}${target_subdir}"
+        [ -d "$dest_dir" ] || continue
+
+        cp "$canonical" "${dest_dir}/${filename}"
+        git add "${dest_dir}/${filename}"
+    done
+done

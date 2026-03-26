@@ -5,7 +5,7 @@ requires-python = ">=3.12"
 
 [tool.pytest.ini_options]
 pythonpath = ["plugins/ocd/scripts", "plugins/ocd"]
-testpaths = ["plugins/ocd/tests", "plugins/ocd/skills/navigator/scripts/tests", "plugins/ocd/skills/conventions/scripts/tests"]
+testpaths = ["tests", "plugins/ocd/tests", "plugins/ocd/skills/navigator/scripts/tests", "plugins/ocd/skills/conventions/scripts/tests"]
 
 [dependency-groups]
 dev = [
