@@ -18,3 +18,6 @@ conventions:
   .claude/ocd/conventions/python.md:
     pattern: "*.py"
     dependencies: [.claude/rules/ocd-agent-authoring.md]
+  .claude/ocd/conventions/testing.md:
+    pattern: "test_*.*"
+    dependencies: [.claude/rules/ocd-agent-authoring.md]
