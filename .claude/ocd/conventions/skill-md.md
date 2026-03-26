@@ -56,13 +56,11 @@ Process Model is optional — only for skills where workflow correctness depends
 
 ### Orchestration vs Execution Boundary
 
-Sections before Workflow are orchestration — main conversation agent resolves arguments, selects route, and packages inputs. Workflow sections are execution — self-contained blocks that may run directly or by spawned agents.
+Sections before Workflow are orchestration — main conversation agent resolves arguments, selects route, and packages inputs. Workflow sections are execution — self-contained blocks that may run directly or by spawned agents. Workflows never re-resolve arguments or re-route — they assume orchestration is complete.
 
-Orchestration sections (Trigger, Route) prepare inputs. Route is central orchestration section — resolves arguments, validates inputs, selects Workflow, and dispatches. Workflow sections contain everything needed to execute, including Report and supporting subsections. Workflows never re-resolve arguments or re-route — they assume orchestration is complete.
+When dispatching to agents, agent receives resolved inputs and execution instructions without exposure to alternative workflows, routing logic, or argument parsing. Workflow agent may spawn additional agents internally which it coordinates. System-managed variables (`$ARGUMENTS`, `${CLAUDE_SESSION_ID}`) and environment variables (`${CLAUDE_PLUGIN_ROOT}`) are resolved mechanically by Claude Code and shell respectively.
 
-Skills that support `--delegate` must spawn an agent for Workflow execution — `--delegate` backgrounds that spawn. Skills without `--delegate` may execute workflows directly. When dispatching to agents, agent receives resolved inputs and execution instructions without exposure to alternative workflows, routing logic, or argument parsing. Workflow agent may spawn additional agents internally (evaluation agents, per-file agents) which it coordinates. System-managed variables (`$ARGUMENTS`, `${CLAUDE_SESSION_ID}`) and environment variables (`${CLAUDE_PLUGIN_ROOT}`) are resolved mechanically by Claude Code and shell respectively.
-
-Orchestrator does not pre-read component files to inline content. Workflow steps dictate when component files are read and by whom — each executor reads what it needs at execution time. This keeps agent context precisely scoped.
+Orchestrator does not pre-read component files to inline content. Workflow steps dictate when component files are read and by whom — each executor reads what it needs at execution time.
 
 String substitution variables available in body:
 - `$ARGUMENTS` — All arguments passed when invoking skill
@@ -76,7 +74,7 @@ Reusable argument patterns for skills that accept targets, spawn agents, or scop
 | Argument | Role | Description |
 |----------|------|-------------|
 | `--target` | Gate + subject | Required flag carrying target value; presence triggers execution, value identifies what to operate on; without it, skill responds with description and usage hint |
-| `[--delegate]` | Dispatch modifier | Workflow agent spawns in background instead of foreground |
+| `[--delegate]` | Dispatch modifier | Workflow agent spawns in background; see --delegate section for requirements |
 | `[--pattern <glob> ...]` | Filter | Passthrough to navigator CLI for file enumeration; repeatable for OR-combined matching; ignored when target is single file |
 | `[--all]` | Boundary override | Includes `.claude/` files in target enumeration; without it, `.claude/` excluded by default |
 
@@ -114,7 +112,7 @@ Exits with code 1 if skill not found. Skills should EXIT with error when resolut
 
 ### Route Dispatch Pattern
 
-Route evaluates {target} and selects Workflow. Dispatch spawns Workflow agent — --delegate controls whether spawn is foreground or background.
+Route evaluates {target} and selects Workflow. Skills without `--delegate` may execute workflows directly or spawn agents.
 
 ```
 ## Route
@@ -138,11 +136,19 @@ Route evaluates {target} and selects Workflow. Dispatch spawns Workflow agent �
   - If --delegate: Workflow agent spawns in background
 ```
 
+### --delegate
+
+Skills that declare `--delegate` in argument-hint must spawn an agent for Workflow execution. `--delegate` backgrounds that spawn; without `--delegate`, spawn runs in foreground.
+
+Requirements:
+- Workflow must be fully autonomous — no interactive checkpoints
+- Skills with interactive workflows must reject `--delegate` in Route
+- Spawned agent receives Workflow and Rules; reads component files at execution time
+
+Skills without `--delegate` have no agent-spawn requirement and may execute workflows directly.
+
 ### Constraints
 
-- Skills supporting --delegate must spawn agent for Workflow execution; --delegate backgrounds that spawn
-- Skills without --delegate may execute workflows directly or spawn agents
-- --delegate requires Workflow to be fully autonomous — no interactive checkpoints; skills with interactive workflows must reject --delegate in Route
 - Natural language {target} evaluation occurs in Route as fallback after deterministic matches — orchestrator interprets goal, derives adjustments, assigns variables, and presents for user confirmation before proceeding
 - When natural language adjustments conflict with other provided flags, orchestrator surfaces conflict and works with user to resolve — no implicit precedence
 - Deterministic {target} values execute without interpretation or confirmation
