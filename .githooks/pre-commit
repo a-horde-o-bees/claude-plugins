@@ -41,7 +41,7 @@ for entry in "${SHARED_FILES[@]}"; do
         dest_dir="${plugin_dir}${target_subdir}"
         [ -d "$dest_dir" ] || continue
 
-        cp "$canonical" "${dest_dir}/${filename}"
+        git show ":${canonical}" > "${dest_dir}/${filename}"
         git add "${dest_dir}/${filename}"
     done
 done
