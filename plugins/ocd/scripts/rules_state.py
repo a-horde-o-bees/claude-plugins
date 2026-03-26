@@ -33,10 +33,12 @@ def check_rules(plugin_root: Path, project_dir: Path) -> list[dict]:
             results.append({"rule": name, "state": "skipped"})
             continue
 
-        src_content = src_file.read_text()
-        dst_content = dst_file.read_text()
+        src_content = src_file.read_bytes()
+        dst_content = dst_file.read_bytes()
+        # Compare with stamp applied — template has "type: template", deployed has "type: deployed"
+        src_deployed = src_content.replace(b"type: template", b"type: deployed", 1)
 
-        if src_content == dst_content:
+        if src_deployed == dst_content:
             results.append({"rule": name, "state": "adopted"})
         else:
             results.append({"rule": name, "state": "modified"})
