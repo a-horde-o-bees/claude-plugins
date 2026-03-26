@@ -111,6 +111,20 @@ Use `_{purpose}.py` (internal) when functions exist to support the parent module
 
 Decomposition of `{name}.py` is invisible to `{name}_cli.py`. CLI always imports from facade (`{name}.py`), never from internal `_{purpose}.py` modules. Separate modules with own CLI subcommands are imported directly by the CLI alongside the facade.
 
+## Testing
+
+### File Naming
+
+Test files use `test_` prefix: `test_navigator.py`, `test_conventions.py`. Pytest discovers `test_*.py` by default. Do not use `*_test.py` suffix convention.
+
+Test directories contain `__init__.py` for proper package structure. Shared fixtures live in `conftest.py` at appropriate directory level.
+
+### Test Structure
+
+Group related tests by class when testing a single function or module boundary. Use descriptive test method names that state what is being verified: `test_prefix_attack_blocked`, `test_cycle_detection_raises`.
+
+Fixtures provide isolated test state (temp directories, databases, environment variables). Prefer `tmp_path` and `monkeypatch` builtins over manual setup/teardown.
+
 ## Post-Refactor Cleanup
 
 After moves, renames, or structural changes:
