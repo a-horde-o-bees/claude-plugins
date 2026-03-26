@@ -36,7 +36,7 @@ Never place plugin data in the user's project tree outside `.claude/`.
 
 Rules and conventions use a template→deployed model. Source files (`plugins/<plugin>/rules/`, `plugins/<plugin>/templates/conventions/`) carry `type: template` frontmatter. Deployed copies (`.claude/rules/`, `.claude/<plugin>/conventions/`) carry `type: deployed`.
 
-Edit templates, never deployed copies. Test changes by running `/ocd-init --force` to deploy from templates — do not modify deployed files directly.
+Edit templates, never deployed copies.
 
 ## README Scopes
 
@@ -46,5 +46,4 @@ Edit templates, never deployed copies. Test changes by running `/ocd-init --forc
 ## Testing
 
 - Run tests via `.venv/bin/python3 -m pytest -v`
-- Run only tests affected by current changes, scoped to narrowest relevant test file
 - All test paths configured in `pyproject.toml`
