@@ -1,7 +1,7 @@
 """Navigator CLI.
 
 Presentation layer: argument parsing and dispatch wrappers only.
-Business logic lives in navigator.py, skill_resolver.py, and _init.py.
+Business logic lives in navigator.py and skill_resolver.py.
 """
 
 import argparse
@@ -11,11 +11,9 @@ import sys
 try:
     from . import navigator
     from . import skill_resolver
-    from . import _init
 except ImportError:
     import navigator  # type: ignore[import-not-found]
     import skill_resolver  # type: ignore[import-not-found]
-    import _init  # type: ignore[import-not-found]
 
 
 DEFAULT_DB = ".claude/ocd/navigator/navigator.db"
@@ -80,26 +78,6 @@ def _dispatch_search(args: argparse.Namespace) -> None:
     print(navigator.search_entries(args.db, args.pattern))
 
 
-def _dispatch_init(args: argparse.Namespace) -> None:
-    project_dir = _init.get_project_dir()
-    if getattr(args, "force", False):
-        db_path = _init.get_db_path(project_dir)
-        if db_path.exists():
-            db_path.unlink()
-    for line in _init.init(project_dir):
-        print(line)
-
-
-def _dispatch_status(_args: argparse.Namespace) -> None:
-    project_dir = _init.get_project_dir()
-    result = _init.status(project_dir)
-    print(f"navigator: {result['state']}")
-    for detail in result.get("details", []):
-        print(f"  {detail}")
-    for action in result.get("actions", []):
-        print(f"  Action: {action}")
-
-
 def _dispatch_resolve_skill(args: argparse.Namespace) -> None:
     result = skill_resolver.resolve_skill(args.name)
     if result:
@@ -136,7 +114,7 @@ def build_parser() -> argparse.ArgumentParser:
             "Complements Grep/Glob which search file contents — navigator\n"
             "search finds files by what they do.\n"
             "\n"
-            "All commands except init and scan auto-scan before execution\n"
+            "All commands except scan auto-scan before execution\n"
             "to ensure fresh data.\n"
             "\n"
             "Workflow: describe navigates tree with descriptions,\n"
@@ -166,36 +144,6 @@ def build_parser() -> argparse.ArgumentParser:
     )
 
     commands = parser.add_subparsers(dest="command", required=True)
-
-    # init
-    init_p = commands.add_parser(
-        "init",
-        help="Create database with schema and seed rules",
-        description=(
-            "Create navigator database and populate seed rules from\n"
-            "navigator_seed.csv. Idempotent — safe to run multiple times.\n"
-            "Uses $CLAUDE_PROJECT_DIR for database location."
-        ),
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-    )
-    init_p.add_argument(
-        "--force", action="store_true",
-        help="Delete existing database before reinitializing; without --force, init is idempotent",
-    )
-    init_p.set_defaults(_dispatch=_dispatch_init)
-
-    # status
-    status_p = commands.add_parser(
-        "status",
-        help="Report navigator infrastructure state",
-        description=(
-            "Check database existence, schema, entry counts, and\n"
-            "undescribed/stale entries. Returns state (operational,\n"
-            "adopted, error) with actionable next steps."
-        ),
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-    )
-    status_p.set_defaults(_dispatch=_dispatch_status)
 
     # describe
     describe_p = commands.add_parser(

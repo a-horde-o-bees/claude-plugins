@@ -1,66 +1,46 @@
-"""Navigator initialization and status.
+"""Navigator skill infrastructure.
 
-Database creation, seed rule deployment, and infrastructure health checks.
+Initialize database with seeds and check DB health.
+Interface contract: init() and status() return {"files": [...], "extra": [...]}.
 """
 
-import logging
-import os
 import sqlite3
 from pathlib import Path
 
-try:
-    from ._db import init_db, get_connection
-except ImportError:
-    from _db import init_db, get_connection  # type: ignore[import-not-found]
-
-logger = logging.getLogger(__name__)
+import _db  # type: ignore[import-not-found]
+import plugin  # type: ignore[import-not-found]
 
 
-def get_project_dir() -> Path:
-    return Path(os.environ.get("CLAUDE_PROJECT_DIR", os.getcwd()))
+def _db_path(plugin_name: str, project_dir: Path) -> Path:
+    return project_dir / ".claude" / plugin_name / "navigator" / "navigator.db"
 
 
-def get_db_path(project_dir: Path) -> Path:
-    return project_dir / ".claude" / "ocd" / "navigator" / "navigator.db"
+def _db_rel_path(plugin_name: str) -> str:
+    return f".claude/{plugin_name}/navigator/navigator.db"
 
 
-def init(project_dir: Path) -> list[str]:
-    """Initialize navigator database. Returns status lines."""
-    db_path = get_db_path(project_dir)
-    result = init_db(str(db_path))
-    return [result]
-
-
-def status(project_dir: Path) -> dict:
-    """Check navigator infrastructure state.
-
-    Returns dict with:
-    - state: "operational" | "adopted" | "error"
-    - details: list of human-readable status lines
-    - actions: list of actionable commands
-    """
-    db_path = get_db_path(project_dir)
+def _status_extra(plugin_name: str, project_dir: Path) -> list[dict]:
+    """Check DB health and return extra lines."""
+    db_path = _db_path(plugin_name, project_dir)
 
     if not db_path.exists():
-        return {
-            "state": "adopted",
-            "details": ["Database: not found"],
-            "actions": ["Run /ocd-init to create navigator database"],
-        }
+        return [
+            {"label": "overall status", "value": "adopted \u2014 database not found"},
+            {"label": "action needed", "value": "Run /ocd-init to create navigator database"},
+        ]
 
     try:
-        conn = get_connection(str(db_path))
+        conn = _db.get_connection(str(db_path))
 
         tables = conn.execute(
             "SELECT name FROM sqlite_master WHERE type='table' AND name='entries'",
         ).fetchone()
         if not tables:
             conn.close()
-            return {
-                "state": "error",
-                "details": ["Database: missing entries table"],
-                "actions": ["Run /ocd-init to reinitialize navigator database"],
-            }
+            return [
+                {"label": "overall status", "value": "error \u2014 missing entries table"},
+                {"label": "action needed", "value": "Run /ocd-init to reinitialize navigator database"},
+            ]
 
         total = conn.execute(
             "SELECT COUNT(*) as c FROM entries WHERE path NOT LIKE '%*%'",
@@ -68,11 +48,10 @@ def status(project_dir: Path) -> dict:
 
         if total == 0:
             conn.close()
-            return {
-                "state": "adopted",
-                "details": ["Database: ready", "Entries: none (scan needed)"],
-                "actions": ["Run /ocd-navigator to scan and describe project"],
-            }
+            return [
+                {"label": "overall status", "value": "ready \u2014 no entries"},
+                {"label": "action needed", "value": "Run /ocd-navigator to scan and describe project"},
+            ]
 
         undescribed = conn.execute(
             "SELECT COUNT(*) as c FROM entries "
@@ -86,8 +65,7 @@ def status(project_dir: Path) -> dict:
 
         conn.close()
 
-        details = [f"Entries: {total} total, {undescribed} undescribed, {stale} stale"]
-        actions = []
+        extra = [{"label": "overall status", "value": f"operational \u2014 {total} entries, {undescribed} undescribed, {stale} stale"}]
 
         if undescribed > 0 or stale > 0:
             parts = []
@@ -95,17 +73,61 @@ def status(project_dir: Path) -> dict:
                 parts.append(f"describe {undescribed} entries")
             if stale > 0:
                 parts.append(f"review {stale} stale entries")
-            actions.append(f"Run /ocd-navigator to {' and '.join(parts)}")
+            extra.append({"label": "action needed", "value": f"Run /ocd-navigator to {' and '.join(parts)}"})
 
-        return {
-            "state": "operational",
-            "details": details,
-            "actions": actions,
-        }
+        return extra
 
     except sqlite3.Error as e:
-        return {
-            "state": "error",
-            "details": [f"Database: {e}"],
-            "actions": ["Run /ocd-init to reinitialize navigator database"],
-        }
+        return [
+            {"label": "overall status", "value": f"error \u2014 {e}"},
+            {"label": "action needed", "value": "Run /ocd-init to reinitialize navigator database"},
+        ]
+
+
+def init(plugin_root: Path, project_dir: Path, force: bool = False) -> dict:
+    """Initialize navigator database. Returns {files, extra}."""
+    plugin_name = plugin.get_plugin_name(plugin_root)
+    db = _db_path(plugin_name, project_dir)
+    rel_path = _db_rel_path(plugin_name)
+
+    before = "current" if db.exists() else "absent"
+
+    if force and db.exists():
+        db.unlink()
+        before = "absent"
+
+    result_msg = _db.init_db(str(db))
+
+    after = "current"
+    summary = ""
+    if "(seed rules:" in result_msg:
+        seed_part = result_msg.split("(seed rules: ")[1].rstrip(")")
+        summary = f"initialized \u2014 seed rules: {seed_part}"
+    elif "(no seed file)" in result_msg:
+        summary = "initialized \u2014 no seed file"
+    else:
+        summary = "initialized"
+
+    files = [{"path": rel_path, "before": before, "after": after}]
+    extra = [{"label": "overall status", "value": summary}]
+
+    # Add action needed from status check
+    status_extra = _status_extra(plugin_name, project_dir)
+    for item in status_extra:
+        if item["label"] == "action needed":
+            extra.append(item)
+
+    return {"files": files, "extra": extra}
+
+
+def status(plugin_root: Path, project_dir: Path) -> dict:
+    """Check navigator DB state. Returns {files, extra}."""
+    plugin_name = plugin.get_plugin_name(plugin_root)
+    db = _db_path(plugin_name, project_dir)
+    rel_path = _db_rel_path(plugin_name)
+
+    state = "current" if db.exists() else "absent"
+    files = [{"path": rel_path, "before": state, "after": state}]
+
+    extra = _status_extra(plugin_name, project_dir)
+    return {"files": files, "extra": extra}

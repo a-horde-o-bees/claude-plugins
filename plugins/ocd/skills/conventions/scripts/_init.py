@@ -1,107 +1,97 @@
-"""Conventions initialization and status.
+"""Conventions skill infrastructure.
 
-Template deployment, manifest management, and infrastructure health checks.
-Business logic for deploy operations lives in _deploy.py.
+Deploy convention templates and validate manifest state.
+Interface contract: init() and status() return {"files": [...], "extra": [...]}.
 """
 
-import logging
 from pathlib import Path
 
-try:
-    from . import conventions
-except ImportError:
-    import conventions  # type: ignore[import-not-found]
-
-try:
-    from _deploy import deploy_files, get_plugin_root, get_project_dir
-except ImportError:
-    import sys
-    sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "scripts"))
-    from _deploy import deploy_files, get_plugin_root, get_project_dir  # type: ignore[import-not-found]
-
-logger = logging.getLogger(__name__)
+import conventions  # type: ignore[import-not-found]
+import plugin  # type: ignore[import-not-found]
 
 
-def get_conventions_dir(project_dir: Path) -> Path:
-    return project_dir / ".claude" / "ocd" / "conventions"
+def _conventions_dir(plugin_name: str, project_dir: Path) -> Path:
+    return project_dir / ".claude" / plugin_name / "conventions"
 
 
-def get_manifest_path(project_dir: Path) -> Path:
-    return get_conventions_dir(project_dir) / "manifest.yaml"
+def _manifest_path(plugin_name: str, project_dir: Path) -> Path:
+    return _conventions_dir(plugin_name, project_dir) / "manifest.yaml"
 
 
-def init(plugin_root: Path, project_dir: Path, force: bool = False) -> list[str]:
-    """Deploy convention templates and manifest. Returns status lines."""
-    templates_src = plugin_root / "templates" / "conventions"
-
-    if not templates_src.is_dir():
-        return ["No convention templates found in plugin"]
-
-    results = deploy_files(
-        src_dir=templates_src,
-        dst_dir=get_conventions_dir(project_dir),
-        pattern="*",
-        force=force,
-    )
-
-    lines = []
-    for r in results:
-        if r["before"] == r["after"]:
-            state = r["after"].capitalize()
-        else:
-            state = f"{r['before']} → {r['after']}"
-        lines.append(f"{state}: {r['name']}")
-
-    return lines
-
-
-def status(project_dir: Path) -> dict:
-    """Check conventions infrastructure state.
-
-    Returns dict with:
-    - state: "operational" | "adopted" | "error"
-    - details: list of human-readable status lines
-    - actions: list of actionable commands
-    """
-    manifest_path = get_manifest_path(project_dir)
+def _manifest_extra(plugin_name: str, project_dir: Path) -> list[dict]:
+    """Validate manifest and return extra lines for overall status / action needed."""
+    manifest_path = _manifest_path(plugin_name, project_dir)
 
     if not manifest_path.exists():
-        return {
-            "state": "adopted",
-            "details": ["Manifest: not found"],
-            "actions": ["Run /ocd-init to deploy conventions"],
-        }
+        return [
+            {"label": "overall status", "value": "adopted \u2014 manifest not found"},
+            {"label": "action needed", "value": "Run /ocd-init to deploy conventions"},
+        ]
 
     try:
         manifest = conventions.load_manifest(manifest_path)
     except Exception as e:
-        return {
-            "state": "error",
-            "details": [f"Manifest: {e}"],
-            "actions": ["Run /ocd-init --force to redeploy conventions"],
-        }
+        return [
+            {"label": "overall status", "value": f"error \u2014 {e}"},
+            {"label": "action needed", "value": "Run /ocd-init --force to redeploy conventions"},
+        ]
 
     validation = conventions.validate_manifest(manifest_path)
     missing = validation["missing"]
     untracked = validation["untracked"]
 
-    details = [f"Conventions: {len(manifest)} in manifest"]
-    actions = []
+    extra = []
 
     if missing:
-        details.append(f"Missing from disk: {', '.join(Path(p).name for p in missing)}")
-        actions.append("Run /ocd-init to deploy missing convention files")
+        extra.append({"label": "overall status", "value": f"error \u2014 {len(manifest)} in manifest"})
+        extra.append({"label": "action needed", "value": f"Missing from disk: {', '.join(Path(p).name for p in missing)}"})
+        extra.append({"label": "action needed", "value": "Run /ocd-init to deploy missing convention files"})
+    else:
+        extra.append({"label": "overall status", "value": f"operational \u2014 {len(manifest)} in manifest"})
 
     if untracked:
-        details.append(f"Untracked: {', '.join(Path(p).name for p in untracked)}")
-        actions.append("Add untracked files to manifest.yaml or remove from conventions dir")
+        extra.append({"label": "action needed", "value": f"Untracked: {', '.join(Path(p).name for p in untracked)}"})
+        extra.append({"label": "action needed", "value": "Add untracked files to manifest.yaml or remove from conventions dir"})
 
-    state = "operational"
-    if missing:
-        state = "error"
+    return extra
 
-    return {
-        "state": state,
-        "details": details,
-        "actions": actions,
-    }
+
+def init(plugin_root: Path, project_dir: Path, force: bool = False) -> dict:
+    """Deploy convention templates. Returns {files, extra}."""
+    plugin_name = plugin.get_plugin_name(plugin_root)
+    dst_dir = _conventions_dir(plugin_name, project_dir)
+
+    results = plugin.deploy_files(
+        src_dir=plugin_root / "templates" / "conventions",
+        dst_dir=dst_dir,
+        pattern="*",
+        force=force,
+    )
+
+    rel_prefix = f".claude/{plugin_name}/conventions"
+    files = []
+    for r in results:
+        files.append({"path": f"{rel_prefix}/{r['name']}", "before": r["before"], "after": r["after"]})
+
+    extra = _manifest_extra(plugin_name, project_dir)
+    return {"files": files, "extra": extra}
+
+
+def status(plugin_root: Path, project_dir: Path) -> dict:
+    """Check convention file states and manifest health. Returns {files, extra}."""
+    plugin_name = plugin.get_plugin_name(plugin_root)
+    src_dir = plugin_root / "templates" / "conventions"
+    dst_dir = _conventions_dir(plugin_name, project_dir)
+    rel_prefix = f".claude/{plugin_name}/conventions"
+
+    files = []
+    if src_dir.is_dir():
+        for src in sorted(src_dir.glob("*")):
+            if not src.is_file():
+                continue
+            dst = dst_dir / src.name
+            state = plugin.compare_deployed(src, dst)
+            files.append({"path": f"{rel_prefix}/{src.name}", "before": state, "after": state})
+
+    extra = _manifest_extra(plugin_name, project_dir)
+    return {"files": files, "extra": extra}
