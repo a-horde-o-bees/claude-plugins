@@ -12,6 +12,7 @@ Conventions for content consumed by agents: skills, conventions, plans, actions,
 
 - Omit grammar articles (a, an, the) — agents parse structure, not prose
 - Prioritize completeness over brevity — missing information causes incorrect assumptions
+- Every word must earn its place — if removing word or phrase does not change meaning, remove it; complete does not mean verbose
 - Include examples only when rule is ambiguous without one
 
 ### Naming
@@ -28,7 +29,7 @@ Conventions for content consumed by agents: skills, conventions, plans, actions,
 
 ## Skill Architecture
 
-- Deterministic operations belong in CLI scripts; non-deterministic steps (judgment, context-dependent decisions, natural language generation) stay in SKILL.md as agent-executed workflow instructions
+- Deterministic operations belong in CLI scripts; non-deterministic steps stay in SKILL.md as agent-executed workflow instructions
 - When continuing session that was mid-skill, re-read SKILL.md from disk before resuming — carried-over context may be stale
 
 ## Conventions
@@ -48,7 +49,7 @@ Pass all target file paths in single call. Output groups each target file with i
 
 ## Process Flow Notation
 
-Notation for workflow documents: skills, conventions, plans, actions. Required in always-on context — agents must parse and follow this notation during execution, not only when authoring. Not convention candidate.
+Notation for workflow documents: skills, conventions, plans, actions. Required in always-on context — agents must parse and follow this notation during execution, not only when authoring.
 
 ### Structure
 
@@ -170,7 +171,7 @@ Grouping headings organize contiguous steps within single process. Steps continu
 
 ## Skill Argument Notation
 
-Notation for skill `argument-hint` frontmatter and workflow argument references. Defines how skills declare arguments and how workflows reference argument values during execution. Required in always-on context — agents must parse argument hints to understand skill interfaces and follow `{flag}` references to resolve values during workflow execution.
+Notation for skill `argument-hint` frontmatter and workflow argument references. Required in always-on context — agents must parse argument hints to understand skill interfaces and follow `{flag}` references to resolve values during workflow execution.
 
 ### Argument Hint Format
 
@@ -249,7 +250,7 @@ Skill Argument Notation extends Process Flow Notation for skill-specific constru
 
 ### Agent-facing vs internal scripts
 
-Agent-facing CLIs are executables that agents call directly during tasks. They are primary interface between agents and deterministic operations. Internal scripts are implementation details called by plugin infrastructure (hooks, commands) — agents never invoke them.
+Agent-facing CLIs are executables that agents call directly during tasks. Internal scripts are implementation details called by plugin infrastructure (hooks, commands) — agents never invoke them.
 
 Naming convention:
 - `<name>_cli.py` (or `<name>_cli.sh`, etc.) — agent-facing entry point; agents call it directly, read its `--help`, and parse its output

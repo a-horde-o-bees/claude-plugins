@@ -19,5 +19,5 @@ conventions:
     pattern: "*.py"
     dependencies: [.claude/rules/ocd-agent-authoring.md]
   .claude/ocd/conventions/testing.md:
-    pattern: "test_*.*"
+    pattern: "test_*.*|*_test.*|conftest.*"
     dependencies: [.claude/rules/ocd-agent-authoring.md]
