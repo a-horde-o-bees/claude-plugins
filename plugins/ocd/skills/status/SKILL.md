@@ -15,7 +15,7 @@ User runs `/ocd-status`
 
 1. Run status script
   ```
-  python3 ${CLAUDE_PLUGIN_ROOT}/scripts/status.py
+  python3 ${CLAUDE_PLUGIN_ROOT}/scripts/plugin_cli.py status
   ```
 2. Present output to user as-is
 

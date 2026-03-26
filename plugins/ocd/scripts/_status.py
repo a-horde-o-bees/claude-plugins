@@ -1,36 +1,17 @@
-"""Plugin status report.
+"""Status reporting.
 
-Derives all state deterministically from filesystem:
-- Plugin version and marketplace version comparison
-- Rule states via diff of source vs deployed files
-- Skill states via per-skill init.py --status
-
-No state file, no network calls, no automated updates.
+Plugin version, rules state, skill infrastructure status.
 """
 
-import importlib
 import json
 import os
 import subprocess
-import sys
 from pathlib import Path
 
-
-def get_plugin_root() -> Path:
-    """Resolve plugin root from CLAUDE_PLUGIN_ROOT or script location."""
-    env = os.environ.get("CLAUDE_PLUGIN_ROOT")
-    if env:
-        return Path(env)
-    return Path(__file__).parent.parent
-
-
-def get_project_dir() -> Path:
-    """Resolve project directory from environment or cwd."""
-    return Path(os.environ.get("CLAUDE_PROJECT_DIR", os.getcwd()))
+from _deploy import compare_deployed, discover_skill_clis, format_columns, get_plugin_root, get_project_dir
 
 
 def get_claude_home() -> Path:
-    """Resolve Claude home directory."""
     return Path.home() / ".claude"
 
 
@@ -43,13 +24,11 @@ def read_json(path: Path) -> dict:
 
 
 def get_installed_version(plugin_root: Path) -> str:
-    """Read version from installed plugin.json."""
     data = read_json(plugin_root / ".claude-plugin" / "plugin.json")
     return data.get("version", "unknown")
 
 
 def get_plugin_name(plugin_root: Path) -> str:
-    """Read name from installed plugin.json."""
     data = read_json(plugin_root / ".claude-plugin" / "plugin.json")
     return data.get("name", "ocd")
 
@@ -108,79 +87,57 @@ def format_header(
     source_version: str | None,
     marketplace_name: str | None,
 ) -> str:
-    """Format header line with version and update status."""
     parts = [f"{plugin_name} v{installed_version}"]
-
     if source_version and source_version != installed_version:
         parts.append(f"update available: v{source_version}")
     elif source_version:
         parts.append("up to date")
-
     return " | ".join(parts)
 
 
 def format_rules_section(plugin_root: Path, project_dir: Path) -> list[str]:
-    """Format rules section using diff-based state check."""
-    scripts_dir = plugin_root / "scripts"
-    sys.path.insert(0, str(scripts_dir))
-    try:
-        import rules_state
-        importlib.reload(rules_state)
-        results = rules_state.check_rules(plugin_root, project_dir)
-    except Exception as e:
-        return [f"  Error checking rules: {e}"]
-    finally:
-        sys.path.pop(0)
-        sys.modules.pop("rules_state", None)
+    """Format rules section using compare_deployed."""
+    src_dir = plugin_root / "rules"
+    dst_dir = project_dir / ".claude" / "rules"
 
-    if not results:
+    if not src_dir.is_dir():
         return ["  No rules found in plugin"]
 
-    lines = []
-    for r in results:
-        lines.append(f"  {r['state']:<12}{r['rule']}")
-    return lines
+    rows = []
+    for src in sorted(src_dir.glob("*.md")):
+        if not src.is_file():
+            continue
+        dst = dst_dir / src.name
+        state = compare_deployed(src, dst)
+        name = src.stem.removeprefix("ocd-")
+        rows.append((state, name))
+
+    if not rows:
+        return ["  No rules found in plugin"]
+
+    return [f"  {line}" for line in format_columns(rows)]
 
 
 def discover_skills(plugin_root: Path) -> list[str]:
-    """Discover available skills from SKILL.md files."""
     skills_dir = plugin_root / "skills"
     if not skills_dir.is_dir():
         return []
-
-    skills = []
-    for skill_md in sorted(skills_dir.glob("*/SKILL.md")):
-        skills.append(skill_md.parent.name)
-    return skills
-
-
-def discover_skill_clis(plugin_root: Path) -> dict[str, Path]:
-    """Find all skills/*/scripts/*_cli.py files. Returns {skill_name: path}."""
-    skills_dir = plugin_root / "skills"
-    if not skills_dir.is_dir():
-        return {}
-    result = {}
-    for cli_path in sorted(skills_dir.glob("*/scripts/*_cli.py")):
-        result[cli_path.parent.parent.name] = cli_path
-    return result
+    return [skill_md.parent.name for skill_md in sorted(skills_dir.glob("*/SKILL.md"))]
 
 
 def format_skills_section(plugin_root: Path) -> list[str]:
-    """Format skills section by calling each skill's CLI status subcommand."""
+    """Format skills section by calling each skill CLI status subcommand."""
     skills = discover_skills(plugin_root)
-
     if not skills:
         return ["  No skills found in plugin"]
 
     skill_clis = discover_skill_clis(plugin_root)
     lines = []
-
     for skill in skills:
         cli_path = skill_clis.get(skill)
         if cli_path is None:
             lines.append(f"  {skill}")
             continue
-
         result = subprocess.run(
             ["python3", str(cli_path), "status"],
             capture_output=True, text=True, env=os.environ,
@@ -191,37 +148,27 @@ def format_skills_section(plugin_root: Path) -> list[str]:
                 lines.append(f"  {line}")
         else:
             lines.append(f"  {skill}")
-
     return lines
 
 
-def main() -> None:
+def run_status() -> None:
+    """Full status report. Prints output directly."""
     plugin_root = get_plugin_root()
     project_dir = get_project_dir()
     claude_home = get_claude_home()
 
     plugin_name = get_plugin_name(plugin_root)
     installed_version = get_installed_version(plugin_root)
-
     source_version, marketplace_name = find_marketplace_source(
         plugin_name, plugin_root, claude_home,
     )
 
-    header = format_header(
-        plugin_name, installed_version, source_version, marketplace_name,
-    )
-    print(header)
-
+    print(format_header(plugin_name, installed_version, source_version, marketplace_name))
     print()
     print("Rules")
     for line in format_rules_section(plugin_root, project_dir):
         print(line)
-
     print()
     print("Skills")
     for line in format_skills_section(plugin_root):
         print(line)
-
-
-if __name__ == "__main__":
-    main()

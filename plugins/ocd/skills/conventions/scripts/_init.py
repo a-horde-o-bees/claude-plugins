@@ -1,11 +1,10 @@
 """Conventions initialization and status.
 
 Template deployment, manifest management, and infrastructure health checks.
+Business logic for deploy operations lives in _deploy.py.
 """
 
 import logging
-import os
-import shutil
 from pathlib import Path
 
 try:
@@ -13,19 +12,14 @@ try:
 except ImportError:
     import conventions  # type: ignore[import-not-found]
 
+try:
+    from _deploy import deploy_files, get_plugin_root, get_project_dir
+except ImportError:
+    import sys
+    sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "scripts"))
+    from _deploy import deploy_files, get_plugin_root, get_project_dir  # type: ignore[import-not-found]
+
 logger = logging.getLogger(__name__)
-
-
-def get_project_dir() -> Path:
-    return Path(os.environ.get("CLAUDE_PROJECT_DIR", os.getcwd()))
-
-
-def get_plugin_root() -> Path:
-    """Resolve plugin root from environment or script location."""
-    env = os.environ.get("CLAUDE_PLUGIN_ROOT")
-    if env:
-        return Path(env)
-    return Path(__file__).parent.parent.parent.parent
 
 
 def get_conventions_dir(project_dir: Path) -> Path:
@@ -36,47 +30,27 @@ def get_manifest_path(project_dir: Path) -> Path:
     return get_conventions_dir(project_dir) / "manifest.yaml"
 
 
-def stamp_deployed(path: Path) -> None:
-    """Replace type: template with type: deployed in frontmatter only."""
-    content = path.read_text()
-    if not content.startswith("---\n"):
-        return
-    end = content.index("\n---\n", 4)
-    frontmatter = content[: end + 5]
-    stamped = frontmatter.replace("type: template", "type: deployed")
-    path.write_text(stamped + content[end + 5 :])
-
-
 def init(plugin_root: Path, project_dir: Path, force: bool = False) -> list[str]:
     """Deploy convention templates and manifest. Returns status lines."""
     templates_src = plugin_root / "templates" / "conventions"
-    conventions_dst = get_conventions_dir(project_dir)
-    conventions_dst.mkdir(parents=True, exist_ok=True)
-
-    lines = []
 
     if not templates_src.is_dir():
-        lines.append("No convention templates found in plugin")
-        return lines
+        return ["No convention templates found in plugin"]
 
-    for src in sorted(templates_src.iterdir()):
-        if not src.is_file():
-            continue
-        dst = conventions_dst / src.name
-        # Compare using deployed content (template with stamp applied)
-        src_deployed = src.read_bytes().replace(b"type: template", b"type: deployed", 1)
-        if not dst.exists():
-            shutil.copy2(src, dst)
-            stamp_deployed(dst)
-            lines.append(f"New: {src.name}")
-        elif src_deployed == dst.read_bytes():
-            lines.append(f"Current: {src.name}")
-        elif force:
-            shutil.copy2(src, dst)
-            stamp_deployed(dst)
-            lines.append(f"Replaced: {src.name}")
+    results = deploy_files(
+        src_dir=templates_src,
+        dst_dir=get_conventions_dir(project_dir),
+        pattern="*",
+        force=force,
+    )
+
+    lines = []
+    for r in results:
+        if r["before"] == r["after"]:
+            state = r["after"].capitalize()
         else:
-            lines.append(f"Outdated: {src.name}")
+            state = f"{r['before']} → {r['after']}"
+        lines.append(f"{state}: {r['name']}")
 
     return lines
 
