@@ -8,11 +8,16 @@ WAL mode enables concurrent reads while writes are in progress.
 Write contention handled by retry_write decorator with random jitter.
 """
 
+import functools
 import random
 import sqlite3
 import time
+from collections.abc import Callable
 from pathlib import Path
+from typing import TypeVar
 from urllib.parse import urlparse
+
+F = TypeVar("F", bound=Callable)
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS entities (
@@ -76,12 +81,13 @@ def get_connection(db_path: str) -> sqlite3.Connection:
     return conn
 
 
-def retry_write(func):
+def retry_write(func: F) -> F:
     """Retry write operations on database lock with random jitter.
 
     Catches sqlite3.OperationalError for 'database is locked' and retries
     with random 50-200ms jitter between attempts.
     """
+    @functools.wraps(func)
     def wrapper(*args, **kwargs):
         while True:
             try:
@@ -91,7 +97,7 @@ def retry_write(func):
                     time.sleep(random.uniform(0.05, 0.2))
                 else:
                     raise
-    return wrapper
+    return wrapper  # type: ignore[return-value]
 
 
 def normalize_url(url: str | None) -> str | None:
@@ -1011,7 +1017,6 @@ def list_source_data(
 
 def _union_find_groups(pairs: list[tuple[str, str]]) -> dict[str, set[str]]:
     """Build transitive groups from pairs using union-find."""
-    from collections import defaultdict
     entity_groups: dict[str, set[str]] = {}
     entity_to_group: dict[str, str] = {}
 
@@ -1130,7 +1135,7 @@ def find_duplicates(db_path: str, templates_db: str | None = None) -> str:
 
         stage_icons = {"new": ".", "rejected": "x", "researched": "+", "merged": "~"}
         lines = [f"Duplicate groups ({len(groups)}):\n"]
-        for group_idx, (rep, members) in enumerate(sorted(groups.items(), key=lambda item: int(item[0][1:])), 1):
+        for group_idx, (_, members) in enumerate(sorted(groups.items(), key=lambda item: int(item[0][1:])), 1):
             sorted_members = sorted(members, key=lambda e: int(e[1:]))
             lines.append(f"  Group {group_idx}:")
             for eid in sorted_members:

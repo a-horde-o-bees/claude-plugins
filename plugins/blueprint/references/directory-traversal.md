@@ -21,11 +21,11 @@ references/crawl-scripts/
 
 When directory entity has no `[CRAWL METHOD]:` note, agent develops approach before starting extraction:
 
-1. Check `[ACCESSIBILITY]:` note on directory entity — determines whether browser tools needed
+1. Check `[ACCESSIBILITY]:` note on directory entity — determines whether browser tools are needed
 2. Navigate to directory URL with Playwright
 3. Inspect page structure — probe for data sources before resorting to per-element interaction:
-  1. Run JS eval to check: `data-*` attributes on interactive elements, hidden containers with pre-loaded content, inline `<script>` tags with JSON data, API endpoints in network requests
-  2. Check network requests during page interaction — detail content may come from same-page data rather than API calls
+    1. Run JS eval to check: `data-*` attributes on interactive elements, hidden containers with pre-loaded content, inline `<script>` tags with JSON data, API endpoints in network requests
+    2. Check network requests during page interaction — detail content may come from same-page data rather than API calls
 4. Select primitives and compose into recipe based on directory structure
 5. Record approach as `[CRAWL METHOD]:` note on directory entity
 6. Save extraction script to `references/crawl-scripts/{entity_id}-{short_name}.js`
@@ -154,13 +154,13 @@ Proven combinations of primitives for specific directory types. When directory m
 
 1. Initial `browser_navigate` to directory domain (establishes same-origin context)
 2. While pages remain:
-  1. `browser_evaluate` with accumulating fetch script
-    - For each page in budget: fetch HTML, parse with DOMParser, extract data attributes, filter to members with domains, strip HTML from text
-    - Returns batch with `nextPage` checkpoint
-  2. Construct `register-batch` JSON from returned batch
-  3. Single `register-batch` CLI call
-  4. Reconcile any already-registered entities individually
-  5. Update `[CRAWL PROGRESS]:` note
+    1. `browser_evaluate` with accumulating fetch script
+        - For each page in budget: fetch HTML, parse with DOMParser, extract data attributes, filter to members with domains, strip HTML from text
+        - Returns batch with `nextPage` checkpoint
+    2. Construct `register-batch` JSON from returned batch
+    3. Single `register-batch` CLI call
+    4. Reconcile any already-registered entities individually
+    5. Update `[CRAWL PROGRESS]:` note
 
 ### JS-Rendered SPA
 
@@ -172,8 +172,8 @@ Proven combinations of primitives for specific directory types. When directory m
 
 1. Navigate to directory with `browser_navigate`
 2. Check network requests for underlying API endpoints
-  1. If API found: switch to Same-Origin Fetch against API endpoint (more efficient)
-  2. If no API: use browser interaction (click, scroll) to load content, extract from snapshots
+    1. If API found: switch to Same-Origin Fetch against API endpoint (more efficient)
+    2. If no API: use browser interaction (click, scroll) to load content, extract from snapshots
 3. Accumulate and register per standard flow
 
 ### API-Backed Directory
@@ -187,10 +187,10 @@ Proven combinations of primitives for specific directory types. When directory m
 1. Initial `browser_navigate` to directory domain
 2. Discover API endpoint from network requests or page source
 3. While pages remain:
-  1. `browser_evaluate` with accumulating fetch to API
-  2. Parse JSON response directly (no DOMParser needed)
-  3. Extract name, URL, description from structured fields
-  4. `register-batch` + progress update per standard flow
+    1. `browser_evaluate` with accumulating fetch to API
+    2. Parse JSON response directly (no DOMParser needed)
+    3. Extract name, URL, description from structured fields
+    4. `register-batch` + progress update per standard flow
 
 API responses are typically smaller and more structured than HTML — accumulation budgets can be larger.
 

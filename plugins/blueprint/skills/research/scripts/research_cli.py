@@ -15,11 +15,11 @@ import research  # type: ignore[import-not-found]
 # --- Dispatchers ---
 
 
-def _dispatch_init(args):
+def _dispatch_init(args: argparse.Namespace) -> None:
     print(db.init_db(args.db))
 
 
-def _dispatch_register(args):
+def _dispatch_register(args: argparse.Namespace) -> None:
     print(db.register_entity(
         args.db,
         name=args.name,
@@ -31,11 +31,11 @@ def _dispatch_register(args):
     ))
 
 
-def _dispatch_normalize_url(args):
+def _dispatch_normalize_url(args: argparse.Namespace) -> None:
     print(db.compute_normalize_url(args.url))
 
 
-def _dispatch_update_entity(args):
+def _dispatch_update_entity(args: argparse.Namespace) -> None:
     ids = args.ids.split(",") if args.ids else None
     all_entities = getattr(args, "all", False)
     try:
@@ -54,7 +54,7 @@ def _dispatch_update_entity(args):
         sys.exit(1)
 
 
-def _dispatch_upsert_notes(args):
+def _dispatch_upsert_notes(args: argparse.Namespace) -> None:
     try:
         print(db.upsert_notes(args.db, args.entity_id, args.notes))
     except ValueError as e:
@@ -62,7 +62,7 @@ def _dispatch_upsert_notes(args):
         sys.exit(1)
 
 
-def _dispatch_get_entity(args):
+def _dispatch_get_entity(args: argparse.Namespace) -> None:
     try:
         print(db.get_entity(args.db, args.id))
     except ValueError as e:
@@ -70,7 +70,7 @@ def _dispatch_get_entity(args):
         sys.exit(1)
 
 
-def _dispatch_list_entities(args):
+def _dispatch_list_entities(args: argparse.Namespace) -> None:
     print(db.list_entities(
         args.db,
         role=args.role,
@@ -79,11 +79,11 @@ def _dispatch_list_entities(args):
     ))
 
 
-def _dispatch_stats(args):
+def _dispatch_stats(args: argparse.Namespace) -> None:
     print(db.get_stats(args.db))
 
 
-def _dispatch_register_batch(args):
+def _dispatch_register_batch(args: argparse.Namespace) -> None:
     import json
     try:
         entities = json.loads(args.json)
@@ -93,7 +93,7 @@ def _dispatch_register_batch(args):
     print(db.register_batch(args.db, entities, source_url=args.source_url))
 
 
-def _dispatch_upsert_provenance(args):
+def _dispatch_upsert_provenance(args: argparse.Namespace) -> None:
     try:
         print(db.upsert_provenance(args.db, args.entity_id, args.source_url))
     except ValueError as e:
@@ -101,7 +101,7 @@ def _dispatch_upsert_provenance(args):
         sys.exit(1)
 
 
-def _dispatch_upsert_url(args):
+def _dispatch_upsert_url(args: argparse.Namespace) -> None:
     try:
         print(db.upsert_url(args.db, args.entity_id, args.url))
     except ValueError as e:
@@ -109,7 +109,7 @@ def _dispatch_upsert_url(args):
         sys.exit(1)
 
 
-def _dispatch_update_note(args):
+def _dispatch_update_note(args: argparse.Namespace) -> None:
     try:
         print(db.update_note(args.db, args.note_id, args.note))
     except ValueError as e:
@@ -117,7 +117,7 @@ def _dispatch_update_note(args):
         sys.exit(1)
 
 
-def _dispatch_remove_notes(args):
+def _dispatch_remove_notes(args: argparse.Namespace) -> None:
     note_ids = args.note_ids.split(",")
     try:
         print(db.remove_notes(args.db, args.entity_id, note_ids))
@@ -126,29 +126,29 @@ def _dispatch_remove_notes(args):
         sys.exit(1)
 
 
-def _dispatch_touch_entities(args):
+def _dispatch_touch_entities(args: argparse.Namespace) -> None:
     ids = args.ids.split(",") if args.ids else None
     all_entities = getattr(args, "all", False)
     print(db.touch_entities(args.db, ids=ids, all_entities=all_entities))
 
 
-def _dispatch_list_provenance(args):
+def _dispatch_list_provenance(args: argparse.Namespace) -> None:
     print(db.list_provenance(args.db, entity_id=args.entity_id))
 
 
-def _dispatch_list_reach(args):
+def _dispatch_list_reach(args: argparse.Namespace) -> None:
     print(db.list_reach(args.db, min_count=args.min))
 
 
-def _dispatch_search_notes(args):
+def _dispatch_search_notes(args: argparse.Namespace) -> None:
     print(db.search_notes(args.db, args.pattern, stage=args.stage, min_relevance=args.min_relevance))
 
 
-def _dispatch_export(args):
+def _dispatch_export(args: argparse.Namespace) -> None:
     print(db.export_db(args.db, format=args.format))
 
 
-def _dispatch_upsert_measures(args):
+def _dispatch_upsert_measures(args: argparse.Namespace) -> None:
     try:
         print(db.upsert_measures(args.db, args.entity_id, args.measures))
     except ValueError as e:
@@ -156,19 +156,19 @@ def _dispatch_upsert_measures(args):
         sys.exit(1)
 
 
-def _dispatch_get_measures(args):
+def _dispatch_get_measures(args: argparse.Namespace) -> None:
     print(db.get_measures(args.db))
 
 
-def _dispatch_clear_measures(args):
+def _dispatch_clear_measures(args: argparse.Namespace) -> None:
     print(db.clear_measures(args.db))
 
 
-def _dispatch_find_duplicates(args):
+def _dispatch_find_duplicates(args: argparse.Namespace) -> None:
     print(db.find_duplicates(args.db, templates_db=getattr(args, "templates_db", None)))
 
 
-def _dispatch_merge_entities(args):
+def _dispatch_merge_entities(args: argparse.Namespace) -> None:
     ids = args.ids.split(",")
     try:
         print(db.merge_entities(args.db, ids))
@@ -177,7 +177,7 @@ def _dispatch_merge_entities(args):
         sys.exit(1)
 
 
-def _dispatch_upsert_source_data(args):
+def _dispatch_upsert_source_data(args: argparse.Namespace) -> None:
     try:
         print(db.upsert_source_data(args.db, args.entity_id, args.source_type, args.data))
     except ValueError as e:
@@ -185,7 +185,7 @@ def _dispatch_upsert_source_data(args):
         sys.exit(1)
 
 
-def _dispatch_list_source_data(args):
+def _dispatch_list_source_data(args: argparse.Namespace) -> None:
     print(db.list_source_data(
         args.db,
         source_type=getattr(args, "source_type", None),
@@ -197,18 +197,18 @@ def _dispatch_list_source_data(args):
 # --- Template dispatchers ---
 
 
-def _dispatch_init_templates(args):
+def _dispatch_init_templates(args: argparse.Namespace) -> None:
     print(templates.init_templates(args.templates_db))
 
 
-def _dispatch_upsert_template_key(args):
+def _dispatch_upsert_template_key(args: argparse.Namespace) -> None:
     print(templates.upsert_template_key(
         args.templates_db, args.source_type, args.key,
         format=args.format, description=args.description,
     ))
 
 
-def _dispatch_update_source_type(args):
+def _dispatch_update_source_type(args: argparse.Namespace) -> None:
     try:
         print(templates.update_source_type(
             args.templates_db, args.type,
@@ -219,7 +219,7 @@ def _dispatch_update_source_type(args):
         sys.exit(1)
 
 
-def _dispatch_get_source_template(args):
+def _dispatch_get_source_template(args: argparse.Namespace) -> None:
     try:
         print(templates.get_source_template(args.templates_db, args.source_type))
     except ValueError as e:
@@ -227,11 +227,11 @@ def _dispatch_get_source_template(args):
         sys.exit(1)
 
 
-def _dispatch_list_source_templates(args):
+def _dispatch_list_source_templates(args: argparse.Namespace) -> None:
     print(templates.list_source_templates(args.templates_db))
 
 
-def _dispatch_match_source_type(args):
+def _dispatch_match_source_type(args: argparse.Namespace) -> None:
     try:
         print(templates.match_source_type(args.templates_db, args.url))
     except ValueError as e:
@@ -239,7 +239,7 @@ def _dispatch_match_source_type(args):
         sys.exit(1)
 
 
-def _dispatch_autofill_source_data(args):
+def _dispatch_autofill_source_data(args: argparse.Namespace) -> None:
     print(research.autofill_source_data(
         args.db, args.templates_db,
         source_type_filter=args.source_type,

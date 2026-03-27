@@ -28,22 +28,22 @@ Orchestrator provides:
 
 3. Get entity list: `get entities --stage researched --db PATH`
 4. For each entity in relevance order (highest first):
-  1. Read entity: `get entity {entity_id} --db PATH`
-  2. Assess whether room remains to consume more; stop when approaching context budget; always consume at least one entity
+    1. Read entity: `get entity {entity_id} --db PATH`
+    2. Assess whether room remains to consume more; stop when approaching context budget; always consume at least one entity
 5. For each consumed entity, evaluate every gradient criterion against notes:
-  1. For each criterion: determine met or not met based on note evidence
-  2. Sum met criteria to produce new relevance score
-  3. If new score differs from current: record change
+    1. For each criterion: determine met or not met based on note evidence
+    2. Sum met criteria to produce new relevance score
+    3. If new score differs from current: record change
 6. After evaluating all consumed entities, apply updates:
-  1. For each entity with changed relevance: `update entities --ids {entity_id} --relevance {new_score} --db PATH`
+    1. For each entity with changed relevance: `update entities --ids {entity_id} --relevance {new_score} --db PATH`
 
 ### Output
 
 7. Report:
-  - Entities evaluated this batch: count and ID list
-  - Changes: entity ID, old score, new score, criteria gained/lost
-  - Unchanged: count
-  - Next entity to resume from (or "complete" if all evaluated)
+    - Entities evaluated this batch: count and ID list
+    - Changes: entity ID, old score, new score, criteria gained/lost
+    - Unchanged: count
+    - Next entity to resume from (or "complete" if all evaluated)
 
 ### Resumption
 

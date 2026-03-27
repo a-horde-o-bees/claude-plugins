@@ -36,36 +36,36 @@ docs/progress.db
 
 ### Draft Blueprint
 
-1. Extract from research: every tool, platform, integration, dependency, requirement, and process user needs to implement
+1. Extract from research: every tool, platform, integration, dependency, requirement, and process the user needs to implement
 2. Use decision cascades from analysis to inform dependency ordering — relationships unlocking multiple needs get priority positioning
 3. Organize into dependency-ordered implementation topics
 4. For each topic, document:
-  - What it is and why it matters
-  - Cost estimates where available
-  - Dependencies — what must come first
-  - Recommended sequence position
-  - Supporting evidence from research (which entities use it, how)
+    - What it is and why it matters
+    - Cost estimates where available
+    - Dependencies — what must come first
+    - Recommended sequence position
+    - Supporting evidence from research (which entities use it, how)
 5. Build phased timeline based on dependencies and priorities:
-  - Distinguish foundational items (needed regardless of scale) from progressive items (adopted as project matures)
-  - Where analysis identified relationship target tiers, align phases: table-stakes first, differentiators next, emerging last
+    - Distinguish foundational items (needed regardless of scale) from progressive items (adopted as project matures)
+    - Where analysis identified relationship target tiers, align phases: table-stakes first, differentiators next, emerging last
 6. Present draft implementation plan
 
 ### Refine Blueprint
 
 7. User reviews and provides feedback:
-  - Reprioritize topics based on specific constraints (budget, timeline, skills)
-  - Remove items that do not apply
-  - Add items research surfaced but did not explicitly recommend
-  - Adjust dependency ordering based on operational reality
+    - Reprioritize topics based on specific constraints (budget, timeline, skills)
+    - Remove items that do not apply
+    - Add items research surfaced but did not explicitly recommend
+    - Adjust dependency ordering based on operational reality
 8. Revise and present refined plan
 9. Repeat until user approves
 
 ### Handoff to Progress Tracking
 
 10. After user approves implementation plan, invoke `/progress`
-  - Progress skill detects no database exists, initializes, and imports `docs/implementation-progress.md`
-  - Progress skill owns `docs/implementation-progress.md` and `docs/progress.db` from this point forward
-  - Blueprint's job is complete; future updates through `/progress`, not `/blueprint-research`
+    - Progress skill detects no database exists, initializes, and imports `docs/implementation-progress.md`
+    - Progress skill owns `docs/implementation-progress.md` and `docs/progress.db` from this point forward
+    - Blueprint's job is complete; future updates through `/progress`, not `/blueprint-research`
 
 ## Re-Entry
 
@@ -82,7 +82,7 @@ User directs: revise existing plan, restart draft from analysis findings, or pro
 
 ## Output
 
-`docs/implementation-progress.md` — actionable checklist with:
+`docs/implementation-progress.md` — an actionable checklist with:
 
 - Status tracking per item (checkbox format)
 - Dependency ordering (items grouped by phase/priority)

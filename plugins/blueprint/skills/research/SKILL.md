@@ -302,7 +302,7 @@ Orchestrator selects server based on directory accessibility notes and concurren
 
 ### Agent Spawning
 
-- Spawn autonomous agents via Agent tool — one per discrete research unit
+- Spawn autonomous agents — one per discrete research unit
 - One agent per entity for deep research, single pass — relevance ordering determines priority
 - Sequential by default — parallel only when explicitly approved by user
 - Sub-agents inherit parent tools and permissions from settings.json
@@ -340,13 +340,13 @@ Orchestrator selects server based on directory accessibility notes and concurren
 
 - Notes name tools, platforms, and external dependencies explicitly — analysis identifies cross-entity patterns from notes
 - Skill infrastructure remains domain-agnostic — taxonomy, notes, measures, and sources are project-specific data produced by execution, not embedded in skill; prompt templates use placeholders filled from project context, never hardcoded domain-specific language
-- Do not skip phases — each phase output feeds next
+- Do not skip phases — each phase output feeds the next
 - Browser tools operate on single active page — browser work runs sequentially unless parallel-capable MCP configured
 
 ### State Management
 
-- `docs/blueprint.md` is single source of truth for phase-level state
-- `docs/history.md` is sequential stride log — entries: ISO 8601 datetime, phase, action, result stats, next step; describe activity type (context wave, directory traversal, research batch); do not include entity IDs
+- `docs/blueprint.md` is the single source of truth for phase-level state
+- `docs/history.md` is the sequential stride log — entries: ISO 8601 datetime, phase, action, result stats, next step; describe activity type (context wave, directory traversal, research batch); do not include entity IDs
 - Mark `[-]` when starting phase, `[x]` when phase gate passed
 - Project outputs to project paths (`docs/`, `references/`), not `.claude/` paths
 - User can re-invoke completed phase — ask before overwriting

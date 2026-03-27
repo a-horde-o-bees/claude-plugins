@@ -31,20 +31,20 @@ Process all duplicate groups sequentially. For each group, fetch context, make m
 ### Evaluate Group
 
 5. For each entity ID in group:
-  1. Run `get entity ID --db PATH`
+    1. Run `get entity ID --db PATH`
 6. If group members are not true duplicates (e.g., forks with divergent purposes, same tool used differently):
-  1. Report recommendation to skip with reasoning, continue to next group
+    1. Report recommendation to skip with reasoning, continue to next group
 
 ### Merge
 
 7. Run `merge entities --ids ID1,ID2,... --db PATH`
-  - Lowest ID becomes survivor automatically
-  - Moves URLs, provenance, source data, notes to survivor
-  - Appends notes and descriptions to survivor
-  - Clears relevance to NULL (agent reassesses)
-  - Wipes measures on survivor (stale after merge)
-  - Sets survivor stage to `merged` (signals unreconciled data)
-  - Deletes absorbed entities
+    - Lowest ID becomes survivor automatically
+    - Moves URLs, provenance, source data, notes to survivor
+    - Appends notes and descriptions to survivor
+    - Clears relevance to NULL (agent reassesses)
+    - Wipes measures on survivor (stale after merge)
+    - Sets survivor stage to `merged` (signals unreconciled data)
+    - Deletes absorbed entities
 
 `merge entities` is fully mechanical — all data preserved on survivor. `merged` stage signals reconciliation needed. If process interrupted after merge but before reconciliation, `get entities --stage merged --db PATH` finds entities needing cleanup.
 
@@ -54,8 +54,8 @@ After merge, survivor has combined notes and descriptions from all group members
 
 8. Read survivor: `get entity SURVIVOR --db PATH`
 9. Apply Entity Reconciliation Procedure (from `${CLAUDE_PLUGIN_ROOT}/references/reconcile-entity.md`) to notes, description, and relevance
-10. When two or more notes address same fact (e.g., both describe same feature or record same metric):
-  1. Consolidate into one note — remove redundant, keep or replace with most complete version; merged entities often have same fact captured independently by different sources; do not consolidate notes addressing different facts — distinct observations remain as separate notes
+10. When two or more notes address the same fact (e.g., both describe the same feature or record the same metric):
+    1. Consolidate into one note — remove redundant, keep or replace with the most complete version; merged entities often have the same fact captured independently by different sources; do not consolidate notes addressing different facts — distinct observations remain as separate notes
 
 ### Clear Merged Stage
 
@@ -66,11 +66,11 @@ After merge, survivor has combined notes and descriptions from all group members
 ### Report Group
 
 12. Report for each group:
-  - Survivor entity ID and name
-  - Number of entities absorbed
-  - Number of reconciled notes written
-  - Relevance and description set on survivor
-  - If skipped: reason for skipping
+    - Survivor entity ID and name
+    - Number of entities absorbed
+    - Number of reconciled notes written
+    - Relevance and description set on survivor
+    - If skipped: reason for skipping
 
 ### Summary
 

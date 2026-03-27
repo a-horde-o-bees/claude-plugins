@@ -32,10 +32,10 @@ references/research.db (populated with notes)
 ### Pre-Research
 
 1. Present research plan to user:
-  - Entity count and relevance-sorted list (highest relevance first)
-  - Emergent schema approach: agents capture everything observed as atomic notes — self-explanatory facts that each stand alone
-  - One agent per entity, sequential processing, starting from highest relevance
-  - User may set relevance cutoff (e.g., "research entities with relevance 5+") or entity count limit
+    - Entity count and relevance-sorted list (highest relevance first)
+    - Emergent schema approach: agents capture everything observed as atomic notes — self-explanatory facts that each stand alone
+    - One agent per entity, sequential processing, starting from highest relevance
+    - User may set relevance cutoff (e.g., "research entities with relevance 5+") or entity count limit
 2. User confirms to proceed
 
 ### Research Waves
@@ -43,25 +43,25 @@ references/research.db (populated with notes)
 Research proceeds in waves by relevance tier. After each wave, orchestrator and user review findings and update domain knowledge with newly observed platforms, tools, and business models before next wave begins — later agents get richer context.
 
 3. For each relevance tier (highest first):
-  1. Identify entities at this relevance level with stage `new`
-  2. For each entity in tier (sequential, one at a time): dispatch Research Loop
-  3. After wave completes: review findings, update `docs/6-domain-knowledge.md` with new platforms, tools, models observed; document existence only — no frequency analysis per domain knowledge guard
-  4. User decides whether to continue to next tier or proceed to Phase 3
+    1. Identify entities at this relevance level with stage `new`
+    2. For each entity in tier (sequential, one at a time): dispatch Research Loop
+    3. After wave completes: review findings, update `docs/6-domain-knowledge.md` with new platforms, tools, models observed; document existence only — no frequency analysis per domain knowledge guard
+    4. User decides whether to continue to next tier or proceed to Phase 3
 
 ### Research Loop
 
 4. Record current note count for entity:
-  - `research_cli.py get entity {entity_id}` — note "Notes:" count
+    - `research_cli.py get entity {entity_id}` — note "Notes:" count
 5. Spawn agent with Research Agent template
 6. After agent completes, verify:
-  1. If task interrupted or errored: re-spawn
-  2. Check stage: `research_cli.py get entity {entity_id}`
-  3. If stage is not `researched`: re-spawn — agent failed to write
+    1. If task interrupted or errored: re-spawn
+    2. Check stage: `research_cli.py get entity {entity_id}`
+    3. If stage is not `researched`: re-spawn — agent failed to write
 
 ### Post-Research
 
 7. Propose spawning resolve-duplicates agent (`${CLAUDE_PLUGIN_ROOT}/references/resolve-duplicates.md`) — present to user for confirmation before executing; merges are hard to reverse
-  1. If user confirms: spawn agent
+    1. If user confirms: spawn agent
 8. Present summary: `research_cli.py get stats`
 
 ## Re-Entry
@@ -100,12 +100,12 @@ Read domain knowledge and effectiveness criteria:
 - `docs/4-effectiveness-criteria.md`
 
 1. Resolve entity:
-  python3 ${CLAUDE_PLUGIN_ROOT}/skills/research/scripts/research_cli.py get entity {entity_id} --db references/research.db
+    python3 ${CLAUDE_PLUGIN_ROOT}/skills/research/scripts/research_cli.py get entity {entity_id} --db references/research.db
 2. Research entity web presence — start with primary URL, then explore thoroughly
 3. After completing ALL research, read existing notes and apply Entity Reconciliation Procedure (below):
-  python3 ${CLAUDE_PLUGIN_ROOT}/skills/research/scripts/research_cli.py get entity {entity_id} --db references/research.db
+    python3 ${CLAUDE_PLUGIN_ROOT}/skills/research/scripts/research_cli.py get entity {entity_id} --db references/research.db
 4. Set stage to researched:
-  python3 ${CLAUDE_PLUGIN_ROOT}/skills/research/scripts/research_cli.py update entities --ids {entity_id} --stage researched --db references/research.db
+    python3 ${CLAUDE_PLUGIN_ROOT}/skills/research/scripts/research_cli.py update entities --ids {entity_id} --stage researched --db references/research.db
 
 Rules:
 - Complete ALL research before writing to database

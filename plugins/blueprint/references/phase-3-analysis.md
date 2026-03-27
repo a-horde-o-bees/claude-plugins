@@ -33,8 +33,8 @@ references/analysis-interpretation.md
 ### Pre-Analysis
 
 1. Query database for analysis inputs:
-  - `research_cli.py get stats` — overall summary
-  - `research_cli.py get entities --stage researched` — researched entities with relevance
+    - `research_cli.py get stats` — overall summary
+    - `research_cli.py get entities --stage researched` — researched entities with relevance
 2. Build ordered entity list — researched entities sorted by relevance (highest first), with entity IDs
 3. Present analysis plan to user — entity count, analytical questions, dynamic loading approach (agents self-regulate batch size based on accumulated note content)
 4. User confirms to proceed
@@ -54,59 +54,59 @@ All agents answer all questions from whatever entities they consume:
 
 5. Clear existing measures from prior analysis runs: `research_cli.py clear measures`
 6. Spawn sequential agents with dynamic loading:
-  1. Spawn agent with Analysis Agent template
-    - Provide full ordered entity list (all researched entity IDs by relevance descending)
-    - First agent: no prior analysis, start from first entity
-    - Subsequent agents: prior agent's analysis + resume from next unconsumed entity
-  2. Agent dynamically loads entities one at a time via CLI, tracking accumulated content size; stops consuming when approaching context budget; produces analysis of entities consumed so far; returns analysis + last entity consumed + next entity to resume from
-  3. Orchestrator reviews agent output — checks for completeness, flags issues
-  4. If agent reports all entities consumed (`complete: true`): analysis is terminal; go to step 7. Domain Knowledge Refinement
-  5. Else: spawn next agent with prior analysis + resumption point
+    1. Spawn agent with Analysis Agent template
+        - Provide full ordered entity list (all researched entity IDs by relevance descending)
+        - First agent: no prior analysis, start from first entity
+        - Subsequent agents: prior agent's analysis + resume from next unconsumed entity
+    2. Agent dynamically loads entities one at a time via CLI, tracking accumulated content size; stops consuming when approaching context budget; produces analysis of entities consumed so far; returns analysis + last entity consumed + next entity to resume from
+    3. Orchestrator reviews agent output — checks for completeness, flags issues
+    4. If agent reports all entities consumed (`complete: true`): analysis is terminal; go to step 7. Domain Knowledge Refinement
+    5. Else: spawn next agent with prior analysis + resumption point
 
 ### Domain Knowledge Refinement
 
 7. Review terminal analysis against `docs/6-domain-knowledge.md`:
-  - Do current categories reflect functional areas from cross-entity analysis?
-  - Are there areas with enough entities to warrant new category?
-  - Are there categories with no meaningful entity population?
-  - Update if warranted — present changes to user before writing
+    - Do current categories reflect functional areas from cross-entity analysis?
+    - Are there areas with enough entities to warrant a new category?
+    - Are there categories with no meaningful entity population?
+    - Update if warranted — present changes to user before writing
 
 ### Measure Extraction
 
 8. Derive measures per entity from notes and terminal analysis:
-  - Measures are universal key/value pairs discovered during analysis — quantifiable attributes revealed as meaningful across entities (not predefined)
-  - Extracted from existing notes — facts already captured during research
-  - Orchestrator identifies measure schema from terminal analysis, then spawns agent(s) to extract measures from entity notes via CLI
+    - Measures are universal key/value pairs discovered during analysis — quantifiable attributes revealed as meaningful across entities (not predefined)
+    - Extracted from existing notes — facts already captured during research
+    - Orchestrator identifies measure schema from terminal analysis, then spawns agent(s) to extract measures from entity notes via CLI
 
 ### Findings
 
 9. Compile analytical findings into `references/analysis-findings.md`:
-  - Every section and subsection must include description explaining what it measures, why items are grouped, and how to interpret data — reader without context should understand grouping logic
-  - Pattern tiers (table-stakes, differentiators, emerging, absent) based on adoption count across cohort, not effectiveness recommendation; tier descriptions must state this
-  - Cautionary patterns note correlation with weaker presences, not causal claims
-  - Decision cascades explain co-occurrence logic
-  - Measure distributions and co-occurrence data (from `research_cli.py get measures`)
-  - Decision cascades with specific entity evidence
-  - Cautionary patterns with specific entity evidence
-  - Domain knowledge updates (if any)
-  - Templated, data-driven output — no project-specific interpretation
+    - Every section and subsection must include a description explaining what it measures, why items are grouped, and how to interpret data — a reader without context should understand grouping logic
+    - Pattern tiers (table-stakes, differentiators, emerging, absent) based on adoption count across cohort, not effectiveness recommendation; tier descriptions must state this
+    - Cautionary patterns note correlation with weaker presences, not causal claims
+    - Decision cascades explain co-occurrence logic
+    - Measure distributions and co-occurrence data (from `research_cli.py get measures`)
+    - Decision cascades with specific entity evidence
+    - Cautionary patterns with specific entity evidence
+    - Domain knowledge updates (if any)
+    - Templated, data-driven output — no project-specific interpretation
 
 10. Compile goal-aligned interpretation into `references/analysis-interpretation.md`:
-  - Read `docs/3-goals.md` — frame every finding through these goals
-  - Read `docs/4-effectiveness-criteria.md` — evaluate patterns against these criteria
-  - For each significant finding: what does this mean for goals? What should we learn? What practices to model?
-  - Practices to adopt, organized by effectiveness evidence
-  - Project-specific output — rewritten when goals change without re-running analysis agents
+    - Read `docs/3-goals.md` — frame every finding through these goals
+    - Read `docs/4-effectiveness-criteria.md` — evaluate patterns against these criteria
+    - For each significant finding: what does this mean for the goals? What should we learn? What practices to model?
+    - Practices to adopt, organized by effectiveness evidence
+    - Project-specific output — rewritten when goals change without re-running analysis agents
 
 11. Present both documents to user
 
 ### Post-Analysis Goal Refinement
 
 12. Orchestrator and user review:
-  - Did `docs/3-goals.md` produce interpretation reflecting project's actual intent?
-  - Did `docs/4-effectiveness-criteria.md` filter for right pattern qualities?
-  - Are there findings mapping to no goal, suggesting missing goal?
-  - Are there goals producing no findings, suggesting scope or criteria misalignment?
+    - Did `docs/3-goals.md` produce an interpretation reflecting the project's actual intent?
+    - Did `docs/4-effectiveness-criteria.md` filter for the right pattern qualities?
+    - Are there findings mapping to no goal, suggesting a missing goal?
+    - Are there goals producing no findings, suggesting scope or criteria misalignment?
 13. If refinement needed: update relevant project definition file(s), then rewrite `references/analysis-interpretation.md` through updated goals — no need to re-run analysis agents or regenerate findings
 14. User confirms interpretation is aligned
 
@@ -148,7 +148,7 @@ Prior analysis from previous batches (refine, confirm, adjust, or overturn with 
 
 Procedure:
 1. Read entities one at a time in provided order, starting from `{start_entity_id}`:
-  python3 ${CLAUDE_PLUGIN_ROOT}/skills/research/scripts/research_cli.py get entity {entity_id} --db references/research.db
+    python3 ${CLAUDE_PLUGIN_ROOT}/skills/research/scripts/research_cli.py get entity {entity_id} --db references/research.db
 2. After reading each entity, assess whether room to consume more; stop when adding another entity's notes would leave insufficient room for thorough analysis; always consume at least one entity
 3. Analyze notes across all consumed entities
 4. {if prior_analysis} Integrate with prior analysis — update counts, strengthen or weaken patterns, add new findings {end if}
