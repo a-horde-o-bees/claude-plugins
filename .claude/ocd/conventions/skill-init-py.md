@@ -22,7 +22,7 @@ Two standard labels:
 
 ## Database Status Pattern
 
-Skills with SQLite databases report status through a standard state machine. States, output format, and action commands are deterministic.
+Skills with SQLite databases report status through a standard state machine. States, output format, and action commands are all deterministic.
 
 ### States
 
@@ -48,13 +48,13 @@ if not expected_tables.issubset(actual_tables):
 
 ### Metric Summary
 
-Operational status includes a metric summary with counts relevant to skill domain. Format: `operational — {count} {noun}, {count} {noun}, ...`
+Operational status includes a metric summary with counts relevant to the skill domain. Format: `operational — {count} {noun}, {count} {noun}, ...`
 
 Counts use skill-specific nouns (entities, entries, notes). Include enough metrics for user to understand health at a glance without querying.
 
 ### Action Needed
 
-Always present. Value is a copy-pastable slash command — no prose, no "Run" prefix, no parenthetical explanations.
+Always present. The value is a copy-pastable slash command — no prose, no "Run" prefix, no parenthetical explanations.
 
 - Not initialized → `/{plugin}-init`
 - Error states → `/{plugin}-init --force`

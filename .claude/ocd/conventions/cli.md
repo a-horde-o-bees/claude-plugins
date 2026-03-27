@@ -17,8 +17,8 @@ CLI scripts are presentation only — argument parsing, output formatting, and d
 
 Help text answers agent questions:
 
-- **When to call** — conditions under which command is preferred over alternatives
-- **What output looks like** — structure, markers, delimiters agent will parse
+- **When to call** — conditions under which the command is preferred over alternatives
+- **What output looks like** — structure, markers, delimiters the agent will parse
 - **How to interpret results** — what markers mean, what empty results imply
 - **What to call next** — workflow sequencing
 - **Stop conditions** — explicit termination criteria for loops
@@ -48,7 +48,7 @@ Errors guide agent to self-correct without user intervention.
 
 ## Documentation as Code
 
-`--help` output must be complete enough that agent reading it can use tool correctly without external reference:
+`--help` output must be complete enough that an agent reading it can use the tool correctly without external reference:
 
 - Help descriptions explain workflow context, not just syntax
 - Subcommand help text includes output format and interpretation
