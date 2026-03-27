@@ -42,9 +42,9 @@ references/research.db (populated with notes)
 
 Research proceeds in waves by relevance tier. After each wave, orchestrator and user review findings and update domain knowledge with newly observed platforms, tools, and business models before next wave begins — later agents get richer context.
 
-3. For each relevance tier (highest first):
+3. For each {tier} in {relevance-tiers}:
     1. Identify entities at this relevance level with stage `new`
-    2. For each entity in tier (sequential, one at a time): dispatch Research Loop
+    2. For each {entity} in {tier}: dispatch Research Loop
     3. After wave completes: review findings, update `docs/6-domain-knowledge.md` with new platforms, tools, models observed; document existence only — no frequency analysis per domain knowledge guard
     4. User decides whether to continue to next tier or proceed to Phase 3
 

@@ -4,6 +4,8 @@ Autofill source data by matching entity URLs against source templates
 and fetching from external APIs.
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import subprocess

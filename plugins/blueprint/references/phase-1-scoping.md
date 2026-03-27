@@ -90,7 +90,7 @@ Codify observations into domain knowledge guiding discovery and deep research. S
 Context entities (role: `context`) researched in waves to build domain knowledge before landscape exploration. Each wave's findings update `docs/6-domain-knowledge.md`.
 
 18. Order context entities by relevance (highest first); low-relevance context entities may be deferred — document cutoff in history
-19. For each wave (batch of context entities at similar relevance):
+19. For each {wave} in {context-waves}:
     1. Spawn context research agents — one per entity, sequential by default; use Context Research Agent template
     2. After wave completes, review findings across all researched entities in wave
     3. Update `docs/6-domain-knowledge.md` with distilled insights
@@ -105,7 +105,7 @@ Explore domain to discover entities. Two modes:
 - **Targeted search** — web searches with focused queries, following results; use Discovery Agent template
 - **Directory crawl** — systematic traversal of directory entities; use Directory Crawl Agent template; check accessibility notes before spawning — `js-rendered` or `auth-gated` require browser automation
 
-21. For each directory entity: spawn directory crawl agent
+21. For each {directory} in {directory-entities}: spawn directory crawl agent
 22. For targeted searches: spawn discovery agents with focused queries for examples not covered by directories
 23. As entities are encountered, assess against scope criteria before registering:
     1. If entity fails hardline criterion:

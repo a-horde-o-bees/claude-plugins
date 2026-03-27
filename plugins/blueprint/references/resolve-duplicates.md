@@ -24,14 +24,13 @@ Process all duplicate groups sequentially. For each group, fetch context, make m
 
 1. Run `find-duplicates --db PATH`
 2. Parse output into groups — each group lists entity IDs and detection evidence (URL overlap, source-data key match)
-3. If no duplicates found:
-  1. EXIT — report "No duplicates detected"
+3. If no duplicates found: Exit to user — report "No duplicates detected"
 4. For each group: dispatch Evaluate Group through Report Group
 
 ### Evaluate Group
 
-5. For each entity ID in group:
-    1. Run `get entity ID --db PATH`
+5. For each {entity-id} in {group}:
+    1. Run `get entity {entity-id} --db PATH`
 6. If group members are not true duplicates (e.g., forks with divergent purposes, same tool used differently):
     1. Report recommendation to skip with reasoning, continue to next group
 

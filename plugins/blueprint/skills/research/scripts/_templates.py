@@ -5,6 +5,8 @@ Source types define what external data can be fetched (e.g., GitHub repo metadat
 and how to detect duplicates by matching key values across entities.
 """
 
+from __future__ import annotations
+
 import json
 import sqlite3
 from pathlib import Path

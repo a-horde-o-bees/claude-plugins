@@ -4,6 +4,8 @@ Agent-facing entry point for blueprint research database operations.
 Business logic lives in _db.py, _templates.py, and research.py.
 """
 
+from __future__ import annotations
+
 import argparse
 import sys
 

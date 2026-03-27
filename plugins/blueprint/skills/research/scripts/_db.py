@@ -8,6 +8,8 @@ WAL mode enables concurrent reads while writes are in progress.
 Write contention handled by retry_write decorator with random jitter.
 """
 
+from __future__ import annotations
+
 import functools
 import random
 import sqlite3
@@ -453,7 +455,7 @@ def list_entities(
     conn = get_connection(db_path)
     try:
         conditions: list[str] = []
-        params: list = []
+        params: list[str] = []
         if role:
             conditions.append("e.role = ?")
             params.append(role)
@@ -796,7 +798,7 @@ def search_notes(db_path: str, pattern: str, stage: str | None = None, min_relev
     conn = get_connection(db_path)
     try:
         conditions = ["n.note LIKE ?"]
-        params: list = [f"%{pattern}%"]
+        params: list[str | int] = [f"%{pattern}%"]
         if stage:
             conditions.append("e.stage = ?")
             params.append(stage)

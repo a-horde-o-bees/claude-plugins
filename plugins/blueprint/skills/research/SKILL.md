@@ -93,7 +93,7 @@ User runs `/blueprint-research`. Optional `$ARGUMENTS` passed as initial scope i
     4. Mark Phase 1 as `[-]`; use `$ARGUMENTS` as initial scope input if provided
     5. Go to step 3. Determine active phase
 2. Read `docs/blueprint.md`
-3. Determine active phase
+3. Determine active phase:
     1. If `docs/history.md` exists: read last 5 lines for current stride and next steps
     2. Find first phase with status `[-]` or `[ ]`
         1. If `[-]` found: propose resuming; history log indicates last stride; for execution phases check database for completed work; for design phases check for phase output files

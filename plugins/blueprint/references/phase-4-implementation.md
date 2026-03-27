@@ -39,7 +39,7 @@ docs/progress.db
 1. Extract from research: every tool, platform, integration, dependency, requirement, and process the user needs to implement
 2. Use decision cascades from analysis to inform dependency ordering — relationships unlocking multiple needs get priority positioning
 3. Organize into dependency-ordered implementation topics
-4. For each topic, document:
+4. For each {topic} in {implementation-topics}:
     - What it is and why it matters
     - Cost estimates where available
     - Dependencies — what must come first

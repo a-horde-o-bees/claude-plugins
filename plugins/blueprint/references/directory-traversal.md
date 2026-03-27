@@ -152,9 +152,9 @@ Proven combinations of primitives for specific directory types. When directory m
 
 **Flow:**
 
-1. Initial `browser_navigate` to directory domain (establishes same-origin context)
+1. Initial `browser_navigate` to directory domain — establishes same-origin context
 2. While pages remain:
-    1. `browser_evaluate` with accumulating fetch script
+    1. `browser_evaluate` with accumulating fetch script:
         - For each page in budget: fetch HTML, parse with DOMParser, extract data attributes, filter to members with domains, strip HTML from text
         - Returns batch with `nextPage` checkpoint
     2. Construct `register-batch` JSON from returned batch

@@ -54,13 +54,13 @@ All agents answer all questions from whatever entities they consume:
 
 5. Clear existing measures from prior analysis runs: `research_cli.py clear measures`
 6. Spawn sequential agents with dynamic loading:
-    1. Spawn agent with Analysis Agent template
+    1. Spawn agent with Analysis Agent template:
         - Provide full ordered entity list (all researched entity IDs by relevance descending)
         - First agent: no prior analysis, start from first entity
         - Subsequent agents: prior agent's analysis + resume from next unconsumed entity
     2. Agent dynamically loads entities one at a time via CLI, tracking accumulated content size; stops consuming when approaching context budget; produces analysis of entities consumed so far; returns analysis + last entity consumed + next entity to resume from
     3. Orchestrator reviews agent output — checks for completeness, flags issues
-    4. If agent reports all entities consumed (`complete: true`): analysis is terminal; go to step 7. Domain Knowledge Refinement
+    4. If agent reports all entities consumed (`complete: true`): Go to step 7. Domain Knowledge Refinement
     5. Else: spawn next agent with prior analysis + resumption point
 
 ### Domain Knowledge Refinement
