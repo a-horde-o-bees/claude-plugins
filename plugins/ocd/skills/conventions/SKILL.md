@@ -1,12 +1,12 @@
 ---
 name: ocd-conventions
 description: Manage and enforce project conventions; reformats files to conform using deterministic pattern matching and per-file parallel agents
-argument-hint: "--target <path | /skill-name | project | self | natural language goal> [--pattern <glob> ...] [--delegate]"
+argument-hint: "--target <path | /skill-name | project | self | natural language goal> [--pattern <glob> ...] [--auto] [--delegate]"
 ---
 
 # /ocd-conventions
 
-Manage and enforce project conventions. Convention CLI deterministically discovers applicable conventions per target, then parallel agents apply them with one agent per file. Deterministic discovery + non-deterministic application.
+Manage and enforce project conventions. Convention CLI deterministically discovers applicable conventions per target, then parallel agents apply them with one agent per file. Deterministic discovery + non-deterministic application. `--auto` wraps Conformity in convergence loop per skill-md convention.
 
 ## Trigger
 
@@ -17,10 +17,12 @@ User runs `/ocd-conventions`
 1. If not --target:
   1. EXIT — respond with skill description and argument-hint
 2. If {target} is `self`:
-  1. If --delegate:
+  1. If --auto:
+    1. EXIT — self-evaluation does not support --auto
+  2. If --delegate:
     1. EXIT — self-evaluation is interactive and cannot be delegated
-  2. {selected-workflow} = Self-Evaluation
-  3. Go to step 12. Dispatch
+  3. {selected-workflow} = Self-Evaluation
+  4. Go to step 11. Dispatch
 3. Else if {target} is `project`:
   1. {target-directory} = `.` (project root)
 4. Else if ({target} starts with `/` and contains no spaces) or ({target} is a path ending with `/SKILL.md`):
@@ -46,7 +48,7 @@ User runs `/ocd-conventions`
   4. Present proposed passes and ask user for confirmation via AskUserQuestion before proceeding
   5. For each confirmed pass:
     1. Assign derived variables ({target-directory}) for pass
-    2. Execute steps 8-12 with assigned variables
+    2. Execute steps 8-10 with assigned variables
 8. Enumerate targets — run navigator CLI to get filtered file list
   ```bash
   python3 ${CLAUDE_PLUGIN_ROOT}/skills/navigator/scripts/navigator_cli.py list {target-directory} --exclude ".claude/*" [--pattern "..."]
@@ -55,12 +57,10 @@ User runs `/ocd-conventions`
   - {target-file} bypasses enumeration — file target from step 5 checks that path without exclusion
 9. Deduplicate target list
 10. {selected-workflow} = Conformity
-11. Safeguard — check target count
-  1. If target count exceeds 20:
-    1. Report count and suggest narrowing via AskUserQuestion with options: proceed, narrow with --pattern, or specify more specific path
-12. Dispatch {selected-workflow}
-  1. If --delegate:
-    1. Spawn workflow agent in background
+  1. Safeguard — if target count exceeds 20: report count and suggest narrowing via AskUserQuestion with options: proceed, narrow with --pattern, or specify more specific path
+11. Dispatch {selected-workflow}
+  - If --auto: wrap in convergence loop per skill-md convention
+  - If --delegate: agent spawn runs in background
 
 ## Workflow: Conformity
 
@@ -128,3 +128,5 @@ Evaluate rules and conventions against each other in dependency order. Report-on
 - Deterministic {target} values (`project`, `self`, paths, `/skill-name`) execute without interpretation or confirmation
 - --delegate spawns background agent with Workflow and Rules — agents read component files at execution time; orchestration (Route) always runs in main conversation
 - Self-evaluation does not support --delegate — interactive review between levels is structurally required
+- Self-evaluation does not support --auto — report-only and interactive
+- --auto wraps Conformity workflow in convergence loop per skill-md convention; each iteration spawns fresh agent

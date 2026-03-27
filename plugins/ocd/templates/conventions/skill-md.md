@@ -70,6 +70,7 @@ Reusable argument patterns for skills that accept targets, spawn agents, or scop
 | Argument | Role | Description |
 |----------|------|-------------|
 | `--target` | Gate + subject | Required flag carrying target value; presence triggers execution, value identifies what to operate on; without it, skill responds with description and usage hint |
+| `[--auto]` | Dispatch wrapper | Wraps selected workflow in convergence loop; spawns fresh agent per iteration, checks git diff for convergence; requires fix-producing workflow and clean working tree; see --auto section |
 | `[--delegate]` | Dispatch modifier | Workflow agent spawns in background; see --delegate section for requirements |
 | `[--pattern <glob> ...]` | Filter | Passthrough to navigator CLI for file enumeration; repeatable for OR-combined matching; ignored when target is single file |
 | `[--all]` | Boundary override | Includes `.claude/` files in target enumeration; without it, `.claude/` excluded by default |
@@ -108,7 +109,7 @@ Exits with code 1 if skill not found. Skills should EXIT with error when resolut
 
 ### Route Dispatch Pattern
 
-Route evaluates {target} and selects Workflow. Skills without `--delegate` may execute workflows directly or spawn agents.
+Route evaluates {target} and selects Workflow.
 
 ```
 ## Route
@@ -129,19 +130,52 @@ Route evaluates {target} and selects Workflow. Skills without `--delegate` may e
     1. Interpret {target} as natural language goal — derive adjustments, assign variables, present for confirmation
 3. Prepare inputs for selected Workflow
 4. Dispatch {selected-workflow}
-  - If --delegate: Workflow agent spawns in background
+  - If --auto: wrap in convergence loop (see --auto section)
+  - If --delegate: agent spawn runs in background
 ```
+
+### --auto
+
+Skills that declare `--auto` in argument-hint wrap dispatch in a convergence loop. Route selects inner workflow as usual; `--auto` iterates it with fresh agents until stable.
+
+Convergence loop:
+
+```
+1. Check precondition — working tree must be clean
+  1. Run `git status --porcelain`
+  2. If output is non-empty: EXIT — commit pending changes before running --auto
+2. {baseline} = `git rev-parse HEAD`
+3. {iteration} = 0
+4. While {iteration} < 5:
+  1. Spawn fresh agent for {selected-workflow}
+  2. {iteration} = {iteration} + 1
+  3. Run `git diff {baseline} --stat` — check for changes since baseline
+  4. If diff unchanged since previous iteration:
+    1. {converged} = true
+    2. STOP
+5. Report convergence metadata: iterations completed, converged status, cumulative diff summary
+```
+
+Requirements:
+- Workflow must be fix-producing — report-only and interactive workflows reject `--auto` in Route
+- Fresh agent per iteration — no accumulated context; agent reads current file state from disk
+- Convergence measured by git diff between iterations — when iteration produces no new changes, converged
+- Iteration limit (5) is safeguard, not target
 
 ### --delegate
 
-Skills that declare `--delegate` in argument-hint must spawn an agent for Workflow execution. `--delegate` backgrounds that spawn; without `--delegate`, spawn runs in foreground.
+`--delegate` backgrounds workflow agent spawn. Without `--delegate`, spawn runs in foreground.
 
 Requirements:
 - Workflow must be fully autonomous — no interactive checkpoints
 - Skills with interactive workflows must reject `--delegate` in Route
 - Spawned agent receives Workflow and Rules; reads component files at execution time
 
-Skills without `--delegate` have no agent-spawn requirement and may execute workflows directly.
+### Agent Spawn Requirement
+
+Skills declaring `--auto` or `--delegate` must spawn agents for Workflow execution. `--auto` spawns fresh agents per iteration; `--delegate` controls foreground vs background. Skills declaring neither have no agent-spawn requirement and may execute workflows directly.
+
+`--auto` and `--delegate` compose — `--delegate` backgrounds the entire convergence loop.
 
 ### Constraints
 

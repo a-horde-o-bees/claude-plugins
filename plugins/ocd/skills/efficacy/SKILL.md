@@ -6,7 +6,7 @@ argument-hint: "--target </skill-name | natural language scenario> [--auto] [--d
 
 # /ocd-efficacy
 
-Evaluate whether documentation enables correct task execution. Agents spawn with no conversation history to truthfully evaluate instructions without prior context influencing assessment. Holistic examination reviews raw document as single target. Per-scenario examination delegates to coordinating agent that spawns parallel evaluators per execution path. Auto mode iteratively evaluates and fixes straightforward issues until convergence, reporting complex issues for user review. --delegate runs workflow in background. Mode is routing choice — evaluation protocol is shared.
+Evaluate whether documentation enables correct task execution. Agents spawn with no conversation history to truthfully evaluate instructions without prior context influencing assessment. Holistic examination reviews raw document as single target. Per-scenario examination delegates to coordinating agent that spawns parallel evaluators per execution path. Both modes evaluate, triage findings, and fix Defects directly — Observations requiring judgment are reported for user review. `--auto` wraps selected workflow in convergence loop per skill-md convention. `--delegate` runs workflow in background.
 
 ## Trigger
 
@@ -27,8 +27,9 @@ User runs `/ocd-efficacy`
     1. {skill-path} = {target}
   3. {target} = contents of {skill-path}
   4. If --auto:
-    1. {selected-workflow} = Auto
-    2. Go to step 4. Dispatch
+    1. {scenario} = {target}
+    2. {selected-workflow} = Holistic
+    3. Go to step 4. Dispatch
   5. Present mode choice to user via AskUserQuestion with options:
     1. Holistic — raw document, single agent examination
     2. Per-scenario — coordinating agent spawns parallel evaluators per execution path
@@ -62,52 +63,25 @@ User runs `/ocd-efficacy`
     1. Ask user for clarification — explain interpretation and propose options
     2. Assign {scenario} or {scenarios} and {selected-workflow} based on clarified input
 4. Dispatch {selected-workflow}
-  - If --delegate: agent spawn in Workflow runs in background
+  - If --auto: wrap in convergence loop per skill-md convention
+  - If --delegate: agent spawn runs in background
 
 ## Workflow: Holistic
 
 1. Spawn agent with {scenario} and instructions:
   1. Read `_evaluation-protocol.md` and `_problem-list.md`
   2. Follow evaluation protocol against {scenario}
+  3. Evaluation complete — triage phase begins
+  4. Read `_triage-criteria.md`
+  5. Triage findings — map Defect/Observation classifications per triage criteria
+  6. Apply Defect fixes directly to target file; reject fixes that change control flow in loops or EXIT paths (reclassify as Observation)
 2. Present agent report
 
 ### Report
 
-Agent findings with comprehension, trace, assessment, and per-issue Defect/Observation classifications with recommended actions.
-
-## Workflow: Auto
-
-Iterative fix-and-verify loop. Coordinating agent spawns evaluation agents, triages findings, fixes Defects, and re-evaluates until convergence.
-
-1. Check precondition — working tree must be clean
-  1. Run `git status --porcelain`
-  2. If output is non-empty: EXIT — commit pending changes before running --auto
-2. {baseline} = `git rev-parse HEAD`
-3. Spawn coordinating agent with {skill-path}, {baseline}, and instructions:
-  1. Read `_triage-criteria.md`
-  2. {iteration} = 0
-  3. {converged} = false
-  4. While {iteration} < 5:
-    1. {scenario} = re-read {skill-path} from disk
-    2. Spawn evaluation agent with {scenario} and instructions:
-      1. Read `_evaluation-protocol.md` and `_problem-list.md`
-      2. Follow evaluation protocol against {scenario}
-    3. {iteration} = {iteration} + 1
-    4. Triage findings using `_triage-criteria.md` — map evaluator Defect/Observation classifications to auto-fix or report
-    5. If no Defects:
-      1. {converged} = true
-      2. STOP
-    6. Apply Defect fixes directly to {skill-path}
-  5. Run `git diff {baseline}` to capture all changes
-  6. Evaluate diff — group changes by topic, ignore intermediate mutations
-  7. Report findings with {converged} status
-4. Present coordinating agent report
-
-### Report
-
-- Defect fixes applied: grouped by topic from diff
+- Changes applied: Defect fixes with rationale and intent preserved
 - Observations: findings requiring user judgment, with descriptions and recommended actions
-- Iterations completed (evaluation rounds, including final convergence evaluation) and convergence status
+- Assessment: overall evaluation of document efficacy
 
 ## Workflow: Per-Scenario
 
@@ -116,25 +90,31 @@ Iterative fix-and-verify loop. Coordinating agent spawns evaluation agents, tria
     1. Spawn sub-agent with scenario and instructions:
       1. Read `_evaluation-protocol.md` and `_problem-list.md`
       2. Follow evaluation protocol against scenario
+    - async agent per scenario
   2. Collect sub-agent reports
-  3. Produce consolidated report with cross-cutting analysis
+  3. Produce cross-cutting analysis — findings recurring across 2+ scenarios
+  4. Read `_triage-criteria.md`
+  5. Triage consolidated findings — map Defect/Observation classifications per triage criteria
+  6. Apply Defect fixes directly to target files; reject fixes that change control flow in loops or EXIT paths (reclassify as Observation)
 2. Present coordinating agent report
 
 ### Report
 
-Per-scenario findings from each sub-agent. Cross-cutting analysis of findings recurring across 2+ scenarios — do not promote single-scenario observations.
+- Per-scenario findings from sub-agents
+- Cross-cutting analysis — do not promote single-scenario observations
+- Changes applied: Defect fixes with rationale
+- Observations: findings requiring user judgment
 
 ## Rules
 
 - Agents spawn with no conversation history — project rules and CLAUDE.md load automatically; only Workflow instructions and scenario content are passed explicitly
-- Evaluation is always descriptive (dry run) — recursion constraint lives in `_evaluation-protocol.md`, applied to evaluating agents
-- Coordinating agent in Per-Scenario Workflow spawns sub-agents with evaluation file references
+- Evaluation protocol constraints ("Do NOT execute any changes") govern evaluation steps; triage and fix are post-evaluation workflow steps executed by same or coordinating agent
+- Coordinating agent in Per-Scenario spawns sub-agents with evaluation file references; sub-agents evaluate only, coordinator does triage and fix after consolidation
 - Cross-cutting findings require 2+ scenario recurrence — do not promote single-scenario observations
 - Route always runs in main conversation; --delegate applies only to Workflow agent spawns
 - Scenario description is agent-determined, no prescribed format
-- Natural language {target} routing is inherently non-deterministic — agent judgment determines whether target warrants multiple scenarios, is ambiguous, or maps to single scenario
-- Holistic and per-scenario are user-selected modes; auto is flag-driven routing via --auto
+- Natural language {target} routing is inherently non-deterministic — agent judgment determines whether target warrants multiple scenarios
 - User always confirms proposed scenarios before per-scenario evaluation proceeds
+- --auto defaults to Holistic for file targets — simpler iteration with single agent per pass
 - --auto requires file target (/skill-name or SKILL.md path) and clean working tree
-- --auto triage uses `_triage-criteria.md` — Defects are auto-fixed, Observations are reported for user review
-- --auto converges when no Defects remain; iteration limit is safeguard, not target
+- --auto wraps selected workflow in convergence loop per skill-md convention; each iteration spawns fresh agent

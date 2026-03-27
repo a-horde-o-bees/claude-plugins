@@ -1,3 +1,7 @@
+---
+type: template
+---
+
 # Agent Authoring
 
 Conventions for content consumed by agents: skills, conventions, plans, actions, CLAUDE.md files, and CLI tools.
