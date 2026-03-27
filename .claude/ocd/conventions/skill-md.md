@@ -84,10 +84,11 @@ Route pattern for {target} evaluation:
 ```
 1. If not --target:
   1. EXIT — respond with skill description and argument-hint
-2. If ({target} starts with `/` and contains no spaces) or ({target} is a path ending with `/SKILL.md`):
+2. If ({target} starts with `/` and contains no spaces) or ({target} is path ending with `/SKILL.md`):
   1. If {target} starts with `/`:
     1. Resolve skill path — run navigator CLI `resolve-skill` (strip leading `/` from {target})
-    2. If exit code 1: EXIT — report skill not found
+    2. If exit code 1:
+      1. EXIT — report skill not found
   2. {target-directory} = parent of resolved SKILL.md path
 3. Else if {target} is file path:
   1. {target-file} = {target}
@@ -97,7 +98,7 @@ Route pattern for {target} evaluation:
   1. Interpret {target} as natural language goal — derive adjustments, assign variables, present for user confirmation
 ```
 
-Skills define their own deterministic {target} values (e.g., `project`, `self`) as additional branches before the natural language fallback.
+Skills define their own deterministic {target} values (e.g., `project`, `self`) as additional branches before natural language fallback.
 
 Navigator CLI resolves skill names across all discovery locations in priority order:
 
@@ -117,10 +118,11 @@ Route evaluates {target} and selects Workflow.
 1. If not --target:
   1. EXIT — respond with skill description and argument-hint
 2. Evaluate {target} against deterministic matches
-  1. If ({target} starts with `/` and contains no spaces) or ({target} is a path ending with `/SKILL.md`):
+  1. If ({target} starts with `/` and contains no spaces) or ({target} is path ending with `/SKILL.md`):
     1. If {target} starts with `/`:
       1. Resolve skill path via navigator `resolve-skill` (strip leading `/` from {target})
-      2. If exit code 1: EXIT — report skill not found
+      2. If exit code 1:
+        1. EXIT — report skill not found
     2. {target-directory} = parent of resolved SKILL.md path
   2. Else if {target} is file path:
     1. {target-file} = {target}
@@ -130,20 +132,23 @@ Route evaluates {target} and selects Workflow.
     1. Interpret {target} as natural language goal — derive adjustments, assign variables, present for confirmation
 3. Prepare inputs for selected Workflow
 4. Dispatch {selected-workflow}
-  - If --auto: wrap in convergence loop (see --auto section)
-  - If --delegate: agent spawn runs in background
+  - If --auto:
+    - Wrap in convergence loop (see --auto section)
+  - If --delegate:
+    - Agent spawn runs in background
 ```
 
 ### --auto
 
-Skills that declare `--auto` in argument-hint wrap dispatch in a convergence loop. Route selects inner workflow as usual; `--auto` iterates it with fresh agents until stable.
+Skills that declare `--auto` in argument-hint wrap dispatch in convergence loop. Route selects inner workflow as usual; `--auto` iterates it with fresh agents until stable.
 
 Convergence loop:
 
 ```
 1. Check precondition — working tree must be clean
   1. Run `git status --porcelain`
-  2. If output is non-empty: EXIT — commit pending changes before running --auto
+  2. If output is non-empty:
+    1. EXIT — commit pending changes before running --auto
 2. {baseline} = `git rev-parse HEAD`
 3. {iteration} = 0
 4. While {iteration} < 5:
@@ -175,7 +180,7 @@ Requirements:
 
 Skills declaring `--auto` or `--delegate` must spawn agents for Workflow execution. `--auto` spawns fresh agents per iteration; `--delegate` controls foreground vs background. Skills declaring neither have no agent-spawn requirement and may execute workflows directly.
 
-`--auto` and `--delegate` compose — `--delegate` backgrounds the entire convergence loop.
+`--auto` and `--delegate` compose — `--delegate` backgrounds entire convergence loop.
 
 ### Constraints
 
@@ -206,7 +211,7 @@ Workflow section is self-contained — everything agent needs to execute belongs
 - Explicit file read steps for extracted components (`Read _component.md`)
 - Supporting subsections (e.g., file roles, interpreting results)
 
-Agent given Workflow section and Rules section can execute without referencing other parts of SKILL.md. Component files are read at execution time by the agent running the workflow, not pre-loaded by the orchestrator.
+Agent given Workflow section and Rules section can execute without referencing other parts of SKILL.md. Component files are read at execution time by agent running workflow, not pre-loaded by orchestrator.
 
 ### Multi-Path Workflows
 
@@ -264,7 +269,7 @@ Workflows include explicit read steps for extracted components:
 - Mode B specific format
 ```
 
-When content is used by only one workflow, keep it as a workflow subsection — components are for content shared across 2+ workflows. Underscore prefix signals internal (consistent with `_{purpose}.py` pattern for internal modules).
+When content is used by only one workflow, keep it as workflow subsection — components are for content shared across 2+ workflows. Underscore prefix signals internal (consistent with `_{purpose}.py` pattern for internal modules).
 
 ## File Enumeration
 
@@ -285,7 +290,7 @@ Skills should:
 
 User interaction (AskUserQuestion, clarification, confirmation) only works in orchestrator context — Route and main conversation. Workflow agents run autonomously and cannot prompt user mid-execution.
 
-Orchestrator handles all user-facing decisions before dispatching Workflow agent. Workflow agents collect findings and report back — user decides next steps after reviewing the report.
+Orchestrator handles all user-facing decisions before dispatching Workflow agent. Workflow agents collect findings and report back — user decides next steps after reviewing report.
 
 When interactive decisions span multiple Workflow executions, structure them as orchestrator steps between agent calls. Each agent call is autonomous; orchestrator mediates between calls in main conversation.
 

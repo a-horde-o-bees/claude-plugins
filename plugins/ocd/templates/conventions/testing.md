@@ -10,7 +10,7 @@ Deterministic operations get traditional tests. Non-deterministic behavior (agen
 
 ### Output Format Contracts
 
-Stdout is an API contract. Agents parse CLI output mechanically — any change to output structure, field names, ordering, or delimiters is a breaking change even if data is the same.
+Stdout is API contract. Agents parse CLI output mechanically — any change to output structure, field names, ordering, or delimiters is breaking change even if data is same.
 
 Test:
 - Structured output matches explicit schema or snapshot
@@ -22,7 +22,7 @@ Technique: snapshot/approval testing — capture golden output for representativ
 
 ### Roundtrip and Invertibility
 
-If system reads a format and writes it back, the roundtrip property is the highest-value test. Parse then serialize then parse again must yield same structure.
+If system reads format and writes it back, roundtrip property is highest-value test. Parse then serialize then parse again must yield same structure.
 
 Test:
 - Format parse-serialize roundtrips (frontmatter, manifests, configuration)
@@ -68,7 +68,7 @@ Test:
 
 ### Security Boundaries
 
-Permission enforcement has zero tolerance for false negatives. A bug that permits an operation that should be denied has immediate consequences.
+Permission enforcement has zero tolerance for false negatives. Bug that permits operation that should be denied has immediate consequences.
 
 Test:
 - Path traversal resistance
@@ -110,11 +110,11 @@ When it is overhead:
 
 ### Configuration Restating
 
-If manifest says `pattern: "*.py"` and test asserts `pattern == "*.py"`, you are testing that parsing works, not that system works. Test that pattern matching behaves correctly (file X matches pattern Y), not that configuration reads back as written.
+If manifest says `pattern: "*.py"` and test asserts `pattern == "*.py"`, test asserts that parsing works, not that system works. Test that pattern matching behaves correctly (file X matches pattern Y), not that configuration reads back as written.
 
 ### Coverage Metrics Disconnected from Risk
 
-100% coverage on a formatting function has less value than 60% coverage on permission enforcement with adversarial edge cases. Allocate testing effort proportionally to failure impact.
+100% coverage on formatting function has less value than 60% coverage on permission enforcement with adversarial edge cases. Allocate testing effort proportionally to failure impact.
 
 ### Unit Testing Non-Deterministic Behavior
 
@@ -124,10 +124,19 @@ Agent judgment, NL interpretation, and workflow execution quality cannot be caug
 
 For any component, ask:
 
-1. Is it deterministic? → test traditionally; if not → evaluate, do not unit test
-2. Is it a contract agents depend on? (output format, exit codes, help text) → snapshot test
-3. Does it have invariants? (properties that must hold for all inputs) → property test
-4. Is it idempotent by design? → test idempotency explicitly
-5. Is it a security boundary? → test exhaustively with adversarial cases
-6. Would silent failure cause downstream agent malfunction? → test regardless of code simplicity
-7. Does test merely restate configuration? → skip — testing theater
+1. If deterministic:
+  1. Test traditionally
+2. Else:
+  1. Evaluate through protocols, do not unit test
+3. If contract agents depend on (output format, exit codes, help text):
+  1. Snapshot test
+4. If invariants exist (properties that must hold for all inputs):
+  1. Property test
+5. If idempotent by design:
+  1. Test idempotency explicitly
+6. If security boundary:
+  1. Test exhaustively with adversarial cases
+7. If silent failure would cause downstream agent malfunction:
+  1. Test regardless of code simplicity
+8. If test merely restates configuration:
+  1. Skip — testing theater
