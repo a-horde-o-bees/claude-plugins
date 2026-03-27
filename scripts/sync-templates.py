@@ -2,13 +2,12 @@
 
 Compares deployed files in .claude/ against their template counterparts
 in plugins/. Copies deployed content to template when bytes differ.
-Stages updated templates for the in-progress commit.
+Prints synced file paths to stdout for the caller to stage.
 
 Called by git pre-commit hook.
 """
 
 import shutil
-import subprocess
 import sys
 from pathlib import Path
 
@@ -82,16 +81,10 @@ def main() -> int:
             current_count += 1
 
     if synced:
-        subprocess.run(
-            ["git", "add"] + synced,
-            cwd=PROJECT_ROOT,
-            check=True,
-        )
-        print(f"sync-templates: {len(synced)} synced, {current_count} current")
         for path in synced:
-            print(f"  synced: {path}")
+            print(path)
     else:
-        print(f"sync-templates: all {current_count} templates current")
+        print(f"sync-templates: all {current_count} templates current", file=sys.stderr)
 
     return 0
 
