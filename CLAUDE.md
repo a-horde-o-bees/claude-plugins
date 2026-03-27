@@ -34,9 +34,9 @@ Never place plugin data in the user's project tree outside `.claude/`.
 
 ## Template vs Deployed Files
 
-Rules and conventions use a template→deployed model. Source files (`plugins/<plugin>/rules/`, `plugins/<plugin>/templates/conventions/`) carry `type: template` frontmatter. Deployed copies (`.claude/rules/`, `.claude/<plugin>/conventions/`) carry `type: deployed`.
+Rules and conventions use a template→deployed model. Source files live in `plugins/<plugin>/rules/` and `plugins/<plugin>/templates/conventions/`. Deployed copies live in `.claude/rules/` and `.claude/<plugin>/conventions/`. Init copies templates to deployed locations; `--force` overwrites deployed copies.
 
-Edit templates, never deployed copies.
+Edit templates in `plugins/`, never deployed copies in `.claude/`. Deployed files are overwritten by init and are not committed to this repo as source of truth.
 
 ## README Scopes
 

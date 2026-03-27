@@ -1,7 +1,3 @@
----
-type: template
----
-
 # CLAUDE.md Conventions
 
 CLAUDE.md is agent-facing project instructions loaded into system prompt. Defines startup behavior, discovery procedures, preferences, and project-specific conventions. Overrides Claude's default behavior — instructions are followed exactly as written.

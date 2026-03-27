@@ -1,7 +1,3 @@
----
-type: deployed
----
-
 # Python Conventions
 
 ## Code Style

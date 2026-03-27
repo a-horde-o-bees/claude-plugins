@@ -1,7 +1,3 @@
----
-type: template
----
-
 # Agent Authoring
 
 Conventions for content consumed by agents: skills, conventions, plans, actions, CLAUDE.md files, and CLI tools.
@@ -262,3 +258,4 @@ Absence of `_cli` file for domain concept indicates missing CLI capabilities —
 
 - `python3` not `python` — explicit interpreter version
 - No shebangs, no execute permissions — scripts are invoked via interpreter prefix
+

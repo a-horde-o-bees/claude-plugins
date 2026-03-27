@@ -1,7 +1,3 @@
----
-type: template
----
-
 # Workflow
 
 Execution discipline for agent task processing.

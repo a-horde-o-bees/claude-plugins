@@ -1,7 +1,3 @@
----
-type: deployed
----
-
 # Navigator
 
 SQLite database (`.claude/ocd/navigator/navigator.db`) indexes project structure — files, folders, and descriptions — so agents can find what they need without reading every file.

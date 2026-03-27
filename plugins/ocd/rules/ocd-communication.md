@@ -1,7 +1,3 @@
----
-type: template
----
-
 # Communication
 
 Interaction style between agent and user.
