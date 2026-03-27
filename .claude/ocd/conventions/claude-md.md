@@ -12,4 +12,4 @@ CLAUDE.md is agent-facing project instructions loaded into the system prompt. De
 | `## After Changes` | Post-modification tasks: sync project navigator |
 | `## Rules` | Behavioral rules: when to stop, how to handle ambiguity, coding style |
 
-Sections appear in this order. Not all sections are required for every project — include what is relevant.
+Sections appear in this order. Not all sections are required — include what is relevant to the project.

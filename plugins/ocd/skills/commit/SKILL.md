@@ -24,11 +24,13 @@ User runs `/ocd-commit`
     1. EXIT — report clean working tree
   3. Run `git diff --stat` — understand scope of changes
   4. Run `git log --oneline -5` — capture recent commit message style
-2. Sync deployed→template — for each deployed file in `.claude/rules/` and `.claude/<plugin>/conventions/`, compare against corresponding template; if deployed content differs from template, overwrite template with deployed copy
-  - Rule mapping: `.claude/rules/<plugin>-<name>.md` → `plugins/<plugin>/rules/<plugin>-<name>.md`
-  - Convention mapping: `.claude/<plugin>/conventions/<name>.md` → `plugins/<plugin>/templates/conventions/<name>.md`
-  - Plugin name derived from filename prefix (rules) or directory name (conventions)
-  - Skip non-content files (manifest.yaml, databases)
+2. Sync deployed→template — run sync script and stage any synced files
+    ```bash
+    python3 scripts/sync-templates.py
+    ```
+    - Script compares deployed files against templates byte-for-byte; copies only when diverged
+    - Output is one synced file path per line; empty output means all templates are current
+    - Stage all synced paths with `git add`
 3. Include untracked files — group with related changes using same topic logic as modified files
   1. If any untracked file seems suspicious (e.g., large generated directories missing from .gitignore, credentials, build artifacts):
     1. Surface exceptions to user before committing — they may belong to group or need exclusion
@@ -77,5 +79,5 @@ User runs `/ocd-commit`
 - Stage specific files by name — never use `git add -A` or `git add .`
 - Co-author trailer required: `Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>`
 - Commit order matters — if group B depends on changes in group A (e.g., convention before skill that uses it), commit A first
-- Deployed→template sync runs before grouping — ensures templates match deployed copies; only syncs content files (rules, conventions), not infrastructure (manifest.yaml, databases)
-- Synced templates are committed, deployed copies are not — deployed copies are working files in `.claude/`, templates in `plugins/` are distribution artifacts
+- Deployed→template sync runs via `scripts/sync-templates.py` before grouping — deterministic byte comparison, only copies when content diverges
+- Synced templates are staged and committed alongside deployed copies — deployed copies are working files in `.claude/`, templates in `plugins/` are distribution artifacts

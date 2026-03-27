@@ -36,7 +36,7 @@ Never place plugin data in the user's project tree outside `.claude/`.
 
 Rules and conventions use a template→deployed model for distribution. Templates live in `plugins/<plugin>/rules/` and `plugins/<plugin>/templates/conventions/`. Deployed copies live in `.claude/rules/` and `.claude/<plugin>/conventions/`. Init copies templates to deployed locations for bootstrapping new clones and user installations.
 
-Edit deployed copies in `.claude/`, never templates in `plugins/`. Templates are distribution artifacts — the commit workflow syncs deployed copies to templates before committing. Guard hook blocks direct template edits.
+Edit deployed copies in `.claude/`, never templates in `plugins/`. Templates are distribution artifacts — the commit workflow runs `scripts/sync-templates.py` to sync deployed copies to templates before committing. Guard hook blocks direct template edits.
 
 ## README Scopes
 
