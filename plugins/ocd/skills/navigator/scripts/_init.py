@@ -25,33 +25,27 @@ def _status_extra(plugin_name: str, project_dir: Path) -> list[dict]:
 
     if not db_path.exists():
         return [
-            {"label": "overall status", "value": "adopted \u2014 database not found"},
-            {"label": "action needed", "value": "Run /ocd-init to create navigator database"},
+            {"label": "overall status", "value": "not initialized"},
+            {"label": "action needed", "value": "/ocd-init"},
         ]
 
     try:
         conn = _db.get_connection(str(db_path))
 
-        tables = conn.execute(
-            "SELECT name FROM sqlite_master WHERE type='table' AND name='entries'",
-        ).fetchone()
-        if not tables:
+        expected_tables = {"entries"}
+        actual_tables = {row[0] for row in conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table'",
+        ).fetchall()}
+        if not expected_tables.issubset(actual_tables):
             conn.close()
             return [
-                {"label": "overall status", "value": "error \u2014 missing entries table"},
-                {"label": "action needed", "value": "Run /ocd-init to reinitialize navigator database"},
+                {"label": "overall status", "value": "error \u2014 divergent schema"},
+                {"label": "action needed", "value": "/ocd-init --force"},
             ]
 
         total = conn.execute(
             "SELECT COUNT(*) as c FROM entries WHERE path NOT LIKE '%*%'",
         ).fetchone()["c"]
-
-        if total == 0:
-            conn.close()
-            return [
-                {"label": "overall status", "value": "ready \u2014 no entries"},
-                {"label": "action needed", "value": "Run /ocd-navigator to scan and describe project"},
-            ]
 
         undescribed = conn.execute(
             "SELECT COUNT(*) as c FROM entries "
@@ -66,21 +60,14 @@ def _status_extra(plugin_name: str, project_dir: Path) -> list[dict]:
         conn.close()
 
         extra = [{"label": "overall status", "value": f"operational \u2014 {total} entries, {undescribed} undescribed, {stale} stale"}]
-
-        if undescribed > 0 or stale > 0:
-            parts = []
-            if undescribed > 0:
-                parts.append(f"describe {undescribed} entries")
-            if stale > 0:
-                parts.append(f"review {stale} stale entries")
-            extra.append({"label": "action needed", "value": f"Run /ocd-navigator to {' and '.join(parts)}"})
+        extra.append({"label": "action needed", "value": "/ocd-navigator"})
 
         return extra
 
     except sqlite3.Error as e:
         return [
             {"label": "overall status", "value": f"error \u2014 {e}"},
-            {"label": "action needed", "value": "Run /ocd-init to reinitialize navigator database"},
+            {"label": "action needed", "value": "/ocd-init --force"},
         ]
 
 

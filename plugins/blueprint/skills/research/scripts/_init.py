@@ -25,31 +25,25 @@ def _status_extra(plugin_name: str, project_dir: Path) -> list[dict]:
 
     if not path.exists():
         return [
-            {"label": "overall status", "value": "adopted \u2014 database not found"},
-            {"label": "action needed", "value": "Run /blueprint-init to create research database"},
+            {"label": "overall status", "value": "not initialized"},
+            {"label": "action needed", "value": "/blueprint-init"},
         ]
 
     try:
         conn = db.get_connection(str(path))
 
-        tables = conn.execute(
-            "SELECT name FROM sqlite_master WHERE type='table' AND name='entities'",
-        ).fetchone()
-        if not tables:
+        expected_tables = {"entities", "entity_urls", "url_provenance", "entity_notes", "entity_measures", "entity_source_data"}
+        actual_tables = {row[0] for row in conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table'",
+        ).fetchall()}
+        if not expected_tables.issubset(actual_tables):
             conn.close()
             return [
-                {"label": "overall status", "value": "error \u2014 missing entities table"},
-                {"label": "action needed", "value": "Run /blueprint-init to reinitialize research database"},
+                {"label": "overall status", "value": "error \u2014 divergent schema"},
+                {"label": "action needed", "value": "/blueprint-init --force"},
             ]
 
         total = conn.execute("SELECT COUNT(*) as c FROM entities").fetchone()["c"]
-        if total == 0:
-            conn.close()
-            return [
-                {"label": "overall status", "value": "ready \u2014 no entities"},
-                {"label": "action needed", "value": "Run /blueprint-research to begin scoping"},
-            ]
-
         researched = conn.execute(
             "SELECT COUNT(*) as c FROM entities WHERE stage = 'researched'",
         ).fetchone()["c"]
@@ -62,15 +56,14 @@ def _status_extra(plugin_name: str, project_dir: Path) -> list[dict]:
 
         extra = [{"label": "overall status", "value": f"operational \u2014 {total} entities, {researched} researched, {new} new, {notes} notes"}]
 
-        if new > 0:
-            extra.append({"label": "action needed", "value": f"Run /blueprint-research to research {new} pending entities"})
+        extra.append({"label": "action needed", "value": "/blueprint-research"})
 
         return extra
 
     except sqlite3.Error as e:
         return [
             {"label": "overall status", "value": f"error \u2014 {e}"},
-            {"label": "action needed", "value": "Run /blueprint-init to reinitialize research database"},
+            {"label": "action needed", "value": "/blueprint-init --force"},
         ]
 
 

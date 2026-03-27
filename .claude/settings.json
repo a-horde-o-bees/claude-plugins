@@ -3,5 +3,19 @@
     "allow": [
       "Bash(./scripts/run-plugin.sh:*)"
     ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 .claude/hooks/guard-deployed.py",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
   }
 }
