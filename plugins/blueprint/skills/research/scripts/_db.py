@@ -227,15 +227,3 @@ def _enforce_stage(conn: sqlite3.Connection, entity_id: str, target_stage: str) 
         conn.execute("DELETE FROM entity_measures WHERE entity_id = ?", (entity_id,))
 
     conn.execute("UPDATE entities SET stage = ? WHERE id = ?", (target_stage, entity_id))
-
-
-# --- Re-export domain modules for backward compatibility ---
-# Callers use `import _db as db; db.function_name()`.
-
-from _entities import *  # noqa: E402,F401,F403
-from _measures import *  # noqa: E402,F401,F403
-from _merge import *  # noqa: E402,F401,F403
-from _notes import *  # noqa: E402,F401,F403
-from _provenance import *  # noqa: E402,F401,F403
-from _search import *  # noqa: E402,F401,F403
-from _source_data import *  # noqa: E402,F401,F403

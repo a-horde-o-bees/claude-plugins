@@ -1,7 +1,8 @@
-"""Cross-database operations for blueprint research.
+"""Blueprint research facade.
 
-Autofill source data by matching entity URLs against source templates
-and fetching from external APIs.
+Public interface for all research database operations. CLI and external
+consumers import from this module. Cross-database operations (autofill)
+and domain module re-exports live here.
 """
 
 from __future__ import annotations
@@ -14,6 +15,17 @@ from pathlib import Path
 
 import _db as db  # type: ignore[import-not-found]
 import _templates as templates  # type: ignore[import-not-found]
+
+# Re-export domain modules — CLI imports from research, not from internal modules.
+from _db import get_connection, init_db, normalize_url, retry_write  # noqa: F401
+from _entities import *  # noqa: F401,F403
+from _measures import *  # noqa: F401,F403
+from _merge import *  # noqa: F401,F403
+from _notes import *  # noqa: F401,F403
+from _provenance import *  # noqa: F401,F403
+from _search import *  # noqa: F401,F403
+from _source_data import *  # noqa: F401,F403
+from _source_data import upsert_source_data  # explicit for local use
 
 logger = logging.getLogger(__name__)
 
@@ -104,7 +116,7 @@ def _write_source_data(entity_id: str, source_type: str, data: dict[str, str], d
     if not pairs:
         return False
     try:
-        db.upsert_source_data(db_path, entity_id, source_type, pairs)
+        upsert_source_data(db_path, entity_id, source_type, pairs)
         return True
     except Exception as e:
         logger.error("Write error for %s/%s: %s", entity_id, source_type, str(e))
