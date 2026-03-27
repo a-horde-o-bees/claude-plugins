@@ -1,17 +1,14 @@
-"""Block edits to deployed files in .claude/.
+"""Block direct edits to template files in plugins/.
 
-Deployed rules and conventions are copies managed by plugin init.
-Edit templates in plugins/ instead.
+Templates are distribution artifacts synced from deployed copies by
+the commit workflow. Edit deployed copies in .claude/ instead.
 """
 
 import json
+import re
 import sys
 
-GUARDED_PREFIXES = (
-    ".claude/rules/",
-    ".claude/ocd/",
-    ".claude/blueprint/",
-)
+TEMPLATE_PATTERN = re.compile(r"^plugins/[^/]+/(rules|templates)/")
 
 
 def main() -> None:
@@ -21,14 +18,14 @@ def main() -> None:
 
     path = tool_input.get("file_path", "") or tool_input.get("path", "")
     if path.startswith(cwd):
-        path = path[len(cwd):].lstrip("/")
+        path = path[len(cwd) :].lstrip("/")
 
-    if any(path.startswith(p) for p in GUARDED_PREFIXES):
+    if TEMPLATE_PATTERN.match(path):
         result = {
             "hookSpecificOutput": {
                 "hookEventName": "PreToolUse",
                 "permissionDecision": "deny",
-                "permissionDecisionReason": f"Deployed file — edit the template in plugins/ instead. Path: {path}",
+                "permissionDecisionReason": f"Template file — edit the deployed copy in .claude/ instead. Path: {path}",
             },
         }
         json.dump(result, sys.stdout)

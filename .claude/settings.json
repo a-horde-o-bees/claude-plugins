@@ -11,7 +11,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 .claude/hooks/guard-deployed.py",
+            "command": "python3 .claude/hooks/guard-templates.py",
             "timeout": 5
           }
         ]

@@ -24,15 +24,20 @@ User runs `/ocd-commit`
     1. EXIT — report clean working tree
   3. Run `git diff --stat` — understand scope of changes
   4. Run `git log --oneline -5` — capture recent commit message style
-2. Include untracked files — group with related changes using same topic logic as modified files
+2. Sync deployed→template — for each deployed file in `.claude/rules/` and `.claude/<plugin>/conventions/`, compare against corresponding template; if deployed content differs from template, overwrite template with deployed copy
+  - Rule mapping: `.claude/rules/<plugin>-<name>.md` → `plugins/<plugin>/rules/<plugin>-<name>.md`
+  - Convention mapping: `.claude/<plugin>/conventions/<name>.md` → `plugins/<plugin>/templates/conventions/<name>.md`
+  - Plugin name derived from filename prefix (rules) or directory name (conventions)
+  - Skip non-content files (manifest.yaml, databases)
+3. Include untracked files — group with related changes using same topic logic as modified files
   1. If any untracked file seems suspicious (e.g., large generated directories missing from .gitignore, credentials, build artifacts):
     1. Surface exceptions to user before committing — they may belong to group or need exclusion
   2. Else:
     1. Proceed without user approval
-3. Group changes by topic — goal is readable history where each commit is focused window into related changes
+4. Group changes by topic — goal is readable history where each commit is focused window into related changes
   1. Evaluate changed files for coherent topics — consider:
     - Skill directory — files in same skill are likely same topic
-    - Template and deployed pairs — template with its deployed copy
+    - Template synced from deployed — template groups with related skill or convention changes
     - Convention and consumers — convention file with skills it affects
     - Tests with code — test files group with code they test
     - Plugin infrastructure — plugin.json, hooks, init scripts
@@ -43,15 +48,15 @@ User runs `/ocd-commit`
     2. Order commits — dependencies first, consumers after
   4. If grouping is ambiguous:
     1. Keep together — consequences of grouping related changes are negligible compared to splitting incorrectly
-4. Draft commit messages — one per group
+5. Draft commit messages — one per group
   1. Describe end-state results, not change journey
   2. Follow project's recent commit message style
-5. Determine version bumps — identify which plugins have changes per group
-6. For each commit group (in order):
+6. Determine version bumps — identify which plugins have changes per group
+7. For each commit group (in order):
   1. Bump version — read current version from plugin.json, increment z, write back
   2. Stage files — `git add` specific files for this group plus plugin.json
   3. Commit with drafted message; append co-author trailer
-7. Verify — run `git status`; report remaining changes or clean tree
+8. Verify — run `git status`; report remaining changes or clean tree
 
 ### Report
 
@@ -72,3 +77,5 @@ User runs `/ocd-commit`
 - Stage specific files by name — never use `git add -A` or `git add .`
 - Co-author trailer required: `Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>`
 - Commit order matters — if group B depends on changes in group A (e.g., convention before skill that uses it), commit A first
+- Deployed→template sync runs before grouping — ensures templates match deployed copies; only syncs content files (rules, conventions), not infrastructure (manifest.yaml, databases)
+- Synced templates are committed, deployed copies are not — deployed copies are working files in `.claude/`, templates in `plugins/` are distribution artifacts

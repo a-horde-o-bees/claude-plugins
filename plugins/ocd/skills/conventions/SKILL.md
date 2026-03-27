@@ -80,7 +80,7 @@ User runs `/ocd-conventions`
 
 ## Workflow: Self-Evaluation
 
-Evaluate rules and conventions against each other in dependency order. Report-only — present findings per level for user review, do not apply fixes. Files at each level are evaluated against criteria from all prior validated levels.
+Evaluate rules and conventions against each other in dependency order. Per level: detect cross-file conflicts for user resolution, then dispatch Conformity with self-evaluation constraints for structural fixes. Rule file changes require session restart between levels.
 
 1. Get evaluation order — run conventions CLI `list-self` command
   ```
@@ -90,26 +90,30 @@ Evaluate rules and conventions against each other in dependency order. Report-on
     1. Report error to user and stop
   - Output is levels (Level 0, Level 1, ...) with file paths
 2. Present DAG overview to user via AskUserQuestion — show levels with file names, confirm before starting
-3. Initialize criteria set — empty list
-4. For each level (starting at Level 0):
-  1. If criteria set is empty (Level 0):
-    1. Evaluate files for internal consistency only — terminology, cross-references, completeness
-  2. Else:
-    1. Evaluate each file against all criteria in criteria set
-    2. For each criterion, assess conformity with specific citations
-    3. Evaluate internal consistency — terminology, cross-references, completeness
-  3. Present findings for current level — per-file summary of conformity issues found
-  4. Wait for user via AskUserQuestion with options: approve level, request changes
-  5. When user approves level:
-    1. Add all files from current level to criteria set
-    2. Proceed to next level
-5. After all levels complete — present summary of full evaluation
+3. For each level (starting at Level 0):
+  1. Conflict detection — spawn agent that reads all files at current level and all files from prior levels; identifies semantic conflicts:
+    - Horizontal — files at current level make contradictory or incompatible claims about same topic
+    - Vertical — files at current level contradict guidance in files from prior levels
+    - Scope: semantic content only; structural and formatting differences are handled by Conformity
+  2. If conflicts found:
+    1. Present conflicts to user with specific citations from both sides
+    2. User resolves conflicts with agent assistance
+  3. Dispatch Conformity workflow with level's files as target list
+    - Agents read `_self-eval-conformity-instructions.md` instead of `_conformity-instructions.md`
+    - Scope: structural, notation, and formatting fixes; semantic differences from criteria are observations for user judgment
+  4. Present level findings — applied fixes and observations requiring user judgment
+  5. Wait for user via AskUserQuestion — approve level or request changes
+  6. When user approves level:
+    1. If any `.claude/rules/` files modified during this level:
+      1. EXIT — instruct user to restart session (`/exit` then `claude --continue`) and re-invoke `/ocd-conventions --target self`
+    2. Else: proceed to next level
+4. After all levels complete — present summary of full evaluation
 
 ### Report
 
-- Per-level: files evaluated, criteria used, issues found
-- Per-file: conformity issues with specific rule/convention citations
-- Summary: total levels, total files, total issues found
+- Per-level: conflicts detected, conflicts resolved, conformity fixes applied, observations for user judgment
+- Per-file: fixes applied with rationale, observations requiring user judgment
+- Summary: total levels, total files, conflicts found, fixes applied
 
 ## Rules
 
@@ -117,7 +121,6 @@ Evaluate rules and conventions against each other in dependency order. Report-on
 - One agent per target file — parallel execution gives each file full attention; agent reads `_conformity-instructions.md` and discovers its own criteria via conventions CLI
 - Agent applies fixes directly in Conformity workflow — reformatting, not just reporting
 - Orchestrator safeguards target count — reports and suggests narrowing when exceeding 20 files; waits for user confirmation before spawning
-- Self-evaluation is report-only — present findings, do not apply fixes; user directs any changes after reviewing
 - Agent preserves semantic meaning — changes are stylistic and structural, never altering what file communicates
 - Files tagged `[fail: N lines]` in `list-matching` output auto-fail without processing — reported to user with line count
 - Files tagged `[warn: N lines]` proceed with size noted — agent may need to use targeted reads for large files
@@ -127,6 +130,10 @@ Evaluate rules and conventions against each other in dependency order. Report-on
 - When natural language adjustments conflict with other provided flags, orchestrator surfaces conflict and works with user to resolve — no implicit precedence
 - Deterministic {target} values (`project`, `self`, paths, `/skill-name`) execute without interpretation or confirmation
 - --delegate spawns background agent with Workflow and Rules — agents read component files at execution time; orchestration (Route) always runs in main conversation
-- Self-evaluation does not support --delegate — interactive review between levels is structurally required
-- Self-evaluation does not support --auto — report-only and interactive
+- Self-evaluation does not support --delegate — interactive conflict resolution and level-by-level approval required
+- Self-evaluation does not support --auto — interactive conflict resolution and level-by-level approval required
 - --auto wraps Conformity workflow in convergence loop per skill-md convention; each iteration spawns fresh agent
+- `.claude/rules/` files loaded at session start — in-session changes to rule files not visible to agents until session restart; convention files read explicitly, changes take effect immediately
+- Self-evaluation conflict detection precedes Conformity per level — horizontal (within-level) and vertical (against prior levels) semantic conflicts require user resolution before structural fixes
+- Self-evaluation Conformity uses `_self-eval-conformity-instructions.md` — structural, notation, and formatting fixes only; semantic differences are observations for user judgment
+- Rule-change restart gate: if `.claude/rules/` files modified during self-evaluation level, session must restart; on restart, self-evaluation begins from Level 0 to re-evaluate with updated rules
