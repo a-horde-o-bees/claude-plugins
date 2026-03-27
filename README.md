@@ -48,6 +48,24 @@ Update plugins after upstream changes:
 /plugin marketplace update a-horde-o-bees
 ```
 
+After updating, check if deployed rules and conventions need updating:
+
+```
+/ocd-status
+/blueprint-status
+```
+
+If any files show `divergent`, force-update and restart:
+
+```
+/ocd-init --force
+/blueprint-init --force
+/exit
+claude --continue
+```
+
+Restart after init is only needed when rule files change. Convention-only updates take effect immediately.
+
 Remove a plugin or the marketplace:
 
 ```
