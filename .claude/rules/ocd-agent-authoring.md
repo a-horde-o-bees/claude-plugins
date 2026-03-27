@@ -6,7 +6,6 @@ Conventions for content consumed by agents: skills, conventions, plans, actions,
 
 ### Grammar
 
-- Omit grammar articles (a, an, the) — agents parse structure, not prose
 - Prioritize completeness over brevity — missing information causes incorrect assumptions
 - Every word must earn its place — if removing word or phrase does not change meaning, remove it; complete does not mean verbose
 - Include examples only when rule is ambiguous without one

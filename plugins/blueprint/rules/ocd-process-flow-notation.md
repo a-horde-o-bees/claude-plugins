@@ -23,7 +23,7 @@ Structured programming for agent workflows. Indentation scopes blocks. Required 
 
 ## Scoping
 
-Indentation is scope mechanism — 4 spaces per level, no depth limit. All `{prefix}:` constructs open a block. Single-action blocks may inline after colon. Multi-action blocks place actions as indented children — never mix inline action with indented children on same block. Return to parent indentation signals end of block.
+Indentation is scope mechanism — 4 spaces per level, no depth limit. All `{prefix}:` constructs open block. Single-action blocks may inline after colon. Multi-action blocks place actions as indented children — never mix inline action with indented children on same block. Return to parent indentation signals end of block.
 
 Flow control keywords are scope-relative — indentation determines which scope they exit:
 
