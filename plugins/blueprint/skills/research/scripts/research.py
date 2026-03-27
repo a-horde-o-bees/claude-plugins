@@ -13,19 +13,30 @@ import subprocess
 from collections.abc import Callable
 from pathlib import Path
 
-import _db as db  # type: ignore[import-not-found]
-import _templates as templates  # type: ignore[import-not-found]
-
-# Re-export domain modules — CLI imports from research, not from internal modules.
-from _db import get_connection, init_db, normalize_url, retry_write  # noqa: F401
-from _entities import *  # noqa: F401,F403
-from _measures import *  # noqa: F401,F403
-from _merge import *  # noqa: F401,F403
-from _notes import *  # noqa: F401,F403
-from _provenance import *  # noqa: F401,F403
-from _search import *  # noqa: F401,F403
-from _source_data import *  # noqa: F401,F403
-from _source_data import upsert_source_data  # explicit for local use
+try:
+    from . import _db as db
+    from . import _templates as templates
+    from ._db import get_connection, init_db, normalize_url, retry_write  # noqa: F401
+    from ._entities import *  # noqa: F401,F403
+    from ._measures import *  # noqa: F401,F403
+    from ._merge import *  # noqa: F401,F403
+    from ._notes import *  # noqa: F401,F403
+    from ._provenance import *  # noqa: F401,F403
+    from ._search import *  # noqa: F401,F403
+    from ._source_data import *  # noqa: F401,F403
+    from ._source_data import upsert_source_data
+except ImportError:
+    import _db as db  # type: ignore[import-not-found]
+    import _templates as templates  # type: ignore[import-not-found]
+    from _db import get_connection, init_db, normalize_url, retry_write  # noqa: F401  # type: ignore[import-not-found]
+    from _entities import *  # noqa: F401,F403  # type: ignore[import-not-found]
+    from _measures import *  # noqa: F401,F403  # type: ignore[import-not-found]
+    from _merge import *  # noqa: F401,F403  # type: ignore[import-not-found]
+    from _notes import *  # noqa: F401,F403  # type: ignore[import-not-found]
+    from _provenance import *  # noqa: F401,F403  # type: ignore[import-not-found]
+    from _search import *  # noqa: F401,F403  # type: ignore[import-not-found]
+    from _source_data import *  # noqa: F401,F403  # type: ignore[import-not-found]
+    from _source_data import upsert_source_data  # type: ignore[import-not-found]
 
 logger = logging.getLogger(__name__)
 

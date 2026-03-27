@@ -6,7 +6,10 @@ import logging
 from collections import defaultdict
 from pathlib import Path
 
-from _db import _touch, get_connection, retry_write
+try:
+    from ._db import _touch, get_connection, retry_write
+except ImportError:
+    from _db import _touch, get_connection, retry_write  # type: ignore[import-not-found]
 
 logger = logging.getLogger(__name__)
 

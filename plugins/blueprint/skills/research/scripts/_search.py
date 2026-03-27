@@ -4,7 +4,10 @@ from __future__ import annotations
 
 import logging
 
-from _db import get_connection
+try:
+    from ._db import get_connection
+except ImportError:
+    from _db import get_connection  # type: ignore[import-not-found]
 
 logger = logging.getLogger(__name__)
 
