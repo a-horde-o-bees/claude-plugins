@@ -18,7 +18,12 @@ User runs `/ocd-push`
 ## Route
 
 1. If not --branch: Exit to user — respond with skill description and argument-hint
-2. Push target is `origin/{branch}`
+2. {current-branch} = current git branch
+3. If {current-branch} does not match {branch}:
+    1. Exit to user — report mismatch, explain options:
+        - To push the current branch: re-invoke with `--branch {current-branch}`
+        - To move commits to {branch} first: ask for help with rebase/merge
+4. Push target is `origin/{branch}`
 
 ## Workflow
 
@@ -43,5 +48,6 @@ User runs `/ocd-push`
 
 - Never force push
 - Explicit --branch is required — no default push target; naming the branch is the confirmation
+- Branch mismatch exits with explanation — no prompt, no default action; user re-invokes with correct intent or asks for help
 - If upstream is not set, use the provided --branch to set it with `git push -u origin {branch}`
 - Commit step is fully automated via /ocd-commit — no double-confirmation on commit content
