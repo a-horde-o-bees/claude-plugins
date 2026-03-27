@@ -73,9 +73,31 @@ Remove a plugin or the marketplace:
 /plugin marketplace remove a-horde-o-bees
 ```
 
-### Local development (--plugin-dir)
+### Local development
 
-For contributors working on plugin source. Load plugins directly from a local clone:
+For contributors working on plugin source. Two approaches:
+
+#### Marketplace-based (recommended)
+
+Develop within a clone that is also the marketplace source. Plugins load via the installed marketplace, so changes flow through git:
+
+```
+/ocd-push
+```
+
+Commits and pushes all changes. Then refresh the marketplace cache and restart:
+
+```
+/plugin marketplace update a-horde-o-bees
+/exit
+claude --continue
+```
+
+Step 3 (`/exit` + restart) only required when `.claude/rules/` files changed. Skill and convention changes take effect after the marketplace update.
+
+#### Plugin-dir (session-only)
+
+Load plugins directly from a local clone without marketplace:
 
 ```
 git clone https://github.com/a-horde-o-bees/claude-plugins.git
