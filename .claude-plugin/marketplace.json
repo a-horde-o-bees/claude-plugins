@@ -11,6 +11,12 @@
       "source": "./plugins/ocd",
       "description": "Deterministic enforcement of permissions, rules, and structural conventions with agent-facing project navigation",
       "category": "development"
+    },
+    {
+      "name": "blueprint",
+      "source": "./plugins/blueprint",
+      "description": "Structured competitive research and implementation planning through entity-based analysis",
+      "category": "development"
     }
   ]
 }

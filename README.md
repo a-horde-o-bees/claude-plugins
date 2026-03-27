@@ -13,99 +13,40 @@ Use at your own discretion. If something breaks, the LICENSE applies.
 | Plugin | Status | Description |
 |--------|--------|-------------|
 | [ocd](plugins/ocd/) | Active | Deterministic enforcement of permissions, rules, and structural conventions with agent-facing project navigation |
+| [blueprint](plugins/blueprint/) | Active | Structured competitive research and implementation planning through entity-based analysis |
 
 ## Installation
 
-### Local development (--plugin-dir)
+### From GitHub
 
-Clone the repo:
-
-```
-git clone https://github.com/a-horde-o-bees/claude-plugins.git
-```
-
-Launch Claude with the plugin loaded directly from source:
+Add the marketplace and install plugins:
 
 ```
-claude --plugin-dir {PATH_TO_REPO}/plugins/ocd
+/plugin marketplace add https://github.com/a-horde-o-bees/claude-plugins.git
+/plugin install ocd@a-horde-o-bees
+/plugin install blueprint@a-horde-o-bees
 ```
 
-Optional shell alias:
+To track a specific branch (e.g., for pre-release testing):
 
 ```
-alias claude-dev='claude --plugin-dir {PATH_TO_REPO}/plugins/ocd'
-```
-
-After making source changes, hot-reload within the session:
-
-```
-/reload-plugins
-```
-
-Check if deployed rules and conventions are up to date:
-
-```
-/ocd-init
-```
-
-Init reports each file as `Current`, `Outdated`, or `New`. If any files are outdated, force-update:
-
-```
-/ocd-init --force
-```
-
-If rules were `Replaced` or `New`, exit and resume to load them into context:
-
-```
-/exit
-claude --resume
-```
-
-`--resume` continues the most recent conversation with fresh context — rules, settings, and hooks reload while conversation history is preserved. Only needed when rule files change; convention-only updates take effect immediately.
-
-Useful flags:
-
-- `--debug` — plugin loading diagnostics
-- `--bare` — skip hooks, LSP, plugin sync, auto-memory, CLAUDE.md for scripted testing
-- `claude plugin validate {PATH_TO_PLUGIN}` — validate manifest without a session
-
-Notes:
-
-- `--plugin-dir` is session-only; no `settings.json` equivalent yet
-- When a `--plugin-dir` plugin shares a name with an installed marketplace plugin, the local copy takes precedence for that session
-- Multiple plugins: `claude --plugin-dir ./plugin-one --plugin-dir ./plugin-two`
-
-### Local development (marketplace)
-
-Alternative workflow using the local marketplace registration. Requires two session restarts per change cycle — one after install (hooks/commands), one after init (rules).
-
-Clone the repo:
-
-```
-git clone https://github.com/a-horde-o-bees/claude-plugins.git
-```
-
-Register the local directory as a marketplace:
-
-```
-/plugin marketplace add a-horde-o-bees --path /path/to/claude-plugins
-```
-
-Install a plugin (first time or after source changes):
-
-```
-/plugin marketplace update a-horde-o-bees
-/plugin uninstall ocd
-/plugin install ocd
+/plugin marketplace add https://github.com/a-horde-o-bees/claude-plugins.git#dev
 ```
 
 Restart Claude session so hooks and commands load, then initialize in target project:
 
 ```
-/{plugin}-init
+/ocd-init
+/blueprint-init
 ```
 
 Restart Claude session again so deployed rules auto-load into context.
+
+Update plugins after upstream changes:
+
+```
+/plugin marketplace update a-horde-o-bees
+```
 
 Remove a plugin or the marketplace:
 
@@ -114,24 +55,49 @@ Remove a plugin or the marketplace:
 /plugin marketplace remove a-horde-o-bees
 ```
 
-### External users
+### Local development (--plugin-dir)
 
-Add this marketplace by URL (requires access to the repository):
-
-```
-/plugin marketplace add a-horde-o-bees --url https://github.com/a-horde-o-bees/claude-plugins.git
-/plugin install ocd
-```
-
-After installing, restart Claude session so hooks and commands load, then initialize the plugin in target project:
+For contributors working on plugin source. Load plugins directly from a local clone:
 
 ```
-/{plugin}-init
+git clone https://github.com/a-horde-o-bees/claude-plugins.git
+claude --plugin-dir ./claude-plugins/plugins/ocd --plugin-dir ./claude-plugins/plugins/blueprint
 ```
 
-Restart Claude session again so deployed rules auto-load into context.
+After making source changes, reload and restart:
 
-> **Note:** This repo is currently private. External installation requires repository access.
+```
+/reload-plugins
+/exit
+claude --continue
+```
+
+`/reload-plugins` picks up script changes. Restart is required for skill content (SKILL.md) to take effect. `--continue` resumes the conversation with fresh context.
+
+Check if deployed rules and conventions need updating:
+
+```
+/ocd-status
+/blueprint-status
+```
+
+If any files show `divergent`, force-update and restart:
+
+```
+/ocd-init --force
+/blueprint-init --force
+/exit
+claude --continue
+```
+
+Restart after init is only needed when rule files change. Convention-only updates take effect immediately.
+
+Notes:
+
+- `--plugin-dir` is session-only; no persistent setting exists
+- When a `--plugin-dir` plugin shares a name with an installed marketplace plugin, the local copy takes precedence for that session
+- `--debug` flag shows plugin loading diagnostics
+- `claude plugin validate {PATH_TO_PLUGIN}` validates manifest without a session
 
 ## Architecture
 
