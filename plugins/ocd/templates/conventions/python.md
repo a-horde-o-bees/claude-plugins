@@ -60,7 +60,7 @@ Validation logic raises exceptions — no `print()` + `sys.exit()` in non-CLI co
 
 ### When to Decompose
 
-Extract internal modules when file contains distinct functional domains — groups of functions that serve different purposes and have minimal cross-references. Decomposition is driven by functional boundaries, not line counts. 600-line file with one cohesive domain stays together; 300-line file with two independent domains splits.
+Extract internal modules when a file contains distinct functional domains — groups of functions that serve different purposes and have minimal cross-references. Decomposition is driven by functional boundaries, not line counts. A 600-line file with one cohesive domain stays together; a 300-line file with two independent domains splits.
 
 ### Internal Module Pattern
 
@@ -79,11 +79,11 @@ scripts/
 
 `_constants.py` — shared configuration values (thresholds, ordering lists, magic numbers) used across module files. Create when constants are shared between parent module and CLI or between multiple internal modules.
 
-`_helpers.py` — pure utility functions with no dependency on module state. Functions take data in and return data out. Create when utility functions are shared across multiple files in package.
+`_helpers.py` — pure utility functions with no dependency on module state. Functions take data in and return data out. Create when utility functions are shared across multiple files in the package.
 
 `_init.py` — initialization and status logic. Contains `init()` for infrastructure setup and `status()` for health checks. CLI exposes these as `init` and `status` subcommands. Standard for any skill that requires infrastructure (database, deployed files, configuration).
 
-`_{domain}.py` — focused on single functional domain. Named for what it does (`_parser.py`, `_storage.py`, `_formatter.py`). Create when functional domain within module has clear boundaries and its functions are primarily called by each other or by parent facade.
+`_{domain}.py` — focused on single functional domain. Named for what it does (`_parser.py`, `_storage.py`, `_formatter.py`). Create when a functional domain within a module has clear boundaries and its functions are primarily called by each other or by the parent facade.
 
 ### Facade Role
 
@@ -101,11 +101,11 @@ def process_path(db_path: str, target_path: str) -> str:
 
 ### Separate Module vs Internal Module
 
-Use `_{purpose}.py` (internal) when functions exist to support parent module and have no independent consumers. Use `{name}.py` (separate module) when domain has its own CLI subcommands, independent tests, or is consumed by multiple parent modules. Example: `client.py` is separate because module CLI exposes its subcommands directly; `_parser.py` is internal because only `module.py` calls its functions.
+Use `_{purpose}.py` (internal) when functions exist to support the parent module and have no independent consumers. Use `{name}.py` (separate module) when the domain has its own CLI subcommands, independent tests, or is consumed by multiple parent modules. Example: `client.py` is separate because the module CLI exposes its subcommands directly; `_parser.py` is internal because only `module.py` calls its functions.
 
 ### CLI Boundary
 
-Decomposition of `{name}.py` is invisible to `{name}_cli.py`. CLI always imports from facade (`{name}.py`), never from internal `_{purpose}.py` modules. Separate modules with own CLI subcommands are imported directly by CLI alongside facade.
+Decomposition of `{name}.py` is invisible to `{name}_cli.py`. CLI always imports from facade (`{name}.py`), never from internal `_{purpose}.py` modules. Separate modules with their own CLI subcommands are imported directly by the CLI alongside the facade.
 
 ## Testing
 
@@ -117,7 +117,7 @@ Test directories contain `__init__.py` for proper package structure. Shared fixt
 
 ### Test Structure
 
-Group related tests by class when testing single function or module boundary. Use descriptive test method names that state what is being verified: `test_prefix_attack_blocked`, `test_cycle_detection_raises`.
+Group related tests by class when testing a single function or module boundary. Use descriptive test method names that state what is being verified: `test_prefix_attack_blocked`, `test_cycle_detection_raises`.
 
 Fixtures provide isolated test state (temp directories, databases, environment variables). Prefer `tmp_path` and `monkeypatch` builtins over manual setup/teardown.
 

@@ -23,7 +23,7 @@ Structured programming for agent workflows. Indentation scopes blocks. Required 
 
 ## Scoping
 
-Indentation is scope mechanism — 4 spaces per level, no depth limit. All `{prefix}:` constructs open block. Single-action blocks may inline after colon. Multi-action blocks place actions as indented children — never mix inline action with indented children on same block. Return to parent indentation signals end of block.
+Indentation is the scope mechanism — 4 spaces per level, no depth limit. All `{prefix}:` constructs open a block. Single-action blocks may inline after the colon. Multi-action blocks place actions as indented children — never mix an inline action with indented children on the same block. Return to parent indentation signals the end of a block.
 
 Flow control keywords are scope-relative — indentation determines which scope they exit:
 
@@ -34,11 +34,11 @@ Flow control keywords are scope-relative — indentation determines which scope 
 | `Exit to user` | Current process — halt workflow | Reason after em dash |
 | `Return` / `Return:` | Agent block — hand back to caller | Optional (`Return:` + children, or bare `Return`) |
 
-`Go to step N. Label` jumps forward or backward to numbered step — always includes both step number and label to survive renumbering.
+`Go to step N. Label` jumps forward or backward to a numbered step — always includes both step number and label to survive renumbering.
 
 ## Agent Spawning
 
-`Spawn agent with:` delegates work to spawned agent. Indented children are agent instructions. Return to parent indentation signals control back to caller. `Return` / `Return:` defines what agent hands back.
+`Spawn agent with:` delegates work to a spawned agent. Indented children are the agent instructions. Return to parent indentation signals control back to the caller. `Return` / `Return:` defines what the agent hands back.
 
 ```
 1. Spawn agent with conflict detection:
@@ -51,7 +51,7 @@ Flow control keywords are scope-relative — indentation determines which scope 
 2. Present results to user
 ```
 
-Within skills, intelligent work delegation uses `Spawn agent with:` exclusively. Tool calls (CLI scripts, bash commands) are not agent spawns and remain unrestricted. Orchestrator applies user-directed corrections inline — no agent spawn needed for directed fixes.
+Within skills, intelligent work delegation uses `Spawn agent with:` exclusively. Tool calls (CLI scripts, bash commands) are not agent spawns and remain unrestricted. The orchestrator applies user-directed corrections inline — no agent spawn needed for directed fixes.
 
 `async` composes with `Spawn agent with:` for concurrent agents:
 
@@ -69,7 +69,7 @@ Within skills, intelligent work delegation uses `Spawn agent with:` exclusively.
 
 ## Conditionals
 
-`If X:`/`Else if X:`/`Else:` prefix. `If/Else if` is mutually exclusive — stop at first match. Chain may end with `Else if` or `Else`. `Else` is universal fallback when all prior conditions fail. Repeated `If/If` at same level is independent evaluation — multiple conditions may fire. Standalone `If` with no `Else` is valid — alternative is "proceed to next step." Never mix two forms in same chain.
+`If X:`/`Else if X:`/`Else:` prefix. `If/Else if` is mutually exclusive — stop at first match. Chain may end with `Else if` or `Else`. `Else` is the universal fallback when all prior conditions fail. Repeated `If/If` at the same level is independent evaluation — multiple conditions may fire. Standalone `If` with no `Else` is valid — the alternative is "proceed to next step." Never mix the two forms in the same chain.
 
 ```
 1. If condition: single action
@@ -81,7 +81,7 @@ Within skills, intelligent work delegation uses `Spawn agent with:` exclusively.
 
 ## Iteration and Events
 
-`For each {item} in {collection}:` iterates over collection — names both loop variable and source. `While X:` repeats while condition holds. `When X:` is event-triggered — reactive to state change rather than evaluated at fixed point in sequence.
+`For each {item} in {collection}:` iterates over a collection — names both the loop variable and source. `While X:` repeats while the condition holds. `When X:` is event-triggered — reactive to a state change rather than evaluated at a fixed point in the sequence.
 
 ```
 1. For each {file} in {target-files}:
@@ -94,18 +94,18 @@ Within skills, intelligent work delegation uses `Spawn agent with:` exclusively.
 
 ## Assignment
 
-`{name} = value` sets named variable for downstream steps. Variable names use curly braces and dashes. Variables use shared scope — assignment makes variable available to all subsequent steps at any depth, including inside `Spawn agent with:` blocks. This matches natural language reading where context carries forward sequentially. Variables must be assigned before use — unassigned references are authoring errors.
+`{name} = value` sets a named variable for downstream steps. Variable names use curly braces and dashes. Variables use shared scope — assignment makes the variable available to all subsequent steps at any depth, including inside `Spawn agent with:` blocks. This matches natural language reading where context carries forward sequentially. Variables must be assigned before use — unassigned references are authoring errors.
 
 ```
 1. {target-directory} = parent of resolved SKILL.md path
 2. If condition:
     1. {selected-workflow} = Self-Evaluation
-3. Pass {target-directory} to navigator CLI
+3. Pass {target-directory} to target CLI
 ```
 
 ## Concurrency
 
-`async` prefix marks concurrent execution. Return to parent indentation signals await point.
+`async` prefix marks concurrent execution. Return to parent indentation signals the await point.
 
 ```
 1. Dispatch operations
@@ -118,15 +118,15 @@ Within skills, intelligent work delegation uses `Spawn agent with:` exclusively.
 
 Numbers are ordered execution or evaluation. Bullets (`-`) are unordered sub-items.
 
-Em dash (`—`) separates step label from optional description. Label is action verb or short imperative; description elaborates context, purpose, or constraints — never imperative action that could be executed independently. Include em dash descriptions only when they add value; omit when label or children are self-evident. Semicolons add qualifications or constraints inline.
+Em dash (`—`) separates step label from optional description. Label is an action verb or short imperative; description elaborates context, purpose, or constraints — never an imperative action that could be executed independently. Include em dash descriptions only when they add value; omit when the label or children are self-evident. Semicolons add qualifications or constraints inline.
 
 ```
 1. Label — description of action; supporting context; constraint or exception
 ```
 
-Subprocesses are extracted under own heading with own steps, referenced by name in parent flow. Heading depth is one level below parent heading.
+Subprocesses are extracted under their own heading with their own steps, referenced by name in the parent flow. Heading depth is one level below the parent heading.
 
-Grouping headings organize contiguous steps within single process. Steps continue numbering across headings — heading is label, not numbering reset.
+Grouping headings organize contiguous steps within a single process. Steps continue numbering across headings — a heading is a label, not a numbering reset.
 
 ## Skill Argument Notation
 
@@ -134,17 +134,17 @@ Notation for skill `argument-hint` frontmatter and workflow argument references.
 
 ### Argument Hint Format
 
-`argument-hint` field in SKILL.md frontmatter declares skill arguments using CLI-style format. Agents read this to understand what arguments skill accepts, which are required, and what values they expect.
+The `argument-hint` field in SKILL.md frontmatter declares skill arguments using CLI-style format. Agents read this to understand what arguments a skill accepts, which are required, and what values they expect.
 
 Format elements:
 
 | Required | Optional | Description |
 |----------|----------|-------------|
 | `<value>` | `[value]` | Value placeholder |
-| `<x \| y>` | `[x \| y]` | Choice — one of listed alternatives |
+| `<x \| y>` | `[x \| y]` | Choice — one of the listed alternatives |
 | N/A | `[--flag]` | Boolean flag — presence means true, absence means false |
-| `--flag <value>` | `[--flag <value>]` | Flag with value — flag consumes following value |
-| N/A | `[--flag <value> ...]` | Repeatable — flag may appear multiple times, each with own value |
+| `--flag <value>` | `[--flag <value>]` | Flag with value — flag consumes the following value |
+| N/A | `[--flag <value> ...]` | Repeatable — flag may appear multiple times, each with its own value |
 
 Angle brackets `<>` denote required values. Square brackets `[]` denote optional elements and drop inner angle brackets. Boolean and repeatable flags are always optional.
 
@@ -170,13 +170,13 @@ Examples:
 
 Workflows reference arguments using two forms — `--flag` for flag existence and `{flag}` for flag value. This separates presence checks from value resolution, making data flow explicit.
 
-`--flag` refers to flag itself — existence, iteration over instances:
+`--flag` refers to the flag itself — existence, iteration over instances:
 - Conditions check presence — `If --flag:` or `If not --flag:`
 - Iteration over repeatable instances — `For each --flag:`
 
-`{flag}` always resolves to value associated with flag:
-- For value flags — `{flag}` resolves to text value passed with flag
-- For repeatable flags — `{flag}` inside `For each --flag:` resolves to current item's value
+`{flag}` always resolves to the value associated with the flag:
+- For value flags — `{flag}` resolves to the text value passed with the flag
+- For repeatable flags — `{flag}` inside `For each --flag:` resolves to the current item's value
 - Boolean flags have no value — use `--flag` only, never `{flag}`
 
 Reference patterns in workflow steps:
@@ -191,7 +191,7 @@ Reference patterns in workflow steps:
 ```
 1. If --pattern:
     1. For each --pattern:
-        1. Pass {pattern} to navigator CLI as filter
+        1. Pass {pattern} to target CLI as filter
 ```
 
 ```
