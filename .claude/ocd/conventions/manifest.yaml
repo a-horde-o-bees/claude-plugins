@@ -3,12 +3,12 @@ settings:
   lines_fail_threshold: 2000
 
 conventions:
-  .claude/rules/ocd-process-flow-notation.md:
-    pattern: "*"
-    dependencies: []
   .claude/rules/ocd-agent-authoring.md:
     pattern: "*"
-    dependencies: [.claude/rules/ocd-process-flow-notation.md]
+    dependencies: []
+  .claude/rules/ocd-process-flow-notation.md:
+    pattern: "*"
+    dependencies: [.claude/rules/ocd-agent-authoring.md]
   .claude/ocd/conventions/cli.md:
     pattern: "*_cli.*"
     dependencies: [.claude/rules/ocd-agent-authoring.md]
