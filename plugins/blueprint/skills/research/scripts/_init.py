@@ -6,11 +6,14 @@ Interface contract: init() and status() return {"files": [...], "extra": [...]}.
 
 from __future__ import annotations
 
+import logging
 import sqlite3
 from pathlib import Path
 
 import _db as db  # type: ignore[import-not-found]
 import plugin  # type: ignore[import-not-found]
+
+logger = logging.getLogger(__name__)
 
 
 def _db_path(plugin_name: str, project_dir: Path) -> Path:

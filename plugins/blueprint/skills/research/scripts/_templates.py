@@ -8,10 +8,13 @@ and how to detect duplicates by matching key values across entities.
 from __future__ import annotations
 
 import json
+import logging
 import sqlite3
 from pathlib import Path
 
 import _db as db  # type: ignore[import-not-found]
+
+logger = logging.getLogger(__name__)
 
 TEMPLATES_SCHEMA = """
 CREATE TABLE IF NOT EXISTS source_types (

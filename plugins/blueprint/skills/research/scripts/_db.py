@@ -11,6 +11,7 @@ Write contention handled by retry_write decorator with random jitter.
 from __future__ import annotations
 
 import functools
+import logging
 import random
 import sqlite3
 import time
@@ -18,6 +19,8 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import TypeVar
 from urllib.parse import urlparse
+
+logger = logging.getLogger(__name__)
 
 F = TypeVar("F", bound=Callable)
 
