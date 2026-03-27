@@ -86,21 +86,21 @@ User runs `/blueprint-research`. Optional `$ARGUMENTS` passed as initial scope i
 ## Route
 
 1. If `docs/blueprint.md` does not exist:
-  1. Verify project root is empty or near-empty — only standard init files at top level (`.claude/`, `.gitmodules`, `CLAUDE.md`, `.claudeignore`, `.gitattributes`, `.env.example`, `.gitignore`)
-  2. If other files or directories exist:
-    1. EXIT — report what was found; skill bootstraps new projects and should not run in populated projects
-  3. Create `docs/` directory and copy `${CLAUDE_PLUGIN_ROOT}/templates/blueprint.md` to `docs/blueprint.md`
-  4. Mark Phase 1 as `[-]`; use `$ARGUMENTS` as initial scope input if provided
-  5. Go to step 3. Determine active phase
+    1. Verify project root is empty or near-empty — only standard init files at top level (`.claude/`, `.gitmodules`, `CLAUDE.md`, `.claudeignore`, `.gitattributes`, `.env.example`, `.gitignore`)
+    2. If other files or directories exist:
+        1. Exit to user — report what was found; skill bootstraps new projects and should not run in populated projects
+    3. Create `docs/` directory and copy `${CLAUDE_PLUGIN_ROOT}/templates/blueprint.md` to `docs/blueprint.md`
+    4. Mark Phase 1 as `[-]`; use `$ARGUMENTS` as initial scope input if provided
+    5. Go to step 3. Determine active phase
 2. Read `docs/blueprint.md`
 3. Determine active phase
-  1. If `docs/history.md` exists: read last 5 lines for current stride and next steps
-  2. Find first phase with status `[-]` or `[ ]`
-    1. If `[-]` found: propose resuming; history log indicates last stride; for execution phases check database for completed work; for design phases check for phase output files
-    2. Else if `[ ]` found: propose starting that phase
-    3. Else if all `[x]`: report complete; offer re-invocation of any phase — ask before overwriting existing outputs
+    1. If `docs/history.md` exists: read last 5 lines for current stride and next steps
+    2. Find first phase with status `[-]` or `[ ]`
+        1. If `[-]` found: propose resuming; history log indicates last stride; for execution phases check database for completed work; for design phases check for phase output files
+        2. Else if `[ ]` found: propose starting that phase
+        3. Else if all `[x]`: report complete; offer re-invocation of any phase — ask before overwriting existing outputs
 4. User confirms phase, chooses different phase, or requests reversion
-  1. If reversion requested: dispatch Phase Reversion
+    1. If reversion requested: dispatch Phase Reversion
 5. {active-phase} = confirmed phase number
 6. Dispatch Workflow
 
@@ -109,9 +109,9 @@ User runs `/blueprint-research`. Optional `$ARGUMENTS` passed as initial scope i
 When user requests "add more entities" at any phase gate:
 
 1. Delete downstream outputs:
-  - `references/analysis-findings.md`
-  - `references/analysis-interpretation.md`
-  - `docs/implementation-progress.md` (if exists)
+    - `references/analysis-findings.md`
+    - `references/analysis-interpretation.md`
+    - `docs/implementation-progress.md` (if exists)
 2. Run `research_cli.py clear measures`
 3. Update `docs/blueprint.md`: Phase 1 `[-]`, Phases 2-4 `[ ]`
 4. Read Phase 1 reference file — re-entry detects existing domain knowledge and entities
@@ -124,10 +124,10 @@ Database preserved. New entities accumulate during scoping; Phase 2 processes on
 2. Read `${CLAUDE_PLUGIN_ROOT}/references/phase-{active-phase}-{name}.md`
 3. Present what current phase will do to user
 4. Execute phase per reference file instructions:
-  1. Spawn autonomous agents for research/analysis — one per discrete research unit
-  2. Present findings to user
-  3. If design phase: user approves or refines (loop until satisfied)
-  4. Write outputs
+    1. Spawn autonomous agents for research/analysis — one per discrete research unit
+    2. Present findings to user
+    3. If design phase: user approves or refines (loop until satisfied)
+    4. Write outputs
 5. Append history entry to `docs/history.md` — one line: ISO 8601 datetime, phase, action, result stats, next step
 6. Mark {active-phase} status `[x]` in `docs/blueprint.md`
 7. Propose next phase

@@ -35,38 +35,38 @@ User runs `/ocd-navigator`
 
 1. Strip `--delegate` from `$ARGUMENTS` if present
 2. If remaining arguments empty:
-  1. Target directory = project root
+    1. Target directory = project root
 3. Else:
-  1. Target directory = specified directory path
+    1. Target directory = specified directory path
 4. Dispatch
-  1. If `--delegate`:
-    1. Spawn single background agent with Workflow section, Rules section, and resolved arguments
-    2. Present agent report as-is
-  2. Else:
-    1. Proceed to Workflow
+    1. If `--delegate`:
+        1. Spawn single background agent with Workflow section, Rules section, and resolved arguments
+        2. Present agent report as-is
+    2. Else:
+        1. Proceed to Workflow
 
 ## Workflow
 
 1. Read `${CLAUDE_PLUGIN_ROOT}/skills/navigator/references/description-guidelines.md` for Description Guidelines
 2. Run `python3 ${CLAUDE_PLUGIN_ROOT}/skills/navigator/scripts/navigator_cli.py scan <target>` — syncs filesystem to database, reports added/removed/changed counts
 3. While `python3 ${CLAUDE_PLUGIN_ROOT}/skills/navigator/scripts/navigator_cli.py get-undescribed` does not return "No work remaining.":
-  1. If output is unexpected (not directory listing, error message, or unrecognized format):
-    1. STOP and report output to user for feedback before continuing
-  2. Review returned directory listing — `[?]` entries need new descriptions, `[~]` entries have stale descriptions that need re-evaluation; described siblings provide context
-  3. For each `[?]` entry:
-    1. Read file
-    2. Write description following Description Guidelines
-    3. Run `python3 ${CLAUDE_PLUGIN_ROOT}/skills/navigator/scripts/navigator_cli.py set <path> --description "..."`
-  4. For each `[~]` entry:
-    1. Read file
-    2. Compare current file scope against existing stale description
-    3. If description still accurately reflects file scope and role:
-      1. Run `python3 ${CLAUDE_PLUGIN_ROOT}/skills/navigator/scripts/navigator_cli.py set <path> --description "..."` with same description — `set` clears stale marker
-    4. Else:
-      1. Write updated description following Description Guidelines
-      2. Run `python3 ${CLAUDE_PLUGIN_ROOT}/skills/navigator/scripts/navigator_cli.py set <path> --description "..."`
-  5. Describe directory — informed by all children now visible in listing
-    1. Run `python3 ${CLAUDE_PLUGIN_ROOT}/skills/navigator/scripts/navigator_cli.py set <directory> --description "..."`
+    1. If output is unexpected (not directory listing, error message, or unrecognized format):
+        1. Break loop — report output to user for feedback before continuing
+    2. Review returned directory listing — `[?]` entries need new descriptions, `[~]` entries have stale descriptions that need re-evaluation; described siblings provide context
+    3. For each `[?]` entry:
+        1. Read file
+        2. Write description following Description Guidelines
+        3. Run `python3 ${CLAUDE_PLUGIN_ROOT}/skills/navigator/scripts/navigator_cli.py set <path> --description "..."`
+    4. For each `[~]` entry:
+        1. Read file
+        2. Compare current file scope against existing stale description
+        3. If description still accurately reflects file scope and role:
+            1. Run `python3 ${CLAUDE_PLUGIN_ROOT}/skills/navigator/scripts/navigator_cli.py set <path> --description "..."` with same description — `set` clears stale marker
+        4. Else:
+            1. Write updated description following Description Guidelines
+            2. Run `python3 ${CLAUDE_PLUGIN_ROOT}/skills/navigator/scripts/navigator_cli.py set <path> --description "..."`
+    5. Describe directory — informed by all children now visible in listing
+        1. Run `python3 ${CLAUDE_PLUGIN_ROOT}/skills/navigator/scripts/navigator_cli.py set <directory> --description "..."`
 
 ### Report
 
@@ -75,7 +75,7 @@ User runs `/ocd-navigator`
 
 ## Rules
 
-- Depth-first by design — `get-undescribed` returns deepest directory first; describe children before parents so directory descriptions reflect contents. Depth-first guarantees all child entries within returned directory are leaf entries (files or `traverse=0` directories) — child directories with their own undescribed entries are processed in earlier iterations. If `[?]` child directory appears within returned directory listing, treat as unexpected output and STOP.
+- Depth-first by design — `get-undescribed` returns deepest directory first; describe children before parents so directory descriptions reflect contents. Depth-first guarantees all child entries within returned directory are leaf entries (files or `traverse=0` directories) — child directories with their own undescribed entries are processed in earlier iterations. If `[?]` child directory appears within returned directory listing, treat as unexpected output and Break loop.
 - Preserve existing descriptions that already conform to guidelines — do not overwrite unless they violate Description Guidelines rules
 - No description length limit — follow Description Guidelines guidance, not brevity constraints
 - Directories with `traverse=0` are listed but not entered — describe directory itself, not its contents

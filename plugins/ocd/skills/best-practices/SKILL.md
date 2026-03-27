@@ -16,25 +16,25 @@ User runs `/ocd-best-practices`
 
 ## Route
 
-1. If not --target:
-  1. EXIT — respond with skill description and argument-hint
+1. If not --target: Exit to user — respond with skill description and argument-hint
 2. If {target} is `project`:
-  1. {scope} = `.` (project root)
-  2. {scope-type} = project
+    1. {scope} = `.` (project root)
+    2. {scope-type} = project
 3. Else if {target} is directory path:
-  1. {scope} = {target}
-  2. {scope-type} = directory
-4. Else:
-  1. EXIT — target must be `project` or directory path
+    1. {scope} = {target}
+    2. {scope-type} = directory
+4. Else: Exit to user — target must be `project` or directory path
 5. Dispatch
-  - If --delegate: Workflow agent spawns in background
+    - If --delegate: Workflow agent spawns in background
 
 ## Workflow
 
-1. Spawn agent with {scope}, {scope-type}, and instructions:
-  1. Read `_evaluation-instructions.md` and `_criteria.md`
-  2. Evaluate {scope} against criteria following focus area instructions
-  3. If {scope-type} is `project`: include Architecture focus area
+1. Spawn agent with evaluation({scope}, {scope-type}):
+    1. Read `_evaluation-instructions.md` and `_criteria.md`
+    2. Evaluate {scope} against criteria following focus area instructions
+    3. If {scope-type} is `project`: include Architecture focus area
+    4. Return:
+        - Findings grouped by focus area
 2. Present agent report
 
 ### Report
