@@ -58,3 +58,4 @@ Absence of a `_cli` file for a domain concept indicates missing CLI capabilities
 
 - `python3` not `python` — explicit interpreter version
 - No shebangs, no execute permissions — scripts are invoked via interpreter prefix
+

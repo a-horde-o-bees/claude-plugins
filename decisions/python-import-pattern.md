@@ -66,7 +66,7 @@ Set `PYTHONPATH` to include script directories before invocation.
 
 **Result:** Rejected. Claude Code hooks don't pass custom environment variables. Would need wrapper scripts. Doesn't help `_load_module` which computes paths at runtime. Adds fragile external configuration.
 
-### `pyrightconfig.json` with `extraPaths` (selected)
+### `pyrightconfig.json` with `extraPaths` (evaluated, insufficient alone)
 
 ```json
 {
@@ -78,19 +78,38 @@ Set `PYTHONPATH` to include script directories before invocation.
 }
 ```
 
-Tells pyright the same thing `pyproject.toml` tells pytest: these directories are on the import path. Bare imports resolve without `# type: ignore`.
+Tells pyright the same directories as pytest's `pythonpath`. Would resolve bare imports for pyright.
 
-**Result:** Correct solution. Matches reality (these directories ARE on `sys.path` at runtime). No code changes needed. Pyright resolves bare imports. No `try/except` complexity. No `# type: ignore` noise. Self-evaluation conformity agents won't flag resolved imports as issues.
+**Result:** Would fix pyright, but bare imports have a deeper problem — naming collisions. Multiple plugins have `_db.py`, and when both directories are on `sys.path` (which `extraPaths` and `pythonpath` both do), `import _db` finds the wrong one. See "Bare imports" entry above.
+
+### Per-plugin `conftest.py` with `sys.path` setup (evaluated, rejected)
+
+Each plugin's test directory gets a `conftest.py` that adds only its scripts directory to `sys.path`. Removes the global `pythonpath` from `pyproject.toml`.
+
+**Result:** Rejected. Pytest collects ALL conftest files during test collection before running any tests. All plugins' script directories end up on `sys.path` simultaneously, recreating the naming collision. Insertion order (`sys.path.insert(0, ...)`) doesn't help because `--import-mode=importlib` may resolve through the package hierarchy before checking `sys.path` order.
+
+### Renaming `_db.py` to unique names (evaluated, deferred)
+
+Rename to `_navigator_db.py` and `_research_db.py` to eliminate the collision at the source.
+
+**Result:** Would work but changes all import statements across both plugins. Deferred — the try/except pattern works and the rename blast radius is large for a test-only issue.
+
+## Decision
+
+**Keep `try/except ImportError` with relative imports.** The relative imports (`from . import _db`) resolve the correct module within the package hierarchy, avoiding naming collisions between plugins. The bare import fallback handles direct script execution where `sys.path` manipulation makes the right module available. This pattern is more complex than bare imports but handles a real collision problem.
+
+The `# type: ignore[import-not-found]` comments on bare import fallbacks are necessary — pyright cannot see runtime `sys.path` state.
 
 ## Key Insight
 
-All three invocation paths (direct execution, `_load_module`, pytest) add the scripts directory to `sys.path`. The import "problem" was only a static analysis gap — pyright didn't know what the runtime knows. The fix belongs in pyright configuration, not in import patterns.
+The import problem is NOT just a static analysis gap. Multiple plugins with identically-named internal modules (`_db.py`, `_init.py`) create real naming collisions when their directories coexist on `sys.path`. Relative imports (`from . import _db`) resolve the correct module through the package hierarchy, which is why the try/except pattern exists — the relative import is the correct import, and the bare import is the fallback for contexts where the package hierarchy isn't available.
 
 ## Guard Against Recurrence
 
-If pyright warnings about unresolved imports reappear:
+If import issues arise:
 
-1. Check `pyrightconfig.json` `extraPaths` — the directory may be missing
-2. Do NOT add `try/except ImportError` with relative imports — this was tried and adds dead code
-3. Do NOT add `# type: ignore[import-not-found]` — this suppresses legitimate errors too
-4. If a new scripts directory is added, add it to both `pyproject.toml` `pythonpath` AND `pyrightconfig.json` `extraPaths`
+1. The `try/except ImportError` pattern is intentional — do NOT simplify to bare imports
+2. Bare imports collide when multiple plugins have same-named internal modules (`_db.py`)
+3. `pyrightconfig.json` `extraPaths` can reduce pyright noise but doesn't fix collisions
+4. Naming collisions are the root cause — if the try/except becomes too burdensome, rename internal modules to be unique per plugin (e.g., `_navigator_db.py`, `_research_db.py`)
+5. Self-evaluation conformity agents should NOT flag the try/except pattern as a violation — it is the documented standard for this project
