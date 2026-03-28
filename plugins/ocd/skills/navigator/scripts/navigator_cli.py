@@ -7,13 +7,8 @@ Business logic lives in navigator.py and skill_resolver.py.
 import argparse
 import sys
 
-# Support both package import and direct execution
-try:
-    from . import navigator
-    from . import skill_resolver
-except ImportError:
-    import navigator  # type: ignore[import-not-found]
-    import skill_resolver  # type: ignore[import-not-found]
+import navigator  # type: ignore[import-not-found]
+import skill_resolver  # type: ignore[import-not-found]
 
 
 DEFAULT_DB = ".claude/ocd/navigator/navigator.db"

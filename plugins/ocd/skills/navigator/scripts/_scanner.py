@@ -11,10 +11,7 @@ import os
 import sqlite3
 from pathlib import Path
 
-try:
-    from ._db import get_connection
-except ImportError:
-    from _db import get_connection  # type: ignore[import-not-found]
+from _db import get_connection  # type: ignore[import-not-found]
 
 logger = logging.getLogger(__name__)
 

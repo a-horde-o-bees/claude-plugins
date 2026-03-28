@@ -12,7 +12,7 @@ All three paths result in the same thing: the scripts directory is on `sys.path`
 
 ## Decision
 
-**Use bare imports.** No relative imports, no `try/except ImportError` fallback pattern. Pyright warnings about unresolved imports are suppressed via `pyrightconfig.json` `extraPaths` (same directories as pytest's `pythonpath`).
+**Use bare imports with `# type: ignore[import-not-found]`.** No relative imports, no `try/except ImportError` fallback pattern. Naming collisions between plugins with same-named internal modules (`_db.py`) are prevented by test infrastructure: per-plugin `conftest.py` files add only that plugin's scripts directory to `sys.path`, and the global `pythonpath` in `pyproject.toml` excludes directories that would collide.
 
 ## Options Considered
 
@@ -94,22 +94,15 @@ Rename to `_navigator_db.py` and `_research_db.py` to eliminate the collision at
 
 **Result:** Would work but changes all import statements across both plugins. Deferred — the try/except pattern works and the rename blast radius is large for a test-only issue.
 
-## Decision
-
-**Keep `try/except ImportError` with relative imports.** The relative imports (`from . import _db`) resolve the correct module within the package hierarchy, avoiding naming collisions between plugins. The bare import fallback handles direct script execution where `sys.path` manipulation makes the right module available. This pattern is more complex than bare imports but handles a real collision problem.
-
-The `# type: ignore[import-not-found]` comments on bare import fallbacks are necessary — pyright cannot see runtime `sys.path` state.
-
 ## Key Insight
 
-The import problem is NOT just a static analysis gap. Multiple plugins with identically-named internal modules (`_db.py`, `_init.py`) create real naming collisions when their directories coexist on `sys.path`. Relative imports (`from . import _db`) resolve the correct module through the package hierarchy, which is why the try/except pattern exists — the relative import is the correct import, and the bare import is the fallback for contexts where the package hierarchy isn't available.
+The import problem is a static analysis gap AND a test infrastructure concern. Pyright cannot see runtime `sys.path` — `# type: ignore` handles this. Multiple plugins with same-named internal modules (`_db.py`) collide when their directories coexist on `sys.path` — per-plugin `conftest.py` handles this by isolating each plugin's test path.
 
 ## Guard Against Recurrence
 
 If import issues arise:
 
-1. The `try/except ImportError` pattern is intentional — do NOT simplify to bare imports
-2. Bare imports collide when multiple plugins have same-named internal modules (`_db.py`)
-3. `pyrightconfig.json` `extraPaths` can reduce pyright noise but doesn't fix collisions
-4. Naming collisions are the root cause — if the try/except becomes too burdensome, rename internal modules to be unique per plugin (e.g., `_navigator_db.py`, `_research_db.py`)
-5. Self-evaluation conformity agents should NOT flag the try/except pattern as a violation — it is the documented standard for this project
+1. Do NOT add `try/except ImportError` with relative imports — tried and rejected; adds dead code in production where bare imports always work
+2. If a naming collision surfaces in tests, check that the colliding directory is NOT in `pyproject.toml` `pythonpath` — use per-plugin `conftest.py` instead
+3. Self-evaluation conformity agents should NOT flag `# type: ignore[import-not-found]` on bare imports as a violation — it is the documented standard
+4. If collisions become unmanageable, rename internal modules to be unique per plugin (e.g., `_navigator_db.py`, `_research_db.py`) as a permanent fix

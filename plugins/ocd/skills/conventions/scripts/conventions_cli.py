@@ -9,11 +9,7 @@ import os
 import sys
 from pathlib import Path
 
-# Support both package import and direct execution
-try:
-    from . import conventions
-except ImportError:
-    import conventions  # type: ignore[import-not-found]
+import conventions  # type: ignore[import-not-found]
 
 
 _PROJECT_DIR = Path(os.environ.get("CLAUDE_PROJECT_DIR", os.getcwd()))

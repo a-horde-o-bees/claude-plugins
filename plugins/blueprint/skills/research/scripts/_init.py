@@ -10,12 +10,8 @@ import logging
 import sqlite3
 from pathlib import Path
 
-try:
-    from . import _db as db
-    import plugin  # type: ignore[import-not-found]
-except ImportError:
-    import _db as db  # type: ignore[import-not-found]
-    import plugin  # type: ignore[import-not-found]
+import _db as db  # type: ignore[import-not-found]
+import plugin  # type: ignore[import-not-found]
 
 logger = logging.getLogger(__name__)
 

@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from ...navigator import (
+from navigator import (  # type: ignore[import-not-found]
     _compute_git_hash,
     _mark_parents_stale,
     _is_pattern,
