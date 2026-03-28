@@ -16,7 +16,7 @@ User runs `/blueprint-init`
 
 1. Run init script — deploy rules and initialize research database
   ```bash
-  python3 ${CLAUDE_PLUGIN_ROOT}/scripts/plugin_cli.py init $ARGUMENTS
+  python3 ${CLAUDE_PLUGIN_ROOT}/run.py scripts.plugin_cli init $ARGUMENTS
   ```
 2. Present script output to user
 

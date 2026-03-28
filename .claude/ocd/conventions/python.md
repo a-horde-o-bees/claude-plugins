@@ -64,7 +64,7 @@ Extract internal modules when a file contains distinct functional domains — gr
 
 ### Internal Module Pattern
 
-`_{purpose}.py` — underscore prefix signals not standalone. Consumers import from parent module (`{name}.py`) or CLI (`{name}_cli.py`), not directly from underscored modules. Same-package files import via bare imports (`import _db`, `from _db import get_connection`) with `# type: ignore[import-not-found]` to suppress pyright warnings.
+`_{purpose}.py` — underscore prefix signals not standalone. Consumers import from parent module (`{name}.py`) or CLI (`{name}_cli.py`), not directly from underscored modules. Same-package files use relative imports (`from . import _db`, `from ._db import get_connection`).
 
 ```
 scripts/
@@ -91,8 +91,8 @@ Parent module (`{name}.py`) stays as public interface after decomposition. Impor
 
 ```python
 # module.py — facade after decomposition
-from _storage import get_connection, init_db, SCHEMA  # type: ignore[import-not-found]
-from _parser import parse_input  # type: ignore[import-not-found]
+from ._storage import get_connection, init_db, SCHEMA
+from ._parser import parse_input
 
 def process_path(db_path: str, target_path: str) -> str:
     """Uses get_connection from _storage, stays in facade."""
@@ -109,14 +109,22 @@ Decomposition of `{name}.py` is invisible to `{name}_cli.py`. CLI always imports
 
 ### Import Pattern
 
-Scripts use bare imports with `# type: ignore[import-not-found]` to suppress pyright warnings. All invocation contexts (direct execution, `_load_module`, pytest) add the scripts directory to `sys.path`, making bare imports resolve correctly at runtime.
+Scripts use relative imports within their `scripts/` package. Each plugin's `run.py` launcher establishes proper `__package__` context via `runpy.run_module()`.
+
+Within-package (same `scripts/` directory):
 
 ```python
-import _db as db  # type: ignore[import-not-found]
-from _db import get_connection  # type: ignore[import-not-found]
+from . import _db
+from ._db import get_connection
 ```
 
-Naming collisions between plugins with identically-named internal modules (e.g., multiple `_db.py`) are prevented by test infrastructure — each plugin's tests use per-plugin `conftest.py` that adds only that plugin's scripts directory to `sys.path`. The global `pythonpath` in `pyproject.toml` excludes directories that would collide. See `decisions/python-import-pattern.md` for full rationale.
+Cross-package (e.g., skill `_init.py` referencing root `scripts/plugin.py`):
+
+```python
+from scripts import plugin
+```
+
+No `sys.path` manipulation in individual scripts. No `# type: ignore` comments. See `decisions/python-import-pattern.md` for full rationale and alternatives evaluated.
 
 ## Testing
 

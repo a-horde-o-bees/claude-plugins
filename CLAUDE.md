@@ -45,5 +45,7 @@ Edit deployed copies in `.claude/`, never templates in `plugins/`. Templates are
 
 ## Testing
 
-- Run tests via `.venv/bin/python3 -m pytest -v`
-- All test paths configured in `pyproject.toml`
+- Run all tests via `bash scripts/test.sh`
+- Two layers: project tests (`tests/`) and per-plugin tests (isolated `pythonpath` per plugin)
+- Plugin test configs in `plugins/<plugin>/pytest.ini`
+- Project test config in `pyproject.toml`

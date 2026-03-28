@@ -12,7 +12,7 @@ import logging
 import sqlite3
 from pathlib import Path
 
-import _db as db  # type: ignore[import-not-found]
+from . import _db as db
 
 logger = logging.getLogger(__name__)
 

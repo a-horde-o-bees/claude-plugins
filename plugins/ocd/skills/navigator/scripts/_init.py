@@ -7,8 +7,8 @@ Interface contract: init() and status() return {"files": [...], "extra": [...]}.
 import sqlite3
 from pathlib import Path
 
-import _db  # type: ignore[import-not-found]
-import plugin  # type: ignore[import-not-found]
+from . import _db
+from scripts import plugin
 
 
 def _db_path(plugin_name: str, project_dir: Path) -> Path:

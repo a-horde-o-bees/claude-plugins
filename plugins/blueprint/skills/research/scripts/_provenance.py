@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import sqlite3
 
-import _db as _core  # type: ignore[import-not-found]
+from . import _db as _core
 
 logger = logging.getLogger(__name__)
 

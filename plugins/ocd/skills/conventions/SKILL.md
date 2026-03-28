@@ -26,7 +26,7 @@ User runs `/ocd-conventions`
     1. If {target} starts with `/`:
         1. Resolve skill path — run navigator CLI `resolve-skill` with skill name (strip leading `/` from {target})
             ```
-            python3 ${CLAUDE_PLUGIN_ROOT}/skills/navigator/scripts/navigator_cli.py resolve-skill <name>
+            python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.navigator.scripts.navigator_cli resolve-skill <name>
             ```
         2. If exit code 1: Exit to user — report skill not found
         3. {target-directory} = parent of resolved skill path
@@ -48,7 +48,7 @@ User runs `/ocd-conventions`
         2. Execute steps 8-10 with assigned variables
 8. Enumerate targets — run navigator CLI to get filtered file list
     ```bash
-    python3 ${CLAUDE_PLUGIN_ROOT}/skills/navigator/scripts/navigator_cli.py list {target-directory} --exclude ".claude/*" [--pattern "..."]
+    python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.navigator.scripts.navigator_cli list {target-directory} --exclude ".claude/*" [--pattern "..."]
     ```
     - If --pattern: For each --pattern, pass {pattern} to navigator CLI
     - {target-file} bypasses enumeration — file target from step 5 checks that path without exclusion
@@ -87,7 +87,7 @@ Evaluate rules and conventions against each other in dependency order. Per level
 
 1. Get evaluation order — run conventions CLI `list-self` command
     ```
-    python3 ${CLAUDE_PLUGIN_ROOT}/skills/conventions/scripts/conventions_cli.py list-self
+    python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.conventions.scripts.conventions_cli list-self
     ```
     1. If error (cycle detected or missing dependency):
         1. Report error to user and stop

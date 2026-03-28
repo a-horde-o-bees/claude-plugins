@@ -6,8 +6,8 @@ Interface contract: init() and status() return {"files": [...], "extra": [...]}.
 
 from pathlib import Path
 
-import conventions  # type: ignore[import-not-found]
-import plugin  # type: ignore[import-not-found]
+from . import conventions
+from scripts import plugin
 
 
 def _conventions_dir(plugin_name: str, project_dir: Path) -> Path:

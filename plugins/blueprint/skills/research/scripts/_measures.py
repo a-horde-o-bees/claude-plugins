@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 
-from _db import get_connection, retry_write  # type: ignore[import-not-found]
+from ._db import get_connection, retry_write
 
 logger = logging.getLogger(__name__)
 

@@ -7,7 +7,7 @@ Universal procedure for updating entity notes, description, and relevance. Appli
 ### Dependencies
 
 ```
-${CLAUDE_PLUGIN_ROOT}/skills/research/scripts/research_cli.py
+${CLAUDE_PLUGIN_ROOT}/run.py skills.research.scripts.research_cli
 docs/2-assessment-criteria.md
 ```
 

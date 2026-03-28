@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-import auto_approval as hook
+from scripts import auto_approval as hook
 
 
 # =========================================================================

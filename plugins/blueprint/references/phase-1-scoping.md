@@ -9,7 +9,7 @@ Design phase — iterative exploration with integrated entity assessment.
 ```
 ${CLAUDE_PLUGIN_ROOT}/references/reconcile-entity.md
 ${CLAUDE_PLUGIN_ROOT}/references/directory-traversal.md
-${CLAUDE_PLUGIN_ROOT}/skills/research/scripts/research_cli.py
+${CLAUDE_PLUGIN_ROOT}/run.py skills.research.scripts.research_cli
 docs/blueprint.md
 ```
 
@@ -67,7 +67,7 @@ When database contains entities at Phase 1 start (from initialization arguments,
     - `5-constraints.md` — implementation realities (budget, timeline, skills, platform)
     - `6-domain-knowledge.md` — landscape structure and distilled context research findings
 11. Create `references/` directory
-12. Initialize research database: `research_cli.py init`
+12. Initialize research database: `research_cli init`
 
 ### Domain Knowledge Development
 
@@ -75,14 +75,14 @@ Codify observations into domain knowledge guiding discovery and deep research. S
 
 13. Propose sources — directories (crawlable listings) and context sources (advice, data, guides)
 14. Register confirmed sources as entities:
-    - `research_cli.py register --name "Source Name" --url "https://source-url.com" --description "What it contains and why it matters" --role directory --relevance 0`
-    - `research_cli.py register --name "Source Name" --url "https://source-url.com" --description "What it contains and why it matters" --role context --relevance 0`
+    - `research_cli register --name "Source Name" --url "https://source-url.com" --description "What it contains and why it matters" --role directory --relevance 0`
+    - `research_cli register --name "Source Name" --url "https://source-url.com" --description "What it contains and why it matters" --role context --relevance 0`
 15. For directory entities, add accessibility note after registration:
-    - `research_cli.py upsert notes --entity-id ID --notes "[ACCESSIBILITY]: {static|js-rendered|auth-gated|api-available} — {brief access method}"`
+    - `research_cli upsert notes --entity-id ID --notes "[ACCESSIBILITY]: {static|js-rendered|auth-gated|api-available} — {brief access method}"`
     - Accessibility guides tool selection: `static` uses web fetch; `js-rendered` and `auth-gated` require browser automation (sequential)
 16. Present sources for user review:
-    - `research_cli.py get entities --role directory`
-    - `research_cli.py get entities --role context`
+    - `research_cli get entities --role directory`
+    - `research_cli get entities --role context`
 17. User refines — add, remove, or adjust sources
 
 ### Context Research Waves
@@ -134,12 +134,12 @@ Explore domain to discover entities. Two modes:
 
 When Phase 1 resumes with existing data, present dashboard:
 
-1. `research_cli.py get stats` — entity counts by role and stage
-2. `research_cli.py get entities --role example` — examples sorted by relevance
-3. `research_cli.py get entities --role directory` — directories (check progress notes)
-4. `research_cli.py get entities --role context` — context sources
-5. `research_cli.py get provenance` — provenance sources with entity counts
-6. `research_cli.py get reach --min 2` — multi-source entities
+1. `research_cli get stats` — entity counts by role and stage
+2. `research_cli get entities --role example` — examples sorted by relevance
+3. `research_cli get entities --role directory` — directories (check progress notes)
+4. `research_cli get entities --role context` — context sources
+5. `research_cli get provenance` — provenance sources with entity counts
+6. `research_cli get reach --min 2` — multi-source entities
 7. `docs/overview.md` for file index, `docs/1-scope.md` for scope context
 
 User directs next action: explore more, crawl directories, refine relevance, or proceed to deep research.
@@ -156,19 +156,19 @@ Research context entity to extract domain knowledge relevant to project.
 Entity: `{entity_id}`
 
 Database CLI — all commands use this prefix:
-  python3 ${CLAUDE_PLUGIN_ROOT}/skills/research/scripts/research_cli.py
+  python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research.scripts.research_cli
 
 Read scope and domain knowledge:
 - `docs/1-scope.md`
 - `docs/6-domain-knowledge.md`
 
 1. Resolve entity:
-    python3 ${CLAUDE_PLUGIN_ROOT}/skills/research/scripts/research_cli.py get entity {entity_id} --db references/research.db
+    python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research.scripts.research_cli get entity {entity_id} --db references/research.db
 2. Research entity content thoroughly — focus on knowledge, frameworks, data, and insights relevant to project scope
 3. After completing ALL research, read existing notes and apply Entity Reconciliation Procedure (below):
-    python3 ${CLAUDE_PLUGIN_ROOT}/skills/research/scripts/research_cli.py get entity {entity_id} --db references/research.db
+    python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research.scripts.research_cli get entity {entity_id} --db references/research.db
 4. Set stage to researched:
-    python3 ${CLAUDE_PLUGIN_ROOT}/skills/research/scripts/research_cli.py update entities --ids {entity_id} --stage researched --db references/research.db
+    python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research.scripts.research_cli update entities --ids {entity_id} --stage researched --db references/research.db
 
 Rules:
 - Complete ALL research before writing to database
@@ -189,7 +189,7 @@ Rules:
 Explore `{source_description}` to discover entities relevant to project scope.
 
 Database CLI — all commands use this prefix:
-  python3 ${CLAUDE_PLUGIN_ROOT}/skills/research/scripts/research_cli.py
+  python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research.scripts.research_cli
 
 Read scope and domain knowledge:
 - `docs/1-scope.md`
@@ -203,16 +203,16 @@ Entity roles:
 For each entity encountered:
 1. Assess against criteria from `docs/2-assessment-criteria.md`
 2. Register with appropriate role — `register` returns new ID or "Already registered" with existing ID:
-    python3 ${CLAUDE_PLUGIN_ROOT}/skills/research/scripts/research_cli.py register --name "Entity Name" --url "https://entity-url.com" --source-url "https://source-url.com" --description "One sentence: what entity is and primary approach" --relevance N [--role example|directory|context] --db references/research.db
+    python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research.scripts.research_cli register --name "Entity Name" --url "https://entity-url.com" --source-url "https://source-url.com" --description "One sentence: what entity is and primary approach" --relevance N [--role example|directory|context] --db references/research.db
 3. If new entity:
     1. Add notes capturing current knowledge:
-        python3 ${CLAUDE_PLUGIN_ROOT}/skills/research/scripts/research_cli.py upsert notes --entity-id ID --notes "observation 1" "observation 2" --db references/research.db
+        python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research.scripts.research_cli upsert notes --entity-id ID --notes "observation 1" "observation 2" --db references/research.db
     2. If entity fails hardline criterion:
-        python3 ${CLAUDE_PLUGIN_ROOT}/skills/research/scripts/research_cli.py update entities --ids ID --stage rejected --db references/research.db
-        python3 ${CLAUDE_PLUGIN_ROOT}/skills/research/scripts/research_cli.py upsert notes --entity-id ID --notes "Rejected: reason" --db references/research.db
+        python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research.scripts.research_cli update entities --ids ID --stage rejected --db references/research.db
+        python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research.scripts.research_cli upsert notes --entity-id ID --notes "Rejected: reason" --db references/research.db
 4. If already registered (reconcile-on-touch):
     1. Read existing entity:
-        python3 ${CLAUDE_PLUGIN_ROOT}/skills/research/scripts/research_cli.py get entity ID --db references/research.db
+        python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research.scripts.research_cli get entity ID --db references/research.db
     2. Apply Entity Reconciliation Procedure to notes, description, and relevance
 
 Relevance guide: read `docs/2-assessment-criteria.md` for project-specific scale.
@@ -235,7 +235,7 @@ Rules:
 Crawl directory entity `{directory_name}` (ID: `{directory_id}`) to discover example entities.
 
 Database CLI — all commands use this prefix:
-  python3 ${CLAUDE_PLUGIN_ROOT}/skills/research/scripts/research_cli.py
+  python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research.scripts.research_cli
 
 Read scope, domain knowledge, and traversal patterns:
 - `docs/1-scope.md`
@@ -243,7 +243,7 @@ Read scope, domain knowledge, and traversal patterns:
 - `${CLAUDE_PLUGIN_ROOT}/references/directory-traversal.md`
 
 Check directory entity for existing notes:
-    python3 ${CLAUDE_PLUGIN_ROOT}/skills/research/scripts/research_cli.py get entity {directory_id} --db references/research.db
+    python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research.scripts.research_cli get entity {directory_id} --db references/research.db
 
 Look for tagged crawl notes:
 - `[CRAWL METHOD]:` — technical approach; if present, follow it; if absent, follow Approach Discovery Workflow in directory-traversal.md
@@ -251,39 +251,39 @@ Look for tagged crawl notes:
 - `[CRAWL PROGRESS]:` — current position; if present, resume from indicated position; if absent, start from beginning
 
 For batch results (multiple entities per extraction):
-    python3 ${CLAUDE_PLUGIN_ROOT}/skills/research/scripts/research_cli.py register-batch --json '[{"name": "...", "url": "...", "description": "...", "relevance": N, "notes": ["fact1", "fact2"]}, ...]' --source-url "https://directory-url.com" --db references/research.db
+    python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research.scripts.research_cli register-batch --json '[{"name": "...", "url": "...", "description": "...", "relevance": N, "notes": ["fact1", "fact2"]}, ...]' --source-url "https://directory-url.com" --db references/research.db
 Notes only written for new entities. Already-registered listed in output for reconciliation — read existing notes and apply Entity Reconciliation Procedure.
 
 For individual entities:
 1. Assess against criteria from `docs/2-assessment-criteria.md`
 2. Register:
-    python3 ${CLAUDE_PLUGIN_ROOT}/skills/research/scripts/research_cli.py register --name "Entity Name" --url "https://entity-url.com" --source-url "https://directory-page-url.com" --description "One sentence: what entity is and primary approach" --relevance N --db references/research.db
+    python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research.scripts.research_cli register --name "Entity Name" --url "https://entity-url.com" --source-url "https://directory-page-url.com" --description "One sentence: what entity is and primary approach" --relevance N --db references/research.db
 3. If new entity:
     1. Add notes:
-        python3 ${CLAUDE_PLUGIN_ROOT}/skills/research/scripts/research_cli.py upsert notes --entity-id ID --notes "observation 1" "observation 2" --db references/research.db
+        python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research.scripts.research_cli upsert notes --entity-id ID --notes "observation 1" "observation 2" --db references/research.db
     2. If entity fails hardline criterion:
-        python3 ${CLAUDE_PLUGIN_ROOT}/skills/research/scripts/research_cli.py update entities --ids ID --stage rejected --db references/research.db
+        python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research.scripts.research_cli update entities --ids ID --stage rejected --db references/research.db
 4. If already registered (reconcile-on-touch):
     1. Read entity and apply reconciliation:
-        python3 ${CLAUDE_PLUGIN_ROOT}/skills/research/scripts/research_cli.py get entity ID --db references/research.db
+        python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research.scripts.research_cli get entity ID --db references/research.db
 
 Directory crawl notes — tagged notes on directory entity track method, script, and progress:
 
 `[CRAWL METHOD]:` — record technical approach before starting (or on first session); update only if approach changes:
-    python3 ${CLAUDE_PLUGIN_ROOT}/skills/research/scripts/research_cli.py upsert notes --entity-id {directory_id} --notes "[CRAWL METHOD]: [base URL, extraction technique, pagination, filtering, directory-specific details]" --db references/research.db
+    python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research.scripts.research_cli upsert notes --entity-id {directory_id} --notes "[CRAWL METHOD]: [base URL, extraction technique, pagination, filtering, directory-specific details]" --db references/research.db
 
 `[CRAWL SCRIPT]:` — save extraction script and record pointer:
 1. Save script to `references/crawl-scripts/{directory_id}-{short_name}.js`
 2. Add pointer note:
-    python3 ${CLAUDE_PLUGIN_ROOT}/skills/research/scripts/research_cli.py upsert notes --entity-id {directory_id} --notes "[CRAWL SCRIPT]: references/crawl-scripts/{directory_id}-{short_name}.js" --db references/research.db
+    python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research.scripts.research_cli upsert notes --entity-id {directory_id} --notes "[CRAWL SCRIPT]: references/crawl-scripts/{directory_id}-{short_name}.js" --db references/research.db
 
 `[CRAWL PROGRESS]:` — update after each page, section, or logical segment; remove previous and replace:
 1. If previous progress note exists, remove it:
-    python3 ${CLAUDE_PLUGIN_ROOT}/skills/research/scripts/research_cli.py remove notes --entity-id {directory_id} --note-ids N_ID --db references/research.db
+    python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research.scripts.research_cli remove notes --entity-id {directory_id} --note-ids N_ID --db references/research.db
 2. Add updated progress:
-    python3 ${CLAUDE_PLUGIN_ROOT}/skills/research/scripts/research_cli.py upsert notes --entity-id {directory_id} --notes "[CRAWL PROGRESS]: [what was processed and where to resume]" --db references/research.db
+    python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research.scripts.research_cli upsert notes --entity-id {directory_id} --notes "[CRAWL PROGRESS]: [what was processed and where to resume]" --db references/research.db
 3. Touch directory entity:
-    python3 ${CLAUDE_PLUGIN_ROOT}/skills/research/scripts/research_cli.py touch entities --ids {directory_id} --db references/research.db
+    python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research.scripts.research_cli touch entities --ids {directory_id} --db references/research.db
 
 Write notes in terms that make sense for directory structure. Goal: new agent reading notes for first time can unambiguously understand approach and find resumption point.
 

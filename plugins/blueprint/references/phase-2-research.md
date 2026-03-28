@@ -8,7 +8,7 @@ Execution phase — sequential agent work with checkpointing.
 
 ```
 ${CLAUDE_PLUGIN_ROOT}/references/reconcile-entity.md
-${CLAUDE_PLUGIN_ROOT}/skills/research/scripts/research_cli.py
+${CLAUDE_PLUGIN_ROOT}/run.py skills.research.scripts.research_cli
 docs/1-scope.md
 docs/2-assessment-criteria.md
 docs/4-effectiveness-criteria.md
@@ -25,7 +25,7 @@ references/research.db (populated with notes)
 
 ### Input
 
-- Entities sorted by relevance: `research_cli.py get entities --role example --stage new`
+- Entities sorted by relevance: `research_cli get entities --role example --stage new`
 - `docs/1-scope.md` for scope context, `docs/2-assessment-criteria.md` for relevance reassessment
 - `docs/4-effectiveness-criteria.md` for evaluating patterns, `docs/6-domain-knowledge.md` for landscape context
 
@@ -51,25 +51,25 @@ Research proceeds in waves by relevance tier. After each wave, orchestrator and 
 ### Research Loop
 
 4. Record current note count for entity:
-    - `research_cli.py get entity {entity_id}` — note "Notes:" count
+    - `research_cli get entity {entity_id}` — note "Notes:" count
 5. Spawn agent with Research Agent template
 6. After agent completes, verify:
     1. If task interrupted or errored: re-spawn
-    2. Check stage: `research_cli.py get entity {entity_id}`
+    2. Check stage: `research_cli get entity {entity_id}`
     3. If stage is not `researched`: re-spawn — agent failed to write
 
 ### Post-Research
 
 7. Propose spawning resolve-duplicates agent (`${CLAUDE_PLUGIN_ROOT}/references/resolve-duplicates.md`) — present to user for confirmation before executing; merges are hard to reverse
     1. If user confirms: spawn agent
-8. Present summary: `research_cli.py get stats`
+8. Present summary: `research_cli get stats`
 
 ## Re-Entry
 
 When Phase 2 resumes with existing research, present dashboard:
 
-1. `research_cli.py get stats` — entity counts by stage
-2. `research_cli.py get entities` — entities sorted by relevance with stage
+1. `research_cli get stats` — entity counts by stage
+2. `research_cli get entities` — entities sorted by relevance with stage
 3. Identify entities at stage `new` (pending) vs `researched` (complete)
 
 Resume with next entity at stage `new` in relevance order (highest first). Entities at `researched` have completed deep research — skip them.
@@ -93,19 +93,19 @@ Research entity's public presence thoroughly.
 Entity: `{entity_id}`
 
 Database CLI — all commands use this prefix:
-  python3 ${CLAUDE_PLUGIN_ROOT}/skills/research/scripts/research_cli.py
+  python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research.scripts.research_cli
 
 Read domain knowledge and effectiveness criteria:
 - `docs/6-domain-knowledge.md`
 - `docs/4-effectiveness-criteria.md`
 
 1. Resolve entity:
-    python3 ${CLAUDE_PLUGIN_ROOT}/skills/research/scripts/research_cli.py get entity {entity_id} --db references/research.db
+    python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research.scripts.research_cli get entity {entity_id} --db references/research.db
 2. Research entity web presence — start with primary URL, then explore thoroughly
 3. After completing ALL research, read existing notes and apply Entity Reconciliation Procedure (below):
-    python3 ${CLAUDE_PLUGIN_ROOT}/skills/research/scripts/research_cli.py get entity {entity_id} --db references/research.db
+    python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research.scripts.research_cli get entity {entity_id} --db references/research.db
 4. Set stage to researched:
-    python3 ${CLAUDE_PLUGIN_ROOT}/skills/research/scripts/research_cli.py update entities --ids {entity_id} --stage researched --db references/research.db
+    python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research.scripts.research_cli update entities --ids {entity_id} --stage researched --db references/research.db
 
 Rules:
 - Complete ALL research before writing to database

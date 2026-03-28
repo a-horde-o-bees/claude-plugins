@@ -9,7 +9,7 @@ import os
 import sys
 from pathlib import Path
 
-import conventions  # type: ignore[import-not-found]
+from . import conventions
 
 
 _PROJECT_DIR = Path(os.environ.get("CLAUDE_PROJECT_DIR", os.getcwd()))

@@ -25,7 +25,7 @@ ${CLAUDE_PLUGIN_ROOT}/references/resolve-duplicates.md
 ${CLAUDE_PLUGIN_ROOT}/references/reassess-relevance.md
 ${CLAUDE_PLUGIN_ROOT}/references/directory-traversal.md
 ${CLAUDE_PLUGIN_ROOT}/references/source-templates.db
-${CLAUDE_PLUGIN_ROOT}/skills/research/scripts/research_cli.py
+${CLAUDE_PLUGIN_ROOT}/run.py skills.research.scripts.research_cli
 ${CLAUDE_PLUGIN_ROOT}/templates/blueprint.md
 ```
 
@@ -112,7 +112,7 @@ When user requests "add more entities" at any phase gate:
     - `references/analysis-findings.md`
     - `references/analysis-interpretation.md`
     - `docs/implementation-progress.md` (if exists)
-2. Run `research_cli.py clear measures`
+2. Run `research_cli clear measures`
 3. Update `docs/blueprint.md`: Phase 1 `[-]`, Phases 2-4 `[ ]`
 4. Read Phase 1 reference file — re-entry detects existing domain knowledge and entities
 
@@ -166,7 +166,7 @@ SQLite database at `references/research.db`.
 ### CLI
 
 ```
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/research/scripts/research_cli.py <command> [--db PATH]
+python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research.scripts.research_cli <command> [--db PATH]
 ```
 
 Default `--db`: `references/research.db`. All commands accept `--db` override.

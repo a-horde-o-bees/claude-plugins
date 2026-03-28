@@ -6,7 +6,7 @@ argument-hint: "[directory-path] [--delegate] (defaults to project root)"
 
 # /ocd-navigator
 
-Scan filesystem and populate navigator database. Deterministic operations (add/remove/change detection) are handled by `python3 ${CLAUDE_PLUGIN_ROOT}/skills/navigator/scripts/navigator_cli.py scan`. Description writing is handled by agent, working depth-first via `python3 ${CLAUDE_PLUGIN_ROOT}/skills/navigator/scripts/navigator_cli.py get-undescribed`.
+Scan filesystem and populate navigator database. Deterministic operations (add/remove/change detection) are handled by `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.navigator.scripts.navigator_cli scan`. Description writing is handled by agent, working depth-first via `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.navigator.scripts.navigator_cli get-undescribed`.
 
 ## Process Model
 
@@ -48,25 +48,25 @@ User runs `/ocd-navigator`
 ## Workflow
 
 1. Read `${CLAUDE_PLUGIN_ROOT}/skills/navigator/references/description-guidelines.md` for Description Guidelines
-2. Run `python3 ${CLAUDE_PLUGIN_ROOT}/skills/navigator/scripts/navigator_cli.py scan <target>` — syncs filesystem to database, reports added/removed/changed counts
-3. While `python3 ${CLAUDE_PLUGIN_ROOT}/skills/navigator/scripts/navigator_cli.py get-undescribed` does not return "No work remaining.":
+2. Run `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.navigator.scripts.navigator_cli scan <target>` — syncs filesystem to database, reports added/removed/changed counts
+3. While `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.navigator.scripts.navigator_cli get-undescribed` does not return "No work remaining.":
     1. If output is unexpected (not directory listing, error message, or unrecognized format):
         1. Break loop — report output to user for feedback before continuing
     2. Review returned directory listing — `[?]` entries need new descriptions, `[~]` entries have stale descriptions that need re-evaluation; described siblings provide context
     3. For each `[?]` entry:
         1. Read file
         2. Write description following Description Guidelines
-        3. Run `python3 ${CLAUDE_PLUGIN_ROOT}/skills/navigator/scripts/navigator_cli.py set <path> --description "..."`
+        3. Run `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.navigator.scripts.navigator_cli set <path> --description "..."`
     4. For each `[~]` entry:
         1. Read file
         2. Compare current file scope against existing stale description
         3. If description still accurately reflects file scope and role:
-            1. Run `python3 ${CLAUDE_PLUGIN_ROOT}/skills/navigator/scripts/navigator_cli.py set <path> --description "..."` with same description — `set` clears stale marker
+            1. Run `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.navigator.scripts.navigator_cli set <path> --description "..."` with same description — `set` clears stale marker
         4. Else:
             1. Write updated description following Description Guidelines
-            2. Run `python3 ${CLAUDE_PLUGIN_ROOT}/skills/navigator/scripts/navigator_cli.py set <path> --description "..."`
+            2. Run `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.navigator.scripts.navigator_cli set <path> --description "..."`
     5. Describe directory — informed by all children now visible in listing
-        1. Run `python3 ${CLAUDE_PLUGIN_ROOT}/skills/navigator/scripts/navigator_cli.py set <directory> --description "..."`
+        1. Run `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.navigator.scripts.navigator_cli set <directory> --description "..."`
 
 ### Report
 

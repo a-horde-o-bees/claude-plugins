@@ -11,8 +11,8 @@ import os
 import sqlite3
 from pathlib import Path
 
-from _db import get_connection, init_db, SCHEMA, MIGRATIONS, SEED_PATH  # type: ignore[import-not-found]  # noqa: F401
-from _scanner import (  # type: ignore[import-not-found]  # noqa: F401
+from ._db import get_connection, init_db, SCHEMA, MIGRATIONS, SEED_PATH  # noqa: F401
+from ._scanner import (  # noqa: F401
     scan_path,
     _walk_filesystem,
     _is_pattern,

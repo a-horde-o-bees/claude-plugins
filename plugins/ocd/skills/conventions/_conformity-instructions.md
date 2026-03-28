@@ -4,7 +4,7 @@ Reformat target file to conform with project conventions.
 
 1. Discover criteria — run conventions CLI to find applicable conventions and rules
     ```
-    python3 ${CLAUDE_PLUGIN_ROOT}/skills/conventions/scripts/conventions_cli.py list-matching <target-file>
+    python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.conventions.scripts.conventions_cli list-matching <target-file>
     ```
     1. If no criteria match: report "no criteria apply" and stop
     2. If file tagged `[fail: N lines]`: report auto-fail with line count and stop

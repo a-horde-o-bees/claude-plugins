@@ -9,8 +9,8 @@ from __future__ import annotations
 import argparse
 import sys
 
-import _templates as templates  # type: ignore[import-not-found]
-import research  # type: ignore[import-not-found]
+from . import _templates as templates
+from . import research
 
 
 # --- Dispatchers ---

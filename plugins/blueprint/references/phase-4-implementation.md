@@ -7,7 +7,7 @@ Design phase — includes refinement loop.
 ### Dependencies
 
 ```
-${CLAUDE_PLUGIN_ROOT}/skills/research/scripts/research_cli.py
+${CLAUDE_PLUGIN_ROOT}/run.py skills.research.scripts.research_cli
 references/analysis-findings.md
 references/analysis-interpretation.md
 references/research.db
@@ -32,7 +32,7 @@ docs/progress.db
 - Confirmed findings from `docs/blueprint.md` Phase 3 section
 - Project goals and priority order from `docs/3-goals.md`
 - Implementation constraints from `docs/5-constraints.md`
-- Database for detailed entity queries: `research_cli.py get entity {id}`
+- Database for detailed entity queries: `research_cli get entity {id}`
 
 ### Draft Blueprint
 

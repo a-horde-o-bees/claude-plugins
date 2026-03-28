@@ -40,7 +40,7 @@ Design phases include refinement loops. Execution phases run sequential agents w
 
 ## Research Database
 
-SQLite database tracks entities, notes, measures, provenance, and structured source data. All operations through `research_cli.py` — agents never access the database directly.
+SQLite database tracks entities, notes, measures, provenance, and structured source data. All operations through `research_cli` — agents never access the database directly.
 
 Entity roles:
 - **example** (default) -- comparable sites to study

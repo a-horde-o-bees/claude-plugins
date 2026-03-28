@@ -101,7 +101,7 @@ Skills define their own deterministic {target} values (e.g., `project`, `self`) 
 Navigator CLI resolves skill names across all discovery locations in priority order:
 
 ```
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/navigator/scripts/navigator_cli.py resolve-skill <name>
+python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.navigator.scripts.navigator_cli resolve-skill <name>
 ```
 
 Exits with code 1 if skill not found. Skills should Exit to user with error when resolution fails.
@@ -279,7 +279,7 @@ When content is used by only one workflow, keep it as a workflow subsection — 
 Skills that accept path argument and can operate on directories must use navigator CLI for file enumeration — never invent ad-hoc file listing (glob, `git ls-files`, agent judgment).
 
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/navigator/scripts/navigator_cli.py list <path> [--pattern "*.py"]
+python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.navigator.scripts.navigator_cli list <path> [--pattern "*.py"]
 ```
 
 Navigator applies project-wide exclude rules (`.git`, `.venv`, `__pycache__`, etc.) and traversal limits deterministically. `--pattern` filters by basename glob and is repeatable for OR-combined matching.

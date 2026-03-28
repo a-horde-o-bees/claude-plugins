@@ -7,7 +7,7 @@ Execution phase — sequential batch agents with rolling analysis and orchestrat
 ### Dependencies
 
 ```
-${CLAUDE_PLUGIN_ROOT}/skills/research/scripts/research_cli.py
+${CLAUDE_PLUGIN_ROOT}/run.py skills.research.scripts.research_cli
 docs/3-goals.md
 docs/4-effectiveness-criteria.md
 docs/6-domain-knowledge.md
@@ -33,8 +33,8 @@ references/analysis-interpretation.md
 ### Pre-Analysis
 
 1. Query database for analysis inputs:
-    - `research_cli.py get stats` — overall summary
-    - `research_cli.py get entities --stage researched` — researched entities with relevance
+    - `research_cli get stats` — overall summary
+    - `research_cli get entities --stage researched` — researched entities with relevance
 2. Build ordered entity list — researched entities sorted by relevance (highest first), with entity IDs
 3. Present analysis plan to user — entity count, analytical questions, dynamic loading approach (agents self-regulate batch size based on accumulated note content)
 4. User confirms to proceed
@@ -52,7 +52,7 @@ All agents answer all questions from whatever entities they consume:
 
 ### Execution
 
-5. Clear existing measures from prior analysis runs: `research_cli.py clear measures`
+5. Clear existing measures from prior analysis runs: `research_cli clear measures`
 6. Spawn sequential agents with dynamic loading:
     1. Spawn agent with Analysis Agent template:
         - Provide full ordered entity list (all researched entity IDs by relevance descending)
@@ -85,7 +85,7 @@ All agents answer all questions from whatever entities they consume:
     - Pattern tiers (table-stakes, differentiators, emerging, absent) based on adoption count across cohort, not effectiveness recommendation; tier descriptions must state this
     - Cautionary patterns note correlation with weaker presences, not causal claims
     - Decision cascades explain co-occurrence logic
-    - Measure distributions and co-occurrence data (from `research_cli.py get measures`)
+    - Measure distributions and co-occurrence data (from `research_cli get measures`)
     - Decision cascades with specific entity evidence
     - Cautionary patterns with specific entity evidence
     - Domain knowledge updates (if any)
@@ -114,7 +114,7 @@ All agents answer all questions from whatever entities they consume:
 
 When Phase 3 resumes with existing analysis data, present dashboard:
 
-1. `research_cli.py get stats` — entity counts including measures
+1. `research_cli get stats` — entity counts including measures
 2. If `references/analysis-findings.md` exists: present existing findings
 3. If `references/analysis-interpretation.md` exists: present existing interpretation
 4. User directs: re-run analysis (clears measures first), re-interpret with updated goals (rewrites interpretation only), refine existing analysis, or proceed to Phase 4
@@ -127,7 +127,7 @@ When Phase 3 resumes with existing analysis data, present dashboard:
 Analyze entity notes and produce consolidated cross-entity analysis.
 
 Database CLI — all commands use this prefix:
-  python3 ${CLAUDE_PLUGIN_ROOT}/skills/research/scripts/research_cli.py
+  python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research.scripts.research_cli
 
 Analytical questions to answer from entities examined:
 1. Cross-cutting patterns — what do high-relevance entities share?
@@ -148,7 +148,7 @@ Prior analysis from previous batches (refine, confirm, adjust, or overturn with 
 
 Procedure:
 1. Read entities one at a time in provided order, starting from `{start_entity_id}`:
-    python3 ${CLAUDE_PLUGIN_ROOT}/skills/research/scripts/research_cli.py get entity {entity_id} --db references/research.db
+    python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research.scripts.research_cli get entity {entity_id} --db references/research.db
 2. After reading each entity, assess whether room to consume more; stop when adding another entity's notes would leave insufficient room for thorough analysis; always consume at least one entity
 3. Analyze notes across all consumed entities
 4. {if prior_analysis} Integrate with prior analysis — update counts, strengthen or weaken patterns, add new findings {end if}

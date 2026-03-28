@@ -9,8 +9,8 @@ from pathlib import Path
 
 import pytest
 
-import skill_resolver  # type: ignore[import-not-found]
-from skill_resolver import (  # type: ignore[import-not-found]
+from skills.navigator.scripts import skill_resolver
+from skills.navigator.scripts.skill_resolver import (
     _parse_frontmatter_name,
     _search_skills_dir,
     resolve_skill,
