@@ -2,15 +2,6 @@
 
 Agent subprocess — rescores entity relevance against current assessment criteria using existing notes. No URL visits or new research unless notes are insufficient to evaluate a criterion.
 
-## File Map
-
-### Dependencies
-
-```
-${CLAUDE_PLUGIN_ROOT}/run.py skills.research
-blueprint/2-assessment-criteria.md
-```
-
 ## Input
 
 Orchestrator provides:

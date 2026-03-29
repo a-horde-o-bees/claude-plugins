@@ -2,26 +2,6 @@
 
 Design phase — includes refinement loop.
 
-## File Map
-
-### Dependencies
-
-```
-${CLAUDE_PLUGIN_ROOT}/run.py skills.research
-blueprint/7-findings.md
-blueprint/8-interpretation.md
-blueprint/data/research.db
-blueprint/data/state.md
-blueprint/3-goals.md
-blueprint/5-constraints.md
-```
-
-### Created
-
-```
-blueprint/9-blueprint.md
-```
-
 ## Workflow
 
 ### Input

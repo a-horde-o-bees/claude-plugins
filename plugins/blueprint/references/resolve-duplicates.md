@@ -2,15 +2,6 @@
 
 Agent subprocess — resolves all duplicate groups in research database sequentially.
 
-## File Map
-
-### Dependencies
-
-```
-${CLAUDE_PLUGIN_ROOT}/references/reconcile-entity.md
-${CLAUDE_PLUGIN_ROOT}/run.py skills.research
-```
-
 ## Input
 
 Orchestrator provides:

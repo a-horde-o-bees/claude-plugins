@@ -11,43 +11,6 @@ Structured competitive research and implementation planning. Bootstraps new proj
 
 Reads `blueprint/data/state.md` to detect current state. If absent, initializes from template and starts Phase 1. Otherwise, finds next incomplete phase and proposes working on it.
 
-## File Map
-
-### Dependencies
-
-```
-${CLAUDE_PLUGIN_ROOT}/references/phase-1-scoping.md
-${CLAUDE_PLUGIN_ROOT}/references/phase-2-research.md
-${CLAUDE_PLUGIN_ROOT}/references/phase-3-analysis.md
-${CLAUDE_PLUGIN_ROOT}/references/phase-4-implementation.md
-${CLAUDE_PLUGIN_ROOT}/references/reconcile-entity.md
-${CLAUDE_PLUGIN_ROOT}/references/resolve-duplicates.md
-${CLAUDE_PLUGIN_ROOT}/references/reassess-relevance.md
-${CLAUDE_PLUGIN_ROOT}/references/directory-traversal.md
-${CLAUDE_PLUGIN_ROOT}/references/source-templates.db
-${CLAUDE_PLUGIN_ROOT}/run.py skills.research
-${CLAUDE_PLUGIN_ROOT}/templates/blueprint.md
-```
-
-### Created
-
-```
-blueprint/data/state.md
-blueprint/data/history.md
-blueprint/data/research.db
-blueprint/overview.md
-blueprint/1-scope.md
-blueprint/2-assessment-criteria.md
-blueprint/3-goals.md
-blueprint/4-effectiveness-criteria.md
-blueprint/5-constraints.md
-blueprint/6-domain-knowledge.md
-blueprint/7-findings.md
-blueprint/8-interpretation.md
-blueprint/9-blueprint.md
-blueprint/scripts/
-```
-
 ## Process Model
 
 ### Phase Structure
@@ -131,7 +94,7 @@ Database preserved. New entities accumulate during scoping; Phase 2 processes on
 6. Mark {active-phase} status `[x]` in `blueprint/data/state.md`
 7. Propose next phase
 
-Interactive checkpoints in main conversation between agent calls. Sub-agents run autonomously — user-facing decisions at orchestration level only.
+Interactive checkpoints in main conversation between agent calls. Subagents run autonomously — user-facing decisions at orchestration level only.
 
 ### Report
 
@@ -305,7 +268,7 @@ Orchestrator selects server based on directory accessibility notes and concurren
 - Spawn autonomous agents — one per discrete research unit
 - One agent per entity for deep research, single pass — relevance ordering determines priority
 - Sequential by default — parallel only when explicitly approved by user
-- Sub-agents inherit parent tools and permissions from settings.json
+- Subagents inherit parent tools and permissions from settings.json
 
 ### Agent Database Access
 

@@ -2,25 +2,6 @@
 
 Execution phase — sequential agent work with checkpointing.
 
-## File Map
-
-### Dependencies
-
-```
-${CLAUDE_PLUGIN_ROOT}/references/reconcile-entity.md
-${CLAUDE_PLUGIN_ROOT}/run.py skills.research
-blueprint/1-scope.md
-blueprint/2-assessment-criteria.md
-blueprint/4-effectiveness-criteria.md
-blueprint/6-domain-knowledge.md
-```
-
-### Created
-
-```
-blueprint/data/research.db (populated with notes)
-```
-
 ## Workflow
 
 ### Input

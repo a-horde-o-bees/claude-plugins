@@ -2,15 +2,6 @@
 
 Universal procedure for updating entity notes, description, and relevance. Applied any time agent touches entity — discovery, research, dedup reconciliation, or reassessment.
 
-## File Map
-
-### Dependencies
-
-```
-${CLAUDE_PLUGIN_ROOT}/run.py skills.research
-blueprint/2-assessment-criteria.md
-```
-
 ## Notes
 
 ### Decision Procedure

@@ -2,30 +2,6 @@
 
 Design phase — iterative exploration with integrated entity assessment.
 
-## File Map
-
-### Dependencies
-
-```
-${CLAUDE_PLUGIN_ROOT}/references/reconcile-entity.md
-${CLAUDE_PLUGIN_ROOT}/references/directory-traversal.md
-${CLAUDE_PLUGIN_ROOT}/run.py skills.research
-blueprint/data/state.md
-```
-
-### Created
-
-```
-blueprint/overview.md
-blueprint/1-scope.md
-blueprint/2-assessment-criteria.md
-blueprint/3-goals.md
-blueprint/4-effectiveness-criteria.md
-blueprint/5-constraints.md
-blueprint/6-domain-knowledge.md
-blueprint/data/research.db
-```
-
 ## Seed Data
 
 When database contains entities at Phase 1 start (from initialization arguments, prior sessions, or external import), treat as unverified leads. Landscape exploration and relevance assessment required regardless. Seeded entities verified during exploration alongside new discoveries — not assumed correct. Discovery agents encountering seeded entity URL hit registration dedup and skip, but orchestrator must ensure every seeded entity gets directly assessed before Phase 1 gate: verify URL is live, confirm recency criterion, validate description against actual content, reconcile notes.

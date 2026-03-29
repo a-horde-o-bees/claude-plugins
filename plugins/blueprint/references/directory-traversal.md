@@ -2,21 +2,6 @@
 
 Reusable primitives and proven recipes for extracting entities from directory websites during Phase 1 landscape exploration. Directory crawl agents read this file when developing or executing crawl approach.
 
-## File Map
-
-### Dependencies
-
-```
-${CLAUDE_PLUGIN_ROOT}/references/reconcile-entity.md
-${CLAUDE_PLUGIN_ROOT}/run.py skills.research
-```
-
-### Created
-
-```
-blueprint/scripts/
-```
-
 ## Approach Discovery Workflow
 
 When directory entity has no `[CRAWL METHOD]:` note, agent develops approach before starting extraction:
