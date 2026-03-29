@@ -2,11 +2,11 @@
 
 ## Context
 
-Skills with multiple workflows share content blocks (evaluation protocols, criteria catalogs, instruction sets). These blocks are passed to spawned agents as part of their instructions. Agents that receive content they don't need (coordinating agents seeing evaluation constraints, evaluation agents seeing triage criteria) can be confused by conflicting instructions or waste context on irrelevant material.
+Skills with multiple workflows share content blocks (evaluation protocols, criteria catalogs, instruction sets). These blocks are passed to spawned agents as part of their instructions. Agents that receive content they do not need (coordinating agents seeing evaluation constraints, evaluation agents seeing triage criteria) can be confused by conflicting instructions or waste context on irrelevant material.
 
 ## Options Considered
 
-**Inline `## Components` section in SKILL.md** — components defined as subsections, referenced by name in workflows. Orchestrator extracts and bundles referenced components when dispatching to agents. Disqualified: orchestrator pre-reads and inlines content, agents receive everything bundled in their prompt, coordinating agents see evaluation instructions they shouldn't act on (caused a real conflict where recursion constraint told coordinating agent not to spawn sub-agents while its own instructions told it to).
+**Inline `## Components` section in SKILL.md** — components defined as subsections, referenced by name in workflows. Orchestrator extracts and bundles referenced components when dispatching to agents. Disqualified: orchestrator pre-reads and inlines content, agents receive everything bundled in their prompt, coordinating agents see evaluation instructions they should not act on (caused a real conflict where recursion constraint told coordinating agent not to spawn subagents while its own instructions told it to).
 
 **Extracted `_{name}.md` files alongside SKILL.md** — components as separate files in skill directory. Workflow steps include explicit `Read _file.md` instructions. Each agent reads only files it needs at execution time.
 
@@ -14,7 +14,7 @@ Skills with multiple workflows share content blocks (evaluation protocols, crite
 
 Extract components to `_{name}.md` files. Underscore prefix signals internal (consistent with `_{purpose}.py` pattern for internal Python modules). Workflows include explicit read steps. Orchestrator does not pre-read component files — workflow steps dictate when files are read and by whom.
 
-For multi-agent workflows: coordinating agents pass file read instructions to sub-agents without reading the files themselves. This prevents coordinating agents from being influenced by content meant for evaluation or execution agents.
+For multi-agent workflows: coordinating agents pass file read instructions to subagents without reading the files themselves. This prevents coordinating agents from being influenced by content meant for evaluation or execution agents.
 
 ## Consequences
 

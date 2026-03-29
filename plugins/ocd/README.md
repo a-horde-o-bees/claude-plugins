@@ -30,7 +30,7 @@ Convention files deployed to `.claude/rules/` via `/ocd-init`. Auto-loaded every
 
 PreToolUse hook on Bash, Edit, and Write tools. Two evaluation layers:
 
-1. **Hardcoded blocks** — structural constraints that don't stick as prose instructions. Blocks directory changes (`cd`, `pushd`, `popd`), compound commands (`&&`, `||`, `;`), and pipes (`|`). Returns inline guidance so the agent self-corrects without user intervention.
+1. **Hardcoded blocks** — structural constraints that do not stick as prose instructions. Blocks directory changes (`cd`, `pushd`, `popd`), compound commands (`&&`, `||`, `;`), and pipes (`|`). Returns inline guidance so the agent self-corrects without user intervention.
 
 2. **Dynamic settings enforcement** — reads and merges global (`~/.claude/settings.json`) and project (`.claude/settings.json`) allow/deny lists. Approves operations matching allow patterns, respects deny rules with precedence, validates file paths against allowed directories.
 

@@ -181,7 +181,7 @@ Notes:
 
 **Supporting files deployed to projects** live under `.claude/<plugin>/`, with skill-specific files under `.claude/<plugin>/<skill>/`. Directory nesting provides namespace isolation — no prefix needed.
 
-**Plugin-internal files** don't use the prefix — already namespaced by living inside the plugin directory.
+**Plugin-internal files** do not use the prefix — already namespaced by living inside the plugin directory.
 
 **Commands and skills** use the plugin-name prefix in their frontmatter `name` field so the plugin name surfaces all commands during search.
 

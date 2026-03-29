@@ -2,25 +2,6 @@
 
 Execution phase — sequential batch agents with rolling analysis and orchestrator-driven measure extraction.
 
-## File Map
-
-### Dependencies
-
-```
-${CLAUDE_PLUGIN_ROOT}/run.py skills.research
-blueprint/3-goals.md
-blueprint/4-effectiveness-criteria.md
-blueprint/6-domain-knowledge.md
-```
-
-### Created
-
-```
-blueprint/data/research.db (measures added)
-blueprint/7-findings.md
-blueprint/8-interpretation.md
-```
-
 ## Workflow
 
 ### Input
@@ -46,7 +27,7 @@ All agents answer all questions from whatever entities they consume:
 1. Cross-cutting patterns — what do high-relevance entities share? Compare note themes across entities with highest relevance. Identify common approaches, tools, strategies.
 2. Adoption frequency — how many entities use X? Scan notes for mentions of specific tools, platforms, approaches. Count distinct entities referencing each.
 3. Purpose and value — why do they use X? Extract context from notes about why entities adopted specific approaches. Capture stated benefits and outcomes.
-4. Gap analysis — what are top performers using that others aren't? Compare note content between high-relevance and lower-relevance entities.
+4. Gap analysis — what are top performers using that others are not? Compare note content between high-relevance and lower-relevance entities.
 5. Cautionary patterns — what do underperformers share? Identify patterns associated with low relevance, abandonment, or poor adoption.
 6. Decision cascades — adopting X also gives Y and Z. Identify co-occurring patterns in notes — approaches that come bundled, single decisions with outsized impact.
 
@@ -133,7 +114,7 @@ Analytical questions to answer from entities examined:
 1. Cross-cutting patterns — what do high-relevance entities share?
 2. Adoption frequency — how many entities use each tool, platform, or approach?
 3. Purpose and value — why do entities adopt specific approaches? What benefits?
-4. Gap analysis — what are top performers using that others aren't?
+4. Gap analysis — what are top performers using that others are not?
 5. Cautionary patterns — what do underperformers share?
 6. Decision cascades — which adoptions bundle together or create outsized impact?
 

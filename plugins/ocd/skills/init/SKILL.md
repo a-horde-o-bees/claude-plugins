@@ -15,9 +15,9 @@ User runs `/ocd-init`
 ## Workflow
 
 1. Run init script — deploy conventions and initialize infrastructure
-  ```bash
-  python3 ${CLAUDE_PLUGIN_ROOT}/run.py plugin init $ARGUMENTS
-  ```
+    ```bash
+    python3 ${CLAUDE_PLUGIN_ROOT}/run.py plugin init $ARGUMENTS
+    ```
 2. Present script output to user
 
 ### Report

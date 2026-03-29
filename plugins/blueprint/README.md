@@ -43,9 +43,9 @@ Design phases include refinement loops. Execution phases run sequential agents w
 SQLite database tracks entities, notes, measures, provenance, and structured source data. All operations through `research` — agents never access the database directly.
 
 Entity roles:
-- **example** (default) -- comparable sites to study
-- **directory** -- crawlable listings yielding examples
-- **context** -- knowledge sources informing the project
+- **example** (default) — comparable sites to study
+- **directory** — crawlable listings yielding examples
+- **context** — knowledge sources informing the project
 
 ## Optional: Browser Automation
 
