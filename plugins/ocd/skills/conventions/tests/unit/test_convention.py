@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from skills.conventions.scripts.conventions import (
+from skills.conventions import (
     load_manifest,
     load_settings,
     list_patterns,

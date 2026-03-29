@@ -2,11 +2,11 @@
 
 Adds the plugin root to sys.path and runs the target module via
 runpy.run_module, establishing proper __package__ context for
-relative imports within scripts/ packages.
+relative imports within packages.
 
 Usage:
     python3 run.py scripts.plugin_cli init
-    python3 run.py skills.research.scripts.research_cli get stats --db path/to/db
+    python3 run.py skills.research get stats --db path/to/db
 """
 
 import sys

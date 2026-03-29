@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from skills.navigator.scripts.navigator import (
+from skills.navigator import (
     _compute_git_hash,
     _mark_parents_stale,
     _is_pattern,

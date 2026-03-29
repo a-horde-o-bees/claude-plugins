@@ -25,7 +25,7 @@ ${CLAUDE_PLUGIN_ROOT}/references/resolve-duplicates.md
 ${CLAUDE_PLUGIN_ROOT}/references/reassess-relevance.md
 ${CLAUDE_PLUGIN_ROOT}/references/directory-traversal.md
 ${CLAUDE_PLUGIN_ROOT}/references/source-templates.db
-${CLAUDE_PLUGIN_ROOT}/run.py skills.research.scripts.research_cli
+${CLAUDE_PLUGIN_ROOT}/run.py skills.research
 ${CLAUDE_PLUGIN_ROOT}/templates/blueprint.md
 ```
 
@@ -166,7 +166,7 @@ SQLite database at `references/research.db`.
 ### CLI
 
 ```
-python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research.scripts.research_cli <command> [--db PATH]
+python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research <command> [--db PATH]
 ```
 
 Default `--db`: `references/research.db`. All commands accept `--db` override.

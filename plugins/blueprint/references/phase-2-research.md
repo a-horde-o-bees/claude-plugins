@@ -8,7 +8,7 @@ Execution phase — sequential agent work with checkpointing.
 
 ```
 ${CLAUDE_PLUGIN_ROOT}/references/reconcile-entity.md
-${CLAUDE_PLUGIN_ROOT}/run.py skills.research.scripts.research_cli
+${CLAUDE_PLUGIN_ROOT}/run.py skills.research
 docs/1-scope.md
 docs/2-assessment-criteria.md
 docs/4-effectiveness-criteria.md
@@ -93,19 +93,19 @@ Research entity's public presence thoroughly.
 Entity: `{entity_id}`
 
 Database CLI — all commands use this prefix:
-  python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research.scripts.research_cli
+  python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research
 
 Read domain knowledge and effectiveness criteria:
 - `docs/6-domain-knowledge.md`
 - `docs/4-effectiveness-criteria.md`
 
 1. Resolve entity:
-    python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research.scripts.research_cli get entity {entity_id} --db references/research.db
+    python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get entity {entity_id} --db references/research.db
 2. Research entity web presence — start with primary URL, then explore thoroughly
 3. After completing ALL research, read existing notes and apply Entity Reconciliation Procedure (below):
-    python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research.scripts.research_cli get entity {entity_id} --db references/research.db
+    python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get entity {entity_id} --db references/research.db
 4. Set stage to researched:
-    python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research.scripts.research_cli update entities --ids {entity_id} --stage researched --db references/research.db
+    python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research update entities --ids {entity_id} --stage researched --db references/research.db
 
 Rules:
 - Complete ALL research before writing to database

@@ -1,13 +1,13 @@
 """Navigator CLI.
 
 Presentation layer: argument parsing and dispatch wrappers only.
-Business logic lives in navigator.py and skill_resolver.py.
+Business logic lives in __init__.py and skill_resolver.py.
 """
 
 import argparse
 import sys
 
-from . import navigator
+from . import *  # noqa: F403
 from . import skill_resolver
 
 
@@ -17,17 +17,17 @@ DEFAULT_DB = ".claude/ocd/navigator/navigator.db"
 def _auto_scan(args: argparse.Namespace) -> None:
     """Run scan before command execution. Silent — discards output."""
     path = getattr(args, "path", None) or "."
-    navigator.scan_path(args.db, path)
+    scan_path(args.db, path)
 
 
 def _dispatch_describe(args: argparse.Namespace) -> None:
     _auto_scan(args)
-    print(navigator.describe_path(args.db, args.path))
+    print(describe_path(args.db, args.path))
 
 
 def _dispatch_list(args: argparse.Namespace) -> None:
     _auto_scan(args)
-    result = navigator.list_files(
+    result = list_files(
         args.db, args.path, patterns=args.pattern, excludes=args.exclude,
     )
     if result:
@@ -35,19 +35,19 @@ def _dispatch_list(args: argparse.Namespace) -> None:
 
 
 def _dispatch_scan(args: argparse.Namespace) -> None:
-    print(navigator.scan_path(args.db, args.path))
+    print(scan_path(args.db, args.path))
 
 
 def _dispatch_get_undescribed(args: argparse.Namespace) -> None:
     _auto_scan(args)
-    print(navigator.get_undescribed(args.db))
+    print(get_undescribed(args.db))
 
 
 def _dispatch_set(args: argparse.Namespace) -> None:
     _auto_scan(args)
     exclude = int(args.exclude) if args.exclude is not None else None
     traverse = int(args.traverse) if args.traverse is not None else None
-    print(navigator.set_entry(
+    print(set_entry(
         args.db,
         args.path,
         description=args.description,
@@ -60,7 +60,7 @@ def _dispatch_remove(args: argparse.Namespace) -> None:
     _auto_scan(args)
     all_entries = getattr(args, "all", False)
     path = getattr(args, "path", None)
-    print(navigator.remove_entry(
+    print(remove_entry(
         args.db,
         entry_path=path or "",
         recursive=args.recursive,
@@ -70,7 +70,7 @@ def _dispatch_remove(args: argparse.Namespace) -> None:
 
 def _dispatch_search(args: argparse.Namespace) -> None:
     _auto_scan(args)
-    print(navigator.search_entries(args.db, args.pattern))
+    print(search_entries(args.db, args.pattern))
 
 
 def _dispatch_resolve_skill(args: argparse.Namespace) -> None:
@@ -101,7 +101,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
 
     parser = argparse.ArgumentParser(
-        prog="navigator_cli.py",
+        prog="navigator",
         description=(
             "Index of project files and directories with descriptions that\n"
             "answer: should I read this file? Each entry conveys scope and\n"

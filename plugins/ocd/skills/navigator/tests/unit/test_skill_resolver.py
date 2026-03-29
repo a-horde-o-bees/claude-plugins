@@ -9,8 +9,8 @@ from pathlib import Path
 
 import pytest
 
-from skills.navigator.scripts import skill_resolver
-from skills.navigator.scripts.skill_resolver import (
+from skills.navigator import skill_resolver
+from skills.navigator.skill_resolver import (
     _parse_frontmatter_name,
     _search_skills_dir,
     resolve_skill,

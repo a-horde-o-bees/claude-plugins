@@ -8,7 +8,7 @@ Agent subprocess — resolves all duplicate groups in research database sequenti
 
 ```
 ${CLAUDE_PLUGIN_ROOT}/references/reconcile-entity.md
-${CLAUDE_PLUGIN_ROOT}/run.py skills.research.scripts.research_cli
+${CLAUDE_PLUGIN_ROOT}/run.py skills.research
 ```
 
 ## Input

@@ -9,7 +9,7 @@
 #   ./scripts/run-plugin.sh blueprint status
 #
 # For skill CLIs, use the skill's CLI script path directly:
-#   ./scripts/run-plugin.sh blueprint skills/research/scripts/research_cli.py init --db /tmp/test.db
+#   ./scripts/run-plugin.sh blueprint skills.research init --db /tmp/test.db
 
 set -euo pipefail
 

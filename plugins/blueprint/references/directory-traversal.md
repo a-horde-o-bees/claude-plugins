@@ -8,7 +8,7 @@ Reusable primitives and proven recipes for extracting entities from directory we
 
 ```
 ${CLAUDE_PLUGIN_ROOT}/references/reconcile-entity.md
-${CLAUDE_PLUGIN_ROOT}/run.py skills.research.scripts.research_cli
+${CLAUDE_PLUGIN_ROOT}/run.py skills.research
 ```
 
 ### Created
@@ -114,7 +114,7 @@ const clean = raw.replace(/<br\s*\/?>/gi, ' ').replace(/<[^>]*>/g, '');
 Combine extraction results into single `register-batch` CLI call. Notes only written for new entities; already-registered listed for reconciliation.
 
 ```
-python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research.scripts.research_cli register-batch --json '[
+python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research register-batch --json '[
   {"name": "...", "url": "...", "description": "...", "relevance": 3, "notes": ["fact1", "fact2"]},
   ...
 ]' --source-url "https://directory-url.com" --db references/research.db
@@ -136,8 +136,8 @@ Build directory search URLs directly from observed parameter patterns, bypassing
 Update `[CRAWL PROGRESS]:` note on directory entity after each batch. Remove previous note, add new one with current position.
 
 ```
-python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research.scripts.research_cli remove notes --entity-id {directory_id} --note-ids PROGRESS_NOTE_ID --db references/research.db
-python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research.scripts.research_cli upsert notes --entity-id {directory_id} --notes "[CRAWL PROGRESS]: Processed pages 1-N of M. X entities registered. Resume on page N+1." --db references/research.db
+python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research remove notes --entity-id {directory_id} --note-ids PROGRESS_NOTE_ID --db references/research.db
+python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research upsert notes --entity-id {directory_id} --notes "[CRAWL PROGRESS]: Processed pages 1-N of M. X entities registered. Resume on page N+1." --db references/research.db
 ```
 
 ## Recipes

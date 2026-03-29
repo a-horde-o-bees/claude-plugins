@@ -6,7 +6,7 @@ Interface contract: init() and status() return {"files": [...], "extra": [...]}.
 
 from pathlib import Path
 
-from . import conventions
+from . import *  # noqa: F403
 from scripts import plugin
 
 
@@ -29,14 +29,14 @@ def _manifest_extra(plugin_name: str, project_dir: Path) -> list[dict]:
         ]
 
     try:
-        manifest = conventions.load_manifest(manifest_path)
+        manifest = load_manifest(manifest_path)
     except Exception as e:
         return [
             {"label": "overall status", "value": f"error \u2014 {e}"},
             {"label": "action needed", "value": "Run /ocd-init --force to redeploy conventions"},
         ]
 
-    validation = conventions.validate_manifest(manifest_path)
+    validation = validate_manifest(manifest_path)
     missing = validation["missing"]
     untracked = validation["untracked"]
 

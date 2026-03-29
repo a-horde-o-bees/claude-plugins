@@ -19,7 +19,7 @@ User runs `/ocd-efficacy`
     1. If {target} starts with `/`:
         1. {skill-path} = resolve skill path — run navigator CLI `resolve-skill` with skill name (strip leading `/` from {target})
             ```
-            python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.navigator.scripts.navigator_cli resolve-skill <name>
+            python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.navigator resolve-skill <name>
             ```
         2. If exit code 1: Exit to user — report skill not found
     2. Else:

@@ -7,7 +7,7 @@ Design phase — includes refinement loop.
 ### Dependencies
 
 ```
-${CLAUDE_PLUGIN_ROOT}/run.py skills.research.scripts.research_cli
+${CLAUDE_PLUGIN_ROOT}/run.py skills.research
 references/analysis-findings.md
 references/analysis-interpretation.md
 references/research.db

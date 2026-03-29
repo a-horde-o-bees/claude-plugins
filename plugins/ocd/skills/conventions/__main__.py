@@ -1,7 +1,7 @@
 """Conventions CLI.
 
 Presentation layer: argument parsing and dispatch wrappers only.
-Business logic lives in conventions.py.
+Business logic lives in __init__.py.
 """
 
 import argparse
@@ -9,7 +9,7 @@ import os
 import sys
 from pathlib import Path
 
-from . import conventions
+from . import *  # noqa: F403
 
 
 _PROJECT_DIR = Path(os.environ.get("CLAUDE_PROJECT_DIR", os.getcwd()))
@@ -21,7 +21,7 @@ def _dispatch_list_patterns(args: argparse.Namespace) -> None:
     manifest = Path(args.manifest) if args.manifest else DEFAULT_MANIFEST
 
     try:
-        patterns = conventions.list_patterns(manifest)
+        patterns = list_patterns(manifest)
     except FileNotFoundError:
         print("Error: manifest.yaml not found. Run /ocd-init to deploy.", file=sys.stderr)
         sys.exit(1)
@@ -54,7 +54,7 @@ def _dispatch_list_matching(args: argparse.Namespace) -> None:
     manifest = Path(args.manifest) if args.manifest else DEFAULT_MANIFEST
 
     try:
-        matches = conventions.list_matching(manifest, args.files)
+        matches = list_matching(manifest, args.files)
     except FileNotFoundError:
         print("Error: manifest.yaml not found. Run /ocd-init to deploy.", file=sys.stderr)
         sys.exit(1)
@@ -63,7 +63,7 @@ def _dispatch_list_matching(args: argparse.Namespace) -> None:
         print(f"No criteria match: {', '.join(args.files)}")
         return
 
-    settings = conventions.load_settings(manifest)
+    settings = load_settings(manifest)
     warn_threshold = settings.get("lines_warn_threshold", 0)
     fail_threshold = settings.get("lines_fail_threshold", 0)
 
@@ -91,7 +91,7 @@ def _dispatch_list_self(args: argparse.Namespace) -> None:
     manifest = Path(args.manifest) if args.manifest else DEFAULT_MANIFEST
 
     try:
-        levels = conventions.topological_order(manifest)
+        levels = topological_order(manifest)
     except FileNotFoundError:
         print("Error: manifest.yaml not found. Run /ocd-init to deploy.", file=sys.stderr)
         sys.exit(1)

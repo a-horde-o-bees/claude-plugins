@@ -2,13 +2,13 @@
 
 ## Context
 
-Plugin scripts live in directories like `plugins/ocd/skills/navigator/scripts/` and are invoked via a launcher (`run.py`) that establishes Python package context. In production, each plugin is installed in its own isolated directory — `CLAUDE_PLUGIN_ROOT` points to one plugin root, and there's never cross-plugin contamination on `sys.path`.
+Plugin scripts live in skill packages like `plugins/ocd/skills/navigator/` and are invoked via a launcher (`run.py`) that establishes Python package context. In production, each plugin is installed in its own isolated directory — `CLAUDE_PLUGIN_ROOT` points to one plugin root, and there's never cross-plugin contamination on `sys.path`.
 
 ## Decision
 
 **Proper Python packages with relative imports.** Each plugin root has `run.py` that adds the plugin root to `sys.path` and uses `runpy.run_module()` to execute modules with correct `__package__` context. All scripts use relative imports within their package.
 
-**Invocation:** `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.navigator.scripts.navigator_cli <args>`
+**Invocation:** `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.navigator <args>`
 
 **Within-package imports:** `from . import _db`, `from ._db import get_connection`
 

@@ -1,7 +1,7 @@
 """Research CLI.
 
 Agent-facing entry point for blueprint research database operations.
-Business logic lives in research.py (facade) and _templates.py.
+Business logic lives in __init__.py (facade) and _templates.py.
 """
 
 from __future__ import annotations
@@ -9,19 +9,18 @@ from __future__ import annotations
 import argparse
 import sys
 
-from . import _templates as templates
-from . import research
+from . import *  # noqa: F403
 
 
 # --- Dispatchers ---
 
 
 def _dispatch_init(args: argparse.Namespace) -> None:
-    print(research.init_db(args.db))
+    print(init_db(args.db))
 
 
 def _dispatch_register(args: argparse.Namespace) -> None:
-    print(research.register_entity(
+    print(register_entity(
         args.db,
         name=args.name,
         url=args.url,
@@ -33,14 +32,14 @@ def _dispatch_register(args: argparse.Namespace) -> None:
 
 
 def _dispatch_normalize_url(args: argparse.Namespace) -> None:
-    print(research.compute_normalize_url(args.url))
+    print(compute_normalize_url(args.url))
 
 
 def _dispatch_update_entity(args: argparse.Namespace) -> None:
     ids = args.ids.split(",") if args.ids else None
     all_entities = getattr(args, "all", False)
     try:
-        print(research.update_entity(
+        print(update_entity(
             args.db,
             ids=ids,
             all_entities=all_entities,
@@ -57,7 +56,7 @@ def _dispatch_update_entity(args: argparse.Namespace) -> None:
 
 def _dispatch_upsert_notes(args: argparse.Namespace) -> None:
     try:
-        print(research.upsert_notes(args.db, args.entity_id, args.notes))
+        print(upsert_notes(args.db, args.entity_id, args.notes))
     except ValueError as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
@@ -65,14 +64,14 @@ def _dispatch_upsert_notes(args: argparse.Namespace) -> None:
 
 def _dispatch_get_entity(args: argparse.Namespace) -> None:
     try:
-        print(research.get_entity(args.db, args.id))
+        print(get_entity(args.db, args.id))
     except ValueError as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
 
 
 def _dispatch_list_entities(args: argparse.Namespace) -> None:
-    print(research.list_entities(
+    print(list_entities(
         args.db,
         role=args.role,
         stage=args.stage,
@@ -81,7 +80,7 @@ def _dispatch_list_entities(args: argparse.Namespace) -> None:
 
 
 def _dispatch_stats(args: argparse.Namespace) -> None:
-    print(research.get_stats(args.db))
+    print(get_stats(args.db))
 
 
 def _dispatch_register_batch(args: argparse.Namespace) -> None:
@@ -91,12 +90,12 @@ def _dispatch_register_batch(args: argparse.Namespace) -> None:
     except json.JSONDecodeError as e:
         print(f"Error: invalid JSON: {e}", file=sys.stderr)
         sys.exit(1)
-    print(research.register_batch(args.db, entities, source_url=args.source_url))
+    print(register_batch(args.db, entities, source_url=args.source_url))
 
 
 def _dispatch_upsert_provenance(args: argparse.Namespace) -> None:
     try:
-        print(research.upsert_provenance(args.db, args.entity_id, args.source_url))
+        print(upsert_provenance(args.db, args.entity_id, args.source_url))
     except ValueError as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
@@ -104,7 +103,7 @@ def _dispatch_upsert_provenance(args: argparse.Namespace) -> None:
 
 def _dispatch_upsert_url(args: argparse.Namespace) -> None:
     try:
-        print(research.upsert_url(args.db, args.entity_id, args.url))
+        print(upsert_url(args.db, args.entity_id, args.url))
     except ValueError as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
@@ -112,7 +111,7 @@ def _dispatch_upsert_url(args: argparse.Namespace) -> None:
 
 def _dispatch_update_note(args: argparse.Namespace) -> None:
     try:
-        print(research.update_note(args.db, args.note_id, args.note))
+        print(update_note(args.db, args.note_id, args.note))
     except ValueError as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
@@ -121,7 +120,7 @@ def _dispatch_update_note(args: argparse.Namespace) -> None:
 def _dispatch_remove_notes(args: argparse.Namespace) -> None:
     note_ids = args.note_ids.split(",")
     try:
-        print(research.remove_notes(args.db, args.entity_id, note_ids))
+        print(remove_notes(args.db, args.entity_id, note_ids))
     except ValueError as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
@@ -130,49 +129,49 @@ def _dispatch_remove_notes(args: argparse.Namespace) -> None:
 def _dispatch_touch_entities(args: argparse.Namespace) -> None:
     ids = args.ids.split(",") if args.ids else None
     all_entities = getattr(args, "all", False)
-    print(research.touch_entities(args.db, ids=ids, all_entities=all_entities))
+    print(touch_entities(args.db, ids=ids, all_entities=all_entities))
 
 
 def _dispatch_list_provenance(args: argparse.Namespace) -> None:
-    print(research.list_provenance(args.db, entity_id=args.entity_id))
+    print(list_provenance(args.db, entity_id=args.entity_id))
 
 
 def _dispatch_list_reach(args: argparse.Namespace) -> None:
-    print(research.list_reach(args.db, min_count=args.min))
+    print(list_reach(args.db, min_count=args.min))
 
 
 def _dispatch_search_notes(args: argparse.Namespace) -> None:
-    print(research.search_notes(args.db, args.pattern, stage=args.stage, min_relevance=args.min_relevance))
+    print(search_notes(args.db, args.pattern, stage=args.stage, min_relevance=args.min_relevance))
 
 
 def _dispatch_export(args: argparse.Namespace) -> None:
-    print(research.export_db(args.db, format=args.format))
+    print(export_db(args.db, format=args.format))
 
 
 def _dispatch_upsert_measures(args: argparse.Namespace) -> None:
     try:
-        print(research.upsert_measures(args.db, args.entity_id, args.measures))
+        print(upsert_measures(args.db, args.entity_id, args.measures))
     except ValueError as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
 
 
 def _dispatch_get_measures(args: argparse.Namespace) -> None:
-    print(research.get_measures(args.db))
+    print(get_measures(args.db))
 
 
 def _dispatch_clear_measures(args: argparse.Namespace) -> None:
-    print(research.clear_measures(args.db))
+    print(clear_measures(args.db))
 
 
 def _dispatch_find_duplicates(args: argparse.Namespace) -> None:
-    print(research.find_duplicates(args.db, templates_db=getattr(args, "templates_db", None)))
+    print(find_duplicates(args.db, templates_db=getattr(args, "templates_db", None)))
 
 
 def _dispatch_merge_entities(args: argparse.Namespace) -> None:
     ids = args.ids.split(",")
     try:
-        print(research.merge_entities(args.db, ids))
+        print(merge_entities(args.db, ids))
     except ValueError as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
@@ -180,14 +179,14 @@ def _dispatch_merge_entities(args: argparse.Namespace) -> None:
 
 def _dispatch_upsert_source_data(args: argparse.Namespace) -> None:
     try:
-        print(research.upsert_source_data(args.db, args.entity_id, args.source_type, args.data))
+        print(upsert_source_data(args.db, args.entity_id, args.source_type, args.data))
     except ValueError as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
 
 
 def _dispatch_list_source_data(args: argparse.Namespace) -> None:
-    print(research.list_source_data(
+    print(list_source_data(
         args.db,
         source_type=getattr(args, "source_type", None),
         key=getattr(args, "key", None),
@@ -241,7 +240,7 @@ def _dispatch_match_source_type(args: argparse.Namespace) -> None:
 
 
 def _dispatch_autofill_source_data(args: argparse.Namespace) -> None:
-    print(research.autofill_source_data(
+    print(autofill_source_data(
         args.db, args.templates_db,
         source_type_filter=args.source_type,
         entity_id_filter=args.entity_id,
@@ -254,7 +253,7 @@ def _dispatch_autofill_source_data(args: argparse.Namespace) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        prog="research_cli.py",
+        prog="research",
         description="Blueprint research database: entity tracking, notes, measures, and analysis.",
     )
     commands = parser.add_subparsers(dest="command", required=True)

@@ -4,7 +4,7 @@ Reformat target convention or rule file for structural, notation, and formatting
 
 1. Discover criteria — run conventions CLI to find applicable conventions and rules
     ```
-    python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.conventions.scripts.conventions_cli list-matching <target-file>
+    python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.conventions list-matching <target-file>
     ```
     1. If no criteria match: report "no criteria apply" and stop
     2. If file tagged `[fail: N lines]`: report auto-fail with line count and stop

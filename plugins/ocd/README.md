@@ -42,7 +42,7 @@ The navigator database (`.claude/ocd/navigator/navigator.db`) indexes project st
 
 #### Navigator CLI
 
-Agent-facing entry point at `skills/navigator/scripts/navigator_cli.py`. Agents call `--help` to learn usage.
+Agent-facing entry point at `skills/navigator/__main__.py`. Agents call `--help` to learn usage.
 
 | Command | Purpose |
 |---------|---------|

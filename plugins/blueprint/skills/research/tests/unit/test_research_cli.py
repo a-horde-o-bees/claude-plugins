@@ -13,13 +13,13 @@ from pathlib import Path
 
 import pytest
 
-PLUGIN_ROOT = Path(__file__).resolve().parent.parent.parent.parent.parent.parent
+PLUGIN_ROOT = Path(__file__).resolve().parent.parent.parent.parent.parent
 RUN_PY = str(PLUGIN_ROOT / "run.py")
 
 
 def run_cli(*args: str, db: str) -> subprocess.CompletedProcess:
     """Run research CLI with --db flag via launcher."""
-    cmd = [sys.executable, RUN_PY, "skills.research.scripts.research_cli", args[0], *args[1:], "--db", db]
+    cmd = [sys.executable, RUN_PY, "skills.research", args[0], *args[1:], "--db", db]
     return subprocess.run(cmd, capture_output=True, text=True)
 
 
@@ -154,29 +154,29 @@ class TestRegister:
 
 class TestURLDedup:
     def test_normalize_strips_scheme(self) -> None:
-        from skills.research.scripts._db import normalize_url
+        from skills.research._db import normalize_url
         assert normalize_url("https://example.com") == "example.com"
         assert normalize_url("http://example.com") == "example.com"
 
     def test_normalize_strips_www(self) -> None:
-        from skills.research.scripts._db import normalize_url
+        from skills.research._db import normalize_url
         assert normalize_url("https://www.example.com") == "example.com"
 
     def test_normalize_keeps_path(self) -> None:
-        from skills.research.scripts._db import normalize_url
+        from skills.research._db import normalize_url
         assert normalize_url("https://example.com/about/team") == "example.com/about/team"
 
     def test_normalize_strips_trailing_slash(self) -> None:
-        from skills.research.scripts._db import normalize_url
+        from skills.research._db import normalize_url
         assert normalize_url("https://example.com/") == "example.com"
         assert normalize_url("https://example.com/about/") == "example.com/about"
 
     def test_normalize_lowercases(self) -> None:
-        from skills.research.scripts._db import normalize_url
+        from skills.research._db import normalize_url
         assert normalize_url("https://Example.COM") == "example.com"
 
     def test_normalize_none_for_empty(self) -> None:
-        from skills.research.scripts._db import normalize_url
+        from skills.research._db import normalize_url
         assert normalize_url(None) is None
         assert normalize_url("") is None
 
@@ -492,7 +492,7 @@ class TestRegisterBatch:
 
 class TestNormalizeURLCLI:
     def test_normalize_url_command(self) -> None:
-        cmd = [sys.executable, RUN_PY, "skills.research.scripts.research_cli", "normalize-url", "https://www.Example.COM/path/"]
+        cmd = [sys.executable, RUN_PY, "skills.research", "normalize-url", "https://www.Example.COM/path/"]
         result = subprocess.run(cmd, capture_output=True, text=True)
         assert result.returncode == 0
         assert "example.com/path" in result.stdout

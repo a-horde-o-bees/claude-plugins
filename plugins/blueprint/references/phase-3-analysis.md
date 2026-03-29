@@ -7,7 +7,7 @@ Execution phase — sequential batch agents with rolling analysis and orchestrat
 ### Dependencies
 
 ```
-${CLAUDE_PLUGIN_ROOT}/run.py skills.research.scripts.research_cli
+${CLAUDE_PLUGIN_ROOT}/run.py skills.research
 docs/3-goals.md
 docs/4-effectiveness-criteria.md
 docs/6-domain-knowledge.md
@@ -127,7 +127,7 @@ When Phase 3 resumes with existing analysis data, present dashboard:
 Analyze entity notes and produce consolidated cross-entity analysis.
 
 Database CLI — all commands use this prefix:
-  python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research.scripts.research_cli
+  python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research
 
 Analytical questions to answer from entities examined:
 1. Cross-cutting patterns — what do high-relevance entities share?
@@ -148,7 +148,7 @@ Prior analysis from previous batches (refine, confirm, adjust, or overturn with 
 
 Procedure:
 1. Read entities one at a time in provided order, starting from `{start_entity_id}`:
-    python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research.scripts.research_cli get entity {entity_id} --db references/research.db
+    python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get entity {entity_id} --db references/research.db
 2. After reading each entity, assess whether room to consume more; stop when adding another entity's notes would leave insufficient room for thorough analysis; always consume at least one entity
 3. Analyze notes across all consumed entities
 4. {if prior_analysis} Integrate with prior analysis — update counts, strengthen or weaken patterns, add new findings {end if}

@@ -7,7 +7,7 @@ infrastructure lives in skill-level _init.py files.
 Propagated to every plugin via pre-commit hook.
 """
 
-import importlib.util
+import importlib
 import json
 import os
 import shutil
@@ -223,23 +223,6 @@ def format_bare_skill(plugin_name: str, skill_name: str) -> str:
     return f"/{plugin_name}-{skill_name}"
 
 
-# --- Module loading ---
-
-
-def _load_module(name: str, path: Path):
-    """Load a Python module from file path.
-
-    Adds the module's parent directory to sys.path so sibling imports
-    resolve during exec_module. Does not clean up sys.path — this runs
-    in a short-lived CLI process.
-    """
-    parent = str(path.parent)
-    if parent not in sys.path:
-        sys.path.insert(0, parent)
-    spec = importlib.util.spec_from_file_location(name, path)
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return mod
 
 
 # --- Rules ---
@@ -293,7 +276,7 @@ def _discover_skills(plugin_root: Path) -> list[tuple[str, bool]]:
     skills = []
     for skill_md in sorted(skills_dir.glob("*/SKILL.md")):
         name = skill_md.parent.name
-        init_path = skill_md.parent / "scripts" / "_init.py"
+        init_path = skill_md.parent / "_init.py"
         skills.append((name, init_path.is_file()))
     return skills
 
@@ -324,8 +307,7 @@ def run_init(force: bool = False) -> None:
     for skill_name, has_init in skills:
         if not has_init:
             continue
-        init_path = plugin_root / "skills" / skill_name / "scripts" / "_init.py"
-        mod = _load_module(f"{skill_name}_init", init_path)
+        mod = importlib.import_module(f"skills.{skill_name}._init")
         result = mod.init(plugin_root, project_dir, force=force)
         header = f"/{plugin_name}-{skill_name}"
         for line in format_section(header, result["files"], result.get("extra")):
@@ -374,8 +356,7 @@ def run_status() -> None:
     for skill_name, has_init in skills:
         if not has_init:
             continue
-        init_path = plugin_root / "skills" / skill_name / "scripts" / "_init.py"
-        mod = _load_module(f"{skill_name}_init", init_path)
+        mod = importlib.import_module(f"skills.{skill_name}._init")
         result = mod.status(plugin_root, project_dir)
         header = f"/{plugin_name}-{skill_name}"
         for line in format_section(header, result["files"], result.get("extra")):
