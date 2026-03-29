@@ -190,10 +190,11 @@ Skills declaring `--auto` or `--delegate` must spawn agents for Workflow executi
 ```
 skill-name/
 ├── SKILL.md               # Main instructions (required)
+├── __init__.py            # Facade — public interface (optional, for skills with code)
+├── __main__.py            # CLI entry point (optional, for skills with code)
 ├── _component-name.md     # Extracted component (optional)
 ├── references/            # Detailed reference docs (optional)
-├── examples/              # Example output (optional)
-└── scripts/               # Executable scripts (optional)
+└── tests/                 # Test suites (optional)
 ```
 
 Keep SKILL.md under 500 lines. Move detailed reference material to separate files. Extract components to `_{name}.md` files alongside SKILL.md to reduce SKILL.md size and scope agent context.

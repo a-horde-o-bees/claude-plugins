@@ -14,7 +14,7 @@ Conventions for content consumed by agents: skills, conventions, plans, actions,
 
 - Use verbose names that convey purpose; capture full meaning in descriptions
 - Do not truncate for visual format
-- Script names match the domain concept — `navigator_cli.py` not `cli.py` or `pt.py`
+- Script names match the domain concept — `plugin_cli.py` not `cli.py` or `pt.py`
 - Skill frontmatter `name` field uses plugin-name prefix — `ocd-navigator` not `navigator`; surfaces plugin name during search
 
 ### Content Rules
@@ -48,11 +48,13 @@ Pass all target file paths in a single call. Output groups each target file with
 
 Agent-facing CLIs are executables that agents call directly during tasks. Internal scripts are implementation details called by plugin infrastructure (hooks, commands) — agents never invoke them.
 
-Naming convention:
-- `<name>_cli.py` (or `<name>_cli.sh`, etc.) — agent-facing entry point; agents call it directly, read its `--help`, and parse its output
-- `<name>.py` (or `<name>.sh`, etc.) — internal library or internal script; called by plugin hooks, commands, or other scripts
+Skill packages use standard Python package entry points:
+- `__main__.py` — agent-facing CLI; invoked via `python3 run.py skills.<name> <command>`
+- `__init__.py` — facade; public interface that `__main__.py` imports via `from . import *`
 
-Absence of a `_cli` file for a domain concept indicates missing CLI capabilities — deterministic operations should have an agent-facing entry point.
+Plugin-level scripts (outside skill packages) use naming convention:
+- `<name>_cli.py` — agent-facing entry point
+- `<name>.py` — internal library; called by plugin hooks, commands, or other scripts
 
 ### Interpreter
 

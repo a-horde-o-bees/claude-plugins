@@ -64,12 +64,12 @@ Extract internal modules when a file contains distinct functional domains — gr
 
 ### Internal Module Pattern
 
-`_{purpose}.py` — underscore prefix signals not standalone. Consumers import from parent module (`{name}.py`) or CLI (`{name}_cli.py`), not directly from underscored modules. Same-package files use relative imports (`from . import _db`, `from ._db import get_connection`).
+`_{purpose}.py` — underscore prefix signals not standalone. Consumers import from the package (`from . import *`) or specific names (`from . import get_connection`), not directly from underscored modules. Same-package files use relative imports (`from . import _db`, `from ._db import get_connection`).
 
 ```
-scripts/
-  module.py             # Facade — public interface, imports from internal modules
-  module_cli.py         # CLI — dispatches to module.py
+skill-name/
+  __init__.py           # Facade — public interface, imports from internal modules
+  __main__.py           # CLI — dispatches to facade via `from . import *`
   _parser.py            # Internal — input parsing domain
   _storage.py           # Internal — database schema and connection
   client.py             # Separate module — independent domain, own CLI subcommands
@@ -87,10 +87,10 @@ scripts/
 
 ### Facade Role
 
-Parent module (`{name}.py`) stays as public interface after decomposition. Imports from internal modules and re-exports or delegates. CLI and external consumers continue importing from parent module — internal module structure is invisible to callers.
+Package `__init__.py` stays as public interface after decomposition. Imports from internal modules and re-exports or delegates. CLI (`__main__.py`) imports from the package via `from . import *` — internal module structure is invisible to callers.
 
 ```python
-# module.py — facade after decomposition
+# __init__.py — facade after decomposition
 from ._storage import get_connection, init_db, SCHEMA
 from ._parser import parse_input
 
@@ -101,21 +101,22 @@ def process_path(db_path: str, target_path: str) -> str:
 
 ### Separate Module vs Internal Module
 
-Use `_{purpose}.py` (internal) when functions exist to support the parent module and have no independent consumers. Use `{name}.py` (separate module) when the domain has its own CLI subcommands, independent tests, or is consumed by multiple parent modules. Example: `client.py` is separate because the module CLI exposes its subcommands directly; `_parser.py` is internal because only `module.py` calls its functions.
+Use `_{purpose}.py` (internal) when functions exist to support the package and have no independent consumers. Use `{name}.py` (separate module) when the domain has its own CLI subcommands, independent tests, or is consumed by multiple packages. Example: `client.py` is separate because the CLI exposes its subcommands directly; `_parser.py` is internal because only the facade calls its functions.
 
 ### CLI Boundary
 
-Decomposition of `{name}.py` is invisible to `{name}_cli.py`. CLI always imports from facade (`{name}.py`), never from internal `_{purpose}.py` modules. Separate modules with their own CLI subcommands are imported directly by the CLI alongside the facade.
+Decomposition of `__init__.py` is invisible to `__main__.py`. CLI always imports from the package (`from . import *`), never from internal `_{purpose}.py` modules. Separate modules with their own CLI subcommands are imported directly by the CLI alongside the facade.
 
 ### Import Pattern
 
-Scripts use relative imports within their `scripts/` package. Each plugin's `run.py` launcher establishes proper `__package__` context via `runpy.run_module()`.
+Skill packages use relative imports. Each plugin's `run.py` launcher establishes proper `__package__` context via `runpy.run_module()`. Plugin infrastructure (`plugin.py`) loads skill `_init.py` modules via `importlib.import_module()` with full package path.
 
-Within-package (same `scripts/` directory):
+Within-package:
 
 ```python
 from . import _db
 from ._db import get_connection
+from . import *  # __main__.py importing facade
 ```
 
 Cross-package (e.g., skill `_init.py` referencing root `scripts/plugin.py`):
