@@ -1,13 +1,13 @@
 ---
 name: blueprint-research
 description: |
-  Structured competitive research and implementation planning. Studies comparable examples through four phases: scoping, deep research, analysis, and implementation blueprint. Uses emergent schema with unified entity model and SQLite database.
+  Structured solution research and implementation planning. Studies existing tools, proven approaches, and established patterns through four phases: scoping, deep research, analysis, and implementation blueprint. Uses emergent schema with unified entity model and SQLite database.
 argument-hint: "[scope description]"
 ---
 
 # /blueprint-research
 
-Structured competitive research and implementation planning. Bootstraps new projects by studying comparable examples: defines scope with integrated entity assessment, deep researches highest-relevance entities with atomic notes in SQLite, synthesizes cross-entity patterns, and produces actionable implementation blueprint.
+Structured solution research and implementation planning. Studies existing tools, proven approaches, and established patterns to fulfill a defined purpose: defines scope with integrated entity assessment, deep researches highest-relevance entities with atomic notes in SQLite, synthesizes cross-entity patterns, and produces actionable implementation blueprint.
 
 Reads `blueprint/data/state.md` to detect current state. If absent, initializes from template and starts Phase 1. Otherwise, finds next incomplete phase and proposes working on it.
 
@@ -300,6 +300,7 @@ Orchestrator selects server based on directory accessibility notes and concurren
 
 ### Research Methodology
 
+- Prefer existing solutions over custom builds — if a well-adopted tool or pattern fulfills the purpose, recommend adoption or mirroring over building from scratch; well-exercised tools have resolved problems not yet encountered; high adoption is a strong signal of maturity and completeness
 - Notes name tools, platforms, and external dependencies explicitly — analysis identifies cross-entity patterns from notes
 - Skill infrastructure remains domain-agnostic — taxonomy, notes, measures, and sources are project-specific data produced by execution, not embedded in skill; prompt templates use placeholders filled from project context, never hardcoded domain-specific language
 - Do not skip phases — each phase output feeds the next
