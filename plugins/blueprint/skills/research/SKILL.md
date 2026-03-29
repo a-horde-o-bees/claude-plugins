@@ -48,12 +48,11 @@ User runs `/blueprint-research`. Optional `$ARGUMENTS` passed as initial scope i
 ## Route
 
 1. If `blueprint/data/state.md` does not exist:
-    1. Verify project root is empty or near-empty — only standard init files at top level (`.claude/`, `.gitmodules`, `CLAUDE.md`, `.claudeignore`, `.gitattributes`, `.env.example`, `.gitignore`)
-    2. If other files or directories exist:
-        1. Exit to user — report what was found; skill bootstraps new projects and should not run in populated projects
-    3. Create `blueprint/data/` directory and copy `${CLAUDE_PLUGIN_ROOT}/templates/blueprint.md` to `blueprint/data/state.md`
-    4. Mark Phase 1 as `[-]`; use `$ARGUMENTS` as initial scope input if provided
-    5. Go to step 3. Determine active phase
+    1. If `blueprint/` directory exists:
+        1. Exit to user — report existing blueprint folder; skill initializes this directory and cannot run over existing content
+    2. Create `blueprint/data/` directory and copy `${CLAUDE_PLUGIN_ROOT}/templates/blueprint.md` to `blueprint/data/state.md`
+    3. Mark Phase 1 as `[-]`; use `$ARGUMENTS` as initial scope input if provided
+    4. Go to step 3. Determine active phase
 2. Read `blueprint/data/state.md`
 3. Determine active phase:
     1. If `blueprint/data/history.md` exists: read last 5 lines for current stride and next steps
