@@ -14,7 +14,7 @@ ${CLAUDE_PLUGIN_ROOT}/run.py skills.research
 ### Created
 
 ```
-references/crawl-scripts/
+blueprint/references/crawl-scripts/
 ```
 
 ## Approach Discovery Workflow
@@ -28,7 +28,7 @@ When directory entity has no `[CRAWL METHOD]:` note, agent develops approach bef
     2. Check network requests during page interaction — detail content may come from same-page data rather than API calls
 4. Select primitives and compose into recipe based on directory structure
 5. Record approach as `[CRAWL METHOD]:` note on directory entity
-6. Save extraction script to `references/crawl-scripts/{entity_id}-{short_name}.js`
+6. Save extraction script to `blueprint/references/crawl-scripts/{entity_id}-{short_name}.js`
 7. Add `[CRAWL SCRIPT]:` pointer note on directory entity
 
 ## Primitives
@@ -117,7 +117,7 @@ Combine extraction results into single `register-batch` CLI call. Notes only wri
 python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research register-batch --json '[
   {"name": "...", "url": "...", "description": "...", "relevance": 3, "notes": ["fact1", "fact2"]},
   ...
-]' --source-url "https://directory-url.com" --db references/research.db
+]' --source-url "https://directory-url.com" --db blueprint/references/research.db
 ```
 
 **Output:** Summary count + already-registered entity IDs with URLs (actionable items only).
@@ -136,8 +136,8 @@ Build directory search URLs directly from observed parameter patterns, bypassing
 Update `[CRAWL PROGRESS]:` note on directory entity after each batch. Remove previous note, add new one with current position.
 
 ```
-python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research remove notes --entity-id {directory_id} --note-ids PROGRESS_NOTE_ID --db references/research.db
-python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research upsert notes --entity-id {directory_id} --notes "[CRAWL PROGRESS]: Processed pages 1-N of M. X entities registered. Resume on page N+1." --db references/research.db
+python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research remove notes --entity-id {directory_id} --note-ids PROGRESS_NOTE_ID --db blueprint/references/research.db
+python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research upsert notes --entity-id {directory_id} --notes "[CRAWL PROGRESS]: Processed pages 1-N of M. X entities registered. Resume on page N+1." --db blueprint/references/research.db
 ```
 
 ## Recipes
@@ -210,12 +210,12 @@ API responses are typically smaller and more structured than HTML — accumulati
 
 Directory-specific extraction scripts saved as files for reuse across sessions:
 
-- **Location:** `references/crawl-scripts/{entity_id}-{short_name}.js`
-- **Pointer:** `[CRAWL SCRIPT]: references/crawl-scripts/{entity_id}-{short_name}.js` note on directory entity
+- **Location:** `blueprint/references/crawl-scripts/{entity_id}-{short_name}.js`
+- **Pointer:** `[CRAWL SCRIPT]: blueprint/references/crawl-scripts/{entity_id}-{short_name}.js` note on directory entity
 - **Content:** Complete JS function with comments documenting URL parameters, DOM selectors, pagination, and variable placeholders (`START_PAGE`, `END_PAGE`, `MAX_CHARS`)
 - **Retrieval:** Agent reads file path from `[CRAWL SCRIPT]:` note, loads script, adjusts `START_PAGE` from `[CRAWL PROGRESS]:` note
 
-Examine all crawl scripts across directories: `ls references/crawl-scripts/`
+Examine all crawl scripts across directories: `ls blueprint/references/crawl-scripts/`
 
 ## Tagged Note Convention
 

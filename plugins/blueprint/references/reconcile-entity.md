@@ -8,7 +8,7 @@ Universal procedure for updating entity notes, description, and relevance. Appli
 
 ```
 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research
-docs/2-assessment-criteria.md
+blueprint/2-assessment-criteria.md
 ```
 
 ## Notes
@@ -55,7 +55,7 @@ If current description is vague, lists features, or references stale information
 
 ## Relevance
 
-Reassess against assessment criteria (from `docs/2-assessment-criteria.md`) with full picture of combined knowledge. If assessment warrants different score, update it. Do not preserve previous score out of deference — latest assessment with most information is authoritative.
+Reassess against assessment criteria (from `blueprint/2-assessment-criteria.md`) with full picture of combined knowledge. If assessment warrants different score, update it. Do not preserve previous score out of deference — latest assessment with most information is authoritative.
 
 ## Adjacent Entity Discovery
 

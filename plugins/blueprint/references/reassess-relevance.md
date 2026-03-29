@@ -8,20 +8,20 @@ Agent subprocess — rescores entity relevance against current assessment criter
 
 ```
 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research
-docs/2-assessment-criteria.md
+blueprint/2-assessment-criteria.md
 ```
 
 ## Input
 
 Orchestrator provides:
-- Database path (e.g., `references/research.db`)
+- Database path (e.g., `blueprint/references/research.db`)
 - Entity scope: `--stage researched` (default), or specific entity IDs
 
 ## Agent Workflow
 
 ### Load Criteria
 
-1. Read `docs/2-assessment-criteria.md` — load all gradient criteria with definitions
+1. Read `blueprint/2-assessment-criteria.md` — load all gradient criteria with definitions
 2. Count total criteria (determines maximum relevance score)
 
 ### Dynamic Entity Loading
@@ -54,7 +54,7 @@ If not all entities evaluated in one agent, orchestrator spawns next agent with:
 ## Rules
 
 - Read-only for notes — do not modify notes, descriptions, or stage during reassessment
-- Score strictly against criteria definitions in `docs/2-assessment-criteria.md` — do not infer criteria not listed
+- Score strictly against criteria definitions in `blueprint/2-assessment-criteria.md` — do not infer criteria not listed
 - When notes are insufficient to determine whether criterion is met, score as not met — do not visit URLs or conduct new research
 - If notes clearly contradict criterion previously scored as met, correct score downward
 - If notes support criterion previously scored as not met, correct score upward

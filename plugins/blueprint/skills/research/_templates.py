@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS source_type_keys (
 );
 """
 
-TEMPLATES_DB_DEFAULT = str(Path(__file__).resolve().parent.parent.parent.parent / "references" / "source-templates.db")
+TEMPLATES_DB_DEFAULT = str(Path(__file__).resolve().parent.parent.parent / "references" / "source-templates.db")
 
 
 def get_templates_connection(db_path: str) -> sqlite3.Connection:

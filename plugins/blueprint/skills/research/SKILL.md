@@ -9,7 +9,7 @@ argument-hint: "[scope description]"
 
 Structured competitive research and implementation planning. Bootstraps new projects by studying comparable examples: defines scope with integrated entity assessment, deep researches highest-relevance entities with atomic notes in SQLite, synthesizes cross-entity patterns, and produces actionable implementation blueprint.
 
-Reads `docs/blueprint.md` to detect current state. If absent, initializes from template and starts Phase 1. Otherwise, finds next incomplete phase and proposes working on it.
+Reads `blueprint/blueprint.md` to detect current state. If absent, initializes from template and starts Phase 1. Otherwise, finds next incomplete phase and proposes working on it.
 
 ## File Map
 
@@ -32,21 +32,21 @@ ${CLAUDE_PLUGIN_ROOT}/templates/blueprint.md
 ### Created
 
 ```
-docs/blueprint.md
-docs/overview.md
-docs/1-scope.md
-docs/2-assessment-criteria.md
-docs/3-goals.md
-docs/4-effectiveness-criteria.md
-docs/5-constraints.md
-docs/6-domain-knowledge.md
-docs/history.md
-docs/implementation-progress.md
-docs/progress.db
-references/research.db
-references/analysis-findings.md
-references/analysis-interpretation.md
-references/crawl-scripts/
+blueprint/blueprint.md
+blueprint/overview.md
+blueprint/1-scope.md
+blueprint/2-assessment-criteria.md
+blueprint/3-goals.md
+blueprint/4-effectiveness-criteria.md
+blueprint/5-constraints.md
+blueprint/6-domain-knowledge.md
+blueprint/history.md
+blueprint/implementation-progress.md
+blueprint/progress.db
+blueprint/references/research.db
+blueprint/references/analysis-findings.md
+blueprint/references/analysis-interpretation.md
+blueprint/references/crawl-scripts/
 ```
 
 ## Process Model
@@ -57,8 +57,8 @@ references/crawl-scripts/
 |-------|------|------|-----------|------------|
 | 1 | Scoping | Design | `references/phase-1-scoping.md` | Project definition files, database initialized, entities with relevance |
 | 2 | Deep Research | Execution | `references/phase-2-research.md` | Research DB populated with notes, relationships, capabilities |
-| 3 | Analysis | Execution | `references/phase-3-analysis.md` | `references/analysis-findings.md`, `references/analysis-interpretation.md`, measures |
-| 4 | Implementation Blueprint | Design | `references/phase-4-implementation.md` | `docs/implementation-progress.md`, `docs/progress.db` |
+| 3 | Analysis | Execution | `references/phase-3-analysis.md` | `blueprint/references/analysis-findings.md`, `blueprint/references/analysis-interpretation.md`, measures |
+| 4 | Implementation Blueprint | Design | `references/phase-4-implementation.md` | `blueprint/implementation-progress.md`, `blueprint/progress.db` |
 
 Design phases (1, 4) include refinement loops — user iterates until satisfied. Execution phases (2, 3) run sequential agent work with checkpointing. All reference file paths relative to `${CLAUDE_PLUGIN_ROOT}`.
 
@@ -68,12 +68,12 @@ Which project definition files agents read at each phase:
 
 | File | P1 | P2 | P3 | P4 |
 |------|----|----|----|----|
-| `docs/1-scope.md` | R | R | — | — |
-| `docs/2-assessment-criteria.md` | R | R | — | — |
-| `docs/3-goals.md` | — | — | R | R |
-| `docs/4-effectiveness-criteria.md` | — | R | R | — |
-| `docs/5-constraints.md` | — | — | — | R |
-| `docs/6-domain-knowledge.md` | R | R | R | R |
+| `blueprint/1-scope.md` | R | R | — | — |
+| `blueprint/2-assessment-criteria.md` | R | R | — | — |
+| `blueprint/3-goals.md` | — | — | R | R |
+| `blueprint/4-effectiveness-criteria.md` | — | R | R | — |
+| `blueprint/5-constraints.md` | — | — | — | R |
+| `blueprint/6-domain-knowledge.md` | R | R | R | R |
 
 Files 1-5 populated during Phase 1 scope approval. File 6 updated after context research waves and when deep research reveals new platforms, tools, or business models.
 
@@ -85,16 +85,16 @@ User runs `/blueprint-research`. Optional `$ARGUMENTS` passed as initial scope i
 
 ## Route
 
-1. If `docs/blueprint.md` does not exist:
+1. If `blueprint/blueprint.md` does not exist:
     1. Verify project root is empty or near-empty — only standard init files at top level (`.claude/`, `.gitmodules`, `CLAUDE.md`, `.claudeignore`, `.gitattributes`, `.env.example`, `.gitignore`)
     2. If other files or directories exist:
         1. Exit to user — report what was found; skill bootstraps new projects and should not run in populated projects
-    3. Create `docs/` directory and copy `${CLAUDE_PLUGIN_ROOT}/templates/blueprint.md` to `docs/blueprint.md`
+    3. Create `blueprint/` directory and copy `${CLAUDE_PLUGIN_ROOT}/templates/blueprint.md` to `blueprint/blueprint.md`
     4. Mark Phase 1 as `[-]`; use `$ARGUMENTS` as initial scope input if provided
     5. Go to step 3. Determine active phase
-2. Read `docs/blueprint.md`
+2. Read `blueprint/blueprint.md`
 3. Determine active phase:
-    1. If `docs/history.md` exists: read last 5 lines for current stride and next steps
+    1. If `blueprint/history.md` exists: read last 5 lines for current stride and next steps
     2. Find first phase with status `[-]` or `[ ]`
         1. If `[-]` found: propose resuming; history log indicates last stride; for execution phases check database for completed work; for design phases check for phase output files
         2. Else if `[ ]` found: propose starting that phase
@@ -109,18 +109,18 @@ User runs `/blueprint-research`. Optional `$ARGUMENTS` passed as initial scope i
 When user requests "add more entities" at any phase gate:
 
 1. Delete downstream outputs:
-    - `references/analysis-findings.md`
-    - `references/analysis-interpretation.md`
-    - `docs/implementation-progress.md` (if exists)
-2. Run `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research clear measures --db references/research.db`
-3. Update `docs/blueprint.md`: Phase 1 `[-]`, Phases 2-4 `[ ]`
+    - `blueprint/references/analysis-findings.md`
+    - `blueprint/references/analysis-interpretation.md`
+    - `blueprint/implementation-progress.md` (if exists)
+2. Run `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research clear measures --db blueprint/references/research.db`
+3. Update `blueprint/blueprint.md`: Phase 1 `[-]`, Phases 2-4 `[ ]`
 4. Read Phase 1 reference file — re-entry detects existing domain knowledge and entities
 
 Database preserved. New entities accumulate during scoping; Phase 2 processes only entities not yet at `researched` stage.
 
 ## Workflow
 
-1. Mark {active-phase} status `[-]` in `docs/blueprint.md`
+1. Mark {active-phase} status `[-]` in `blueprint/blueprint.md`
 2. Read `${CLAUDE_PLUGIN_ROOT}/references/phase-{active-phase}-{name}.md`
 3. Present what current phase will do to user
 4. Execute phase per reference file instructions:
@@ -128,8 +128,8 @@ Database preserved. New entities accumulate during scoping; Phase 2 processes on
     2. Present findings to user
     3. If design phase: user approves or refines (loop until satisfied)
     4. Write outputs
-5. Append history entry to `docs/history.md` — one line: ISO 8601 datetime, phase, action, result stats, next step
-6. Mark {active-phase} status `[x]` in `docs/blueprint.md`
+5. Append history entry to `blueprint/history.md` — one line: ISO 8601 datetime, phase, action, result stats, next step
+6. Mark {active-phase} status `[x]` in `blueprint/blueprint.md`
 7. Propose next phase
 
 Interactive checkpoints in main conversation between agent calls. Sub-agents run autonomously — user-facing decisions at orchestration level only.
@@ -140,10 +140,10 @@ After each phase: summary of outputs produced, entities affected, and recommende
 
 ## Project Infrastructure
 
-State detection creates `docs/blueprint.md` on first run. Phase 1 creates remaining structure:
+State detection creates `blueprint/blueprint.md` on first run. Phase 1 creates remaining structure:
 
 ```
-docs/
+blueprint/
   blueprint.md              — master plan (from template)
   history.md                — completed strides; read last lines for current position
   overview.md               — index pointing to numbered definition files
@@ -153,15 +153,15 @@ docs/
   4-effectiveness-criteria.md — criteria for evaluating patterns
   5-constraints.md          — implementation realities
   6-domain-knowledge.md     — landscape structure and distilled findings
-references/
-  research.db               — SQLite research database
+  references/
+    research.db             — SQLite research database
 ```
 
-Status markers in `docs/blueprint.md`: `[ ]` pending, `[-]` in progress, `[x]` complete.
+Status markers in `blueprint/blueprint.md`: `[ ]` pending, `[-]` in progress, `[x]` complete.
 
 ## Database
 
-SQLite database at `references/research.db`.
+SQLite database at `blueprint/references/research.db`.
 
 ### CLI
 
@@ -169,7 +169,7 @@ SQLite database at `references/research.db`.
 python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research <command> [--db PATH]
 ```
 
-Default `--db`: `references/research.db`. All commands accept `--db` override.
+Default `--db`: `blueprint/references/research.db`. All commands accept `--db` override.
 
 #### Read Commands
 
@@ -231,7 +231,7 @@ Unified entity model — everything is an entity (organizations, platforms, prog
 - `name` — display name
 - `role` — `example` (comparable sites to study), `directory` (crawlable listings yielding examples), `context` (knowledge/advice sources)
 - `stage` — `new` → `rejected` | `researched` | `merged`
-- `relevance` — integer or NULL; higher = more relevant; scale from `docs/2-assessment-criteria.md`; NULL = not yet assessed
+- `relevance` — integer or NULL; higher = more relevant; scale from `blueprint/2-assessment-criteria.md`; NULL = not yet assessed
 - `description` — one-sentence identity statement; notes hold specifics, description never lists features or counts
 
 **Notes**: atomic, self-explanatory facts. Primary knowledge store. Begin accumulating from first contact — not deferred to deep research. Deep research produces comprehensive notes; discovery produces initial notes from whatever information is consumed.
@@ -252,7 +252,7 @@ Unified entity model — everything is an entity (organizations, platforms, prog
 |-----|---------|---------|
 | `[ACCESSIBILITY]:` | Directory entities | Content access: `static`, `js-rendered`, `auth-gated`, `api-available` |
 | `[CRAWL METHOD]:` | Directory entities | Technical extraction approach |
-| `[CRAWL SCRIPT]:` | Directory entities | Path to script in `references/crawl-scripts/` |
+| `[CRAWL SCRIPT]:` | Directory entities | Path to script in `blueprint/references/crawl-scripts/` |
 | `[CRAWL PROGRESS]:` | Directory entities | Mutable crawl position and resumption point |
 
 New tags may emerge per project. Convention: bracketed uppercase, descriptive, unique per entity (replace, not duplicate).
@@ -268,7 +268,7 @@ CLI covers most queries. Before writing raw SQL, check if CLI handles need. When
 ```python
 python3 -c "
 import sqlite3
-conn = sqlite3.connect('references/research.db')
+conn = sqlite3.connect('blueprint/references/research.db')
 conn.row_factory = sqlite3.Row
 rows = conn.execute('SELECT ...').fetchall()
 for r in rows: print(r)
@@ -345,10 +345,10 @@ Orchestrator selects server based on directory accessibility notes and concurren
 
 ### State Management
 
-- `docs/blueprint.md` is the single source of truth for phase-level state
-- `docs/history.md` is the sequential stride log — entries: ISO 8601 datetime, phase, action, result stats, next step; describe activity type (context wave, directory traversal, research batch); do not include entity IDs
+- `blueprint/blueprint.md` is the single source of truth for phase-level state
+- `blueprint/history.md` is the sequential stride log — entries: ISO 8601 datetime, phase, action, result stats, next step; describe activity type (context wave, directory traversal, research batch); do not include entity IDs
 - Mark `[-]` when starting phase, `[x]` when phase gate passed
-- Project outputs to project paths (`docs/`, `references/`), not `.claude/` paths
+- Project outputs to `blueprint/` directory at project root, not `.claude/` paths
 - User can re-invoke completed phase — ask before overwriting
 - During execution, load only active phase reference file; pre-reading all for planning is acceptable
 - Present proposed work before executing — user approves at every phase gate

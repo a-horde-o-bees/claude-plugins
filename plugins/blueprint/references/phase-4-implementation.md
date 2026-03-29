@@ -8,31 +8,31 @@ Design phase — includes refinement loop.
 
 ```
 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research
-references/analysis-findings.md
-references/analysis-interpretation.md
-references/research.db
-docs/blueprint.md
-docs/3-goals.md
-docs/5-constraints.md
+blueprint/references/analysis-findings.md
+blueprint/references/analysis-interpretation.md
+blueprint/references/research.db
+blueprint/blueprint.md
+blueprint/3-goals.md
+blueprint/5-constraints.md
 ```
 
 ### Created
 
 ```
-docs/implementation-progress.md
-docs/progress.db
+blueprint/implementation-progress.md
+blueprint/progress.db
 ```
 
 ## Workflow
 
 ### Input
 
-- Analytical findings from `references/analysis-findings.md`
-- Goal-aligned interpretation from `references/analysis-interpretation.md`
-- Confirmed findings from `docs/blueprint.md` Phase 3 section
-- Project goals and priority order from `docs/3-goals.md`
-- Implementation constraints from `docs/5-constraints.md`
-- Database for detailed entity queries: `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get entity {id} --db references/research.db`
+- Analytical findings from `blueprint/references/analysis-findings.md`
+- Goal-aligned interpretation from `blueprint/references/analysis-interpretation.md`
+- Confirmed findings from `blueprint/blueprint.md` Phase 3 section
+- Project goals and priority order from `blueprint/3-goals.md`
+- Implementation constraints from `blueprint/5-constraints.md`
+- Database for detailed entity queries: `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get entity {id} --db blueprint/references/research.db`
 
 ### Draft Blueprint
 
@@ -63,26 +63,26 @@ docs/progress.db
 ### Handoff to Progress Tracking
 
 10. After user approves implementation plan, invoke `/progress`
-    - Progress skill detects no database exists, initializes, and imports `docs/implementation-progress.md`
-    - Progress skill owns `docs/implementation-progress.md` and `docs/progress.db` from this point forward
+    - Progress skill detects no database exists, initializes, and imports `blueprint/implementation-progress.md`
+    - Progress skill owns `blueprint/implementation-progress.md` and `blueprint/progress.db` from this point forward
     - Blueprint's job is complete; future updates through `/progress`, not `/blueprint-research`
 
 ## Re-Entry
 
 When Phase 4 resumes with existing implementation work, present dashboard:
 
-1. If `docs/implementation-progress.md` exists: present existing draft plan
-2. `references/analysis-findings.md` — analytical findings
-3. `references/analysis-interpretation.md` — interpretation driving decisions
-4. `docs/blueprint.md` Phase 3 section — confirmed findings
-5. `docs/3-goals.md` — project goals
-6. `docs/5-constraints.md` — implementation constraints
+1. If `blueprint/implementation-progress.md` exists: present existing draft plan
+2. `blueprint/references/analysis-findings.md` — analytical findings
+3. `blueprint/references/analysis-interpretation.md` — interpretation driving decisions
+4. `blueprint/blueprint.md` Phase 3 section — confirmed findings
+5. `blueprint/3-goals.md` — project goals
+6. `blueprint/5-constraints.md` — implementation constraints
 
 User directs: revise existing plan, restart draft from analysis findings, or proceed to handoff.
 
 ## Output
 
-`docs/implementation-progress.md` — an actionable checklist with:
+`blueprint/implementation-progress.md` — an actionable checklist with:
 
 - Status tracking per item (checkbox format)
 - Dependency ordering (items grouped by phase/priority)

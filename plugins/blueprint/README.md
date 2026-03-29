@@ -25,7 +25,7 @@ Restart Claude session after init to load rules. Run `/ocd-status` to verify bot
 /blueprint-research [scope description]
 ```
 
-Optional scope description seeds Phase 1. Without arguments, skill detects state from `docs/blueprint.md` and proposes next phase.
+Optional scope description seeds Phase 1. Without arguments, skill detects state from `blueprint/blueprint.md` and proposes next phase.
 
 ## Phases
 
