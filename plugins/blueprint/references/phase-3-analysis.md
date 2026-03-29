@@ -33,8 +33,8 @@ references/analysis-interpretation.md
 ### Pre-Analysis
 
 1. Query database for analysis inputs:
-    - `research get stats` — overall summary
-    - `research get entities --stage researched` — researched entities with relevance
+    - `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get stats --db references/research.db` — overall summary
+    - `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get entities --stage researched --db references/research.db` — researched entities with relevance
 2. Build ordered entity list — researched entities sorted by relevance (highest first), with entity IDs
 3. Present analysis plan to user — entity count, analytical questions, dynamic loading approach (agents self-regulate batch size based on accumulated note content)
 4. User confirms to proceed
@@ -52,7 +52,7 @@ All agents answer all questions from whatever entities they consume:
 
 ### Execution
 
-5. Clear existing measures from prior analysis runs: `research clear measures`
+5. Clear existing measures from prior analysis runs: `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research clear measures --db references/research.db`
 6. Spawn sequential agents with dynamic loading:
     1. Spawn agent with Analysis Agent template:
         - Provide full ordered entity list (all researched entity IDs by relevance descending)
@@ -85,7 +85,7 @@ All agents answer all questions from whatever entities they consume:
     - Pattern tiers (table-stakes, differentiators, emerging, absent) based on adoption count across cohort, not effectiveness recommendation; tier descriptions must state this
     - Cautionary patterns note correlation with weaker presences, not causal claims
     - Decision cascades explain co-occurrence logic
-    - Measure distributions and co-occurrence data (from `research get measures`)
+    - Measure distributions and co-occurrence data (from `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get measures --db references/research.db`)
     - Decision cascades with specific entity evidence
     - Cautionary patterns with specific entity evidence
     - Domain knowledge updates (if any)
@@ -114,7 +114,7 @@ All agents answer all questions from whatever entities they consume:
 
 When Phase 3 resumes with existing analysis data, present dashboard:
 
-1. `research get stats` — entity counts including measures
+1. `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get stats --db references/research.db` — entity counts including measures
 2. If `references/analysis-findings.md` exists: present existing findings
 3. If `references/analysis-interpretation.md` exists: present existing interpretation
 4. User directs: re-run analysis (clears measures first), re-interpret with updated goals (rewrites interpretation only), refine existing analysis, or proceed to Phase 4

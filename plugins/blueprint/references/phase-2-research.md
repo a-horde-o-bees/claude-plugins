@@ -25,7 +25,7 @@ references/research.db (populated with notes)
 
 ### Input
 
-- Entities sorted by relevance: `research get entities --role example --stage new`
+- Entities sorted by relevance: `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get entities --role example --stage new --db references/research.db`
 - `docs/1-scope.md` for scope context, `docs/2-assessment-criteria.md` for relevance reassessment
 - `docs/4-effectiveness-criteria.md` for evaluating patterns, `docs/6-domain-knowledge.md` for landscape context
 
@@ -51,25 +51,25 @@ Research proceeds in waves by relevance tier. After each wave, orchestrator and 
 ### Research Loop
 
 4. Record current note count for entity:
-    - `research get entity {entity_id}` — note "Notes:" count
+    - `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get entity {entity_id} --db references/research.db` — note "Notes:" count
 5. Spawn agent with Research Agent template
 6. After agent completes, verify:
     1. If task interrupted or errored: re-spawn
-    2. Check stage: `research get entity {entity_id}`
+    2. Check stage: `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get entity {entity_id} --db references/research.db`
     3. If stage is not `researched`: re-spawn — agent failed to write
 
 ### Post-Research
 
 7. Propose spawning resolve-duplicates agent (`${CLAUDE_PLUGIN_ROOT}/references/resolve-duplicates.md`) — present to user for confirmation before executing; merges are hard to reverse
     1. If user confirms: spawn agent
-8. Present summary: `research get stats`
+8. Present summary: `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get stats --db references/research.db`
 
 ## Re-Entry
 
 When Phase 2 resumes with existing research, present dashboard:
 
-1. `research get stats` — entity counts by stage
-2. `research get entities` — entities sorted by relevance with stage
+1. `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get stats --db references/research.db` — entity counts by stage
+2. `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get entities --db references/research.db` — entities sorted by relevance with stage
 3. Identify entities at stage `new` (pending) vs `researched` (complete)
 
 Resume with next entity at stage `new` in relevance order (highest first). Entities at `researched` have completed deep research — skip them.
@@ -77,7 +77,7 @@ Resume with next entity at stage `new` in relevance order (highest first). Entit
 ## Checkpointing
 
 - Database is checkpoint — agent writes notes then explicitly sets stage to `researched`
-- If session breaks, `get entities` shows stage for each entity
+- If session breaks, `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get entities --db references/research.db` shows stage for each entity
 - Resume by continuing with next `new` entity in relevance order
 - Writes are transactional with retry — database is always consistent
 

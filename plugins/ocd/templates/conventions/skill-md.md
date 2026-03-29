@@ -210,6 +210,8 @@ Workflow section is self-contained — everything agent needs to execute belongs
 
 An agent given the Workflow section and Rules section can execute without referencing other parts of SKILL.md. Component files are read at execution time by the agent running the workflow, not pre-loaded by the orchestrator.
 
+CLI references in workflows and reference files must be full executable commands — never shorthand. An agent should be able to copy a command verbatim and run it. Include interpreter, launcher path, module, subcommand, and all required flags (e.g., `--db`). Shorthand forces agents to discover invocation patterns, which wastes tokens and risks incorrect construction.
+
 ### Multi-Path Workflows
 
 Skills with distinct execution paths use separate Workflow sections instead of conditional branching within one Workflow. Each path is self-contained with its own steps, report format, and any supporting subsections.

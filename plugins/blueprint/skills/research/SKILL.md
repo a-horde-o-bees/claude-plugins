@@ -112,7 +112,7 @@ When user requests "add more entities" at any phase gate:
     - `references/analysis-findings.md`
     - `references/analysis-interpretation.md`
     - `docs/implementation-progress.md` (if exists)
-2. Run `research clear measures`
+2. Run `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research clear measures --db references/research.db`
 3. Update `docs/blueprint.md`: Phase 1 `[-]`, Phases 2-4 `[ ]`
 4. Read Phase 1 reference file — re-entry detects existing domain knowledge and entities
 

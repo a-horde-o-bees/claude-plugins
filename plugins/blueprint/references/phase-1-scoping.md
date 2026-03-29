@@ -67,7 +67,7 @@ When database contains entities at Phase 1 start (from initialization arguments,
     - `5-constraints.md` — implementation realities (budget, timeline, skills, platform)
     - `6-domain-knowledge.md` — landscape structure and distilled context research findings
 11. Create `references/` directory
-12. Initialize research database: `research init`
+12. Initialize research database: `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research init --db references/research.db`
 
 ### Domain Knowledge Development
 
@@ -75,14 +75,14 @@ Codify observations into domain knowledge guiding discovery and deep research. S
 
 13. Propose sources — directories (crawlable listings) and context sources (advice, data, guides)
 14. Register confirmed sources as entities:
-    - `research register --name "Source Name" --url "https://source-url.com" --description "What it contains and why it matters" --role directory --relevance 0`
-    - `research register --name "Source Name" --url "https://source-url.com" --description "What it contains and why it matters" --role context --relevance 0`
+    - `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research register --name "Source Name" --url "https://source-url.com" --description "What it contains and why it matters" --role directory --relevance 0 --db references/research.db`
+    - `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research register --name "Source Name" --url "https://source-url.com" --description "What it contains and why it matters" --role context --relevance 0 --db references/research.db`
 15. For directory entities, add accessibility note after registration:
-    - `research upsert notes --entity-id ID --notes "[ACCESSIBILITY]: {static|js-rendered|auth-gated|api-available} — {brief access method}"`
+    - `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research upsert notes --entity-id ID --notes "[ACCESSIBILITY]: {static|js-rendered|auth-gated|api-available} — {brief access method}" --db references/research.db`
     - Accessibility guides tool selection: `static` uses web fetch; `js-rendered` and `auth-gated` require browser automation (sequential)
 16. Present sources for user review:
-    - `research get entities --role directory`
-    - `research get entities --role context`
+    - `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get entities --role directory --db references/research.db`
+    - `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get entities --role context --db references/research.db`
 17. User refines — add, remove, or adjust sources
 
 ### Context Research Waves
@@ -134,12 +134,12 @@ Explore domain to discover entities. Two modes:
 
 When Phase 1 resumes with existing data, present dashboard:
 
-1. `research get stats` — entity counts by role and stage
-2. `research get entities --role example` — examples sorted by relevance
-3. `research get entities --role directory` — directories (check progress notes)
-4. `research get entities --role context` — context sources
-5. `research get provenance` — provenance sources with entity counts
-6. `research get reach --min 2` — multi-source entities
+1. `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get stats --db references/research.db` — entity counts by role and stage
+2. `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get entities --role example --db references/research.db` — examples sorted by relevance
+3. `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get entities --role directory --db references/research.db` — directories (check progress notes)
+4. `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get entities --role context --db references/research.db` — context sources
+5. `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get provenance --db references/research.db` — provenance sources with entity counts
+6. `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get reach --min 2 --db references/research.db` — multi-source entities
 7. `docs/overview.md` for file index, `docs/1-scope.md` for scope context
 
 User directs next action: explore more, crawl directories, refine relevance, or proceed to deep research.

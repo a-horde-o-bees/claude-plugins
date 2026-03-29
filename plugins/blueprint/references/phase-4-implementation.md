@@ -32,7 +32,7 @@ docs/progress.db
 - Confirmed findings from `docs/blueprint.md` Phase 3 section
 - Project goals and priority order from `docs/3-goals.md`
 - Implementation constraints from `docs/5-constraints.md`
-- Database for detailed entity queries: `research get entity {id}`
+- Database for detailed entity queries: `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get entity {id} --db references/research.db`
 
 ### Draft Blueprint
 
