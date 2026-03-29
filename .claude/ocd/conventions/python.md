@@ -119,10 +119,10 @@ from ._db import get_connection
 from . import *  # __main__.py importing facade
 ```
 
-Cross-package (e.g., skill `_init.py` referencing root `scripts/plugin.py`):
+Cross-package (e.g., skill `_init.py` referencing plugin framework):
 
 ```python
-from scripts import plugin
+import plugin
 ```
 
 No `sys.path` manipulation in individual scripts. No `# type: ignore` comments. See `decisions/python-import-pattern.md` for full rationale and alternatives evaluated.

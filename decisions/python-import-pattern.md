@@ -12,7 +12,7 @@ Plugin scripts live in skill packages like `plugins/ocd/skills/navigator/` and a
 
 **Within-package imports:** `from . import _db`, `from ._db import get_connection`
 
-**Cross-package imports:** `from scripts import plugin` (absolute from plugin root)
+**Cross-package imports:** `import plugin` (absolute from plugin root)
 
 **Testing:** Per-plugin pytest configs with isolated `pythonpath`. Each plugin's tests run with only that plugin's root on `sys.path`, mirroring production isolation. Project-level tests run separately with no plugin paths.
 

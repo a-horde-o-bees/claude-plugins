@@ -11,7 +11,7 @@ import sqlite3
 from pathlib import Path
 
 from . import _db as db
-from scripts import plugin
+import plugin
 
 logger = logging.getLogger(__name__)
 

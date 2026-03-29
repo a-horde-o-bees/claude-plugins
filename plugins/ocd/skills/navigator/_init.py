@@ -8,7 +8,7 @@ import sqlite3
 from pathlib import Path
 
 from . import _db
-from scripts import plugin
+import plugin
 
 
 def _db_path(plugin_name: str, project_dir: Path) -> Path:

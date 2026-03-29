@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/run.py scripts.session_start",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/run.py hooks.session_start",
             "timeout": 10
           }
         ]
@@ -17,7 +17,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/run.py scripts.auto_approval",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/run.py hooks.auto_approval",
             "timeout": 10
           }
         ]

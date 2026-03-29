@@ -15,7 +15,7 @@ User runs `/blueprint-status`
 
 1. Run status script
   ```
-  python3 ${CLAUDE_PLUGIN_ROOT}/run.py scripts.plugin_cli status
+  python3 ${CLAUDE_PLUGIN_ROOT}/run.py plugin status
   ```
 2. Present output to user as-is
 

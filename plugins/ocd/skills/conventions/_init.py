@@ -7,7 +7,7 @@ Interface contract: init() and status() return {"files": [...], "extra": [...]}.
 from pathlib import Path
 
 from . import *  # noqa: F403
-from scripts import plugin
+import plugin
 
 
 def _conventions_dir(plugin_name: str, project_dir: Path) -> Path:

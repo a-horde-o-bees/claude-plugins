@@ -40,4 +40,4 @@ if [[ "$1" == *.py ]]; then
 fi
 
 # Otherwise, run plugin_cli.py with the args
-exec python3 "${PLUGIN_DIR}/scripts/plugin_cli.py" "$@"
+exec python3 "${PLUGIN_DIR}/run.py" plugin "$@"

@@ -20,7 +20,7 @@ class TestPreCommitPropagation:
         self.plugin_dir = worktree / "plugins" / "test-hook-plugin"
         self.plugin_dir.mkdir(parents=True, exist_ok=True)
         (self.plugin_dir / "rules").mkdir(exist_ok=True)
-        (self.plugin_dir / "scripts").mkdir(exist_ok=True)
+        (self.plugin_dir / "plugin").mkdir(exist_ok=True)
         subprocess.run(
             ["git", "add", str(self.plugin_dir)],
             cwd=self.root, capture_output=True,
@@ -59,7 +59,7 @@ class TestPreCommitPropagation:
         )
 
     def test_no_action_when_canonical_not_staged(self):
-        target = self.plugin_dir / "scripts" / "plugin.py"
+        target = self.plugin_dir / "plugin" / "__init__.py"
         result = self._run_hook()
         assert result.returncode == 0
         assert not target.exists(), "Should not propagate when nothing staged"
@@ -78,37 +78,37 @@ class TestPreCommitPropagation:
         finally:
             self._unstage_file(canonical)
 
-    def test_propagates_plugin_py(self):
-        canonical = self.root / "plugins" / "ocd" / "scripts" / "plugin.py"
-        target = self.plugin_dir / "scripts" / "plugin.py"
+    def test_propagates_plugin_init(self):
+        canonical = self.root / "plugins" / "ocd" / "plugin" / "__init__.py"
+        target = self.plugin_dir / "plugin" / "__init__.py"
 
         self._touch_and_stage(canonical)
         try:
             result = self._run_hook()
             assert result.returncode == 0, result.stderr
-            assert target.exists(), "plugin.py was not propagated"
+            assert target.exists(), "__init__.py was not propagated"
             assert canonical.read_bytes() == target.read_bytes(), \
-                "Propagated plugin.py content does not match canonical"
+                "Propagated __init__.py content does not match canonical"
         finally:
             self._unstage_file(canonical)
 
-    def test_propagates_plugin_cli_py(self):
-        canonical = self.root / "plugins" / "ocd" / "scripts" / "plugin_cli.py"
-        target = self.plugin_dir / "scripts" / "plugin_cli.py"
+    def test_propagates_plugin_main(self):
+        canonical = self.root / "plugins" / "ocd" / "plugin" / "__main__.py"
+        target = self.plugin_dir / "plugin" / "__main__.py"
 
         self._touch_and_stage(canonical)
         try:
             result = self._run_hook()
             assert result.returncode == 0, result.stderr
-            assert target.exists(), "plugin_cli.py was not propagated"
+            assert target.exists(), "__main__.py was not propagated"
             assert canonical.read_bytes() == target.read_bytes(), \
-                "Propagated plugin_cli.py content does not match canonical"
+                "Propagated __main__.py content does not match canonical"
         finally:
             self._unstage_file(canonical)
 
     def test_skips_ocd_plugin(self):
         """Ocd is the canonical source — hook should not copy to itself."""
-        canonical = self.root / "plugins" / "ocd" / "scripts" / "plugin.py"
+        canonical = self.root / "plugins" / "ocd" / "plugin" / "__init__.py"
         original = canonical.read_bytes()
 
         self._touch_and_stage(canonical)
@@ -120,14 +120,14 @@ class TestPreCommitPropagation:
 
     def test_skips_plugin_without_target_dir(self):
         """If a plugin lacks the target subdirectory, skip it."""
-        shutil.rmtree(self.plugin_dir / "scripts")
-        canonical = self.root / "plugins" / "ocd" / "scripts" / "plugin.py"
+        shutil.rmtree(self.plugin_dir / "plugin")
+        canonical = self.root / "plugins" / "ocd" / "plugin" / "__init__.py"
 
         self._touch_and_stage(canonical)
         try:
             result = self._run_hook()
             assert result.returncode == 0, result.stderr
-            assert not (self.plugin_dir / "scripts" / "plugin.py").exists(), \
-                "Should not create scripts/ directory"
+            assert not (self.plugin_dir / "plugin" / "__init__.py").exists(), \
+                "Should not create plugin/ directory"
         finally:
             self._unstage_file(canonical)

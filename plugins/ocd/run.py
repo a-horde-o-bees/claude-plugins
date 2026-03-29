@@ -5,7 +5,7 @@ runpy.run_module, establishing proper __package__ context for
 relative imports within packages.
 
 Usage:
-    python3 run.py scripts.plugin_cli init
+    python3 run.py plugin init
     python3 run.py skills.navigator describe .
 """
 

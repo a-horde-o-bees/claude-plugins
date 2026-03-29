@@ -1,17 +1,17 @@
 """Plugin CLI.
 
 Agent-facing entry point for init and status operations.
-Business logic lives in plugin.py.
+Business logic lives in __init__.py.
 """
 
 import argparse
 
-from plugin import run_init, run_status
+from . import run_init, run_status
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        prog="plugin_cli.py",
+        prog="plugin",
         description="Plugin infrastructure: init and status operations.",
     )
     commands = parser.add_subparsers(dest="command", required=True)

@@ -7,17 +7,17 @@
 # in sync when canonicals change.
 #
 # Propagated files:
-#   rules/ocd-agent-authoring.md  — agent behavior rule (to rules/)
-#   scripts/plugin.py             — generic plugin framework (to scripts/)
-#   scripts/plugin_cli.py         — CLI entry point (to scripts/)
+#   rules/ocd-agent-authoring.md       — agent behavior rule (to rules/)
+#   plugin/__init__.py                — generic plugin framework (to plugin/)
+#   plugin/__main__.py                — CLI entry point (to plugin/)
 
 set -euo pipefail
 
 # Map of canonical paths to target subdirectories within each plugin
 SHARED_FILES=(
     "plugins/ocd/rules/ocd-agent-authoring.md:rules"
-    "plugins/ocd/scripts/plugin.py:scripts"
-    "plugins/ocd/scripts/plugin_cli.py:scripts"
+    "plugins/ocd/plugin/__init__.py:plugin"
+    "plugins/ocd/plugin/__main__.py:plugin"
 )
 
 staged=$(git diff --cached --name-only)
