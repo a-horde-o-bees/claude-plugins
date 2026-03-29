@@ -106,6 +106,30 @@ When it is overhead:
 - Duplicating what unit tests already cover with mocked boundaries
 - Testing library behavior documented by library authors
 
+### Git Worktree Isolation
+
+Integration tests that create, modify, or stage files within the project repository must run in a disposable git worktree. A worktree shares the object store with the main repo — tests operate on real project files in real git context — but has its own working tree and index. Changes in the worktree cannot affect the main working tree.
+
+Without isolation, tests that use `git checkout --`, `git restore`, or `git reset` to clean up after themselves silently destroy uncommitted changes in the main working tree.
+
+Implementation:
+- Session-scoped pytest fixture creates a detached worktree from HEAD via `git worktree add <path> HEAD --detach`
+- Fixture yields the worktree path; teardown removes it via `git worktree remove --force`
+- Tests receive the worktree path and reference all project files relative to it
+- Per-test setup/teardown handles test-specific state (temp directories, staged files) within the worktree
+- conftest.py in the integration test directory owns the fixture
+
+When worktree isolation is required:
+- Tests that stage or unstage files (`git add`, `git reset`)
+- Tests that run git hooks (pre-commit, commit-msg)
+- Tests that create or delete files in the project tree
+- Tests that modify tracked files and restore them afterward
+
+When worktree isolation is unnecessary:
+- Tests that only read project files without modification
+- Tests that operate entirely in `tmp_path` or other external temp directories
+- Unit tests that mock git operations
+
 ## What to Avoid
 
 ### Configuration Restating
