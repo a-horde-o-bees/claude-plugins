@@ -1,4 +1,4 @@
-"""Unit tests for research_cli.py.
+"""Unit tests for research CLI.
 
 Tests: init, register, update entities, get entity, get entities, get stats,
 export, URL dedup, notes, update note, urls, provenance, reach, clear measures,

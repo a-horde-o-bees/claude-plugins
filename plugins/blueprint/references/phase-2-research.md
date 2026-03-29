@@ -25,7 +25,7 @@ references/research.db (populated with notes)
 
 ### Input
 
-- Entities sorted by relevance: `research_cli get entities --role example --stage new`
+- Entities sorted by relevance: `research get entities --role example --stage new`
 - `docs/1-scope.md` for scope context, `docs/2-assessment-criteria.md` for relevance reassessment
 - `docs/4-effectiveness-criteria.md` for evaluating patterns, `docs/6-domain-knowledge.md` for landscape context
 
@@ -51,25 +51,25 @@ Research proceeds in waves by relevance tier. After each wave, orchestrator and 
 ### Research Loop
 
 4. Record current note count for entity:
-    - `research_cli get entity {entity_id}` — note "Notes:" count
+    - `research get entity {entity_id}` — note "Notes:" count
 5. Spawn agent with Research Agent template
 6. After agent completes, verify:
     1. If task interrupted or errored: re-spawn
-    2. Check stage: `research_cli get entity {entity_id}`
+    2. Check stage: `research get entity {entity_id}`
     3. If stage is not `researched`: re-spawn — agent failed to write
 
 ### Post-Research
 
 7. Propose spawning resolve-duplicates agent (`${CLAUDE_PLUGIN_ROOT}/references/resolve-duplicates.md`) — present to user for confirmation before executing; merges are hard to reverse
     1. If user confirms: spawn agent
-8. Present summary: `research_cli get stats`
+8. Present summary: `research get stats`
 
 ## Re-Entry
 
 When Phase 2 resumes with existing research, present dashboard:
 
-1. `research_cli get stats` — entity counts by stage
-2. `research_cli get entities` — entities sorted by relevance with stage
+1. `research get stats` — entity counts by stage
+2. `research get entities` — entities sorted by relevance with stage
 3. Identify entities at stage `new` (pending) vs `researched` (complete)
 
 Resume with next entity at stage `new` in relevance order (highest first). Entities at `researched` have completed deep research — skip them.

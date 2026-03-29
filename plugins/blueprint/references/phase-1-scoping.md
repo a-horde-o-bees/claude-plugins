@@ -67,7 +67,7 @@ When database contains entities at Phase 1 start (from initialization arguments,
     - `5-constraints.md` — implementation realities (budget, timeline, skills, platform)
     - `6-domain-knowledge.md` — landscape structure and distilled context research findings
 11. Create `references/` directory
-12. Initialize research database: `research_cli init`
+12. Initialize research database: `research init`
 
 ### Domain Knowledge Development
 
@@ -75,14 +75,14 @@ Codify observations into domain knowledge guiding discovery and deep research. S
 
 13. Propose sources — directories (crawlable listings) and context sources (advice, data, guides)
 14. Register confirmed sources as entities:
-    - `research_cli register --name "Source Name" --url "https://source-url.com" --description "What it contains and why it matters" --role directory --relevance 0`
-    - `research_cli register --name "Source Name" --url "https://source-url.com" --description "What it contains and why it matters" --role context --relevance 0`
+    - `research register --name "Source Name" --url "https://source-url.com" --description "What it contains and why it matters" --role directory --relevance 0`
+    - `research register --name "Source Name" --url "https://source-url.com" --description "What it contains and why it matters" --role context --relevance 0`
 15. For directory entities, add accessibility note after registration:
-    - `research_cli upsert notes --entity-id ID --notes "[ACCESSIBILITY]: {static|js-rendered|auth-gated|api-available} — {brief access method}"`
+    - `research upsert notes --entity-id ID --notes "[ACCESSIBILITY]: {static|js-rendered|auth-gated|api-available} — {brief access method}"`
     - Accessibility guides tool selection: `static` uses web fetch; `js-rendered` and `auth-gated` require browser automation (sequential)
 16. Present sources for user review:
-    - `research_cli get entities --role directory`
-    - `research_cli get entities --role context`
+    - `research get entities --role directory`
+    - `research get entities --role context`
 17. User refines — add, remove, or adjust sources
 
 ### Context Research Waves
@@ -134,12 +134,12 @@ Explore domain to discover entities. Two modes:
 
 When Phase 1 resumes with existing data, present dashboard:
 
-1. `research_cli get stats` — entity counts by role and stage
-2. `research_cli get entities --role example` — examples sorted by relevance
-3. `research_cli get entities --role directory` — directories (check progress notes)
-4. `research_cli get entities --role context` — context sources
-5. `research_cli get provenance` — provenance sources with entity counts
-6. `research_cli get reach --min 2` — multi-source entities
+1. `research get stats` — entity counts by role and stage
+2. `research get entities --role example` — examples sorted by relevance
+3. `research get entities --role directory` — directories (check progress notes)
+4. `research get entities --role context` — context sources
+5. `research get provenance` — provenance sources with entity counts
+6. `research get reach --min 2` — multi-source entities
 7. `docs/overview.md` for file index, `docs/1-scope.md` for scope context
 
 User directs next action: explore more, crawl directories, refine relevance, or proceed to deep research.

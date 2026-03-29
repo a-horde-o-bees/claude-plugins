@@ -32,7 +32,7 @@ docs/progress.db
 - Confirmed findings from `docs/blueprint.md` Phase 3 section
 - Project goals and priority order from `docs/3-goals.md`
 - Implementation constraints from `docs/5-constraints.md`
-- Database for detailed entity queries: `research_cli get entity {id}`
+- Database for detailed entity queries: `research get entity {id}`
 
 ### Draft Blueprint
 

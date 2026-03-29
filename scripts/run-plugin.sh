@@ -39,5 +39,5 @@ if [[ "$1" == *.py ]]; then
     exec python3 "${PLUGIN_DIR}/${SCRIPT}" "$@"
 fi
 
-# Otherwise, run plugin_cli.py with the args
+# Otherwise, run plugin CLI with the args
 exec python3 "${PLUGIN_DIR}/run.py" plugin "$@"

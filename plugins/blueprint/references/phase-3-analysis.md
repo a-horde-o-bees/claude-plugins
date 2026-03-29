@@ -33,8 +33,8 @@ references/analysis-interpretation.md
 ### Pre-Analysis
 
 1. Query database for analysis inputs:
-    - `research_cli get stats` — overall summary
-    - `research_cli get entities --stage researched` — researched entities with relevance
+    - `research get stats` — overall summary
+    - `research get entities --stage researched` — researched entities with relevance
 2. Build ordered entity list — researched entities sorted by relevance (highest first), with entity IDs
 3. Present analysis plan to user — entity count, analytical questions, dynamic loading approach (agents self-regulate batch size based on accumulated note content)
 4. User confirms to proceed
@@ -52,7 +52,7 @@ All agents answer all questions from whatever entities they consume:
 
 ### Execution
 
-5. Clear existing measures from prior analysis runs: `research_cli clear measures`
+5. Clear existing measures from prior analysis runs: `research clear measures`
 6. Spawn sequential agents with dynamic loading:
     1. Spawn agent with Analysis Agent template:
         - Provide full ordered entity list (all researched entity IDs by relevance descending)
@@ -85,7 +85,7 @@ All agents answer all questions from whatever entities they consume:
     - Pattern tiers (table-stakes, differentiators, emerging, absent) based on adoption count across cohort, not effectiveness recommendation; tier descriptions must state this
     - Cautionary patterns note correlation with weaker presences, not causal claims
     - Decision cascades explain co-occurrence logic
-    - Measure distributions and co-occurrence data (from `research_cli get measures`)
+    - Measure distributions and co-occurrence data (from `research get measures`)
     - Decision cascades with specific entity evidence
     - Cautionary patterns with specific entity evidence
     - Domain knowledge updates (if any)
@@ -114,7 +114,7 @@ All agents answer all questions from whatever entities they consume:
 
 When Phase 3 resumes with existing analysis data, present dashboard:
 
-1. `research_cli get stats` — entity counts including measures
+1. `research get stats` — entity counts including measures
 2. If `references/analysis-findings.md` exists: present existing findings
 3. If `references/analysis-interpretation.md` exists: present existing interpretation
 4. User directs: re-run analysis (clears measures first), re-interpret with updated goals (rewrites interpretation only), refine existing analysis, or proceed to Phase 4
