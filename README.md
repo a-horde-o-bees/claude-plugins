@@ -13,7 +13,7 @@ Use at your own discretion. If something breaks, the LICENSE applies.
 | Plugin | Status | Description |
 |--------|--------|-------------|
 | [ocd](plugins/ocd/) | Active | Deterministic enforcement of permissions, rules, and structural conventions with agent-facing project navigation |
-| [blueprint](plugins/blueprint/) | Active | Structured competitive research and implementation planning through entity-based analysis |
+| [blueprint](plugins/blueprint/) | Active | Structured solution research and implementation planning through entity-based analysis |
 
 ## Installation
 

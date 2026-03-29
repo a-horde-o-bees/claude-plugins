@@ -8,9 +8,17 @@ Plugin versions follow `x.y.z` format in each plugin's `.claude-plugin/plugin.js
 - `y` — increments on public release; cohesive set of changes ready for consumers; resets `z` to `0`
 - `z` — increments on every commit during development; required for local plugin reload to detect changes
 
-## Commit Workflow
+## Development Workflow
 
-Use `/ocd-commit` to commit changes.
+Use `/ocd-commit` to commit changes. Use `/ocd-push --branch main` to push.
+
+After pushing, refresh the marketplace so the running Claude session picks up changes:
+
+```
+/plugin marketplace update a-horde-o-bees
+```
+
+Restart (`/exit` then `claude --continue`) only required when `.claude/rules/` files changed. Skill and convention changes take effect after the marketplace update.
 
 ## Content Boundaries
 
