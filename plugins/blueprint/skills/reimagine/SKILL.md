@@ -1,13 +1,13 @@
 ---
 name: blueprint-reimagine
 description: |
-  Abstract an existing capability into a generalized problem description for unbiased solution research. Reads target, extracts what problem it solves without implementation bias, captures system constraints, and initializes blueprint research with the generalized scope.
+  Abstract an existing capability into a generalized problem description for unbiased solution research. Reads target, extracts what problem it solves without implementation bias, and captures system constraints.
 argument-hint: "--target <path | natural language description>"
 ---
 
 # /blueprint-reimagine
 
-Abstract an existing capability into a generalized problem description, then initialize blueprint research with that scope. Separates what a capability does (the problem it solves) from how it currently works (implementation details). System constraints (platform, runtime, invocation model) are preserved as research filters — they narrow results without shaping the search.
+Abstract an existing capability into a generalized problem description for unbiased solution research. Separates what a capability does (the problem it solves) from how it currently works (implementation details). System constraints (platform, runtime, invocation model) are preserved as research filters — they narrow results without shaping the search.
 
 Produces an unbiased starting point so that research finds existing tools, proven approaches, and established patterns that fulfill the same purpose — including solutions that could be adopted directly rather than rebuilt.
 
@@ -50,18 +50,12 @@ User runs `/blueprint-reimagine`
 4. User refines or approves scope via AskUserQuestion:
     1. If user approves: proceed
     2. Else: incorporate refinements, re-present scope; repeat until approved
-5. If `blueprint/` directory exists:
-    1. Exit to user — report existing blueprint folder; remove or rename before reimagine can initialize
-6. Create `blueprint/data/` directory
-7. Copy `${CLAUDE_PLUGIN_ROOT}/templates/blueprint.md` to `blueprint/data/state.md`
-8. Mark Phase 1 as `[-]` in `blueprint/data/state.md`
-9. Exit to user — blueprint initialized with scope; run `/blueprint-research` to begin Phase 1 scoping; present approved scope statement for user to provide as `$ARGUMENTS`
+5. Exit to user — present approved scope statement for user to provide as `/blueprint-research` target
 
 ### Report
 
 - Generalized scope statement (approved version)
 - System constraints
-- Blueprint initialization status
 - Next step: `/blueprint-research [scope]`
 
 ## Rules
@@ -72,4 +66,4 @@ User runs `/blueprint-reimagine`
 - Generalized scope uses domain-neutral language — describe the problem category, not the existing tool
 - User refinement is the final gate before initialization — agent produces initial abstraction, user adjusts
 - Natural language targets skip abstraction — user already provided a generalized description; present for constraint addition and confirmation
-- Reimagine requires clean state — no existing `blueprint/` directory; prior research must be removed or renamed before re-initializing
+- Reimagine does not manage blueprint infrastructure — initialization and state checking are research's responsibility
