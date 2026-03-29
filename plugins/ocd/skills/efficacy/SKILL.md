@@ -108,7 +108,7 @@ User runs `/ocd-efficacy`
 
 ### Report
 
-- Per-scenario findings from sub-agents
+- Per-scenario findings from subagents
 - Cross-cutting analysis — do not promote single-scenario observations
 - Changes applied: Defect fixes with rationale
 - Observations: findings requiring user judgment
@@ -117,7 +117,7 @@ User runs `/ocd-efficacy`
 
 - Agents spawn with no conversation history — project rules and CLAUDE.md load automatically; only Workflow instructions and scenario content are passed explicitly
 - Evaluation protocol constraints ("Do NOT execute any changes") govern evaluation steps; triage and fix are post-evaluation workflow steps executed by same or coordinating agent
-- Coordinating agent in Per-Scenario spawns sub-agents with evaluation file references; sub-agents evaluate only, coordinator does triage and fix after consolidation
+- Coordinating agent in Per-Scenario spawns subagents with evaluation file references; subagents evaluate only, coordinator does triage and fix after consolidation
 - Cross-cutting findings require 2+ scenario recurrence — do not promote single-scenario observations
 - Route always runs in main conversation; --delegate applies only to Workflow agent spawns
 - Scenario description is agent-determined, no prescribed format

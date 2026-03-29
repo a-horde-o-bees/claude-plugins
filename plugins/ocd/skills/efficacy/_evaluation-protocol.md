@@ -2,7 +2,7 @@
 
 Constraints and steps for evaluating agents. Evaluating agents must not execute changes or spawn further agents.
 
-Do NOT execute any changes. Do NOT spawn sub-agents. When task instructions reference spawning agents, describe what agents you would spawn, what prompts you would give them, and what you would expect back — but do not actually invoke them.
+Do NOT execute any changes. Do NOT spawn subagents. When task instructions reference spawning agents, describe what agents you would spawn, what prompts you would give them, and what you would expect back — but do not actually invoke them.
 
 ## Steps
 

@@ -25,7 +25,7 @@ Fields:
 | `allowed-tools` | None | Tools allowed without permission prompts. Supports wildcards (e.g., `Bash(git *)`) |
 | `model` | Inherited | Override model for this skill |
 | `context` | None | Set `fork` to run in subagent context |
-| `agent` | None | Sub-agent type when `context: fork` (e.g., `Explore`, `Plan`, `general-purpose`) |
+| `agent` | None | Subagent type when `context: fork` (e.g., `Explore`, `Plan`, `general-purpose`) |
 
 Multi-line descriptions — use YAML block scalar operator (`|` or `>`) for multi-line values. Bare multi-line descriptions (wrapped by formatters without operator) break parser.
 
@@ -304,7 +304,7 @@ When interactive decisions span multiple Workflow executions, structure them as 
 
 When orchestrator steps present choices or request confirmation, use `AskUserQuestion` tool with `options` parameter — not freeform text with numbered lists. Structured options give user selectable choices instead of requiring typed responses.
 
-Does not apply to open-ended questions requiring freeform input or sub-agent contexts (AskUserQuestion only works in main conversation).
+Does not apply to open-ended questions requiring freeform input or subagent contexts (AskUserQuestion only works in main conversation).
 
 Else handling for unexpected responses:
 - Orchestrator context — Else may jump forward or backward to appropriate step; do not prescribe specific outcomes
