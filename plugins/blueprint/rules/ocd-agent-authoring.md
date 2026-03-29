@@ -44,7 +44,7 @@ Pass all target file paths in a single call. Output groups each target file with
 
 ## CLI Design
 
-### Agent-facing vs internal scripts
+### Agent-Facing vs Internal Scripts
 
 Agent-facing CLIs are executables that agents call directly during tasks. Internal scripts are implementation details called by plugin infrastructure (hooks, commands) — agents never invoke them.
 
