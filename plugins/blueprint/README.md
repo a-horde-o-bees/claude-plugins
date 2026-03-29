@@ -17,7 +17,7 @@ Requires the **ocd** plugin for agent-authoring rules and plugin infrastructure.
 
 Restart Claude session after init to load rules. Run `/ocd-status` to verify both plugins.
 
-`/blueprint-init` deploys the agent-authoring rule and initializes the research database at `.claude/{plugin_name}/research/research.db`.
+`/blueprint-init` deploys rules and initializes the research database at `blueprint/data/research.db`.
 
 ## Usage
 
@@ -25,7 +25,7 @@ Restart Claude session after init to load rules. Run `/ocd-status` to verify bot
 /blueprint-research [scope description]
 ```
 
-Optional scope description seeds Phase 1. Without arguments, skill detects state from `blueprint/blueprint.md` and proposes next phase.
+Optional scope description seeds Phase 1. Without arguments, skill detects state from `blueprint/data/state.md` and proposes next phase.
 
 ## Phases
 
@@ -34,7 +34,7 @@ Optional scope description seeds Phase 1. Without arguments, skill detects state
 | 1 | Scoping | Design | Define scope, assessment criteria, domain knowledge; discover and assess entities |
 | 2 | Deep Research | Execution | Research each entity thoroughly; capture atomic notes in SQLite |
 | 3 | Analysis | Execution | Cross-entity pattern analysis; derive measures; produce findings and interpretation |
-| 4 | Implementation Blueprint | Design | Dependency-ordered implementation plan; hands off to progress tracking |
+| 4 | Implementation Blueprint | Design | Dependency-ordered implementation plan; produces `blueprint/9-blueprint.md` as final deliverable |
 
 Design phases include refinement loops. Execution phases run sequential agents with checkpointing.
 

@@ -171,9 +171,9 @@ Notes:
 
 **Plugin data lives in `.claude/<plugin>/`.** Files that support plugin operation (databases, caches, conventions) are stored under `.claude/<plugin>/` in the project directory, not in the user's project tree. Rule files deploy to `.claude/rules/` per the standard convention.
 
-**Agent-facing tools are first-class interfaces.** Scripts that agents call directly use the `_cli` suffix and follow agent-facing design conventions: long-form flags, agent-oriented help text, structured output with parseable markers, corrective error messages.
+**Agent-facing tools are first-class interfaces.** Packages expose CLIs via `__main__.py` following agent-facing design conventions: long-form flags, agent-oriented help text, structured output with parseable markers, corrective error messages.
 
-**Internal scripts are implementation details.** Scripts called by hooks or commands (not by agents directly) use plain names without the `_cli` suffix.
+**Hook scripts are standalone modules.** Scripts invoked by hooks.json are individual modules in `hooks/` — no facade or shared entry point.
 
 ### Naming conventions
 
@@ -185,7 +185,7 @@ Notes:
 
 **Commands and skills** use the plugin-name prefix in their frontmatter `name` field so the plugin name surfaces all commands during search.
 
-**Agent-facing CLIs** use `<name>_cli.py` suffix. Internal scripts use `<name>.py`.
+**Packages** (skills, plugin infrastructure) use `__init__.py` facade and `__main__.py` CLI. Hook scripts are standalone modules.
 
 ### Convention delivery model
 

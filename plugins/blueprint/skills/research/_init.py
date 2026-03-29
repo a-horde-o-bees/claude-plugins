@@ -11,22 +11,20 @@ import sqlite3
 from pathlib import Path
 
 from . import _db as db
-import plugin
 
 logger = logging.getLogger(__name__)
 
 
-def _db_path(plugin_name: str, project_dir: Path) -> Path:
-    return project_dir / ".claude" / plugin_name / "research" / "research.db"
+DB_REL_PATH = "blueprint/data/research.db"
 
 
-def _db_rel_path(plugin_name: str) -> str:
-    return f".claude/{plugin_name}/research/research.db"
+def _db_path(project_dir: Path) -> Path:
+    return project_dir / DB_REL_PATH
 
 
-def _status_extra(plugin_name: str, project_dir: Path) -> list[dict]:
+def _status_extra(project_dir: Path) -> list[dict]:
     """Check DB health and return extra lines."""
-    path = _db_path(plugin_name, project_dir)
+    path = _db_path(project_dir)
 
     if not path.exists():
         return [
@@ -74,9 +72,7 @@ def _status_extra(plugin_name: str, project_dir: Path) -> list[dict]:
 
 def init(plugin_root: Path, project_dir: Path, force: bool = False) -> dict:
     """Initialize research database. Returns {files, extra}."""
-    plugin_name = plugin.get_plugin_name(plugin_root)
-    path = _db_path(plugin_name, project_dir)
-    rel_path = _db_rel_path(plugin_name)
+    path = _db_path(project_dir)
 
     before = "current" if path.exists() else "absent"
 
@@ -88,12 +84,11 @@ def init(plugin_root: Path, project_dir: Path, force: bool = False) -> dict:
     db.init_db(str(path))
 
     after = "current"
-    files = [{"path": rel_path, "before": before, "after": after}]
+    files = [{"path": DB_REL_PATH, "before": before, "after": after}]
 
     extra = [{"label": "overall status", "value": "initialized"}]
 
-    # Add action needed from status check
-    status_extra = _status_extra(plugin_name, project_dir)
+    status_extra = _status_extra(project_dir)
     for item in status_extra:
         if item["label"] == "action needed":
             extra.append(item)
@@ -103,12 +98,10 @@ def init(plugin_root: Path, project_dir: Path, force: bool = False) -> dict:
 
 def status(plugin_root: Path, project_dir: Path) -> dict:
     """Check research DB state. Returns {files, extra}."""
-    plugin_name = plugin.get_plugin_name(plugin_root)
-    path = _db_path(plugin_name, project_dir)
-    rel_path = _db_rel_path(plugin_name)
+    path = _db_path(project_dir)
 
     state = "current" if path.exists() else "absent"
-    files = [{"path": rel_path, "before": state, "after": state}]
+    files = [{"path": DB_REL_PATH, "before": state, "after": state}]
 
-    extra = _status_extra(plugin_name, project_dir)
+    extra = _status_extra(project_dir)
     return {"files": files, "extra": extra}

@@ -261,8 +261,8 @@ def main() -> None:
     db_parent = argparse.ArgumentParser(add_help=False)
     db_parent.add_argument(
         "--db",
-        default="blueprint/references/research.db",
-        help="Path to SQLite database (default: blueprint/references/research.db)",
+        default="blueprint/data/research.db",
+        help="Path to SQLite database (default: blueprint/data/research.db)",
     )
 
     templates_db_parent = argparse.ArgumentParser(add_help=False)

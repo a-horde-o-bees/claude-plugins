@@ -78,6 +78,20 @@ class TestPreCommitPropagation:
         finally:
             self._unstage_file(canonical)
 
+    def test_propagates_pfn_rule(self):
+        canonical = self.root / "plugins" / "ocd" / "rules" / "ocd-process-flow-notation.md"
+        target = self.plugin_dir / "rules" / "ocd-process-flow-notation.md"
+
+        self._touch_and_stage(canonical)
+        try:
+            result = self._run_hook()
+            assert result.returncode == 0, result.stderr
+            assert target.exists(), "PFN rule was not propagated"
+            assert canonical.read_bytes() == target.read_bytes(), \
+                "Propagated PFN rule content does not match canonical"
+        finally:
+            self._unstage_file(canonical)
+
     def test_propagates_plugin_init(self):
         canonical = self.root / "plugins" / "ocd" / "plugin" / "__init__.py"
         target = self.plugin_dir / "plugin" / "__init__.py"

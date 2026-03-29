@@ -8,10 +8,10 @@ Design phase — includes refinement loop.
 
 ```
 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research
-blueprint/references/analysis-findings.md
-blueprint/references/analysis-interpretation.md
-blueprint/references/research.db
-blueprint/blueprint.md
+blueprint/7-findings.md
+blueprint/8-interpretation.md
+blueprint/data/research.db
+blueprint/data/state.md
 blueprint/3-goals.md
 blueprint/5-constraints.md
 ```
@@ -19,20 +19,18 @@ blueprint/5-constraints.md
 ### Created
 
 ```
-blueprint/implementation-progress.md
-blueprint/progress.db
+blueprint/9-blueprint.md
 ```
 
 ## Workflow
 
 ### Input
 
-- Analytical findings from `blueprint/references/analysis-findings.md`
-- Goal-aligned interpretation from `blueprint/references/analysis-interpretation.md`
-- Confirmed findings from `blueprint/blueprint.md` Phase 3 section
+- Analytical findings from `blueprint/7-findings.md`
+- Goal-aligned interpretation from `blueprint/8-interpretation.md`
 - Project goals and priority order from `blueprint/3-goals.md`
 - Implementation constraints from `blueprint/5-constraints.md`
-- Database for detailed entity queries: `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get entity {id} --db blueprint/references/research.db`
+- Database for detailed entity queries: `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get entity {id} --db blueprint/data/research.db`
 
 ### Draft Blueprint
 
@@ -60,31 +58,26 @@ blueprint/progress.db
 8. Revise and present refined plan
 9. Repeat until user approves
 
-### Handoff to Progress Tracking
+### Finalize
 
-10. After user approves implementation plan, invoke `/progress`
-    - Progress skill detects no database exists, initializes, and imports `blueprint/implementation-progress.md`
-    - Progress skill owns `blueprint/implementation-progress.md` and `blueprint/progress.db` from this point forward
-    - Blueprint's job is complete; future updates through `/progress`, not `/blueprint-research`
+10. Write approved plan to `blueprint/9-blueprint.md`
 
 ## Re-Entry
 
 When Phase 4 resumes with existing implementation work, present dashboard:
 
-1. If `blueprint/implementation-progress.md` exists: present existing draft plan
-2. `blueprint/references/analysis-findings.md` — analytical findings
-3. `blueprint/references/analysis-interpretation.md` — interpretation driving decisions
-4. `blueprint/blueprint.md` Phase 3 section — confirmed findings
-5. `blueprint/3-goals.md` — project goals
-6. `blueprint/5-constraints.md` — implementation constraints
+1. If `blueprint/9-blueprint.md` exists: present existing draft plan
+2. `blueprint/7-findings.md` — analytical findings
+3. `blueprint/8-interpretation.md` — interpretation driving decisions
+4. `blueprint/3-goals.md` — project goals
+5. `blueprint/5-constraints.md` — implementation constraints
 
-User directs: revise existing plan, restart draft from analysis findings, or proceed to handoff.
+User directs: revise existing plan, restart draft from analysis findings, or approve.
 
 ## Output
 
-`blueprint/implementation-progress.md` — an actionable checklist with:
+`blueprint/9-blueprint.md` — an actionable implementation blueprint with:
 
-- Status tracking per item (checkbox format)
 - Dependency ordering (items grouped by phase/priority)
 - Decision rationale as sub-bullets on relevant items
 - Cost estimates where available
@@ -92,4 +85,4 @@ User directs: revise existing plan, restart draft from analysis findings, or pro
 
 ## Gate
 
-User approves final implementation plan and progress database is initialized.
+User approves final implementation blueprint.

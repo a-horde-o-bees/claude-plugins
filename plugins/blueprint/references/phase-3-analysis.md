@@ -16,16 +16,16 @@ blueprint/6-domain-knowledge.md
 ### Created
 
 ```
-blueprint/references/research.db (measures added)
-blueprint/references/analysis-findings.md
-blueprint/references/analysis-interpretation.md
+blueprint/data/research.db (measures added)
+blueprint/7-findings.md
+blueprint/8-interpretation.md
 ```
 
 ## Workflow
 
 ### Input
 
-- Populated database from Phase 2 (`blueprint/references/research.db`)
+- Populated database from Phase 2 (`blueprint/data/research.db`)
 - `blueprint/3-goals.md` for project goals and priority order
 - `blueprint/4-effectiveness-criteria.md` for evaluating patterns
 - `blueprint/6-domain-knowledge.md` for landscape context
@@ -33,8 +33,8 @@ blueprint/references/analysis-interpretation.md
 ### Pre-Analysis
 
 1. Query database for analysis inputs:
-    - `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get stats --db blueprint/references/research.db` — overall summary
-    - `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get entities --stage researched --db blueprint/references/research.db` — researched entities with relevance
+    - `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get stats --db blueprint/data/research.db` — overall summary
+    - `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get entities --stage researched --db blueprint/data/research.db` — researched entities with relevance
 2. Build ordered entity list — researched entities sorted by relevance (highest first), with entity IDs
 3. Present analysis plan to user — entity count, analytical questions, dynamic loading approach (agents self-regulate batch size based on accumulated note content)
 4. User confirms to proceed
@@ -52,7 +52,7 @@ All agents answer all questions from whatever entities they consume:
 
 ### Execution
 
-5. Clear existing measures from prior analysis runs: `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research clear measures --db blueprint/references/research.db`
+5. Clear existing measures from prior analysis runs: `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research clear measures --db blueprint/data/research.db`
 6. Spawn sequential agents with dynamic loading:
     1. Spawn agent with Analysis Agent template:
         - Provide full ordered entity list (all researched entity IDs by relevance descending)
@@ -80,18 +80,18 @@ All agents answer all questions from whatever entities they consume:
 
 ### Findings
 
-9. Compile analytical findings into `blueprint/references/analysis-findings.md`:
+9. Compile analytical findings into `blueprint/7-findings.md`:
     - Every section and subsection must include a description explaining what it measures, why items are grouped, and how to interpret data — a reader without context should understand grouping logic
     - Pattern tiers (table-stakes, differentiators, emerging, absent) based on adoption count across cohort, not effectiveness recommendation; tier descriptions must state this
     - Cautionary patterns note correlation with weaker presences, not causal claims
     - Decision cascades explain co-occurrence logic
-    - Measure distributions and co-occurrence data (from `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get measures --db blueprint/references/research.db`)
+    - Measure distributions and co-occurrence data (from `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get measures --db blueprint/data/research.db`)
     - Decision cascades with specific entity evidence
     - Cautionary patterns with specific entity evidence
     - Domain knowledge updates (if any)
     - Templated, data-driven output — no project-specific interpretation
 
-10. Compile goal-aligned interpretation into `blueprint/references/analysis-interpretation.md`:
+10. Compile goal-aligned interpretation into `blueprint/8-interpretation.md`:
     - Read `blueprint/3-goals.md` — frame every finding through these goals
     - Read `blueprint/4-effectiveness-criteria.md` — evaluate patterns against these criteria
     - For each significant finding: what does this mean for the goals? What should we learn? What practices to model?
@@ -107,16 +107,16 @@ All agents answer all questions from whatever entities they consume:
     - Did `blueprint/4-effectiveness-criteria.md` filter for the right pattern qualities?
     - Are there findings mapping to no goal, suggesting a missing goal?
     - Are there goals producing no findings, suggesting scope or criteria misalignment?
-13. If refinement needed: update relevant project definition file(s), then rewrite `blueprint/references/analysis-interpretation.md` through updated goals — no need to re-run analysis agents or regenerate findings
+13. If refinement needed: update relevant project definition file(s), then rewrite `blueprint/8-interpretation.md` through updated goals — no need to re-run analysis agents or regenerate findings
 14. User confirms interpretation is aligned
 
 ## Re-Entry
 
 When Phase 3 resumes with existing analysis data, present dashboard:
 
-1. `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get stats --db blueprint/references/research.db` — entity counts including measures
-2. If `blueprint/references/analysis-findings.md` exists: present existing findings
-3. If `blueprint/references/analysis-interpretation.md` exists: present existing interpretation
+1. `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get stats --db blueprint/data/research.db` — entity counts including measures
+2. If `blueprint/7-findings.md` exists: present existing findings
+3. If `blueprint/8-interpretation.md` exists: present existing interpretation
 4. User directs: re-run analysis (clears measures first), re-interpret with updated goals (rewrites interpretation only), refine existing analysis, or proceed to Phase 4
 
 ## Agent Prompt Template
@@ -148,7 +148,7 @@ Prior analysis from previous batches (refine, confirm, adjust, or overturn with 
 
 Procedure:
 1. Read entities one at a time in provided order, starting from `{start_entity_id}`:
-    python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get entity {entity_id} --db blueprint/references/research.db
+    python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get entity {entity_id} --db blueprint/data/research.db
 2. After reading each entity, assess whether room to consume more; stop when adding another entity's notes would leave insufficient room for thorough analysis; always consume at least one entity
 3. Analyze notes across all consumed entities
 4. {if prior_analysis} Integrate with prior analysis — update counts, strengthen or weaken patterns, add new findings {end if}
@@ -172,9 +172,9 @@ Rules:
 
 ## Output
 
-- `blueprint/references/analysis-findings.md` — measure distributions, pattern tiers, decision cascades, cautionary patterns, taxonomy changes
-- `blueprint/references/analysis-interpretation.md` — goal-aligned interpretation, practices to adopt with effectiveness evidence
-- `blueprint/references/research.db` — measures derived per entity from notes and terminal analysis
+- `blueprint/7-findings.md` — measure distributions, pattern tiers, decision cascades, cautionary patterns, taxonomy changes
+- `blueprint/8-interpretation.md` — goal-aligned interpretation, practices to adopt with effectiveness evidence
+- `blueprint/data/research.db` — measures derived per entity from notes and terminal analysis
 
 ## Gate
 
@@ -183,4 +183,4 @@ User reviews findings and confirms practices to pursue. May request:
 1. Re-interpret findings through refined goals (updates interpretation only)
 2. Add more entities (reverts to Phase 1 — see Phase Reversion in SKILL.md)
 
-Record confirmed findings in `blueprint/blueprint.md` under Phase 3 section — these drive Phase 4 implementation planning.
+`blueprint/8-interpretation.md` feeds Phase 4 implementation planning directly.

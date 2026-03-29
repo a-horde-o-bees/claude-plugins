@@ -14,7 +14,7 @@ blueprint/2-assessment-criteria.md
 ## Input
 
 Orchestrator provides:
-- Database path (e.g., `blueprint/references/research.db`)
+- Database path (e.g., `blueprint/data/research.db`)
 - Entity scope: `--stage researched` (default), or specific entity IDs
 
 ## Agent Workflow

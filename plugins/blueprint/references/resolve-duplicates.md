@@ -14,7 +14,7 @@ ${CLAUDE_PLUGIN_ROOT}/run.py skills.research
 ## Input
 
 Orchestrator provides:
-- Database path (e.g., `blueprint/references/research.db`)
+- Database path (e.g., `blueprint/data/research.db`)
 
 ## Agent Workflow
 
