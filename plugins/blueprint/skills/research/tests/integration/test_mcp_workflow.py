@@ -217,6 +217,53 @@ class TestPhase1Scoping:
 # =============================================================================
 
 
+    def test_create_entity_with_nested_notes(self, db):
+        """Create entity with notes in one call — symmetric with read_records include."""
+        result = _json(db["create"]("entities", {
+            "name": "Nested Entity",
+            "url": "https://nested.com",
+            "relevance": 7,
+            "entity_notes": [
+                {"note": "First observation"},
+                {"note": "Second observation"},
+            ],
+        }))
+        assert "id: e1" in result
+
+        # Notes created automatically with entity_id filled in
+        entity = _json(db["read"]("entities", {"id": "e1"}, include=["entity_notes"]))
+        assert len(entity[0]["entity_notes"]) == 2
+        notes = [n["note"] for n in entity[0]["entity_notes"]]
+        assert "First observation" in notes
+        assert "Second observation" in notes
+
+    def test_create_batch_entities_with_nested_notes(self, db):
+        """Batch create entities with nested notes."""
+        result = _json(db["create"]("entities", [
+            {"name": "Tool A", "url": "https://a.com", "entity_notes": [{"note": "Note on A"}]},
+            {"name": "Tool B", "url": "https://b.com", "entity_notes": [{"note": "Note on B"}]},
+        ]))
+        assert len(result) == 2
+
+        a = _json(db["read"]("entities", {"id": "e1"}, include=["entity_notes"]))
+        b = _json(db["read"]("entities", {"id": "e2"}, include=["entity_notes"]))
+        assert len(a[0]["entity_notes"]) == 1
+        assert len(b[0]["entity_notes"]) == 1
+
+    def test_nested_notes_skipped_for_duplicate_entity(self, db):
+        """Nested notes not created when entity is a duplicate."""
+        db["create"]("entities", {"name": "Existing", "url": "https://existing.com"})
+        result = _json(db["create"]("entities", {
+            "name": "Dupe",
+            "url": "https://existing.com",
+            "entity_notes": [{"note": "Should not be created"}],
+        }))
+        assert "Already registered" in result
+
+        entity = _json(db["read"]("entities", {"id": "e1"}, include=["entity_notes"]))
+        assert len(entity[0]["entity_notes"]) == 0
+
+
 class TestPhase1ScopeRefinement:
     """Non-sequential Phase 1: criteria changes, relevance reassessment, hardline filters."""
 

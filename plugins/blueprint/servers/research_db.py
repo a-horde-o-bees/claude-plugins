@@ -225,6 +225,12 @@ def create_records(table: str, data: dict | list[dict], source_url: str | None =
     if table == "entities":
         results = []
         for record in records:
+            # Extract nested related data before creating entity
+            nested = {}
+            for key in list(record.keys()):
+                if key in _FK_TABLES:
+                    nested[key] = record.pop(key)
+
             result = register_entity(
                 DB_PATH,
                 name=record.get("name", ""),
@@ -235,6 +241,18 @@ def create_records(table: str, data: dict | list[dict], source_url: str | None =
                 role=record.get("role"),
             )
             results.append(result)
+
+            # Create nested related records only if entity was newly created (not duplicate)
+            if nested and result.startswith("Registered:"):
+                entity_id = result.split("id: ")[1].split(")")[0]
+                for child_table, child_records in nested.items():
+                    if not isinstance(child_records, list):
+                        child_records = [child_records]
+                    for child in child_records:
+                        child["entity_id"] = entity_id
+                    # Recurse through create_records for child table routing
+                    create_records(child_table, child_records)
+
         return json.dumps(results if len(results) > 1 else results[0])
 
     if table == "entity_notes":
@@ -348,14 +366,21 @@ def update_records(table: str, id: str, data: dict) -> str:
         )
         return json.dumps({"status": "updated", "result": result})
 
-    # Generic update
+    # Generic update — translate last_modified="now" to SQL datetime('now')
     conn = core.get_connection(DB_PATH)
     try:
         with conn:
-            set_clauses = ", ".join([f"{k} = ?" for k in data.keys()])
-            params = list(data.values()) + [id]
+            set_parts = []
+            params = []
+            for k, v in data.items():
+                if k == "last_modified" and v == "now":
+                    set_parts.append(f"{k} = datetime('now')")
+                else:
+                    set_parts.append(f"{k} = ?")
+                    params.append(v)
+            params.append(id)
             conn.execute(
-                f"UPDATE {table} SET {set_clauses} WHERE id = ?",
+                f"UPDATE {table} SET {', '.join(set_parts)} WHERE id = ?",
                 params,
             )
         return json.dumps({"status": "updated", "id": id, "fields": list(data.keys())})

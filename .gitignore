@@ -6,4 +6,4 @@ __pycache__/
 dist/
 build/
 .plugin_root
-/blueprint/
+/blueprint*/
