@@ -852,6 +852,22 @@ class TestMissingDatabase:
         result = _json(srv.describe_entities())
         assert "error" in result
 
+    def test_init_database_creates_schema(self, tmp_path):
+        """init_database creates database when it doesn't exist."""
+        db_path = str(tmp_path / "fresh.db")
+        os.environ["DB_PATH"] = db_path
+        import importlib
+        import servers.research_db as srv
+        importlib.reload(srv)
+        srv.DB_PATH = db_path
+
+        result = _json(srv.init_database())
+        assert "initialized" in result["status"]
+
+        # Now CRUD works
+        result = _json(srv.describe_entities())
+        assert "entities" in result
+
 
 class TestErrorHandling:
     """Error cases that agents might encounter."""

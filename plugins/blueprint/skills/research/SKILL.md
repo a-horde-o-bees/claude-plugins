@@ -145,6 +145,7 @@ The `blueprint-research` MCP server exposes 7 tools. The server starts automatic
 | `query` | `sql`, `params?` | Read-only SQL (SELECT only enforced); for complex joins, aggregations, subqueries |
 | `describe_entities` | `table?` | Schema discovery — tables, columns, types, FK relationships |
 | `merge_entities` | `ids` (array) | Merge entities into lowest-ID survivor; preserves all related data |
+| `init_database` | (none) | Initialize database schema; idempotent |
 
 #### Conditions Syntax
 

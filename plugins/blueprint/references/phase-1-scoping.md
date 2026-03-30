@@ -43,7 +43,7 @@ When database contains entities at Phase 1 start (from initialization arguments,
     - `5-constraints.md` — implementation realities (budget, timeline, skills, platform)
     - `6-domain-knowledge.md` — landscape structure and distilled context research findings
 11. Create `blueprint/data/` directory
-12. Initialize research database: `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research init --db blueprint/data/research.db` (remains CLI — one-time setup before MCP server can operate)
+12. Initialize research database: `init_database()`
 
 ### Domain Knowledge Development
 

@@ -468,6 +468,13 @@ def merge_entities(ids: list[str]) -> str:
     return json.dumps({"status": "merged", "result": result})
 
 
+@mcp.tool()
+def init_database() -> str:
+    """Initialize research database. Creates schema if database doesn't exist. Idempotent — safe to call on existing database."""
+    result = core.init_db(DB_PATH)
+    return json.dumps({"status": "initialized", "result": result})
+
+
 # --- Entry point ---
 
 if __name__ == "__main__":
