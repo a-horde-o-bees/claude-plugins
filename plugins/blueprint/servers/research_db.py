@@ -62,6 +62,32 @@ _FK_TABLES = {
 _ALL_TABLES = {"entities", "entity_notes", "entity_urls", "entity_measures",
                "entity_source_data", "url_provenance"}
 
+# --- FK introspection ---
+
+
+def _find_child_tables(conn, parent_table: str) -> list[tuple[str, str]]:
+    """Discover tables with FKs pointing to parent_table.
+
+    Returns list of (child_table, fk_column) tuples. Uses PRAGMA
+    foreign_key_list to introspect schema dynamically — no hardcoded
+    table names. Recurses depth-first for transitive children.
+    """
+    all_tables = [
+        row[0] for row in
+        conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
+    ]
+    children = []
+    for candidate in all_tables:
+        fks = conn.execute(f"PRAGMA foreign_key_list({candidate})").fetchall()
+        for fk in fks:
+            if fk["table"] == parent_table:
+                children.append((candidate, fk["from"]))
+                # Recurse for grandchildren
+                children.extend(_find_child_tables(conn, candidate))
+                break
+    return children
+
+
 # --- Conditions parsing (Django __operator convention) ---
 
 _OPERATOR_RE = re.compile(r"^(.+)__(gte|gt|lte|lt|ne|like|null)$")
@@ -408,10 +434,15 @@ def delete_records(table: str, id: str | None = None, all: bool = False) -> str:
     conn = core.get_connection(DB_PATH)
     try:
         with conn:
+            children = _find_child_tables(conn, table)
             if all:
+                for child_table, _ in children:
+                    conn.execute(f"DELETE FROM {child_table}")
                 conn.execute(f"DELETE FROM {table}")
                 return json.dumps({"status": "cleared", "table": table})
             else:
+                for child_table, fk_col in children:
+                    conn.execute(f"DELETE FROM {child_table} WHERE {fk_col} = ?", (id,))
                 conn.execute(f"DELETE FROM {table} WHERE id = ?", (id,))
                 return json.dumps({"status": "deleted", "table": table, "id": id})
     finally:
