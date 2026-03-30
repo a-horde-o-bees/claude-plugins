@@ -5,7 +5,7 @@ SQLite database (`.claude/ocd/navigator/navigator.db`) indexes project structure
 ## CLI
 
 ```
-python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.navigator <command>
+python3 $(cat .claude/ocd/.plugin_root)/run.py skills.navigator <command>
 ```
 
 All commands except `init` and `scan` auto-scan before execution to ensure fresh data.

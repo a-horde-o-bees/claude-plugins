@@ -30,7 +30,7 @@ Conventions for content consumed by agents: skills, conventions, plans, actions,
 Convention check CLI for the "Before creating or modifying files" alignment trigger:
 
 ```
-python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.conventions list-matching <file> [<file> ...]
+python3 $(cat .claude/ocd/.plugin_root)/run.py skills.conventions list-matching <file> [<file> ...]
 ```
 
 Pass all target file paths in a single call. Output groups each target file with its matching convention paths. If output is non-empty, read and follow returned convention files before proceeding.
