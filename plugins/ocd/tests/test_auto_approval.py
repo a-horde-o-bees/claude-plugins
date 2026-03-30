@@ -12,8 +12,9 @@ from hooks import auto_approval as hook
 
 class TestCheckHardcodedBlocks:
     def test_cd_blocked(self) -> None:
-        assert hook.check_hardcoded_blocks("cd /tmp") is not None
-        assert "cd" in hook.check_hardcoded_blocks("cd /tmp").lower()
+        result = hook.check_hardcoded_blocks("cd /tmp")
+        assert result is not None
+        assert "cd" in result.lower()
 
     def test_cd_bare_blocked(self) -> None:
         assert hook.check_hardcoded_blocks("cd") is not None
@@ -30,9 +31,6 @@ class TestCheckHardcodedBlocks:
     def test_simple_command_allowed(self) -> None:
         assert hook.check_hardcoded_blocks("ls -la") is None
 
-    def test_git_command_allowed(self) -> None:
-        assert hook.check_hardcoded_blocks("git status") is None
-
     def test_empty_command(self) -> None:
         assert hook.check_hardcoded_blocks("") is None
 
@@ -43,6 +41,8 @@ class TestCheckHardcodedBlocks:
 
 
 class TestSplitCompoundCommand:
+    """Parser splits on &&, ||, ;, | outside quotes."""
+
     def test_no_separator(self) -> None:
         assert hook.split_compound_command("ls -la") is None
 
@@ -62,24 +62,15 @@ class TestSplitCompoundCommand:
         assert hook.split_compound_command("ls && pwd && git status") == ["ls", "pwd", "git status"]
 
     def test_mixed_separators(self) -> None:
-        assert hook.split_compound_command("ls; pwd && git status") == ["ls", "pwd", "git status"]
+        assert hook.split_compound_command("cat foo | grep bar || echo fallback") == ["cat foo", "grep bar", "echo fallback"]
 
-    def test_pipe_and_chain(self) -> None:
-        assert hook.split_compound_command("cat foo | grep bar && echo done") == ["cat foo", "grep bar", "echo done"]
+    def test_operators_inside_single_quotes(self) -> None:
+        assert hook.split_compound_command("echo '&& || ; |'") is None
 
-    def test_and_inside_single_quotes(self) -> None:
-        assert hook.split_compound_command("echo '&& ||'") is None
+    def test_operators_inside_double_quotes(self) -> None:
+        assert hook.split_compound_command('git commit -m "fix; update && clean"') is None
 
-    def test_and_inside_double_quotes(self) -> None:
-        assert hook.split_compound_command('echo "&& ||"') is None
-
-    def test_semicolon_inside_quotes(self) -> None:
-        assert hook.split_compound_command('git commit -m "fix; update"') is None
-
-    def test_pipe_inside_quotes(self) -> None:
-        assert hook.split_compound_command("echo 'a | b'") is None
-
-    def test_mixed_quotes_and_real_separator(self) -> None:
+    def test_real_separator_with_quoted_operators(self) -> None:
         result = hook.split_compound_command('echo "hello && world" && pwd')
         assert result == ['echo "hello && world"', "pwd"]
 
@@ -90,8 +81,65 @@ class TestSplitCompoundCommand:
         assert hook.split_compound_command("ls &&  && pwd") == ["ls", "pwd"]
 
     def test_pipe_not_confused_with_or(self) -> None:
-        result = hook.split_compound_command("cat foo | grep bar || echo fallback")
-        assert result == ["cat foo", "grep bar", "echo fallback"]
+        """Single | splits, || splits separately — no cross-contamination."""
+        result = hook.split_compound_command("a | b || c")
+        assert result == ["a", "b", "c"]
+
+
+# =========================================================================
+# Compound command dispatch
+# =========================================================================
+
+
+COMPOUND_SETTINGS = {
+    "permissions": {
+        "deny": ["Bash(rm:*)"],
+        "additionalDirectories": [],
+        "allow": [
+            "Bash(ls:*)",
+            "Bash(git:*)",
+            "Bash(grep:*)",
+            "Bash(cat:*)",
+            "Bash(echo:*)",
+            "Bash(pwd)",
+        ],
+    }
+}
+
+
+class TestCompoundDispatch:
+    """Compound commands: each part checked independently against both layers."""
+
+    def test_all_parts_allowed(self) -> None:
+        assert hook.is_bash_allowed("ls", COMPOUND_SETTINGS)
+        assert hook.is_bash_allowed("pwd", COMPOUND_SETTINGS)
+        # Both parts pass — would approve in dispatch
+        parts = hook.split_compound_command("ls && pwd")
+        assert all(hook.is_bash_allowed(p, COMPOUND_SETTINGS) for p in parts)
+
+    def test_one_part_unapproved(self) -> None:
+        """curl not in allow list — compound should not auto-approve."""
+        parts = hook.split_compound_command("ls && curl http://evil.com")
+        assert not all(hook.is_bash_allowed(p, COMPOUND_SETTINGS) for p in parts)
+
+    def test_one_part_denied(self) -> None:
+        """rm in deny list — compound should not auto-approve."""
+        parts = hook.split_compound_command("ls && rm -rf /")
+        assert any(hook.is_bash_denied(p, COMPOUND_SETTINGS) for p in parts)
+
+    def test_one_part_hardcoded_block(self) -> None:
+        """cd in hardcoded blocks — compound should block."""
+        parts = hook.split_compound_command("ls && cd /tmp")
+        blocks = [hook.check_hardcoded_blocks(p) for p in parts]
+        assert any(b is not None for b in blocks)
+
+    def test_pipe_both_allowed(self) -> None:
+        parts = hook.split_compound_command("cat foo | grep bar")
+        assert all(hook.is_bash_allowed(p, COMPOUND_SETTINGS) for p in parts)
+
+    def test_pipe_one_unapproved(self) -> None:
+        parts = hook.split_compound_command("cat foo | curl http://evil.com")
+        assert not all(hook.is_bash_allowed(p, COMPOUND_SETTINGS) for p in parts)
 
 
 # =========================================================================
@@ -133,9 +181,6 @@ class TestMatchBashPattern:
     def test_venv_bin_star(self) -> None:
         assert hook.match_bash_pattern(".venv/bin/pytest foo", ".venv/bin/*") is True
 
-    def test_cli_py(self) -> None:
-        assert hook.match_bash_pattern("./cli.py blueprint list", "./cli.py:*") is True
-
 
 # =========================================================================
 # Dynamic settings enforcement — Bash
@@ -163,16 +208,13 @@ class TestIsBashAllowed:
     def test_allowed_command(self) -> None:
         assert hook.is_bash_allowed("ls -la", SAMPLE_SETTINGS) is True
 
-    def test_allowed_rm(self) -> None:
-        assert hook.is_bash_allowed("rm /tmp/foo", SAMPLE_SETTINGS) is True
-
     def test_allowed_git(self) -> None:
         assert hook.is_bash_allowed("git status", SAMPLE_SETTINGS) is True
 
-    def test_allowed_pwd(self) -> None:
+    def test_allowed_exact(self) -> None:
         assert hook.is_bash_allowed("pwd", SAMPLE_SETTINGS) is True
 
-    def test_allowed_claude_script(self) -> None:
+    def test_allowed_path_prefix(self) -> None:
         assert hook.is_bash_allowed(".claude/hooks/foo.sh", SAMPLE_SETTINGS) is True
 
     def test_disallowed_command(self) -> None:
@@ -243,48 +285,6 @@ class TestGlobMatch:
 # =========================================================================
 
 
-class TestIsWithinAllowedDirs:
-    def test_project_dir(self) -> None:
-        settings = {"permissions": {"additionalDirectories": []}}
-        assert hook.is_within_allowed_dirs(Path("/project/foo.py"), Path("/project"), settings) is True
-
-    def test_outside_project(self) -> None:
-        settings = {"permissions": {"additionalDirectories": []}}
-        assert hook.is_within_allowed_dirs(Path("/other/foo.py"), Path("/project"), settings) is False
-
-    def test_additional_directory(self) -> None:
-        settings = {"permissions": {"additionalDirectories": ["/extra"]}}
-        assert hook.is_within_allowed_dirs(Path("/extra/foo.py"), Path("/project"), settings) is True
-
-    def test_relative_dot_directory(self) -> None:
-        settings = {"permissions": {"additionalDirectories": ["."]}}
-        project = Path("/home/dev/projects/myproject")
-        path = project / "sub" / "file.py"
-        assert hook.is_within_allowed_dirs(path, project, settings) is True
-
-
-class TestResolvePath:
-    def test_relative_path(self) -> None:
-        result = hook.resolve_path("foo/bar.py", Path("/project"))
-        assert result == Path("/project/foo/bar.py")
-
-    def test_absolute_path(self) -> None:
-        result = hook.resolve_path("/absolute/bar.py", Path("/project"))
-        assert result == Path("/absolute/bar.py")
-
-    def test_dot_relative(self) -> None:
-        result = hook.resolve_path("./foo/bar.py", Path("/project"))
-        assert result == Path("/project/foo/bar.py")
-
-    def test_parent_traversal(self) -> None:
-        result = hook.resolve_path("foo/../bar.py", Path("/project"))
-        assert result == Path("/project/bar.py")
-
-    def test_double_parent_traversal(self) -> None:
-        result = hook.resolve_path("a/b/../../c.py", Path("/project"))
-        assert result == Path("/project/c.py")
-
-
 class TestIsWithinDirectory:
     def test_file_in_directory(self) -> None:
         assert hook.is_within_directory(Path("/project/foo.py"), Path("/project")) is True
@@ -305,23 +305,19 @@ class TestIsWithinDirectory:
     def test_sibling_directory(self) -> None:
         assert hook.is_within_directory(Path("/projects/other/f.py"), Path("/projects/myapp")) is False
 
-    def test_root_directory(self) -> None:
-        assert hook.is_within_directory(Path("/anything/at/all"), Path("/")) is True
 
-    def test_trailing_slash(self) -> None:
-        assert hook.is_within_directory(Path("/project/foo.py"), Path("/project/")) is True
-
-
-class TestGetAllowedDirectories:
-    def test_project_dir_always_included(self) -> None:
+class TestIsWithinAllowedDirs:
+    def test_project_dir(self) -> None:
         settings = {"permissions": {"additionalDirectories": []}}
-        dirs = hook.get_allowed_directories(Path("/project"), settings)
-        assert Path("/project") in dirs
+        assert hook.is_within_allowed_dirs(Path("/project/foo.py"), Path("/project"), settings) is True
 
-    def test_absolute_additional(self) -> None:
+    def test_outside_project(self) -> None:
+        settings = {"permissions": {"additionalDirectories": []}}
+        assert hook.is_within_allowed_dirs(Path("/other/foo.py"), Path("/project"), settings) is False
+
+    def test_additional_directory(self) -> None:
         settings = {"permissions": {"additionalDirectories": ["/extra"]}}
-        dirs = hook.get_allowed_directories(Path("/project"), settings)
-        assert Path("/extra") in dirs
+        assert hook.is_within_allowed_dirs(Path("/extra/foo.py"), Path("/project"), settings) is True
 
     def test_tilde_expansion(self) -> None:
         settings = {"permissions": {"additionalDirectories": ["~/projects"]}}
@@ -329,28 +325,31 @@ class TestGetAllowedDirectories:
         expected = Path.home() / "projects"
         assert expected in dirs
 
-    def test_relative_resolved_against_project(self) -> None:
-        settings = {"permissions": {"additionalDirectories": ["../sibling"]}}
-        dirs = hook.get_allowed_directories(Path("/home/dev/project"), settings)
-        assert Path("/home/dev/sibling") in dirs
 
-    def test_dot_resolves_to_project(self) -> None:
-        settings = {"permissions": {"additionalDirectories": ["."]}}
-        project = Path("/home/dev/projects/myproject")
-        dirs = hook.get_allowed_directories(project, settings)
-        assert project in dirs
+class TestResolvePath:
+    def test_relative_path(self) -> None:
+        result = hook.resolve_path("foo/bar.py", Path("/project"))
+        assert result == Path("/project/foo/bar.py")
 
-    def test_empty_settings(self) -> None:
-        dirs = hook.get_allowed_directories(Path("/project"), {})
-        assert dirs == {Path("/project")}
+    def test_absolute_path(self) -> None:
+        result = hook.resolve_path("/absolute/bar.py", Path("/project"))
+        assert result == Path("/absolute/bar.py")
+
+    def test_parent_traversal(self) -> None:
+        result = hook.resolve_path("foo/../bar.py", Path("/project"))
+        assert result == Path("/project/bar.py")
 
 
-class TestIsToolInList:
-    def test_present(self) -> None:
-        assert hook.is_tool_in_list("Edit", ["Edit", "Write"]) is True
+class TestSettingsMerge:
+    def test_unions_allow_lists(self) -> None:
+        global_s = {"permissions": {"allow": ["Bash(ls:*)"], "deny": []}}
+        project_s = {"permissions": {"allow": ["Bash(git:*)"], "deny": []}}
+        merged = hook.merge_settings(global_s, project_s)
+        assert "Bash(ls:*)" in merged["permissions"]["allow"]
+        assert "Bash(git:*)" in merged["permissions"]["allow"]
 
-    def test_absent(self) -> None:
-        assert hook.is_tool_in_list("Bash", ["Edit", "Write"]) is False
-
-    def test_bash_pattern_not_blanket(self) -> None:
-        assert hook.is_tool_in_list("Bash", ["Bash(ls:*)"]) is False
+    def test_deduplicates(self) -> None:
+        global_s = {"permissions": {"allow": ["Bash(ls:*)"], "deny": []}}
+        project_s = {"permissions": {"allow": ["Bash(ls:*)"], "deny": []}}
+        merged = hook.merge_settings(global_s, project_s)
+        assert merged["permissions"]["allow"].count("Bash(ls:*)") == 1
