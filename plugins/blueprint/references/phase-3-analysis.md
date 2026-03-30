@@ -15,7 +15,7 @@ Execution phase — sequential batch agents with rolling analysis and orchestrat
 
 1. Query database for analysis inputs:
     - `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get stats --db blueprint/data/research.db` — overall summary
-    - `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get entities --stage researched --db blueprint/data/research.db` — researched entities with relevance
+    - `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get entities --filter "stage=researched" --db blueprint/data/research.db` — researched entities with relevance
 2. Build ordered entity list — researched entities sorted by relevance (highest first), with entity IDs
 3. Present analysis plan to user — entity count, analytical questions, dynamic loading approach (agents self-regulate batch size based on accumulated note content)
 4. User confirms to proceed
@@ -33,20 +33,22 @@ All agents answer all questions from whatever entities they consume:
 
 ### Execution
 
-5. Clear existing measures from prior analysis runs: `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research clear measures --db blueprint/data/research.db`
-6. Spawn sequential agents with dynamic loading:
+5. Check existing measures: `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get measures --db blueprint/data/research.db`
+    1. If measures exist: existing entity measures remain valid — extract measures for new entities only during step 9
+    2. If no measures: full extraction during step 9
+7. Spawn sequential agents with dynamic loading:
     1. Spawn agent with Analysis Agent template:
         - Provide full ordered entity list (all researched entity IDs by relevance descending)
         - First agent: no prior analysis, start from first entity
         - Subsequent agents: prior agent's analysis + resume from next unconsumed entity
     2. Agent dynamically loads entities one at a time via CLI, tracking accumulated content size; stops consuming when approaching context budget; produces analysis of entities consumed so far; returns analysis + last entity consumed + next entity to resume from
     3. Orchestrator reviews agent output — checks for completeness, flags issues
-    4. If agent reports all entities consumed (`complete: true`): Go to step 7. Domain Knowledge Refinement
+    4. If agent reports all entities consumed (`complete: true`): Go to step 8. Domain Knowledge Refinement
     5. Else: spawn next agent with prior analysis + resumption point
 
 ### Domain Knowledge Refinement
 
-7. Review terminal analysis against `blueprint/6-domain-knowledge.md`:
+8. Review terminal analysis against `blueprint/6-domain-knowledge.md`:
     - Do current categories reflect functional areas from cross-entity analysis?
     - Are there areas with enough entities to warrant a new category?
     - Are there categories with no meaningful entity population?
@@ -54,14 +56,14 @@ All agents answer all questions from whatever entities they consume:
 
 ### Measure Extraction
 
-8. Derive measures per entity from notes and terminal analysis:
+9. Derive measures per entity from notes and terminal analysis:
     - Measures are universal key/value pairs discovered during analysis — quantifiable attributes revealed as meaningful across entities (not predefined)
     - Extracted from existing notes — facts already captured during research
     - Orchestrator identifies measure schema from terminal analysis, then spawns agent(s) to extract measures from entity notes via CLI
 
 ### Findings
 
-9. Compile analytical findings into `blueprint/7-findings.md`:
+10. Compile analytical findings into `blueprint/7-findings.md`:
     - Every section and subsection must include a description explaining what it measures, why items are grouped, and how to interpret data — a reader without context should understand grouping logic
     - Pattern tiers (table-stakes, differentiators, emerging, absent) based on adoption count across cohort, not effectiveness recommendation; tier descriptions must state this
     - Cautionary patterns note correlation with weaker presences, not causal claims
@@ -72,24 +74,27 @@ All agents answer all questions from whatever entities they consume:
     - Domain knowledge updates (if any)
     - Templated, data-driven output — no project-specific interpretation
 
-10. Compile goal-aligned interpretation into `blueprint/8-interpretation.md`:
+11. Compile goal-aligned interpretation into `blueprint/8-interpretation.md`:
     - Read `blueprint/3-goals.md` — frame every finding through these goals
     - Read `blueprint/4-effectiveness-criteria.md` — evaluate patterns against these criteria
     - For each significant finding: what does this mean for the goals? What should we learn? What practices to model?
     - Practices to adopt, organized by effectiveness evidence
     - Project-specific output — rewritten when goals change without re-running analysis agents
 
-11. Present both documents to user
+12. Present both documents to user
 
 ### Post-Analysis Goal Refinement
 
-12. Orchestrator and user review:
+13. Orchestrator and user review:
     - Did `blueprint/3-goals.md` produce an interpretation reflecting the project's actual intent?
     - Did `blueprint/4-effectiveness-criteria.md` filter for the right pattern qualities?
     - Are there findings mapping to no goal, suggesting a missing goal?
     - Are there goals producing no findings, suggesting scope or criteria misalignment?
-13. If refinement needed: update relevant project definition file(s), then rewrite `blueprint/8-interpretation.md` through updated goals — no need to re-run analysis agents or regenerate findings
-14. User confirms interpretation is aligned
+14. If refinement needed:
+    1. Update relevant project definition file(s)
+    2. If `blueprint/4-effectiveness-criteria.md` changed: clear measures — criteria change invalidates prior measures: `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research clear measures --db blueprint/data/research.db`
+    3. Rewrite `blueprint/8-interpretation.md` through updated goals — no need to re-run analysis agents or regenerate findings unless measures were cleared
+15. User confirms interpretation is aligned
 
 ## Re-Entry
 

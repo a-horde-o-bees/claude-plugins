@@ -258,7 +258,7 @@ class TestUpdateEntity:
         register_entity(db, "Org A", "https://a.org")
         id_b = register_entity(db, "Org B", "https://b.org")
         run_cli("update", "entities", "--ids", id_b, "--stage", "rejected", db=db)
-        result = run_cli("get", "entities", "--stage", "rejected", db=db)
+        result = run_cli("get", "entities", "--filter", "stage=rejected", db=db)
         assert "Org B" in result.stdout
         assert "Org A" not in result.stdout
 
@@ -360,7 +360,7 @@ class TestGetEntities:
         db = init_db(tmp_path)
         register_entity(db, "Example", "https://ex.org")
         register_entity(db, "Directory", "https://dir.org", role="directory")
-        result = run_cli("get", "entities", "--role", "directory", db=db)
+        result = run_cli("get", "entities", "--filter", "role=directory", db=db)
         assert "Directory" in result.stdout
         assert "Example" not in result.stdout
 

@@ -71,12 +71,14 @@ def _dispatch_get_entity(args: argparse.Namespace) -> None:
 
 
 def _dispatch_list_entities(args: argparse.Namespace) -> None:
-    print(list_entities(
-        args.db,
-        role=args.role,
-        stage=args.stage,
-        modified_before=getattr(args, "modified_before", None),
-    ))
+    try:
+        print(list_entities(
+            args.db,
+            filters=args.filter,
+        ))
+    except ValueError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
 
 
 def _dispatch_stats(args: argparse.Namespace) -> None:
@@ -326,10 +328,8 @@ def main() -> None:
     get_entity_p.add_argument("id", help="Entity ID (e.g., e1)")
     get_entity_p.set_defaults(_dispatch=_dispatch_get_entity)
 
-    get_entities_p = get_sub.add_parser("entities", help="List all entities", parents=[db_parent])
-    get_entities_p.add_argument("--role", choices=["example", "directory", "context"], default=None, help="Filter by role")
-    get_entities_p.add_argument("--stage", choices=["new", "rejected", "researched", "merged"], default=None, help="Filter by stage")
-    get_entities_p.add_argument("--modified-before", default=None, help="Filter to entities modified before ISO 8601 timestamp")
+    get_entities_p = get_sub.add_parser("entities", help="List entities with optional filters", parents=[db_parent])
+    get_entities_p.add_argument("--filter", action="append", default=[], help="Filter expression: field=value, field!=value, field>=value, field=null. Repeatable. AND logic. Fields: name, role, stage, relevance, description, last_modified, notes, measures, urls")
     get_entities_p.set_defaults(_dispatch=_dispatch_list_entities)
 
     get_stats_p = get_sub.add_parser("stats", help="Database summary statistics", parents=[db_parent])

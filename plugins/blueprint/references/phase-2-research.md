@@ -6,7 +6,7 @@ Execution phase — sequential agent work with checkpointing.
 
 ### Input
 
-- Entities sorted by relevance: `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get entities --role example --stage new --db blueprint/data/research.db`
+- Entities sorted by relevance: `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get entities --filter "role=example" --filter "stage=new" --db blueprint/data/research.db`
 - `blueprint/1-scope.md` for scope context, `blueprint/2-assessment-criteria.md` for relevance reassessment
 - `blueprint/4-effectiveness-criteria.md` for evaluating patterns, `blueprint/6-domain-knowledge.md` for landscape context
 

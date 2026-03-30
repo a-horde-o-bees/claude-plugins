@@ -6,7 +6,7 @@ Agent subprocess — rescores entity relevance against current assessment criter
 
 Orchestrator provides:
 - Database path (e.g., `blueprint/data/research.db`)
-- Entity scope: `--stage researched` (default), or specific entity IDs
+- Entity scope: `--filter "stage=researched"` (default), or specific entity IDs
 
 ## Agent Workflow
 
@@ -17,7 +17,7 @@ Orchestrator provides:
 
 ### Dynamic Entity Loading
 
-3. Get entity list: `get entities --stage researched --db PATH`
+3. Get entity list: `get entities --filter "stage=researched" --db PATH`
 4. For each {entity} in {entity-list}:
     1. Read entity: `get entity {entity_id} --db PATH`
     2. Assess whether room remains to consume more; stop when approaching context budget; always consume at least one entity

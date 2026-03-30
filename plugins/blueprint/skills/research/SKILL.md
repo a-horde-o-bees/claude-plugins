@@ -138,7 +138,7 @@ Default `--db`: `blueprint/data/research.db`. All commands accept `--db` overrid
 | Command | Description |
 |---------|-------------|
 | `get entity <id>` | Entity detail with URLs, provenance, relevance, description, measures, notes |
-| `get entities [--role R] [--stage S] [--modified-before T]` | All entities sorted by relevance, optionally filtered |
+| `get entities [--filter F ...]` | Entities sorted by relevance; repeatable filters with AND logic; fields: name, role, stage, relevance, description, last_modified, notes, measures, urls; operators: =, !=, >, >=, <, <=, =null, !=null |
 | `get provenance [--entity-id ID]` | Per-entity source URLs or all sources ranked by entity count |
 | `get reach [--min N]` | Entities ranked by provenance source count |
 | `get stats` | Summary: stage distribution, relevance, provenance counts |
@@ -198,7 +198,7 @@ Unified entity model — everything is an entity (organizations, platforms, prog
 
 **Notes**: atomic, self-explanatory facts. Primary knowledge store. Begin accumulating from first contact — not deferred to deep research. Deep research produces comprehensive notes; discovery produces initial notes from whatever information is consumed.
 
-**Measures**: universal key/value pairs produced by analysis (Phase 3). Not produced during research. Re-running analysis clears and regenerates all measures.
+**Measures**: universal key/value pairs produced by analysis (Phase 3). Not produced during research. Measures are cleared at the point of change — when assessment criteria or effectiveness criteria are modified, the modifying workflow step clears measures immediately. Adding new entities does not invalidate existing measures.
 
 **URLs**: separate `entity_urls` table; multiple normalized URLs per entity. URL normalization strips scheme, www, trailing slash, lowercases, keeps path. Dedup during registration checks normalized URLs.
 
@@ -297,6 +297,7 @@ Orchestrator selects server based on directory accessibility notes and concurren
 
 - URL-grounded identity — surviving entities must have at least one URL; name-only entities are temporary placeholders during lead harvesting; resolve to URL or reject
 - All deduplication is agent-administered — orchestrator proposes spawning resolve-duplicates agent (`${CLAUDE_PLUGIN_ROOT}/references/resolve-duplicates.md`) and waits for user confirmation; merges are hard to reverse
+- Duplicate resolution belongs in deep research — agents with entity context loaded are best positioned to make dedup decisions; `find-duplicates` CLI is exclusively for use within the resolve-duplicates agent workflow, not standalone; do not suggest duplicate detection outside of deep research or post-research phases
 
 ### Research Methodology
 

@@ -57,8 +57,8 @@ Codify observations into domain knowledge guiding discovery and deep research. S
     - `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research upsert notes --entity-id ID --notes "[ACCESSIBILITY]: {static|js-rendered|auth-gated|api-available} — {brief access method}" --db blueprint/data/research.db`
     - Accessibility guides tool selection: `static` uses web fetch; `js-rendered` and `auth-gated` require browser automation (sequential)
 16. Present sources for user review:
-    - `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get entities --role directory --db blueprint/data/research.db`
-    - `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get entities --role context --db blueprint/data/research.db`
+    - `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get entities --filter "role=directory" --db blueprint/data/research.db`
+    - `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get entities --filter "role=context" --db blueprint/data/research.db`
 17. User refines — add, remove, or adjust sources
 
 ### Context Research Waves
@@ -93,27 +93,31 @@ Explore domain to discover entities. Two modes:
     - What differentiates entities in this space?
     - Which entities address core scope concerns?
 25. Present accumulated entities and observations to user
+26. Update `blueprint/6-domain-knowledge.md` — distill landscape exploration findings into domain knowledge; present changes to user before writing
 
 ### Scope Refinement and Relevance Adjustment
 
-26. User reviews entities and domain knowledge, directs next steps:
+27. User reviews entities and domain knowledge, directs next steps:
     - "Look at more entities in [region/category]"
     - "What do the [sources] say about this space?"
     - "Check [specific directory or aggregator]"
     - "That category is more important — boost those entities"
     - "Remove source [X] — not relevant"
-27. Execute directed exploration, register new entities
-28. When scope criteria change: spawn reassess-relevance agent (`${CLAUDE_PLUGIN_ROOT}/references/reassess-relevance.md`) to rescore all entities against updated criteria using existing notes
-29. Repeat until user considers landscape adequately mapped and relevance ordering reflects priorities
+28. Execute directed exploration, register new entities
+29. When scope criteria change:
+    1. Spawn reassess-relevance agent (`${CLAUDE_PLUGIN_ROOT}/references/reassess-relevance.md`) to rescore all entities against updated criteria using existing notes
+    2. Apply hardline filters retroactively — check existing entities against new/modified hardline criteria; reject entities that no longer pass
+    3. Clear measures — criteria change invalidates prior analysis measures: `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research clear measures --db blueprint/data/research.db`
+30. Repeat until user considers landscape adequately mapped and relevance ordering reflects priorities
 
 ## Re-Entry
 
 When Phase 1 resumes with existing data, present dashboard:
 
 1. `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get stats --db blueprint/data/research.db` — entity counts by role and stage
-2. `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get entities --role example --db blueprint/data/research.db` — examples sorted by relevance
-3. `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get entities --role directory --db blueprint/data/research.db` — directories (check progress notes)
-4. `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get entities --role context --db blueprint/data/research.db` — context sources
+2. `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get entities --filter "role=example" --db blueprint/data/research.db` — examples sorted by relevance
+3. `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get entities --filter "role=directory" --db blueprint/data/research.db` — directories (check progress notes)
+4. `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get entities --filter "role=context" --db blueprint/data/research.db` — context sources
 5. `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get provenance --db blueprint/data/research.db` — provenance sources with entity counts
 6. `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get reach --min 2 --db blueprint/data/research.db` — multi-source entities
 7. `blueprint/overview.md` for file index, `blueprint/1-scope.md` for scope context

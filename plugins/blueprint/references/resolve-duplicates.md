@@ -37,7 +37,7 @@ Process all duplicate groups sequentially. For each group, fetch context, make m
     - Sets survivor stage to `merged` (signals unreconciled data)
     - Deletes absorbed entities
 
-`merge entities` is fully mechanical — all data preserved on survivor. `merged` stage signals reconciliation needed. If process interrupted after merge but before reconciliation, `get entities --stage merged --db PATH` finds entities needing cleanup.
+`merge entities` is fully mechanical — all data preserved on survivor. `merged` stage signals reconciliation needed. If process interrupted after merge but before reconciliation, `get entities --filter "stage=merged" --db PATH` finds entities needing cleanup.
 
 ### Reconcile
 

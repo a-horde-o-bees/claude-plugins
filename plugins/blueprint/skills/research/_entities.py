@@ -3,13 +3,82 @@
 from __future__ import annotations
 
 import logging
+import re
 import sqlite3
 
 from . import _db as _core
 
+# Filter parsing — kubectl field-selector style: field operator value
+_FILTER_RE = re.compile(r"^(\w+)\s*(!=|>=|<=|=|>|<)\s*(.+)$")
+_SQL_OPS = {"=": "=", "!=": "!=", ">": ">", ">=": ">=", "<": "<", "<=": "<="}
+
+# Fields directly on entities table
+_DIRECT_FIELDS = {"name", "role", "stage", "relevance", "description", "last_modified"}
+
+# Computed fields via subquery (counts from related tables)
+_COMPUTED_FIELDS = {
+    "notes": "(SELECT COUNT(*) FROM entity_notes WHERE entity_id = e.id)",
+    "measures": "(SELECT COUNT(*) FROM entity_measures WHERE entity_id = e.id)",
+    "urls": "(SELECT COUNT(*) FROM entity_urls WHERE entity_id = e.id)",
+}
+
+
+def parse_filters(filter_exprs: list[str]) -> tuple[list[str], list[str]]:
+    """Parse filter expressions into SQL conditions and params.
+
+    Returns (conditions, params) for WHERE clause.
+    Raises ValueError for invalid expressions.
+    """
+    conditions: list[str] = []
+    params: list[str] = []
+
+    for expr in filter_exprs:
+        match = _FILTER_RE.match(expr)
+        if not match:
+            raise ValueError(
+                f"Invalid filter: '{expr}'. "
+                f"Expected format: field operator value (e.g., stage=researched, relevance>=7, measures!=null)"
+            )
+
+        field, op, value = match.group(1), match.group(2), match.group(3)
+
+        # Resolve field to SQL expression
+        if field in _DIRECT_FIELDS:
+            sql_field = f"e.{field}"
+        elif field in _COMPUTED_FIELDS:
+            sql_field = _COMPUTED_FIELDS[field]
+        else:
+            valid = sorted(_DIRECT_FIELDS | _COMPUTED_FIELDS.keys())
+            raise ValueError(
+                f"Unknown filter field: '{field}'. Valid fields: {', '.join(valid)}"
+            )
+
+        # Handle null checks
+        if value.lower() == "null":
+            if op == "=":
+                conditions.append(f"{sql_field} IS NULL" if field in _DIRECT_FIELDS else f"{sql_field} = 0")
+            elif op == "!=":
+                conditions.append(f"{sql_field} IS NOT NULL" if field in _DIRECT_FIELDS else f"{sql_field} > 0")
+            else:
+                raise ValueError(f"Only = and != operators supported with null, got '{op}'")
+            continue
+
+        # Numeric fields use numeric comparison
+        if field in ("relevance", "notes", "measures", "urls"):
+            try:
+                int(value)
+            except ValueError:
+                raise ValueError(f"Field '{field}' requires numeric value, got '{value}'")
+
+        conditions.append(f"{sql_field} {_SQL_OPS[op]} ?")
+        params.append(value)
+
+    return conditions, params
+
 logger = logging.getLogger(__name__)
 
 __all__ = [
+    "parse_filters",
     "register_entity",
     "compute_normalize_url",
     "update_entity",
@@ -198,24 +267,16 @@ def get_entity(db_path: str, entity_id: str) -> str:
 
 def list_entities(
     db_path: str,
-    role: str | None = None,
-    stage: str | None = None,
-    modified_before: str | None = None,
+    filters: list[str] | None = None,
 ) -> str:
-    """List entities with stage and relevance, optionally filtered."""
+    """List entities with stage and relevance, optionally filtered.
+
+    Filters use kubectl field-selector syntax: field=value, field!=value,
+    field>=value, field=null, etc. Multiple filters combine with AND logic.
+    """
+    conditions, params = parse_filters(filters or [])
     conn = _core.get_connection(db_path)
     try:
-        conditions: list[str] = []
-        params: list[str] = []
-        if role:
-            conditions.append("e.role = ?")
-            params.append(role)
-        if stage:
-            conditions.append("e.stage = ?")
-            params.append(stage)
-        if modified_before:
-            conditions.append("(e.last_modified IS NULL OR datetime(e.last_modified) < datetime(?))")
-            params.append(modified_before)
         where = f" WHERE {' AND '.join(conditions)}" if conditions else ""
         entities = conn.execute(
             f"SELECT e.id, e.name, e.role, e.stage, e.relevance, e.description FROM entities e{where} ORDER BY e.relevance DESC, e.name",
@@ -223,19 +284,14 @@ def list_entities(
         ).fetchall()
 
         if not entities:
-            return "No entities registered."
+            return "No entities found."
 
         stage_icons = {"new": ".", "rejected": "x", "researched": "+", "merged": "~"}
-        filters = []
-        if role:
-            filters.append(f"role: {role}")
-        if stage:
-            filters.append(f"stage: {stage}")
-        label = f" ({', '.join(filters)})" if filters else ""
-        lines = [f"Entities ({len(entities)}){label}:"]
+        filter_label = f" ({', '.join(filters)})" if filters else ""
+        lines = [f"Entities ({len(entities)}){filter_label}:"]
         for e in entities:
             icon = stage_icons.get(e["stage"], "?")
-            role_tag = f" [{e['role']}]" if not role else ""
+            role_tag = f" [{e['role']}]"
             desc_part = f" -- {e['description']}" if e["description"] else ""
             rel_display = e["relevance"] if e["relevance"] is not None else "?"
             lines.append(f"  [{icon}] {e['id']}. {e['name']} (relevance: {rel_display}){desc_part}{role_tag}")
