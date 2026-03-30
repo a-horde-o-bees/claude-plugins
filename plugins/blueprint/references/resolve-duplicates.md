@@ -5,7 +5,7 @@ Agent subprocess — resolves all duplicate groups in research database sequenti
 ## Input
 
 Orchestrator provides:
-- Database path (e.g., `blueprint/data/research.db`)
+- Research database (accessed via MCP tool calls)
 
 ## Agent Workflow
 
@@ -13,7 +13,7 @@ Process all duplicate groups sequentially. For each group, fetch context, make m
 
 ### Discover Groups
 
-1. Run `find-duplicates --db PATH`
+1. Run `query({sql: "SELECT e1.id as id1, e2.id as id2, e1.name as name1, e2.name as name2 FROM entities e1 JOIN entities e2 ON e1.id < e2.id JOIN entity_urls u1 ON e1.id = u1.entity_id JOIN entity_urls u2 ON e2.id = u2.entity_id WHERE u1.url = u2.url"})`
 2. Parse output into groups — each group lists entity IDs and detection evidence (URL overlap, source-data key match)
 3. If no duplicates found: Exit to user — report "No duplicates detected"
 4. For each {group} in {duplicate-groups}: dispatch Evaluate Group through Report Group
@@ -21,14 +21,14 @@ Process all duplicate groups sequentially. For each group, fetch context, make m
 ### Evaluate Group
 
 5. For each {entity-id} in {group}:
-    1. Run `get entity {entity-id} --db PATH`
+    1. Run `read_records({table: "entities", conditions: {id: "{entity-id}"}, include: ["entity_notes", "entity_measures", "entity_urls"]})`
 6. If group members are not true duplicates (e.g., forks with divergent purposes, same tool used differently):
     1. Report recommendation to skip with reasoning
     2. Continue next {group}
 
 ### Merge
 
-7. Run `merge entities --ids ID1,ID2,... --db PATH`
+7. Run `merge_entities({ids: ["ID1", "ID2", ...]})`
     - Lowest ID becomes survivor automatically
     - Moves URLs, provenance, source data, notes to survivor
     - Appends notes and descriptions to survivor
@@ -37,20 +37,20 @@ Process all duplicate groups sequentially. For each group, fetch context, make m
     - Sets survivor stage to `merged` (signals unreconciled data)
     - Deletes absorbed entities
 
-`merge entities` is fully mechanical — all data preserved on survivor. `merged` stage signals reconciliation needed. If process interrupted after merge but before reconciliation, `get entities --filter "stage=merged" --db PATH` finds entities needing cleanup.
+`merge_entities` is fully mechanical — all data preserved on survivor. `merged` stage signals reconciliation needed. If process interrupted after merge but before reconciliation, `read_records({table: "entities", conditions: {stage: "merged"}})` finds entities needing cleanup.
 
 ### Reconcile
 
 After merge, survivor has combined notes and descriptions from all group members (including duplicates and potential contradictions). Read survivor full state and produce clean, reconciled version.
 
-8. Read survivor: `get entity SURVIVOR --db PATH`
+8. Read survivor: `read_records({table: "entities", conditions: {id: "SURVIVOR"}, include: ["entity_notes", "entity_measures", "entity_urls"]})`
 9. Apply Entity Reconciliation Procedure (from `${CLAUDE_PLUGIN_ROOT}/references/reconcile-entity.md`) to notes, description, and relevance
 10. When two or more notes address the same fact (e.g., both describe the same feature or record the same metric):
     1. Consolidate into one note — remove redundant, keep or replace with the most complete version; merged entities often have the same fact captured independently by different sources; do not consolidate notes addressing different facts — distinct observations remain as separate notes
 
 ### Clear Merged Stage
 
-11. Set survivor stage to `new`: `update entities --ids SURVIVOR --stage new --db PATH`
+11. Set survivor stage to `new`: `update_records({table: "entities", id: "SURVIVOR", data: {stage: "new"}})`
 
 `merged` → `new` transition preserves all data. Entity is now ready for normal processing.
 
@@ -69,12 +69,11 @@ After merge, survivor has combined notes and descriptions from all group members
 
 ## Rules
 
-- Agent fetches all context via CLI before writing
-- `merge entities` is fully mechanical, preserves all data — no information lost
+- Agent fetches all context via MCP tool calls before writing
+- `merge_entities` is fully mechanical, preserves all data — no information lost
 - Reconciliation happens after merge when full combined picture is visible on survivor
 - Agent may skip merge if entities are not true duplicates — report reasoning, continue to next group
 - Process groups sequentially — one at a time, complete each before starting next
-- Agent uses only CLI commands, never raw SQL
-- Every Bash call: single-line command starting with recognized program name; no comments, line continuations, shell loops, or variable assignments
+- Agent uses only MCP tool calls, never raw SQL
 
 Orchestrator appends content of `${CLAUDE_PLUGIN_ROOT}/references/reconcile-entity.md` to agent prompt before spawning.

@@ -14,8 +14,8 @@ Execution phase — sequential batch agents with rolling analysis and orchestrat
 ### Pre-Analysis
 
 1. Query database for analysis inputs:
-    - `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get stats --db blueprint/data/research.db` — overall summary
-    - `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get entities --filter "stage=researched" --db blueprint/data/research.db` — researched entities with relevance
+    - `query({sql: "SELECT stage, COUNT(*) as count FROM entities GROUP BY stage"})` — overall summary
+    - `read_records({table: "entities", conditions: {stage: "researched"}})` — researched entities with relevance
 2. Build ordered entity list — researched entities sorted by relevance (highest first), with entity IDs
 3. Present analysis plan to user — entity count, analytical questions, dynamic loading approach (agents self-regulate batch size based on accumulated note content)
 4. User confirms to proceed
@@ -33,7 +33,7 @@ All agents answer all questions from whatever entities they consume:
 
 ### Execution
 
-5. Check existing measures: `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get measures --db blueprint/data/research.db`
+5. Check existing measures: `query({sql: "SELECT measure, value, COUNT(*) as entity_count FROM entity_measures GROUP BY measure, value ORDER BY measure, entity_count DESC"})`
     1. If measures exist: existing entity measures remain valid — extract measures for new entities only during step 9
     2. If no measures: full extraction during step 9
 7. Spawn sequential agents with dynamic loading:
@@ -41,7 +41,7 @@ All agents answer all questions from whatever entities they consume:
         - Provide full ordered entity list (all researched entity IDs by relevance descending)
         - First agent: no prior analysis, start from first entity
         - Subsequent agents: prior agent's analysis + resume from next unconsumed entity
-    2. Agent dynamically loads entities one at a time via CLI, tracking accumulated content size; stops consuming when approaching context budget; produces analysis of entities consumed so far; returns analysis + last entity consumed + next entity to resume from
+    2. Agent dynamically loads entities one at a time via MCP tool calls, tracking accumulated content size; stops consuming when approaching context budget; produces analysis of entities consumed so far; returns analysis + last entity consumed + next entity to resume from
     3. Orchestrator reviews agent output — checks for completeness, flags issues
     4. If agent reports all entities consumed (`complete: true`): Go to step 8. Domain Knowledge Refinement
     5. Else: spawn next agent with prior analysis + resumption point
@@ -59,7 +59,7 @@ All agents answer all questions from whatever entities they consume:
 9. Derive measures per entity from notes and terminal analysis:
     - Measures are universal key/value pairs discovered during analysis — quantifiable attributes revealed as meaningful across entities (not predefined)
     - Extracted from existing notes — facts already captured during research
-    - Orchestrator identifies measure schema from terminal analysis, then spawns agent(s) to extract measures from entity notes via CLI
+    - Orchestrator identifies measure schema from terminal analysis, then spawns agent(s) to extract measures from entity notes via MCP tool calls
 
 ### Findings
 
@@ -68,7 +68,7 @@ All agents answer all questions from whatever entities they consume:
     - Pattern tiers (table-stakes, differentiators, emerging, absent) based on adoption count across cohort, not effectiveness recommendation; tier descriptions must state this
     - Cautionary patterns note correlation with weaker presences, not causal claims
     - Decision cascades explain co-occurrence logic
-    - Measure distributions and co-occurrence data (from `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get measures --db blueprint/data/research.db`)
+    - Measure distributions and co-occurrence data (from `query({sql: "SELECT measure, value, COUNT(*) as entity_count FROM entity_measures GROUP BY measure, value ORDER BY measure, entity_count DESC"})`)
     - Decision cascades with specific entity evidence
     - Cautionary patterns with specific entity evidence
     - Domain knowledge updates (if any)
@@ -92,7 +92,7 @@ All agents answer all questions from whatever entities they consume:
     - Are there goals producing no findings, suggesting scope or criteria misalignment?
 14. If refinement needed:
     1. Update relevant project definition file(s)
-    2. If `blueprint/4-effectiveness-criteria.md` changed: clear measures — criteria change invalidates prior measures: `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research clear measures --db blueprint/data/research.db`
+    2. If `blueprint/4-effectiveness-criteria.md` changed: clear measures — criteria change invalidates prior measures: `delete_records({table: "entity_measures", all: true})`
     3. Rewrite `blueprint/8-interpretation.md` through updated goals — no need to re-run analysis agents or regenerate findings unless measures were cleared
 15. User confirms interpretation is aligned
 
@@ -100,7 +100,7 @@ All agents answer all questions from whatever entities they consume:
 
 When Phase 3 resumes with existing analysis data, present dashboard:
 
-1. `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get stats --db blueprint/data/research.db` — entity counts including measures
+1. `query({sql: "SELECT stage, COUNT(*) as count FROM entities GROUP BY stage"})` — entity counts including measures
 2. If `blueprint/7-findings.md` exists: present existing findings
 3. If `blueprint/8-interpretation.md` exists: present existing interpretation
 4. User directs: re-run analysis (clears measures first), re-interpret with updated goals (rewrites interpretation only), refine existing analysis, or proceed to Phase 4
@@ -111,9 +111,6 @@ When Phase 3 resumes with existing analysis data, present dashboard:
 
 ```
 Analyze entity notes and produce consolidated cross-entity analysis.
-
-Database CLI — all commands use this prefix:
-  python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research
 
 Analytical questions to answer from entities examined:
 1. Cross-cutting patterns — what do high-relevance entities share?
@@ -134,7 +131,7 @@ Prior analysis from previous batches (refine, confirm, adjust, or overturn with 
 
 Procedure:
 1. Read entities one at a time in provided order, starting from `{start_entity_id}`:
-    python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get entity {entity_id} --db blueprint/data/research.db
+    read_records({table: "entities", conditions: {id: "{entity_id}"}, include: ["entity_notes"]})
 2. After reading each entity, assess whether room to consume more; stop when adding another entity's notes would leave insufficient room for thorough analysis; always consume at least one entity
 3. Analyze notes across all consumed entities
 4. {if prior_analysis} Integrate with prior analysis — update counts, strengthen or weaken patterns, add new findings {end if}
@@ -152,8 +149,7 @@ Rules:
 - Do NOT write to database — read-only analysis
 - Do NOT create files
 - Do NOT repeat full entity details or note lists — cite entity IDs and summarize relevant note content
-- NEVER access database directly — CLI is only interface
-- Every Bash call: single-line command starting with recognized program name; no comments, line continuations, shell loops, or variable assignments
+- NEVER access database directly — MCP tool calls are the only interface
 ```
 
 ## Output

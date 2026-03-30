@@ -5,8 +5,8 @@ Agent subprocess — rescores entity relevance against current assessment criter
 ## Input
 
 Orchestrator provides:
-- Database path (e.g., `blueprint/data/research.db`)
-- Entity scope: `--filter "stage=researched"` (default), or specific entity IDs
+- Research database (accessed via MCP tool calls)
+- Entity scope: `conditions: {stage: "researched"}` (default), or specific entity IDs
 
 ## Agent Workflow
 
@@ -17,16 +17,16 @@ Orchestrator provides:
 
 ### Dynamic Entity Loading
 
-3. Get entity list: `get entities --filter "stage=researched" --db PATH`
+3. Get entity list: `read_records({table: "entities", conditions: {stage: "researched"}})`
 4. For each {entity} in {entity-list}:
-    1. Read entity: `get entity {entity_id} --db PATH`
+    1. Read entity: `read_records({table: "entities", conditions: {id: "{entity_id}"}, include: ["entity_notes", "entity_measures", "entity_urls"]})`
     2. Assess whether room remains to consume more; stop when approaching context budget; always consume at least one entity
 5. For each {entity} in {consumed-entities}:
     1. For each {criterion} in {gradient-criteria}: determine met or not met based on note evidence
     2. Sum met criteria to produce new relevance score
     3. If new score differs from current: record change
 6. After evaluating all consumed entities, apply updates:
-    1. For each {entity} in {changed-entities}: `update entities --ids {entity_id} --relevance {new_score} --db PATH`
+    1. For each {entity} in {changed-entities}: `update_records({table: "entities", id: "{entity_id}", data: {relevance: {new_score}}})`
 
 ### Output
 
@@ -50,5 +50,4 @@ If not all entities evaluated in one agent, orchestrator spawns next agent with:
 - If notes clearly contradict criterion previously scored as met, correct score downward
 - If notes support criterion previously scored as not met, correct score upward
 - Report both gains and losses — reassessment is bidirectional
-- NEVER access database directly — CLI is only interface
-- Every Bash call: single-line command starting with recognized program name; no comments, line continuations, shell loops, or variable assignments
+- NEVER access database directly — MCP tool calls are the only interface

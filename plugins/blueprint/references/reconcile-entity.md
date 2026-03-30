@@ -8,10 +8,10 @@ Universal procedure for updating entity notes, description, and relevance. Appli
 
 For each existing note, classify against new information:
 - Still accurate, not superseded — keep
-- Contains outdated value — replace via `update note --note-id N_ID --note "corrected fact"`
-- Disproven, redundant, or no longer relevant — remove via `remove notes --entity-id ID --note-ids N_ID`
+- Contains outdated value — replace via `update_records({table: "entity_notes", id: "N_ID", data: {note: "corrected fact"}})`
+- Disproven, redundant, or no longer relevant — remove via `delete_records({table: "entity_notes", id: "N_ID"})`
 
-Then add genuinely new observations not already captured: `upsert notes --entity-id ID --notes "new fact"`
+Then add genuinely new observations not already captured: `create_records({table: "entity_notes", data: {entity_id: "ID", note: "new fact"}})`
 
 ### Contradiction Resolution
 
@@ -50,6 +50,6 @@ Reassess against assessment criteria (from `blueprint/2-assessment-criteria.md`)
 
 ## Adjacent Entity Discovery
 
-While examining any entity, if links to other relevant entities not yet in database are encountered, register them using registration flow from agent prompt. Use current entity URL as `--source-url` for provenance.
+While examining any entity, if links to other relevant entities not yet in database are encountered, register them using registration flow from agent prompt. Use current entity URL as `source_url` for provenance.
 
 **One-hop limit:** Adjacent discoveries are bare registrations only — do not apply this reconciliation procedure, do not visit their pages, do not follow their links. Capture only what is visible from page already being read. Discovered entity enters database at stage `new` for future processing.
