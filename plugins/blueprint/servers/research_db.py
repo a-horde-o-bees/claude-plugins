@@ -288,7 +288,10 @@ def read_records(table: str, conditions: dict | None = None, include: list[str] 
         include: Related tables to join via FK relationships
         limit: Maximum number of records to return
     """
-    sql, params = _build_select(table, conditions, include, limit)
+    try:
+        sql, params = _build_select(table, conditions, include, limit)
+    except ValueError as e:
+        return json.dumps({"error": str(e)})
 
     conn = core.get_connection(DB_PATH)
     try:
@@ -438,8 +441,8 @@ def merge_entities(ids: list[str]) -> str:
     Args:
         ids: Entity IDs to merge (comma-separated or list, e.g., ["e1", "e2"])
     """
-    ids_str = ",".join(ids) if isinstance(ids, list) else ids
-    result = _merge_entities(DB_PATH, ids_str)
+    id_list = ids if isinstance(ids, list) else ids.split(",")
+    result = _merge_entities(DB_PATH, id_list)
     return json.dumps({"status": "merged", "result": result})
 
 
