@@ -219,11 +219,61 @@ def _glob_match(path: str, pattern: str) -> bool:
 # ===========================================================================
 
 
-def strip_quoted_strings(command: str) -> str:
-    """Remove single- and double-quoted strings for operator detection."""
-    result = re.sub(r"'[^']*'", "", command)
-    result = re.sub(r'"(?:[^"\\]|\\.)*"', "", result)
-    return result
+def split_compound_command(command: str) -> list[str] | None:
+    """Split command on &&, ||, ;, | outside quotes.
+
+    Returns list of individual commands if separators found, None otherwise.
+    Tracks quote state character by character to avoid splitting inside strings.
+    """
+    parts = []
+    current: list[str] = []
+    in_single = False
+    in_double = False
+    escaped = False
+    i = 0
+    while i < len(command):
+        c = command[i]
+        if escaped:
+            current.append(c)
+            escaped = False
+            i += 1
+            continue
+        if c == "\\" and in_double:
+            current.append(c)
+            escaped = True
+            i += 1
+            continue
+        if c == "'" and not in_double:
+            in_single = not in_single
+            current.append(c)
+            i += 1
+            continue
+        if c == '"' and not in_single:
+            in_double = not in_double
+            current.append(c)
+            i += 1
+            continue
+        if not in_single and not in_double:
+            if command[i:i + 2] in ("&&", "||"):
+                parts.append("".join(current).strip())
+                current = []
+                i += 2
+                continue
+            if c == ";":
+                parts.append("".join(current).strip())
+                current = []
+                i += 1
+                continue
+            if c == "|" and command[i:i + 2] != "||":
+                parts.append("".join(current).strip())
+                current = []
+                i += 1
+                continue
+        current.append(c)
+        i += 1
+    parts.append("".join(current).strip())
+    parts = [p for p in parts if p]
+    return parts if len(parts) > 1 else None
 
 
 def check_hardcoded_blocks(command: str) -> str | None:
@@ -236,32 +286,6 @@ def check_hardcoded_blocks(command: str) -> str | None:
             "Use absolute paths from project root instead. For git "
             "operations in other directories, use git -C <path>."
         )
-
-    # Compound commands — separators bypass approval pattern matching
-    stripped = strip_quoted_strings(command)
-    if "&&" in stripped or "||" in stripped:
-        return (
-            "Compound operators (&&, ||) are not allowed — command "
-            "separators bypass approval pattern matching because the "
-            "matcher sees only the first command. Run each command as a "
-            "separate Bash tool call. Independent commands can run in "
-            "parallel."
-        )
-    if ";" in stripped:
-        return (
-            "Command separator (;) is not allowed — separators bypass "
-            "approval pattern matching because the matcher sees only the "
-            "first command. Run each command as a separate Bash tool call."
-        )
-    if re.search(r"(?<!\|)\|(?!\|)", stripped):
-        return (
-            "Pipes (|) are not allowed — command separators bypass "
-            "approval pattern matching because the matcher sees only the "
-            "first command. Run each command as a separate Bash tool call, "
-            "or use dedicated tools (Grep instead of grep, Read instead "
-            "of cat | head, etc.)."
-        )
-
     return None
 
 
@@ -315,13 +339,28 @@ def main() -> None:
         if not command:
             return
 
-        # Layer 1: hardcoded blocks
+        # Split compound commands and check each part independently
+        parts = split_compound_command(command)
+        if parts is not None:
+            settings = load_merged_settings(project_dir)
+            for part in parts:
+                violation = check_hardcoded_blocks(part)
+                if violation:
+                    block(violation)
+                    return
+                if is_bash_denied(part, settings):
+                    return
+                if not is_bash_allowed(part, settings):
+                    return
+            approve()
+            return
+
+        # Single command — standard two-layer check
         violation = check_hardcoded_blocks(command)
         if violation:
             block(violation)
             return
 
-        # Layer 2: dynamic settings enforcement
         settings = load_merged_settings(project_dir)
         check_bash_dynamic(command, settings)
         return

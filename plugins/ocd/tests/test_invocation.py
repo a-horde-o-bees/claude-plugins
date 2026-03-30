@@ -84,7 +84,7 @@ class TestHookInvocation:
         output = json.loads(result.stdout)
         assert output.get("decision") == "block"
 
-    def test_auto_approval_blocks_pipe(self) -> None:
+    def test_auto_approval_approves_allowed_compound(self) -> None:
         hook_input = json.dumps({
             "tool_name": "Bash",
             "tool_input": {"command": "ls | grep foo"},
@@ -92,7 +92,7 @@ class TestHookInvocation:
         result = run("hooks.auto_approval", stdin=hook_input)
         assert result.returncode == 0, result.stderr
         output = json.loads(result.stdout)
-        assert output.get("decision") == "block"
+        assert output.get("hookSpecificOutput", {}).get("permissionDecision") == "allow"
 
     def test_auto_approval_no_output_for_unknown_tool(self) -> None:
         hook_input = json.dumps({

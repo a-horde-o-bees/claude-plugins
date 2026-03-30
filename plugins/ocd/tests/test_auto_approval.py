@@ -27,32 +27,6 @@ class TestCheckHardcodedBlocks:
     def test_cd_substring_not_blocked(self) -> None:
         assert hook.check_hardcoded_blocks("abcd foo") is None
 
-    def test_compound_and(self) -> None:
-        result = hook.check_hardcoded_blocks("ls && pwd")
-        assert result is not None
-        assert "&&" in result
-
-    def test_compound_or(self) -> None:
-        result = hook.check_hardcoded_blocks("ls || pwd")
-        assert result is not None
-        assert "||" in result
-
-    def test_semicolon(self) -> None:
-        result = hook.check_hardcoded_blocks("ls; pwd")
-        assert result is not None
-        assert ";" in result
-
-    def test_pipe(self) -> None:
-        result = hook.check_hardcoded_blocks("cat foo | grep bar")
-        assert result is not None
-        assert "|" in result
-
-    def test_operators_inside_single_quotes_allowed(self) -> None:
-        assert hook.check_hardcoded_blocks("echo '&& || ; |'") is None
-
-    def test_operators_inside_double_quotes_allowed(self) -> None:
-        assert hook.check_hardcoded_blocks('echo "&& || ; |"') is None
-
     def test_simple_command_allowed(self) -> None:
         assert hook.check_hardcoded_blocks("ls -la") is None
 
@@ -61,6 +35,63 @@ class TestCheckHardcodedBlocks:
 
     def test_empty_command(self) -> None:
         assert hook.check_hardcoded_blocks("") is None
+
+
+# =========================================================================
+# Compound command splitting
+# =========================================================================
+
+
+class TestSplitCompoundCommand:
+    def test_no_separator(self) -> None:
+        assert hook.split_compound_command("ls -la") is None
+
+    def test_and(self) -> None:
+        assert hook.split_compound_command("ls && pwd") == ["ls", "pwd"]
+
+    def test_or(self) -> None:
+        assert hook.split_compound_command("ls || pwd") == ["ls", "pwd"]
+
+    def test_semicolon(self) -> None:
+        assert hook.split_compound_command("ls; pwd") == ["ls", "pwd"]
+
+    def test_pipe(self) -> None:
+        assert hook.split_compound_command("cat foo | grep bar") == ["cat foo", "grep bar"]
+
+    def test_triple_chain(self) -> None:
+        assert hook.split_compound_command("ls && pwd && git status") == ["ls", "pwd", "git status"]
+
+    def test_mixed_separators(self) -> None:
+        assert hook.split_compound_command("ls; pwd && git status") == ["ls", "pwd", "git status"]
+
+    def test_pipe_and_chain(self) -> None:
+        assert hook.split_compound_command("cat foo | grep bar && echo done") == ["cat foo", "grep bar", "echo done"]
+
+    def test_and_inside_single_quotes(self) -> None:
+        assert hook.split_compound_command("echo '&& ||'") is None
+
+    def test_and_inside_double_quotes(self) -> None:
+        assert hook.split_compound_command('echo "&& ||"') is None
+
+    def test_semicolon_inside_quotes(self) -> None:
+        assert hook.split_compound_command('git commit -m "fix; update"') is None
+
+    def test_pipe_inside_quotes(self) -> None:
+        assert hook.split_compound_command("echo 'a | b'") is None
+
+    def test_mixed_quotes_and_real_separator(self) -> None:
+        result = hook.split_compound_command('echo "hello && world" && pwd')
+        assert result == ['echo "hello && world"', "pwd"]
+
+    def test_escaped_quote_in_double_quotes(self) -> None:
+        assert hook.split_compound_command(r'echo "say \"hi\"" && pwd') == [r'echo "say \"hi\""', "pwd"]
+
+    def test_empty_parts_filtered(self) -> None:
+        assert hook.split_compound_command("ls &&  && pwd") == ["ls", "pwd"]
+
+    def test_pipe_not_confused_with_or(self) -> None:
+        result = hook.split_compound_command("cat foo | grep bar || echo fallback")
+        assert result == ["cat foo", "grep bar", "echo fallback"]
 
 
 # =========================================================================

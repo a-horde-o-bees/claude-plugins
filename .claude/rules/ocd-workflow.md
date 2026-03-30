@@ -7,7 +7,7 @@ Execution discipline for agent task processing.
 Bash commands are governed by `.claude/settings.json` (project) and `~/.claude/settings.json` (user). Hooks enforce constraints that override approval — keep rules and settings in sync. Key constraints:
 
 - Working directory must remain project root — no `cd`, `pushd`, `popd`; use absolute paths or tool flags (`git -C <path>`)
-- Single-command Bash calls only — no `&&`, `||`, `;`, `|`; compound commands bypass approval pattern matching
+- Compound commands (`&&`, `||`, `;`, `|`) are supported — each part is checked independently against approval patterns; all parts must pass
 - Use relative paths from project root for `.claude/` scripts; use `git -C <path>` for submodule operations
 
 ## Agents
