@@ -25,11 +25,9 @@ Conventions for content consumed by agents: skills, conventions, plans, actions,
 ## Skill Architecture
 
 - Deterministic operations belong in CLI scripts; non-deterministic steps stay in SKILL.md as agent-executed workflow instructions
-- When continuing a session that was mid-skill, re-read SKILL.md from disk before resuming — carried-over context may be stale
-
 ## Conventions
 
-Before creating or modifying files, check for applicable conventions:
+Convention check CLI for the "Before creating or modifying files" alignment trigger:
 
 ```
 python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.conventions list-matching <file> [<file> ...]

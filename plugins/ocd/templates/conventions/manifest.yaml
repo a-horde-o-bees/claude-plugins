@@ -27,3 +27,6 @@ conventions:
   .claude/ocd/conventions/testing.md:
     pattern: "test_*.*|*_test.*|conftest.*"
     dependencies: [.claude/rules/ocd-agent-authoring.md]
+  .claude/ocd/conventions/db-mcp.md:
+    pattern: "servers/*.py"
+    dependencies: [.claude/rules/ocd-agent-authoring.md, .claude/ocd/conventions/python.md]
