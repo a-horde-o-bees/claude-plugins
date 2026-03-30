@@ -828,6 +828,31 @@ class TestConditionOperators:
 # =============================================================================
 
 
+class TestMissingDatabase:
+    """Server handles missing database gracefully."""
+
+    def test_read_without_database(self, tmp_path):
+        """All tools return clear error when database doesn't exist."""
+        os.environ["DB_PATH"] = str(tmp_path / "nonexistent.db")
+        import importlib
+        import servers.research_db as srv
+        importlib.reload(srv)
+        srv.DB_PATH = str(tmp_path / "nonexistent.db")
+
+        result = _json(srv.read_records("entities"))
+        assert "error" in result
+        assert "not initialized" in result["error"].lower()
+
+        result = _json(srv.create_records("entities", {"name": "Test"}))
+        assert "error" in result
+
+        result = _json(srv.query("SELECT 1"))
+        assert "error" in result
+
+        result = _json(srv.describe_entities())
+        assert "error" in result
+
+
 class TestErrorHandling:
     """Error cases that agents might encounter."""
 

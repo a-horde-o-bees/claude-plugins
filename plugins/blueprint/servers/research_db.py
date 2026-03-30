@@ -35,6 +35,21 @@ mcp = FastMCP("blueprint-research")
 
 # --- Schema introspection ---
 
+# --- Database existence check ---
+
+_NO_DB_MSG = json.dumps({
+    "error": "Database not initialized.",
+    "action": "Run /blueprint-init or /blueprint-research to create the database first.",
+})
+
+
+def _check_db() -> str | None:
+    """Return error JSON if database doesn't exist, None if OK."""
+    if not Path(DB_PATH).exists():
+        return _NO_DB_MSG
+    return None
+
+
 # Tables and their FK relationships (entity_id → entities.id)
 _FK_TABLES = {
     "entity_notes": "entity_id",
@@ -204,6 +219,7 @@ def create_records(table: str, data: dict | list[dict], source_url: str | None =
         data: Single record object or array of record objects with field:value pairs
         source_url: (entities only) Source URL for provenance tracking
     """
+    if err := _check_db(): return err
     records = data if isinstance(data, list) else [data]
 
     if table == "entities":
@@ -288,6 +304,7 @@ def read_records(table: str, conditions: dict | None = None, include: list[str] 
         include: Related tables to join via FK relationships
         limit: Maximum number of records to return
     """
+    if err := _check_db(): return err
     try:
         sql, params = _build_select(table, conditions, include, limit)
     except ValueError as e:
@@ -318,6 +335,7 @@ def update_records(table: str, id: str, data: dict) -> str:
         id: Record ID (e.g., e1, n14)
         data: Fields to update as key:value pairs
     """
+    if err := _check_db(): return err
     if table == "entities":
         result = update_entity(
             DB_PATH,
@@ -354,6 +372,7 @@ def delete_records(table: str, id: str | None = None, all: bool = False) -> str:
         id: Record ID to delete (required unless all=True)
         all: Delete all records from table (required for measures bulk delete)
     """
+    if err := _check_db(): return err
     if table == "entity_measures" and all:
         result = clear_measures(DB_PATH)
         return json.dumps({"status": "cleared", "result": result})
@@ -385,6 +404,7 @@ def query(sql: str, params: dict | None = None) -> str:
         sql: SQL query (must be SELECT)
         params: Named parameters for the query (e.g., {"stage": "researched"})
     """
+    if err := _check_db(): return err
     stripped = sql.strip().upper()
     if not stripped.startswith("SELECT"):
         return json.dumps({"error": "Only SELECT queries are allowed. Use create_records/update_records/delete_records for writes."})
@@ -404,6 +424,7 @@ def describe_entities(table: str | None = None) -> str:
     Args:
         table: Specific table to describe (optional; omit for all tables)
     """
+    if err := _check_db(): return err
     conn = core.get_connection(DB_PATH)
     try:
         if table:
@@ -441,6 +462,7 @@ def merge_entities(ids: list[str]) -> str:
     Args:
         ids: Entity IDs to merge (comma-separated or list, e.g., ["e1", "e2"])
     """
+    if err := _check_db(): return err
     id_list = ids if isinstance(ids, list) else ids.split(",")
     result = _merge_entities(DB_PATH, id_list)
     return json.dumps({"status": "merged", "result": result})
