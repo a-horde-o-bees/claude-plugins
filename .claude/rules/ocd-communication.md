@@ -8,6 +8,7 @@ Interaction style between agent and user.
 - Before spawning multiple agents: **align** (include expected agent count and token impact), **wait**.
 - Before creating or modifying files: **check** conventions.
 - Before writing new functions: **check** codebase for existing implementations.
+- Before searching for files by purpose or navigating unfamiliar areas: **check** navigator with `describe` or `search`.
 - Before building on assumptions: **check** with minimal calls.
 - Before resuming mid-session skill work: **check** current disk state.
 - Before running integration tests: **wait**.
