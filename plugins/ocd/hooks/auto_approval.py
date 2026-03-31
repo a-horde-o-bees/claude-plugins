@@ -286,6 +286,13 @@ def check_hardcoded_blocks(command: str) -> str | None:
             "Use absolute paths from project root instead. For git "
             "operations in other directories, use git -C <path>."
         )
+    # cat — use Read tool instead
+    if re.match(r"^cat\b", command):
+        return (
+            "Use the Read tool instead of cat. Read supports offset and "
+            "limit parameters for partial file reads and handles errors "
+            "natively — no redirect or exit-code wrapper needed."
+        )
     return None
 
 

@@ -25,6 +25,17 @@ class TestCheckHardcodedBlocks:
     def test_popd_blocked(self) -> None:
         assert hook.check_hardcoded_blocks("popd") is not None
 
+    def test_cat_blocked(self) -> None:
+        result = hook.check_hardcoded_blocks("cat /tmp/foo.txt")
+        assert result is not None
+        assert "Read" in result
+
+    def test_cat_bare_blocked(self) -> None:
+        assert hook.check_hardcoded_blocks("cat") is not None
+
+    def test_cat_substring_not_blocked(self) -> None:
+        assert hook.check_hardcoded_blocks("catalog foo") is None
+
     def test_cd_substring_not_blocked(self) -> None:
         assert hook.check_hardcoded_blocks("abcd foo") is None
 
