@@ -20,6 +20,7 @@ Structured programming for agent workflows. Indentation scopes blocks. Required 
 | Concurrency | `async` prefix | `asyncio.TaskGroup` |
 | Jump | `Go to step N. Label` | — |
 | Subroutine | Subprocess heading | `def` |
+| Invocation type | `skill:`, `bash:`, `{tool}:` | decorator / annotation |
 
 ## Scoping
 
@@ -127,6 +128,29 @@ Em dash (`—`) separates step label from optional description. Label is an acti
 Subprocesses are extracted under their own heading with their own steps, referenced by name in the parent flow. Heading depth is one level below the parent heading.
 
 Grouping headings organize contiguous steps within a single process. Steps continue numbering across headings — a heading is a label, not a numbering reset.
+
+## Invocation Types
+
+When a step delegates to a specific execution mechanism, an invocation type prefixes the command: `{mechanism}: {command}`. This disambiguates how the agent executes the step — which tool or interface to use.
+
+| Prefix | Mechanism | Example |
+|--------|-----------|---------|
+| `skill:` | Skill tool | `skill: /ocd-commit` |
+| `bash:` | Bash tool | `bash: \`claude plugins marketplace update\`` |
+| `{tool}:` | Dedicated tool (Read, Grep, Glob, etc.) | `Read: \`settings.json\`` |
+
+The prefix can appear after an em dash (`1. Commit — skill: /ocd-commit`) or standalone (`- bash: \`command\``). Invocation types are optional — omit when the mechanism is unambiguous from context. Use when a workflow mixes mechanisms and the agent needs to distinguish between them. Steps without an invocation type are executed by agent judgment.
+
+```
+1. Commit — skill: `/ocd-commit`
+2. Push — skill: `/ocd-push --branch main`
+3. Marketplace refresh — bash: `claude plugins marketplace update`
+4. Update plugins:
+    - bash: `claude plugins update ocd@marketplace`
+    - bash: `claude plugins update blueprint@marketplace`
+5. If rules changed:
+    1. Suggest session restart
+```
 
 ## Skill Argument Notation
 
