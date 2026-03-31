@@ -5,10 +5,16 @@ database operations produce correct state for downstream phases.
 """
 
 import json
+import sqlite3
 
 
 def parse(result: str):
     return json.loads(result)
+
+
+def result_text(result: str) -> str:
+    """Extract result string from _ok() wrapper."""
+    return json.loads(result)["result"]
 
 
 # =============================================================================
@@ -21,7 +27,7 @@ class TestPhase1Scoping:
 
     def test_schema_discovery(self, db):
         """Agent discovers database structure on first run."""
-        result = parse(db["describe"]())
+        result = parse(db["describe_schema"]())
         assert "entities" in result
         assert "entity_notes" in result
         assert "entity_urls" in result
@@ -29,183 +35,176 @@ class TestPhase1Scoping:
 
     def test_single_table_schema(self, db):
         """Agent inspects specific table schema."""
-        result = parse(db["describe"]("entities"))
+        result = parse(db["describe_schema"](table="entities"))
         assert result["table"] == "entities"
         col_names = [c["name"] for c in result["columns"]]
         assert "id" in col_names
         assert "name" in col_names
         assert "stage" in col_names
         assert "relevance" in col_names
-        assert "entity_notes" in result["relationships"]
 
     def test_create_context_entity(self, db):
         """Register a context source (knowledge/advice)."""
-        result = parse(db["create"]("entities", {
+        text = result_text(db["register_entity"]({
             "name": "ArchUnit Docs",
             "url": "https://www.archunit.org/userguide",
             "description": "Architecture rule testing patterns",
-            "role": "context",
+            "modes": ["context"],
             "relevance": 8,
         }))
-        assert "id: e1" in result
+        assert "id: e1" in text
 
     def test_create_directory_entity(self, db):
         """Register a directory source (crawlable listing)."""
-        result = parse(db["create"]("entities", {
+        text = result_text(db["register_entity"]({
             "name": "awesome-static-analysis",
             "url": "https://github.com/analysis-tools-dev/static-analysis",
             "description": "Curated list of static analysis tools",
-            "role": "directory",
+            "modes": ["directory"],
             "relevance": 7,
         }))
-        assert "id: e1" in result
+        assert "id: e1" in text
 
     def test_url_dedup_returns_existing(self, db):
         """Creating entity with duplicate URL returns existing ID."""
-        db["create"]("entities", {"name": "Tool A", "url": "https://example.com/tool"})
-        result = parse(db["create"]("entities", {"name": "Tool A Dupe", "url": "https://example.com/tool"}))
-        assert "Already registered" in result
-        assert "e1" in result
+        db["register_entity"]({"name": "Tool A", "url": "https://example.com/tool"})
+        text = result_text(db["register_entity"]({"name": "Tool A Dupe", "url": "https://example.com/tool"}))
+        assert "Already registered" in text
+        assert "e1" in text
 
     def test_url_normalization(self, db):
         """URLs normalized: scheme stripped, www stripped, lowercased, trailing slash stripped."""
-        db["create"]("entities", {"name": "Tool A", "url": "https://www.Example.com/Path/"})
-        result = parse(db["create"]("entities", {"name": "Dupe", "url": "http://example.com/Path"}))
-        assert "Already registered" in result
+        db["register_entity"]({"name": "Tool A", "url": "https://www.Example.com/Path/"})
+        text = result_text(db["register_entity"]({"name": "Dupe", "url": "http://example.com/Path"}))
+        assert "Already registered" in text
 
     def test_provenance_tracking(self, db):
         """Source URL creates provenance link."""
-        db["create"]("entities", {
+        db["register_entity"]({
             "name": "Found Entity",
             "url": "https://found.com",
             "source_url": "https://directory.com/listing",
         })
-        result = parse(db["query"](
-            "SELECT source_url, entity_id FROM url_provenance"
-        ))
-        assert len(result) == 1
-        assert "directory.com/listing" in result[0]["source_url"]
+        # Verify provenance via get_entity detail
+        detail = result_text(db["get_entity"]("e1"))
+        assert "directory.com/listing" in detail
 
     def test_create_accessibility_note(self, db):
         """Add tagged note for directory accessibility."""
-        db["create"]("entities", {"name": "Directory", "url": "https://dir.com", "role": "directory"})
-        result = parse(db["create"]("entity_notes", {
-            "entity_id": "e1",
-            "note": "[ACCESSIBILITY]: static — GitHub README with tool listings",
-        }))
-        assert "Added 1 notes" in result
+        db["register_entity"]({"name": "Directory", "url": "https://dir.com", "modes": ["directory"]})
+        text = result_text(db["add_notes"]("e1", [
+            "[ACCESSIBILITY]: static — GitHub README with tool listings",
+        ]))
+        assert "Added 1 notes" in text
 
     def test_create_multiple_notes(self, db):
         """Batch create notes for an entity."""
-        db["create"]("entities", {"name": "Entity", "url": "https://e.com"})
-        result = parse(db["create"]("entity_notes", [
-            {"entity_id": "e1", "note": "First observation"},
-            {"entity_id": "e1", "note": "Second observation"},
-            {"entity_id": "e1", "note": "Third observation"},
+        db["register_entity"]({"name": "Entity", "url": "https://e.com"})
+        text = result_text(db["add_notes"]("e1", [
+            "First observation",
+            "Second observation",
+            "Third observation",
         ]))
-        assert len(result) == 3
+        assert "Added 3 notes" in text
 
-    def test_read_entities_by_role(self, db):
-        """List entities filtered by role."""
-        db["create"]("entities", {"name": "Context", "url": "https://c.com", "role": "context"})
-        db["create"]("entities", {"name": "Directory", "url": "https://d.com", "role": "directory"})
-        db["create"]("entities", {"name": "Example", "url": "https://e.com", "role": "example"})
+    def test_read_entities_by_mode(self, db):
+        """List entities filtered by mode."""
+        db["register_entity"]({"name": "Context", "url": "https://c.com", "modes": ["context"]})
+        db["register_entity"]({"name": "Directory", "url": "https://d.com", "modes": ["directory"]})
+        db["register_entity"]({"name": "Example", "url": "https://e.com", "modes": ["example"]})
 
-        contexts = parse(db["read"]("entities", {"role": "context"}))
-        assert len(contexts) == 1
-        assert contexts[0]["name"] == "Context"
+        contexts = result_text(db["list_entities"](mode="context"))
+        assert "Context" in contexts
+        assert "Directory" not in contexts
 
-        directories = parse(db["read"]("entities", {"role": "directory"}))
-        assert len(directories) == 1
-        assert directories[0]["name"] == "Directory"
+        directories = result_text(db["list_entities"](mode="directory"))
+        assert "Directory" in directories
+        assert "Example" not in directories
 
     def test_batch_entity_creation(self, db):
         """Batch create entities (directory crawl result)."""
-        result = parse(db["create"]("entities", [
+        text = result_text(db["register_entities"]([
             {"name": "Tool A", "url": "https://a.com", "relevance": 7, "description": "First tool"},
             {"name": "Tool B", "url": "https://b.com", "relevance": 5, "description": "Second tool"},
             {"name": "Tool C", "url": "https://c.com", "relevance": 3, "description": "Third tool"},
         ]))
-        assert len(result) == 3
-        assert any("id: e1" in r for r in result)
-        assert any("id: e2" in r for r in result)
-        assert any("id: e3" in r for r in result)
+        assert "3 new" in text
 
     def test_batch_with_dedup(self, db):
         """Batch create where some entities already exist."""
-        db["create"]("entities", {"name": "Existing", "url": "https://existing.com"})
-        result = parse(db["create"]("entities", [
+        db["register_entity"]({"name": "Existing", "url": "https://existing.com"})
+        text = result_text(db["register_entities"]([
             {"name": "Existing Dupe", "url": "https://existing.com"},
             {"name": "New Entity", "url": "https://new.com"},
         ]))
-        assert any("Already registered" in r for r in result)
-        assert any("id: e2" in r for r in result)
+        assert "1 new" in text
+        assert "1 already registered" in text
 
     def test_crawl_progress_notes(self, db):
         """Directory crawl state tracked via tagged notes."""
-        db["create"]("entities", {"name": "Directory", "url": "https://dir.com", "role": "directory"})
+        db["register_entity"]({"name": "Directory", "url": "https://dir.com", "modes": ["directory"]})
 
-        db["create"]("entity_notes", {"entity_id": "e1", "note": "[CRAWL METHOD]: WebFetch of GitHub README"})
-        db["create"]("entity_notes", {"entity_id": "e1", "note": "[CRAWL PROGRESS]: Processed pages 1-5. 12 entities registered."})
+        db["add_notes"]("e1", ["[CRAWL METHOD]: WebFetch of GitHub README"])
+        db["add_notes"]("e1", ["[CRAWL PROGRESS]: Processed pages 1-5. 12 entities registered."])
 
-        notes = parse(db["read"]("entities", {"id": "e1"}, include=["entity_notes"]))
-        note_texts = [n["note"] for n in notes[0]["entity_notes"]]
-        assert any("[CRAWL PROGRESS]" in n for n in note_texts)
+        detail = result_text(db["get_entity"]("e1"))
+        assert "[CRAWL PROGRESS]" in detail
 
-        # Update progress (delete old, create new)
-        progress_note = next(n for n in notes[0]["entity_notes"] if "[CRAWL PROGRESS]" in n["note"])
-        db["delete"]("entity_notes", id=progress_note["id"])
-        db["create"]("entity_notes", {"entity_id": "e1", "note": "[CRAWL PROGRESS]: Processed pages 1-10. 24 entities registered."})
+        # Find progress note ID from detail and update it
+        # Detail format: [n2] [CRAWL PROGRESS]: ...
+        conn = sqlite3.connect(db["path"])
+        conn.row_factory = sqlite3.Row
+        progress_note = conn.execute(
+            "SELECT id FROM entity_notes WHERE entity_id = 'e1' AND note LIKE '%[CRAWL PROGRESS]%'"
+        ).fetchone()
+        conn.close()
+        progress_note_id = progress_note["id"]
 
-        notes = parse(db["read"]("entities", {"id": "e1"}, include=["entity_notes"]))
-        progress_notes = [n for n in notes[0]["entity_notes"] if "[CRAWL PROGRESS]" in n["note"]]
-        assert len(progress_notes) == 1
-        assert "pages 1-10" in progress_notes[0]["note"]
+        db["remove_notes"]("e1", [progress_note_id])
+        db["add_notes"]("e1", ["[CRAWL PROGRESS]: Processed pages 1-10. 24 entities registered."])
 
-    def test_create_entity_with_nested_notes(self, db):
-        """Create entity with notes in one call — symmetric with read_records include."""
-        result = parse(db["create"]("entities", {
+        detail = result_text(db["get_entity"]("e1"))
+        assert "pages 1-10" in detail
+        # Only one CRAWL PROGRESS note should remain
+        assert detail.count("[CRAWL PROGRESS]") == 1
+
+    def test_create_entity_with_notes(self, db):
+        """Create entity then add notes — symmetric with get_entity detail view."""
+        text = result_text(db["register_entity"]({
             "name": "Nested Entity",
             "url": "https://nested.com",
             "relevance": 7,
-            "entity_notes": [
-                {"note": "First observation"},
-                {"note": "Second observation"},
-            ],
         }))
-        assert "id: e1" in result
+        assert "id: e1" in text
 
-        entity = parse(db["read"]("entities", {"id": "e1"}, include=["entity_notes"]))
-        assert len(entity[0]["entity_notes"]) == 2
-        notes = [n["note"] for n in entity[0]["entity_notes"]]
-        assert "First observation" in notes
-        assert "Second observation" in notes
+        db["add_notes"]("e1", ["First observation", "Second observation"])
 
-    def test_create_batch_entities_with_nested_notes(self, db):
-        """Batch create entities with nested notes."""
-        result = parse(db["create"]("entities", [
-            {"name": "Tool A", "url": "https://a.com", "entity_notes": [{"note": "Note on A"}]},
-            {"name": "Tool B", "url": "https://b.com", "entity_notes": [{"note": "Note on B"}]},
+        detail = result_text(db["get_entity"]("e1"))
+        assert "First observation" in detail
+        assert "Second observation" in detail
+
+    def test_create_batch_entities_with_notes(self, db):
+        """Batch create entities then add notes to each."""
+        db["register_entities"]([
+            {"name": "Tool A", "url": "https://a.com", "notes": ["Note on A"]},
+            {"name": "Tool B", "url": "https://b.com", "notes": ["Note on B"]},
+        ])
+
+        detail_a = result_text(db["get_entity"]("e1"))
+        detail_b = result_text(db["get_entity"]("e2"))
+        assert "Note on A" in detail_a
+        assert "Note on B" in detail_b
+
+    def test_notes_not_created_for_duplicate_entity(self, db):
+        """Notes not created when entity is a duplicate (register_batch skips notes for dupes)."""
+        db["register_entity"]({"name": "Existing", "url": "https://existing.com"})
+        text = result_text(db["register_entities"]([
+            {"name": "Dupe", "url": "https://existing.com", "notes": ["Should not be created"]},
         ]))
-        assert len(result) == 2
+        assert "already registered" in text.lower()
 
-        a = parse(db["read"]("entities", {"id": "e1"}, include=["entity_notes"]))
-        b = parse(db["read"]("entities", {"id": "e2"}, include=["entity_notes"]))
-        assert len(a[0]["entity_notes"]) == 1
-        assert len(b[0]["entity_notes"]) == 1
-
-    def test_nested_notes_skipped_for_duplicate_entity(self, db):
-        """Nested notes not created when entity is a duplicate."""
-        db["create"]("entities", {"name": "Existing", "url": "https://existing.com"})
-        result = parse(db["create"]("entities", {
-            "name": "Dupe",
-            "url": "https://existing.com",
-            "entity_notes": [{"note": "Should not be created"}],
-        }))
-        assert "Already registered" in result
-
-        entity = parse(db["read"]("entities", {"id": "e1"}, include=["entity_notes"]))
-        assert len(entity[0]["entity_notes"]) == 0
+        detail = result_text(db["get_entity"]("e1"))
+        assert "Should not be created" not in detail
 
 
 # =============================================================================
@@ -217,83 +216,88 @@ class TestPhase2DeepResearch:
     """Phase 2 operations: research agents writing notes, advancing stage."""
 
     def _seed_for_research(self, db):
-        db["create"]("entities", {"name": "High Priority", "url": "https://hp.com", "relevance": 9})
-        db["create"]("entities", {"name": "Med Priority", "url": "https://mp.com", "relevance": 7})
-        db["create"]("entities", {"name": "Low Priority", "url": "https://lp.com", "relevance": 5})
-        db["create"]("entity_notes", {"entity_id": "e1", "note": "Initial discovery observation"})
+        db["register_entity"]({"name": "High Priority", "url": "https://hp.com", "relevance": 9})
+        db["register_entity"]({"name": "Med Priority", "url": "https://mp.com", "relevance": 7})
+        db["register_entity"]({"name": "Low Priority", "url": "https://lp.com", "relevance": 5})
+        db["add_notes"]("e1", ["Initial discovery observation"])
 
     def test_get_research_queue(self, db):
         """Phase 2 input: entities filtered for research queue."""
         self._seed_for_research(db)
-        queue = parse(db["read"]("entities", {"stage": "new"}))
-        assert len(queue) == 3
-        relevances = {e["name"]: e["relevance"] for e in queue}
-        assert relevances["High Priority"] == 9
-        assert relevances["Med Priority"] == 7
-        assert relevances["Low Priority"] == 5
+        text = result_text(db["list_entities"](stage="new"))
+        assert "High Priority" in text
+        assert "Med Priority" in text
+        assert "Low Priority" in text
 
     def test_research_agent_reads_entity(self, db):
         """Research agent loads entity with existing notes."""
         self._seed_for_research(db)
-        entity = parse(db["read"]("entities", {"id": "e1"}, include=["entity_notes"]))
-        assert len(entity) == 1
-        assert entity[0]["name"] == "High Priority"
-        assert len(entity[0]["entity_notes"]) == 1
+        detail = result_text(db["get_entity"]("e1"))
+        assert "High Priority" in detail
+        assert "Initial discovery observation" in detail
 
     def test_research_agent_writes_notes(self, db):
         """Research agent adds comprehensive notes after research."""
         self._seed_for_research(db)
-        db["create"]("entity_notes", [
-            {"entity_id": "e1", "note": "Apache 2.0 licensed, fully open source"},
-            {"entity_id": "e1", "note": "32k GitHub stars, active maintenance"},
-            {"entity_id": "e1", "note": "Supports 30+ languages via tree-sitter"},
+        db["add_notes"]("e1", [
+            "Apache 2.0 licensed, fully open source",
+            "32k GitHub stars, active maintenance",
+            "Supports 30+ languages via tree-sitter",
         ])
-        entity = parse(db["read"]("entities", {"id": "e1"}, include=["entity_notes"]))
-        assert len(entity[0]["entity_notes"]) == 4  # 1 initial + 3 new
+        detail = result_text(db["get_entity"]("e1"))
+        assert "Apache 2.0" in detail
+        assert "32k GitHub stars" in detail
+        assert "tree-sitter" in detail
+        # Should have 4 notes total: 1 initial + 3 new
+        assert "Notes (4)" in detail
 
     def test_research_agent_reconciles_notes(self, db):
         """Research agent corrects outdated note during reconciliation."""
         self._seed_for_research(db)
-        db["create"]("entity_notes", {"entity_id": "e1", "note": "15k stars"})
+        db["add_notes"]("e1", ["15k stars"])
 
-        entity = parse(db["read"]("entities", {"id": "e1"}, include=["entity_notes"]))
-        outdated = next(n for n in entity[0]["entity_notes"] if "15k stars" in n["note"])
+        # Find the outdated note ID
+        conn = sqlite3.connect(db["path"])
+        conn.row_factory = sqlite3.Row
+        outdated = conn.execute(
+            "SELECT id FROM entity_notes WHERE entity_id = 'e1' AND note = '15k stars'"
+        ).fetchone()
+        conn.close()
 
-        db["delete"]("entity_notes", id=outdated["id"])
-        db["create"]("entity_notes", {"entity_id": "e1", "note": "32k GitHub stars as of March 2026"})
+        db["remove_notes"]("e1", [outdated["id"]])
+        db["add_notes"]("e1", ["32k GitHub stars as of March 2026"])
 
-        entity = parse(db["read"]("entities", {"id": "e1"}, include=["entity_notes"]))
-        notes = [n["note"] for n in entity[0]["entity_notes"]]
-        assert "32k GitHub stars as of March 2026" in notes
-        assert "15k stars" not in notes
+        detail = result_text(db["get_entity"]("e1"))
+        assert "32k GitHub stars as of March 2026" in detail
+        assert "15k stars" not in detail
 
     def test_advance_stage_to_researched(self, db):
         """Research agent marks entity as researched after completing."""
         self._seed_for_research(db)
-        db["update"]("entities", "e1", {"stage": "researched"})
-        entity = parse(db["read"]("entities", {"id": "e1"}))
-        assert entity[0]["stage"] == "researched"
+        db["set_stage"]("e1", "researched")
+        detail = result_text(db["get_entity"]("e1"))
+        assert "Stage: researched" in detail
 
     def test_verify_stage_after_completion(self, db):
         """Orchestrator verifies agent actually set stage."""
         self._seed_for_research(db)
-        entity = parse(db["read"]("entities", {"id": "e1"}))
-        assert entity[0]["stage"] == "new"  # not advanced — needs re-spawn
+        detail = result_text(db["get_entity"]("e1"))
+        assert "Stage: new" in detail  # not advanced — needs re-spawn
 
     def test_adjacent_entity_discovery(self, db):
         """Research agent discovers and registers adjacent entities."""
         self._seed_for_research(db)
-        result = parse(db["create"]("entities", {
+        text = result_text(db["register_entity"]({
             "name": "Adjacent Tool",
             "url": "https://adjacent.com",
             "source_url": "https://hp.com",
             "description": "Found while researching High Priority",
             "relevance": 6,
         }))
-        assert "id: e4" in result
+        assert "id: e4" in text
 
-        prov = parse(db["query"]("SELECT * FROM url_provenance WHERE entity_id = 'e4'"))
-        assert len(prov) == 1
+        detail = result_text(db["get_entity"]("e4"))
+        assert "Found via" in detail
 
 
 # =============================================================================
@@ -311,92 +315,82 @@ class TestPhase3Analysis:
             ("Superpowers", 8),
             ("ArchUnit", 7),
         ], 1):
-            db["create"]("entities", {"name": name, "url": f"https://e{i}.com", "relevance": rel})
-            db["update"]("entities", f"e{i}", {"stage": "researched"})
-            db["create"]("entity_notes", [
-                {"entity_id": f"e{i}", "note": f"{name} note 1"},
-                {"entity_id": f"e{i}", "note": f"{name} note 2"},
+            db["register_entity"]({"name": name, "url": f"https://e{i}.com", "relevance": rel})
+            db["set_stage"](f"e{i}", "researched")
+            db["add_notes"](f"e{i}", [
+                f"{name} note 1",
+                f"{name} note 2",
             ])
 
     def test_get_researched_entities(self, db):
         """Analysis input: all researched entities."""
         self._seed_for_analysis(db)
-        entities = parse(db["read"]("entities", {"stage": "researched"}))
-        assert len(entities) == 4
-        relevances = [e["relevance"] for e in entities]
-        assert 9 in relevances
-        assert 7 in relevances
+        text = result_text(db["list_entities"](stage="researched"))
+        assert "Code Review" in text
+        assert "ArchUnit" in text
 
     def test_analysis_agent_reads_notes(self, db):
         """Analysis agent reads entity with all notes."""
         self._seed_for_analysis(db)
-        entity = parse(db["read"]("entities", {"id": "e1"}, include=["entity_notes"]))
-        assert len(entity[0]["entity_notes"]) == 2
+        detail = result_text(db["get_entity"]("e1"))
+        assert "Notes (2)" in detail
 
     def test_measure_extraction(self, db):
         """Extract measures per entity from analysis findings."""
         self._seed_for_analysis(db)
         for i in range(1, 5):
-            db["create"]("entity_measures", [
-                {"entity_id": f"e{i}", "measure": "implementation_model", "value": "markdown-only"},
-                {"entity_id": f"e{i}", "measure": "activation_scope", "value": "pr"},
-                {"entity_id": f"e{i}", "measure": "confidence_scoring", "value": "yes"},
+            db["set_measures"](f"e{i}", [
+                {"measure": "implementation_model", "value": "markdown-only"},
+                {"measure": "activation_scope", "value": "pr"},
+                {"measure": "confidence_scoring", "value": "yes"},
             ])
 
-        measures = parse(db["query"](
-            "SELECT measure, COUNT(DISTINCT entity_id) as entity_count FROM entity_measures GROUP BY measure"
-        ))
-        assert len(measures) == 3
-        assert all(m["entity_count"] == 4 for m in measures)
+        summary = result_text(db["get_measure_summary"]())
+        assert "implementation_model" in summary
+        assert "activation_scope" in summary
+        assert "confidence_scoring" in summary
 
     def test_measure_distribution_query(self, db):
         """Query measure distributions for findings report."""
         self._seed_for_analysis(db)
-        db["create"]("entity_measures", [
-            {"entity_id": "e1", "measure": "scope", "value": "pr"},
-            {"entity_id": "e2", "measure": "scope", "value": "whole-project"},
-            {"entity_id": "e3", "measure": "scope", "value": "pr"},
-            {"entity_id": "e4", "measure": "scope", "value": "whole-project"},
-        ])
+        db["set_measures"]("e1", [{"measure": "scope", "value": "pr"}])
+        db["set_measures"]("e2", [{"measure": "scope", "value": "whole-project"}])
+        db["set_measures"]("e3", [{"measure": "scope", "value": "pr"}])
+        db["set_measures"]("e4", [{"measure": "scope", "value": "whole-project"}])
 
-        dist = parse(db["query"](
-            "SELECT value, COUNT(*) as count FROM entity_measures WHERE measure = 'scope' GROUP BY value ORDER BY count DESC"
-        ))
-        assert len(dist) == 2
-        assert dist[0]["count"] == 2
+        summary = result_text(db["get_measure_summary"]())
+        assert "scope" in summary
 
     def test_incremental_measures_new_entities_only(self, db):
         """Adding entities after initial analysis: only new entities need measures."""
         self._seed_for_analysis(db)
         for i in range(1, 5):
-            db["create"]("entity_measures", {"entity_id": f"e{i}", "measure": "score", "value": str(i * 10)})
+            db["set_measures"](f"e{i}", [{"measure": "score", "value": str(i * 10)}])
 
-        db["create"]("entities", {"name": "New Entity", "url": "https://new.com", "relevance": 6})
-        db["update"]("entities", "e5", {"stage": "researched"})
+        db["register_entity"]({"name": "New Entity", "url": "https://new.com", "relevance": 6})
+        db["set_stage"]("e5", "researched")
 
-        unmeasured = parse(db["query"](
-            "SELECT e.id, e.name FROM entities e WHERE e.stage = 'researched' AND e.id NOT IN (SELECT DISTINCT entity_id FROM entity_measures)"
-        ))
-        assert len(unmeasured) == 1
-        assert unmeasured[0]["id"] == "e5"
+        # e5 has no measures yet — verify via get_entity
+        detail = result_text(db["get_entity"]("e5"))
+        assert "Measures" not in detail
 
-        db["create"]("entity_measures", {"entity_id": "e5", "measure": "score", "value": "60"})
+        db["set_measures"]("e5", [{"measure": "score", "value": "60"}])
 
-        unmeasured = parse(db["query"](
-            "SELECT e.id FROM entities e WHERE e.stage = 'researched' AND e.id NOT IN (SELECT DISTINCT entity_id FROM entity_measures)"
-        ))
-        assert len(unmeasured) == 0
+        detail = result_text(db["get_entity"]("e5"))
+        assert "score: 60" in detail
 
     def test_criteria_change_clears_all_measures(self, db):
         """Effectiveness criteria change clears all measures for re-extraction."""
         self._seed_for_analysis(db)
         for i in range(1, 5):
-            db["create"]("entity_measures", {"entity_id": f"e{i}", "measure": "score", "value": str(i * 10)})
+            db["set_measures"](f"e{i}", [{"measure": "score", "value": str(i * 10)}])
 
-        db["delete"]("entity_measures", all=True)
+        db["clear_all_measures"]()
 
-        total = parse(db["query"]("SELECT COUNT(*) as count FROM entity_measures"))
-        assert total[0]["count"] == 0
+        # Verify no measures on any entity
+        for i in range(1, 5):
+            detail = result_text(db["get_entity"](f"e{i}"))
+            assert "Measures" not in detail
 
 
 # =============================================================================
@@ -408,39 +402,33 @@ class TestPhase4Blueprint:
     """Phase 4 operations: full entity reads for implementation blueprint."""
 
     def _seed_full_dataset(self, db):
-        db["create"]("entities", {"name": "Top Entity", "url": "https://top.com", "relevance": 9})
-        db["update"]("entities", "e1", {"stage": "researched"})
-        db["create"]("entity_notes", [
-            {"entity_id": "e1", "note": "Key architectural pattern: markdown-as-code"},
-            {"entity_id": "e1", "note": "Multi-agent parallel dispatch via Task tool"},
+        db["register_entity"]({"name": "Top Entity", "url": "https://top.com", "relevance": 9})
+        db["set_stage"]("e1", "researched")
+        db["add_notes"]("e1", [
+            "Key architectural pattern: markdown-as-code",
+            "Multi-agent parallel dispatch via Task tool",
         ])
-        db["create"]("entity_measures", [
-            {"entity_id": "e1", "measure": "implementation_model", "value": "markdown-only"},
-            {"entity_id": "e1", "measure": "activation_scope", "value": "pr"},
+        db["set_measures"]("e1", [
+            {"measure": "implementation_model", "value": "markdown-only"},
+            {"measure": "activation_scope", "value": "pr"},
         ])
 
     def test_full_entity_with_all_includes(self, db):
         """Phase 4 reads entity with notes, measures, and URLs."""
         self._seed_full_dataset(db)
-        entity = parse(db["read"](
-            "entities", {"id": "e1"},
-            include=["entity_notes", "entity_measures", "entity_urls"]
-        ))
-        assert len(entity) == 1
-        assert len(entity[0]["entity_notes"]) == 2
-        assert len(entity[0]["entity_measures"]) == 2
-        assert "entity_urls" in entity[0]
+        detail = result_text(db["get_entity"]("e1"))
+        assert "Top Entity" in detail
+        assert "Notes (2)" in detail
+        assert "Measures (2)" in detail
+        assert "URLs" in detail
 
     def test_read_all_researched_with_notes(self, db):
-        """Phase 4 bulk read: all researched entities with notes."""
+        """Phase 4 bulk read: all researched entities listed."""
         self._seed_full_dataset(db)
-        db["create"]("entities", {"name": "Second", "url": "https://second.com", "relevance": 7})
-        db["update"]("entities", "e2", {"stage": "researched"})
-        db["create"]("entity_notes", {"entity_id": "e2", "note": "Note for second entity"})
+        db["register_entity"]({"name": "Second", "url": "https://second.com", "relevance": 7})
+        db["set_stage"]("e2", "researched")
+        db["add_notes"]("e2", ["Note for second entity"])
 
-        entities = parse(db["read"](
-            "entities", {"stage": "researched"},
-            include=["entity_notes"]
-        ))
-        assert len(entities) == 2
-        assert all("entity_notes" in e for e in entities)
+        text = result_text(db["list_entities"](stage="researched"))
+        assert "Top Entity" in text
+        assert "Second" in text

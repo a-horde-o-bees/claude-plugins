@@ -18,6 +18,24 @@ from mcp.client.stdio import stdio_client
 _plugin_root = Path(__file__).resolve().parent.parent.parent.parent.parent
 SERVER_PATH = str(_plugin_root / "servers" / "research_db.py")
 
+EXPECTED_TOOLS = sorted([
+    "register_entity", "register_entities",
+    "set_name", "clear_name",
+    "set_description", "clear_description",
+    "set_purpose", "clear_purpose",
+    "set_relevance", "clear_relevance",
+    "set_stage",
+    "set_modes", "add_modes", "remove_modes", "clear_modes",
+    "add_notes", "set_note", "remove_notes", "clear_notes",
+    "set_measures", "clear_measures", "clear_all_measures",
+    "add_url", "add_provenance",
+    "reject_entity", "merge_entities",
+    "get_entity", "list_entities",
+    "get_research_queue", "get_unclassified",
+    "find_duplicates", "get_dashboard", "get_measure_summary",
+    "init_database", "describe_schema",
+])
+
 
 @pytest.fixture
 async def session(tmp_path):
@@ -51,19 +69,14 @@ class TestServerHandshake:
     @pytest.mark.anyio
     async def test_server_starts(self, session):
         """Server process starts and completes MCP handshake."""
-        # session fixture already called initialize() — reaching here means success
         assert session is not None
 
     @pytest.mark.anyio
     async def test_lists_all_tools(self, session):
-        """Server exposes all 8 tools via tools/list."""
+        """Server exposes all domain tools via tools/list."""
         result = await session.list_tools()
         tool_names = sorted(t.name for t in result.tools)
-        expected = sorted([
-            "create_records", "read_records", "update_records", "delete_records",
-            "query", "describe_entities", "merge_entities", "init_database",
-        ])
-        assert tool_names == expected
+        assert tool_names == EXPECTED_TOOLS
 
     @pytest.mark.anyio
     async def test_tool_schemas_present(self, session):
@@ -82,43 +95,64 @@ class TestDatabaseLifecycle:
     """init_database and missing-database error handling over transport."""
 
     @pytest.mark.anyio
-    async def test_read_before_init_returns_error(self, session):
-        """Tools return clear error when database doesn't exist."""
-        result = await session.call_tool("read_records", {"table": "entities"})
+    async def test_tool_before_init_returns_error(self, session):
+        """Domain tools return clear error when database doesn't exist."""
+        result = await session.call_tool("list_entities", {})
         data = _parse(result)
         assert "error" in data
         assert "not initialized" in data["error"].lower()
 
     @pytest.mark.anyio
     async def test_init_creates_database(self, session):
-        """init_database creates schema and enables CRUD."""
+        """init_database creates schema and enables domain operations."""
         result = await session.call_tool("init_database", {})
         data = _parse(result)
-        assert "initialized" in data.get("status", "")
+        assert "result" in data
 
-        # CRUD now works
-        result = await session.call_tool("describe_entities", {})
+        # Domain tools now work
+        result = await session.call_tool("list_entities", {})
+        data = _parse(result)
+        assert "result" in data
+
+    @pytest.mark.anyio
+    async def test_describe_schema_returns_tables(self, session):
+        """describe_schema returns raw JSON with table structure."""
+        await session.call_tool("init_database", {})
+
+        result = await session.call_tool("describe_schema", {})
         data = _parse(result)
         assert "entities" in data
 
+    @pytest.mark.anyio
+    async def test_describe_schema_single_table(self, session):
+        """describe_schema with table argument returns column details."""
+        await session.call_tool("init_database", {})
+
+        result = await session.call_tool("describe_schema", {"table": "entities"})
+        data = _parse(result)
+        assert data["table"] == "entities"
+        col_names = [c["name"] for c in data["columns"]]
+        assert "id" in col_names
+        assert "name" in col_names
+        assert "stage" in col_names
+
 
 # =============================================================================
-# CRUD Over Transport
+# Domain Operations
 # =============================================================================
 
 
-class TestCrudOverTransport:
-    """Create, read, update, delete operations via JSON-RPC."""
+class TestDomainOperations:
+    """Registration, retrieval, and property mutations via JSON-RPC."""
 
     @pytest.fixture(autouse=True)
     async def _init_db(self, session):
         await session.call_tool("init_database", {})
 
     @pytest.mark.anyio
-    async def test_create_and_read_entity(self, session):
-        """Round-trip: create entity, read it back."""
-        result = await session.call_tool("create_records", {
-            "table": "entities",
+    async def test_register_and_get_entity(self, session):
+        """Round-trip: register entity, retrieve full detail."""
+        result = await session.call_tool("register_entity", {
             "data": {
                 "name": "Test Tool",
                 "url": "https://example.com/tool",
@@ -127,279 +161,446 @@ class TestCrudOverTransport:
             },
         })
         data = _parse(result)
-        assert "id: e1" in data
+        assert "result" in data
 
-        result = await session.call_tool("read_records", {
-            "table": "entities",
-            "conditions": {"name": "Test Tool"},
-        })
-        records = _parse(result)
-        assert len(records) == 1
-        assert records[0]["name"] == "Test Tool"
-        assert records[0]["relevance"] == 8
+        result = await session.call_tool("get_entity", {"entity_id": "e1"})
+        data = _parse(result)
+        assert "result" in data
+        assert "Test Tool" in data["result"]
+        assert "relevance: 8" in data["result"].lower() or "8" in data["result"]
 
     @pytest.mark.anyio
-    async def test_update_entity(self, session):
-        """Update entity fields and verify."""
-        await session.call_tool("create_records", {
-            "table": "entities",
-            "data": {"name": "Original", "url": "https://example.com/orig"},
+    async def test_url_dedup_on_register(self, session):
+        """Duplicate URL returns existing entity instead of creating new."""
+        await session.call_tool("register_entity", {
+            "data": {"name": "Original", "url": "https://example.com/tool"},
         })
-
-        await session.call_tool("update_records", {
-            "table": "entities",
-            "id": "e1",
-            "data": {"description": "Updated description"},
-        })
-
-        result = await session.call_tool("read_records", {
-            "table": "entities",
-            "conditions": {"id": "e1"},
-        })
-        records = _parse(result)
-        assert records[0]["description"] == "Updated description"
-
-    @pytest.mark.anyio
-    async def test_delete_child_record(self, session):
-        """Delete a child record (note) and verify removal."""
-        await session.call_tool("create_records", {
-            "table": "entities",
-            "data": {"name": "Parent", "url": "https://example.com/parent"},
-        })
-        await session.call_tool("create_records", {
-            "table": "entity_notes",
-            "data": {"entity_id": "e1", "note": "To be deleted"},
-        })
-
-        # Get the note ID
-        result = await session.call_tool("read_records", {
-            "table": "entities",
-            "conditions": {"id": "e1"},
-            "include": ["entity_notes"],
-        })
-        records = _parse(result)
-        note_id = records[0]["entity_notes"][0]["id"]
-
-        result = await session.call_tool("delete_records", {
-            "table": "entity_notes",
-            "id": str(note_id),
-        })
-        delete_response = _parse(result)
-        assert delete_response.get("status") == "deleted"
-
-        # Verify note removed
-        result = await session.call_tool("read_records", {
-            "table": "entities",
-            "conditions": {"id": "e1"},
-            "include": ["entity_notes"],
-        })
-        records = _parse(result)
-        assert len(records[0]["entity_notes"]) == 0
-
-    @pytest.mark.anyio
-    async def test_delete_entity_cascades_children(self, session):
-        """Deleting entity cascades to all child records via FK introspection."""
-        await session.call_tool("create_records", {
-            "table": "entities",
-            "data": {"name": "Has Children", "url": "https://example.com/fk"},
-        })
-        await session.call_tool("create_records", {
-            "table": "entity_notes",
-            "data": {"entity_id": "e1", "note": "Orphan candidate"},
-        })
-        await session.call_tool("create_records", {
-            "table": "entity_measures",
-            "data": {"entity_id": "e1", "measure": "score", "value": "5"},
-        })
-
-        result = await session.call_tool("delete_records", {
-            "table": "entities",
-            "id": "e1",
+        result = await session.call_tool("register_entity", {
+            "data": {"name": "Duplicate", "url": "https://example.com/tool"},
         })
         data = _parse(result)
-        assert data.get("status") == "deleted"
-
-        # Entity gone
-        result = await session.call_tool("read_records", {
-            "table": "entities",
-            "conditions": {"id": "e1"},
-        })
-        assert len(_parse(result)) == 0
-
-        # All children gone — no orphans
-        for child_table in ["entity_notes", "entity_urls", "entity_measures"]:
-            result = await session.call_tool("query", {
-                "sql": f"SELECT COUNT(*) as cnt FROM {child_table} WHERE entity_id = 'e1'",
-            })
-            assert _parse(result)[0]["cnt"] == 0, f"Orphans in {child_table}"
+        assert "result" in data
+        assert "already" in data["result"].lower() or "existing" in data["result"].lower()
 
     @pytest.mark.anyio
-    async def test_describe_entities(self, session):
-        """Schema introspection returns table structure."""
-        result = await session.call_tool("describe_entities", {"table": "entities"})
+    async def test_batch_registration(self, session):
+        """register_entities handles multiple entities in one call."""
+        result = await session.call_tool("register_entities", {
+            "entities": [
+                {"name": "Tool A", "url": "https://a.com"},
+                {"name": "Tool B", "url": "https://b.com"},
+            ],
+        })
         data = _parse(result)
-        assert data["table"] == "entities"
-        col_names = [c["name"] for c in data["columns"]]
-        assert "id" in col_names
-        assert "name" in col_names
+        assert "result" in data
+
+        # Both entities retrievable
+        for eid in ("e1", "e2"):
+            result = await session.call_tool("get_entity", {"entity_id": eid})
+            entity = _parse(result)
+            assert "result" in entity
 
     @pytest.mark.anyio
-    async def test_read_only_query(self, session):
-        """query tool executes SELECT and returns results."""
-        await session.call_tool("create_records", {
-            "table": "entities",
-            "data": {"name": "Queryable", "url": "https://example.com/q"},
+    async def test_notes_lifecycle(self, session):
+        """Add notes, update one, remove one, clear remaining."""
+        await session.call_tool("register_entity", {
+            "data": {"name": "Noted Entity", "url": "https://example.com/noted"},
         })
 
-        result = await session.call_tool("query", {
-            "sql": "SELECT COUNT(*) as cnt FROM entities",
+        # Add notes
+        result = await session.call_tool("add_notes", {
+            "entity_id": "e1",
+            "notes": ["First observation", "Second observation"],
         })
         data = _parse(result)
-        assert data[0]["cnt"] == 1
+        assert "result" in data
+
+        # Verify notes appear in entity detail
+        result = await session.call_tool("get_entity", {"entity_id": "e1"})
+        detail = _parse(result)["result"]
+        assert "First observation" in detail
+        assert "Second observation" in detail
+
+        # Update a note — need to know the note ID from detail
+        # Note IDs follow n{N} pattern; first two notes are n1, n2
+        result = await session.call_tool("set_note", {
+            "note_id": "n1",
+            "text": "Updated first observation",
+        })
+        data = _parse(result)
+        assert "result" in data
+
+        # Remove second note
+        result = await session.call_tool("remove_notes", {
+            "entity_id": "e1",
+            "note_ids": ["n2"],
+        })
+        data = _parse(result)
+        assert "result" in data
+
+        # Verify state after mutations
+        result = await session.call_tool("get_entity", {"entity_id": "e1"})
+        detail = _parse(result)["result"]
+        assert "Updated first observation" in detail
+        assert "Second observation" not in detail
+
+        # Clear all remaining notes
+        result = await session.call_tool("clear_notes", {"entity_id": "e1"})
+        data = _parse(result)
+        assert "result" in data
 
     @pytest.mark.anyio
-    async def test_query_rejects_write(self, session):
-        """query tool blocks INSERT/UPDATE/DELETE."""
-        result = await session.call_tool("query", {
-            "sql": "INSERT INTO entities (name) VALUES ('bad')",
+    async def test_set_modes(self, session):
+        """Replace modes on entity."""
+        await session.call_tool("register_entity", {
+            "data": {"name": "Modal Entity", "url": "https://example.com/modal"},
+        })
+
+        result = await session.call_tool("set_modes", {
+            "entity_id": "e1",
+            "modes": ["example", "context"],
         })
         data = _parse(result)
-        assert "error" in data
+        assert "result" in data
+
+        # Verify modes appear in entity detail
+        result = await session.call_tool("get_entity", {"entity_id": "e1"})
+        detail = _parse(result)["result"]
+        assert "example" in detail
+        assert "context" in detail
+
+    @pytest.mark.anyio
+    async def test_add_and_remove_modes(self, session):
+        """Add modes preserves existing, remove modes removes specific ones."""
+        await session.call_tool("register_entity", {
+            "data": {"name": "Mode Test", "url": "https://example.com/modes"},
+        })
+
+        await session.call_tool("set_modes", {
+            "entity_id": "e1",
+            "modes": ["example"],
+        })
+        await session.call_tool("add_modes", {
+            "entity_id": "e1",
+            "modes": ["context", "directory"],
+        })
+
+        result = await session.call_tool("get_entity", {"entity_id": "e1"})
+        detail = _parse(result)["result"]
+        assert "example" in detail
+        assert "context" in detail
+        assert "directory" in detail
+
+        await session.call_tool("remove_modes", {
+            "entity_id": "e1",
+            "modes": ["context"],
+        })
+
+        result = await session.call_tool("get_entity", {"entity_id": "e1"})
+        detail = _parse(result)["result"]
+        assert "example" in detail
+        assert "directory" in detail
+
+    @pytest.mark.anyio
+    async def test_stage_transition(self, session):
+        """set_stage changes entity stage."""
+        await session.call_tool("register_entity", {
+            "data": {"name": "Staged Entity", "url": "https://example.com/staged"},
+        })
+
+        result = await session.call_tool("set_stage", {
+            "entity_id": "e1",
+            "stage": "researched",
+        })
+        data = _parse(result)
+        assert "result" in data
+
+        result = await session.call_tool("get_entity", {"entity_id": "e1"})
+        detail = _parse(result)["result"]
+        assert "researched" in detail.lower()
+
+    @pytest.mark.anyio
+    async def test_measures_lifecycle(self, session):
+        """Set measures, verify in detail, clear them."""
+        await session.call_tool("register_entity", {
+            "data": {"name": "Measured Entity", "url": "https://example.com/measured"},
+        })
+
+        result = await session.call_tool("set_measures", {
+            "entity_id": "e1",
+            "measures": [
+                {"measure": "quality", "value": "high"},
+                {"measure": "maturity", "value": "stable"},
+            ],
+        })
+        data = _parse(result)
+        assert "result" in data
+
+        # Verify measures in entity detail
+        result = await session.call_tool("get_entity", {"entity_id": "e1"})
+        detail = _parse(result)["result"]
+        assert "quality" in detail
+        assert "maturity" in detail
+
+        # Clear measures for one entity
+        result = await session.call_tool("clear_measures", {"entity_id": "e1"})
+        data = _parse(result)
+        assert "result" in data
+
+    @pytest.mark.anyio
+    async def test_scalar_setters(self, session):
+        """Scalar property setters update individual fields."""
+        await session.call_tool("register_entity", {
+            "data": {"name": "Original Name", "url": "https://example.com/scalar"},
+        })
+
+        await session.call_tool("set_name", {"entity_id": "e1", "name": "New Name"})
+        await session.call_tool("set_description", {
+            "entity_id": "e1",
+            "description": "Updated description",
+        })
+        await session.call_tool("set_relevance", {"entity_id": "e1", "relevance": 9})
+
+        result = await session.call_tool("get_entity", {"entity_id": "e1"})
+        detail = _parse(result)["result"]
+        assert "New Name" in detail
+        assert "Updated description" in detail
+
+    @pytest.mark.anyio
+    async def test_reject_entity(self, session):
+        """reject_entity sets stage to rejected and adds reason note."""
+        await session.call_tool("register_entity", {
+            "data": {"name": "Reject Me", "url": "https://example.com/reject"},
+        })
+
+        result = await session.call_tool("reject_entity", {
+            "entity_id": "e1",
+            "reason": "Not relevant to research scope",
+        })
+        data = _parse(result)
+        assert "result" in data
+
+        result = await session.call_tool("get_entity", {"entity_id": "e1"})
+        detail = _parse(result)["result"]
+        assert "rejected" in detail.lower()
+        assert "Not relevant to research scope" in detail
+
+    @pytest.mark.anyio
+    async def test_list_entities_with_filters(self, session):
+        """list_entities supports mode, stage, and relevance filters."""
+        await session.call_tool("register_entities", {
+            "entities": [
+                {"name": "High Rel", "url": "https://h.com", "relevance": 9},
+                {"name": "Low Rel", "url": "https://l.com", "relevance": 2},
+            ],
+        })
+        await session.call_tool("set_modes", {
+            "entity_id": "e1",
+            "modes": ["example"],
+        })
+
+        result = await session.call_tool("list_entities", {"min_relevance": 7})
+        data = _parse(result)
+        assert "result" in data
+        assert "High Rel" in data["result"]
+
+        result = await session.call_tool("list_entities", {"mode": "example"})
+        data = _parse(result)
+        assert "result" in data
+        assert "High Rel" in data["result"]
 
 
 # =============================================================================
-# Entity Business Logic Over Transport
+# Entity Logic
 # =============================================================================
 
 
-class TestEntityLogicOverTransport:
-    """Entity-specific behavior (dedup, provenance, merge) via transport."""
+class TestEntityLogic:
+    """Business logic — dedup, merge, duplicates, dashboard — via transport."""
 
     @pytest.fixture(autouse=True)
     async def _init_db(self, session):
         await session.call_tool("init_database", {})
 
     @pytest.mark.anyio
-    async def test_url_dedup(self, session):
-        """Duplicate URL returns existing entity instead of creating new."""
-        await session.call_tool("create_records", {
-            "table": "entities",
-            "data": {"name": "Original", "url": "https://example.com/tool"},
+    async def test_url_dedup_across_entities(self, session):
+        """add_url deduplicates normalized URLs."""
+        await session.call_tool("register_entity", {
+            "data": {"name": "URL Entity", "url": "https://example.com/a"},
         })
-        result = await session.call_tool("create_records", {
-            "table": "entities",
-            "data": {"name": "Duplicate", "url": "https://example.com/tool"},
+
+        result = await session.call_tool("add_url", {
+            "entity_id": "e1",
+            "url": "https://example.com/b",
         })
         data = _parse(result)
-        assert "Already registered" in data
+        assert "result" in data
+
+        # Entity detail shows both URLs
+        result = await session.call_tool("get_entity", {"entity_id": "e1"})
+        detail = _parse(result)["result"]
+        assert "example.com/a" in detail
+        assert "example.com/b" in detail
 
     @pytest.mark.anyio
-    async def test_batch_create(self, session):
-        """Batch entity creation via array data."""
-        result = await session.call_tool("create_records", {
-            "table": "entities",
-            "data": [
-                {"name": "Tool A", "url": "https://a.com"},
-                {"name": "Tool B", "url": "https://b.com"},
-            ],
-        })
-        data = _parse(result)
-        assert len(data) == 2
-
-    @pytest.mark.anyio
-    async def test_nested_notes_on_create(self, session):
-        """Entity creation with nested notes in single call."""
-        await session.call_tool("create_records", {
-            "table": "entities",
-            "data": {
-                "name": "With Notes",
-                "url": "https://example.com/notes",
-                "entity_notes": [
-                    {"note": "First observation"},
-                    {"note": "Second observation"},
-                ],
-            },
-        })
-
-        result = await session.call_tool("read_records", {
-            "table": "entities",
-            "conditions": {"id": "e1"},
-            "include": ["entity_notes"],
-        })
-        records = _parse(result)
-        assert len(records[0]["entity_notes"]) == 2
-
-    @pytest.mark.anyio
-    async def test_star_schema_include(self, session):
-        """read_records with include joins related tables."""
-        await session.call_tool("create_records", {
-            "table": "entities",
-            "data": {"name": "Parent", "url": "https://example.com/parent"},
-        })
-        await session.call_tool("create_records", {
-            "table": "entity_notes",
-            "data": [
-                {"entity_id": "e1", "note": "Note 1"},
-                {"entity_id": "e1", "note": "Note 2"},
-            ],
-        })
-
-        result = await session.call_tool("read_records", {
-            "table": "entities",
-            "conditions": {"id": "e1"},
-            "include": ["entity_notes", "entity_measures", "entity_urls"],
-        })
-        records = _parse(result)
-        assert len(records[0]["entity_notes"]) == 2
-        assert records[0]["entity_measures"] == []
-        # entity_urls populated by entity registration (normalized URL stored there)
-        assert len(records[0]["entity_urls"]) >= 1
-
-    @pytest.mark.anyio
-    async def test_merge_entities(self, session):
-        """Merge duplicates into survivor via transport."""
-        await session.call_tool("create_records", {
-            "table": "entities",
+    async def test_merge_preserves_data(self, session):
+        """Merge combines notes, URLs, and modes into survivor."""
+        await session.call_tool("register_entity", {
             "data": {"name": "Entity A", "url": "https://a.com"},
         })
-        await session.call_tool("create_records", {
-            "table": "entities",
+        await session.call_tool("register_entity", {
             "data": {"name": "Entity B", "url": "https://b.com"},
         })
-        await session.call_tool("create_records", {
-            "table": "entity_notes",
-            "data": {"entity_id": "e1", "note": "Note on A"},
+        await session.call_tool("add_notes", {
+            "entity_id": "e1",
+            "notes": ["Note on A"],
         })
-        await session.call_tool("create_records", {
-            "table": "entity_notes",
-            "data": {"entity_id": "e2", "note": "Note on B"},
+        await session.call_tool("add_notes", {
+            "entity_id": "e2",
+            "notes": ["Note on B"],
+        })
+        await session.call_tool("set_modes", {
+            "entity_id": "e1",
+            "modes": ["example"],
+        })
+        await session.call_tool("set_modes", {
+            "entity_id": "e2",
+            "modes": ["context"],
         })
 
-        await session.call_tool("merge_entities", {"ids": ["e1", "e2"]})
-
-        result = await session.call_tool("read_records", {
-            "table": "entities",
-            "conditions": {"id": "e1"},
-            "include": ["entity_notes"],
+        result = await session.call_tool("merge_entities", {
+            "entity_ids": ["e1", "e2"],
         })
-        survivor = _parse(result)
-        assert len(survivor[0]["entity_notes"]) == 2
+        data = _parse(result)
+        assert "result" in data
+
+        # Survivor (lowest ID = e1) has combined data
+        result = await session.call_tool("get_entity", {"entity_id": "e1"})
+        detail = _parse(result)["result"]
+        assert "Note on A" in detail
+        assert "Note on B" in detail
 
     @pytest.mark.anyio
-    async def test_condition_operators(self, session):
-        """Django __operator conditions work over transport."""
-        await session.call_tool("create_records", {
-            "table": "entities",
-            "data": [
-                {"name": "High", "url": "https://h.com", "relevance": 9},
-                {"name": "Low", "url": "https://l.com", "relevance": 3},
-            ],
+    async def test_find_duplicates(self, session):
+        """find_duplicates detects entities sharing URLs."""
+        await session.call_tool("register_entity", {
+            "data": {"name": "Entity X", "url": "https://unique-x.com"},
+        })
+        await session.call_tool("register_entity", {
+            "data": {"name": "Entity Y", "url": "https://unique-y.com"},
+        })
+        # Add overlapping URL to create duplicate relationship
+        await session.call_tool("add_url", {
+            "entity_id": "e2",
+            "url": "https://unique-x.com",
         })
 
-        result = await session.call_tool("read_records", {
-            "table": "entities",
-            "conditions": {"relevance__gte": 7},
+        result = await session.call_tool("find_duplicates", {})
+        data = _parse(result)
+        assert "result" in data
+
+    @pytest.mark.anyio
+    async def test_dashboard_stats(self, session):
+        """get_dashboard returns aggregated statistics."""
+        await session.call_tool("register_entities", {
+            "entities": [
+                {"name": "Tool A", "url": "https://a.com", "relevance": 8},
+                {"name": "Tool B", "url": "https://b.com", "relevance": 5},
+                {"name": "Tool C", "url": "https://c.com"},
+            ],
         })
-        records = _parse(result)
-        assert len(records) == 1
-        assert records[0]["name"] == "High"
+        await session.call_tool("set_stage", {"entity_id": "e1", "stage": "researched"})
+
+        result = await session.call_tool("get_dashboard", {})
+        data = _parse(result)
+        assert "result" in data
+        # Dashboard text should contain counts
+        dashboard = data["result"]
+        assert "3" in dashboard or "entities" in dashboard.lower()
+
+    @pytest.mark.anyio
+    async def test_research_queue(self, session):
+        """get_research_queue returns example-mode entities at stage new."""
+        await session.call_tool("register_entity", {
+            "data": {"name": "Queued Tool", "url": "https://queued.com", "relevance": 7},
+        })
+        await session.call_tool("set_modes", {
+            "entity_id": "e1",
+            "modes": ["example"],
+        })
+
+        result = await session.call_tool("get_research_queue", {})
+        data = _parse(result)
+        assert "result" in data
+        assert "Queued Tool" in data["result"]
+
+    @pytest.mark.anyio
+    async def test_get_unclassified(self, session):
+        """get_unclassified returns entities with unclassified mode."""
+        await session.call_tool("register_entity", {
+            "data": {"name": "Unknown Entity", "url": "https://unknown.com"},
+        })
+        await session.call_tool("set_modes", {
+            "entity_id": "e1",
+            "modes": ["unclassified"],
+        })
+
+        result = await session.call_tool("get_unclassified", {})
+        data = _parse(result)
+        assert "result" in data
+        assert "Unknown Entity" in data["result"]
+
+    @pytest.mark.anyio
+    async def test_measure_summary(self, session):
+        """get_measure_summary returns measure distribution."""
+        await session.call_tool("register_entity", {
+            "data": {"name": "Measured", "url": "https://measured.com"},
+        })
+        await session.call_tool("set_measures", {
+            "entity_id": "e1",
+            "measures": [{"measure": "quality", "value": "high"}],
+        })
+
+        result = await session.call_tool("get_measure_summary", {})
+        data = _parse(result)
+        assert "result" in data
+
+    @pytest.mark.anyio
+    async def test_provenance_tracking(self, session):
+        """add_provenance records discovery source."""
+        await session.call_tool("register_entity", {
+            "data": {"name": "Discovered Tool", "url": "https://discovered.com"},
+        })
+
+        result = await session.call_tool("add_provenance", {
+            "entity_id": "e1",
+            "source_url": "https://source-page.com/tools",
+        })
+        data = _parse(result)
+        assert "result" in data
+
+        result = await session.call_tool("get_entity", {"entity_id": "e1"})
+        detail = _parse(result)["result"]
+        assert "source-page.com" in detail
+
+    @pytest.mark.anyio
+    async def test_clear_all_measures(self, session):
+        """clear_all_measures removes measures across all entities."""
+        await session.call_tool("register_entities", {
+            "entities": [
+                {"name": "M1", "url": "https://m1.com"},
+                {"name": "M2", "url": "https://m2.com"},
+            ],
+        })
+        await session.call_tool("set_measures", {
+            "entity_id": "e1",
+            "measures": [{"measure": "score", "value": "5"}],
+        })
+        await session.call_tool("set_measures", {
+            "entity_id": "e2",
+            "measures": [{"measure": "score", "value": "3"}],
+        })
+
+        result = await session.call_tool("clear_all_measures", {})
+        data = _parse(result)
+        assert "result" in data

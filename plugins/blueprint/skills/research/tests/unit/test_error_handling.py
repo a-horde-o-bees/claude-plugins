@@ -3,9 +3,16 @@
 import importlib
 import json
 import os
+import sqlite3
+
 
 def parse(result: str):
     return json.loads(result)
+
+
+def result_text(result: str) -> str:
+    """Extract result string from _ok() wrapper."""
+    return json.loads(result)["result"]
 
 
 # =============================================================================
@@ -23,17 +30,17 @@ class TestMissingDatabase:
         importlib.reload(srv)
         srv.DB_PATH = str(tmp_path / "nonexistent.db")
 
-        result = json.loads(srv.read_records("entities"))
+        result = json.loads(srv.list_entities())
         assert "error" in result
         assert "not initialized" in result["error"].lower()
 
-        result = json.loads(srv.create_records("entities", {"name": "Test"}))
+        result = json.loads(srv.register_entity({"name": "Test"}))
         assert "error" in result
 
-        result = json.loads(srv.query("SELECT 1"))
+        result = json.loads(srv.get_dashboard())
         assert "error" in result
 
-        result = json.loads(srv.describe_entities())
+        result = json.loads(srv.describe_schema())
         assert "error" in result
 
     def test_init_database_creates_schema(self, tmp_path):
@@ -45,9 +52,9 @@ class TestMissingDatabase:
         srv.DB_PATH = db_path
 
         result = json.loads(srv.init_database())
-        assert "initialized" in result["status"]
+        assert "initialized" in result["result"].lower()
 
-        result = json.loads(srv.describe_entities())
+        result = json.loads(srv.describe_schema())
         assert "entities" in result
 
 
@@ -59,33 +66,16 @@ class TestMissingDatabase:
 class TestErrorHandling:
     """Error cases that agents might encounter."""
 
-    def test_invalid_table(self, db):
-        result = parse(db["read"]("nonexistent_table"))
-        assert "error" in str(result).lower() or isinstance(result, list)
-
-    def test_query_rejects_insert(self, db):
-        result = parse(db["query"]("INSERT INTO entities (id, name) VALUES ('e999', 'bad')"))
+    def test_get_nonexistent_entity(self, db):
+        result = parse(db["get_entity"]("e999"))
         assert "error" in result
 
-    def test_query_rejects_delete(self, db):
-        result = parse(db["query"]("DELETE FROM entities"))
-        assert "error" in result
-
-    def test_query_rejects_update(self, db):
-        result = parse(db["query"]("UPDATE entities SET name = 'bad' WHERE id = 'e1'"))
-        assert "error" in result
-
-    def test_invalid_include_table(self, db):
-        """Include with non-FK table raises error."""
-        db["create"]("entities", {"name": "Test", "url": "https://test.com"})
-        try:
-            result = parse(db["read"]("entities", include=["nonexistent"]))
-            assert "error" in str(result).lower()
-        except ValueError:
-            pass  # also acceptable
+    def test_set_stage_nonexistent_entity(self, db):
+        result = parse(db["set_stage"]("e999", "researched"))
+        assert "Updated 0" in result.get("result", "")
 
     def test_describe_invalid_table(self, db):
-        result = parse(db["describe"]("nonexistent"))
+        result = parse(db["describe_schema"](table="nonexistent"))
         assert "error" in str(result).lower()
 
 
@@ -98,16 +88,24 @@ class TestSourceData:
     """Entity source data — structured key-value per source type."""
 
     def test_create_and_read_source_data(self, db):
-        db["create"]("entities", {"name": "Test", "url": "https://test.com"})
-        db["create"]("entity_source_data", [
-            {"entity_id": "e1", "source_type": "github", "key": "stars", "value": "14600"},
-            {"entity_id": "e1", "source_type": "github", "key": "forks", "value": "1200"},
-        ])
+        db["register_entity"]({"name": "Test", "url": "https://test.com"})
 
-        data = parse(db["query"](
-            "SELECT key, value FROM entity_source_data WHERE entity_id = 'e1' AND source_type = 'github'"
-        ))
-        assert len(data) == 2
-        keys = {d["key"] for d in data}
-        assert "stars" in keys
-        assert "forks" in keys
+        # Source data has no domain tool — insert directly via SQLite
+        conn = sqlite3.connect(db["path"])
+        conn.execute(
+            "INSERT INTO entity_source_data (entity_id, source_type, key, value) VALUES (?, ?, ?, ?)",
+            ("e1", "github", "stars", "14600"),
+        )
+        conn.execute(
+            "INSERT INTO entity_source_data (entity_id, source_type, key, value) VALUES (?, ?, ?, ?)",
+            ("e1", "github", "forks", "1200"),
+        )
+        conn.commit()
+        conn.close()
+
+        # Verify source data appears in entity detail
+        detail = result_text(db["get_entity"]("e1"))
+        assert "stars" in detail
+        assert "14600" in detail
+        assert "forks" in detail
+        assert "1200" in detail

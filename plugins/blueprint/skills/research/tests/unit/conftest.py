@@ -15,7 +15,7 @@ from skills.research._db import init_db
 
 @pytest.fixture
 def db(tmp_path):
-    """Create fresh database and configure server to use it."""
+    """Create fresh database and expose domain tools by their actual names."""
     db_path = str(tmp_path / "test.db")
     init_db(db_path)
     os.environ["DB_PATH"] = db_path
@@ -24,13 +24,22 @@ def db(tmp_path):
     importlib.reload(srv)
     srv.DB_PATH = db_path
 
-    yield {
-        "path": db_path,
-        "create": srv.create_records,
-        "read": srv.read_records,
-        "update": srv.update_records,
-        "delete": srv.delete_records,
-        "query": srv.query,
-        "describe": srv.describe_entities,
-        "merge": srv.merge_entities,
-    }
+    tools = {"path": db_path}
+    for name in [
+        "register_entity", "register_entities",
+        "set_name", "clear_name", "set_description", "clear_description",
+        "set_purpose", "clear_purpose", "set_relevance", "clear_relevance",
+        "set_stage",
+        "set_modes", "add_modes", "remove_modes", "clear_modes",
+        "add_notes", "set_note", "remove_notes", "clear_notes",
+        "set_measures", "clear_measures", "clear_all_measures",
+        "add_url", "add_provenance",
+        "reject_entity", "merge_entities",
+        "get_entity", "list_entities", "get_research_queue",
+        "get_unclassified", "find_duplicates", "get_dashboard",
+        "get_measure_summary",
+        "init_database", "describe_schema",
+    ]:
+        tools[name] = getattr(srv, name)
+
+    yield tools
