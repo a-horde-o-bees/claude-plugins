@@ -13,6 +13,7 @@ __all__ = [
     "upsert_notes",
     "update_note",
     "remove_notes",
+    "clear_notes",
 ]
 
 
@@ -86,5 +87,23 @@ def remove_notes(db_path: str, entity_id: str, note_ids: list[str]) -> str:
                     [entity_id] + list(existing_ids),
                 )
         return f"Removed {len(existing_ids)} notes from {row['name']} (id: {entity_id})"
+    finally:
+        conn.close()
+
+
+@_core.retry_write
+def clear_notes(db_path: str, entity_id: str) -> str:
+    """Remove all notes from entity."""
+    conn = _core.get_connection(db_path)
+    try:
+        row = conn.execute("SELECT id, name FROM entities WHERE id = ?", (entity_id,)).fetchone()
+        if not row:
+            raise ValueError(f"Entity not found: {entity_id}")
+        with conn:
+            count = conn.execute(
+                "SELECT COUNT(*) FROM entity_notes WHERE entity_id = ?", (entity_id,),
+            ).fetchone()[0]
+            conn.execute("DELETE FROM entity_notes WHERE entity_id = ?", (entity_id,))
+        return f"Cleared {count} notes from {row['name']} (id: {entity_id})"
     finally:
         conn.close()

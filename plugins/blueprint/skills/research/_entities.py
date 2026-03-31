@@ -13,7 +13,7 @@ _FILTER_RE = re.compile(r"^(\w+)\s*(!=|>=|<=|=|>|<)\s*(.+)$")
 _SQL_OPS = {"=": "=", "!=": "!=", ">": ">", ">=": ">=", "<": "<", "<=": "<="}
 
 # Fields directly on entities table
-_DIRECT_FIELDS = {"name", "role", "stage", "relevance", "description", "last_modified"}
+_DIRECT_FIELDS = {"name", "stage", "relevance", "description", "purpose", "last_modified"}
 
 # Computed fields via subquery (counts from related tables)
 _COMPUTED_FIELDS = {
@@ -98,9 +98,10 @@ def register_entity(
     source_url: str | None = None,
     relevance: int | None = None,
     description: str | None = None,
-    role: str | None = None,
+    purpose: str | None = None,
+    modes: list[str] | None = None,
 ) -> str:
-    """Register entity with URL dedup and optional provenance."""
+    """Register entity with URL dedup, modes, and optional provenance."""
     conn = _core.get_connection(db_path)
     try:
         with conn:
@@ -113,9 +114,15 @@ def register_entity(
 
             entity_id = _core._next_id(conn, "entities", "e")
             conn.execute(
-                "INSERT INTO entities (id, name, role, relevance, description) VALUES (?, ?, ?, ?, ?)",
-                (entity_id, name, role or "example", relevance or 0, description or ""),
+                "INSERT INTO entities (id, name, relevance, description, purpose) VALUES (?, ?, ?, ?, ?)",
+                (entity_id, name, relevance or 0, description or "", purpose or ""),
             )
+
+            for mode in (modes or ["example"]):
+                conn.execute(
+                    "INSERT OR IGNORE INTO entity_modes (entity_id, mode) VALUES (?, ?)",
+                    (entity_id, mode),
+                )
 
             if url:
                 _core._add_entity_url(conn, entity_id, url)
@@ -142,12 +149,12 @@ def update_entity(
     stage: str | None = None,
     relevance: int | None = None,
     description: str | None = None,
+    purpose: str | None = None,
     name: str | None = None,
-    role: str | None = None,
 ) -> str:
-    """Update entity stage, relevance, description, name, and/or role."""
-    if not stage and relevance is None and description is None and name is None and role is None:
-        raise ValueError("At least one of stage, relevance, description, name, or role is required")
+    """Update entity stage, relevance, description, purpose, and/or name."""
+    if not stage and relevance is None and description is None and purpose is None and name is None:
+        raise ValueError("At least one of stage, relevance, description, purpose, or name is required")
 
     conn = _core.get_connection(db_path)
     try:
@@ -170,10 +177,10 @@ def update_entity(
                     conn.execute("UPDATE entities SET relevance = ? WHERE id = ?", (relevance, entity_id))
                 if description is not None:
                     conn.execute("UPDATE entities SET description = ? WHERE id = ?", (description, entity_id))
+                if purpose is not None:
+                    conn.execute("UPDATE entities SET purpose = ? WHERE id = ?", (purpose, entity_id))
                 if name is not None:
                     conn.execute("UPDATE entities SET name = ? WHERE id = ?", (name, entity_id))
-                if role is not None:
-                    conn.execute("UPDATE entities SET role = ? WHERE id = ?", (role, entity_id))
                 _core._touch(conn, "entities", entity_id)
                 updated += 1
 
@@ -184,10 +191,10 @@ def update_entity(
             parts.append(f"relevance: {relevance}")
         if description is not None:
             parts.append(f"description: {description}")
+        if purpose is not None:
+            parts.append(f"purpose: {purpose}")
         if name is not None:
             parts.append(f"name: {name}")
-        if role is not None:
-            parts.append(f"role: {role}")
         return f"Updated {updated} entities ({', '.join(parts)})"
     finally:
         conn.close()
@@ -201,9 +208,13 @@ def get_entity(db_path: str, entity_id: str) -> str:
         if not entity:
             raise ValueError(f"Entity not found: {entity_id}")
 
+        modes = [r["mode"] for r in conn.execute(
+            "SELECT mode FROM entity_modes WHERE entity_id = ? ORDER BY mode", (entity_id,),
+        ).fetchall()]
+
         lines = [
             f"# {entity['name']} (id: {entity['id']})",
-            f"Role: {entity['role']}",
+            f"Modes: {', '.join(modes) if modes else 'none'}",
             f"Stage: {entity['stage']}",
             f"Relevance: {entity['relevance'] if entity['relevance'] is not None else 'unset'}",
         ]
@@ -211,6 +222,8 @@ def get_entity(db_path: str, entity_id: str) -> str:
             lines.append(f"Last modified: {entity['last_modified']}")
         if entity["description"]:
             lines.append(f"Description: {entity['description']}")
+        if entity["purpose"]:
+            lines.append(f"Purpose: {entity['purpose']}")
 
         urls = conn.execute(
             "SELECT url FROM entity_urls WHERE entity_id = ? ORDER BY id", (entity_id,),
@@ -279,22 +292,28 @@ def list_entities(
     try:
         where = f" WHERE {' AND '.join(conditions)}" if conditions else ""
         entities = conn.execute(
-            f"SELECT e.id, e.name, e.role, e.stage, e.relevance, e.description FROM entities e{where} ORDER BY e.relevance DESC, e.name",
+            f"SELECT e.id, e.name, e.stage, e.relevance, e.description FROM entities e{where} ORDER BY e.relevance DESC, e.name",
             params,
         ).fetchall()
 
         if not entities:
             return "No entities found."
 
+        # Batch-fetch modes for all entities
+        all_modes = {}
+        for row in conn.execute("SELECT entity_id, mode FROM entity_modes").fetchall():
+            all_modes.setdefault(row["entity_id"], []).append(row["mode"])
+
         stage_icons = {"new": ".", "rejected": "x", "researched": "+", "merged": "~"}
         filter_label = f" ({', '.join(filters)})" if filters else ""
         lines = [f"Entities ({len(entities)}){filter_label}:"]
         for e in entities:
             icon = stage_icons.get(e["stage"], "?")
-            role_tag = f" [{e['role']}]"
+            modes = all_modes.get(e["id"], [])
+            mode_tag = f" [{', '.join(modes)}]" if modes else ""
             desc_part = f" -- {e['description']}" if e["description"] else ""
             rel_display = e["relevance"] if e["relevance"] is not None else "?"
-            lines.append(f"  [{icon}] {e['id']}. {e['name']} (relevance: {rel_display}){desc_part}{role_tag}")
+            lines.append(f"  [{icon}] {e['id']}. {e['name']} (relevance: {rel_display}){desc_part}{mode_tag}")
         return "\n".join(lines)
     finally:
         conn.close()
@@ -306,10 +325,10 @@ def get_stats(db_path: str) -> str:
     try:
         entity_total = conn.execute("SELECT COUNT(*) FROM entities").fetchone()[0]
 
-        role_counts = {}
-        for role_name in ("example", "directory", "context"):
-            role_counts[role_name] = conn.execute(
-                "SELECT COUNT(*) FROM entities WHERE role = ?", (role_name,),
+        mode_counts = {}
+        for mode_name in ("example", "directory", "context", "unclassified"):
+            mode_counts[mode_name] = conn.execute(
+                "SELECT COUNT(DISTINCT entity_id) FROM entity_modes WHERE mode = ?", (mode_name,),
             ).fetchone()[0]
 
         stage_counts = {}
@@ -325,12 +344,14 @@ def get_stats(db_path: str) -> str:
         source_data_count = conn.execute("SELECT COUNT(*) FROM entity_source_data").fetchone()[0]
 
         relevance_rows = conn.execute(
-            "SELECT relevance, COUNT(*) as cnt FROM entities WHERE role = 'example' GROUP BY relevance ORDER BY relevance DESC",
+            "SELECT relevance, COUNT(*) as cnt FROM entities e "
+            "JOIN entity_modes m ON m.entity_id = e.id WHERE m.mode = 'example' "
+            "GROUP BY relevance ORDER BY relevance DESC",
         ).fetchall()
 
         lines = ["Database Statistics:"]
-        role_parts = [f"{role_counts[r]} {r}" for r in ("example", "directory", "context") if role_counts[r] > 0]
-        lines.append(f"  Entities: {entity_total} ({', '.join(role_parts)})")
+        mode_parts = [f"{mode_counts[m]} {m}" for m in ("example", "directory", "context", "unclassified") if mode_counts[m] > 0]
+        lines.append(f"  Entities: {entity_total} (modes: {', '.join(mode_parts)})")
         stage_parts = [f"{stage_counts['new']} new", f"{stage_counts['rejected']} rejected", f"{stage_counts['researched']} researched"]
         if stage_counts["merged"] > 0:
             stage_parts.append(f"{stage_counts['merged']} merged")
@@ -356,7 +377,7 @@ def register_batch(db_path: str, entities: list[dict], source_url: str | None = 
     """Register multiple entities with URL dedup, optional notes for new entities.
 
     Each entity dict may contain: name, url, source_url, description, relevance,
-    role, notes. Notes only written for newly created entities.
+    modes, notes. Notes only written for newly created entities.
     """
     conn = _core.get_connection(db_path)
     try:
@@ -370,7 +391,9 @@ def register_batch(db_path: str, entities: list[dict], source_url: str | None = 
                 url = entry.get("url")
                 desc = entry.get("description", "")
                 rel = entry.get("relevance", 0)
-                role = entry.get("role", "example")
+                modes = entry.get("modes", ["example"])
+                if isinstance(modes, str):
+                    modes = [modes]
                 notes = entry.get("notes", [])
                 entry_source = entry.get("source_url")
                 effective_source = _core.normalize_url(entry_source) if entry_source else normalized_source
@@ -393,9 +416,14 @@ def register_batch(db_path: str, entities: list[dict], source_url: str | None = 
                 else:
                     entity_id = _core._next_id(conn, "entities", "e")
                     conn.execute(
-                        "INSERT INTO entities (id, name, role, relevance, description) VALUES (?, ?, ?, ?, ?)",
-                        (entity_id, name, role, rel, desc),
+                        "INSERT INTO entities (id, name, relevance, description) VALUES (?, ?, ?, ?)",
+                        (entity_id, name, rel, desc),
                     )
+                    for mode in modes:
+                        conn.execute(
+                            "INSERT OR IGNORE INTO entity_modes (entity_id, mode) VALUES (?, ?)",
+                            (entity_id, mode),
+                        )
                     if url:
                         _core._add_entity_url(conn, entity_id, url)
                     if effective_source:

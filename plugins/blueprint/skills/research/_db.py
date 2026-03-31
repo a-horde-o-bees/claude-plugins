@@ -24,15 +24,24 @@ logger = logging.getLogger(__name__)
 
 F = TypeVar("F", bound=Callable)
 
+VALID_MODES = ("example", "directory", "context", "unclassified")
+VALID_STAGES = ("new", "rejected", "researched", "merged")
+
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS entities (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
-    role TEXT NOT NULL DEFAULT 'example',
-    stage TEXT NOT NULL DEFAULT 'new',
+    stage TEXT NOT NULL DEFAULT 'new' CHECK(stage IN ('new', 'rejected', 'researched', 'merged')),
     relevance INTEGER DEFAULT 0,
     description TEXT NOT NULL DEFAULT '',
+    purpose TEXT NOT NULL DEFAULT '',
     last_modified TEXT
+);
+
+CREATE TABLE IF NOT EXISTS entity_modes (
+    entity_id TEXT NOT NULL REFERENCES entities(id),
+    mode TEXT NOT NULL CHECK(mode IN ('example', 'directory', 'context', 'unclassified')),
+    PRIMARY KEY (entity_id, mode)
 );
 
 CREATE TABLE IF NOT EXISTS entity_urls (
@@ -180,12 +189,82 @@ def _touch(conn: sqlite3.Connection, table: str, row_id: str) -> None:
 # --- Database lifecycle ---
 
 
+def _migrate_roles_to_modes(conn: sqlite3.Connection) -> None:
+    """Migrate role column on entities to entity_modes satellite table.
+
+    Detects old schema by checking for 'role' column on entities table.
+    Creates entity_modes table if needed, copies role values as mode entries,
+    then recreates entities table without role column (adding purpose).
+    No-op if role column is already absent.
+    """
+    columns = [c["name"] for c in conn.execute("PRAGMA table_info(entities)").fetchall()]
+    if "role" not in columns:
+        return  # Already migrated
+
+    conn.execute("PRAGMA foreign_keys = OFF")
+
+    # Ensure entity_modes table exists
+    conn.executescript("""
+        CREATE TABLE IF NOT EXISTS entity_modes (
+            entity_id TEXT NOT NULL REFERENCES entities(id),
+            mode TEXT NOT NULL CHECK(mode IN ('example', 'directory', 'context', 'unclassified')),
+            PRIMARY KEY (entity_id, mode)
+        );
+    """)
+
+    # Copy existing roles as modes + add unclassified marker
+    rows = conn.execute("SELECT id, role FROM entities").fetchall()
+    for row in rows:
+        role = row["role"] if row["role"] in VALID_MODES else "unclassified"
+        conn.execute(
+            "INSERT OR IGNORE INTO entity_modes (entity_id, mode) VALUES (?, ?)",
+            (row["id"], role),
+        )
+        conn.execute(
+            "INSERT OR IGNORE INTO entity_modes (entity_id, mode) VALUES (?, ?)",
+            (row["id"], "unclassified"),
+        )
+
+    # Recreate entities without role, with purpose
+    conn.executescript("""
+        CREATE TABLE entities_new (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            stage TEXT NOT NULL DEFAULT 'new' CHECK(stage IN ('new', 'rejected', 'researched', 'merged')),
+            relevance INTEGER DEFAULT 0,
+            description TEXT NOT NULL DEFAULT '',
+            purpose TEXT NOT NULL DEFAULT '',
+            last_modified TEXT
+        );
+    """)
+
+    # Determine which columns exist for the copy
+    if "purpose" in columns:
+        conn.execute("""
+            INSERT INTO entities_new (id, name, stage, relevance, description, purpose, last_modified)
+            SELECT id, name, stage, relevance, description, purpose, last_modified FROM entities
+        """)
+    else:
+        conn.execute("""
+            INSERT INTO entities_new (id, name, stage, relevance, description, last_modified)
+            SELECT id, name, stage, relevance, description, last_modified FROM entities
+        """)
+
+    conn.executescript("""
+        DROP TABLE entities;
+        ALTER TABLE entities_new RENAME TO entities;
+    """)
+    conn.execute("PRAGMA foreign_keys = ON")
+    conn.commit()
+
+
 def init_db(db_path: str) -> str:
     """Create database with schema. Idempotent — safe to run on existing DB."""
     path = Path(db_path)
     path.parent.mkdir(parents=True, exist_ok=True)
     conn = get_connection(str(path))
     conn.executescript(SCHEMA)
+    _migrate_roles_to_modes(conn)
     conn.close()
     return f"Database initialized: {path}"
 

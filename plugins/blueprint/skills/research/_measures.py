@@ -12,6 +12,7 @@ __all__ = [
     "upsert_measures",
     "get_measures",
     "clear_measures",
+    "clear_entity_measures",
 ]
 
 
@@ -52,6 +53,24 @@ def get_measures(db_path: str) -> str:
         for m in measures:
             lines.append(f"  {m['measure']}: {m['cnt']} entities")
         return "\n".join(lines)
+    finally:
+        conn.close()
+
+
+@retry_write
+def clear_entity_measures(db_path: str, entity_id: str) -> str:
+    """Clear measures for one entity."""
+    conn = get_connection(db_path)
+    try:
+        row = conn.execute("SELECT id, name FROM entities WHERE id = ?", (entity_id,)).fetchone()
+        if not row:
+            raise ValueError(f"Entity not found: {entity_id}")
+        with conn:
+            count = conn.execute(
+                "SELECT COUNT(*) FROM entity_measures WHERE entity_id = ?", (entity_id,),
+            ).fetchone()[0]
+            conn.execute("DELETE FROM entity_measures WHERE entity_id = ?", (entity_id,))
+        return f"Cleared {count} measures from {row['name']} (id: {entity_id})"
     finally:
         conn.close()
 

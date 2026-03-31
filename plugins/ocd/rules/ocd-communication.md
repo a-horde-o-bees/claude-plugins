@@ -16,6 +16,7 @@ Interaction style between agent and user.
 - When encountering multiple valid approaches: **align**, **wait**.
 - When encountering unexpected constraints: **research**, **align**, **wait**.
 - When encountering missing capabilities at any layer: **research**, **align**, **wait**.
+- Before writing raw queries into markdown instructions or when encountering them: raw queries in instructions represent a missing capability in the structured tool interface; **align**, **wait**.
 - When encountering plan deviations: **align**, **wait**.
 - When encountering errors that change the approach: **research**, **align**, **wait**.
 - When user asks a question: **wait**.

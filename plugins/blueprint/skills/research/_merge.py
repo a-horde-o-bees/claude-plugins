@@ -195,7 +195,12 @@ def merge_entities(db_path: str, ids: list[str]) -> str:
                     (survivor_id, source_id),
                 )
                 conn.execute("UPDATE entity_notes SET entity_id = ? WHERE entity_id = ?", (survivor_id, source_id))
+                conn.execute(
+                    "INSERT OR IGNORE INTO entity_modes (entity_id, mode) SELECT ?, mode FROM entity_modes WHERE entity_id = ?",
+                    (survivor_id, source_id),
+                )
 
+                conn.execute("DELETE FROM entity_modes WHERE entity_id = ?", (source_id,))
                 conn.execute("DELETE FROM entity_urls WHERE entity_id = ?", (source_id,))
                 conn.execute("DELETE FROM url_provenance WHERE entity_id = ?", (source_id,))
                 conn.execute("DELETE FROM entity_source_data WHERE entity_id = ?", (source_id,))
