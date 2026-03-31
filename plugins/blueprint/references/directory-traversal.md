@@ -96,13 +96,13 @@ const clean = raw.replace(/<br\s*\/?>/gi, ' ').replace(/<[^>]*>/g, '');
 
 ### Batch Registration
 
-Combine extraction results into single `create_records` call. Notes only written for new entities; already-registered listed for reconciliation.
+Combine extraction results into single `register_entities` call. Notes only written for new entities; already-registered listed for reconciliation.
 
 ```
-create_records({table: "entities", data: [
+register_entities([
   {"name": "...", "url": "...", "description": "...", "relevance": 3, "notes": ["fact1", "fact2"]},
   ...
-], source_url: "https://directory-url.com"})
+], source_url: "https://directory-url.com")
 ```
 
 **Output:** Summary count + already-registered entity IDs with URLs (actionable items only).
@@ -121,8 +121,8 @@ Build directory search URLs directly from observed parameter patterns, bypassing
 Update `[CRAWL PROGRESS]:` note on directory entity after each batch. Remove previous note, add new one with current position.
 
 ```
-delete_records({table: "entity_notes", id: "PROGRESS_NOTE_ID"})
-create_records({table: "entity_notes", data: {entity_id: "{directory_id}", note: "[CRAWL PROGRESS]: Processed pages 1-N of M. X entities registered. Resume on page N+1."}})
+remove_notes({entity_id: "{directory_id}", note_ids: ["PROGRESS_NOTE_ID"]})
+add_notes({entity_id: "{directory_id}", notes: ["[CRAWL PROGRESS]: Processed pages 1-N of M. X entities registered. Resume on page N+1."]})
 ```
 
 ## Recipes
@@ -142,8 +142,8 @@ Proven combinations of primitives for specific directory types. When directory m
     1. `browser_evaluate` with accumulating fetch script:
         - For each page in budget: fetch HTML, parse with DOMParser, extract data attributes, filter to members with domains, strip HTML from text
         - Returns batch with `nextPage` checkpoint
-    2. Construct `create_records` data from returned batch
-    3. Single `create_records` call
+    2. Construct `register_entities` data from returned batch
+    3. Single `register_entities` call
     4. Reconcile any already-registered entities individually
     5. Update `[CRAWL PROGRESS]:` note
 
@@ -175,7 +175,7 @@ Proven combinations of primitives for specific directory types. When directory m
     1. `browser_evaluate` with accumulating fetch to API
     2. Parse JSON response directly (no DOMParser needed)
     3. Extract name, URL, description from structured fields
-    4. `create_records` + progress update per standard flow
+    4. `register_entities` + progress update per standard flow
 
 API responses are typically smaller and more structured than HTML — accumulation budgets can be larger.
 

@@ -6,7 +6,7 @@ Execution phase — sequential agent work with checkpointing.
 
 ### Input
 
-- Entities sorted by relevance: `read_records({table: "entities", conditions: {role: "example", stage: "new"}})`
+- Entities sorted by relevance: `list_entities({mode: "example", stage: "new"})`
 - `blueprint/1-scope.md` for scope context, `blueprint/2-assessment-criteria.md` for relevance reassessment
 - `blueprint/4-effectiveness-criteria.md` for evaluating patterns, `blueprint/6-domain-knowledge.md` for landscape context
 
@@ -27,30 +27,31 @@ Research proceeds in waves by relevance tier. After each wave, orchestrator and 
     1. Identify entities at this relevance level with stage `new`
     2. For each {entity} in {tier}: dispatch Research Loop
     3. After wave completes: review findings, update `blueprint/6-domain-knowledge.md` with new platforms, tools, models observed; document existence only — no frequency analysis per domain knowledge guard
-    4. User decides whether to continue to next tier or proceed to Phase 3
+    4. If unclassified entities exist (adjacent discoveries): propose spawning classify-modes agent (`${CLAUDE_PLUGIN_ROOT}/references/classify-modes.md`); wait for user confirmation
+    5. User decides whether to continue to next tier or proceed to Phase 3
 
 ### Research Loop
 
 4. Record current note count for entity:
-    - `read_records({table: "entities", conditions: {id: "{entity_id}"}, include: ["entity_notes"]})` — note "Notes:" count
+    - `get_entity({entity_id: "{entity_id}"})` — note "Notes:" count
 5. Spawn agent with Research Agent template
 6. After agent completes, verify:
     1. If task interrupted or errored: re-spawn
-    2. Check stage: `read_records({table: "entities", conditions: {id: "{entity_id}"}})`
+    2. Check stage: `get_entity({entity_id: "{entity_id}"})`
     3. If stage is not `researched`: re-spawn — agent failed to write
 
 ### Post-Research
 
 7. Propose spawning resolve-duplicates agent (`${CLAUDE_PLUGIN_ROOT}/references/resolve-duplicates.md`) — present to user for confirmation before executing; merges are hard to reverse
     1. If user confirms: spawn agent
-8. Present summary: `query({sql: "SELECT stage, COUNT(*) as count FROM entities GROUP BY stage"})`
+8. Present summary: `get_dashboard()`
 
 ## Re-Entry
 
 When Phase 2 resumes with existing research, present dashboard:
 
-1. `query({sql: "SELECT stage, COUNT(*) as count FROM entities GROUP BY stage"})` — entity counts by stage
-2. `read_records({table: "entities"})` — entities sorted by relevance with stage
+1. `get_dashboard()` — entity counts by stage
+2. `list_entities()` — entities sorted by relevance with stage
 3. Identify entities at stage `new` (pending) vs `researched` (complete)
 
 Resume with next entity at stage `new` in relevance order (highest first). Entities at `researched` have completed deep research — skip them.
@@ -58,7 +59,7 @@ Resume with next entity at stage `new` in relevance order (highest first). Entit
 ## Checkpointing
 
 - Database is checkpoint — agent writes notes then explicitly sets stage to `researched`
-- If session breaks, `read_records({table: "entities"})` shows stage for each entity
+- If session breaks, `list_entities()` shows stage for each entity
 - Resume by continuing with next `new` entity in relevance order
 - Writes are transactional with retry — database is always consistent
 
@@ -78,12 +79,12 @@ Read domain knowledge and effectiveness criteria:
 - `blueprint/4-effectiveness-criteria.md`
 
 1. Resolve entity:
-    read_records({table: "entities", conditions: {id: "{entity_id}"}, include: ["entity_notes", "entity_measures", "entity_urls"]})
+    get_entity({entity_id: "{entity_id}"})
 2. Research entity web presence — start with primary URL, then explore thoroughly
 3. After completing ALL research, read existing notes and apply Entity Reconciliation Procedure (below):
-    read_records({table: "entities", conditions: {id: "{entity_id}"}, include: ["entity_notes"]})
+    get_entity({entity_id: "{entity_id}"})
 4. Set stage to researched:
-    update_records({table: "entities", id: "{entity_id}", data: {stage: "researched"}})
+    set_stage({entity_id: "{entity_id}", stage: "researched"})
 
 Rules:
 - Complete ALL research before writing to database

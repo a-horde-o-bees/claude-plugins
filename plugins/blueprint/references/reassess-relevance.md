@@ -17,16 +17,16 @@ Orchestrator provides:
 
 ### Dynamic Entity Loading
 
-3. Get entity list: `read_records({table: "entities", conditions: {stage: "researched"}})`
+3. Get entity list: `list_entities({stage: "researched"})`
 4. For each {entity} in {entity-list}:
-    1. Read entity: `read_records({table: "entities", conditions: {id: "{entity_id}"}, include: ["entity_notes", "entity_measures", "entity_urls"]})`
+    1. Read entity: `get_entity({entity_id: "{entity_id}"})`
     2. Assess whether room remains to consume more; stop when approaching context budget; always consume at least one entity
 5. For each {entity} in {consumed-entities}:
     1. For each {criterion} in {gradient-criteria}: determine met or not met based on note evidence
     2. Sum met criteria to produce new relevance score
     3. If new score differs from current: record change
 6. After evaluating all consumed entities, apply updates:
-    1. For each {entity} in {changed-entities}: `update_records({table: "entities", id: "{entity_id}", data: {relevance: {new_score}}})`
+    1. For each {entity} in {changed-entities}: `set_relevance({entity_id: "{entity_id}", relevance: {new_score}})`
 
 ### Output
 

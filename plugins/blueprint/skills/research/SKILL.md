@@ -73,7 +73,7 @@ When user requests "add more entities" at any phase gate:
     - `blueprint/7-findings.md`
     - `blueprint/8-interpretation.md`
     - `blueprint/9-blueprint.md` (if exists)
-2. Clear measures: `delete_records({table: "entity_measures", all: true})`
+2. Clear measures: `clear_all_measures()`
 3. Update `blueprint/data/state.md`: Phase 1 `[-]`, Phases 2-4 `[ ]`
 4. Read Phase 1 reference file — re-entry detects existing domain knowledge and entities
 
@@ -82,16 +82,19 @@ Database preserved. New entities accumulate during scoping; Phase 2 processes on
 ## Workflow
 
 1. Mark {active-phase} status `[-]` in `blueprint/data/state.md`
-2. Read `${CLAUDE_PLUGIN_ROOT}/references/phase-{active-phase}-{name}.md`
-3. Present what current phase will do to user
-4. Execute phase per reference file instructions:
+2. If {active-phase} is 3 or 4:
+    1. Check for unclassified entities: `get_unclassified()`
+    2. If count > 0: propose spawning classify-modes agent (`${CLAUDE_PLUGIN_ROOT}/references/classify-modes.md`) before proceeding; wait for user confirmation
+3. Read `${CLAUDE_PLUGIN_ROOT}/references/phase-{active-phase}-{name}.md`
+4. Present what current phase will do to user
+5. Execute phase per reference file instructions:
     1. Spawn autonomous agents for research/analysis — one per discrete research unit
     2. Present findings to user
     3. If design phase: user approves or refines (loop until satisfied)
     4. Write outputs
-5. Append history entry to `blueprint/data/history.md` — one line: ISO 8601 datetime, phase, action, result stats, next step
-6. Mark {active-phase} status `[x]` in `blueprint/data/state.md`
-7. Propose next phase
+6. Append history entry to `blueprint/data/history.md` — one line: ISO 8601 datetime, phase, action, result stats, next step
+7. Mark {active-phase} status `[x]` in `blueprint/data/state.md`
+8. Propose next phase
 
 Interactive checkpoints in main conversation between agent calls. Subagents run autonomously — user-facing decisions at orchestration level only.
 
@@ -127,80 +130,98 @@ SQLite database at `blueprint/data/research.db`.
 
 ### MCP Tools
 
-The `blueprint-research` MCP server exposes 7 tools. The server starts automatically when the plugin is installed. Database path configured via `DB_PATH` environment variable (default: `blueprint/data/research.db`).
+The `blueprint-research` MCP server exposes domain tools grouped by function. The server starts automatically when the plugin is installed. Database path configured via `DB_PATH` environment variable (default: `blueprint/data/research.db`).
 
-#### CRUD Tools
-
-| Tool | Parameters | Description |
-|------|-----------|-------------|
-| `create_records` | `table`, `data` (object or array), `source_url?` | Insert one or many rows; entities table: URL normalization, dedup, provenance; other tables: straight insert |
-| `read_records` | `table`, `conditions?`, `include?`, `limit?` | Select with Django `__operator` conditions and FK-resolved joins |
-| `update_records` | `table`, `id`, `data` | Update fields by ID; entities table: validates stage transitions |
-| `delete_records` | `table`, `id?`, `all?` | Delete by ID or clear all (requires explicit `all: true`) |
-
-#### Query and Schema Tools
+#### Entity Registration
 
 | Tool | Parameters | Description |
 |------|-----------|-------------|
-| `query` | `sql`, `params?` | Read-only SQL (SELECT only enforced); for complex joins, aggregations, subqueries |
-| `describe_entities` | `table?` | Schema discovery — tables, columns, types, FK relationships |
-| `merge_entities` | `ids` (array) | Merge entities into lowest-ID survivor; preserves all related data |
+| `register_entity` | `name`, `url?`, `source_url?`, `modes?`, `relevance?`, `description?`, `purpose?` | Register single entity; URL normalization, dedup, provenance |
+| `register_entities` | `entities` (array), `source_url?` | Batch register entities from a single source |
+
+#### Entity Field Updates
+
+| Tool | Parameters | Description |
+|------|-----------|-------------|
+| `set_stage` | `entity_id`, `stage` | Advance entity stage; validates transitions (`new` → `rejected` \| `researched` \| `merged`) |
+| `set_relevance` | `entity_id`, `relevance` | Set entity relevance score |
+| `set_description` | `entity_id`, `description` | Set entity description |
+| `set_modes` | `entity_id`, `modes` (array) | Replace entity modes |
+
+#### Notes
+
+| Tool | Parameters | Description |
+|------|-----------|-------------|
+| `add_notes` | `entity_id`, `notes` (array of strings) | Add one or more notes to an entity |
+| `set_note` | `note_id`, `text` | Update existing note text |
+| `remove_notes` | `entity_id`, `note_ids` (array) | Delete specific notes from an entity |
+
+#### Measures
+
+| Tool | Parameters | Description |
+|------|-----------|-------------|
+| `set_measures` | `entity_id`, `measures` (array of `{measure, value}`) | Set key/value measures on an entity |
+| `clear_all_measures` | (none) | Clear all measures across all entities |
+
+#### Retrieval
+
+| Tool | Parameters | Description |
+|------|-----------|-------------|
+| `get_entity` | `entity_id` | Get entity with all related data (notes, measures, URLs) |
+| `list_entities` | `mode?`, `stage?`, `min_relevance?` | List entities with optional filters |
+| `get_unclassified` | (none) | Get entities with `unclassified` mode |
+| `get_dashboard` | (none) | Overview of entity counts by stage, mode, and relevance |
+| `get_research_queue` | (none) | Entities ready for deep research, ordered by relevance |
+| `get_measure_summary` | (none) | Summary of measures across entities |
+| `find_duplicates` | (none) | Detect potential duplicate entities by URL or name similarity |
+
+#### Schema, Merge, and Query
+
+| Tool | Parameters | Description |
+|------|-----------|-------------|
+| `describe_schema` | `table?` | Schema discovery — tables, columns, types, FK relationships |
+| `merge_entities` | `entity_ids` (array) | Merge entities into lowest-ID survivor; preserves all related data |
+| `query` | `sql`, `params?` | Read-only SQL (SELECT only enforced); use only when no domain tool covers the need |
 | `init_database` | (none) | Initialize database schema; idempotent |
-
-#### Conditions Syntax
-
-`read_records` conditions use Django `__operator` suffix convention:
-
-| Condition | Operator |
-|-----------|----------|
-| `{field: value}` | `=` (equality) |
-| `{field__gte: N}` | `>=` |
-| `{field__gt: N}` | `>` |
-| `{field__lte: N}` | `<=` |
-| `{field__lt: N}` | `<` |
-| `{field__ne: value}` | `!=` |
-| `{field__like: pattern}` | `LIKE` |
-| `{field__null: true}` | `IS NULL` |
-| `{field__null: false}` | `IS NOT NULL` |
-
-Multiple conditions combine with AND logic.
-
-#### Star-Schema Joins
-
-`read_records` `include` parameter resolves FK joins:
-
-```json
-read_records({table: "entities", conditions: {id: "e1"}, include: ["entity_notes", "entity_measures"]})
-```
-
-Returns entity with nested related data. Error if no FK relationship exists between tables.
 
 #### Examples
 
 ```json
-// Create entity with URL dedup and provenance
-create_records({table: "entities", data: {name: "Semgrep", url: "https://github.com/semgrep/semgrep", source_url: "https://directory.com", role: "context", relevance: 8}})
+// Register entity with URL dedup and provenance
+register_entity({name: "Semgrep", url: "https://github.com/semgrep/semgrep", source_url: "https://directory.com", modes: ["context"], relevance: 8})
 
-// Batch create notes
-create_records({table: "entity_notes", data: [{entity_id: "e1", note: "First observation"}, {entity_id: "e1", note: "Second observation"}]})
+// Batch register entities from a directory source
+register_entities([{name: "Tool A", url: "https://tool-a.dev"}, {name: "Tool B", url: "https://tool-b.dev"}], source_url: "https://directory.com")
 
-// Read with conditions
-read_records({table: "entities", conditions: {stage: "researched", relevance__gte: 7}})
+// Add notes to an entity
+add_notes({entity_id: "e1", notes: ["First observation", "Second observation"]})
 
-// Read entity with all related data
-read_records({table: "entities", conditions: {id: "e1"}, include: ["entity_notes", "entity_measures", "entity_urls"]})
+// Get entity with all related data
+get_entity({entity_id: "e1"})
 
-// Update entity
-update_records({table: "entities", id: "e1", data: {stage: "researched", relevance: 9}})
+// List researched entities with minimum relevance
+list_entities({stage: "researched", min_relevance: 7})
 
-// Delete note
-delete_records({table: "entity_notes", id: "n14"})
+// Set entity stage after research complete
+set_stage({entity_id: "e1", stage: "researched"})
 
-// Clear all measures
-delete_records({table: "entity_measures", all: true})
+// Set relevance score
+set_relevance({entity_id: "e1", relevance: 9})
 
-// Complex query
-query({sql: "SELECT e.name, COUNT(n.id) as note_count FROM entities e LEFT JOIN entity_notes n ON n.entity_id = e.id GROUP BY e.id", params: {stage: "researched"}})
+// Update a note
+set_note({note_id: "n14", text: "Corrected observation"})
+
+// Remove notes
+remove_notes({entity_id: "e1", note_ids: ["n14"]})
+
+// Clear all measures before re-analysis
+clear_all_measures()
+
+// Set measures on an entity
+set_measures({entity_id: "e1", measures: [{measure: "adoption", value: "high"}, {measure: "maturity", value: "stable"}]})
+
+// Complex query (only when no domain tool covers the need)
+query({sql: "SELECT e.name, COUNT(n.id) as note_count FROM entities e LEFT JOIN entity_notes n ON n.entity_id = e.id GROUP BY e.id"})
 ```
 
 ### ID Convention
@@ -213,10 +234,19 @@ Unified entity model — everything is an entity (organizations, platforms, prog
 
 - `id` — prefixed TEXT (e.g., `e7`), stable, never changes
 - `name` — display name
-- `role` — `example` (comparable sites to study), `directory` (crawlable listings yielding examples), `context` (knowledge/advice sources)
-- `stage` — `new` → `rejected` | `researched` | `merged`
+- `stage` — `new` → `rejected` | `researched` | `merged`; enforced by CHECK constraint
 - `relevance` — integer or NULL; higher = more relevant; scale from `blueprint/2-assessment-criteria.md`; NULL = not yet assessed
 - `description` — one-sentence identity statement; notes hold specifics, description never lists features or counts
+- `purpose` — why this entity matters to the research; summarizes relevance outside of notes for intelligent navigation
+
+**Modes** (`entity_modes` table): interaction modes that determine what kind of agent work an entity receives. An entity may have multiple modes. Enforced by CHECK constraint.
+
+- `example` — comparable tool, project, or system to study; receives deep research in Phase 2
+- `directory` — crawlable listing that yields other entities; receives directory crawl agents in Phase 1
+- `context` — knowledge, advice, or data source; receives context research in Phase 1
+- `unclassified` — marker indicating classification pass needed; coexists with other modes; removed by classify-modes agent (`${CLAUDE_PLUGIN_ROOT}/references/classify-modes.md`)
+
+If an entity has two modes, it needs two different kinds of agent work — crawl it AND deep-research it. These are separate activities that happen in different phases.
 
 **Notes**: atomic, self-explanatory facts. Primary knowledge store. Begin accumulating from first contact — not deferred to deep research. Deep research produces comprehensive notes; discovery produces initial notes from whatever information is consumed.
 
@@ -247,7 +277,7 @@ WAL mode for concurrent reads. Write operations use retry with random 50-200ms j
 
 ### Complex Queries
 
-Use `read_records` with conditions and include for most reads. For complex joins, aggregations, or subqueries that `read_records` cannot express, use the `query` tool with read-only SQL. The `query` tool enforces SELECT-only — write operations are rejected.
+Use domain retrieval tools (`get_entity`, `list_entities`, `get_dashboard`, `get_research_queue`, `get_unclassified`, `find_duplicates`, `get_measure_summary`) for most reads. For complex joins, aggregations, or subqueries that no domain tool covers, use the `query` tool with read-only SQL. The `query` tool enforces SELECT-only — write operations are rejected.
 
 Key tables: `entities`, `entity_urls`, `url_provenance`, `entity_notes`, `entity_measures`, `entity_source_data`.
 
@@ -282,24 +312,24 @@ Orchestrator selects server based on directory accessibility notes and concurren
 
 ### Agent Database Access
 
-- Agents access database exclusively through MCP tools (`create_records`, `read_records`, `update_records`, `delete_records`, `query`, `describe_entities`, `merge_entities`)
-- Agents push notes directly to database via `create_records` — no intermediate JSON files for knowledge storage; files only for artifacts (templates, PDFs, source documents)
+- Agents access database exclusively through MCP domain tools (`register_entity`, `register_entities`, `add_notes`, `set_note`, `remove_notes`, `set_measures`, `set_stage`, `set_relevance`, `set_description`, `set_modes`, `get_entity`, `list_entities`, `get_unclassified`, `get_dashboard`, `get_research_queue`, `find_duplicates`, `get_measure_summary`, `describe_schema`, `merge_entities`, `query`)
+- Agents push notes directly to database via `add_notes` — no intermediate JSON files for knowledge storage; files only for artifacts (templates, PDFs, source documents)
 - Agent database errors: report in output text, do not diagnose or fix schema issues
 
 ### Agent Write Discipline
 
-- Scoping agents create entities with `create_records` during landscape exploration, then capture observations with `create_records` on `entity_notes`; entities failing hardline criteria: create with relevance 0, update stage to `rejected`
-- Deep research agents receive entity IDs from orchestrator — never create entities
+- Scoping agents register entities with `register_entity`/`register_entities` during landscape exploration, then capture observations with `add_notes`; entities failing hardline criteria: register with relevance 0, then `set_stage` to `rejected`
+- Deep research agents receive entity IDs from orchestrator — never register entities
 - Notes accumulate from first contact — capture important observations immediately, not deferred to deep research
-- Create notes for new observations; update via `update_records` for corrections; delete via `delete_records` for stale notes
-- Deep research agents complete all research before writing — read existing notes with `read_records` including `entity_notes`, apply reconciliation (`${CLAUDE_PLUGIN_ROOT}/references/reconcile-entity.md`), then advance stage with `update_records`
+- Create notes with `add_notes`; update via `set_note` for corrections; delete via `remove_notes` for stale notes
+- Deep research agents complete all research before writing — read existing data with `get_entity`, apply reconciliation (`${CLAUDE_PLUGIN_ROOT}/references/reconcile-entity.md`), then advance stage with `set_stage`
 - Agent final output must report notes written (e.g., "Wrote 14 notes to entity e7") — self-reported count is completion signal; emphasize in agent prompts
-- Stage transitions always explicit via `update_records` on entities — other tool calls never change stage
+- Stage transitions always explicit via `set_stage` — other tool calls never change stage
 - Reconcile-on-touch — any time entity is revisited, apply reconciliation procedure
 
 ### Agent Verification
 
-- After agent completion, orchestrator checks `read_records({table: "entities", conditions: {id: ID}})` for expected stage
+- After agent completion, orchestrator checks `get_entity({entity_id: ID})` for expected stage
 - If stage not advanced after completion, agent failed to write — re-spawn
 - If task interrupted, re-spawn — agent reconciles from current note state
 
@@ -307,7 +337,7 @@ Orchestrator selects server based on directory accessibility notes and concurren
 
 - URL-grounded identity — surviving entities must have at least one URL; name-only entities are temporary placeholders during lead harvesting; resolve to URL or reject
 - All deduplication is agent-administered — orchestrator proposes spawning resolve-duplicates agent (`${CLAUDE_PLUGIN_ROOT}/references/resolve-duplicates.md`) and waits for user confirmation; merges are hard to reverse
-- Duplicate resolution belongs in deep research — agents with entity context loaded are best positioned to make dedup decisions; duplicate detection via `query` tool is exclusively for use within the resolve-duplicates agent workflow, not standalone; do not suggest duplicate detection outside of deep research or post-research phases
+- Duplicate resolution belongs in deep research — agents with entity context loaded are best positioned to make dedup decisions; duplicate detection via `find_duplicates` is exclusively for use within the resolve-duplicates agent workflow, not standalone; do not suggest duplicate detection outside of deep research or post-research phases
 
 ### Research Methodology
 

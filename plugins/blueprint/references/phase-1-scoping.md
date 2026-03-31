@@ -47,23 +47,23 @@ When database contains entities at Phase 1 start (from initialization arguments,
 
 ### Domain Knowledge Development
 
-Codify observations into domain knowledge guiding discovery and deep research. Sources registered as entities with `directory` or `context` roles.
+Codify observations into domain knowledge guiding discovery and deep research. Sources registered as entities with `directory` or `context` modes.
 
 13. Propose sources — directories (crawlable listings) and context sources (advice, data, guides)
 14. Register confirmed sources as entities:
-    - `create_records({table: "entities", data: {name: "Source Name", url: "https://source-url.com", description: "What it contains and why it matters", role: "directory", relevance: 0}})`
-    - `create_records({table: "entities", data: {name: "Source Name", url: "https://source-url.com", description: "What it contains and why it matters", role: "context", relevance: 0}})`
+    - `register_entity({name: "Source Name", url: "https://source-url.com", description: "What it contains and why it matters", modes: ["directory"], relevance: 0})`
+    - `register_entity({name: "Source Name", url: "https://source-url.com", description: "What it contains and why it matters", modes: ["context"], relevance: 0})`
 15. For directory entities, add accessibility note after registration:
-    - `create_records({table: "entity_notes", data: {entity_id: "ID", note: "[ACCESSIBILITY]: {static|js-rendered|auth-gated|api-available} — {brief access method}"}})`
+    - `add_notes({entity_id: "ID", notes: ["[ACCESSIBILITY]: {static|js-rendered|auth-gated|api-available} — {brief access method}"]})`
     - Accessibility guides tool selection: `static` uses web fetch; `js-rendered` and `auth-gated` require browser automation (sequential)
 16. Present sources for user review:
-    - `read_records({table: "entities", conditions: {role: "directory"}})`
-    - `read_records({table: "entities", conditions: {role: "context"}})`
+    - `list_entities({mode: "directory"})`
+    - `list_entities({mode: "context"})`
 17. User refines — add, remove, or adjust sources
 
 ### Context Research Waves
 
-Context entities (role: `context`) researched in waves to build domain knowledge before landscape exploration. Each wave's findings update `blueprint/6-domain-knowledge.md`.
+Context entities (mode: `context`) researched in waves to build domain knowledge before landscape exploration. Each wave's findings update `blueprint/6-domain-knowledge.md`.
 
 18. Order context entities by relevance (highest first); low-relevance context entities may be deferred — document cutoff in history
 19. For each {wave} in {context-waves}:
@@ -87,13 +87,14 @@ Explore domain to discover entities. Two modes:
     1. If entity fails hardline criterion:
         1. Register as rejected with description, notes, and reason (relevance 0, stage `rejected`)
     2. Else:
-        1. Register with relevance assessment, description, role, and initial notes
+        1. Register with relevance assessment, description, modes, and initial notes
 24. Observe patterns:
     - What types of structured public data exist for this entity type?
     - What differentiates entities in this space?
     - Which entities address core scope concerns?
 25. Present accumulated entities and observations to user
 26. Update `blueprint/6-domain-knowledge.md` — distill landscape exploration findings into domain knowledge; present changes to user before writing
+27. If unclassified entities exist: propose spawning classify-modes agent (`${CLAUDE_PLUGIN_ROOT}/references/classify-modes.md`); wait for user confirmation
 
 ### Scope Refinement and Relevance Adjustment
 
@@ -107,17 +108,17 @@ Explore domain to discover entities. Two modes:
 29. When scope criteria change:
     1. Spawn reassess-relevance agent (`${CLAUDE_PLUGIN_ROOT}/references/reassess-relevance.md`) to rescore all entities against updated criteria using existing notes
     2. Apply hardline filters retroactively — check existing entities against new/modified hardline criteria; reject entities that no longer pass
-    3. Clear measures — criteria change invalidates prior analysis measures: `delete_records({table: "entity_measures", all: true})`
+    3. Clear measures — criteria change invalidates prior analysis measures: `clear_all_measures()`
 30. Repeat until user considers landscape adequately mapped and relevance ordering reflects priorities
 
 ## Re-Entry
 
 When Phase 1 resumes with existing data, present dashboard:
 
-1. `query({sql: "SELECT stage, COUNT(*) as count FROM entities GROUP BY stage"})` — entity counts by role and stage
-2. `read_records({table: "entities", conditions: {role: "example"}})` — examples sorted by relevance
-3. `read_records({table: "entities", conditions: {role: "directory"}})` — directories (check progress notes)
-4. `read_records({table: "entities", conditions: {role: "context"}})` — context sources
+1. `get_dashboard()` — entity counts by stage and mode
+2. `list_entities({mode: "example"})` — examples by relevance
+3. `list_entities({mode: "directory"})` — directories (check progress notes)
+4. `list_entities({mode: "context"})` — context sources
 5. `query({sql: "SELECT source_url, COUNT(entity_id) as entity_count FROM url_provenance GROUP BY source_url ORDER BY entity_count DESC"})` — provenance sources with entity counts
 6. `query({sql: "SELECT entity_id, COUNT(source_url) as source_count FROM url_provenance GROUP BY entity_id HAVING source_count >= :min", params: {min: 2}})` — multi-source entities
 7. `blueprint/overview.md` for file index, `blueprint/1-scope.md` for scope context
@@ -140,12 +141,12 @@ Read scope and domain knowledge:
 - `blueprint/6-domain-knowledge.md`
 
 1. Resolve entity:
-    read_records({table: "entities", conditions: {id: "{entity_id}"}, include: ["entity_notes", "entity_measures", "entity_urls"]})
+    get_entity({entity_id: "{entity_id}"})
 2. Research entity content thoroughly — focus on knowledge, frameworks, data, and insights relevant to project scope
 3. After completing ALL research, read existing notes and apply Entity Reconciliation Procedure (below):
-    read_records({table: "entities", conditions: {id: "{entity_id}"}, include: ["entity_notes"]})
+    get_entity({entity_id: "{entity_id}"})
 4. Set stage to researched:
-    update_records({table: "entities", id: "{entity_id}", data: {stage: "researched"}})
+    set_stage({entity_id: "{entity_id}", stage: "researched"})
 
 Rules:
 - Complete ALL research before writing to database
@@ -168,24 +169,25 @@ Read scope and domain knowledge:
 - `blueprint/1-scope.md`
 - `blueprint/6-domain-knowledge.md`
 
-Entity roles:
+Entity modes (database enforces these values via CHECK constraint):
 - `example` (default) — comparable sites to study and emulate
 - `directory` — crawlable listings that yield examples
 - `context` — knowledge/advice sources informing project
+- `unclassified` — discovered adjacently, pending mode classification
 
 For each entity encountered:
 1. Assess against criteria from `blueprint/2-assessment-criteria.md`
-2. Register with appropriate role — `create_records` returns new ID or "Already registered" with existing ID:
-    create_records({table: "entities", data: {name: "Entity Name", url: "https://entity-url.com", source_url: "https://source-url.com", description: "One sentence: what entity is and primary approach", relevance: N, role: "example"}})
+2. Register with appropriate modes — `register_entity` returns new ID or "Already registered" with existing ID:
+    register_entity({name: "Entity Name", url: "https://entity-url.com", source_url: "https://source-url.com", description: "One sentence: what entity is and primary approach", relevance: N, modes: ["example"]})
 3. If new entity:
     1. Add notes capturing current knowledge:
-        create_records({table: "entity_notes", data: [{entity_id: "ID", note: "observation 1"}, {entity_id: "ID", note: "observation 2"}]})
+        add_notes({entity_id: "ID", notes: ["observation 1", "observation 2"]})
     2. If entity fails hardline criterion:
-        update_records({table: "entities", id: "ID", data: {stage: "rejected"}})
-        create_records({table: "entity_notes", data: {entity_id: "ID", note: "Rejected: reason"}})
+        set_stage({entity_id: "ID", stage: "rejected"})
+        add_notes({entity_id: "ID", notes: ["Rejected: reason"]})
 4. If already registered (reconcile-on-touch):
     1. Read existing entity:
-        read_records({table: "entities", conditions: {id: "ID"}, include: ["entity_notes"]})
+        get_entity({entity_id: "ID"})
     2. Apply Entity Reconciliation Procedure to notes, description, and relevance
 
 Relevance guide: read `blueprint/2-assessment-criteria.md` for project-specific scale.
@@ -212,7 +214,7 @@ Read scope, domain knowledge, and traversal patterns:
 - `${CLAUDE_PLUGIN_ROOT}/references/directory-traversal.md`
 
 Check directory entity for existing notes:
-    read_records({table: "entities", conditions: {id: "{directory_id}"}, include: ["entity_notes"]})
+    get_entity({entity_id: "{directory_id}"})
 
 Look for tagged crawl notes:
 - `[CRAWL METHOD]:` — technical approach; if present, follow it; if absent, follow Approach Discovery Workflow in directory-traversal.md
@@ -220,39 +222,37 @@ Look for tagged crawl notes:
 - `[CRAWL PROGRESS]:` — current position; if present, resume from indicated position; if absent, start from beginning
 
 For batch results (multiple entities per extraction):
-    create_records({table: "entities", data: [{"name": "...", "url": "...", "description": "...", "relevance": N, "notes": ["fact1", "fact2"]}, ...], source_url: "https://directory-url.com"})
+    register_entity({name: "...", url: "...", source_url: "https://directory-url.com", description: "...", relevance: N, notes: ["fact1", "fact2"]})
 Notes only written for new entities. Already-registered listed in output for reconciliation — read existing notes and apply Entity Reconciliation Procedure.
 
 For individual entities:
 1. Assess against criteria from `blueprint/2-assessment-criteria.md`
 2. Register:
-    create_records({table: "entities", data: {name: "Entity Name", url: "https://entity-url.com", source_url: "https://directory-page-url.com", description: "One sentence: what entity is and primary approach", relevance: N}})
+    register_entity({name: "Entity Name", url: "https://entity-url.com", source_url: "https://directory-page-url.com", description: "One sentence: what entity is and primary approach", relevance: N})
 3. If new entity:
     1. Add notes:
-        create_records({table: "entity_notes", data: [{entity_id: "ID", note: "observation 1"}, {entity_id: "ID", note: "observation 2"}]})
+        add_notes({entity_id: "ID", notes: ["observation 1", "observation 2"]})
     2. If entity fails hardline criterion:
-        update_records({table: "entities", id: "ID", data: {stage: "rejected"}})
+        set_stage({entity_id: "ID", stage: "rejected"})
 4. If already registered (reconcile-on-touch):
     1. Read entity and apply reconciliation:
-        read_records({table: "entities", conditions: {id: "ID"}, include: ["entity_notes"]})
+        get_entity({entity_id: "ID"})
 
 Directory crawl notes — tagged notes on directory entity track method, script, and progress:
 
 `[CRAWL METHOD]:` — record technical approach before starting (or on first session); update only if approach changes:
-    create_records({table: "entity_notes", data: {entity_id: "{directory_id}", note: "[CRAWL METHOD]: [base URL, extraction technique, pagination, filtering, directory-specific details]"}})
+    add_notes({entity_id: "{directory_id}", notes: ["[CRAWL METHOD]: [base URL, extraction technique, pagination, filtering, directory-specific details]"]})
 
 `[CRAWL SCRIPT]:` — save extraction script and record pointer:
 1. Save script to `blueprint/scripts/{directory_id}-{short_name}.js`
 2. Add pointer note:
-    create_records({table: "entity_notes", data: {entity_id: "{directory_id}", note: "[CRAWL SCRIPT]: blueprint/scripts/{directory_id}-{short_name}.js"}})
+    add_notes({entity_id: "{directory_id}", notes: ["[CRAWL SCRIPT]: blueprint/scripts/{directory_id}-{short_name}.js"]})
 
 `[CRAWL PROGRESS]:` — update after each page, section, or logical segment; remove previous and replace:
 1. If previous progress note exists, remove it:
-    delete_records({table: "entity_notes", id: "N_ID"})
+    remove_notes({entity_id: "{directory_id}", note_ids: ["N_ID"]})
 2. Add updated progress:
-    create_records({table: "entity_notes", data: {entity_id: "{directory_id}", note: "[CRAWL PROGRESS]: [what was processed and where to resume]"}})
-3. Touch directory entity:
-    update_records({table: "entities", id: "{directory_id}", data: {last_modified: "now"}})
+    add_notes({entity_id: "{directory_id}", notes: ["[CRAWL PROGRESS]: [what was processed and where to resume]"]})
 
 Write notes in terms that make sense for directory structure. Goal: new agent reading notes for first time can unambiguously understand approach and find resumption point.
 
@@ -269,13 +269,16 @@ Rules:
 {content of ${CLAUDE_PLUGIN_ROOT}/references/reconcile-entity.md}
 ```
 
-## Entity Roles
+## Entity Modes
 
-- `example` (default) — comparable sites to study and emulate
-- `directory` — crawlable listings that yield examples (member directories, curated lists)
-- `context` — knowledge/advice sources informing project (guides, data, advice)
+Interaction modes determine what kind of agent work an entity receives. Stored in `entity_modes` satellite table — an entity may have multiple modes. Database enforces valid values via CHECK constraint.
 
-All roles share the same table, notes, URLs, and provenance. Role determines how agents interact with the entity and what notes capture.
+- `example` (default) — comparable sites to study and emulate; deep researched in Phase 2
+- `directory` — crawlable listings that yield examples (member directories, curated lists); crawled in Phase 1
+- `context` — knowledge/advice sources informing project (guides, data, advice); researched for domain knowledge in Phase 1
+- `unclassified` — marker indicating classification pass needed; coexists with other modes; removed by classify-modes agent
+
+If an entity has two modes, it needs two different kinds of agent work. All modes share the same entity table, notes, URLs, and provenance.
 
 ## Output
 

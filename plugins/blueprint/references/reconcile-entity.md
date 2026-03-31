@@ -8,10 +8,10 @@ Universal procedure for updating entity notes, description, and relevance. Appli
 
 For each existing note, classify against new information:
 - Still accurate, not superseded — keep
-- Contains outdated value — replace via `update_records({table: "entity_notes", id: "N_ID", data: {note: "corrected fact"}})`
-- Disproven, redundant, or no longer relevant — remove via `delete_records({table: "entity_notes", id: "N_ID"})`
+- Contains outdated value — replace via `set_note({note_id: "N_ID", text: "corrected fact"})`
+- Disproven, redundant, or no longer relevant — remove via `remove_notes({entity_id: "ID", note_ids: ["N_ID"]})`
 
-Then add genuinely new observations not already captured: `create_records({table: "entity_notes", data: {entity_id: "ID", note: "new fact"}})`
+Then add genuinely new observations not already captured: `add_notes({entity_id: "ID", notes: ["new fact"]})`
 
 ### Contradiction Resolution
 
@@ -50,6 +50,12 @@ Reassess against assessment criteria (from `blueprint/2-assessment-criteria.md`)
 
 ## Adjacent Entity Discovery
 
-While examining any entity, if links to other relevant entities not yet in database are encountered, register them using registration flow from agent prompt. Use current entity URL as `source_url` for provenance.
+While examining any entity, if links to other relevant entities not yet in database are encountered, register them with mode `unclassified` and use current entity URL as `source_url` for provenance:
+
+```
+register_entity({name: "Name", url: "https://...", description: "One sentence", relevance: 0, modes: ["unclassified"], source_url: "https://current-entity-url"})
+```
+
+Valid modes: `example`, `directory`, `context`, `unclassified`. Adjacent discoveries always use `unclassified` — the orchestrator classifies them after the research wave completes via classify-modes agent (`${CLAUDE_PLUGIN_ROOT}/references/classify-modes.md`).
 
 **One-hop limit:** Adjacent discoveries are bare registrations only — do not apply this reconciliation procedure, do not visit their pages, do not follow their links. Capture only what is visible from page already being read. Discovered entity enters database at stage `new` for future processing.
