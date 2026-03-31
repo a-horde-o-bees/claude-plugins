@@ -4,7 +4,8 @@ Structured competitive research and implementation planning. Bootstraps new proj
 
 ## Dependencies
 
-Requires the **ocd** plugin for agent-authoring rules and plugin infrastructure.
+- **ocd** plugin — agent-authoring rules and plugin infrastructure
+- **uv** — Python package manager; installs MCP server dependencies on first session start
 
 ## Setup
 
@@ -15,7 +16,7 @@ Requires the **ocd** plugin for agent-authoring rules and plugin infrastructure.
 /blueprint-init
 ```
 
-Restart Claude session after init to load rules. Run `/ocd-status` to verify both plugins.
+Restart Claude session after init to load rules. On first session with the plugin enabled, a `SessionStart` hook automatically creates a Python virtual environment and installs required packages. Run `/ocd-status` to verify both plugins.
 
 `/blueprint-init` deploys rules and initializes the research database at `blueprint/data/research.db`.
 
@@ -40,7 +41,7 @@ Design phases include refinement loops. Execution phases run sequential agents w
 
 ## Research Database
 
-SQLite database tracks entities, notes, measures, provenance, and structured source data. All operations through `research` — agents never access the database directly.
+SQLite database tracks entities, notes, measures, provenance, and structured source data. All operations through the `blueprint-research` MCP server — agents never access the database directly.
 
 Entity roles:
 - **example** (default) — comparable sites to study

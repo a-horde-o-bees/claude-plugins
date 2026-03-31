@@ -17,6 +17,26 @@ When user asks to "checkpoint" progress:
 3. Marketplace refresh (bash): `claude plugins marketplace update a-horde-o-bees`
 4. Suggest session restart (`/exit` then `claude --continue`) only when `.claude/rules/` files changed; skill and convention changes take effect after marketplace update
 
+## Plugin Reference
+
+When implementing plugin infrastructure (hooks, MCP servers, dependency management, environment variables), check the official Claude Code plugin docs first: https://code.claude.com/docs/en/plugins-reference
+
+This is the primary source for patterns, supported fields, and examples. Fetch the page and review relevant sections before designing new plugin features.
+
+## Python Dependencies in Plugins
+
+Plugins requiring Python packages beyond the standard library use a `SessionStart` hook to install into a persistent venv at `${CLAUDE_PLUGIN_DATA}/venv/`. This is the plugin-native pattern from the official docs.
+
+Required files:
+
+- `requirements.txt` — declares pip dependencies
+- `hooks/hooks.json` — `SessionStart` hook that diffs `requirements.txt` against a cached copy in `${CLAUDE_PLUGIN_DATA}`, creates a venv via `uv venv --seed`, installs via pip, and copies the manifest; skips when unchanged
+- `.mcp.json` — MCP server command points to `${CLAUDE_PLUGIN_DATA}/venv/bin/python3`
+
+Adding a dependency: add the package to `requirements.txt`. The diff detects the change on next session start and reinstalls automatically.
+
+Prerequisite: `uv` must be installed on the user's system.
+
 ## Content Boundaries
 
 - **CLAUDE.md** — project-specific procedures for this repository

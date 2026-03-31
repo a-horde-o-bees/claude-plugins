@@ -1,7 +1,7 @@
 {
   "mcpServers": {
     "blueprint-research": {
-      "command": "python3",
+      "command": "${CLAUDE_PLUGIN_DATA}/venv/bin/python3",
       "args": ["${CLAUDE_PLUGIN_ROOT}/servers/research_db.py"],
       "env": {
         "DB_PATH": "blueprint/data/research.db"
