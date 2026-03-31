@@ -7,7 +7,7 @@ Execution phase — sequential batch agents with rolling analysis and orchestrat
 ### Input
 
 - Populated database from Phase 2 (`blueprint/data/research.db`)
-- `blueprint/3-goals.md` for project goals and priority order
+- `blueprint/2-goals.md` for project goals and priority order
 - `blueprint/4-effectiveness-criteria.md` for evaluating patterns
 - `blueprint/6-domain-knowledge.md` for landscape context
 
@@ -75,7 +75,7 @@ All agents answer all questions from whatever entities they consume:
     - Templated, data-driven output — no project-specific interpretation
 
 11. Compile goal-aligned interpretation into `blueprint/8-interpretation.md`:
-    - Read `blueprint/3-goals.md` — frame every finding through these goals
+    - Read `blueprint/2-goals.md` — frame every finding through these goals
     - Read `blueprint/4-effectiveness-criteria.md` — evaluate patterns against these criteria
     - For each significant finding: what does this mean for the goals? What should we learn? What practices to model?
     - Practices to adopt, organized by effectiveness evidence
@@ -86,7 +86,7 @@ All agents answer all questions from whatever entities they consume:
 ### Post-Analysis Goal Refinement
 
 13. Orchestrator and user review:
-    - Did `blueprint/3-goals.md` produce an interpretation reflecting the project's actual intent?
+    - Did `blueprint/2-goals.md` produce an interpretation reflecting the project's actual intent?
     - Did `blueprint/4-effectiveness-criteria.md` filter for the right pattern qualities?
     - Are there findings mapping to no goal, suggesting a missing goal?
     - Are there goals producing no findings, suggesting scope or criteria misalignment?

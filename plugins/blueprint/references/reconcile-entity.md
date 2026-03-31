@@ -46,7 +46,7 @@ If current description is vague, lists features, or references stale information
 
 ## Relevance
 
-Reassess against assessment criteria (from `blueprint/2-assessment-criteria.md`) with full picture of combined knowledge. If assessment warrants different score, update it. Do not preserve previous score out of deference — latest assessment with most information is authoritative.
+Recount binary criteria met from `blueprint/3-assessment-criteria.md` with full picture of combined knowledge. Each criterion is yes/no — relevance is the total count. If recount produces a different number, update it. Do not preserve previous count out of deference — latest assessment with most information is authoritative.
 
 ## Adjacent Entity Discovery
 

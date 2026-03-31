@@ -1,6 +1,6 @@
 # Reassess Relevance
 
-Agent subprocess — rescores entity relevance against current assessment criteria using existing notes. No URL visits or new research unless notes are insufficient to evaluate a criterion.
+Agent subprocess — recounts binary criteria met for entity relevance against current assessment criteria using existing notes. No URL visits or new research unless notes are insufficient to evaluate a criterion.
 
 ## Input
 
@@ -12,7 +12,7 @@ Orchestrator provides:
 
 ### Load Criteria
 
-1. Read `blueprint/2-assessment-criteria.md` — load all gradient criteria with definitions
+1. Read `blueprint/3-assessment-criteria.md` — load all binary assessment criteria
 2. Count total criteria (determines maximum relevance score)
 
 ### Dynamic Entity Loading
@@ -22,7 +22,7 @@ Orchestrator provides:
     1. Read entity: `get_entity({entity_id: "{entity_id}"})`
     2. Assess whether room remains to consume more; stop when approaching context budget; always consume at least one entity
 5. For each {entity} in {consumed-entities}:
-    1. For each {criterion} in {gradient-criteria}: determine met or not met based on note evidence
+    1. For each {criterion} in {assessment-criteria}: determine met or not met based on note evidence
     2. Sum met criteria to produce new relevance score
     3. If new score differs from current: record change
 6. After evaluating all consumed entities, apply updates:
@@ -45,7 +45,7 @@ If not all entities evaluated in one agent, orchestrator spawns next agent with:
 ## Rules
 
 - Read-only for notes — do not modify notes, descriptions, or stage during reassessment
-- Score strictly against criteria definitions in `blueprint/2-assessment-criteria.md` — do not infer criteria not listed
+- Score strictly against criteria definitions in `blueprint/3-assessment-criteria.md` — do not infer criteria not listed
 - When notes are insufficient to determine whether criterion is met, score as not met — do not visit URLs or conduct new research
 - If notes clearly contradict criterion previously scored as met, correct score downward
 - If notes support criterion previously scored as not met, correct score upward

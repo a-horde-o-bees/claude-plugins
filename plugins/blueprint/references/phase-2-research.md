@@ -7,7 +7,7 @@ Execution phase — sequential agent work with checkpointing.
 ### Input
 
 - Entities sorted by relevance: `list_entities({mode: "example", stage: "new"})`
-- `blueprint/1-scope.md` for scope context, `blueprint/2-assessment-criteria.md` for relevance reassessment
+- `blueprint/1-scope.md` for scope context, `blueprint/3-assessment-criteria.md` for relevance reassessment
 - `blueprint/4-effectiveness-criteria.md` for evaluating patterns, `blueprint/6-domain-knowledge.md` for landscape context
 
 ### Pre-Research

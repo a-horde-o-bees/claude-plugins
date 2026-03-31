@@ -34,14 +34,14 @@ When database contains entities at Phase 1 start (from initialization arguments,
 
 ### Project Infrastructure
 
-10. Write project definition files in `blueprint/`:
-    - `overview.md` — lightweight index pointing to all numbered files with one-line purpose descriptions
-    - `1-scope.md` — parent concept, confirmed in-scope concepts, excluded concepts with brief rationale
-    - `2-assessment-criteria.md` — hardline filters, gradient criteria, relevance guide
-    - `3-goals.md` — goals and priority order from refinement
-    - `4-effectiveness-criteria.md` — criteria for judging pattern and approach effectiveness
-    - `5-constraints.md` — implementation realities (budget, timeline, skills, platform)
-    - `6-domain-knowledge.md` — landscape structure and distilled context research findings
+10. Write project definition files in `blueprint/`, following templates in `${CLAUDE_PLUGIN_ROOT}/templates/`:
+    - `overview.md` from `templates/overview.md`
+    - `1-scope.md` from `templates/1-scope.md`
+    - `2-goals.md` from `templates/2-goals.md`
+    - `3-assessment-criteria.md` from `templates/3-assessment-criteria.md`
+    - `4-effectiveness-criteria.md` from `templates/4-effectiveness-criteria.md`
+    - `5-constraints.md` from `templates/5-constraints.md`
+    - `6-domain-knowledge.md` from `templates/6-domain-knowledge.md`
 11. Create `blueprint/data/` directory
 12. Initialize research database: `init_database()`
 
@@ -87,7 +87,7 @@ Explore domain to discover entities. Two modes:
     1. If entity fails hardline criterion:
         1. Register as rejected with description, notes, and reason (relevance 0, stage `rejected`)
     2. Else:
-        1. Register with relevance assessment, description, modes, and initial notes
+        1. Register with relevance (count of criteria met), description, modes, and initial notes
 24. Observe patterns:
     - What types of structured public data exist for this entity type?
     - What differentiates entities in this space?
@@ -106,7 +106,7 @@ Explore domain to discover entities. Two modes:
     - "Remove source [X] — not relevant"
 28. Execute directed exploration, register new entities
 29. When scope criteria change:
-    1. Spawn reassess-relevance agent (`${CLAUDE_PLUGIN_ROOT}/references/reassess-relevance.md`) to rescore all entities against updated criteria using existing notes
+    1. Spawn reassess-relevance agent (`${CLAUDE_PLUGIN_ROOT}/references/reassess-relevance.md`) to recount criteria met for all entities against updated criteria using existing notes
     2. Apply hardline filters retroactively — check existing entities against new/modified hardline criteria; reject entities that no longer pass
     3. Clear measures — criteria change invalidates prior analysis measures: `clear_all_measures()`
 30. Repeat until user considers landscape adequately mapped and relevance ordering reflects priorities
@@ -176,7 +176,7 @@ Entity modes (database enforces these values via CHECK constraint):
 - `unclassified` — discovered adjacently, pending mode classification
 
 For each entity encountered:
-1. Assess against criteria from `blueprint/2-assessment-criteria.md`
+1. Assess against criteria from `blueprint/3-assessment-criteria.md`
 2. Register with appropriate modes — `register_entity` returns new ID or "Already registered" with existing ID:
     register_entity({name: "Entity Name", url: "https://entity-url.com", source_url: "https://source-url.com", description: "One sentence: what entity is and primary approach", relevance: N, modes: ["example"]})
 3. If new entity:
@@ -190,7 +190,7 @@ For each entity encountered:
         get_entity({entity_id: "ID"})
     2. Apply Entity Reconciliation Procedure to notes, description, and relevance
 
-Relevance guide: read `blueprint/2-assessment-criteria.md` for project-specific scale.
+Relevance: count binary criteria met from `blueprint/3-assessment-criteria.md`. Each criterion is yes/no — relevance is the total count.
 
 Rules:
 - Assess each entity on encounter — do not register stubs for later evaluation
@@ -226,7 +226,7 @@ For batch results (multiple entities per extraction):
 Notes only written for new entities. Already-registered listed in output for reconciliation — read existing notes and apply Entity Reconciliation Procedure.
 
 For individual entities:
-1. Assess against criteria from `blueprint/2-assessment-criteria.md`
+1. Assess against criteria from `blueprint/3-assessment-criteria.md`
 2. Register:
     register_entity({name: "Entity Name", url: "https://entity-url.com", source_url: "https://directory-page-url.com", description: "One sentence: what entity is and primary approach", relevance: N})
 3. If new entity:
@@ -256,7 +256,7 @@ Directory crawl notes — tagged notes on directory entity track method, script,
 
 Write notes in terms that make sense for directory structure. Goal: new agent reading notes for first time can unambiguously understand approach and find resumption point.
 
-Relevance guide: read `blueprint/2-assessment-criteria.md` for project-specific scale.
+Relevance: count binary criteria met from `blueprint/3-assessment-criteria.md`. Each criterion is yes/no — relevance is the total count.
 
 Rules:
 - Assess each entity on encounter — do not register stubs for later evaluation

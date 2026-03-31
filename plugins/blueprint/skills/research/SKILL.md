@@ -31,8 +31,8 @@ Which project definition files agents read at each phase:
 | File | P1 | P2 | P3 | P4 |
 |------|----|----|----|----|
 | `blueprint/1-scope.md` | R | R | — | — |
-| `blueprint/2-assessment-criteria.md` | R | R | — | — |
-| `blueprint/3-goals.md` | — | — | R | R |
+| `blueprint/2-goals.md` | — | — | R | R |
+| `blueprint/3-assessment-criteria.md` | R | R | — | — |
 | `blueprint/4-effectiveness-criteria.md` | — | R | R | — |
 | `blueprint/5-constraints.md` | — | — | — | R |
 | `blueprint/6-domain-knowledge.md` | R | R | R | R |
@@ -104,21 +104,19 @@ After each phase: summary of outputs produced, entities affected, and recommende
 
 ## Project Infrastructure
 
-State detection creates `blueprint/data/state.md` on first run. Phase 1 creates remaining structure:
+State detection creates `blueprint/data/state.md` on first run. Phase 1 creates remaining structure. All output files follow templates in `${CLAUDE_PLUGIN_ROOT}/templates/` — see `templates/overview.md` for the complete deliverable index.
 
 ```
 blueprint/
   data/
-    state.md                — master plan (from template)
-    history.md              — completed strides; read last lines for current position
+    state.md                — phase progress tracker (from templates/blueprint.md)
+    history.md              — sequential stride log with timestamps
     research.db             — SQLite research database
-  overview.md               — index pointing to numbered definition files
-  1-scope.md                — parent concept, in-scope and excluded
-  2-assessment-criteria.md  — scoring rubric (hardline filters, gradient criteria, relevance guide)
-  3-goals.md                — project goals and priority order
-  4-effectiveness-criteria.md — criteria for evaluating patterns
-  5-constraints.md          — implementation realities
-  6-domain-knowledge.md     — landscape structure and distilled findings
+  overview.md               — complete deliverable index (from templates/overview.md)
+  1-scope.md through 6-domain-knowledge.md  — project definition (Phase 1)
+  7-findings.md             — cross-entity analysis (Phase 3)
+  8-interpretation.md       — actionable conclusions (Phase 3)
+  9-blueprint.md            — implementation plan (Phase 4)
   scripts/                  — crawl scripts for directory traversal
 ```
 
@@ -188,7 +186,7 @@ The `blueprint-research` MCP server exposes domain tools grouped by function. Th
 
 ```json
 // Register entity with URL dedup and provenance
-register_entity({name: "Semgrep", url: "https://github.com/semgrep/semgrep", source_url: "https://directory.com", modes: ["context"], relevance: 8})
+register_entity({name: "Semgrep", url: "https://github.com/semgrep/semgrep", source_url: "https://directory.com", modes: ["context"], relevance: 5})
 
 // Batch register entities from a directory source
 register_entities([{name: "Tool A", url: "https://tool-a.dev"}, {name: "Tool B", url: "https://tool-b.dev"}], source_url: "https://directory.com")
@@ -205,8 +203,8 @@ list_entities({stage: "researched", min_relevance: 7})
 // Set entity stage after research complete
 set_stage({entity_id: "e1", stage: "researched"})
 
-// Set relevance score
-set_relevance({entity_id: "e1", relevance: 9})
+// Set relevance (count of criteria met)
+set_relevance({entity_id: "e1", relevance: 5})
 
 // Update a note
 set_note({note_id: "n14", text: "Corrected observation"})
@@ -235,7 +233,7 @@ Unified entity model — everything is an entity (organizations, platforms, prog
 - `id` — prefixed TEXT (e.g., `e7`), stable, never changes
 - `name` — display name
 - `stage` — `new` → `rejected` | `researched` | `merged`; enforced by CHECK constraint
-- `relevance` — integer or NULL; higher = more relevant; scale from `blueprint/2-assessment-criteria.md`; NULL = not yet assessed
+- `relevance` — integer; count of binary assessment criteria met from `blueprint/3-assessment-criteria.md`; higher = more criteria satisfied; 0 = none met or not yet assessed
 - `description` — one-sentence identity statement; notes hold specifics, description never lists features or counts
 - `purpose` — why this entity matters to the research; summarizes relevance outside of notes for intelligent navigation
 

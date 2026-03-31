@@ -18,7 +18,7 @@ An entity may have multiple modes simultaneously (e.g., both `directory` and `ex
 Orchestrator provides:
 - Research database (accessed via MCP tool calls)
 - `blueprint/1-scope.md` for scope context
-- `blueprint/2-assessment-criteria.md` for assessment reference
+- `blueprint/3-assessment-criteria.md` for assessment reference
 
 ## Agent Workflow
 
@@ -51,7 +51,7 @@ Orchestrator provides:
         set_modes({entity_id: "{entity_id}", modes: ["example", "directory"]})
         ```
         `set_modes` replaces all existing modes. Do not include `unclassified` — its removal signals classification is complete.
-    5. If classification reveals the entity fails hardline criteria from `blueprint/2-assessment-criteria.md`:
+    5. If classification reveals the entity fails hardline criteria from `blueprint/3-assessment-criteria.md`:
         ```
         set_stage({entity_id: "{entity_id}", stage: "rejected"})
         add_notes({entity_id: "{entity_id}", notes: ["Rejected: {reason}"]})
