@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(./scripts/run-plugin.sh:*)"
+      "Bash(./scripts/run-plugin.sh:*)",
+      "mcp__plugin_blueprint_blueprint-research__*"
     ]
   },
   "hooks": {

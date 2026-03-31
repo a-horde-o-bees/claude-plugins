@@ -46,6 +46,7 @@ Update plugins after upstream changes:
 
 ```
 /plugin marketplace update a-horde-o-bees
+/reload-plugins
 ```
 
 After updating, check if deployed rules and conventions need updating:
@@ -85,15 +86,14 @@ Develop within a clone that is also the marketplace source. Plugins load via the
 /ocd-push
 ```
 
-Commits and pushes all changes. Then refresh the marketplace cache and restart:
+Commits and pushes all changes. Then refresh the marketplace cache and reload:
 
 ```
 /plugin marketplace update a-horde-o-bees
-/exit
-claude --continue
+/reload-plugins
 ```
 
-Step 3 (`/exit` + restart) only required when `.claude/rules/` files changed. Skill and convention changes take effect after the marketplace update.
+Restart (`/exit` then `claude --continue`) only required when `.claude/rules/` files changed. Skill and convention changes take effect after reload.
 
 #### Plugin-dir (session-only)
 

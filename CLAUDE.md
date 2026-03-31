@@ -15,7 +15,8 @@ When user asks to "checkpoint" progress:
 1. Commit (skill): `/ocd-commit`
 2. Push (skill): `/ocd-push --branch main`
 3. Marketplace refresh (bash): `claude plugins marketplace update a-horde-o-bees`
-4. Suggest session restart (`/exit` then `claude --continue`) only when `.claude/rules/` files changed; skill and convention changes take effect after marketplace update
+4. Reload plugins: `/reload-plugins`
+5. Suggest session restart (`/exit` then `claude --continue`) only when `.claude/rules/` files changed; skill and convention changes take effect after reload
 
 ## Plugin Reference
 
