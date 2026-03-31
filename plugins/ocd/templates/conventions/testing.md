@@ -10,13 +10,12 @@ Deterministic operations get traditional tests. Non-deterministic behavior (agen
 
 ### Output Format Contracts
 
-Stdout is an API contract. Agents parse CLI output mechanically — any change to output structure, field names, ordering, or delimiters is a breaking change even if the data is the same.
+Tool responses are API contracts. Agents parse output mechanically — any change to structure, field names, or response format is a breaking change even if the data is the same.
 
 Test:
 - Structured output matches explicit schema or snapshot
-- Exit codes are semantic and stable (0 = success, nonzero = categorized failure)
-- Error messages include machine-parseable identifiers, not just prose
-- Help text includes all flags, marks required vs optional, enumerates valid values
+- Error responses include machine-parseable identifiers, not just prose
+- Tool descriptions and parameter schemas are complete and accurate
 
 Technique: snapshot/approval testing — capture golden output for representative inputs, diff on every change, review diffs deliberately before approving new snapshots.
 

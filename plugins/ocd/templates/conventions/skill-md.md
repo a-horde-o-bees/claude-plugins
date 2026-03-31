@@ -65,7 +65,7 @@ String substitution variables available in body:
 
 ## Standard Arguments
 
-Reusable argument patterns for skills that accept targets, spawn agents, or scope evaluation. Not all arguments apply to every skill — include only those relevant to skill's domain. Arguments follow Skill Argument Notation defined in agent-authoring rules.
+Reusable argument patterns for skills that accept targets, spawn agents, or scope evaluation. Not all arguments apply to every skill — include only those relevant to skill's domain. Arguments follow Skill Argument Notation defined in Process Flow Notation rules.
 
 | Argument | Role | Description |
 |----------|------|-------------|

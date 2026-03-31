@@ -125,7 +125,7 @@ Cross-package (e.g., skill `_init.py` referencing plugin framework):
 import plugin
 ```
 
-No `sys.path` manipulation in individual scripts. No `# type: ignore` comments. See `decisions/python-import-pattern.md` for full rationale and alternatives evaluated.
+No `sys.path` manipulation in individual scripts. No `# type: ignore` comments.
 
 ## Testing
 
