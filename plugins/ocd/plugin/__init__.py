@@ -290,7 +290,7 @@ def _get_permissions_coverage(plugin_root: Path) -> dict:
 
     Returns {scope: {category: {total, present, missing}}} for each scope.
     """
-    ref_path = plugin_root / "references" / "recommended-permissions.json"
+    ref_path = plugin_root / "templates" / "settings.json"
     if not ref_path.exists():
         return {}
 
@@ -351,7 +351,7 @@ def _merge_permissions(plugin_root: Path, scope: str) -> None:
     Additive only — adds patterns not already present, never removes.
     scope: 'project' or 'user'
     """
-    ref_path = plugin_root / "references" / "recommended-permissions.json"
+    ref_path = plugin_root / "templates" / "settings.json"
     if not ref_path.exists():
         print("  recommended-permissions.json not found")
         return
