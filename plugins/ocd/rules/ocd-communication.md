@@ -2,33 +2,27 @@
 
 When to pause, verify, align, or wait. Interaction triggers between agent and user.
 
+Each trigger follows: gate condition, what to do, decision criteria.
+
 ## Alignment
 
-- Before proposing a workaround that changes what's delivered: **align**, **wait**.
-- Before spawning multiple agents: **align** (include expected agent count and token impact), **wait**. Does not apply to skill-prescribed spawning where the skill author determined the agent count or pattern.
-- Before creating or modifying files: **check** conventions.
-- Before searching for files by purpose or navigating unfamiliar areas: **check** navigator with `describe` or `search`.
-- Before building on assumptions: **check** with minimal calls.
-- Before resuming mid-session skill work: **check** current disk state.
-- Before running integration tests: **wait**.
-- When encountering ambiguous instructions: **align**, **wait**.
-- When encountering multiple valid approaches: **align**, **wait**.
-- When encountering unexpected constraints: **research**, **align**, **wait**.
-- When encountering missing capabilities at any layer: **research**, **align**, **wait**.
-- When encountering plan deviations: **align**, **wait**.
-- When encountering errors that change the approach: **research**, **align**, **wait**.
-- When user asks a question during multi-step work: **wait** — do not continue executing steps until user directs.
-- After all file-modifying agents complete: **review** changes before presenting.
-- When a rule has failed to appropriately trigger its actions: **align**, **wait**.
-- When the user fails to address or acknowledge all questions: **align**, **wait**.
-
-## Actions
-
-- **check** — verify a precondition yourself (run a command, search code, read a file); no user involvement
-- **align** — explain what you see (the conflict, constraint, or gap) and propose options to the user
-- **research** — investigate current solutions before presenting; do not rely on memory or training alone
-- **wait** — do not act until user directs next steps
-- **review** — examine output or changes before presenting to user
+- Before proposing a workaround that changes what's delivered: explain what's missing and present alternative approaches; proceed only after user selects direction.
+- Before spawning multiple agents: present expected agent count and token impact; proceed after user approves. Does not apply to skill-prescribed spawning where the skill author determined the agent count or pattern.
+- Before creating or modifying files: verify applicable conventions match the target files.
+- Before searching for files by purpose or navigating unfamiliar areas: use navigator `describe` or `search` to locate files.
+- Before building on assumptions: verify with minimal tool calls.
+- Before resuming mid-session skill work: verify current disk state matches expected state.
+- Before running integration tests: confirm scope with user before executing.
+- Before acting on ambiguous instructions: surface the ambiguity and present interpretations; proceed after user clarifies.
+- Before choosing between multiple valid approaches: present the approaches with trade-offs; proceed after user selects.
+- Before working around unexpected constraints: research the constraint, explain what it prevents and what alternatives exist; proceed after user directs.
+- Before proposing alternatives for missing capabilities: research existing solutions first, then explain the gap; proceed after user directs.
+- Before deviating from the plan: explain what changed and why the deviation is needed; proceed after user approves.
+- Before changing approach due to errors: research the error cause, explain what failed and propose corrected approach; proceed after user directs.
+- Before continuing after user asks a question during multi-step work: address the user's question and confirm resuming paused operations.
+- After all file-modifying agents complete: review changes before presenting to user.
+- Before continuing when a rule should have triggered but didn't: surface which rule was missed and what should have happened; proceed after user acknowledges.
+- Before proceeding after receiving a response: verify all prior questions were addressed; if unanswered, surface them before continuing.
 
 ## Principled Pushback
 
