@@ -1,0 +1,102 @@
+{
+  "categories": {
+    "core_tools": {
+      "description": "Claude Code built-in tools",
+      "patterns": [
+        "Read",
+        "Glob",
+        "Grep",
+        "Edit",
+        "Write",
+        "WebFetch",
+        "WebSearch",
+        "LSP"
+      ]
+    },
+    "file_operations": {
+      "description": "File and directory management",
+      "patterns": [
+        "Bash(ls:*)",
+        "Bash(pwd)",
+        "Bash(tree:*)",
+        "Bash(mkdir:*)",
+        "Bash(rm:*)",
+        "Bash(rmdir:*)",
+        "Bash(mv:*)",
+        "Bash(cp:*)",
+        "Bash(ln:*)",
+        "Bash(touch:*)",
+        "Bash(stat:*)",
+        "Bash(wc:*)",
+        "Bash(diff:*)",
+        "Bash(mktemp:*)"
+      ]
+    },
+    "text_processing": {
+      "description": "Text search, sort, and filtering",
+      "patterns": [
+        "Bash(cat:*)",
+        "Bash(head:*)",
+        "Bash(tail:*)",
+        "Bash(grep:*)",
+        "Bash(sort:*)",
+        "Bash(uniq:*)",
+        "Bash(tee:*)",
+        "Bash(less:*)",
+        "Bash(xargs:*)",
+        "Bash(find:*)",
+        "Bash(sed:*)",
+        "Bash(awk:*)"
+      ]
+    },
+    "git": {
+      "description": "Version control",
+      "patterns": [
+        "Bash(git:*)"
+      ]
+    },
+    "python": {
+      "description": "Python development tools",
+      "patterns": [
+        "Bash(python3:*)",
+        "Bash(.venv/bin/*)",
+        "Bash(uv sync:*)",
+        "Bash(uv add:*)",
+        "Bash(uv remove:*)",
+        "Bash(uv lock:*)",
+        "Bash(uv pip:*)",
+        "Bash(uvx:*)",
+        "Bash(pip:*)",
+        "Bash(pip3:*)",
+        "Bash(pyright:*)"
+      ]
+    },
+    "node": {
+      "description": "Node.js development tools",
+      "patterns": [
+        "Bash(node:*)",
+        "Bash(npm:*)",
+        "Bash(npx:*)"
+      ]
+    },
+    "claude": {
+      "description": "Claude Code CLI management",
+      "patterns": [
+        "Bash(claude mcp:*)",
+        "Bash(claude plugins:*)",
+        "Bash(.claude/*)"
+      ]
+    },
+    "system": {
+      "description": "System utilities (optional — environment-specific)",
+      "patterns": [
+        "Bash(curl:*)",
+        "Bash(wget:*)",
+        "Bash(which:*)",
+        "Bash(env:*)",
+        "Bash(echo:*)",
+        "Bash(test:*)"
+      ]
+    }
+  }
+}

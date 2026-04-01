@@ -24,6 +24,10 @@ def main() -> None:
         "--force", action="store_true",
         help="Overwrite existing rules and conventions with plugin defaults",
     )
+    init_p.add_argument(
+        "--permissions", action="store_true",
+        help="Merge recommended auto-approve patterns into settings.json",
+    )
 
     commands.add_parser(
         "status",
@@ -33,7 +37,7 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.command == "init":
-        run_init(force=args.force)
+        run_init(force=args.force, permissions=args.permissions)
     elif args.command == "status":
         run_status()
 

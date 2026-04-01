@@ -285,7 +285,124 @@ def _discover_skills(plugin_root: Path) -> list[tuple[str, bool]]:
 _META_SKILLS = {"init", "status"}
 
 
-def run_init(force: bool = False) -> None:
+def _get_permissions_coverage(plugin_root: Path) -> dict:
+    """Check how many recommended patterns are present in project and user settings.
+
+    Returns {scope: {category: {total, present, missing}}} for each scope.
+    """
+    ref_path = plugin_root / "references" / "recommended-permissions.json"
+    if not ref_path.exists():
+        return {}
+
+    ref = read_json(ref_path)
+    categories = ref.get("categories", {})
+
+    result = {}
+    for scope, settings_path in [
+        ("project", get_project_dir() / ".claude" / "settings.json"),
+        ("user", get_claude_home() / "settings.json"),
+    ]:
+        settings = read_json(settings_path)
+        existing = set(settings.get("permissions", {}).get("allow", []))
+
+        scope_result = {}
+        for cat_name, cat in categories.items():
+            patterns = cat.get("patterns", [])
+            present = [p for p in patterns if p in existing]
+            scope_result[cat_name] = {
+                "description": cat.get("description", cat_name),
+                "total": len(patterns),
+                "present": len(present),
+            }
+        result[scope] = scope_result
+
+    return result
+
+
+def _show_permissions_status(plugin_root: Path) -> None:
+    """Print permissions coverage for status display."""
+    coverage = _get_permissions_coverage(plugin_root)
+    if not coverage:
+        return
+
+    print("Permissions")
+    for scope, categories in coverage.items():
+        total_all = sum(c["total"] for c in categories.values())
+        present_all = sum(c["present"] for c in categories.values())
+        if present_all == total_all:
+            print(f"  {scope}: {present_all}/{total_all} recommended patterns")
+        else:
+            missing_cats = [
+                c["description"] for c in categories.values()
+                if c["present"] < c["total"]
+            ]
+            print(f"  {scope}: {present_all}/{total_all} recommended patterns — missing: {', '.join(missing_cats)}")
+
+    if any(
+        sum(c["present"] for c in cats.values()) < sum(c["total"] for c in cats.values())
+        for cats in coverage.values()
+    ):
+        print(f"  action needed: /ocd-init --permissions")
+
+
+def _merge_permissions(plugin_root: Path, scope: str) -> None:
+    """Merge recommended auto-approve patterns into settings.json.
+
+    Additive only — adds patterns not already present, never removes.
+    scope: 'project' or 'user'
+    """
+    ref_path = plugin_root / "references" / "recommended-permissions.json"
+    if not ref_path.exists():
+        print("  recommended-permissions.json not found")
+        return
+
+    ref = read_json(ref_path)
+    categories = ref.get("categories", {})
+
+    if scope == "project":
+        settings_path = get_project_dir() / ".claude" / "settings.json"
+    else:
+        settings_path = get_claude_home() / "settings.json"
+
+    settings = read_json(settings_path)
+    existing = set(settings.get("permissions", {}).get("allow", []))
+
+    added = []
+    for cat_name, cat in categories.items():
+        desc = cat.get("description", cat_name)
+        cat_added = []
+        for pattern in cat.get("patterns", []):
+            if pattern not in existing:
+                cat_added.append(pattern)
+        if cat_added:
+            added.append((desc, cat_added))
+
+    if not added:
+        print(f"  {scope} settings — all recommended patterns already present")
+        return
+
+    # Merge
+    if "permissions" not in settings:
+        settings["permissions"] = {}
+    if "allow" not in settings["permissions"]:
+        settings["permissions"]["allow"] = []
+
+    total = 0
+    for desc, patterns in added:
+        settings["permissions"]["allow"].extend(patterns)
+        total += len(patterns)
+
+    settings_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(settings_path, "w") as f:
+        json.dump(settings, f, indent=2)
+        f.write("\n")
+
+    print(f"  {scope} settings — added {total} patterns:")
+    for desc, patterns in added:
+        print(f"    {desc}: {len(patterns)} patterns")
+
+
+def run_init(force: bool = False, permissions: bool = False) -> None:
     """Generic init: deploy rules, call skill init hooks. Prints unified output."""
     plugin_root = get_plugin_root()
     project_dir = get_project_dir()
@@ -317,6 +434,13 @@ def run_init(force: bool = False) -> None:
         if has_init or skill_name in _META_SKILLS:
             continue
         print(format_bare_skill(plugin_name, skill_name))
+
+    # Permissions
+    if permissions:
+        print()
+        print("Permissions")
+        _merge_permissions(plugin_root, "project")
+        _merge_permissions(plugin_root, "user")
 
     # Footer
     rules_changed = any(r["before"] != r["after"] for r in rules)
@@ -367,8 +491,9 @@ def run_status() -> None:
             continue
         print(format_bare_skill(plugin_name, skill_name))
 
-
-
+    # Permissions status
+    print()
+    _show_permissions_status(plugin_root)
 
 
 
