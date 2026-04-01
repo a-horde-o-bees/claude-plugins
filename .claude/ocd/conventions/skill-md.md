@@ -19,7 +19,7 @@ Fields:
 |-------|---------|-------------|
 | `name` | Directory name | Slash command name. Lowercase letters, numbers, hyphens only (max 64 characters). Plugin skills use plugin-name prefix (e.g., `ocd-navigator` not `navigator`) so plugin name surfaces during search. |
 | `description` | First markdown paragraph | Claude uses this to decide when skill is relevant. Loaded into context at metadata level before full body. |
-| `argument-hint` | None | Autocomplete hint shown after `/command` (e.g., `[issue-number]`, `[filename]`). For skills with argument-type routing, use pipe-separated format: `[type-a \| type-b \| type-c]` |
+| `argument-hint` | None | Autocomplete hint shown after `/command`. Format follows Skill Argument Notation in Process Flow Notation rules. |
 | `disable-model-invocation` | `false` | Prevents Claude from auto-loading skill |
 | `user-invocable` | `true` | Set `false` to hide from `/` menu |
 | `allowed-tools` | None | Tools allowed without permission prompts. Supports wildcards (e.g., `Bash(git *)`) |

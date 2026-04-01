@@ -38,7 +38,7 @@ Skills with SQLite databases report status through a standard state machine. Sta
 Compare expected tables against actual tables using subset check — expected tables must all be present. Additional tables are not an error.
 
 ```python
-expected_tables = {"entities", "entity_urls", "url_provenance"}
+expected_tables = {"records", "record_details", "record_tags"}
 actual_tables = {row[0] for row in conn.execute(
     "SELECT name FROM sqlite_master WHERE type='table'",
 ).fetchall()}

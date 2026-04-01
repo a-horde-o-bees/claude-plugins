@@ -4,6 +4,8 @@ Structured programming for agent workflows. Indentation scopes blocks. Required 
 
 ## Execution Model
 
+PFN constructs map to familiar programming concepts:
+
 | Concept | PFN Syntax | Python Analogy |
 |---------|------------|----------------|
 | Sequential | Numbered steps | Lines of code |

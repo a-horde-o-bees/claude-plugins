@@ -56,7 +56,7 @@ Technique: define invariant as predicate, generate random valid inputs, assert p
 
 ### Deterministic Skeleton
 
-Separate deterministic skeleton from non-deterministic behavior. Test skeleton with traditional unit tests — highest regression prevention per line of test code.
+Separate deterministic skeleton from non-deterministic behavior. Test skeleton — highest regression prevention per line of test code.
 
 Test:
 - Resolution priority ordering (which source wins when multiple match)
@@ -64,6 +64,8 @@ Test:
 - Command routing (which operations get approved, denied, or blocked)
 - Settings evaluation (how configuration is interpreted)
 - Dependency ordering (topological sort correctness)
+
+Technique: traditional unit tests — isolate each deterministic function, verify with explicit inputs and expected outputs.
 
 ### Security Boundaries
 

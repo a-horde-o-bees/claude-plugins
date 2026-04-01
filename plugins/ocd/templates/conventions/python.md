@@ -1,5 +1,7 @@
 # Python Conventions
 
+Code style, module structure, and import patterns for Python files in this project.
+
 ## Code Style
 
 ### Typing
@@ -49,8 +51,7 @@ Use `pathlib.Path` throughout:
 - Use `/` operator for path construction, not string concatenation or `os.path.join()`
 - Use `Path` methods (`resolve()`, `expanduser()`, `is_absolute()`, `parents`) over `os.path` equivalents
 - Exception: pattern-matching interfaces (glob patterns, regex on paths) operate on `str` representations since they match text, not filesystem objects
-
-When user input is interpolated into file paths, validate containment with `Path.is_relative_to()` to prevent path traversal.
+- When user input is interpolated into file paths, validate containment with `Path.is_relative_to()` to prevent path traversal
 
 ### Error Handling
 
@@ -77,13 +78,10 @@ skill-name/
 
 ### Standard Internal Module Types
 
-`_constants.py` — shared configuration values (thresholds, ordering lists, magic numbers) used across module files. Create when constants are shared between parent module and CLI or between multiple internal modules.
-
-`_helpers.py` — pure utility functions with no dependency on module state. Functions take data in and return data out. Create when utility functions are shared across multiple files in the package.
-
-`_init.py` — initialization and status logic. Contains `init()` for infrastructure setup and `status()` for health checks. CLI exposes these as `init` and `status` subcommands. Standard for any skill that requires infrastructure (database, deployed files, configuration).
-
-`_{domain}.py` — focused on single functional domain. Named for what it does (`_parser.py`, `_storage.py`, `_formatter.py`). Create when a functional domain within a module has clear boundaries and its functions are primarily called by each other or by the parent facade.
+- `_constants.py` — shared configuration values (thresholds, ordering lists, magic numbers) used across module files; create when constants are shared between parent module and CLI or between multiple internal modules
+- `_helpers.py` — pure utility functions with no dependency on module state; functions take data in and return data out; create when utility functions are shared across multiple files in the package
+- `_init.py` — initialization and status logic; contains `init()` for infrastructure setup and `status()` for health checks; CLI exposes these as `init` and `status` subcommands; standard for any skill that requires infrastructure (database, deployed files, configuration)
+- `_{domain}.py` — focused on single functional domain; named for what it does (`_parser.py`, `_storage.py`, `_formatter.py`); create when a functional domain within a module has clear boundaries and its functions are primarily called by each other or by the parent facade
 
 ### Facade Role
 
@@ -125,7 +123,8 @@ Cross-package (e.g., skill `_init.py` referencing plugin framework):
 import plugin
 ```
 
-No `sys.path` manipulation in individual scripts. No `# type: ignore` comments.
+- No `sys.path` manipulation in individual scripts
+- No `# type: ignore` comments
 
 ## Testing
 

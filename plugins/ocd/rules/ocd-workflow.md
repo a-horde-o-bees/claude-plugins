@@ -13,7 +13,6 @@ Working directory must remain project root for the entire session. Use absolute 
 ## Agents
 
 - Minimize agent count — each agent independently loads context and rediscovers project; default to single agent processing tasks sequentially within one context
-- Agents inherit tools and permissions from settings.json
 
 ## Testing
 
@@ -51,8 +50,7 @@ Pass all target file paths in a single call. If output is non-empty, read and fo
 All packages (skills, plugin infrastructure) use standard Python entry points:
 - `__main__.py` — agent-facing CLI; invoked via `python3 run.py <package> <command>`
 - `__init__.py` — facade; public interface that `__main__.py` imports via `from . import *`
-
-Hook scripts are standalone modules invoked individually by hooks.json — no facade or `__main__.py`.
+- Hook scripts are standalone modules invoked individually by hooks.json — no facade or `__main__.py`
 
 ## Interpreter
 
