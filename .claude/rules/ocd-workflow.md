@@ -19,6 +19,7 @@ Working directory must remain project root for the entire session. Use absolute 
 
 - Run only tests directly affected by current changes, scoped to narrowest relevant test file
 - Run broader suites only when explicitly requested
+- Exception: run full suite after structural changes (moves, renames, refactors) and before checkpoints — broken imports and cascading failures won't surface in narrow tests
 
 ## Decisions
 
