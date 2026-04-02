@@ -84,7 +84,7 @@ Database preserved. New entities accumulate during scoping; Phase 2 processes on
 1. Mark {active-phase} status `[-]` in `blueprint/data/state.md`
 2. If {active-phase} is 3 or 4:
     1. Check for unclassified entities: `get_unclassified()`
-    2. If count > 0: propose spawning classify-modes agent (`${CLAUDE_PLUGIN_ROOT}/references/classify-modes.md`) before proceeding; wait for user confirmation
+    2. If count > 0: propose spawning assess-entity agent (`${CLAUDE_PLUGIN_ROOT}/references/assess-entity.md`) before proceeding; wait for user confirmation
 3. Read `${CLAUDE_PLUGIN_ROOT}/references/phase-{active-phase}-{name}.md`
 4. Present what current phase will do to user
 5. Execute phase per reference file instructions:
@@ -173,13 +173,26 @@ The `blueprint-research` MCP server exposes domain tools grouped by function. Th
 | `get_measure_summary` | (none) | Summary of measures across entities |
 | `find_duplicates` | (none) | Detect potential duplicate entities by URL or name similarity |
 
+#### Criteria
+
+| Tool | Parameters | Description |
+|------|-----------|-------------|
+| `set_criteria` | `criteria` (array of {type, name, gate}) | Replace ALL criteria definitions; cascade deletes old links |
+| `add_criterion` | `type`, `name`, `gate` | Add single criterion definition |
+| `remove_criterion` | `criterion_id` | Remove criterion and cascade-delete its note links |
+| `get_criteria` | (none) | List all criteria with type, name, gate |
+| `link_criterion_note` | `criterion_id`, `note_id`, `quality` | Link criterion to note with quality (pass/fail) |
+| `unlink_criterion_note` | `criterion_id`, `note_id` | Remove specific criterion-note link |
+| `clear_criterion_links` | `criterion_id` | Remove all note links for a criterion |
+| `get_assessment` | `entity_id` | Computed per-entity: criterion quality, hardline result, relevancy count |
+| `compute_relevance` | `entity_id` | Recompute cached relevance from criterion-note links |
+
 #### Schema, Merge, and Query
 
 | Tool | Parameters | Description |
 |------|-----------|-------------|
 | `describe_schema` | `table?` | Schema discovery — tables, columns, types, FK relationships |
 | `merge_entities` | `entity_ids` (array) | Merge entities into lowest-ID survivor; preserves all related data |
-| `query` | `sql`, `params?` | Read-only SQL (SELECT only enforced); use only when no domain tool covers the need |
 | `init_database` | (none) | Initialize database schema; idempotent |
 
 #### Examples
@@ -224,7 +237,7 @@ query({sql: "SELECT e.name, COUNT(n.id) as note_count FROM entities e LEFT JOIN 
 
 ### ID Convention
 
-Single-letter prefixes: `e` (entity), `n` (note). IDs are stored, displayed, and accepted identically — `e7` in output is `e7` in input.
+Single-letter prefixes: `e` (entity), `n` (note), `c` (criterion). IDs are stored, displayed, and accepted identically — `e7` in output is `e7` in input.
 
 ### Data Model
 
@@ -242,11 +255,15 @@ Unified entity model — everything is an entity (organizations, platforms, prog
 - `example` — comparable tool, project, or system to study; receives deep research in Phase 2
 - `directory` — crawlable listing that yields other entities; receives directory crawl agents in Phase 1
 - `context` — knowledge, advice, or data source; receives context research in Phase 1
-- `unclassified` — marker indicating classification pass needed; coexists with other modes; removed by classify-modes agent (`${CLAUDE_PLUGIN_ROOT}/references/classify-modes.md`)
+- `unclassified` — marker indicating assessment pass needed; coexists with other modes; removed by assess-entity agent (`${CLAUDE_PLUGIN_ROOT}/references/assess-entity.md`)
 
 If an entity has two modes, it needs two different kinds of agent work — crawl it AND deep-research it. These are separate activities that happen in different phases.
 
 **Notes**: atomic, self-explanatory facts. Primary knowledge store. Begin accumulating from first contact — not deferred to deep research. Deep research produces comprehensive notes; discovery produces initial notes from whatever information is consumed.
+
+**Criteria** (`criteria` table): assessment definitions loaded from `blueprint/3-assessment-criteria.md`. Two types: `hardline` (reject on fail) and `relevancy` (count toward relevance score). Each criterion has a `gate` — an explicit pass/fail description with concrete thresholds. Populated via `set_criteria()` during Phase 1 infrastructure setup.
+
+**Criteria-Note Links** (`criteria_notes` junction): many-to-many between criteria and entity_notes with quality (`pass`/`fail`). Links are the evidence trail — trace any relevance score to specific notes. Resolution: any "pass" link for a criterion-entity pair means passed (supersedes fail). Only "fail" links means failed. No links means not assessed. ON DELETE CASCADE from both criteria and entity_notes.
 
 **Measures**: universal key/value pairs produced by analysis (Phase 3). Not produced during research. Measures are cleared at the point of change — when assessment criteria or effectiveness criteria are modified, the modifying workflow step clears measures immediately. Adding new entities does not invalidate existing measures.
 

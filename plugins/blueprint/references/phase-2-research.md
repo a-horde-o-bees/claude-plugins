@@ -27,7 +27,7 @@ Research proceeds in waves by relevance tier. After each wave, orchestrator and 
     1. Identify entities at this relevance level with stage `new`
     2. For each {entity} in {tier}: dispatch Research Loop
     3. After wave completes: review findings, update `blueprint/6-domain-knowledge.md` with new platforms, tools, models observed; document existence only — no frequency analysis per domain knowledge guard
-    4. If unclassified entities exist (adjacent discoveries): propose spawning classify-modes agent (`${CLAUDE_PLUGIN_ROOT}/references/classify-modes.md`); wait for user confirmation
+    4. If unclassified entities exist (adjacent discoveries): propose spawning assess-entity agent (`${CLAUDE_PLUGIN_ROOT}/references/assess-entity.md`); wait for user confirmation
     5. User decides whether to continue to next tier or proceed to Phase 3
 
 ### Research Loop

@@ -44,6 +44,11 @@ When database contains entities at Phase 1 start (from initialization arguments,
     - `6-domain-knowledge.md` from `templates/6-domain-knowledge.md`
 11. Create `blueprint/data/` directory
 12. Initialize research database: `init_database()`
+13. Populate criteria in database: `set_criteria([{type, name, gate}, ...])`
+    - Read criteria from `blueprint/3-assessment-criteria.md`
+    - Each hardline criterion must define a concrete pass/fail gate with no judgment required
+    - Each relevancy criterion must include thresholds or enumerated conditions (e.g., ">=50 GitHub stars OR >=10 forks OR active community channel")
+    - Review criteria and flag any that require agent judgment rather than evaluation — rewrite until all are deterministic
 
 ### Domain Knowledge Development
 
@@ -94,7 +99,7 @@ Explore domain to discover entities. Two modes:
     - Which entities address core scope concerns?
 25. Present accumulated entities and observations to user
 26. Update `blueprint/6-domain-knowledge.md` — distill landscape exploration findings into domain knowledge; present changes to user before writing
-27. If unclassified entities exist: propose spawning classify-modes agent (`${CLAUDE_PLUGIN_ROOT}/references/classify-modes.md`); wait for user confirmation
+27. If unclassified entities exist: propose spawning assess-entity agent (`${CLAUDE_PLUGIN_ROOT}/references/assess-entity.md`); wait for user confirmation
 
 ### Scope Refinement and Relevance Adjustment
 
@@ -106,7 +111,7 @@ Explore domain to discover entities. Two modes:
     - "Remove source [X] — not relevant"
 28. Execute directed exploration, register new entities
 29. When scope criteria change:
-    1. Spawn reassess-relevance agent (`${CLAUDE_PLUGIN_ROOT}/references/reassess-relevance.md`) to recount criteria met for all entities against updated criteria using existing notes
+    1. Spawn assess-entity agent (`${CLAUDE_PLUGIN_ROOT}/references/assess-entity.md`) with scope: all researched entities; reassesses criteria against updated definitions
     2. Apply hardline filters retroactively — check existing entities against new/modified hardline criteria; reject entities that no longer pass
     3. Clear measures — criteria change invalidates prior analysis measures: `clear_all_measures()`
 30. Repeat until user considers landscape adequately mapped and relevance ordering reflects priorities
@@ -276,7 +281,7 @@ Interaction modes determine what kind of agent work an entity receives. Stored i
 - `example` (default) — comparable sites to study and emulate; deep researched in Phase 2
 - `directory` — crawlable listings that yield examples (member directories, curated lists); crawled in Phase 1
 - `context` — knowledge/advice sources informing project (guides, data, advice); researched for domain knowledge in Phase 1
-- `unclassified` — marker indicating classification pass needed; coexists with other modes; removed by classify-modes agent
+- `unclassified` — marker indicating assessment pass needed; coexists with other modes; removed by assess-entity agent
 
 If an entity has two modes, it needs two different kinds of agent work. All modes share the same entity table, notes, URLs, and provenance.
 

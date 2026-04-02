@@ -38,6 +38,9 @@ def db(tmp_path):
         "get_entity", "list_entities", "get_research_queue",
         "get_unclassified", "find_duplicates", "get_dashboard",
         "get_measure_summary",
+        "set_criteria", "add_criterion", "remove_criterion", "get_criteria",
+        "link_criterion_note", "unlink_criterion_note", "clear_criterion_links",
+        "get_assessment", "compute_relevance",
         "init_database", "describe_schema",
     ]:
         tools[name] = getattr(srv, name)

@@ -79,6 +79,21 @@ CREATE TABLE IF NOT EXISTS url_provenance (
     entity_id TEXT NOT NULL REFERENCES entities(id),
     PRIMARY KEY (source_url, entity_id)
 );
+
+CREATE TABLE IF NOT EXISTS criteria (
+    id TEXT PRIMARY KEY,
+    type TEXT NOT NULL CHECK(type IN ('hardline', 'relevancy')),
+    name TEXT NOT NULL,
+    gate TEXT NOT NULL,
+    last_modified TEXT
+);
+
+CREATE TABLE IF NOT EXISTS criteria_notes (
+    criterion_id TEXT NOT NULL REFERENCES criteria(id) ON DELETE CASCADE,
+    note_id TEXT NOT NULL REFERENCES entity_notes(id) ON DELETE CASCADE,
+    quality TEXT NOT NULL CHECK(quality IN ('pass', 'fail')),
+    PRIMARY KEY (criterion_id, note_id)
+);
 """
 
 

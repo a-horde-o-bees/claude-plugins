@@ -25,6 +25,7 @@ from ._notes import *  # noqa: F401,F403
 from ._provenance import *  # noqa: F401,F403
 from ._search import *  # noqa: F401,F403
 from ._source_data import *  # noqa: F401,F403
+from ._criteria import *  # noqa: F401,F403
 
 logger = logging.getLogger(__name__)
 
