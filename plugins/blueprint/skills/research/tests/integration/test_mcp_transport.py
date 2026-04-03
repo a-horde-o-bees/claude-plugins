@@ -36,6 +36,11 @@ EXPECTED_TOOLS = sorted([
     "get_entity", "list_entities",
     "get_research_queue", "get_unclassified",
     "find_duplicates", "get_dashboard", "get_measure_summary",
+    "set_domains", "add_domain", "remove_domain", "get_domains",
+    "link_domain_criterion", "unlink_domain_criterion",
+    "set_goals", "add_goal", "remove_goal", "get_goals",
+    "link_goal_domain", "unlink_goal_domain",
+    "get_coverage", "get_criteria_effectiveness",
     "init_database", "describe_schema",
 ])
 

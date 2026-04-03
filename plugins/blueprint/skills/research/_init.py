@@ -35,7 +35,7 @@ def _status_extra(project_dir: Path) -> list[dict]:
     try:
         conn = db.get_connection(str(path))
 
-        expected_tables = {"entities", "entity_urls", "url_provenance", "entity_notes", "entity_measures", "entity_source_data", "entity_modes", "criteria", "criteria_notes"}
+        expected_tables = {"entities", "entity_urls", "url_provenance", "entity_notes", "entity_measures", "entity_source_data", "entity_modes", "criteria", "criteria_notes", "domains", "goals", "goal_domains", "domain_criteria"}
         actual_tables = {row[0] for row in conn.execute(
             "SELECT name FROM sqlite_master WHERE type='table'",
         ).fetchall()}

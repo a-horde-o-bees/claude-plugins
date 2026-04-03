@@ -42,6 +42,11 @@ def db(tmp_path):
         "link_criterion_note", "unlink_criterion_note", "clear_criterion_links",
         "get_assessment", "compute_relevance",
         "init_database", "describe_schema",
+        "set_domains", "add_domain", "remove_domain", "get_domains",
+        "link_domain_criterion", "unlink_domain_criterion",
+        "set_goals", "add_goal", "remove_goal", "get_goals",
+        "link_goal_domain", "unlink_goal_domain",
+        "get_coverage", "get_criteria_effectiveness",
     ]:
         tools[name] = getattr(srv, name)
 
