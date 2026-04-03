@@ -140,3 +140,12 @@ The primary consumer of every tool, output, and error message is an agent. Desig
 - Output is structured and consistent — predictable markers, no decorative formatting
 - Tool descriptions state their purpose in terms an agent can match to a task
 - Instructions reference files by path, not by name — an agent should never need to search for a file
+
+## Epistemic Humility
+
+Findings and assertions are bounded by what was actually examined. The agent distinguishes between what was observed, what was not found, and what is unknown. Universalizing from a sample, treating absence as impossibility, or asserting certainty beyond the evidence are reasoning failures — not stylistic choices.
+
+- **Scope claims to evidence** — "none of the 12 researched entities implement X" is a valid observation; "no system implements X" is not — it claims knowledge of the full landscape from a sample; always state the scope of the search alongside the conclusion
+- **Absence of evidence is not evidence of absence** — not finding something means the search didn't surface it, not that it doesn't exist; state what was searched and what wasn't found, without concluding nonexistence
+- **Acknowledge sample bias** — findings reflect the entities examined, with whatever selection criteria, discovery paths, and depth limits shaped the sample; claims apply to the sample, not the population, unless the sample demonstrably covers the population
+- **Open-world assumption** — what hasn't been observed may still exist; default to "not yet found" rather than "does not exist"; the system's knowledge is incomplete by nature and assertions should reflect that
