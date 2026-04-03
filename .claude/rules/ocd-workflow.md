@@ -20,35 +20,6 @@ Working directory must remain project root for the entire session. Use absolute 
 - Run broader suites only when explicitly requested
 - Exception: run full suite after structural changes (moves, renames, refactors) and before checkpoints — broken imports and cascading failures won't surface in narrow tests
 
-## System Documentation
-
-Every system maintains at its root:
-
-- `README.md` — user/consumer facing: what it does, how to install, configure, use
-- `architecture.md` — system facing: layers, components, relationships, design patterns, key implementation details
-
-A system is any structural unit with its own entry point or public interface — a plugin, a library, a service, a standalone package. The agent identifies system boundaries from project structure: own directory with entry points, own package manifest, or own deployment artifact.
-
-`decisions.md` lives at the project root (not per-system) with detail files in `decisions/`. Decisions are preventative — they record non-obvious choices to prevent backtracking.
-
-Before modifying a system, check for its architecture reference. After significant structural changes (new tables, new layers, changed tool interfaces), update the architecture reference.
-
-## Decisions
-
-`decisions.md` at project root is the index — one line per decision, implicit timeline by insertion order. `decisions/` holds detail files when reasoning is worth preserving.
-
-- Simple: `- **[Title]** — one-line summary`
-- With detail: `- **[Title]** — one-line summary → [detail](decisions/file.md)`
-
-Record when alternatives were considered and rejected, or when reasoning is not derivable from code or conventions. Detail files follow:
-
-- **Context** — what problem or question prompted the decision
-- **Options Considered** — alternatives evaluated with trade-offs
-- **Decision** — what was chosen and why
-- **Consequences** — what this enables, constrains, and how to mitigate risks
-
-Do not record implementation details, choices dictated by convention, or standard patterns obvious from reading code. Update existing entries when direction changes. Remove entries and detail files when the decision is no longer relevant.
-
 ## Conventions
 
 Check conventions before creating or modifying files:

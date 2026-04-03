@@ -141,68 +141,10 @@ Notes:
 
 ## Architecture
 
-### Plugin structure
+See [architecture.md](architecture.md) for marketplace structure, shared infrastructure, and how plugins relate. Each plugin documents its own internals:
 
-```
-<plugin>/
-  .claude-plugin/plugin.json           # Plugin manifest
-  hooks/
-    hooks.json                          # Hook registrations (SessionStart, PreToolUse, etc.)
-  commands/                             # Slash commands (e.g., /ocd-init)
-  scripts/                              # Hook implementations and internal scripts
-  references/                           # Reference data (manifests, configs)
-  rules/                                # Convention templates (deployed to .claude/rules/)
-  skills/
-    <skill>/
-      SKILL.md                          # Skill definition
-      scripts/                          # Skill tool implementation
-      references/                       # Skill-specific guidance
-  templates/                            # Templates deployed to user projects
-  tests/                                # Plugin-level tests
-```
-
-### Design principles
-
-**Deterministic operations in scripts, not agent judgment.** File copying, database initialization, permission checking — handled by scripts called via Bash. Skills contain only non-deterministic parts: judgment calls, context-dependent decisions, natural language generation.
-
-**Opt-in convention delivery via `.claude/rules/`.** Rules deploy to the standard auto-loading directory. Users explicitly run init to adopt conventions. Without `--force`, existing files are preserved — init reports `Outdated` when deployed files differ from plugin templates.
-
-**Status command for user awareness.** `/ocd-status` displays plugin version, init status, and available updates on demand. Informational only — no automated updates or network calls. Agent discoverability comes from skill list entries.
-
-**Plugin data lives in `.claude/<plugin>/`.** Files that support plugin operation (databases, caches, conventions) are stored under `.claude/<plugin>/` in the project directory, not in the user's project tree. Rule files deploy to `.claude/rules/` per the standard convention.
-
-**Agent-facing tools are first-class interfaces.** Packages expose CLIs via `__main__.py` following agent-facing design conventions: long-form flags, agent-oriented help text, structured output with parseable markers, corrective error messages.
-
-**Hook scripts are standalone modules.** Scripts invoked by hooks.json are individual modules in `hooks/` — no facade or shared entry point.
-
-### Naming conventions
-
-**Rule files deployed to `.claude/rules/`** use a plugin-name prefix for namespace isolation (e.g., `ocd-agent-authoring.md`). Prevents collision with other plugins or user files.
-
-**Supporting files deployed to projects** live under `.claude/<plugin>/`, with skill-specific files under `.claude/<plugin>/<skill>/`. Directory nesting provides namespace isolation — no prefix needed.
-
-**Plugin-internal files** do not use the prefix — already namespaced by living inside the plugin directory.
-
-**Commands and skills** use the plugin-name prefix in their frontmatter `name` field so the plugin name surfaces all commands during search.
-
-**Packages** (skills, plugin infrastructure) use `__init__.py` facade and `__main__.py` CLI. Hook scripts are standalone modules.
-
-### Convention delivery model
-
-```
-Plugin source              Init copies to              Auto-loaded by Claude
-  <plugin>/rules/*.md  -->  .claude/rules/<prefix>-*.md  -->  Every session
-```
-
-Rules have CLAUDE.md-level strength once deployed. The plugin is source of truth for convention content; deployed files are copies users can customize.
-
-### Navigator design decisions
-
-**No dedicated navigator agent.** Agent handoff destroys traversal context. Navigation stays inline with the calling agent.
-
-**CLI `--help` as documentation.** Rule file teaches agents the CLI exists. Agents call `--help` when they need usage details. Help text arrives as a tool result (compactable) rather than skill content (persistent in context).
-
-**Skill is for maintenance only.** The skill handles the scan/describe workflow. Exploration during development tasks uses the CLI directly.
+- [ocd architecture](plugins/ocd/architecture.md) — hooks, rules, navigator, conventions engine
+- [blueprint architecture](plugins/blueprint/architecture.md) — MCP server, research database, entity lifecycle
 
 ## Versioning
 
