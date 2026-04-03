@@ -50,7 +50,9 @@ Recount binary criteria met from `blueprint/3-assessment-criteria.md` with full 
 
 ## Adjacent Entity Discovery
 
-While examining any entity, if links to other relevant entities not yet in database are encountered, register them with mode `unclassified` and use current entity URL as `source_url` for provenance:
+While examining any entity, if links to other relevant entities not yet in database are encountered, register them with mode `unclassified` and use current entity URL as `source_url` for provenance.
+
+Only register entities that could plausibly be research subjects in this scope. Do not register pure dependencies — libraries, frameworks, APIs, or tools that are implementation dependencies of the entity being researched rather than research targets themselves.
 
 ```
 register_entity({name: "Name", url: "https://...", description: "One sentence", relevance: 0, modes: ["unclassified"], source_url: "https://current-entity-url"})

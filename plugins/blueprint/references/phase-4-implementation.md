@@ -10,6 +10,7 @@ Design phase — includes refinement loop.
 - Goal-aligned interpretation from `blueprint/8-interpretation.md`
 - Project goals and priority order from `blueprint/2-goals.md`
 - Implementation constraints from `blueprint/5-constraints.md`
+- Approved directions from `blueprint/9-directions.md` — only approved directions are implemented in the blueprint
 - Database for detailed entity queries: `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.research get entity {id} --db blueprint/data/research.db`
 
 ### Draft Blueprint
@@ -40,13 +41,13 @@ Design phase — includes refinement loop.
 
 ### Finalize
 
-10. Write approved plan to `blueprint/9-blueprint.md`
+10. Write approved plan to `blueprint/10-blueprint.md`
 
 ## Re-Entry
 
 When Phase 4 resumes with existing implementation work, present dashboard:
 
-1. If `blueprint/9-blueprint.md` exists: present existing draft plan
+1. If `blueprint/10-blueprint.md` exists: present existing draft plan
 2. `blueprint/7-findings.md` — analytical findings
 3. `blueprint/8-interpretation.md` — interpretation driving decisions
 4. `blueprint/2-goals.md` — project goals
@@ -56,7 +57,7 @@ User directs: revise existing plan, restart draft from analysis findings, or app
 
 ## Output
 
-`blueprint/9-blueprint.md` — an actionable implementation blueprint with:
+`blueprint/10-blueprint.md` — an actionable implementation blueprint with:
 
 - Dependency ordering (items grouped by phase/priority)
 - Decision rationale as sub-bullets on relevant items

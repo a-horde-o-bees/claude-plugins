@@ -88,11 +88,7 @@ Explore domain to discover entities. Two modes:
 
 21. For each {directory} in {directory-entities}: spawn directory crawl agent
 22. For targeted searches: spawn discovery agents with focused queries for examples not covered by directories
-23. As entities are encountered, assess against scope criteria before registering:
-    1. If entity fails hardline criterion:
-        1. Register as rejected with description, notes, and reason (relevance 0, stage `rejected`)
-    2. Else:
-        1. Register with relevance (count of criteria met), description, modes, and initial notes
+23. Crawl and discovery agents register entities with relevance 0 — no criteria assessment during crawl; hardline rejections still applied on encounter
 24. Observe patterns:
     - What types of structured public data exist for this entity type?
     - What differentiates entities in this space?
@@ -181,28 +177,27 @@ Entity modes (database enforces these values via CHECK constraint):
 - `unclassified` — discovered adjacently, pending mode classification
 
 For each entity encountered:
-1. Assess against criteria from `blueprint/3-assessment-criteria.md`
-2. Register with appropriate modes — `register_entity` returns new ID or "Already registered" with existing ID:
-    register_entity({name: "Entity Name", url: "https://entity-url.com", source_url: "https://source-url.com", description: "One sentence: what entity is and primary approach", relevance: N, modes: ["example"]})
-3. If new entity:
+1. Register with appropriate modes — `register_entity` returns new ID or "Already registered" with existing ID:
+    register_entity({name: "Entity Name", url: "https://entity-url.com", source_url: "https://source-url.com", description: "One sentence: what entity is and primary approach", relevance: 0, modes: ["example"]})
+2. If new entity:
     1. Add notes capturing current knowledge:
         add_notes({entity_id: "ID", notes: ["observation 1", "observation 2"]})
     2. If entity fails hardline criterion:
         set_stage({entity_id: "ID", stage: "rejected"})
         add_notes({entity_id: "ID", notes: ["Rejected: reason"]})
-4. If already registered (reconcile-on-touch):
+3. If already registered (reconcile-on-touch):
     1. Read existing entity:
         get_entity({entity_id: "ID"})
-    2. Apply Entity Reconciliation Procedure to notes, description, and relevance
+    2. Apply Entity Reconciliation Procedure to notes and description
 
-Relevance: count binary criteria met from `blueprint/3-assessment-criteria.md`. Each criterion is yes/no — relevance is the total count.
+Relevance: always 0 during discovery. Do NOT assess criteria during crawl. Formal assessment happens via assess-entity agent afterward.
 
 Rules:
-- Assess each entity on encounter — do not register stubs for later evaluation
+- Do not assess criteria — register entities with relevance 0; assessment is a separate step
 - Register even rejected entities (relevance 0) so they are not re-discovered
 - NEVER access database directly — MCP tool calls are the only interface
 - When pages use JavaScript rendering or require interaction, use browser automation if available; fall back to web search
-- Final output: report entities registered, rejected, and top relevance entities found
+- Final output: report entities registered, rejected, and entities found
 
 --- Entity Reconciliation Procedure ---
 {content of ${CLAUDE_PLUGIN_ROOT}/references/reconcile-entity.md}
@@ -227,19 +222,18 @@ Look for tagged crawl notes:
 - `[CRAWL PROGRESS]:` — current position; if present, resume from indicated position; if absent, start from beginning
 
 For batch results (multiple entities per extraction):
-    register_entity({name: "...", url: "...", source_url: "https://directory-url.com", description: "...", relevance: N, notes: ["fact1", "fact2"]})
+    register_entity({name: "...", url: "...", source_url: "https://directory-url.com", description: "...", relevance: 0, notes: ["fact1", "fact2"]})
 Notes only written for new entities. Already-registered listed in output for reconciliation — read existing notes and apply Entity Reconciliation Procedure.
 
 For individual entities:
-1. Assess against criteria from `blueprint/3-assessment-criteria.md`
-2. Register:
-    register_entity({name: "Entity Name", url: "https://entity-url.com", source_url: "https://directory-page-url.com", description: "One sentence: what entity is and primary approach", relevance: N})
-3. If new entity:
+1. Register:
+    register_entity({name: "Entity Name", url: "https://entity-url.com", source_url: "https://directory-page-url.com", description: "One sentence: what entity is and primary approach", relevance: 0})
+2. If new entity:
     1. Add notes:
         add_notes({entity_id: "ID", notes: ["observation 1", "observation 2"]})
     2. If entity fails hardline criterion:
         set_stage({entity_id: "ID", stage: "rejected"})
-4. If already registered (reconcile-on-touch):
+3. If already registered (reconcile-on-touch):
     1. Read entity and apply reconciliation:
         get_entity({entity_id: "ID"})
 
@@ -261,10 +255,10 @@ Directory crawl notes — tagged notes on directory entity track method, script,
 
 Write notes in terms that make sense for directory structure. Goal: new agent reading notes for first time can unambiguously understand approach and find resumption point.
 
-Relevance: count binary criteria met from `blueprint/3-assessment-criteria.md`. Each criterion is yes/no — relevance is the total count.
+Relevance: always 0 during crawl. Do NOT assess criteria during crawl. Formal assessment happens via assess-entity agent afterward.
 
 Rules:
-- Assess each entity on encounter — do not register stubs for later evaluation
+- Do not assess criteria — register entities with relevance 0; assessment is a separate step
 - Register even rejected entities (relevance 0) so they are not re-discovered
 - NEVER access database directly — MCP tool calls are the only interface
 - Use browser automation when directory requires JavaScript rendering or interaction (filters, pagination, search forms); fall back to web fetch for static content; check accessibility notes

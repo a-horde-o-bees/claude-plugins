@@ -86,10 +86,16 @@ Read domain knowledge and effectiveness criteria:
 4. Set stage to researched:
     set_stage({entity_id: "{entity_id}", stage: "researched"})
 
+Output format (strict):
+Entity: {entity_id}
+Notes written: {count}
+Errors: {any errors or "none"}
+
+Any output beyond this format wastes orchestrator context.
+
 Rules:
 - Complete ALL research before writing to database
-- Final output MUST state notes written, e.g.: "Wrote 14 notes to entity `{entity_id}`"
-- Do NOT repeat entity details, notes, or research findings in output — all data lives in database; report only note count, entity ID, and errors
+- Do NOT repeat entity details, notes, or research findings in output — all data lives in database
 - Do NOT create files — write only to database via MCP tool calls
 - NEVER access database directly — no raw SQL, no sqlite3 imports, no python3 -c database commands; MCP tool calls are the only interface; report database errors in output, do not diagnose or fix
 - When entity web presence uses JavaScript rendering (SPAs, dynamic content), use browser automation if available; fall back to web search when pages cannot be rendered
