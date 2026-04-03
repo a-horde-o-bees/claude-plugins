@@ -175,7 +175,7 @@ def merge_entities(db_path: str, ids: list[str]) -> str:
     try:
         entities = {}
         for eid in entity_ids_sorted:
-            row = conn.execute("SELECT id, name, description FROM entities WHERE id = ?", (eid,)).fetchone()
+            row = conn.execute("SELECT id, name, description, relevance FROM entities WHERE id = ?", (eid,)).fetchone()
             if not row:
                 raise ValueError(f"Entity not found: {eid}")
             entities[eid] = row
@@ -213,8 +213,10 @@ def merge_entities(db_path: str, ids: list[str]) -> str:
                 combined = "\n".join([survivor_desc] + absorbed_descriptions) if survivor_desc else "\n".join(absorbed_descriptions)
                 conn.execute("UPDATE entities SET description = ? WHERE id = ?", (combined, survivor_id))
 
-            conn.execute("UPDATE entities SET relevance = NULL, stage = 'merged' WHERE id = ?", (survivor_id,))
-            conn.execute("DELETE FROM entity_measures WHERE entity_id = ?", (survivor_id,))
+            # Preserve highest relevance from all merging entities
+            all_relevances = [entities[eid]["relevance"] for eid in entity_ids_sorted if entities[eid]["relevance"] is not None]
+            best_relevance = max(all_relevances) if all_relevances else 0
+            conn.execute("UPDATE entities SET relevance = ?, stage = 'merged' WHERE id = ?", (best_relevance, survivor_id))
             _touch(conn, "entities", survivor_id)
 
         absorbed_names = [f"{entities[eid]['name']} ({eid})" for eid in absorbed_ids]

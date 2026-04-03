@@ -94,6 +94,32 @@ CREATE TABLE IF NOT EXISTS criteria_notes (
     quality TEXT NOT NULL CHECK(quality IN ('pass', 'fail')),
     PRIMARY KEY (criterion_id, note_id)
 );
+
+CREATE TABLE IF NOT EXISTS domains (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    last_modified TEXT
+);
+
+CREATE TABLE IF NOT EXISTS goals (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    last_modified TEXT
+);
+
+CREATE TABLE IF NOT EXISTS goal_domains (
+    goal_id TEXT NOT NULL REFERENCES goals(id) ON DELETE CASCADE,
+    domain_id TEXT NOT NULL REFERENCES domains(id) ON DELETE CASCADE,
+    PRIMARY KEY (goal_id, domain_id)
+);
+
+CREATE TABLE IF NOT EXISTS domain_criteria (
+    domain_id TEXT NOT NULL REFERENCES domains(id) ON DELETE CASCADE,
+    criterion_id TEXT NOT NULL REFERENCES criteria(id) ON DELETE CASCADE,
+    PRIMARY KEY (domain_id, criterion_id)
+);
 """
 
 

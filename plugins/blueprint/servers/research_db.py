@@ -570,7 +570,7 @@ def add_provenance(entity_id: str, source_url: str) -> str:
 
 @mcp.tool()
 def reject_entity(entity_id: str, reason: str) -> str:
-    """Reject entity — sets stage to rejected, relevance to 0, adds reason as note.
+    """Reject entity — sets stage to rejected, relevance to -1, adds reason as note.
 
     Args:
         entity_id: Entity ID (e.g., e1)
@@ -578,7 +578,7 @@ def reject_entity(entity_id: str, reason: str) -> str:
     """
     if err := _check_db(): return err
     try:
-        _update_entity(DB_PATH, ids=[entity_id], stage="rejected", relevance=0)
+        _update_entity(DB_PATH, ids=[entity_id], stage="rejected", relevance=-1)
         _add_notes(DB_PATH, entity_id, [f"Rejected: {reason}"])
         return _ok(f"Rejected {entity_id}: {reason}")
     except (ValueError, sqlite3.IntegrityError) as e:

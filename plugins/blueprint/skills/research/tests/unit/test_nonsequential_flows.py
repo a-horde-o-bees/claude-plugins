@@ -54,7 +54,7 @@ class TestPhase1ScopeRefinement:
 
         detail = result_text(db["get_entity"]("e3"))
         assert "Stage: rejected" in detail
-        assert "Relevance: 0" in detail
+        assert "Relevance: -1" in detail
         assert "below new relevance threshold" in detail
 
     def test_criteria_change_clears_measures(self, db):

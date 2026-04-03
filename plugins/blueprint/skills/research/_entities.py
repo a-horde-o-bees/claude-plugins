@@ -118,7 +118,7 @@ def register_entity(
                 (entity_id, name, relevance or 0, description or "", purpose or ""),
             )
 
-            for mode in (modes or ["example"]):
+            for mode in (modes or ["unclassified"]):
                 conn.execute(
                     "INSERT OR IGNORE INTO entity_modes (entity_id, mode) VALUES (?, ?)",
                     (entity_id, mode),
@@ -391,7 +391,7 @@ def register_batch(db_path: str, entities: list[dict], source_url: str | None = 
                 url = entry.get("url")
                 desc = entry.get("description", "")
                 rel = entry.get("relevance", 0)
-                modes = entry.get("modes", ["example"])
+                modes = entry.get("modes", ["unclassified"])
                 if isinstance(modes, str):
                     modes = [modes]
                 notes = entry.get("notes", [])
