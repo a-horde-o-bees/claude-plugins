@@ -129,9 +129,11 @@ User runs `/blueprint-research`. Optional `$ARGUMENTS` passed as initial scope i
         9. Compile findings to `blueprint/7-findings.md` and recommendations to `blueprint/8-interpretation.md`
     5. Run Present phase:
         1. Compute coverage: `get_coverage()`
-        2. Compute criteria effectiveness: `get_criteria_effectiveness()`
-        3. Present consolidated picture -- coverage metrics, effectiveness, findings summary, recommendations
-        4. Read `blueprint/2-goals.md` -- present progress toward goals
+        2. Save coverage output to `blueprint/data/coverage-cycle-{N}.md`
+        3. If prior cycle snapshot exists (`blueprint/data/coverage-cycle-{N-1}.md`): compare per-domain entity counts and note averages to compute density shift and diminishing returns signal
+        4. Compute criteria effectiveness: `get_criteria_effectiveness()`
+        5. Present consolidated picture -- coverage metrics, density shift from prior cycle, effectiveness, findings summary, recommendations
+        6. Read `blueprint/2-goals.md` -- present progress toward goals
     6. Mark Cycle N `[x]` in `blueprint/data/state.md`
     7. Append history entry to `blueprint/data/history.md`
     8. User decides:
@@ -174,6 +176,7 @@ blueprint/
     history.md              — sequential stride log with timestamps
     research.db             — SQLite research database
     friction.md             — process friction observations captured during research
+    coverage-cycle-{N}.md   — coverage snapshot at each cycle boundary for density shift comparison
   overview.md               — complete deliverable index (from templates/overview.md)
   1-scope.md through 6-domain-knowledge.md  — project definition (Initialization)
   7-findings.md             — cross-entity analysis (Consolidate)
