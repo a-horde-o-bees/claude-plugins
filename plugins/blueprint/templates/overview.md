@@ -27,6 +27,7 @@ Templates do not reference which phases produce or consume them — phase orches
 | `data/state.md` | Phase progress tracker |
 | `data/history.md` | Sequential stride log with timestamps |
 | `data/research.db` | SQLite database: entities, notes, modes, measures, provenance |
+| `data/friction.md` | Process friction observations captured during research |
 
 ## Analysis (Phase 3)
 
@@ -35,8 +36,14 @@ Templates do not reference which phases produce or consume them — phase orches
 | `7-findings.md` | Cross-entity pattern analysis and measure-backed observations |
 | `8-interpretation.md` | What findings mean for this project; actionable conclusions |
 
-## Implementation (Phase 4)
+## Directions (Phase 4)
 
 | File | Purpose |
 |------|---------|
-| `9-blueprint.md` | Dependency-ordered implementation plan; final deliverable |
+| `9-directions.md` | User directional choices shaping the implementation blueprint |
+
+## Implementation (Phase 5)
+
+| File | Purpose |
+|------|---------|
+| `10-blueprint.md` | Dependency-ordered implementation plan; final deliverable |
