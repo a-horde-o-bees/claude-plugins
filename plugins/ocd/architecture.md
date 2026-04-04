@@ -83,8 +83,10 @@ Project structure index in SQLite. Agents query by purpose ("what does this file
 |--------|---------------|
 | `_db.py` | Schema, migrations, connection factory, seed rules from CSV |
 | `_scanner.py` | Filesystem walking with rule-based pruning, git hash change detection |
+| `_manifest.py` | Manifest parsing: governance entries and settings |
 | `__init__.py` | Business logic facade: describe, list, search, scan, set, remove |
 | `__main__.py` | CLI entry point with argparse |
+| `_init.py` | Deploy conventions, manifest, and database; report deployment states |
 | `skill_resolver.py` | Resolves skill names to SKILL.md paths across discovery locations |
 
 **Database schema:**
@@ -107,31 +109,6 @@ entries
 
 **Skill resolver** searches four discovery locations in Claude Code priority order: personal (`~/.claude/skills/`), project (`.claude/skills/`), plugin-dir (`$CLAUDE_PLUGIN_ROOT/skills/`), marketplace (from `installed_plugins.json`). First match by frontmatter `name` field wins.
 
-### Conventions
-
-Pattern-based file convention matching and dependency ordering.
-
-**Modules:**
-
-| Module | Responsibility |
-|--------|---------------|
-| `__init__.py` | Manifest parsing, pattern matching, topological sort, validation |
-| `__main__.py` | CLI entry point: `list-matching`, `list-patterns`, `topo-order`, `validate` |
-| `_init.py` | Deploy convention templates and manifest to `.claude/ocd/conventions/` |
-
-**Manifest** (`manifest.yaml`) maps convention files to glob patterns and dependencies:
-
-```yaml
-conventions:
-  .claude/ocd/conventions/python.md:
-    pattern: "*.py"
-    dependencies: [.claude/rules/ocd-design-principles.md]
-```
-
-Pattern matching uses `fnmatch` against both basename and full path. `list-matching` accepts multiple file paths in a single call and returns which conventions apply to each.
-
-**Topological ordering** (Kahn's algorithm) produces dependency levels for self-evaluation — level 0 conventions have no dependencies, level N depends only on levels 0..N-1. Validates no missing dependencies or cycles.
-
 ### Other Skills
 
 Workflow-only skills with no Python infrastructure (SKILL.md only):
@@ -142,8 +119,6 @@ Workflow-only skills with no Python infrastructure (SKILL.md only):
 | `push` | Push to remote with pre-push commit check |
 | `init` | Deploy rules, conventions, and skill infrastructure |
 | `status` | Report plugin version, rules state, skill status |
-| `best-practices` | Convention and best-practice evaluation |
-| `efficacy` | Documentation efficacy testing via scenario examination |
 | `pdf` | Export markdown to PDF with GitHub-style CSS |
 
 ## Plugin Framework
@@ -167,7 +142,6 @@ python3 run.py hooks.auto_approval          # Hook invocation
 python3 run.py plugin init [--force]        # Init orchestration
 python3 run.py plugin status                # Status reporting
 python3 run.py skills.navigator describe .  # Navigator CLI
-python3 run.py skills.conventions list-matching file.py  # Convention matching
 ```
 
 Hooks are invoked by Claude Code via `hooks.json` configuration. Agent-facing CLIs are invoked by agents via Bash during skill execution. No shebangs or execute permissions — all scripts run via `python3` interpreter prefix.
@@ -186,18 +160,16 @@ plugins/ocd/
 │   ├── session_start.py         — persist plugin root for agent access
 │   └── auto_approval.py         — permission enforcement (hardcoded + dynamic)
 ├── rules/                       — rule templates (source of truth during development)
+├── conventions/                 — convention templates (deployed to .claude/ocd/conventions/)
+├── manifest.yaml                — governance manifest (rules + conventions ownership)
 ├── templates/
-│   ├── conventions/             — convention templates + manifest
 │   └── settings.json            — recommended auto-approve patterns
 ├── skills/
-│   ├── navigator/               — project structure index (SQLite + CLI)
-│   ├── conventions/             — convention matching engine (manifest + CLI)
+│   ├── navigator/               — project structure index, convention deployment (SQLite + CLI)
 │   ├── commit/                  — structured commit workflow
 │   ├── push/                    — push with pre-push checks
 │   ├── init/                    — deployment orchestration
 │   ├── status/                  — plugin status reporting
-│   ├── best-practices/          — convention evaluation
-│   ├── efficacy/                — documentation efficacy testing
 │   └── pdf/                     — markdown-to-PDF export
 ├── plugin/                      — generic plugin framework (shared across plugins)
 ├── patterns/                    — reusable agent workflow patterns

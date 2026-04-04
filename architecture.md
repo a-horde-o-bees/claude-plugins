@@ -37,7 +37,7 @@ Distribution: users add the GitHub repository as a marketplace source, then inst
 
 ### Template-Deployed Model
 
-Templates live in plugin source (`plugins/<plugin>/rules/`, `plugins/<plugin>/templates/conventions/`). Init deploys copies to the user's project (`.claude/rules/`, `.claude/<plugin>/conventions/`). Users edit deployed copies; `scripts/sync-templates.py` syncs deployed content back to templates before commits. Frontmatter `type` field distinguishes source (`template`) from product (`deployed`).
+Templates live in plugin source (`plugins/<plugin>/rules/`, `plugins/<plugin>/conventions/`). The governance manifest lives at `plugins/<plugin>/manifest.yaml` (template) and `.claude/<plugin>/manifest.yaml` (deployed). Init deploys copies to the user's project (`.claude/rules/`, `.claude/<plugin>/conventions/`). Users edit deployed copies; `scripts/sync-templates.py` syncs deployed content back to templates before commits. Frontmatter `type` field distinguishes source (`template`) from product (`deployed`).
 
 ### Development Scripts
 

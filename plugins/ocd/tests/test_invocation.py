@@ -55,7 +55,6 @@ class TestPluginCLI:
     def test_status_shows_skills(self) -> None:
         result = run("plugin", "status")
         assert "/ocd-navigator" in result.stdout
-        assert "/ocd-conventions" in result.stdout
 
     def test_init_exits_zero(self, tmp_path: Path) -> None:
         result = run("plugin", "init", env={"CLAUDE_PROJECT_DIR": str(tmp_path)})
@@ -127,11 +126,6 @@ class TestSkillCLI:
         assert result.returncode == 0
         assert "describe" in result.stdout
         assert "scan" in result.stdout
-
-    def test_conventions_help(self) -> None:
-        result = run("skills.conventions", "--help")
-        assert result.returncode == 0
-        assert "list-matching" in result.stdout
 
     def test_navigator_governance_help(self) -> None:
         result = run("skills.navigator", "governance", "--help")

@@ -14,8 +14,7 @@ import re
 import sys
 
 GUARDED_PATTERNS = [
-    re.compile(r"^plugins/ocd/(rules|templates)/"),          # synced from .claude/
-    re.compile(r"^plugins/(?!ocd/)[^/]+/rules/ocd-"),        # propagated rules
+    re.compile(r"^plugins/ocd/(rules|conventions)/"),        # synced from .claude/
     re.compile(r"^plugins/(?!ocd/)[^/]+/plugin/(__init__|__main__)\.py$"),  # propagated plugin framework
 ]
 

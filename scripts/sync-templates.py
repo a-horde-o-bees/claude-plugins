@@ -19,7 +19,7 @@ def discover_mappings() -> list[tuple[Path, Path]]:
 
     Enumerates template files and maps each to its deployed counterpart.
     Rules: plugins/<plugin>/rules/<name>.md → .claude/rules/<name>.md
-    Conventions: plugins/<plugin>/templates/conventions/<name> → .claude/<plugin>/conventions/<name>
+    Conventions: plugins/<plugin>/conventions/<name> → .claude/<plugin>/conventions/<name>
     """
     mappings = []
     plugins_dir = PROJECT_ROOT / "plugins"
@@ -35,7 +35,7 @@ def discover_mappings() -> list[tuple[Path, Path]]:
                 deployed = PROJECT_ROOT / ".claude" / "rules" / template.name
                 mappings.append((template, deployed))
 
-        conv_dir = plugin_dir / "templates" / "conventions"
+        conv_dir = plugin_dir / "conventions"
         deployed_conv_dir = (
             PROJECT_ROOT / ".claude" / plugin_name / "conventions"
         )
@@ -48,25 +48,39 @@ def discover_mappings() -> list[tuple[Path, Path]]:
                 deployed = deployed_conv_dir / template.name
                 mappings.append((template, deployed))
 
-        # Deployed conventions without template counterparts — read
-        # manifest to discover the full set, create template targets
-        # for any deployed files not yet in templates directory
-        manifest_path = deployed_conv_dir / "manifest.yaml"
-        if manifest_path.is_file() and conv_dir.is_dir():
-            existing_templates = {
+        # Manifest: plugins/<plugin>/manifest.yaml ↔ .claude/<plugin>/manifest.yaml
+        manifest_path = (
+            PROJECT_ROOT / ".claude" / plugin_name / "manifest.yaml"
+        )
+        manifest_template = plugin_dir / "manifest.yaml"
+        if manifest_path.is_file():
+            mappings.append((manifest_template, manifest_path))
+            existing_rule_templates = {
+                f.name for f in rules_dir.iterdir() if f.is_file()
+            } if rules_dir.is_dir() else set()
+            existing_conv_templates = {
                 f.name for f in conv_dir.iterdir() if f.is_file()
-            }
+            } if conv_dir.is_dir() else set()
+
             for line in manifest_path.read_text().splitlines():
                 stripped = line.strip()
                 indent = len(line) - len(line.lstrip())
                 if indent == 2 and stripped.endswith(":"):
                     entry_path = stripped[:-1]
-                    # Convention entries reference paths like
-                    # .claude/ocd/conventions/python.md
+
+                    rules_prefix = ".claude/rules/"
+                    if entry_path.startswith(rules_prefix):
+                        name = entry_path[len(rules_prefix):]
+                        if name not in existing_rule_templates:
+                            template = rules_dir / name
+                            deployed = PROJECT_ROOT / ".claude" / "rules" / name
+                            mappings.append((template, deployed))
+                        continue
+
                     conv_prefix = f".claude/{plugin_name}/conventions/"
-                    if entry_path.startswith(conv_prefix):
+                    if entry_path.startswith(conv_prefix) and conv_dir.is_dir():
                         name = entry_path[len(conv_prefix):]
-                        if name not in existing_templates:
+                        if name not in existing_conv_templates:
                             template = conv_dir / name
                             deployed = deployed_conv_dir / name
                             mappings.append((template, deployed))

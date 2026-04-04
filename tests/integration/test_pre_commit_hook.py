@@ -19,7 +19,6 @@ class TestPreCommitPropagation:
         self.root = worktree
         self.plugin_dir = worktree / "plugins" / "test-hook-plugin"
         self.plugin_dir.mkdir(parents=True, exist_ok=True)
-        (self.plugin_dir / "rules").mkdir(exist_ok=True)
         (self.plugin_dir / "plugin").mkdir(exist_ok=True)
         subprocess.run(
             ["git", "add", str(self.plugin_dir)],
@@ -63,34 +62,6 @@ class TestPreCommitPropagation:
         result = self._run_hook()
         assert result.returncode == 0
         assert not target.exists(), "Should not propagate when nothing staged"
-
-    def test_propagates_agent_authoring_rule(self):
-        canonical = self.root / "plugins" / "ocd" / "rules" / "ocd-agent-authoring.md"
-        target = self.plugin_dir / "rules" / "ocd-agent-authoring.md"
-
-        self._touch_and_stage(canonical)
-        try:
-            result = self._run_hook()
-            assert result.returncode == 0, result.stderr
-            assert target.exists(), "Rule was not propagated"
-            assert canonical.read_bytes() == target.read_bytes(), \
-                "Propagated rule content does not match canonical"
-        finally:
-            self._unstage_file(canonical)
-
-    def test_propagates_pfn_rule(self):
-        canonical = self.root / "plugins" / "ocd" / "rules" / "ocd-process-flow-notation.md"
-        target = self.plugin_dir / "rules" / "ocd-process-flow-notation.md"
-
-        self._touch_and_stage(canonical)
-        try:
-            result = self._run_hook()
-            assert result.returncode == 0, result.stderr
-            assert target.exists(), "PFN rule was not propagated"
-            assert canonical.read_bytes() == target.read_bytes(), \
-                "Propagated PFN rule content does not match canonical"
-        finally:
-            self._unstage_file(canonical)
 
     def test_propagates_plugin_init(self):
         canonical = self.root / "plugins" / "ocd" / "plugin" / "__init__.py"
