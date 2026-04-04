@@ -72,7 +72,7 @@ No plugin data outside `.claude/`.
 
 ## Template vs Deployed Files
 
-Templates in `plugins/<plugin>/rules/` and `plugins/<plugin>/conventions/`. Deployed copies in `.claude/rules/` and `.claude/<plugin>/conventions/`. Manifest at `plugins/<plugin>/manifest.yaml` (template) and `.claude/<plugin>/manifest.yaml` (deployed). Init copies templates to deployed locations.
+Templates in `plugins/<plugin>/rules/` and `plugins/<plugin>/conventions/`. Deployed copies in `.claude/rules/` and `.claude/conventions/`. Governance metadata (pattern, depends) lives in each file's YAML frontmatter — no external manifest. Init copies templates to deployed locations.
 
 Edit deployed copies in `.claude/`, never templates in `plugins/`. `/ocd-commit` runs `scripts/sync-templates.py` to sync deployed→templates before committing. Guard hook blocks direct template edits.
 

@@ -12,7 +12,7 @@ import sqlite3
 from pathlib import Path
 
 from ._db import get_connection, init_db, SCHEMA, MIGRATIONS, SEED_PATH  # noqa: F401
-from ._manifest import load_manifest, load_settings  # noqa: F401
+from ._frontmatter import parse_governance, scan_governance_dirs  # noqa: F401
 from ._scanner import (  # noqa: F401
     scan_path,
     _walk_filesystem,
@@ -357,30 +357,21 @@ def search_entries(db_path: str, pattern: str) -> str:
 # --- Governance ---
 
 
-def governance_load(db_path: str, manifest_path: str) -> str:
-    """Load governance entries and relationships from manifest.yaml.
+def governance_load(db_path: str, project_dir: str) -> str:
+    """Load governance entries from frontmatter in rules and conventions.
 
-    Parses manifest, ensures entry rows exist, populates governance table
-    with patterns, and populates governs table with explicit governance
-    relationships (dependencies flipped to governs direction). Also stores
-    settings in config table.
+    Scans .claude/rules/ and .claude/conventions/ for files with governance
+    frontmatter (pattern + depends fields). Populates governance table with
+    patterns and governs table with dependency relationships.
 
     Idempotent — safe to rerun. Uses INSERT OR REPLACE for governance and
     INSERT OR IGNORE for governs.
     """
-    manifest = load_manifest(Path(manifest_path))
-    settings = load_settings(Path(manifest_path))
+    entries = scan_governance_dirs(Path(project_dir))
 
     conn = get_connection(db_path)
     try:
-        # Store settings in config table
-        for key, value in settings.items():
-            conn.execute(
-                "INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)",
-                (key, str(value)),
-            )
-
-        for entry_path, entry in manifest.items():
+        for entry_path, entry in entries.items():
             # Ensure entry exists in entries table
             conn.execute(
                 "INSERT OR IGNORE INTO entries (path, entry_type) VALUES (?, 'file')",
@@ -396,10 +387,10 @@ def governance_load(db_path: str, manifest_path: str) -> str:
                 (entry_path, entry["pattern"], auto_loaded),
             )
 
-        # Populate governs: flip dependencies to governs direction
+        # Populate governs: flip depends to governs direction
         # If B depends on A, then A governs B
-        for entry_path, entry in manifest.items():
-            for dep in entry["dependencies"]:
+        for entry_path, entry in entries.items():
+            for dep in entry["depends"]:
                 conn.execute(
                     "INSERT OR IGNORE INTO governs (governor_path, governed_path) "
                     "VALUES (?, ?)",

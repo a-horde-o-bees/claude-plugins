@@ -1,3 +1,9 @@
+---
+pattern: "*"
+depends:
+  - .claude/rules/ocd-design-principles.md
+---
+
 # Friction Detection
 
 Capture process friction as it occurs without interrupting current work. Friction is signal that a system, tool, or process has a gap — logged for later review and action.

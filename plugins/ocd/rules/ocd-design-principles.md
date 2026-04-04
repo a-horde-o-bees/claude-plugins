@@ -1,3 +1,7 @@
+---
+pattern: "*"
+---
+
 # Design Principles
 
 Foundational principles governing all artifacts, agent-user collaboration, and agent-facing interfaces.

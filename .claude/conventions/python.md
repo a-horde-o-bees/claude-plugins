@@ -1,3 +1,9 @@
+---
+pattern: "*.py"
+depends:
+  - .claude/rules/ocd-design-principles.md
+---
+
 # Python Conventions
 
 Code style, module structure, and import patterns for Python files in this project.

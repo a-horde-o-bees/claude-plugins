@@ -1,3 +1,9 @@
+---
+pattern: "*"
+depends:
+  - .claude/rules/ocd-design-principles.md
+---
+
 # Navigator
 
 SQLite database (`.claude/ocd/navigator/navigator.db`) indexes project structure — files, folders, descriptions, governance relationships, and file metrics — so agents can find what they need without reading every file.
@@ -19,7 +25,7 @@ All commands except `init`, `scan`, `governance-load`, `resolve-skill`, and `lis
 | `governance` | List all governance entries (rules and conventions) with patterns and loading mode |
 | `governance-for <file> [<file> ...]` | Find which rules and conventions govern given files; check before creating or modifying files |
 | `governance-order` | Topological ordering of governance entries for evaluation sequence |
-| `governance-load --manifest <path>` | Seed governance data from manifest.yaml; called automatically during init |
+| `governance-load` | Load governance from frontmatter in rules and conventions; called automatically during init |
 | `get-undescribed` | During `/navigator` skill only; returns deepest directory with undescribed entries |
 | `set <path> --description "..."` | During `/navigator` skill only; write or update entry description |
 | `init --db <path>` | One-time setup; creates database with schema and seed rules |

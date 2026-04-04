@@ -1,3 +1,10 @@
+---
+pattern: "servers/*.py"
+depends:
+  - .claude/rules/ocd-design-principles.md
+  - .claude/conventions/python.md
+---
+
 # MCP Relational Conventions
 
 Conventions for MCP servers backed by relational databases. Applies to files in `servers/` directories that implement FastMCP tool handlers.

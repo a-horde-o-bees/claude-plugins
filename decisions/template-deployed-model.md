@@ -2,7 +2,7 @@
 
 ## Context
 
-Plugin rules and conventions are authored in the plugin source tree but consumed from project directories (`.claude/rules/`, `.claude/ocd/conventions/`). Agents editing files need to know which copy is the source of truth to avoid edits being overwritten on next init.
+Plugin rules and conventions are authored in the plugin source tree but consumed from project directories (`.claude/rules/`, `.claude/conventions/`). Agents editing files need to know which copy is the source of truth to avoid edits being overwritten on next init.
 
 ## Options Considered
 

@@ -125,6 +125,16 @@ def init_db(db_path: str) -> str:
                     )
                     updated += 1
 
+        # Seed default config values (won't overwrite existing)
+        for key, value in [
+            ("lines_warn_threshold", "500"),
+            ("lines_fail_threshold", "2000"),
+        ]:
+            conn.execute(
+                "INSERT OR IGNORE INTO config (key, value) VALUES (?, ?)",
+                (key, value),
+            )
+
         conn.commit()
         parts = []
         if added:

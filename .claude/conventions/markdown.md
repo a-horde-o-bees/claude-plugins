@@ -1,3 +1,9 @@
+---
+pattern: "*.md"
+depends:
+  - .claude/rules/ocd-design-principles.md
+---
+
 # Markdown Conventions
 
 Base content standards for all markdown files. Every other convention inherits from these requirements.

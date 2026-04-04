@@ -108,7 +108,8 @@ def _dispatch_governance_order(args: argparse.Namespace) -> None:
 
 
 def _dispatch_governance_load(args: argparse.Namespace) -> None:
-    print(governance_load(args.db, args.manifest))
+    project_dir = args.project_dir or os.getcwd()
+    print(governance_load(args.db, project_dir))
 
 
 def _dispatch_governance_graph(args: argparse.Namespace) -> None:
@@ -487,11 +488,12 @@ def build_parser() -> argparse.ArgumentParser:
     # governance-load
     gl_p = commands.add_parser(
         "governance-load",
-        help="Seed governance data from manifest.yaml",
+        help="Load governance data from frontmatter in rules and conventions",
         description=(
-            "Parse manifest.yaml and populate governance tables.\n"
-            "Loads governance entries with patterns, explicit governs\n"
-            "relationships (from dependencies), and settings.\n"
+            "Scan .claude/rules/ and .claude/conventions/ for files with\n"
+            "governance frontmatter (pattern + depends fields). Populates\n"
+            "governance table with patterns and governs table with\n"
+            "dependency relationships.\n"
             "\n"
             "Idempotent — safe to rerun. Existing data is updated,\n"
             "not duplicated."
@@ -499,7 +501,7 @@ def build_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         parents=[db_parent],
     )
-    gl_p.add_argument("--manifest", required=True, help="Path to manifest.yaml")
+    gl_p.add_argument("--project-dir", default=None, help="Project root (default: cwd)")
     gl_p.set_defaults(_dispatch=_dispatch_governance_load)
 
     # governance-graph

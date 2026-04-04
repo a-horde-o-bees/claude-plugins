@@ -1,3 +1,9 @@
+---
+pattern: "*"
+depends:
+  - .claude/rules/ocd-design-principles.md
+---
+
 # Workflow
 
 How to operate in this project. Project-specific patterns implementing design principles.

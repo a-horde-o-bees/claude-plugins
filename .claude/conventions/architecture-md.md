@@ -1,3 +1,11 @@
+---
+pattern: "architecture.md"
+depends:
+  - .claude/rules/ocd-design-principles.md
+  - .claude/rules/ocd-system-documentation.md
+  - .claude/conventions/markdown.md
+---
+
 # architecture.md Conventions
 
 Content standards for `architecture.md` files. System-facing technical reference documenting layers, components, relationships, design patterns, and key implementation details.

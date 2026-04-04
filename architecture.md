@@ -37,7 +37,7 @@ Distribution: users add the GitHub repository as a marketplace source, then inst
 
 ### Template-Deployed Model
 
-Templates live in plugin source (`plugins/<plugin>/rules/`, `plugins/<plugin>/conventions/`). The governance manifest lives at `plugins/<plugin>/manifest.yaml` (template) and `.claude/<plugin>/manifest.yaml` (deployed). Init deploys copies to the user's project (`.claude/rules/`, `.claude/<plugin>/conventions/`). Users edit deployed copies; `scripts/sync-templates.py` syncs deployed content back to templates before commits. Frontmatter `type` field distinguishes source (`template`) from product (`deployed`).
+Templates live in plugin source (`plugins/<plugin>/rules/`, `plugins/<plugin>/conventions/`). Init deploys copies to the user's project (`.claude/rules/`, `.claude/conventions/`). Users edit deployed copies; `scripts/sync-templates.py` syncs deployed content back to templates before commits. Governance metadata (pattern, depends) lives in each file's YAML frontmatter — navigator scans for it automatically.
 
 ### Development Scripts
 
@@ -60,7 +60,8 @@ claude-plugins/
 │   └── marketplace.json         — marketplace manifest registering both plugins
 ├── .claude/
 │   ├── rules/                   — deployed rule files (edited here, synced to templates)
-│   ├── ocd/                     — ocd plugin project data (conventions, navigator db)
+│   ├── conventions/             — deployed convention files (edited here, synced to templates)
+│   ├── ocd/                     — ocd plugin project data (navigator db)
 │   ├── blueprint/               — blueprint plugin project data (research db)
 │   ├── hooks/                   — project-level git hooks
 │   └── settings.json            — project-level permission patterns

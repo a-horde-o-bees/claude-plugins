@@ -1,3 +1,10 @@
+---
+pattern: "*/evaluate-*/SKILL.md"
+depends:
+  - .claude/rules/ocd-design-principles.md
+  - .claude/conventions/skill-md.md
+---
+
 # Evaluation Skill Conventions
 
 Specialized SKILL.md conventions for domain-specific evaluation skills. Applies to skills with the `evaluate-` directory prefix. Supplements the general skill-md convention — evaluation skills follow both.

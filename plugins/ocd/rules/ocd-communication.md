@@ -1,3 +1,9 @@
+---
+pattern: "*"
+depends:
+  - .claude/rules/ocd-design-principles.md
+---
+
 # Communication
 
 When to pause, verify, align, or wait. Interaction triggers between agent and user.

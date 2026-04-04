@@ -83,7 +83,7 @@ Project structure index in SQLite. Agents query by purpose ("what does this file
 |--------|---------------|
 | `_db.py` | Schema, migrations, connection factory, seed rules from CSV |
 | `_scanner.py` | Filesystem walking with rule-based pruning, git hash change detection |
-| `_manifest.py` | Manifest parsing: governance entries and settings |
+| `_frontmatter.py` | Governance frontmatter parsing: pattern and depends from files |
 | `__init__.py` | Business logic facade: describe, list, search, scan, set, remove |
 | `__main__.py` | CLI entry point with argparse |
 | `_init.py` | Deploy conventions, manifest, and database; report deployment states |
@@ -160,8 +160,7 @@ plugins/ocd/
 │   ├── session_start.py         — persist plugin root for agent access
 │   └── auto_approval.py         — permission enforcement (hardcoded + dynamic)
 ├── rules/                       — rule templates (source of truth during development)
-├── conventions/                 — convention templates (deployed to .claude/ocd/conventions/)
-├── manifest.yaml                — governance manifest (rules + conventions ownership)
+├── conventions/                 — convention templates (deployed to .claude/conventions/)
 ├── templates/
 │   └── settings.json            — recommended auto-approve patterns
 ├── skills/

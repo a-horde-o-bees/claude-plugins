@@ -1,3 +1,11 @@
+---
+pattern: "README.md"
+depends:
+  - .claude/rules/ocd-design-principles.md
+  - .claude/rules/ocd-system-documentation.md
+  - .claude/conventions/markdown.md
+---
+
 # README.md Conventions
 
 Content standards for `README.md` files. User/consumer-facing documentation covering what the system does, how to install, configure, and use it.

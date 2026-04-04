@@ -1,3 +1,9 @@
+---
+pattern: "*"
+depends:
+  - .claude/rules/ocd-design-principles.md
+---
+
 # Process Flow Notation
 
 Structured programming for agent workflows. Indentation scopes blocks. Required in always-on context — agents must parse and follow this notation during execution, not only when authoring.

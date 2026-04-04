@@ -1,3 +1,9 @@
+---
+pattern: "test_*.*|*_test.*|conftest.*"
+depends:
+  - .claude/rules/ocd-design-principles.md
+---
+
 # Testing Conventions
 
 Testing guidance for projects where code is consumed by both humans and AI agents. Language-agnostic principles organized by when tests add value versus when they are overhead.

@@ -1,3 +1,9 @@
+---
+pattern: "*"
+depends:
+  - .claude/rules/ocd-design-principles.md
+---
+
 # System Documentation
 
 What documentation each system maintains, how nested systems relate, and when to check or update documentation.

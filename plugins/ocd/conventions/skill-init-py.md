@@ -1,3 +1,10 @@
+---
+pattern: "_init.py"
+depends:
+  - .claude/rules/ocd-design-principles.md
+  - .claude/conventions/python.md
+---
+
 # Skill Init Conventions
 
 Conventions for `_init.py` modules — skill infrastructure that implements `init()` and `status()` contract.

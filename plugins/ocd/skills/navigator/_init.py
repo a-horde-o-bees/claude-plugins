@@ -1,11 +1,10 @@
 """Navigator skill infrastructure.
 
-Deploy conventions and manifest, initialize database with seeds,
-and check DB health.
+Deploy conventions, initialize database with seeds, and load governance
+from frontmatter. Check DB health.
 Interface contract: init() and status() return {"files": [...], "extra": [...]}.
 """
 
-import shutil
 import sqlite3
 from pathlib import Path
 
@@ -74,42 +73,28 @@ def _status_extra(plugin_name: str, project_dir: Path) -> list[dict]:
 
 
 def _deploy_conventions(
-    plugin_root: Path, project_dir: Path, plugin_name: str, force: bool,
+    plugin_root: Path, project_dir: Path, force: bool,
 ) -> list[dict]:
-    """Deploy convention templates and manifest. Returns file status list."""
+    """Deploy convention templates to .claude/conventions/. Returns file status list."""
     conv_src = plugin_root / "conventions"
-    conv_dst = project_dir / ".claude" / plugin_name / "conventions"
-    rel_prefix = f".claude/{plugin_name}/conventions"
+    conv_dst = project_dir / ".claude" / "conventions"
 
     files = []
     results = plugin.deploy_files(
         src_dir=conv_src, dst_dir=conv_dst, pattern="*", force=force,
     )
     for r in results:
-        files.append({"path": f"{rel_prefix}/{r['name']}", "before": r["before"], "after": r["after"]})
-
-    # Manifest lives at plugin level, not inside conventions
-    manifest_src = plugin_root / "manifest.yaml"
-    manifest_dst = project_dir / ".claude" / plugin_name / "manifest.yaml"
-    if manifest_src.is_file():
-        before = plugin.compare_deployed(manifest_src, manifest_dst)
-        if before == "absent" or force:
-            manifest_dst.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(manifest_src, manifest_dst)
-            files.append({"path": f".claude/{plugin_name}/manifest.yaml", "before": before, "after": "current"})
-        else:
-            files.append({"path": f".claude/{plugin_name}/manifest.yaml", "before": before, "after": before})
+        files.append({"path": f".claude/conventions/{r['name']}", "before": r["before"], "after": r["after"]})
 
     return files
 
 
 def _conventions_status(
-    plugin_root: Path, project_dir: Path, plugin_name: str,
+    plugin_root: Path, project_dir: Path,
 ) -> list[dict]:
-    """Check convention and manifest deployment states. Returns file status list."""
+    """Check convention deployment states. Returns file status list."""
     conv_src = plugin_root / "conventions"
-    conv_dst = project_dir / ".claude" / plugin_name / "conventions"
-    rel_prefix = f".claude/{plugin_name}/conventions"
+    conv_dst = project_dir / ".claude" / "conventions"
 
     files = []
     if conv_src.is_dir():
@@ -118,13 +103,7 @@ def _conventions_status(
                 continue
             dst = conv_dst / src.name
             state = plugin.compare_deployed(src, dst)
-            files.append({"path": f"{rel_prefix}/{src.name}", "before": state, "after": state})
-
-    manifest_src = plugin_root / "manifest.yaml"
-    manifest_dst = project_dir / ".claude" / plugin_name / "manifest.yaml"
-    if manifest_src.is_file():
-        state = plugin.compare_deployed(manifest_src, manifest_dst)
-        files.append({"path": f".claude/{plugin_name}/manifest.yaml", "before": state, "after": state})
+            files.append({"path": f".claude/conventions/{src.name}", "before": state, "after": state})
 
     return files
 
@@ -133,8 +112,8 @@ def init(plugin_root: Path, project_dir: Path, force: bool = False) -> dict:
     """Deploy conventions and initialize navigator database. Returns {files, extra}."""
     plugin_name = plugin.get_plugin_name(plugin_root)
 
-    # Deploy conventions and manifest
-    files = _deploy_conventions(plugin_root, project_dir, plugin_name, force)
+    # Deploy conventions to .claude/conventions/
+    files = _deploy_conventions(plugin_root, project_dir, force)
 
     # Initialize database
     db = _db_path(plugin_name, project_dir)
@@ -148,10 +127,8 @@ def init(plugin_root: Path, project_dir: Path, force: bool = False) -> dict:
 
     result_msg = _db.init_db(str(db))
 
-    # Load governance data from manifest if available
-    manifest = project_dir / ".claude" / plugin_name / "manifest.yaml"
-    if manifest.exists():
-        governance_load(str(db), str(manifest))
+    # Load governance from frontmatter in rules and conventions
+    governance_load(str(db), str(project_dir))
 
     after = "current"
     summary = ""
@@ -179,8 +156,8 @@ def status(plugin_root: Path, project_dir: Path) -> dict:
     """Check convention deployment and navigator DB state. Returns {files, extra}."""
     plugin_name = plugin.get_plugin_name(plugin_root)
 
-    # Convention and manifest deployment states
-    files = _conventions_status(plugin_root, project_dir, plugin_name)
+    # Convention deployment states
+    files = _conventions_status(plugin_root, project_dir)
 
     # Database state
     db = _db_path(plugin_name, project_dir)

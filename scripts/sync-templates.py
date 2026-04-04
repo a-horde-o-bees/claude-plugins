@@ -17,9 +17,9 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 def discover_mappings() -> list[tuple[Path, Path]]:
     """Build (template, deployed) pairs from project structure.
 
-    Enumerates template files and maps each to its deployed counterpart.
-    Rules: plugins/<plugin>/rules/<name>.md → .claude/rules/<name>.md
-    Conventions: plugins/<plugin>/conventions/<name> → .claude/<plugin>/conventions/<name>
+    Scans both template and deployed directories to discover all files.
+    Rules: plugins/<plugin>/rules/<name>.md ↔ .claude/rules/<name>.md
+    Conventions: plugins/<plugin>/conventions/<name> ↔ .claude/conventions/<name>
     """
     mappings = []
     plugins_dir = PROJECT_ROOT / "plugins"
@@ -27,63 +27,47 @@ def discover_mappings() -> list[tuple[Path, Path]]:
     for plugin_dir in sorted(plugins_dir.iterdir()):
         if not plugin_dir.is_dir():
             continue
-        plugin_name = plugin_dir.name
 
         rules_dir = plugin_dir / "rules"
+        conv_dir = plugin_dir / "conventions"
+
+        # Rules: template ↔ deployed
+        deployed_rules = PROJECT_ROOT / ".claude" / "rules"
+        seen_rules: set[str] = set()
+
+        # From templates
         if rules_dir.is_dir():
             for template in sorted(rules_dir.glob("*.md")):
-                deployed = PROJECT_ROOT / ".claude" / "rules" / template.name
+                deployed = deployed_rules / template.name
                 mappings.append((template, deployed))
+                seen_rules.add(template.name)
 
-        conv_dir = plugin_dir / "conventions"
-        deployed_conv_dir = (
-            PROJECT_ROOT / ".claude" / plugin_name / "conventions"
-        )
+        # From deployed (catch new rules without templates)
+        if rules_dir.is_dir() and deployed_rules.is_dir():
+            for deployed in sorted(deployed_rules.glob("*.md")):
+                if deployed.name not in seen_rules:
+                    template = rules_dir / deployed.name
+                    mappings.append((template, deployed))
 
-        # Existing templates → deployed counterparts
+        # Conventions: template ↔ deployed
+        deployed_conv = PROJECT_ROOT / ".claude" / "conventions"
+        seen_conv: set[str] = set()
+
+        # From templates
         if conv_dir.is_dir():
             for template in sorted(conv_dir.iterdir()):
                 if not template.is_file():
                     continue
-                deployed = deployed_conv_dir / template.name
+                deployed = deployed_conv / template.name
                 mappings.append((template, deployed))
+                seen_conv.add(template.name)
 
-        # Manifest: plugins/<plugin>/manifest.yaml ↔ .claude/<plugin>/manifest.yaml
-        manifest_path = (
-            PROJECT_ROOT / ".claude" / plugin_name / "manifest.yaml"
-        )
-        manifest_template = plugin_dir / "manifest.yaml"
-        if manifest_path.is_file():
-            mappings.append((manifest_template, manifest_path))
-            existing_rule_templates = {
-                f.name for f in rules_dir.iterdir() if f.is_file()
-            } if rules_dir.is_dir() else set()
-            existing_conv_templates = {
-                f.name for f in conv_dir.iterdir() if f.is_file()
-            } if conv_dir.is_dir() else set()
-
-            for line in manifest_path.read_text().splitlines():
-                stripped = line.strip()
-                indent = len(line) - len(line.lstrip())
-                if indent == 2 and stripped.endswith(":"):
-                    entry_path = stripped[:-1]
-
-                    rules_prefix = ".claude/rules/"
-                    if entry_path.startswith(rules_prefix):
-                        name = entry_path[len(rules_prefix):]
-                        if name not in existing_rule_templates:
-                            template = rules_dir / name
-                            deployed = PROJECT_ROOT / ".claude" / "rules" / name
-                            mappings.append((template, deployed))
-                        continue
-
-                    conv_prefix = f".claude/{plugin_name}/conventions/"
-                    if entry_path.startswith(conv_prefix) and conv_dir.is_dir():
-                        name = entry_path[len(conv_prefix):]
-                        if name not in existing_conv_templates:
-                            template = conv_dir / name
-                            deployed = deployed_conv_dir / name
-                            mappings.append((template, deployed))
+        # From deployed (catch new conventions without templates)
+        if conv_dir.is_dir() and deployed_conv.is_dir():
+            for deployed in sorted(deployed_conv.glob("*.md")):
+                if deployed.name not in seen_conv:
+                    template = conv_dir / deployed.name
+                    mappings.append((template, deployed))
 
     return mappings
 
