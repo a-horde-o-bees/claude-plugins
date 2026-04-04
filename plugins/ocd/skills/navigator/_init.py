@@ -7,7 +7,7 @@ Interface contract: init() and status() return {"files": [...], "extra": [...]}.
 import sqlite3
 from pathlib import Path
 
-from . import _db
+from . import _db, governance_load
 import plugin
 
 
@@ -32,7 +32,7 @@ def _status_extra(plugin_name: str, project_dir: Path) -> list[dict]:
     try:
         conn = _db.get_connection(str(db_path))
 
-        expected_tables = {"entries"}
+        expected_tables = {"entries", "governance", "governs", "config"}
         actual_tables = {row[0] for row in conn.execute(
             "SELECT name FROM sqlite_master WHERE type='table'",
         ).fetchall()}
@@ -84,6 +84,11 @@ def init(plugin_root: Path, project_dir: Path, force: bool = False) -> dict:
         before = "absent"
 
     result_msg = _db.init_db(str(db))
+
+    # Load governance data from manifest if available
+    manifest = project_dir / ".claude" / plugin_name / "conventions" / "manifest.yaml"
+    if manifest.exists():
+        governance_load(str(db), str(manifest))
 
     after = "current"
     summary = ""

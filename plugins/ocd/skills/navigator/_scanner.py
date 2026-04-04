@@ -41,14 +41,26 @@ def _matches_any_rule(path: str, rules: list[sqlite3.Row]) -> sqlite3.Row | None
     return None
 
 
-def _compute_git_hash(file_path: str) -> str | None:
-    """Compute git-compatible blob hash for a file. Returns hex digest or None for directories."""
+def _compute_file_metrics(file_path: str) -> dict:
+    """Compute git hash, line count, and char count from a single file read.
+
+    Returns dict with keys: git_hash, line_count, char_count.
+    All values None for directories or on read error.
+    """
     try:
         data = Path(file_path).read_bytes()
     except (OSError, IsADirectoryError):
-        return None
+        return {"git_hash": None, "line_count": None, "char_count": None}
     header = f"blob {len(data)}\0".encode()
-    return hashlib.sha1(header + data).hexdigest()
+    git_hash = hashlib.sha1(header + data).hexdigest()
+    line_count = data.count(b"\n") + (1 if data and not data.endswith(b"\n") else 0)
+    char_count = len(data)
+    return {"git_hash": git_hash, "line_count": line_count, "char_count": char_count}
+
+
+def _compute_git_hash(file_path: str) -> str | None:
+    """Compute git-compatible blob hash for a file. Returns hex digest or None for directories."""
+    return _compute_file_metrics(file_path)["git_hash"]
 
 
 def _mark_parents_stale(conn: sqlite3.Connection, entry_path: str) -> list[str]:
@@ -186,13 +198,13 @@ def scan_path(db_path: str, target_path: str) -> str:
 
                 rule = _matches_any_rule(path, prescribed_rules)
                 description = rule["description"] if rule else None
-                git_hash = _compute_git_hash(path) if entry_type == "file" else None
+                metrics = _compute_file_metrics(path) if entry_type == "file" else {"git_hash": None, "line_count": None, "char_count": None}
 
                 conn.execute(
                     "INSERT OR IGNORE INTO entries "
-                    "(path, parent_path, entry_type, description, git_hash) "
-                    "VALUES (?, ?, ?, ?, ?)",
-                    (path, parent_path, entry_type, description, git_hash),
+                    "(path, parent_path, entry_type, description, git_hash, line_count, char_count) "
+                    "VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    (path, parent_path, entry_type, description, metrics["git_hash"], metrics["line_count"], metrics["char_count"]),
                 )
                 display = path + "/" if entry_type == "directory" else path
                 added.append(f"- {display}")
@@ -203,29 +215,31 @@ def scan_path(db_path: str, target_path: str) -> str:
         changed = []
         for path in sorted(disk_entries):
             if path in db_entries and disk_entries[path] == "file":
-                current_hash = _compute_git_hash(path)
+                metrics = _compute_file_metrics(path)
+                current_hash = metrics["git_hash"]
                 stored_hash = db_entries[path]
                 if stored_hash is not None and current_hash != stored_hash:
                     rule = _matches_any_rule(path, prescribed_rules)
                     if rule:
                         conn.execute(
-                            "UPDATE entries SET description = ?, stale = 0, git_hash = ? "
+                            "UPDATE entries SET description = ?, stale = 0, git_hash = ?, line_count = ?, char_count = ? "
                             "WHERE path = ?",
-                            (rule["description"], current_hash, path),
+                            (rule["description"], current_hash, metrics["line_count"], metrics["char_count"], path),
                         )
                     else:
                         conn.execute(
-                            "UPDATE entries SET stale = CASE WHEN description IS NOT NULL THEN 1 ELSE 0 END, git_hash = ? "
+                            "UPDATE entries SET stale = CASE WHEN description IS NOT NULL THEN 1 ELSE 0 END, "
+                            "git_hash = ?, line_count = ?, char_count = ? "
                             "WHERE path = ?",
-                            (current_hash, path),
+                            (current_hash, metrics["line_count"], metrics["char_count"], path),
                         )
                     changed.append(f"- {path}")
                     for p in _mark_parents_stale(conn, path):
                         staled_parents.add(p)
                 elif stored_hash is None and current_hash is not None:
                     conn.execute(
-                        "UPDATE entries SET git_hash = ? WHERE path = ?",
-                        (current_hash, path),
+                        "UPDATE entries SET git_hash = ?, line_count = ?, char_count = ? WHERE path = ?",
+                        (current_hash, metrics["line_count"], metrics["char_count"], path),
                     )
 
         # Auto-remove stale entries
@@ -236,6 +250,34 @@ def scan_path(db_path: str, target_path: str) -> str:
                 removed.append(f"- {path}")
                 for p in _mark_parents_stale(conn, path):
                     staled_parents.add(p)
+
+        # Governance pattern matching — populate governs from governance patterns
+        gov_rows = conn.execute(
+            "SELECT entry_path, pattern FROM governance"
+        ).fetchall()
+        if gov_rows:
+            gov_paths = {r["entry_path"] for r in gov_rows}
+            # Get all non-governance file entries in scope
+            file_entries = [
+                path for path, etype in disk_entries.items()
+                if etype == "file" and path not in gov_paths
+            ]
+            for gov in gov_rows:
+                pattern = gov["pattern"]
+                gov_path = gov["entry_path"]
+                for file_path in file_entries:
+                    basename = Path(file_path).name
+                    if fnmatch.fnmatch(basename, pattern) or fnmatch.fnmatch(file_path, pattern):
+                        conn.execute(
+                            "INSERT OR IGNORE INTO governs (governor_path, governed_path) "
+                            "VALUES (?, ?)",
+                            (gov_path, file_path),
+                        )
+            # Remove stale governs for files no longer on disk
+            conn.execute(
+                "DELETE FROM governs WHERE governed_path NOT IN "
+                "(SELECT path FROM entries)"
+            )
 
         conn.commit()
 

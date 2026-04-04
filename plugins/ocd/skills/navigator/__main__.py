@@ -29,6 +29,7 @@ def _dispatch_list(args: argparse.Namespace) -> None:
     _auto_scan(args)
     result = list_files(
         args.db, args.path, patterns=args.pattern, excludes=args.exclude,
+        sizes=args.sizes,
     )
     if result:
         print(result)
@@ -89,6 +90,25 @@ def _dispatch_list_skills(_args: argparse.Namespace) -> None:
         return
     for skill in skills:
         print(f"{skill['name']}  [{skill['source']}]  {skill['path']}")
+
+
+def _dispatch_governance(args: argparse.Namespace) -> None:
+    _auto_scan(args)
+    print(list_governance(args.db))
+
+
+def _dispatch_governance_for(args: argparse.Namespace) -> None:
+    _auto_scan(args)
+    print(governance_for(args.db, args.files))
+
+
+def _dispatch_governance_order(args: argparse.Namespace) -> None:
+    _auto_scan(args)
+    print(governance_order(args.db))
+
+
+def _dispatch_governance_load(args: argparse.Namespace) -> None:
+    print(governance_load(args.db, args.manifest))
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -206,6 +226,10 @@ def build_parser() -> argparse.ArgumentParser:
     list_p.add_argument(
         "--exclude", action="append", default=None,
         help="Glob pattern to exclude by full path (repeatable, OR-combined)",
+    )
+    list_p.add_argument(
+        "--sizes", action="store_true", default=False,
+        help="Append line_count and char_count columns (tab-separated)",
     )
     list_p.set_defaults(_dispatch=_dispatch_list)
 
@@ -389,6 +413,84 @@ def build_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     ls_p.set_defaults(_dispatch=_dispatch_list_skills)
+
+    # governance
+    gov_p = commands.add_parser(
+        "governance",
+        help="List all governance entries with patterns and loading mode",
+        description=(
+            "List governance entries (rules and conventions) registered in\n"
+            "the database. Shows entry path, glob pattern, and loading mode\n"
+            "(rule = auto-loaded every session, convention = on-demand).\n"
+            "\n"
+            "Output format:\n"
+            "  <path>  <pattern>  [rule|convention]"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        parents=[db_parent],
+    )
+    gov_p.set_defaults(_dispatch=_dispatch_governance)
+
+    # governance-for
+    gf_p = commands.add_parser(
+        "governance-for",
+        help="Find which governance entries govern given files",
+        description=(
+            "Match file paths against governance patterns to find which\n"
+            "rules and conventions apply. Replaces conventions list-matching.\n"
+            "Auto-scans before execution.\n"
+            "\n"
+            "Output format:\n"
+            "  Criteria: (sorted unique list)\n"
+            "  <file> follows: (per-file governance list)\n"
+            "\n"
+            "Line count tags [warn: N lines] and [fail: N lines] appear\n"
+            "when file exceeds configured thresholds."
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        parents=[db_parent],
+    )
+    gf_p.add_argument("files", nargs="+", help="File paths to check governance for")
+    gf_p.set_defaults(_dispatch=_dispatch_governance_for)
+
+    # governance-order
+    go_p = commands.add_parser(
+        "governance-order",
+        help="Topological ordering of governance entries for evaluation sequence",
+        description=(
+            "Show governance entries ordered by dependency level.\n"
+            "Level 0 has no governors; level N is governed only by\n"
+            "levels 0..N-1. Replaces conventions list-self.\n"
+            "Auto-scans before execution.\n"
+            "\n"
+            "Output format:\n"
+            "  Level 0:\n"
+            "    <path>\n"
+            "  Level 1:\n"
+            "    <path>"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        parents=[db_parent],
+    )
+    go_p.set_defaults(_dispatch=_dispatch_governance_order)
+
+    # governance-load
+    gl_p = commands.add_parser(
+        "governance-load",
+        help="Seed governance data from manifest.yaml",
+        description=(
+            "Parse manifest.yaml and populate governance tables.\n"
+            "Loads governance entries with patterns, explicit governs\n"
+            "relationships (from dependencies), and settings.\n"
+            "\n"
+            "Idempotent — safe to rerun. Existing data is updated,\n"
+            "not duplicated."
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        parents=[db_parent],
+    )
+    gl_p.add_argument("--manifest", required=True, help="Path to manifest.yaml")
+    gl_p.set_defaults(_dispatch=_dispatch_governance_load)
 
     return parser
 

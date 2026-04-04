@@ -25,10 +25,10 @@ Working directory must remain project root for the entire session. Use absolute 
 Check conventions before creating or modifying files:
 
 ```
-python3 $(cat .claude/ocd/.plugin_root)/run.py skills.conventions list-matching <file> [<file> ...]
+python3 $(cat .claude/ocd/.plugin_root)/run.py skills.navigator governance-for <file> [<file> ...]
 ```
 
-Pass all target file paths in a single call. If output is non-empty, read and follow returned convention files before proceeding.
+Pass all target file paths in a single call. If output is non-empty, read and follow returned governance files before proceeding.
 
 ## Naming
 

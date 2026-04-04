@@ -12,11 +12,13 @@ import sqlite3
 from pathlib import Path
 
 from ._db import get_connection, init_db, SCHEMA, MIGRATIONS, SEED_PATH  # noqa: F401
+from ._manifest import load_manifest, load_settings  # noqa: F401
 from ._scanner import (  # noqa: F401
     scan_path,
     _walk_filesystem,
     _is_pattern,
     _compute_git_hash,
+    _compute_file_metrics,
     _matches_any_rule,
     _mark_parents_stale,
 )
@@ -98,6 +100,7 @@ def list_files(
     target_path: str,
     patterns: list[str] | None = None,
     excludes: list[str] | None = None,
+    sizes: bool = False,
 ) -> str:
     """List non-excluded file paths under target_path.
 
@@ -106,6 +109,8 @@ def list_files(
     provided, keeps only paths where basename matches any pattern via
     fnmatch. If excludes provided, removes paths where any path component
     matches any exclude pattern via fnmatch.
+
+    When sizes=True, appends line_count and char_count columns per line.
 
     Returns empty string if no files match.
     """
@@ -116,24 +121,38 @@ def list_files(
     conn = get_connection(db_path)
     try:
         disk_entries = _walk_filesystem(conn, target_path)
+
+        files = sorted(p for p, t in disk_entries.items() if t == "file")
+
+        if patterns:
+            files = [
+                f for f in files
+                if any(fnmatch.fnmatch(Path(f).name, pat) for pat in patterns)
+            ]
+
+        if excludes:
+            files = [
+                f for f in files
+                if not any(fnmatch.fnmatch(f, pat) for pat in excludes)
+            ]
+
+        if not sizes:
+            return "\n".join(files)
+
+        # Fetch size data from database for matched files
+        lines = []
+        for f in files:
+            row = conn.execute(
+                "SELECT line_count, char_count FROM entries WHERE path = ?",
+                (f,),
+            ).fetchone()
+            if row and row["line_count"] is not None:
+                lines.append(f"{f}\t{row['line_count']}\t{row['char_count']}")
+            else:
+                lines.append(f)
+        return "\n".join(lines)
     finally:
         conn.close()
-
-    files = sorted(p for p, t in disk_entries.items() if t == "file")
-
-    if patterns:
-        files = [
-            f for f in files
-            if any(fnmatch.fnmatch(Path(f).name, pat) for pat in patterns)
-        ]
-
-    if excludes:
-        files = [
-            f for f in files
-            if not any(fnmatch.fnmatch(f, pat) for pat in excludes)
-        ]
-
-    return "\n".join(files)
 
 
 def get_undescribed(db_path: str) -> str:
@@ -204,10 +223,10 @@ def set_entry(
             "SELECT * FROM entries WHERE path = ?", (entry_path,)
         ).fetchone()
 
-        # Compute git hash for files when setting description
-        git_hash = None
+        # Compute file metrics for files when setting description
+        metrics = {"git_hash": None, "line_count": None, "char_count": None}
         if description is not None and not is_pat and entry_type == "file":
-            git_hash = _compute_git_hash(entry_path)
+            metrics = _compute_file_metrics(entry_path)
 
         if existing:
             updates = []
@@ -222,9 +241,13 @@ def set_entry(
             if traverse is not None:
                 updates.append("traverse = ?")
                 params.append(traverse)
-            if git_hash is not None:
+            if metrics["git_hash"] is not None:
                 updates.append("git_hash = ?")
-                params.append(git_hash)
+                params.append(metrics["git_hash"])
+                updates.append("line_count = ?")
+                params.append(metrics["line_count"])
+                updates.append("char_count = ?")
+                params.append(metrics["char_count"])
             if not updates:
                 return f"No changes: {entry_path}"
             params.append(entry_path)
@@ -238,8 +261,8 @@ def set_entry(
         else:
             conn.execute(
                 "INSERT INTO entries "
-                "(path, parent_path, entry_type, exclude, traverse, description, git_hash) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?)",
+                "(path, parent_path, entry_type, exclude, traverse, description, git_hash, line_count, char_count) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (
                     entry_path,
                     parent_path,
@@ -247,7 +270,9 @@ def set_entry(
                     exclude if exclude is not None else 0,
                     traverse if traverse is not None else 1,
                     description,
-                    git_hash,
+                    metrics["git_hash"],
+                    metrics["line_count"],
+                    metrics["char_count"],
                 ),
             )
             conn.commit()
@@ -324,6 +349,228 @@ def search_entries(db_path: str, pattern: str) -> str:
                 display += "/"
             lines.append(f"- {display} - {row['description']}")
 
+        return "\n".join(lines)
+    finally:
+        conn.close()
+
+
+# --- Governance ---
+
+
+def governance_load(db_path: str, manifest_path: str) -> str:
+    """Load governance entries and relationships from manifest.yaml.
+
+    Parses manifest, ensures entry rows exist, populates governance table
+    with patterns, and populates governs table with explicit governance
+    relationships (dependencies flipped to governs direction). Also stores
+    settings in config table.
+
+    Idempotent — safe to rerun. Uses INSERT OR REPLACE for governance and
+    INSERT OR IGNORE for governs.
+    """
+    manifest = load_manifest(Path(manifest_path))
+    settings = load_settings(Path(manifest_path))
+
+    conn = get_connection(db_path)
+    try:
+        # Store settings in config table
+        for key, value in settings.items():
+            conn.execute(
+                "INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)",
+                (key, str(value)),
+            )
+
+        for entry_path, entry in manifest.items():
+            # Ensure entry exists in entries table
+            conn.execute(
+                "INSERT OR IGNORE INTO entries (path, entry_type) VALUES (?, 'file')",
+                (entry_path,),
+            )
+
+            # Rules (in /rules/) are auto-loaded; conventions are not
+            auto_loaded = 1 if "/rules/" in entry_path else 0
+
+            conn.execute(
+                "INSERT OR REPLACE INTO governance (entry_path, pattern, auto_loaded) "
+                "VALUES (?, ?, ?)",
+                (entry_path, entry["pattern"], auto_loaded),
+            )
+
+        # Populate governs: flip dependencies to governs direction
+        # If B depends on A, then A governs B
+        for entry_path, entry in manifest.items():
+            for dep in entry["dependencies"]:
+                conn.execute(
+                    "INSERT OR IGNORE INTO governs (governor_path, governed_path) "
+                    "VALUES (?, ?)",
+                    (dep, entry_path),
+                )
+
+        conn.commit()
+
+        gov_count = conn.execute("SELECT COUNT(*) as c FROM governance").fetchone()["c"]
+        rel_count = conn.execute("SELECT COUNT(*) as c FROM governs").fetchone()["c"]
+        return f"Loaded {gov_count} governance entries, {rel_count} governs relationships"
+    finally:
+        conn.close()
+
+
+def list_governance(db_path: str) -> str:
+    """List all governance entries with patterns and loading mode."""
+    conn = get_connection(db_path)
+    try:
+        rows = conn.execute(
+            "SELECT g.entry_path, g.pattern, g.auto_loaded "
+            "FROM governance g ORDER BY g.entry_path"
+        ).fetchall()
+
+        if not rows:
+            return "No governance entries."
+
+        lines = []
+        for row in rows:
+            mode = "rule" if row["auto_loaded"] else "convention"
+            lines.append(f"{row['entry_path']}  {row['pattern']}  [{mode}]")
+        return "\n".join(lines)
+    finally:
+        conn.close()
+
+
+def governance_for(db_path: str, file_paths: list[str]) -> str:
+    """Find which governance entries govern given files.
+
+    Matches via runtime pattern matching against governance patterns.
+    Returns output compatible with conventions list-matching format.
+    """
+    conn = get_connection(db_path)
+    try:
+        # Load all governance entries for pattern matching
+        gov_rows = conn.execute(
+            "SELECT entry_path, pattern FROM governance ORDER BY entry_path"
+        ).fetchall()
+
+        # Load settings for line count tags
+        warn_threshold = None
+        fail_threshold = None
+        warn_row = conn.execute(
+            "SELECT value FROM config WHERE key = 'lines_warn_threshold'"
+        ).fetchone()
+        fail_row = conn.execute(
+            "SELECT value FROM config WHERE key = 'lines_fail_threshold'"
+        ).fetchone()
+        if warn_row:
+            warn_threshold = int(warn_row["value"])
+        if fail_row:
+            fail_threshold = int(fail_row["value"])
+
+        # Match each file against governance patterns
+        results: dict[str, list[str]] = {}
+        for file_path in file_paths:
+            basename = Path(file_path).name
+            matches = []
+            for gov in gov_rows:
+                pattern = gov["pattern"]
+                if fnmatch.fnmatch(basename, pattern) or fnmatch.fnmatch(file_path, pattern):
+                    matches.append(gov["entry_path"])
+            if matches:
+                results[file_path] = sorted(matches)
+
+        if not results:
+            return "No governance matches."
+
+        # Collect all unique criteria
+        all_criteria = sorted({c for cs in results.values() for c in cs})
+
+        # Format output
+        lines = ["Criteria:"]
+        for c in all_criteria:
+            lines.append(f"  {c}")
+        lines.append("")
+
+        for file_path in file_paths:
+            if file_path not in results:
+                continue
+
+            # Line count tag
+            tag = ""
+            if fail_threshold or warn_threshold:
+                row = conn.execute(
+                    "SELECT line_count FROM entries WHERE path = ?",
+                    (file_path,),
+                ).fetchone()
+                if row and row["line_count"] is not None:
+                    lc = row["line_count"]
+                    if fail_threshold and lc > fail_threshold:
+                        tag = f" [fail: {lc} lines]"
+                    elif warn_threshold and lc > warn_threshold:
+                        tag = f" [warn: {lc} lines]"
+
+            lines.append(f"{file_path}{tag} follows:")
+            for c in results[file_path]:
+                lines.append(f"  {c}")
+
+        return "\n".join(lines)
+    finally:
+        conn.close()
+
+
+def governance_order(db_path: str) -> str:
+    """Topological ordering of governance entries via governs relationships.
+
+    Returns levels where level 0 has no governors, level N is governed
+    only by levels 0..N-1. Uses Kahn's algorithm on governance-to-governance
+    governs edges.
+    """
+    conn = get_connection(db_path)
+    try:
+        gov_paths = [
+            row["entry_path"]
+            for row in conn.execute("SELECT entry_path FROM governance").fetchall()
+        ]
+
+        if not gov_paths:
+            return "No governance entries."
+
+        gov_set = set(gov_paths)
+
+        # Load governance-to-governance governs edges
+        edges = conn.execute(
+            "SELECT governor_path, governed_path FROM governs"
+        ).fetchall()
+
+        in_degree: dict[str, int] = {p: 0 for p in gov_paths}
+        dependents: dict[str, list[str]] = {p: [] for p in gov_paths}
+
+        for edge in edges:
+            gov = edge["governor_path"]
+            dep = edge["governed_path"]
+            if gov in gov_set and dep in gov_set:
+                in_degree[dep] += 1
+                dependents[gov].append(dep)
+
+        # Kahn's algorithm with level tracking
+        levels: list[list[str]] = []
+        current = sorted(p for p in in_degree if in_degree[p] == 0)
+
+        while current:
+            levels.append(current)
+            next_level = []
+            for node in current:
+                for dep in dependents[node]:
+                    in_degree[dep] -= 1
+                    if in_degree[dep] == 0:
+                        next_level.append(dep)
+            current = sorted(set(next_level))
+
+        remaining = [p for p in in_degree if in_degree[p] > 0]
+        if remaining:
+            return f"Cycle detected among: {', '.join(sorted(remaining))}"
+
+        lines = []
+        for i, level in enumerate(levels):
+            lines.append(f"Level {i}:")
+            for path in level:
+                lines.append(f"  {path}")
         return "\n".join(lines)
     finally:
         conn.close()

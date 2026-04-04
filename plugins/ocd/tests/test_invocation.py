@@ -132,3 +132,13 @@ class TestSkillCLI:
         result = run("skills.conventions", "--help")
         assert result.returncode == 0
         assert "list-matching" in result.stdout
+
+    def test_navigator_governance_help(self) -> None:
+        result = run("skills.navigator", "governance", "--help")
+        assert result.returncode == 0
+        assert "governance" in result.stdout
+
+    def test_navigator_governance_for_help(self) -> None:
+        result = run("skills.navigator", "governance-for", "--help")
+        assert result.returncode == 0
+        assert "files" in result.stdout

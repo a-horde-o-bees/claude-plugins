@@ -19,14 +19,37 @@ CREATE TABLE IF NOT EXISTS entries (
     traverse INTEGER NOT NULL DEFAULT 1,
     description TEXT,
     git_hash TEXT,
-    stale INTEGER NOT NULL DEFAULT 0
+    stale INTEGER NOT NULL DEFAULT 0,
+    line_count INTEGER,
+    char_count INTEGER
 );
 
 CREATE INDEX IF NOT EXISTS idx_entries_parent ON entries(parent_path);
+
+CREATE TABLE IF NOT EXISTS governance (
+    entry_path TEXT PRIMARY KEY REFERENCES entries(path) ON DELETE CASCADE,
+    pattern TEXT NOT NULL,
+    auto_loaded INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS governs (
+    governor_path TEXT REFERENCES entries(path) ON DELETE CASCADE,
+    governed_path TEXT REFERENCES entries(path) ON DELETE CASCADE,
+    PRIMARY KEY (governor_path, governed_path)
+);
+
+CREATE INDEX IF NOT EXISTS idx_governs_governed ON governs(governed_path);
+
+CREATE TABLE IF NOT EXISTS config (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+);
 """
 
 MIGRATIONS = [
     "ALTER TABLE entries ADD COLUMN stale INTEGER NOT NULL DEFAULT 0",
+    "ALTER TABLE entries ADD COLUMN line_count INTEGER",
+    "ALTER TABLE entries ADD COLUMN char_count INTEGER",
 ]
 
 SEED_PATH = Path(__file__).parent / "navigator_seed.csv"
