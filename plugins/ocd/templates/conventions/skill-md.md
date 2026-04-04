@@ -134,33 +134,34 @@ Route evaluates {target} and selects Workflow.
 
 ### --auto
 
-Skills that declare `--auto` in argument-hint wrap dispatch in a convergence loop. Route selects inner workflow as usual; `--auto` iterates it with fresh agents until stable.
+Skills that declare `--auto` in argument-hint wrap dispatch in a convergence loop. Route selects inner workflow as usual; `--auto` iterates it with fresh agents until stable. Git mechanics are handled by a deterministic tool; the agent manages only workflow dispatch.
 
 Convergence loop:
 
 ```
-1. Check precondition — working tree must be clean
-    1. Run `git status --porcelain`
-    2. If output is non-empty: Exit to user — commit pending changes before running --auto
-2. {baseline} = `git rev-parse HEAD`
-3. {iteration} = 0
+1. Check precondition — bash: `python3 ${CLAUDE_PLUGIN_ROOT}/run.py tools.auto_convergence precondition`
+    1. If exit code 1: Exit to user — commit pending changes before running --auto
+    2. {baseline} = output (commit hash)
+2. {iteration} = 0
+3. {prev-diff} = none
 4. While {iteration} < 5:
     1. Spawn agent with {selected-workflow}:
         1. Execute workflow
         2. Return:
             - Changes applied
     2. {iteration} = {iteration} + 1
-    3. Run `git diff {baseline} --stat` — check for changes since baseline
-    4. If diff unchanged since previous iteration:
-        1. {converged} = true
-        2. Break loop — converged
+    3. Check convergence — bash: `python3 ${CLAUDE_PLUGIN_ROOT}/run.py tools.auto_convergence check --baseline {baseline} [--prev-diff {prev-diff}]`
+    4. {status} = first line of output
+    5. {prev-diff} = second line of output (diff file path)
+    6. If {status} is `converged`:
+        1. Break loop — converged
 5. Report convergence metadata: iterations completed, converged status, cumulative diff summary
 ```
 
 Requirements:
 - Workflow must be fix-producing — report-only and interactive workflows reject `--auto` in Route
 - Fresh agent per iteration — no accumulated context; agent reads current file state from disk
-- Convergence measured by git diff between iterations — when iteration produces no new changes, converged
+- Convergence detection is deterministic — the `auto_convergence check` tool compares git diffs between iterations
 - Iteration limit (5) is safeguard, not target
 
 ### --delegate

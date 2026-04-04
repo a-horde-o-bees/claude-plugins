@@ -2,7 +2,7 @@
 name: ocd-evaluate-governance
 description: |
   Evaluate the rules and conventions governance chain across conformity, efficacy, coherence, and prior art. Traverses dependency chain root-first to verify each layer builds correctly on its foundations.
-argument-hint: "--target <project | governance-file-path>"
+argument-hint: "--target project"
 ---
 
 # /ocd-evaluate-governance
@@ -20,12 +20,10 @@ Evaluate the rules and conventions governance chain across four lenses in a sing
 
 ## Scope
 
-Target determines what to evaluate:
-- `project` — full governance chain via `governance-order`
-- Governance file path — single file plus its governors (upward chain)
+Full governance chain via `governance-order`. The governance files are a known, closed set — navigator maps every entry with its dependencies. No file path targeting needed.
 
 Accepted arguments:
-- `--target` — required; `project` or path to a governance file
+- `--target` — required; must be `project`
 
 ## Trigger
 
@@ -34,17 +32,12 @@ User runs `/ocd-evaluate-governance`
 ## Route
 
 1. If not --target: Exit to user — respond with skill description and argument-hint
-2. If {target} is `project`:
-    1. Discover governance chain — bash: `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.navigator governance-order`
-    2. {evaluation-order} = levels from output (level 0 first)
-    3. Collect all governance file paths across levels
-3. Else if {target} is a file path:
-    1. Verify file exists
-    2. Discover governance for target — bash: `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.navigator governance-for {target}`
-    3. {evaluation-order} = target's governors + target itself, ordered by dependency
-4. Else: Exit to user — target must be `project` or path to governance file
-5. Get file sizes — bash: `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.navigator list . --pattern "*.md" --sizes`
-6. Dispatch Workflow
+2. If {target} is not `project`: Exit to user — target must be `project`
+3. Discover governance chain — bash: `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.navigator governance-order`
+4. {evaluation-order} = levels from output (level 0 first)
+5. Collect all governance file paths across levels
+6. Get file sizes — bash: `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.navigator list . --pattern "*.md" --sizes`
+7. Dispatch Workflow
 
 ## Workflow
 

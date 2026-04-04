@@ -113,12 +113,7 @@ Integration tests that create, modify, or stage files within the project reposit
 
 Without isolation, tests that use `git checkout --`, `git restore`, or `git reset` to clean up after themselves silently destroy uncommitted changes in the main working tree.
 
-Implementation:
-- Session-scoped pytest fixture creates a detached worktree from HEAD via `git worktree add <path> HEAD --detach`
-- Fixture yields the worktree path; teardown removes it via `git worktree remove --force`
-- Tests receive the worktree path and reference all project files relative to it
-- Per-test setup/teardown handles test-specific state (temp directories, staged files) within the worktree
-- conftest.py in the integration test directory owns the fixture
+Mechanism: create a detached worktree from HEAD via `git worktree add <path> HEAD --detach`; teardown removes it via `git worktree remove --force`. Tests receive the worktree path and reference all project files relative to it. Language-specific fixture patterns belong in the language convention (e.g., Python conventions for pytest fixture implementation).
 
 When worktree isolation is required:
 - Tests that stage or unstage files (`git add`, `git reset`)

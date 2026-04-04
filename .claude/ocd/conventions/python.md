@@ -140,6 +140,15 @@ Group related tests by class when testing a single function or module boundary. 
 
 Fixtures provide isolated test state (temp directories, databases, environment variables). Prefer `tmp_path` and `monkeypatch` builtins over manual setup/teardown.
 
+### Git Worktree Fixtures
+
+Integration tests requiring git worktree isolation (see testing convention) use a session-scoped pytest fixture:
+
+- Session-scoped fixture in `conftest.py` creates a detached worktree from HEAD via `git worktree add <path> HEAD --detach`
+- Fixture yields the worktree path; teardown removes it via `git worktree remove --force`
+- Per-test setup/teardown handles test-specific state (temp directories, staged files) within the worktree
+- `conftest.py` in the integration test directory owns the fixture
+
 ## Post-Refactor Cleanup
 
 After moves, renames, or structural changes:

@@ -574,3 +574,121 @@ def governance_order(db_path: str) -> str:
         return "\n".join(lines)
     finally:
         conn.close()
+
+
+def governance_graph(db_path: str) -> str:
+    """Show governance-to-governance edges and root entries.
+
+    Displays which governance entries govern which other governance entries,
+    and which entries are roots (no governor). Complements governance-order
+    which shows levels but not edges.
+    """
+    conn = get_connection(db_path)
+    try:
+        gov_paths = {
+            row["entry_path"]
+            for row in conn.execute("SELECT entry_path FROM governance").fetchall()
+        }
+
+        if not gov_paths:
+            return "No governance entries."
+
+        edges = conn.execute(
+            "SELECT governor_path, governed_path FROM governs"
+        ).fetchall()
+
+        # Filter to governance-to-governance edges
+        gov_edges: dict[str, list[str]] = {p: [] for p in gov_paths}
+        governed_set: set[str] = set()
+        for edge in edges:
+            gov = edge["governor_path"]
+            dep = edge["governed_path"]
+            if gov in gov_paths and dep in gov_paths:
+                gov_edges[gov].append(dep)
+                governed_set.add(dep)
+
+        roots = sorted(gov_paths - governed_set)
+
+        lines = []
+        if roots:
+            lines.append(f"Roots ({len(roots)}):")
+            for r in roots:
+                lines.append(f"  {r}")
+            lines.append("")
+
+        lines.append(f"Edges ({sum(len(v) for v in gov_edges.values())}):")
+        for gov in sorted(gov_edges):
+            targets = sorted(gov_edges[gov])
+            if targets:
+                for t in targets:
+                    lines.append(f"  {gov}  -->  {t}")
+
+        # Leaf entries (govern nothing within governance)
+        leaves = sorted(p for p in gov_paths if not gov_edges[p])
+        if leaves:
+            lines.append("")
+            lines.append(f"Leaves ({len(leaves)}):")
+            for l in leaves:
+                lines.append(f"  {l}")
+
+        return "\n".join(lines)
+    finally:
+        conn.close()
+
+
+def get_unclassified(db_path: str) -> str:
+    """Find file entries with no governance coverage.
+
+    Returns file entries that match no governance pattern. Groups by
+    file extension to surface which file types lack conventions.
+    """
+    conn = get_connection(db_path)
+    try:
+        gov_rows = conn.execute(
+            "SELECT entry_path, pattern FROM governance"
+        ).fetchall()
+
+        if not gov_rows:
+            return "No governance entries loaded."
+
+        gov_paths = {r["entry_path"] for r in gov_rows}
+
+        # Get all concrete file entries (not patterns, not directories, not governance entries)
+        file_rows = conn.execute(
+            "SELECT path FROM entries "
+            "WHERE entry_type = 'file' AND path NOT LIKE '%*%' AND exclude = 0"
+        ).fetchall()
+
+        unclassified: list[str] = []
+        for row in file_rows:
+            file_path = row["path"]
+            if file_path in gov_paths:
+                continue
+            basename = Path(file_path).name
+            matched = False
+            for gov in gov_rows:
+                pattern = gov["pattern"]
+                if fnmatch.fnmatch(basename, pattern) or fnmatch.fnmatch(file_path, pattern):
+                    matched = True
+                    break
+            if not matched:
+                unclassified.append(file_path)
+
+        if not unclassified:
+            return "All file entries have governance coverage."
+
+        # Group by extension
+        by_ext: dict[str, list[str]] = {}
+        for path in sorted(unclassified):
+            ext = Path(path).suffix or "(no extension)"
+            by_ext.setdefault(ext, []).append(path)
+
+        lines = [f"Unclassified: {len(unclassified)} files without governance coverage"]
+        lines.append("")
+        for ext in sorted(by_ext):
+            lines.append(f"{ext} ({len(by_ext[ext])} files):")
+            for path in by_ext[ext]:
+                lines.append(f"  {path}")
+        return "\n".join(lines)
+    finally:
+        conn.close()

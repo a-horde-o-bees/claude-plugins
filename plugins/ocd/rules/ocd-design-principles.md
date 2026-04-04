@@ -23,6 +23,23 @@ Reveal information in layers — overview first, details on demand. Every level 
 - File organization reveals architecture at each directory level without requiring traversal of children
 - Each layer is complete at its depth — a reader who stops at any level has a coherent (if less detailed) understanding
 
+### Purpose Statement
+
+The disclosure boundary between layers. A purpose statement tells a reader what something is and whether to go deeper — present at every structural boundary where a reader makes an include-or-skip decision.
+
+A purpose statement conveys:
+- **Scope** — what domain or responsibility the thing covers
+- **Role** — what kind of thing it is (business logic, CLI, config, convention, rule)
+
+A purpose statement excludes:
+- Internal mechanics — how algorithms work, what patterns are used, implementation details
+- Content listing — section names, function names, class names
+- History — why it exists, what it replaced, when it was added
+
+Quality test: if two things share the same purpose statement, it is too vague. If the purpose statement would change when internals are refactored but responsibility stays the same, it is too detailed.
+
+Purpose statements appear at every disclosure boundary: file headings, navigator descriptions, directory listings, skill descriptions, tool help text. The same thing described at different boundaries uses the same purpose statement — single source of truth for what it is.
+
 ## Make Invalid States Unrepresentable
 
 Enforce correctness through structure, not documentation. When the system's structure prevents incorrect usage, documentation becomes confirmation rather than instruction. Prefer enforcement mechanisms over prose rules at every layer — data, schemas, tool interfaces, file organization.

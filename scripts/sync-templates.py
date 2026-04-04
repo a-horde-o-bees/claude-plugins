@@ -36,18 +36,40 @@ def discover_mappings() -> list[tuple[Path, Path]]:
                 mappings.append((template, deployed))
 
         conv_dir = plugin_dir / "templates" / "conventions"
+        deployed_conv_dir = (
+            PROJECT_ROOT / ".claude" / plugin_name / "conventions"
+        )
+
+        # Existing templates → deployed counterparts
         if conv_dir.is_dir():
             for template in sorted(conv_dir.iterdir()):
                 if not template.is_file():
                     continue
-                deployed = (
-                    PROJECT_ROOT
-                    / ".claude"
-                    / plugin_name
-                    / "conventions"
-                    / template.name
-                )
+                deployed = deployed_conv_dir / template.name
                 mappings.append((template, deployed))
+
+        # Deployed conventions without template counterparts — read
+        # manifest to discover the full set, create template targets
+        # for any deployed files not yet in templates directory
+        manifest_path = deployed_conv_dir / "manifest.yaml"
+        if manifest_path.is_file() and conv_dir.is_dir():
+            existing_templates = {
+                f.name for f in conv_dir.iterdir() if f.is_file()
+            }
+            for line in manifest_path.read_text().splitlines():
+                stripped = line.strip()
+                indent = len(line) - len(line.lstrip())
+                if indent == 2 and stripped.endswith(":"):
+                    entry_path = stripped[:-1]
+                    # Convention entries reference paths like
+                    # .claude/ocd/conventions/python.md
+                    conv_prefix = f".claude/{plugin_name}/conventions/"
+                    if entry_path.startswith(conv_prefix):
+                        name = entry_path[len(conv_prefix):]
+                        if name not in existing_templates:
+                            template = conv_dir / name
+                            deployed = deployed_conv_dir / name
+                            mappings.append((template, deployed))
 
     return mappings
 
@@ -61,9 +83,10 @@ def sync_pair(template: Path, deployed: Path) -> bool:
     if not deployed.exists():
         return False
 
-    if template.read_bytes() == deployed.read_bytes():
+    if template.exists() and template.read_bytes() == deployed.read_bytes():
         return False
 
+    template.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(deployed, template)
     return True
 

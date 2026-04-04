@@ -111,6 +111,16 @@ def _dispatch_governance_load(args: argparse.Namespace) -> None:
     print(governance_load(args.db, args.manifest))
 
 
+def _dispatch_governance_graph(args: argparse.Namespace) -> None:
+    _auto_scan(args)
+    print(governance_graph(args.db))
+
+
+def _dispatch_get_unclassified(args: argparse.Namespace) -> None:
+    _auto_scan(args)
+    print(get_unclassified(args.db))
+
+
 def build_parser() -> argparse.ArgumentParser:
     """Build standalone argument parser for navigator CLI."""
     db_parent = argparse.ArgumentParser(add_help=False)
@@ -491,6 +501,48 @@ def build_parser() -> argparse.ArgumentParser:
     )
     gl_p.add_argument("--manifest", required=True, help="Path to manifest.yaml")
     gl_p.set_defaults(_dispatch=_dispatch_governance_load)
+
+    # governance-graph
+    gg_p = commands.add_parser(
+        "governance-graph",
+        help="Show governance-to-governance edges, roots, and leaves",
+        description=(
+            "Display which governance entries govern which other governance\n"
+            "entries. Shows roots (no governor), edges (governs relationships),\n"
+            "and leaves (govern no other governance entries).\n"
+            "Auto-scans before execution.\n"
+            "\n"
+            "Output format:\n"
+            "  Roots (N):\n"
+            "    <path>\n"
+            "  Edges (N):\n"
+            "    <governor>  -->  <governed>\n"
+            "  Leaves (N):\n"
+            "    <path>"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        parents=[db_parent],
+    )
+    gg_p.set_defaults(_dispatch=_dispatch_governance_graph)
+
+    # get-unclassified (governance coverage)
+    gu2_p = commands.add_parser(
+        "get-unclassified",
+        help="Find file entries with no governance coverage",
+        description=(
+            "List files that match no governance pattern. Groups by\n"
+            "file extension to surface which file types lack conventions.\n"
+            "Auto-scans before execution.\n"
+            "\n"
+            "Output format:\n"
+            "  Unclassified: N files without governance coverage\n"
+            "  .ext (N files):\n"
+            "    <path>"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        parents=[db_parent],
+    )
+    gu2_p.set_defaults(_dispatch=_dispatch_get_unclassified)
 
     return parser
 
