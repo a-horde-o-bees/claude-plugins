@@ -5,6 +5,15 @@
         "hooks": [
           {
             "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/install_deps.sh\"",
+            "timeout": 30
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
             "command": "python3 ${CLAUDE_PLUGIN_ROOT}/run.py hooks.session_start",
             "timeout": 10
           }

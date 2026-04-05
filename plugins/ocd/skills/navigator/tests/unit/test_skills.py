@@ -1,4 +1,4 @@
-"""Unit tests for skill resolver."""
+"""Unit tests for skill resolution."""
 
 from __future__ import annotations
 
@@ -9,8 +9,8 @@ from pathlib import Path
 
 import pytest
 
-from skills.navigator import skill_resolver
-from skills.navigator.skill_resolver import (
+from skills.navigator import _skills
+from skills.navigator._skills import (
     _parse_frontmatter_name,
     _search_skills_dir,
     resolve_skill,
@@ -32,7 +32,7 @@ def tmp_env(monkeypatch: pytest.MonkeyPatch) -> Generator[dict[str, Path], None,
                    plugin / "skills", marketplace_cache]:
             d.mkdir(parents=True)
 
-        monkeypatch.setattr(skill_resolver, "_get_claude_home", lambda: home / ".claude")
+        monkeypatch.setattr(_skills, "_get_claude_home", lambda: home / ".claude")
         monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(project))
         monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(plugin))
 

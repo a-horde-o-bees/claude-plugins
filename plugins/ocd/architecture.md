@@ -84,10 +84,11 @@ Project structure index in SQLite. Agents query by purpose ("what does this file
 | `_db.py` | Schema, migrations, connection factory, seed rules from CSV |
 | `_scanner.py` | Filesystem walking with rule-based pruning, git hash change detection |
 | `_frontmatter.py` | Governance frontmatter parsing: pattern and depends from files |
-| `__init__.py` | Business logic facade: describe, list, search, scan, set, remove |
+| `_governance.py` | Governance loading, matching, ordering, and analysis |
+| `__init__.py` | Business logic facade: describe, list, search, set, remove; re-exports from all modules |
 | `__main__.py` | CLI entry point with argparse |
 | `_init.py` | Deploy conventions, manifest, and database; report deployment states |
-| `skill_resolver.py` | Resolves skill names to SKILL.md paths across discovery locations |
+| `_skills.py` | Resolves skill names to SKILL.md paths across discovery locations |
 
 **Database schema:**
 

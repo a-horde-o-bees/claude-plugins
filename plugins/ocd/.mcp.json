@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "ocd-navigator": {
+      "command": "${CLAUDE_PLUGIN_DATA}/venv/bin/python3",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/servers/navigator.py"],
+      "env": {
+        "DB_PATH": ".claude/ocd/navigator/navigator.db"
+      }
+    }
+  }
+}

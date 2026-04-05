@@ -1,14 +1,13 @@
 """Navigator CLI.
 
 Presentation layer: argument parsing and dispatch wrappers only.
-Business logic lives in __init__.py and skill_resolver.py.
+Business logic lives in __init__.py facade.
 """
 
 import argparse
 import sys
 
 from . import *  # noqa: F403
-from . import skill_resolver
 
 
 DEFAULT_DB = ".claude/ocd/navigator/navigator.db"
@@ -75,7 +74,7 @@ def _dispatch_search(args: argparse.Namespace) -> None:
 
 
 def _dispatch_resolve_skill(args: argparse.Namespace) -> None:
-    result = skill_resolver.resolve_skill(args.name)
+    result = resolve_skill(args.name)
     if result:
         print(result)
     else:
@@ -84,7 +83,7 @@ def _dispatch_resolve_skill(args: argparse.Namespace) -> None:
 
 
 def _dispatch_list_skills(_args: argparse.Namespace) -> None:
-    skills = skill_resolver.list_skills()
+    skills = list_skills()
     if not skills:
         print("No skills found.")
         return
