@@ -23,9 +23,10 @@ Complete catalog of evaluation perspectives. Each lens is a distinct concern. Im
 
 **Does the target follow applicable project conventions?**
 
-Load matching conventions via conventions CLI. Evaluate target content against each convention's requirements. For targets spanning dependency chains, traverse root-first — evaluate foundational documents before derived ones, carrying forward what each layer establishes.
+Load matching conventions via navigator `governance-for`. Evaluate target content against each convention's requirements. For targets spanning dependency chains, traverse root-first — evaluate foundational documents before derived ones, carrying forward what each layer establishes.
 
 Failure modes:
+
 - Convention requirements not reflected in target content
 - Target contradicts convention guidance
 - Dependency chain traversal order incorrect or incomplete
@@ -37,6 +38,7 @@ Failure modes:
 Evaluate whether an agent encountering the target for the first time could use it correctly without external context, trial and error, or user assistance.
 
 Failure modes:
+
 - Unbound references — names, paths, or variables referenced but never defined
 - Ambiguous instructions — multiple valid interpretations with different outcomes
 - Missing context — information required for correct use that isn't present or referenced
@@ -50,6 +52,7 @@ Failure modes:
 Evaluate structural decisions and patterns within the target's domain. What constitutes "best practice" varies by target type — implementations define domain-specific criteria.
 
 Failure modes:
+
 - Anti-patterns specific to the target domain
 - Structural readiness — target has outgrown its natural scope
 - Naming and discoverability gaps
@@ -62,6 +65,7 @@ Failure modes:
 Evaluate whether the target reinvents something with a well-known solution. Surface standard patterns, established approaches, and widely-adopted conventions that the implementation could mirror instead.
 
 Failure modes:
+
 - Custom implementation of a well-known pattern without justification
 - Pattern transplanted from a fitting context into one where it doesn't fit
 - Missing standard structure consumers would expect for the domain
@@ -74,6 +78,7 @@ Failure modes:
 Evaluate consistency across multiple related files. Targets that exist in a system — parent-child, dependency chain, cross-references — must be consistent with each other.
 
 Failure modes:
+
 - Parent re-explaining what child documents cover (progressive disclosure violation)
 - Cross-file contradictions — same concept described differently in related documents
 - Dependency chain gaps — layer references capabilities from a lower layer that don't exist
@@ -107,6 +112,7 @@ Execution planning considerations:
 - File sizes inform how much work fits in one agent's context, but where to split depends on file relationships the orchestrator determines
 
 Context-aware iteration is the mechanism for when a group exceeds one agent's context. The agent processes what it can, then passes forward:
+
 - Files not yet evaluated
 - Accumulated findings so far
 - Any context needed for continuity (what was established in files already evaluated)

@@ -32,10 +32,12 @@ Reveal information in layers — overview first, details on demand. Every level 
 The disclosure boundary between layers. A purpose statement tells a reader what something is and whether to go deeper — present at every structural boundary where a reader makes an include-or-skip decision.
 
 A purpose statement conveys:
+
 - **Scope** — what domain or responsibility the thing covers
 - **Role** — what kind of thing it is (business logic, CLI, config, convention, rule)
 
 A purpose statement excludes:
+
 - Internal mechanics — how algorithms work, what patterns are used, implementation details
 - Content listing — section names, function names, class names
 - History — why it exists, what it replaced, when it was added

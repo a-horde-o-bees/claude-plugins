@@ -203,10 +203,12 @@ Examples:
 Workflows reference arguments using two forms — `--flag` for flag existence and `{flag}` for flag value. This separates presence checks from value resolution, making data flow explicit.
 
 `--flag` refers to the flag itself — existence, iteration over instances:
+
 - Conditions check presence — `If --flag:` or `If not --flag:`
 - Iteration over repeatable instances — `For each --flag:`
 
 `{flag}` always resolves to the value associated with the flag:
+
 - For value flags — `{flag}` resolves to the text value passed with the flag
 - For repeatable flags — `{flag}` inside `For each --flag:` resolves to the current item's value
 - Boolean flags have no value — use `--flag` only, never `{flag}`

@@ -7,6 +7,7 @@ specific structure used by governance frontmatter.
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 
@@ -37,7 +38,10 @@ def parse_governance(file_path: Path) -> dict | None:
         if stripped.startswith("pattern:"):
             in_depends = False
             value = stripped[len("pattern:"):].strip()
-            pattern = value.strip('"').strip("'")
+            if value.startswith("["):
+                pattern = value
+            else:
+                pattern = value.strip('"').strip("'")
 
         elif stripped == "depends:":
             in_depends = True
@@ -79,3 +83,14 @@ def scan_governance_dirs(
                 result[rel_path] = parsed
 
     return result
+
+
+def normalize_patterns(pattern: str) -> list[str]:
+    """Normalize a governance pattern to a list of fnmatch patterns.
+
+    Handles both single pattern strings and flow-style YAML lists
+    stored as JSON arrays (e.g. '["test_*.*", "*_test.*"]').
+    """
+    if pattern.startswith("["):
+        return json.loads(pattern)
+    return [pattern]

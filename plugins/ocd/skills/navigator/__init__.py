@@ -12,7 +12,7 @@ import sqlite3
 from pathlib import Path
 
 from ._db import get_connection, init_db, SCHEMA, MIGRATIONS, SEED_PATH  # noqa: F401
-from ._frontmatter import parse_governance, scan_governance_dirs  # noqa: F401
+from ._frontmatter import normalize_patterns, parse_governance, scan_governance_dirs  # noqa: F401
 from ._scanner import (  # noqa: F401
     scan_path,
     _walk_filesystem,
@@ -460,8 +460,11 @@ def governance_for(db_path: str, file_paths: list[str]) -> str:
             basename = Path(file_path).name
             matches = []
             for gov in gov_rows:
-                pattern = gov["pattern"]
-                if fnmatch.fnmatch(basename, pattern) or fnmatch.fnmatch(file_path, pattern):
+                patterns = normalize_patterns(gov["pattern"])
+                if any(
+                    fnmatch.fnmatch(basename, p) or fnmatch.fnmatch(file_path, p)
+                    for p in patterns
+                ):
                     matches.append(gov["entry_path"])
             if matches:
                 results[file_path] = sorted(matches)
@@ -658,8 +661,11 @@ def get_unclassified(db_path: str) -> str:
             basename = Path(file_path).name
             matched = False
             for gov in gov_rows:
-                pattern = gov["pattern"]
-                if fnmatch.fnmatch(basename, pattern) or fnmatch.fnmatch(file_path, pattern):
+                patterns = normalize_patterns(gov["pattern"])
+                if any(
+                    fnmatch.fnmatch(basename, p) or fnmatch.fnmatch(file_path, p)
+                    for p in patterns
+                ):
                     matched = True
                     break
             if not matched:

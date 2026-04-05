@@ -12,12 +12,14 @@ from skills.navigator import (
     _matches_any_rule,
     get_connection,
     get_undescribed,
+    get_unclassified,
     governance_for,
     governance_load,
     governance_order,
     init_db,
     list_files,
     list_governance,
+    normalize_patterns,
     remove_entry,
     scan_path,
     search_entries,
@@ -27,10 +29,14 @@ from skills.navigator import (
 )
 
 
-def _write_governance_file(path: Path, pattern: str, depends: list = None) -> None:
+def _write_governance_file(path: Path, pattern, depends: list = None) -> None:
     """Create a markdown file with governance frontmatter at path."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    lines = ["---", f'pattern: "{pattern}"']
+    if isinstance(pattern, list):
+        quoted = ", ".join(f'"{p}"' for p in pattern)
+        lines = ["---", f"pattern: [{quoted}]"]
+    else:
+        lines = ["---", f'pattern: "{pattern}"']
     if depends:
         lines.append("depends:")
         for dep in depends:
@@ -1590,4 +1596,129 @@ class TestScanGovernance:
         assert any("app.py" in g for g in governed)
         # Should NOT have governance entries added by scan pattern matching
         assert ".claude/rules/all.md" not in governed
+        conn.close()
+
+
+class TestNormalizePatterns:
+    def test_single_string(self):
+        assert normalize_patterns("*.py") == ["*.py"]
+
+    def test_json_list(self):
+        result = normalize_patterns('["test_*.*", "*_test.*", "conftest.*"]')
+        assert result == ["test_*.*", "*_test.*", "conftest.*"]
+
+    def test_single_element_list(self):
+        assert normalize_patterns('["*.py"]') == ["*.py"]
+
+    def test_empty_list(self):
+        assert normalize_patterns("[]") == []
+
+
+class TestListPatternGovernanceFor:
+    @pytest.fixture
+    def list_gov_db(self, tmp_path):
+        db = str(tmp_path / "gov.db")
+        conn = get_connection(db)
+        conn.executescript(SCHEMA)
+        conn.close()
+
+        _write_governance_file(tmp_path / ".claude/rules/all.md", "*")
+        _write_governance_file(
+            tmp_path / ".claude/conventions/testing.md",
+            ["test_*.*", "*_test.*", "conftest.*"],
+        )
+        governance_load(db, str(tmp_path))
+        return db
+
+    def test_matches_test_prefix(self, list_gov_db):
+        result = governance_for(list_gov_db, ["test_utils.py"])
+        assert ".claude/conventions/testing.md" in result
+
+    def test_matches_test_suffix(self, list_gov_db):
+        result = governance_for(list_gov_db, ["app_test.py"])
+        assert ".claude/conventions/testing.md" in result
+
+    def test_matches_conftest(self, list_gov_db):
+        result = governance_for(list_gov_db, ["conftest.py"])
+        assert ".claude/conventions/testing.md" in result
+
+    def test_no_match_regular_file(self, list_gov_db):
+        result = governance_for(list_gov_db, ["app.py"])
+        assert ".claude/conventions/testing.md" not in result
+        assert ".claude/rules/all.md" in result
+
+    def test_multiple_files_mixed(self, list_gov_db):
+        result = governance_for(list_gov_db, ["test_foo.py", "app.py", "bar_test.py"])
+        lines = result.split("\n")
+        # test_foo.py and bar_test.py should match testing convention
+        test_foo_section = False
+        app_section = False
+        for line in lines:
+            if "test_foo.py" in line and "follows:" in line:
+                test_foo_section = True
+            if "app.py" in line and "follows:" in line:
+                app_section = True
+        assert test_foo_section
+        assert app_section
+
+
+class TestListPatternGetUnclassified:
+    def test_list_pattern_covers_files(self, tmp_path):
+        project = tmp_path / "project"
+        project.mkdir()
+        (project / "test_app.py").write_text("x = 1\n")
+        (project / "unknown.xyz").write_text("data\n")
+
+        db = str(tmp_path / "gov.db")
+        conn = get_connection(db)
+        conn.executescript(SCHEMA)
+        conn.close()
+
+        _write_governance_file(
+            project / ".claude/conventions/testing.md",
+            ["test_*.*", "*_test.*", "conftest.*"],
+        )
+        governance_load(db, str(project))
+        scan_path(db, str(project))
+
+        result = get_unclassified(db)
+        # test_app.py should be classified, unknown.xyz should not
+        assert "test_app.py" not in result
+        assert "unknown.xyz" in result
+
+
+class TestListPatternScanGovernance:
+    @pytest.fixture
+    def list_gov_scan_tree(self, tmp_path):
+        project = tmp_path / "project"
+        project.mkdir()
+        (project / "test_app.py").write_text("x = 1\n")
+        (project / "utils_test.py").write_text("y = 2\n")
+        (project / "conftest.py").write_text("z = 3\n")
+        (project / "app.py").write_text("w = 4\n")
+
+        db = str(tmp_path / "gov.db")
+        conn = get_connection(db)
+        conn.executescript(SCHEMA)
+        conn.close()
+
+        _write_governance_file(
+            project / ".claude/conventions/testing.md",
+            ["test_*.*", "*_test.*", "conftest.*"],
+        )
+        governance_load(db, str(project))
+        return {"project": project, "db": db}
+
+    def test_scan_populates_governs_for_all_patterns(self, list_gov_scan_tree):
+        scan_path(list_gov_scan_tree["db"], str(list_gov_scan_tree["project"]))
+        conn = get_connection(list_gov_scan_tree["db"])
+        rows = conn.execute(
+            "SELECT governed_path FROM governs "
+            "WHERE governor_path = '.claude/conventions/testing.md'"
+        ).fetchall()
+        governed = {r["governed_path"] for r in rows}
+        assert any("test_app.py" in g for g in governed)
+        assert any("utils_test.py" in g for g in governed)
+        assert any("conftest.py" in g for g in governed)
+        assert not any(g.endswith("/app.py") or g == "app.py" for g in governed)
         conn.close()

@@ -14,15 +14,15 @@ Every file opens with a level-1 heading (`#`) that identifies the file's subject
 
 ## Blank Line Separation
 
-Different formatting elements require a blank line between them. Without separation, markdown renderers may merge or misinterpret adjacent elements.
+A blank line is required between any two different formatting element types. Without separation, markdown renderers may merge or misinterpret adjacent elements.
 
-Required blank line between:
-- Heading and following content
-- Paragraph and list
-- Bold/emphasis line and list
-- List and paragraph
-- Code block and surrounding content
-- Table and surrounding content
-- Blockquote and surrounding content
+Formatting element types:
 
-Within a single formatting context (consecutive list items, consecutive paragraphs), blank lines follow standard markdown rules for that element.
+- Headings
+- Paragraphs (including single-line labels ending in `:`)
+- Lists (numbered or bulleted, including nested content within list items)
+- Code blocks (fenced or indented)
+- Tables
+- Blockquotes
+
+Transitioning from any one type to a different type requires a blank line. Content that stays within the same type (consecutive list items, consecutive paragraphs, nested lists within a parent list) follows standard markdown rules for that element.

@@ -12,6 +12,7 @@ import sqlite3
 from pathlib import Path
 
 from ._db import get_connection
+from ._frontmatter import normalize_patterns
 
 logger = logging.getLogger(__name__)
 
@@ -263,11 +264,14 @@ def scan_path(db_path: str, target_path: str) -> str:
                 if etype == "file" and path not in gov_paths
             ]
             for gov in gov_rows:
-                pattern = gov["pattern"]
+                patterns = normalize_patterns(gov["pattern"])
                 gov_path = gov["entry_path"]
                 for file_path in file_entries:
                     basename = Path(file_path).name
-                    if fnmatch.fnmatch(basename, pattern) or fnmatch.fnmatch(file_path, pattern):
+                    if any(
+                        fnmatch.fnmatch(basename, p) or fnmatch.fnmatch(file_path, p)
+                        for p in patterns
+                    ):
                         conn.execute(
                             "INSERT OR IGNORE INTO governs (governor_path, governed_path) "
                             "VALUES (?, ?)",

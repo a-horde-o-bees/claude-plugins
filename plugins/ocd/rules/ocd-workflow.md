@@ -43,6 +43,7 @@ Pass all target file paths in a single call. If output is non-empty, read and fo
 ## Package Structure
 
 All packages (skills, plugin infrastructure) use standard Python entry points:
+
 - `__main__.py` — agent-facing CLI; invoked via `python3 run.py <package> <command>`
 - `__init__.py` — facade; public interface that `__main__.py` imports via `from . import *`
 - Hook scripts are standalone modules invoked individually by hooks.json — no facade or `__main__.py`

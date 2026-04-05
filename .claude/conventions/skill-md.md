@@ -67,6 +67,7 @@ When dispatching to agents, agent receives resolved inputs and execution instruc
 Orchestrator does not pre-read component files to inline content. Workflow steps dictate when component files are read and by whom — each executor reads what it needs at execution time.
 
 String substitution variables available in body:
+
 - `$ARGUMENTS` — All arguments passed when invoking skill
 - `$ARGUMENTS[N]` or `$N` — Specific argument by 0-based index
 - `${CLAUDE_SESSION_ID}` — Current session ID
@@ -167,6 +168,7 @@ Convergence loop:
 ```
 
 Requirements:
+
 - Workflow must be fix-producing — report-only and interactive workflows reject `--auto` in Route
 - Fresh agent per iteration — no accumulated context; agent reads current file state from disk
 - Convergence detection is deterministic — the `auto_convergence check` tool compares git diffs between iterations
@@ -177,6 +179,7 @@ Requirements:
 `--delegate` backgrounds workflow agent spawn. Without `--delegate`, spawn runs in foreground.
 
 Requirements:
+
 - Workflow must be fully autonomous — no interactive checkpoints
 - Skills with interactive workflows must reject `--delegate` in Route
 - Spawned agent receives Workflow and Rules; reads component files at execution time
@@ -297,6 +300,7 @@ python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.navigator list <path> [--pattern "*.
 Navigator applies project-wide exclude rules (`.git`, `.venv`, `__pycache__`, etc.) and traversal limits deterministically. `--pattern` filters by basename glob and is repeatable for OR-combined matching.
 
 Skills should:
+
 - Accept `--pattern` as passthrough argument when user wants to scope to specific file types
 - Ignore `--pattern` when target is single file (nothing to filter)
 - Document `--pattern` in `argument-hint` frontmatter when supported
@@ -316,6 +320,7 @@ When orchestrator steps present choices or request confirmation, use `AskUserQue
 Does not apply to open-ended questions requiring freeform input or subagent contexts (AskUserQuestion only works in main conversation).
 
 Else handling for unexpected responses:
+
 - Orchestrator context — Else may jump forward or backward to appropriate step; do not prescribe specific outcomes
 - Steps processable by either orchestrator or spawned agent — Else defaults to Exit to user; spawned agents cannot prompt user for alternative input
 

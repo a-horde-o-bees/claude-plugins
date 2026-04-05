@@ -32,7 +32,7 @@ Create the file if it doesn't exist. Append to it if it does.
 Each entry is a timestamped bullet with enough context to act on later:
 
 ```
-- {date} — {what happened}; expected {what was expected}; workaround: {what was done instead, or "none — blocked"}
+- {YYYY-MM-DD} — {what happened}; expected {what was expected}; workaround: {what was done instead, or "none — blocked"}
 ```
 
 Keep entries concise. The goal is capture, not analysis — analysis happens when the friction log is reviewed.

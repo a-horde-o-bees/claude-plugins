@@ -1,5 +1,5 @@
 ---
-pattern: "test_*.*|*_test.*|conftest.*"
+pattern: ["test_*.*", "*_test.*", "conftest.*"]
 depends:
   - .claude/rules/ocd-design-principles.md
 ---
@@ -19,6 +19,7 @@ Deterministic operations get traditional tests. Non-deterministic behavior (agen
 Tool responses are API contracts. Agents parse output mechanically — any change to structure, field names, or response format is a breaking change even if the data is the same.
 
 Test:
+
 - Structured output matches explicit schema or snapshot
 - Error responses include machine-parseable identifiers, not just prose
 - Tool descriptions and parameter schemas are complete and accurate
@@ -30,6 +31,7 @@ Technique: snapshot/approval testing — capture golden output for representativ
 If a system reads a format and writes it back, the roundtrip property is the highest-value test. Parse then serialize then parse again must yield same structure.
 
 Test:
+
 - Format parse-serialize roundtrips (frontmatter, manifests, configuration)
 - Pattern matching symmetry (if pattern matches file, listing files under pattern includes that file)
 - Path resolution determinism (same input always resolves to same absolute path)
@@ -41,6 +43,7 @@ Technique: property-based testing — generate random valid inputs, run through 
 Agent workflows retry frequently. Any operation that changes behavior on second identical invocation causes cascading failures.
 
 Test:
+
 - Database operations produce same state whether run once or twice
 - Init/deploy operations detect existing state and skip gracefully
 - File operations overwrite cleanly without side effects
@@ -52,6 +55,7 @@ Technique: run operation, capture state, run again, assert state identical.
 Define properties that must hold regardless of input, then test with generated data. Invariants catch classes of bugs, not individual cases.
 
 Test:
+
 - Dependency ordering always produces valid topological sort
 - Cycle detection always raises on cycles, never silently degrades
 - Wildcard patterns always match everything
@@ -65,6 +69,7 @@ Technique: define invariant as predicate, generate random valid inputs, assert p
 Separate deterministic skeleton from non-deterministic behavior. Test skeleton — highest regression prevention per line of test code.
 
 Test:
+
 - Resolution priority ordering (which source wins when multiple match)
 - Pattern matching (which rules apply to which inputs)
 - Command routing (which operations get approved, denied, or blocked)
@@ -78,6 +83,7 @@ Technique: traditional unit tests — isolate each deterministic function, verif
 Permission enforcement has zero tolerance for false negatives. A bug that permits an operation that should be denied has immediate consequences.
 
 Test:
+
 - Path traversal resistance
 - Injection in quoted vs unquoted contexts
 - Deny list precedence over allow list
@@ -92,11 +98,13 @@ Technique: explicit boundary case enumeration plus property-based fuzzing of inp
 Structured documentation consumed by agents is code. Validate schema and referential integrity, not prose content.
 
 When it adds value:
+
 - Fields that agents parse programmatically (names, patterns, dependencies)
 - Referential integrity (manifest entries reference files that exist)
 - Format consistency across files of same type
 
 When it is overhead:
+
 - Linting prose content that agents interpret with natural language understanding
 - Enforcing style rules on descriptions that do not affect machine parsing
 
@@ -105,11 +113,13 @@ When it is overhead:
 Unit tests with mocked dependencies can pass while real integration is broken. Use integration tests strategically at boundaries where failure is silent.
 
 When it adds value:
+
 - CLI end-to-end: invoke actual script, verify stdout/stderr/exit code
 - Database operations against real databases (temp databases in test fixtures)
 - File system operations in temp directories
 
 When it is overhead:
+
 - Duplicating what unit tests already cover with mocked boundaries
 - Testing library behavior documented by library authors
 
@@ -122,12 +132,14 @@ Without isolation, tests that use `git checkout --`, `git restore`, or `git rese
 Mechanism: create a detached worktree from HEAD via `git worktree add <path> HEAD --detach`; teardown removes it via `git worktree remove --force`. Tests receive the worktree path and reference all project files relative to it. Language-specific fixture patterns belong in the language convention (e.g., Python conventions for pytest fixture implementation).
 
 When worktree isolation is required:
+
 - Tests that stage or unstage files (`git add`, `git reset`)
 - Tests that run git hooks (pre-commit, commit-msg)
 - Tests that create or delete files in the project tree
 - Tests that modify tracked files and restore them afterward
 
 When worktree isolation is unnecessary:
+
 - Tests that only read project files without modification
 - Tests that operate entirely in `tmp_path` or other external temp directories
 - Unit tests that mock git operations
