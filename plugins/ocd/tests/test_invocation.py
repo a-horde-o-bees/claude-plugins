@@ -64,6 +64,51 @@ class TestPluginCLI:
         result = run("plugin", "bogus")
         assert result.returncode != 0
 
+    def test_init_rejects_permissions_flag(self) -> None:
+        result = run("plugin", "init", "--permissions")
+        assert result.returncode != 0
+
+
+class TestPermissionsCLI:
+    """Verify permissions subcommands invoke through run.py."""
+
+    def test_report_exits_zero(self) -> None:
+        result = run("plugin", "permissions", "report")
+        assert result.returncode == 0, result.stderr
+
+    def test_report_shows_both_scopes(self) -> None:
+        result = run("plugin", "permissions", "report")
+        assert "project" in result.stdout
+        assert "user" in result.stdout
+
+    def test_deploy_requires_scope(self) -> None:
+        result = run("plugin", "permissions", "deploy")
+        assert result.returncode != 0
+
+    def test_deploy_exits_zero(self, tmp_path: Path) -> None:
+        result = run(
+            "plugin", "permissions", "deploy", "--scope", "project",
+            env={"CLAUDE_PROJECT_DIR": str(tmp_path)},
+        )
+        assert result.returncode == 0, result.stderr
+        assert "added" in result.stdout or "already present" in result.stdout
+
+    def test_analyze_exits_zero(self) -> None:
+        result = run("plugin", "permissions", "analyze")
+        assert result.returncode == 0, result.stderr
+        assert "health:" in result.stdout
+
+    def test_clean_requires_scope(self) -> None:
+        result = run("plugin", "permissions", "clean")
+        assert result.returncode != 0
+
+    def test_clean_exits_zero(self, tmp_path: Path) -> None:
+        result = run(
+            "plugin", "permissions", "clean", "--scope", "project",
+            env={"CLAUDE_PROJECT_DIR": str(tmp_path)},
+        )
+        assert result.returncode == 0, result.stderr
+
 
 # ===========================================================================
 # Hook invocation
