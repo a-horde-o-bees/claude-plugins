@@ -3,6 +3,10 @@ name: ocd-evaluate-documentation
 description: |
   Evaluate architecture.md and README.md files across conformity, coherence, and prior art. Checks nesting, progressive disclosure, and cross-document consistency.
 argument-hint: "--target <project | architecture | readme>"
+allowed-tools:
+  - Read
+  - Edit
+  - Bash(python3 *)
 ---
 
 # /ocd-evaluate-documentation

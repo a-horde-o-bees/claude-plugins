@@ -3,6 +3,10 @@ name: blueprint-reimagine
 description: |
   Abstract an existing capability into a generalized problem description for unbiased solution research. Reads target, extracts what problem it solves without implementation bias, and captures system constraints.
 argument-hint: "--target <path | natural language description>"
+allowed-tools:
+  - Read
+  - Write
+  - AskUserQuestion
 ---
 
 # /blueprint-reimagine

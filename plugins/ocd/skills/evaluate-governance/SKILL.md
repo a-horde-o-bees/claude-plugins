@@ -3,6 +3,10 @@ name: ocd-evaluate-governance
 description: |
   Evaluate the rules and conventions governance chain across conformity, efficacy, coherence, and prior art. Traverses dependency chain root-first to verify each layer builds correctly on its foundations.
 argument-hint: "--target project"
+allowed-tools:
+  - Read
+  - Edit
+  - Bash(python3 *)
 ---
 
 # /ocd-evaluate-governance

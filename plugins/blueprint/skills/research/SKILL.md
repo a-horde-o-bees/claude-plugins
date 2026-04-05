@@ -3,6 +3,17 @@ name: blueprint-research
 description: |
   Structured solution research and implementation planning. Studies existing tools, proven approaches, and established patterns through iterative cycles: initialization, expand/consolidate/present cycles, directions, and implementation blueprint. Uses emergent schema with unified entity model and SQLite database.
 argument-hint: "[scope description]"
+allowed-tools:
+  - Read
+  - Write
+  - Edit
+  - AskUserQuestion
+  - WebFetch
+  - WebSearch
+  - Bash(python3 *)
+  - Bash(mkdir *)
+  - Bash(cp *)
+  - mcp__plugin_blueprint_blueprint-research__*
 ---
 
 # /blueprint-research

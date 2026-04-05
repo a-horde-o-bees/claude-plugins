@@ -1,5 +1,8 @@
 ---
 name: ocd-commit
+allowed-tools:
+  - Bash(git *)
+  - Bash(python3 scripts/sync-templates.py)
 description: >
   Commit working tree changes grouped by topic. Analyzes pending changes,
   groups by topic for readable history, drafts messages describing end-state

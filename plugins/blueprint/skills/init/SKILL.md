@@ -2,6 +2,8 @@
 name: blueprint-init
 description: Initialize blueprint research infrastructure in current project
 argument-hint: "[--force]"
+allowed-tools:
+  - Bash(python3 *)
 ---
 
 # /blueprint-init

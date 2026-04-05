@@ -1,5 +1,8 @@
 ---
 name: ocd-push
+allowed-tools:
+  - Skill
+  - Bash(git *)
 description: >
   Push commits to remote. Requires explicit --branch to name the push target.
   Runs /ocd-commit first if uncommitted changes exist, previews unpushed commits,

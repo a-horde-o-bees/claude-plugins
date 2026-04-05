@@ -3,6 +3,10 @@ name: ocd-evaluate-skill
 description: |
   Evaluate a skill across conformity, efficacy, quality, and prior art in one pass. Follows cross-references into component files. Produces unified change set.
 argument-hint: "--target </skill-name | path/to/SKILL.md>"
+allowed-tools:
+  - Read
+  - Edit
+  - Bash(python3 *)
 ---
 
 # /ocd-evaluate-skill

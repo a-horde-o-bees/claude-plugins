@@ -1,6 +1,8 @@
 ---
 name: blueprint-status
 description: Show blueprint plugin version, rule states, research database status, and actionable next steps
+allowed-tools:
+  - Bash(python3 *)
 ---
 
 # /blueprint-status

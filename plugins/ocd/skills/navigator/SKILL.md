@@ -2,6 +2,9 @@
 name: ocd-navigator
 description: Scan project directory and populate navigator database with file and folder descriptions
 argument-hint: "[directory-path] [--delegate] (defaults to project root)"
+allowed-tools:
+  - Read
+  - Bash(python3 *)
 ---
 
 # /ocd-navigator

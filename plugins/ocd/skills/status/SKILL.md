@@ -1,6 +1,8 @@
 ---
 name: ocd-status
 description: Show plugin version, rule states, skill infrastructure status, and actionable next steps
+allowed-tools:
+  - Bash(python3 *)
 ---
 
 # /ocd-status
