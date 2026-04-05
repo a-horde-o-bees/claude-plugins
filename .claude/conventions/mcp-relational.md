@@ -1,6 +1,7 @@
 ---
 pattern: "servers/*.py"
 depends:
+  - .claude/conventions/mcp-server.md
   - .claude/rules/ocd-design-principles.md
   - .claude/conventions/python.md
 ---
@@ -34,7 +35,19 @@ Delete operations cascade through the ownership tree. Cascade logic must be dyna
 
 ## Tool Interface
 
-<!-- Pending: conventions for domain tool design to be populated after blueprint research testing validates the new architecture -->
+Relational-specific tool design patterns. General tool conventions (naming, descriptions, input/output, error handling, granularity) are in the parent `mcp-server.md` convention.
+
+### Domain Scope
+
+Each tool encodes one operation on one property or relationship in the aggregate. Tools map to domain operations, not SQL statements — `set_description`, `link_goal_domain`, `add_notes` — not `update_row`, `insert_join`, or `execute_query`.
+
+### Aggregate Awareness
+
+Tools operate within aggregate boundaries. A tool that modifies a satellite record understands its relationship to the root — validation, cascade implications, and consistency checks are tool responsibilities, not caller responsibilities.
+
+### Batch Operations
+
+Registration and mutation tools accept arrays for batch processing. The tool handles per-item dedup, validation, and error collection internally — the caller provides the batch, the tool returns per-item results.
 
 ## Error Handling
 
