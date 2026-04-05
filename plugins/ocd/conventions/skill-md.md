@@ -291,13 +291,9 @@ When content is used by only one workflow, keep it as a workflow subsection — 
 
 ## File Enumeration
 
-Skills that accept path argument and can operate on directories must use navigator CLI for file enumeration — never invent ad-hoc file listing (glob, `git ls-files`, agent judgment).
+Skills that accept path argument and can operate on directories must use the `paths_list` MCP tool for file enumeration — never invent ad-hoc file listing (glob, `git ls-files`, agent judgment).
 
-```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.navigator list <path> [--pattern "*.py"]
-```
-
-Navigator applies project-wide exclude rules (`.git`, `.venv`, `__pycache__`, etc.) and traversal limits deterministically. `--pattern` filters by basename glob and is repeatable for OR-combined matching.
+Navigator applies project-wide exclude rules (`.git`, `.venv`, `__pycache__`, etc.) and traversal limits deterministically. The `patterns` parameter filters by basename glob and accepts arrays for OR-combined matching.
 
 Skills should:
 

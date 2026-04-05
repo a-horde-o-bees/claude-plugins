@@ -142,10 +142,10 @@ python3 run.py hooks.session_start          # Hook invocation
 python3 run.py hooks.auto_approval          # Hook invocation
 python3 run.py plugin init [--force]        # Init orchestration
 python3 run.py plugin status                # Status reporting
-python3 run.py skills.navigator describe .  # Navigator CLI
+python3 run.py skills.navigator scan .     # Navigator CLI (operational)
 ```
 
-Hooks are invoked by Claude Code via `hooks.json` configuration. Agent-facing CLIs are invoked by agents via Bash during skill execution. No shebangs or execute permissions — all scripts run via `python3` interpreter prefix.
+Hooks are invoked by Claude Code via `hooks.json` configuration. Navigator agent-facing operations are exposed via MCP server (`servers/navigator.py`); CLI retained for operational commands (init, scan, governance-load). No shebangs or execute permissions — all scripts run via `python3` interpreter prefix.
 
 ## Concurrency
 

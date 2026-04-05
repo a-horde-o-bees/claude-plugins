@@ -6,7 +6,7 @@ argument-hint: "--target project"
 allowed-tools:
   - Read
   - Edit
-  - Bash(python3 *)
+  - mcp__plugin_ocd_ocd-navigator__*
 ---
 
 # /ocd-evaluate-governance
@@ -24,7 +24,7 @@ Evaluate the rules and conventions governance chain across four lenses in a sing
 
 ## Scope
 
-Full governance chain via `governance-order`. The governance files are a known, closed set — navigator maps every entry with its dependencies. No file path targeting needed.
+Full governance chain via `governance_order`. The governance files are a known, closed set — navigator maps every entry with its dependencies. No file path targeting needed.
 
 Accepted arguments:
 - `--target` — required; must be `project`
@@ -37,24 +37,24 @@ User runs `/ocd-evaluate-governance`
 
 1. If not --target: Exit to user — respond with skill description and argument-hint
 2. If {target} is not `project`: Exit to user — target must be `project`
-3. Discover governance chain — bash: `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.navigator governance-order`
-4. {evaluation-order} = levels from output (level 0 first)
+3. Discover governance chain — governance_order:
+4. {evaluation-order} = levels from result (level 0 first)
 5. Collect all governance file paths across levels
-6. Get file sizes — bash: `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.navigator list . --pattern "*.md" --sizes`
+6. Get file sizes — paths_list: target_path=".", patterns=["*.md"], sizes=true
 7. Dispatch Workflow
 
 ## Workflow
 
 1. Spawn agent with governance evaluation({evaluation-order}):
-    1. Read `evaluate-shared/_triage-criteria.md`
-    2. Read `evaluate-governance/_lenses.md`
+    1. Read `${CLAUDE_PLUGIN_ROOT}/skills/evaluate-shared/_triage-criteria.md`
+    2. Read `${CLAUDE_PLUGIN_ROOT}/skills/evaluate-governance/_lenses.md`
     3. Examine {evaluation-order} with file sizes — plan execution:
         1. Files are processed in dependency order (level 0 first)
         2. Context from earlier levels carries forward (what each layer establishes)
         3. Determine if scope fits single agent or needs context-aware iteration
     4. For each {level} in {evaluation-order}:
         1. For each {file} in {level}:
-            1. Discover governance for this file — bash: `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.navigator governance-for {file}`
+            1. Discover governance for this file — governance_match: file_paths=[{file}]
             2. Read {file} and any governing files not yet read
             3. **Conformity lens:**
                 1. Evaluate file against its matched conventions
@@ -106,4 +106,4 @@ User runs `/ocd-evaluate-governance`
 - Prior Art evaluates the system design after full chain is in context — not per-file
 - Context-aware iteration passes context summary (what each level established) to continuation agents
 - Single sequential agent strongly preferred — coherence depends on carrying context across the chain
-- Governance-for output may include the file itself as governed — skip self-governance in coherence checks
+- governance_match output may include the file itself as governed — skip self-governance in coherence checks

@@ -6,7 +6,7 @@ argument-hint: "--target <project | architecture | readme>"
 allowed-tools:
   - Read
   - Edit
-  - Bash(python3 *)
+  - mcp__plugin_ocd_ocd-navigator__*
 ---
 
 # /ocd-evaluate-documentation
@@ -17,7 +17,7 @@ Evaluate project documentation files across three lenses in a single structured 
 
 | Lens | Question |
 |------|----------|
-| Conformity | Does each doc follow architecture-md or README-md conventions? |
+| Conformity | Does each doc follow its matched governance conventions? |
 | Coherence | Do parent and child docs properly divide responsibility? No re-explanation? |
 | Prior Art | Does the documentation structure mirror established patterns? |
 
@@ -39,37 +39,36 @@ User runs `/ocd-evaluate-documentation`
 
 1. If not --target: Exit to user — respond with skill description and argument-hint
 2. If {target} is `project`:
-    1. {patterns} = `architecture.md`, `README.md`
+    1. {patterns} = ["architecture.md", "README.md"]
 3. Else if {target} is `architecture`:
-    1. {patterns} = `architecture.md`
+    1. {patterns} = ["architecture.md"]
 4. Else if {target} is `readme`:
-    1. {patterns} = `README.md`
+    1. {patterns} = ["README.md"]
 5. Else: Exit to user — target must be `project`, `architecture`, or `readme`
-6. For each {pattern} in {patterns}:
-    1. Discover files — bash: `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.navigator list . --pattern "{pattern}" --sizes`
-7. Discover governance — bash: `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.navigator governance-for <all discovered files>`
-8. {file-list} = all discovered files with sizes
-9. Dispatch Workflow
+6. Discover files — paths_list: target_path=".", patterns={patterns}, sizes=true
+7. {file-list} = discovered files with sizes
+8. Dispatch Workflow
 
 ## Workflow
 
 1. Spawn agent with documentation evaluation({file-list}):
-    1. Read `evaluate-shared/_triage-criteria.md`
-    2. Read `evaluate-documentation/_lenses.md`
-    3. Read governance files listed by `governance-for` output
-    4. Examine {file-list} — plan execution:
+    1. Read `${CLAUDE_PLUGIN_ROOT}/skills/evaluate-shared/_triage-criteria.md`
+    2. Read `${CLAUDE_PLUGIN_ROOT}/skills/evaluate-documentation/_lenses.md`
+    3. Examine {file-list} — plan execution:
         1. Group files by system (root, each plugin, each subsystem)
         2. Within each system, identify parent-child relationships
         3. Determine if scope fits single agent or needs splitting
-    5. For each file in planned order:
+    4. For each file in planned order:
         1. Read file
-        2. **Conformity lens:**
-            1. Evaluate against architecture-md or README-md convention (matched by filename)
+        2. Discover governance — governance_match: file_paths=[{file}]
+        3. Read governance files not yet read
+        4. **Conformity lens:**
+            1. Evaluate file against its matched conventions
             2. Cite specific convention requirements with each finding
-        3. **Prior Art lens:**
+        5. **Prior Art lens:**
             1. Does the document structure follow established patterns for its type?
             2. Are there standard sections or organization the document is missing?
-    6. After all files read — **Coherence lens** (requires cross-file context):
+    5. After all files read — **Coherence lens** (requires cross-file context):
         1. For each parent-child system pair:
             1. Does the parent re-explain what the child covers? (progressive disclosure violation)
             2. Does the parent give a generalized description linking to the child?
@@ -78,10 +77,10 @@ User runs `/ocd-evaluate-documentation`
             1. Consistent structure and depth?
             2. Orphaned references to docs that don't exist?
             3. Systems missing required docs?
-    7. Triage findings per `_triage-criteria.md`
-    8. Apply Defect fixes directly; reclassify to Observation when escalation rules apply
-    9. If scope exceeded context — return findings so far with remaining files as checkpoint
-    10. Return:
+    6. Triage findings per `_triage-criteria.md`
+    7. Apply Defect fixes directly; reclassify to Observation when escalation rules apply
+    8. If scope exceeded context — return findings so far with remaining files as checkpoint
+    9. Return:
         - Scope: files evaluated and lenses applied
         - Findings by lens
         - Cross-lens interactions
@@ -110,3 +109,4 @@ User runs `/ocd-evaluate-documentation`
 - System documentation rule defines what docs each system must have — check completeness
 - Context-aware iteration: if file set exceeds context, agent returns checkpoint with remaining work
 - Single agent preferred for coherence (needs cross-file context); split only when scope forces it
+- governance_match called per-file during evaluation, not batch in Route — governance is a workflow concern
