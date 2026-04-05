@@ -102,7 +102,7 @@ def _get_marketplace_skill_dirs() -> list[Path]:
     return result
 
 
-def resolve_skill(name: str) -> Path | None:
+def skills_resolve(name: str) -> Path | None:
     """Resolve skill name to SKILL.md path.
 
     Searches in Claude Code priority order (highest wins):
@@ -144,7 +144,7 @@ def resolve_skill(name: str) -> Path | None:
     return None
 
 
-def list_skills() -> list[dict[str, str]]:
+def skills_list() -> list[dict[str, str]]:
     """List all discoverable skills with source and path.
 
     Returns list of {name, source, path} dicts in priority order.

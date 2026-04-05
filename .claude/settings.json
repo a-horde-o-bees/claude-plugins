@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(./scripts/run-plugin.sh:*)",
-      "mcp__plugin_blueprint_blueprint-research__*"
+      "mcp__plugin_blueprint_blueprint-research__*",
+      "mcp__plugin_ocd_ocd-navigator__*"
     ]
   },
   "hooks": {

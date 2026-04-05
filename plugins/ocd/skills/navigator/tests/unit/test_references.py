@@ -11,7 +11,7 @@ from skills.navigator._references import (
     _parse_skill_refs,
     _parse_governance_refs,
     _classify_and_parse,
-    map_references,
+    references_map,
 )
 
 
@@ -194,7 +194,7 @@ class TestMapReferences:
         """Single file with no references returns just that file."""
         leaf = tmp_path / "_leaf.md"
         leaf.write_text("# Leaf\n")
-        result = map_references([str(leaf)])
+        result = references_map([str(leaf)])
         assert result["total_files"] == 1
         assert result["files"][0]["references"] == []
         assert result["files"][0]["depth"] == 0
@@ -214,7 +214,7 @@ class TestMapReferences:
             "2. Read `sub/_triage.md`\n"
         )
 
-        result = map_references([str(skill_md)])
+        result = references_map([str(skill_md)])
         assert result["total_files"] == 3
         # Root is at depth 0
         root_entry = next(f for f in result["files"] if f["depth"] == 0)
@@ -242,7 +242,7 @@ class TestMapReferences:
             "1. Read `../shared/_common.md`\n"
         )
 
-        result = map_references([str(skill_a), str(skill_b)])
+        result = references_map([str(skill_a), str(skill_b)])
         # 2 skills + 1 shared = 3 total, not 4
         assert result["total_files"] == 3
 
@@ -268,12 +268,12 @@ class TestMapReferences:
         )
 
         # max_depth=1 means root (depth 0) follows refs to depth 1, but depth 1 doesn't follow further
-        result = map_references([str(root)], max_depth=1)
+        result = references_map([str(root)], max_depth=1)
         assert result["total_files"] == 2  # root + sub/SKILL.md, not sub/inner/_deep.md
 
     def test_roots_preserved(self, tmp_path: Path) -> None:
         """The roots field reflects the input paths."""
         leaf = tmp_path / "_leaf.md"
         leaf.write_text("# Leaf\n")
-        result = map_references([str(leaf)])
+        result = references_map([str(leaf)])
         assert result["roots"] == [str(leaf)]

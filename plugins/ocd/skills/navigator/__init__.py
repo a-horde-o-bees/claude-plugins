@@ -2,8 +2,11 @@
 
 Facade module — public interface for navigator functionality. Domain
 modules: _db (database), _scanner (filesystem), _frontmatter (parsing),
-_governance (governance operations), _skills (skill resolution).
-Presentation lives in __main__.py.
+_governance (governance operations), _skills (skill resolution),
+_references (file reference mapping).
+
+All functions return structured data (dicts/lists). Formatting for
+CLI display belongs in __main__.py. Presentation lives in __main__.py.
 """
 
 import fnmatch
@@ -11,34 +14,27 @@ import logging
 import os
 from pathlib import Path
 
-from ._db import get_connection, init_db, SCHEMA, MIGRATIONS, SEED_PATH  # noqa: F401
-from ._frontmatter import normalize_patterns, parse_governance, scan_governance_dirs  # noqa: F401
-from ._scanner import (  # noqa: F401
-    scan_path,
-    _walk_filesystem,
-    _is_pattern,
-    _compute_git_hash,
-    _compute_file_metrics,
-    _matches_any_rule,
-    _mark_parents_stale,
-)
-from ._governance import (  # noqa: F401
-    match_governance,
+# Local imports — used by functions in this module
+from ._db import get_connection
+from ._scanner import scan_path, _walk_filesystem, _is_pattern, _compute_file_metrics
+
+# Re-exports — public interface consumed by MCP server and CLI
+from ._governance import (
     governance_load,
-    list_governance,
-    governance_for,
+    governance_list,
+    governance_match,
     governance_order,
     governance_graph,
-    get_unclassified,
+    governance_unclassified,
 )
-from ._references import map_references  # noqa: F401
-from ._skills import resolve_skill, list_skills  # noqa: F401
+from ._references import references_map
+from ._skills import skills_resolve, skills_list
 
 logger = logging.getLogger(__name__)
 
 
-def describe_path(db_path: str, target_path: str) -> str:
-    """Show entry at path. Files return description. Directories return description and children."""
+def paths_describe(db_path: str, target_path: str) -> dict:
+    """Describe an entry at path. Files return entry info. Directories return entry info with children."""
     target_path = target_path.rstrip("/")
     if target_path == ".":
         target_path = ""
@@ -49,29 +45,26 @@ def describe_path(db_path: str, target_path: str) -> str:
             "SELECT * FROM entries WHERE path = ?", (target_path,)
         ).fetchone()
 
-        # File entry — return single entry with description
+        def _entry_dict(row) -> dict:
+            return {
+                "path": row["path"] or ".",
+                "type": row["entry_type"],
+                "description": row["description"],
+                "stale": bool(row["stale"]),
+            }
+
+        # File entry
         if entry and entry["entry_type"] == "file":
-            lines = [entry["path"]]
-            if entry["description"] is None:
-                lines.append("[?]")
-            elif entry["stale"]:
-                lines.append(f"[~] {entry['description']}")
-            elif entry["description"]:
-                lines.append(entry["description"])
-            return "\n".join(lines)
+            return _entry_dict(entry)
 
-        # Directory entry — return listing
-        lines = []
-
-        display_path = target_path + "/" if target_path else "./"
-        lines.append(display_path)
-
-        if entry and entry["description"] is None:
-            lines.append("[?]")
-        elif entry and entry["stale"] and entry["description"]:
-            lines.append(f"[~] {entry['description']}")
-        elif entry and entry["description"]:
-            lines.append(entry["description"])
+        # Directory entry
+        result = {
+            "path": (target_path + "/") if target_path else "./",
+            "type": "directory",
+            "description": entry["description"] if entry else None,
+            "stale": bool(entry["stale"]) if entry else False,
+            "children": [],
+        }
 
         children = conn.execute(
             "SELECT * FROM entries WHERE parent_path = ? "
@@ -81,49 +74,28 @@ def describe_path(db_path: str, target_path: str) -> str:
             (target_path,),
         ).fetchall()
 
-        if children:
-            if entry and (entry["description"] is not None and entry["description"]):
-                lines.append("")
-            for child in children:
-                child_display = child["path"]
-                if child["entry_type"] == "directory":
-                    child_display += "/"
-                desc = child["description"]
-                if desc is None:
-                    lines.append(f"- {child_display} [?]")
-                elif child["stale"] and desc:
-                    lines.append(f"- {child_display} [~] {desc}")
-                elif desc:
-                    lines.append(f"- {child_display} - {desc}")
-                else:
-                    lines.append(f"- {child_display}")
+        for child in children:
+            result["children"].append(_entry_dict(child))
 
         if not entry and not children:
-            lines.append("(no entries)")
+            result["children"] = None  # signals "no entries"
 
-        return "\n".join(lines)
+        return result
     finally:
         conn.close()
 
 
-def list_files(
+def paths_list(
     db_path: str,
     target_path: str,
     patterns: list[str] | None = None,
     excludes: list[str] | None = None,
     sizes: bool = False,
-) -> str:
-    """List non-excluded file paths under target_path.
+) -> list[dict]:
+    """List non-excluded files under target_path.
 
-    Walks filesystem using navigator rules (exclude, traverse). Returns
-    files only (not directories), sorted, one per line. If patterns
-    provided, keeps only paths where basename matches any pattern via
-    fnmatch. If excludes provided, removes paths where any path component
-    matches any exclude pattern via fnmatch.
-
-    When sizes=True, appends line_count and char_count columns per line.
-
-    Returns empty string if no files match.
+    Returns list of file dicts. Each dict has 'path' and optionally
+    'line_count' and 'char_count' when sizes=True.
     """
     target_path = target_path.rstrip("/")
     if target_path == ".":
@@ -148,39 +120,40 @@ def list_files(
             ]
 
         if not sizes:
-            return "\n".join(files)
+            return [{"path": f} for f in files]
 
-        # Fetch size data from database for matched files
-        lines = []
+        result = []
         for f in files:
             row = conn.execute(
                 "SELECT line_count, char_count FROM entries WHERE path = ?",
                 (f,),
             ).fetchone()
+            entry = {"path": f}
             if row and row["line_count"] is not None:
-                lines.append(f"{f}\t{row['line_count']}\t{row['char_count']}")
-            else:
-                lines.append(f)
-        return "\n".join(lines)
+                entry["line_count"] = row["line_count"]
+                entry["char_count"] = row["char_count"]
+            result.append(entry)
+        return result
     finally:
         conn.close()
 
 
-def get_undescribed(db_path: str) -> str:
+def paths_undescribed(db_path: str) -> dict:
     """Return deepest directory with undescribed or stale entries.
-    Uses [?] for new entries, [~] for stale. Agent calls repeatedly until no work remaining."""
+
+    Returns progress info and directory listing. When no work remains,
+    returns {"done": True}.
+    """
     conn = get_connection(db_path)
     try:
-        # Find all entries needing attention: NULL description or stale
         work_entries = conn.execute(
             "SELECT path, parent_path, entry_type FROM entries "
             "WHERE (description IS NULL OR stale = 1) AND path NOT LIKE '%*%'"
         ).fetchall()
 
         if not work_entries:
-            return "No work remaining."
+            return {"done": True}
 
-        # Collect directories that need attention
         work_dirs = set()
         for row in work_entries:
             if row["entry_type"] == "directory":
@@ -188,25 +161,27 @@ def get_undescribed(db_path: str) -> str:
             else:
                 work_dirs.add(row["parent_path"] if row["parent_path"] is not None else "")
 
-        # Pick deepest (longest path = most segments)
         deepest = max(work_dirs, key=lambda p: p.count("/") if p else -1)
 
-        # Render with progress header
-        header = f"[{len(work_entries)} remaining across {len(work_dirs)} directories]"
-        body = describe_path(db_path, deepest)
-        return f"{header}\n{body}"
+        return {
+            "done": False,
+            "remaining": len(work_entries),
+            "directories": len(work_dirs),
+            "target": deepest,
+            "listing": paths_describe(db_path, deepest),
+        }
     finally:
         conn.close()
 
 
-def set_entry(
+def paths_set(
     db_path: str,
     entry_path: str,
     description: str | None = None,
     exclude: int | None = None,
     traverse: int | None = None,
-) -> str:
-    """Create or update entry. Returns status message."""
+) -> dict:
+    """Create or update entry. Returns status dict."""
     entry_path = entry_path.rstrip("/")
     if entry_path == ".":
         entry_path = ""
@@ -234,10 +209,11 @@ def set_entry(
             "SELECT * FROM entries WHERE path = ?", (entry_path,)
         ).fetchone()
 
-        # Compute file metrics for files when setting description
         metrics = {"git_hash": None, "line_count": None, "char_count": None}
         if description is not None and not is_pat and entry_type == "file":
             metrics = _compute_file_metrics(entry_path)
+
+        display = entry_path if entry_path else "."
 
         if existing:
             updates = []
@@ -260,15 +236,14 @@ def set_entry(
                 updates.append("char_count = ?")
                 params.append(metrics["char_count"])
             if not updates:
-                return f"No changes: {entry_path}"
+                return {"action": "none", "path": display}
             params.append(entry_path)
             conn.execute(
                 f"UPDATE entries SET {', '.join(updates)} WHERE path = ?",
                 params,
             )
             conn.commit()
-            display = entry_path if entry_path else "."
-            return f"Updated: {display}"
+            return {"action": "updated", "path": display}
         else:
             conn.execute(
                 "INSERT INTO entries "
@@ -287,20 +262,19 @@ def set_entry(
                 ),
             )
             conn.commit()
-            display = entry_path if entry_path else "."
             kind = entry_type or "pattern"
-            return f"Added: {display} ({kind})"
+            return {"action": "added", "path": display, "type": kind}
     finally:
         conn.close()
 
 
-def remove_entry(
+def paths_remove(
     db_path: str,
     entry_path: str,
     recursive: bool = False,
     all_entries: bool = False,
-) -> str:
-    """Remove entries. Returns status message."""
+) -> dict:
+    """Remove entries. Returns status dict."""
     conn = get_connection(db_path)
     try:
         if all_entries:
@@ -308,7 +282,7 @@ def remove_entry(
                 "DELETE FROM entries WHERE path NOT LIKE '%*%'"
             )
             conn.commit()
-            return f"Removed all {result.rowcount} entries (rules preserved)"
+            return {"action": "removed_all", "count": result.rowcount}
 
         entry_path = entry_path.rstrip("/")
 
@@ -317,29 +291,29 @@ def remove_entry(
                 "SELECT entry_type FROM entries WHERE path = ?", (entry_path,)
             ).fetchone()
             if existing and existing["entry_type"] == "file":
-                return f"Error: --recursive not valid for file entries. Use remove without --recursive."
+                return {"action": "error", "message": "--recursive not valid for file entries"}
             result = conn.execute(
                 "DELETE FROM entries WHERE path = ? OR path LIKE ?",
                 (entry_path, entry_path + "/%"),
             )
             conn.commit()
             if result.rowcount == 0:
-                return f"Not found: {entry_path}"
-            return f"Removed {result.rowcount} entries under {entry_path}/"
+                return {"action": "not_found", "path": entry_path}
+            return {"action": "removed_recursive", "path": entry_path, "count": result.rowcount}
         else:
             result = conn.execute(
                 "DELETE FROM entries WHERE path = ?", (entry_path,)
             )
             conn.commit()
             if result.rowcount == 0:
-                return f"Not found: {entry_path}"
-            return f"Removed: {entry_path}"
+                return {"action": "not_found", "path": entry_path}
+            return {"action": "removed", "path": entry_path}
     finally:
         conn.close()
 
 
-def search_entries(db_path: str, pattern: str) -> str:
-    """Search descriptions by pattern. Returns formatted results."""
+def paths_search(db_path: str, pattern: str) -> dict:
+    """Search descriptions by pattern."""
     conn = get_connection(db_path)
     try:
         rows = conn.execute(
@@ -349,36 +323,31 @@ def search_entries(db_path: str, pattern: str) -> str:
             (f"%{pattern}%",),
         ).fetchall()
 
-        if not rows:
-            return f'No entries matching "{pattern}"'
-
-        lines = [f'Search: "{pattern}" ({len(rows)} results)']
-        lines.append("")
-        for row in rows:
-            display = row["path"] if row["path"] else "."
-            if row["entry_type"] == "directory":
-                display += "/"
-            lines.append(f"- {display} - {row['description']}")
-
-        return "\n".join(lines)
+        return {
+            "pattern": pattern,
+            "results": [
+                {
+                    "path": row["path"] if row["path"] else ".",
+                    "type": row["entry_type"],
+                    "description": row["description"],
+                }
+                for row in rows
+            ],
+        }
     finally:
         conn.close()
 
 
-def scope_analysis(db_path: str, paths: list[str]) -> dict:
+def scope_analyze(db_path: str, paths: list[str]) -> dict:
     """Build scope matrix combining references, sizes, and governance.
 
     Follows references from starting paths, collects file sizes from the
     database, and maps governance for all files. Returns a structured
     matrix for intelligent agent partitioning.
     """
-    # 1. Map references to get full file set
-    ref_result = map_references(paths)
-
-    # Collect all file paths from DAG
+    ref_result = references_map(paths)
     all_paths = [f["path"] for f in ref_result["files"]]
 
-    # 2. Get sizes from database
     size_map: dict[str, dict[str, int | None]] = {}
     conn = get_connection(db_path)
     try:
@@ -395,10 +364,9 @@ def scope_analysis(db_path: str, paths: list[str]) -> dict:
     finally:
         conn.close()
 
-    # 3. Match governance for all files
-    gov_matches = match_governance(db_path, all_paths)
+    gov_result = governance_match(db_path, all_paths)
+    gov_matches = gov_result["matches"]
 
-    # 4. Build file entries with all metadata
     files = []
     total_lines = 0
     for f in ref_result["files"]:
@@ -416,7 +384,6 @@ def scope_analysis(db_path: str, paths: list[str]) -> dict:
             "referenced_by": f["referenced_by"],
         })
 
-    # 5. Build governance index (convention → [files])
     governance_index: dict[str, list[str]] = {}
     for path, govs in gov_matches.items():
         for gov in govs:
@@ -428,4 +395,3 @@ def scope_analysis(db_path: str, paths: list[str]) -> dict:
         "total_lines": total_lines,
         "total_files": len(files),
     }
-

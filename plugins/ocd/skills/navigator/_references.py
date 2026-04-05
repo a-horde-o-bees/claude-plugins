@@ -101,7 +101,7 @@ def _classify_and_parse(file_path: str) -> list[str]:
 # --- DAG Builder ---
 
 
-def map_references(paths: list[str], max_depth: int = 20) -> dict:
+def references_map(paths: list[str], max_depth: int = 20) -> dict:
     """Build reference DAG from starting paths via BFS.
 
     Follows file references recursively, deduplicating as it goes.

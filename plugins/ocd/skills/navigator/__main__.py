@@ -5,9 +5,10 @@ Business logic lives in __init__.py facade.
 """
 
 import argparse
+import os
 import sys
 
-from . import *  # noqa: F403
+from . import *  # noqa: F403 — __all__ defines the public API
 
 
 DEFAULT_DB = ".claude/ocd/navigator/navigator.db"
@@ -19,19 +20,66 @@ def _auto_scan(args: argparse.Namespace) -> None:
     scan_path(args.db, path)
 
 
+def _format_describe(result: dict) -> str:
+    """Format paths_describe result for CLI display."""
+    if result["type"] == "file":
+        lines = [result["path"]]
+        if result["description"] is None:
+            lines.append("[?]")
+        elif result["stale"]:
+            lines.append(f"[~] {result['description']}")
+        elif result["description"]:
+            lines.append(result["description"])
+        return "\n".join(lines)
+
+    # Directory
+    lines = [result["path"]]
+    if result["description"] is None:
+        lines.append("[?]")
+    elif result["stale"] and result["description"]:
+        lines.append(f"[~] {result['description']}")
+    elif result["description"]:
+        lines.append(result["description"])
+
+    children = result.get("children")
+    if children is None:
+        lines.append("(no entries)")
+    elif children:
+        if result["description"]:
+            lines.append("")
+        for child in children:
+            display = child["path"]
+            if child["type"] == "directory":
+                display += "/"
+            desc = child["description"]
+            if desc is None:
+                lines.append(f"- {display} [?]")
+            elif child["stale"] and desc:
+                lines.append(f"- {display} [~] {desc}")
+            elif desc:
+                lines.append(f"- {display} - {desc}")
+            else:
+                lines.append(f"- {display}")
+
+    return "\n".join(lines)
+
+
 def _dispatch_describe(args: argparse.Namespace) -> None:
     _auto_scan(args)
-    print(describe_path(args.db, args.path))
+    print(_format_describe(paths_describe(args.db, args.path)))
 
 
 def _dispatch_list(args: argparse.Namespace) -> None:
     _auto_scan(args)
-    result = list_files(
+    result = paths_list(
         args.db, args.path, patterns=args.pattern, excludes=args.exclude,
         sizes=args.sizes,
     )
-    if result:
-        print(result)
+    for entry in result:
+        if "line_count" in entry:
+            print(f"{entry['path']}\t{entry['line_count']}\t{entry['char_count']}")
+        else:
+            print(entry["path"])
 
 
 def _dispatch_scan(args: argparse.Namespace) -> None:
@@ -40,41 +88,72 @@ def _dispatch_scan(args: argparse.Namespace) -> None:
 
 def _dispatch_get_undescribed(args: argparse.Namespace) -> None:
     _auto_scan(args)
-    print(get_undescribed(args.db))
+    result = paths_undescribed(args.db)
+    if result["done"]:
+        print("No work remaining.")
+        return
+    print(f"[{result['remaining']} remaining across {result['directories']} directories]")
+    print(_format_describe(result["listing"]))
 
 
 def _dispatch_set(args: argparse.Namespace) -> None:
     _auto_scan(args)
     exclude = int(args.exclude) if args.exclude is not None else None
     traverse = int(args.traverse) if args.traverse is not None else None
-    print(set_entry(
+    result = paths_set(
         args.db,
         args.path,
         description=args.description,
         exclude=exclude,
         traverse=traverse,
-    ))
+    )
+    if result["action"] == "none":
+        print(f"No changes: {result['path']}")
+    elif result["action"] == "updated":
+        print(f"Updated: {result['path']}")
+    elif result["action"] == "added":
+        print(f"Added: {result['path']} ({result['type']})")
 
 
 def _dispatch_remove(args: argparse.Namespace) -> None:
     _auto_scan(args)
     all_entries = getattr(args, "all", False)
     path = getattr(args, "path", None)
-    print(remove_entry(
+    result = paths_remove(
         args.db,
         entry_path=path or "",
         recursive=args.recursive,
         all_entries=all_entries,
-    ))
+    )
+    if result["action"] == "removed_all":
+        print(f"Removed all {result['count']} entries (rules preserved)")
+    elif result["action"] == "error":
+        print(f"Error: {result['message']}")
+    elif result["action"] == "not_found":
+        print(f"Not found: {result['path']}")
+    elif result["action"] == "removed_recursive":
+        print(f"Removed {result['count']} entries under {result['path']}/")
+    elif result["action"] == "removed":
+        print(f"Removed: {result['path']}")
 
 
 def _dispatch_search(args: argparse.Namespace) -> None:
     _auto_scan(args)
-    print(search_entries(args.db, args.pattern))
+    result = paths_search(args.db, args.pattern)
+    if not result["results"]:
+        print(f'No entries matching "{result["pattern"]}"')
+        return
+    print(f'Search: "{result["pattern"]}" ({len(result["results"])} results)')
+    print()
+    for entry in result["results"]:
+        display = entry["path"]
+        if entry["type"] == "directory":
+            display += "/"
+        print(f"- {display} - {entry['description']}")
 
 
 def _dispatch_resolve_skill(args: argparse.Namespace) -> None:
-    result = resolve_skill(args.name)
+    result = skills_resolve(args.name)
     if result:
         print(result)
     else:
@@ -83,7 +162,7 @@ def _dispatch_resolve_skill(args: argparse.Namespace) -> None:
 
 
 def _dispatch_list_skills(_args: argparse.Namespace) -> None:
-    skills = list_skills()
+    skills = skills_list()
     if not skills:
         print("No skills found.")
         return
@@ -93,32 +172,88 @@ def _dispatch_list_skills(_args: argparse.Namespace) -> None:
 
 def _dispatch_governance(args: argparse.Namespace) -> None:
     _auto_scan(args)
-    print(list_governance(args.db))
+    entries = governance_list(args.db)
+    if not entries:
+        print("No governance entries.")
+        return
+    for entry in entries:
+        print(f"{entry['path']}  {entry['pattern']}  [{entry['mode']}]")
 
 
 def _dispatch_governance_for(args: argparse.Namespace) -> None:
     _auto_scan(args)
-    print(governance_for(args.db, args.files))
+    result = governance_match(args.db, args.files)
+    if not result["matches"]:
+        print("No governance matches.")
+        return
+    print("Criteria:")
+    for c in result["criteria"]:
+        print(f"  {c}")
+    print()
+    for file_path in args.files:
+        if file_path not in result["matches"]:
+            continue
+        print(f"{file_path} follows:")
+        for c in result["matches"][file_path]:
+            print(f"  {c}")
 
 
 def _dispatch_governance_order(args: argparse.Namespace) -> None:
     _auto_scan(args)
-    print(governance_order(args.db))
+    result = governance_order(args.db)
+    if result["cycle"]:
+        print(f"Cycle detected among: {', '.join(result['cycle'])}")
+        return
+    if not result["levels"]:
+        print("No governance entries.")
+        return
+    for level in result["levels"]:
+        print(f"Level {level['level']}:")
+        for path in level["entries"]:
+            print(f"  {path}")
 
 
 def _dispatch_governance_load(args: argparse.Namespace) -> None:
     project_dir = args.project_dir or os.getcwd()
-    print(governance_load(args.db, project_dir))
+    result = governance_load(args.db, project_dir)
+    print(f"Loaded {result['governance_entries']} governance entries, "
+          f"{result['governs_relationships']} governs relationships")
 
 
 def _dispatch_governance_graph(args: argparse.Namespace) -> None:
     _auto_scan(args)
-    print(governance_graph(args.db))
+    result = governance_graph(args.db)
+    if not result["roots"] and not result["edges"]:
+        print("No governance entries.")
+        return
+    if result["roots"]:
+        print(f"Roots ({len(result['roots'])}):")
+        for r in result["roots"]:
+            print(f"  {r}")
+        print()
+    print(f"Edges ({len(result['edges'])}):")
+    for edge in result["edges"]:
+        print(f"  {edge['from']}  -->  {edge['to']}")
+    if result["leaves"]:
+        print()
+        print(f"Leaves ({len(result['leaves'])}):")
+        for l in result["leaves"]:
+            print(f"  {l}")
 
 
 def _dispatch_get_unclassified(args: argparse.Namespace) -> None:
     _auto_scan(args)
-    print(get_unclassified(args.db))
+    result = governance_unclassified(args.db)
+    if result["total"] == 0:
+        print("All file entries have governance coverage.")
+        return
+    print(f"Unclassified: {result['total']} files without governance coverage")
+    print()
+    for ext in sorted(result["by_extension"]):
+        files = result["by_extension"][ext]
+        print(f"{ext} ({len(files)} files):")
+        for path in files:
+            print(f"  {path}")
 
 
 def build_parser() -> argparse.ArgumentParser:

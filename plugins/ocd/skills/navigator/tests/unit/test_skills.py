@@ -13,8 +13,8 @@ from skills.navigator import _skills
 from skills.navigator._skills import (
     _parse_frontmatter_name,
     _search_skills_dir,
-    resolve_skill,
-    list_skills,
+    skills_resolve,
+    skills_list,
 )
 
 
@@ -129,21 +129,21 @@ class TestSearchSkillsDir:
 class TestResolveSkill:
     def test_finds_in_plugin_dir(self, tmp_env: dict[str, Path]) -> None:
         _write_skill(tmp_env["plugin"] / "skills", "conventions", "ocd-conventions")
-        result = resolve_skill("ocd-conventions")
+        result = skills_resolve("ocd-conventions")
         assert result is not None
         assert "plugin" in str(result)
 
     def test_project_shadows_plugin(self, tmp_env: dict[str, Path]) -> None:
         _write_skill(tmp_env["plugin"] / "skills", "my-skill", "my-skill")
         _write_skill(tmp_env["project"] / ".claude" / "skills", "my-skill", "my-skill")
-        result = resolve_skill("my-skill")
+        result = skills_resolve("my-skill")
         assert result is not None
         assert "project" in str(result)
 
     def test_personal_shadows_project(self, tmp_env: dict[str, Path]) -> None:
         _write_skill(tmp_env["project"] / ".claude" / "skills", "my-skill", "my-skill")
         _write_skill(tmp_env["home"] / ".claude" / "skills", "my-skill", "my-skill")
-        result = resolve_skill("my-skill")
+        result = skills_resolve("my-skill")
         assert result is not None
         assert "home" in str(result)
 
@@ -157,7 +157,7 @@ class TestResolveSkill:
         )
         # Create plugin-dir skill with same name
         _write_skill(tmp_env["plugin"] / "skills", "my-skill", "my-skill")
-        result = resolve_skill("my-skill")
+        result = skills_resolve("my-skill")
         assert result is not None
         assert "plugin" in str(result)
 
@@ -168,12 +168,12 @@ class TestResolveSkill:
             tmp_env["marketplace_cache"],
             {"other-plugin@marketplace": str(mp_dir)},
         )
-        result = resolve_skill("other-skill")
+        result = skills_resolve("other-skill")
         assert result is not None
         assert "marketplace_plugin" in str(result)
 
     def test_not_found(self, tmp_env: dict[str, Path]) -> None:
-        assert resolve_skill("nonexistent") is None
+        assert skills_resolve("nonexistent") is None
 
 
 # =========================================================================
@@ -185,16 +185,16 @@ class TestListSkills:
     def test_lists_from_plugin_dir(self, tmp_env: dict[str, Path]) -> None:
         _write_skill(tmp_env["plugin"] / "skills", "conv", "ocd-conventions")
         _write_skill(tmp_env["plugin"] / "skills", "nav", "ocd-navigator")
-        skills = list_skills()
+        skills = skills_list()
         assert len(skills) == 2
         assert all(s["source"] == "plugin-dir" for s in skills)
 
     def test_higher_priority_shadows(self, tmp_env: dict[str, Path]) -> None:
         _write_skill(tmp_env["plugin"] / "skills", "my-skill", "my-skill")
         _write_skill(tmp_env["project"] / ".claude" / "skills", "my-skill", "my-skill")
-        skills = list_skills()
+        skills = skills_list()
         assert len(skills) == 1
         assert skills[0]["source"] == "project"
 
     def test_empty_when_no_skills(self, tmp_env: dict[str, Path]) -> None:
-        assert list_skills() == []
+        assert skills_list() == []

@@ -4,6 +4,9 @@ Agent-facing tools for project structure navigation, governance discovery,
 reference mapping, and scope analysis. Business logic lives in
 skills.navigator; this server is a thin presentation layer.
 
+Tools follow object_action naming: paths_*, governance_*, skills_*,
+references_*, scope_*. All return structured JSON.
+
 Runs via stdio transport. Database path from DB_PATH env var.
 """
 
@@ -53,14 +56,8 @@ def _auto_scan(target_path: str = ".") -> None:
 
 
 def _ok(result) -> str:
-    """Wrap result as JSON response."""
-    if isinstance(result, str):
-        return json.dumps({"result": result})
-    if isinstance(result, list):
-        return json.dumps({"result": result}, default=str)
-    if isinstance(result, dict):
-        return json.dumps(result, default=str)
-    return json.dumps({"result": str(result)})
+    """Serialize result as JSON string."""
+    return json.dumps(result, default=str)
 
 
 def _err(e: Exception) -> str:
@@ -69,92 +66,158 @@ def _err(e: Exception) -> str:
 
 
 # ============================================================
-# Structure Navigation
+# paths_* — project structure navigation
 # ============================================================
 
 
 @mcp.tool()
-def describe_path(target_path: str) -> str:
-    """Navigate project structure by path. Directories list children with descriptions; files show description. Start with '.' for top-level overview.
+def paths_describe(target_path: str) -> str:
+    """Describe entry at path. Files return type, description, stale flag. Directories return entry info plus children array.
 
-    Markers: [?] = needs description, [~] = stale (file changed since described).
+    Start with '.' for top-level overview. Children with description=null need descriptions.
     """
     if err := _check_db(): return err
     _auto_scan(target_path)
     try:
-        return _ok(nav.describe_path(DB_PATH, target_path))
+        return _ok(nav.paths_describe(DB_PATH, target_path))
     except Exception as e:
         return _err(e)
 
 
 @mcp.tool()
-def list_files(
+def paths_list(
     target_path: str = ".",
     patterns: list[str] | None = None,
     excludes: list[str] | None = None,
     sizes: bool = False,
 ) -> str:
-    """List non-excluded file paths under target_path. One per line, sorted.
+    """List non-excluded files under target_path. Returns array of {path} dicts.
 
     Args:
         target_path: Directory to list. Defaults to project root.
         patterns: Basename glob filters (e.g. ["*.md"]). Only matching files returned.
         excludes: Path glob filters. Matching files removed from results.
-        sizes: If true, append line_count and char_count columns per file.
+        sizes: If true, include line_count and char_count per file.
     """
     if err := _check_db(): return err
     _auto_scan(target_path)
     try:
-        return _ok(nav.list_files(DB_PATH, target_path, patterns=patterns,
+        return _ok(nav.paths_list(DB_PATH, target_path, patterns=patterns,
                                   excludes=excludes, sizes=sizes))
     except Exception as e:
         return _err(e)
 
 
 @mcp.tool()
-def search_entries(pattern: str) -> str:
+def paths_search(pattern: str) -> str:
     """Search file descriptions by keyword. Find files by what they do, not their name.
 
-    Args:
-        pattern: Substring to match against entry descriptions.
+    Returns {pattern, results: [{path, type, description}]}.
     """
     if err := _check_db(): return err
     _auto_scan()
     try:
-        return _ok(nav.search_entries(DB_PATH, pattern))
+        return _ok(nav.paths_search(DB_PATH, pattern))
+    except Exception as e:
+        return _err(e)
+
+
+@mcp.tool()
+def paths_set(
+    entry_path: str,
+    description: str | None = None,
+    exclude: int | None = None,
+    traverse: int | None = None,
+) -> str:
+    """Create or update entry description, exclusion, or traversal flags.
+
+    Returns {action: "added"|"updated"|"none", path, ...}.
+    """
+    if err := _check_db(): return err
+    _auto_scan()
+    try:
+        return _ok(nav.paths_set(DB_PATH, entry_path, description=description,
+                                 exclude=exclude, traverse=traverse))
+    except Exception as e:
+        return _err(e)
+
+
+@mcp.tool()
+def paths_undescribed() -> str:
+    """Return deepest directory with undescribed or stale entries.
+
+    Returns {done: true} when no work remains. Otherwise returns
+    {done: false, remaining, directories, target, listing}.
+    Call repeatedly during /ocd-navigator workflow until done is true.
+    """
+    if err := _check_db(): return err
+    _auto_scan()
+    try:
+        return _ok(nav.paths_undescribed(DB_PATH))
+    except Exception as e:
+        return _err(e)
+
+
+@mcp.tool()
+def paths_remove(
+    entry_path: str,
+    recursive: bool = False,
+    all_entries: bool = False,
+) -> str:
+    """Remove entries from database. Rarely needed — scan handles cleanup automatically.
+
+    Returns {action: "removed"|"removed_recursive"|"removed_all"|"not_found"|"error", ...}.
+    """
+    if err := _check_db(): return err
+    _auto_scan()
+    try:
+        return _ok(nav.paths_remove(DB_PATH, entry_path, recursive=recursive,
+                                    all_entries=all_entries))
     except Exception as e:
         return _err(e)
 
 
 # ============================================================
-# Governance
+# governance_* — rules and conventions discovery
 # ============================================================
 
 
 @mcp.tool()
-def governance_for(file_paths: list[str]) -> str:
-    """Find which rules and conventions govern given files. Pass all target paths in one call.
+def governance_match(file_paths: list[str]) -> str:
+    """Match files against governance patterns. Returns per-file governance and aggregated criteria.
 
-    Returns criteria list and per-file governance matches. Use before creating or modifying files
-    to discover applicable conventions.
+    Use before creating or modifying files to discover applicable conventions.
 
-    Args:
-        file_paths: Array of project-relative file paths to check.
+    Returns {matches: {file: [governance_paths]}, criteria: [all_unique_governance]}.
     """
     if err := _check_db(): return err
     _auto_scan()
     try:
-        return _ok(nav.governance_for(DB_PATH, file_paths))
+        return _ok(nav.governance_match(DB_PATH, file_paths))
+    except Exception as e:
+        return _err(e)
+
+
+@mcp.tool()
+def governance_list() -> str:
+    """List all governance entries. Returns array of {path, pattern, mode}.
+
+    Mode is 'rule' (auto-loaded) or 'convention' (on-demand).
+    """
+    if err := _check_db(): return err
+    _auto_scan()
+    try:
+        return _ok(nav.governance_list(DB_PATH))
     except Exception as e:
         return _err(e)
 
 
 @mcp.tool()
 def governance_order() -> str:
-    """Topological ordering of governance entries for evaluation sequence.
+    """Topological ordering for evaluation sequence.
 
-    Returns levels where level 0 has no governors, level N is governed only by levels 0..N-1.
-    Use to determine evaluation order in governance chain traversals.
+    Returns {levels: [{level, entries}], cycle: null|[paths]}.
+    Level 0 has no governors. Use to determine dependency-safe evaluation order.
     """
     if err := _check_db(): return err
     _auto_scan()
@@ -165,21 +228,10 @@ def governance_order() -> str:
 
 
 @mcp.tool()
-def list_governance() -> str:
-    """List all governance entries with patterns and loading mode (rule or convention)."""
-    if err := _check_db(): return err
-    _auto_scan()
-    try:
-        return _ok(nav.list_governance(DB_PATH))
-    except Exception as e:
-        return _err(e)
-
-
-@mcp.tool()
 def governance_graph() -> str:
-    """Show governance dependency edges, roots (no governor), and leaves (govern nothing).
+    """Governance dependency edges, roots, and leaves.
 
-    Complements governance_order which shows levels but not edges.
+    Returns {roots: [...], edges: [{from, to}], leaves: [...]}.
     """
     if err := _check_db(): return err
     _auto_scan()
@@ -190,136 +242,88 @@ def governance_graph() -> str:
 
 
 @mcp.tool()
-def get_unclassified() -> str:
-    """Find file entries with no governance coverage, grouped by extension.
+def governance_unclassified() -> str:
+    """Find files with no governance coverage, grouped by extension.
 
-    Use to identify file types that lack conventions.
+    Returns {total, by_extension: {ext: [paths]}}.
     """
     if err := _check_db(): return err
     _auto_scan()
     try:
-        return _ok(nav.get_unclassified(DB_PATH))
+        return _ok(nav.governance_unclassified(DB_PATH))
     except Exception as e:
         return _err(e)
 
 
 # ============================================================
-# Navigator Skill Support
+# skills_* — skill resolution
 # ============================================================
 
 
 @mcp.tool()
-def get_undescribed() -> str:
-    """Return deepest directory with undescribed or stale entries.
+def skills_resolve(name: str) -> str:
+    """Resolve skill name to SKILL.md path. Searches personal, project, plugin-dir, marketplace.
 
-    Call repeatedly during /ocd-navigator workflow until response contains 'No work remaining.'
-    """
-    if err := _check_db(): return err
-    _auto_scan()
-    try:
-        return _ok(nav.get_undescribed(DB_PATH))
-    except Exception as e:
-        return _err(e)
-
-
-@mcp.tool()
-def set_entry(
-    entry_path: str,
-    description: str | None = None,
-    exclude: int | None = None,
-    traverse: int | None = None,
-) -> str:
-    """Create or update entry description, exclusion, or traversal flags.
-
-    Args:
-        entry_path: Project-relative path of the entry.
-        description: New description text. Pass to set or update.
-        exclude: 1 to exclude from scans/listings, 0 to include.
-        traverse: 1 to allow traversal into directory, 0 to block.
-    """
-    if err := _check_db(): return err
-    _auto_scan()
-    try:
-        return _ok(nav.set_entry(DB_PATH, entry_path, description=description,
-                                 exclude=exclude, traverse=traverse))
-    except Exception as e:
-        return _err(e)
-
-
-# ============================================================
-# Skill Resolution
-# ============================================================
-
-
-@mcp.tool()
-def resolve_skill(name: str) -> str:
-    """Resolve skill name to SKILL.md file path. Searches personal, project, plugin-dir, and marketplace locations.
-
-    Args:
-        name: Skill name as it appears in frontmatter (e.g. 'ocd-navigator').
-
-    Returns path on success, error if not found.
+    Returns {path} on success, {error} if not found.
     """
     try:
-        result = nav.resolve_skill(name)
+        result = nav.skills_resolve(name)
         if result:
-            return _ok(str(result))
+            return _ok({"path": str(result)})
         return json.dumps({"error": f"Skill not found: {name}"})
     except Exception as e:
         return _err(e)
 
 
 @mcp.tool()
-def list_skills() -> str:
-    """List all discoverable skills with source and path.
+def skills_list() -> str:
+    """List all discoverable skills. Returns array of {name, source, path}.
 
-    Returns array of {name, source, path} entries in priority order.
     Sources: personal, project, plugin-dir, marketplace.
     """
     try:
-        return _ok(nav.list_skills())
+        return _ok(nav.skills_list())
     except Exception as e:
         return _err(e)
 
 
 # ============================================================
-# Reference Mapping
+# references_* — file reference traversal
 # ============================================================
 
 
 @mcp.tool()
-def scope_analysis(paths: list[str]) -> str:
+def references_map(paths: list[str], max_depth: int = 20) -> str:
+    """Follow file references recursively to build a dependency DAG.
+
+    Works with SKILL.md backtick paths, governance depends: fields, and component
+    _*.md files (leaf nodes).
+
+    Returns {files: [{path, depth, references, referenced_by}], roots, total_files}.
+    """
+    try:
+        return _ok(nav.references_map(paths, max_depth=max_depth))
+    except Exception as e:
+        return _err(e)
+
+
+# ============================================================
+# scope_* — composite analysis
+# ============================================================
+
+
+@mcp.tool()
+def scope_analyze(paths: list[str]) -> str:
     """Analyze scope: follow references, collect sizes, map governance.
 
-    Composite tool that combines map_references + file sizes + governance matching.
-    Returns structured matrix of files with line counts, governance coverage, and
-    reference relationships. Includes governance_index for grouping files by convention.
-
-    Args:
-        paths: Starting file paths to analyze scope from.
+    Composite tool combining references_map + file sizes + governance_match.
+    Returns {files: [{path, line_count, char_count, governance, references, referenced_by}],
+    governance_index: {convention: [files]}, total_lines, total_files}.
     """
     if err := _check_db(): return err
     _auto_scan()
     try:
-        return _ok(nav.scope_analysis(DB_PATH, paths))
-    except Exception as e:
-        return _err(e)
-
-
-@mcp.tool()
-def map_references(paths: list[str], max_depth: int = 20) -> str:
-    """Follow file references recursively to build a dependency DAG.
-
-    Works with SKILL.md backtick paths, governance depends: fields, and component
-    _*.md files (leaf nodes). Returns file list with depth, references, and
-    referenced_by for each file.
-
-    Args:
-        paths: Starting file paths (project-relative or absolute).
-        max_depth: Maximum traversal depth. Default 20.
-    """
-    try:
-        return _ok(nav.map_references(paths, max_depth=max_depth))
+        return _ok(nav.scope_analyze(DB_PATH, paths))
     except Exception as e:
         return _err(e)
 
