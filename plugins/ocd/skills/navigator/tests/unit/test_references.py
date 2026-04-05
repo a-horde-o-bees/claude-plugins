@@ -92,6 +92,56 @@ class TestParseSkillRefs:
         refs = _parse_skill_refs(str(skill_md))
         assert len(refs) == 2
 
+    def test_parent_relative_not_resolved(self, tmp_path: Path) -> None:
+        """Paths to sibling directories (not beside/below) are NOT resolved."""
+        skills_dir = tmp_path / "skills"
+        skill_dir = skills_dir / "my-skill"
+        skill_dir.mkdir(parents=True)
+        shared_dir = skills_dir / "shared"
+        shared_dir.mkdir()
+        (shared_dir / "_common.md").write_text("# Shared\n")
+
+        skill_md = skill_dir / "SKILL.md"
+        skill_md.write_text(
+            "---\nname: test\n---\n\n"
+            "1. Read `shared/_common.md`\n"
+        )
+        refs = _parse_skill_refs(str(skill_md))
+        assert refs == []  # not beside or below — requires env var path
+
+    def test_plugin_root_env_var_paths(self, tmp_path: Path, monkeypatch) -> None:
+        """${CLAUDE_PLUGIN_ROOT} paths resolve for file references."""
+        plugin_root = tmp_path / "plugin"
+        plugin_root.mkdir()
+        shared = plugin_root / "skills" / "shared"
+        shared.mkdir(parents=True)
+        (shared / "_common.md").write_text("# Shared\n")
+
+        monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(plugin_root))
+
+        skill_dir = plugin_root / "skills" / "my-skill"
+        skill_dir.mkdir(parents=True)
+        skill_md = skill_dir / "SKILL.md"
+        skill_md.write_text(
+            "---\nname: test\n---\n\n"
+            "1. Read `${CLAUDE_PLUGIN_ROOT}/skills/shared/_common.md`\n"
+        )
+        refs = _parse_skill_refs(str(skill_md))
+        assert len(refs) == 1
+        assert refs[0] == str((shared / "_common.md").resolve())
+
+    def test_plugin_root_skips_commands(self, tmp_path: Path, monkeypatch) -> None:
+        """${CLAUDE_PLUGIN_ROOT} paths that are commands (no file ext) are skipped."""
+        monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(tmp_path))
+
+        skill_md = tmp_path / "SKILL.md"
+        skill_md.write_text(
+            "---\nname: test\n---\n\n"
+            "1. Run `${CLAUDE_PLUGIN_ROOT}/run.py skills.navigator scan`\n"
+        )
+        refs = _parse_skill_refs(str(skill_md))
+        assert refs == []
+
 
 # =========================================================================
 # Governance parser

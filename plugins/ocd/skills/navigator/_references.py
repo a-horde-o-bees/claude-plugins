@@ -12,6 +12,7 @@ Parsers:
 
 from __future__ import annotations
 
+import os
 import re
 from collections import deque
 from pathlib import Path
@@ -22,12 +23,36 @@ from ._frontmatter import parse_governance
 # --- Parsers ---
 
 
+def _resolve_plugin_root() -> Path | None:
+    """Resolve CLAUDE_PLUGIN_ROOT from environment or persisted file."""
+    env = os.environ.get("CLAUDE_PLUGIN_ROOT")
+    if env:
+        return Path(env)
+    plugin_root_file = Path(".claude/ocd/.plugin_root")
+    try:
+        value = plugin_root_file.read_text().strip()
+        if value:
+            return Path(value)
+    except (FileNotFoundError, PermissionError):
+        pass
+    return None
+
+
+# File extensions that indicate a file reference (not a command invocation)
+_FILE_EXTENSIONS = re.compile(r'\.(?:md|py|sh|json|csv)$')
+
+
 def _parse_skill_refs(file_path: str) -> list[str]:
     """Extract file references from a SKILL.md.
 
-    Finds backtick-wrapped paths in workflow steps that look like
-    relative file references: contain '/' and end in a known extension.
-    Skips fenced code blocks. Resolves relative to the skill directory.
+    Finds backtick-wrapped paths in workflow steps that look like file
+    references. Skips fenced code blocks.
+
+    Resolution rules:
+    - Relative paths (no ${}) resolve from SKILL.md's directory only —
+      beside or below, never upward
+    - ${CLAUDE_PLUGIN_ROOT} paths resolve via env var when the path
+      ends in a file extension (file reference, not command invocation)
     """
     try:
         content = Path(file_path).read_text()
@@ -38,10 +63,8 @@ def _parse_skill_refs(file_path: str) -> list[str]:
     refs: list[str] = []
     in_code_block = False
 
-    # Match backtick-wrapped paths: `path/to/file.ext`
-    backtick_path = re.compile(
-        r'`([^`]+/[^`]+\.(?:md|py|sh|json|csv))`'
-    )
+    # Match backtick-wrapped paths containing '/'
+    backtick_path = re.compile(r'`([^`]+/[^`]+)`')
 
     for line in content.splitlines():
         stripped = line.strip()
@@ -53,13 +76,27 @@ def _parse_skill_refs(file_path: str) -> list[str]:
 
         for match in backtick_path.finditer(line):
             ref = match.group(1)
-            # Skip paths with ${} variable substitution — CLI scripts, not file refs
-            if "${" in ref:
+
+            if "${CLAUDE_PLUGIN_ROOT}" in ref:
+                # Env var path — resolve only if it's a file reference
+                if not _FILE_EXTENSIONS.search(ref):
+                    continue
+                plugin_root = _resolve_plugin_root()
+                if not plugin_root:
+                    continue
+                resolved = Path(ref.replace("${CLAUDE_PLUGIN_ROOT}", str(plugin_root)))
+                if resolved.exists():
+                    refs.append(str(resolved.resolve()))
+            elif "${" in ref:
+                # Other env vars — skip (unknown resolution)
                 continue
-            # Resolve relative to skill directory
-            resolved = skill_dir / ref
-            if resolved.exists():
-                refs.append(str(resolved.resolve()))
+            else:
+                # Relative path — resolve from skill directory only
+                if not _FILE_EXTENSIONS.search(ref):
+                    continue
+                resolved = skill_dir / ref
+                if resolved.exists():
+                    refs.append(str(resolved.resolve()))
 
     return refs
 
