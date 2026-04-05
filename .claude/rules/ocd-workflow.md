@@ -22,6 +22,7 @@ Working directory must remain project root for the entire session. Use absolute 
 
 ## Testing
 
+- Verify new code by writing tests, not ad-hoc bash commands — when checking that something works, add a test to the relevant test file and run it; test fixtures handle environment setup automatically while ad-hoc commands require inline env vars that need manual approval
 - Run only tests directly affected by current changes, scoped to narrowest relevant test file
 - Run broader suites only when explicitly requested
 - Exception: run full suite after structural changes (moves, renames, refactors) and before checkpoints — broken imports and cascading failures won't surface in narrow tests

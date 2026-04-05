@@ -3,6 +3,7 @@
     "core_tools": {
       "description": "Claude Code built-in tools",
       "patterns": [
+        "Skill",
         "Read",
         "Glob",
         "Grep",
