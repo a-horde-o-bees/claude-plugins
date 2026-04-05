@@ -36,17 +36,16 @@ User runs `/ocd-evaluate-skill`
 ## Route
 
 1. If not --target: Exit to user — respond with skill description and argument-hint
-2. If {target} starts with `/`:
-    1. Resolve skill path — bash: `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.navigator resolve-skill <name>`
-    2. If exit code 1: Exit to user — report skill not found
-    3. {skill-path} = resolved path
-3. Else if {target} is a path ending with `SKILL.md`:
-    1. {skill-path} = {target}
-4. Else: Exit to user — target must be /skill-name or path to SKILL.md
-5. {target-directory} = parent of {skill-path}
-6. Discover scope — bash: `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.navigator list {target-directory} --sizes`
-7. Discover governance — bash: `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.navigator governance-for {skill-path}`
-8. Dispatch Workflow
+2. If ({target} starts with `/` and contains no spaces) or ({target} is a path ending with `/SKILL.md`):
+    1. If {target} starts with `/`:
+        1. Resolve skill path — bash: `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.navigator resolve-skill {target}` (strip leading `/` from {target})
+        2. If exit code 1: Exit to user — report skill not found
+    2. {skill-path} = resolved path or {target}
+3. Else: Exit to user — target must be /skill-name or path to SKILL.md
+4. {target-directory} = parent of {skill-path}
+5. Discover scope — bash: `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.navigator list {target-directory} --sizes`
+6. Discover governance — bash: `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.navigator governance-for {skill-path}`
+7. Dispatch Workflow
 
 ## Workflow
 

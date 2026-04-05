@@ -1,0 +1,5 @@
+- 2026-04-05 — evaluate-skill missing Protocol and Shared Infrastructure sections required by evaluation-skill-md convention; expected convention conformity; workaround: none — functional without them but structurally incomplete
+- 2026-04-05 — evaluate-skill has no checkpoint/continuation handling unlike evaluate-governance and evaluate-documentation siblings; expected consistency across evaluate-* family; workaround: none — single-skill scope fits one agent context
+- 2026-04-05 — evaluate-* workflow references (evaluate-shared/, evaluate-skill/) resolve relative to skills/ parent by convention but this is implicit; expected explicit working context documentation; workaround: none — works by established pattern
+- 2026-04-05 — evaluate-* family has no --auto support despite being fix-producing; expected convergence loop candidacy; workaround: manual re-invocation after fixes applied
+- 2026-04-05 — Report section and Return block overlap in evaluate-skill; expected single expression of output format; workaround: none — cross-convention interaction (skill-md requires Report, PFN uses Return)
