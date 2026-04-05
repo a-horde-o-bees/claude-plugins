@@ -1,5 +1,7 @@
 ---
-pattern: [".claude/rules/*.md", ".claude/conventions/*.md"]
+pattern:
+  - ".claude/rules/*.md"
+  - ".claude/conventions/*.md"
 depends:
   - .claude/conventions/markdown.md
   - .claude/rules/ocd-design-principles.md
@@ -23,10 +25,13 @@ Single pattern as quoted string:
 pattern: "*.py"
 ```
 
-Multiple patterns as flow-style YAML list:
+Multiple patterns as block-style YAML list:
 
 ```yaml
-pattern: ["test_*.*", "*_test.*", "conftest.*"]
+pattern:
+  - "test_*.*"
+  - "*_test.*"
+  - "conftest.*"
 ```
 
 Rules that apply universally use `pattern: "*"`. Conventions use patterns specific to their target file type. Path patterns (e.g. `.claude/rules/*.md`) match against the full project-relative path; basename patterns (e.g. `*.py`) match against the filename alone.

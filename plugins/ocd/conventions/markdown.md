@@ -26,3 +26,5 @@ Formatting element types:
 - Blockquotes
 
 Transitioning from any one type to a different type requires a blank line. Content that stays within the same type (consecutive list items, consecutive paragraphs, nested lists within a parent list) follows standard markdown rules for that element.
+
+YAML frontmatter (between `---` delimiters) is not a markdown formatting element — it is parsed separately before the markdown body. Blank line separation rules do not apply inside frontmatter.

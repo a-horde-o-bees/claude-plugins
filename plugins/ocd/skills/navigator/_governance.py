@@ -78,16 +78,17 @@ def governance_list(db_path: str) -> list[dict]:
         conn.close()
 
 
-def governance_match(db_path: str, file_paths: list[str]) -> dict:
+def governance_match(db_path: str, file_paths: list[str], include_rules: bool = False) -> dict:
     """Match files against governance patterns.
 
-    Returns structured mapping with per-file governance matches and
-    a criteria summary.
+    By default returns only conventions (on-demand) since rules are always
+    loaded into agent context. Set include_rules=True for governance
+    evaluation where rules themselves are the evaluation target.
     """
     conn = get_connection(db_path)
     try:
         gov_rows = conn.execute(
-            "SELECT entry_path, pattern FROM governance ORDER BY entry_path"
+            "SELECT entry_path, pattern, auto_loaded FROM governance ORDER BY entry_path"
         ).fetchall()
 
         matches: dict[str, list[str]] = {}
@@ -95,6 +96,8 @@ def governance_match(db_path: str, file_paths: list[str]) -> dict:
             basename = Path(file_path).name
             file_matches = []
             for gov in gov_rows:
+                if not include_rules and gov["auto_loaded"]:
+                    continue
                 patterns = normalize_patterns(gov["pattern"])
                 if any(
                     fnmatch.fnmatch(basename, p) or fnmatch.fnmatch(file_path, p)
@@ -104,11 +107,11 @@ def governance_match(db_path: str, file_paths: list[str]) -> dict:
             if file_matches:
                 matches[file_path] = sorted(file_matches)
 
-        criteria = sorted({c for cs in matches.values() for c in cs})
+        conventions = sorted({c for cs in matches.values() for c in cs})
 
         return {
             "matches": matches,
-            "criteria": criteria,
+            "conventions": conventions,
         }
     finally:
         conn.close()

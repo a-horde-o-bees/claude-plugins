@@ -37,6 +37,8 @@ Fields:
 
 Multi-line descriptions — use YAML block scalar operator (`|` or `>`) for multi-line values. Bare multi-line descriptions (wrapped by formatters without operator) break parser.
 
+List fields (`allowed-tools`, etc.) — use YAML block-style lists, one item per line with `- ` prefix. Not flow-style arrays (`[a, b]`).
+
 ## Body Structure
 
 Markdown body follows skill after frontmatter. Claude loads full body only when skill is invoked.
@@ -216,7 +218,7 @@ Keep SKILL.md under 500 lines. Move detailed reference material to separate file
 Workflow section is self-contained — everything agent needs to execute belongs inside it or is referenced by it. This includes:
 
 - Numbered steps using Process Flow Notation
-- `### Report` subheading defining output format
+- `### Report` subheading defining output format — this is a content standard (what the report contains), distinct from PFN's `Return:` which is flow control (where the agent block ends and what data it hands back)
 - Explicit file read steps for extracted components (`Read _component.md`)
 - Supporting subsections (e.g., file roles, interpreting results)
 

@@ -183,17 +183,22 @@ def paths_remove(
 
 
 @mcp.tool()
-def governance_match(file_paths: list[str]) -> str:
-    """Match files against governance patterns. Returns per-file governance and aggregated criteria.
+def governance_match(file_paths: list[str], include_rules: bool = False) -> str:
+    """Find which conventions apply to files. Call before creating or modifying files.
 
-    Use before creating or modifying files to discover applicable conventions.
+    Returns only conventions (on-demand) by default. Rules are excluded — they are
+    always loaded into agent context. Read each returned convention you haven't already
+    read, then follow its requirements.
 
-    Returns {matches: {file: [governance_paths]}, criteria: [all_unique_governance]}.
+    Set include_rules=true only for governance evaluation where rules themselves
+    are the evaluation target.
+
+    Returns {matches: {file: [convention_paths]}, conventions: [all_unique]}.
     """
     if err := _check_db(): return err
     _auto_scan()
     try:
-        return _ok(nav.governance_match(DB_PATH, file_paths))
+        return _ok(nav.governance_match(DB_PATH, file_paths, include_rules=include_rules))
     except Exception as e:
         return _err(e)
 

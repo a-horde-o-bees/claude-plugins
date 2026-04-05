@@ -54,7 +54,7 @@ User runs `/ocd-evaluate-governance`
         3. Determine if scope fits single agent or needs context-aware iteration
     4. For each {level} in {evaluation-order}:
         1. For each {file} in {level}:
-            1. Discover governance for this file — governance_match: file_paths=[{file}]
+            1. Discover governance for this file — governance_match: file_paths=[{file}], include_rules=true
             2. Read {file} and any governing files not yet read
             3. **Conformity lens:**
                 1. Evaluate file against its matched conventions

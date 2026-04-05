@@ -29,7 +29,7 @@ Working directory must remain project root for the entire session. Use absolute 
 
 ## Conventions
 
-Check conventions before creating or modifying files using the `governance_match` MCP tool. Pass all target file paths as an array in a single call. If matches are non-empty, read and follow returned governance files before proceeding.
+Check conventions before creating or modifying files using the `governance_match` MCP tool. Pass all target file paths as an array in a single call. If matches are non-empty, read returned conventions you haven't already read, then follow their requirements.
 
 ## Naming
 

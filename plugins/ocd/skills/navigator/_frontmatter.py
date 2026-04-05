@@ -27,7 +27,9 @@ def parse_governance(file_path: Path) -> dict | None:
         return None
 
     pattern = None
+    pattern_items: list[str] = []
     depends: list[str] = []
+    in_pattern = False
     in_depends = False
 
     for line in lines[1:]:
@@ -37,20 +39,41 @@ def parse_governance(file_path: Path) -> dict | None:
 
         if stripped.startswith("pattern:"):
             in_depends = False
+            in_pattern = False
             value = stripped[len("pattern:"):].strip()
             if value.startswith("["):
+                # Flow-style: pattern: ["a", "b"]
                 pattern = value
-            else:
+            elif value:
+                # Single value: pattern: "*.py"
                 pattern = value.strip('"').strip("'")
+            else:
+                # Block-style list follows
+                in_pattern = True
+                pattern_items = []
 
-        elif stripped == "depends:":
+        elif in_pattern and stripped.startswith("- "):
+            pattern_items.append(stripped[2:].strip().strip('"').strip("'"))
+
+        elif stripped == "depends:" or (stripped.startswith("depends:") and not stripped[len("depends:"):].strip()):
+            if in_pattern and pattern_items:
+                pattern = json.dumps(pattern_items)
+            in_pattern = False
             in_depends = True
 
         elif in_depends and stripped.startswith("- "):
             depends.append(stripped[2:].strip().strip('"').strip("'"))
 
         else:
+            if in_pattern and pattern_items:
+                # End of pattern block — store as JSON array for normalize_patterns
+                pattern = json.dumps(pattern_items)
+            in_pattern = False
             in_depends = False
+
+    # Handle pattern block at end of frontmatter
+    if in_pattern and pattern_items:
+        pattern = json.dumps(pattern_items)
 
     if pattern is None:
         return None

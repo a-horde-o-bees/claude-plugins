@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from skills.navigator._db import get_connection, init_db, SCHEMA
-from skills.navigator._frontmatter import normalize_patterns
+from skills.navigator._frontmatter import normalize_patterns, parse_governance
 from skills.navigator._scanner import (
     _compute_git_hash,
     _compute_file_metrics,
@@ -1400,14 +1400,16 @@ class TestGovernanceMatch:
         governance_load(db, str(tmp_path))
         return db
 
-    def test_matches_by_pattern(self, gov_db):
+    def test_matches_conventions_only(self, gov_db):
         result = governance_match(gov_db, ["src/app.py"])
         assert ".claude/conventions/python.md" in result["matches"]["src/app.py"]
-        assert ".claude/rules/principles.md" in result["matches"]["src/app.py"]
+        # Rules are excluded — already loaded into agent context
+        assert ".claude/rules/principles.md" not in result["matches"]["src/app.py"]
 
-    def test_wildcard_matches_all(self, gov_db):
+    def test_wildcard_rule_excluded(self, gov_db):
         result = governance_match(gov_db, ["README.md"])
-        assert ".claude/rules/principles.md" in result["matches"]["README.md"]
+        # README.md matches principles.md (pattern: *) but it's a rule — excluded
+        assert result["matches"] == {}
 
     def test_no_match(self, db_path):
         result = governance_match(db_path, ["test.py"])
@@ -1415,13 +1417,15 @@ class TestGovernanceMatch:
 
     def test_multiple_files(self, gov_db):
         result = governance_match(gov_db, ["src/app.py", "README.md"])
+        # src/app.py matches python convention; README.md only matches rule (excluded)
         assert "src/app.py" in result["matches"]
-        assert "README.md" in result["matches"]
+        assert "README.md" not in result["matches"]
 
-    def test_criteria_aggregated(self, gov_db):
+    def test_conventions_aggregated(self, gov_db):
         result = governance_match(gov_db, ["src/app.py"])
-        assert ".claude/conventions/python.md" in result["criteria"]
-        assert ".claude/rules/principles.md" in result["criteria"]
+        assert ".claude/conventions/python.md" in result["conventions"]
+        # Rules not in conventions list
+        assert ".claude/rules/principles.md" not in result["conventions"]
 
 
 class TestGovernanceOrder:
@@ -1590,6 +1594,54 @@ class TestNormalizePatterns:
         assert normalize_patterns("[]") == []
 
 
+class TestBlockStylePattern:
+    def test_block_style_pattern_parsed(self, tmp_path):
+        """Block-style YAML list for pattern is parsed correctly."""
+        gov_file = tmp_path / "testing.md"
+        gov_file.write_text(
+            "---\n"
+            "pattern:\n"
+            '  - "test_*.*"\n'
+            '  - "*_test.*"\n'
+            '  - "conftest.*"\n'
+            "depends:\n"
+            "  - .claude/rules/design.md\n"
+            "---\n\n"
+            "# Testing\n"
+        )
+        result = parse_governance(gov_file)
+        assert result is not None
+        patterns = normalize_patterns(result["pattern"])
+        assert patterns == ["test_*.*", "*_test.*", "conftest.*"]
+
+    def test_flow_style_still_works(self, tmp_path):
+        """Flow-style YAML list for pattern still works (backwards compat)."""
+        gov_file = tmp_path / "testing.md"
+        gov_file.write_text(
+            '---\n'
+            'pattern: ["test_*.*", "*_test.*"]\n'
+            '---\n\n'
+            '# Testing\n'
+        )
+        result = parse_governance(gov_file)
+        assert result is not None
+        patterns = normalize_patterns(result["pattern"])
+        assert patterns == ["test_*.*", "*_test.*"]
+
+    def test_single_pattern_unchanged(self, tmp_path):
+        """Single string pattern still works."""
+        gov_file = tmp_path / "python.md"
+        gov_file.write_text(
+            '---\n'
+            'pattern: "*.py"\n'
+            '---\n\n'
+            '# Python\n'
+        )
+        result = parse_governance(gov_file)
+        assert result is not None
+        assert result["pattern"] == "*.py"
+
+
 class TestListPatternGovernanceFor:
     @pytest.fixture
     def list_gov_db(self, tmp_path):
@@ -1620,13 +1672,14 @@ class TestListPatternGovernanceFor:
 
     def test_no_match_regular_file(self, list_gov_db):
         result = governance_match(list_gov_db, ["app.py"])
-        assert ".claude/conventions/testing.md" not in result["matches"].get("app.py", [])
-        assert ".claude/rules/all.md" in result["matches"]["app.py"]
+        # app.py matches only the wildcard rule (excluded) — no conventions
+        assert "app.py" not in result["matches"]
 
     def test_multiple_files_mixed(self, list_gov_db):
         result = governance_match(list_gov_db, ["test_foo.py", "app.py", "bar_test.py"])
         assert "test_foo.py" in result["matches"]
-        assert "app.py" in result["matches"]
+        # app.py matches only rule (excluded)
+        assert "app.py" not in result["matches"]
         assert "bar_test.py" in result["matches"]
 
 

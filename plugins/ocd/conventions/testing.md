@@ -1,5 +1,8 @@
 ---
-pattern: ["test_*.*", "*_test.*", "conftest.*"]
+pattern:
+  - "test_*.*"
+  - "*_test.*"
+  - "conftest.*"
 depends:
   - .claude/rules/ocd-design-principles.md
 ---
