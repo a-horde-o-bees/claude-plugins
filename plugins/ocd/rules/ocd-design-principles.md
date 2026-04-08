@@ -63,14 +63,21 @@ The correct path is the easiest path. If doing the right thing requires extra st
 - Conventions auto-match by file pattern rather than requiring manual lookup
 - When a dependency is unavailable, the system degrades to a functional state with clear guidance — not silent failure or cryptic errors
 
-## Measure Twice, Cut Once
+## Verify Against Reality
 
-Verify assumptions before acting on them. Read before writing. Check before building. Align before committing. The cost of verification is always lower than the cost of rework.
+Verify assumptions against system reality before acting — read what's there, validate current state, and check actual behavior so action proceeds on facts rather than guesses. The cost of verification is always lower than the cost of rework.
 
 - Read existing implementations before writing new functions
 - Validate current state before transforming data
 - Verify API return formats before writing code that consumes them
+
+## Confirm Shared Intent
+
+Confirm shared understanding with the user before committing to action — align on intent, scope, and approach so neither party proceeds on a different premise than the other. Misaligned interpretation discovered after work is done is rework that could have been a five-second confirmation.
+
 - Confirm approach with user before executing multi-step changes
+- Surface ambiguity in instructions for clarification rather than picking an interpretation
+- Present trade-offs and let the user choose direction when multiple valid paths exist
 
 ## Fix Foundations, Not Symptoms
 
@@ -93,7 +100,7 @@ One authoritative source for each concept. Derived artifacts validate against th
 
 ## Convention as Documentation
 
-Structure communicates intent. When the system's organization makes its design obvious, the need for explanatory documentation decreases proportionally. Names, locations, patterns, and hierarchies encode meaning that should be readable without a guide.
+Structure communicates intent — organization itself conveys meaning, so readers can locate relevant content without needing explanatory documentation. Names, locations, patterns, and hierarchies encode meaning that should be readable without a guide.
 
 - File numbering encodes dependency order
 - Names are verbose and convey purpose — not truncated for visual format
@@ -102,10 +109,16 @@ Structure communicates intent. When the system's organization makes its design o
 
 ## Determinism by Default
 
-Reserve agent judgment for decisions that genuinely require intelligence. When an operation can produce the same correct result every time through code, it belongs in a deterministic tool — not in instructions that an agent interprets.
+Encode deterministic operations in purpose-built tools rather than in instructions an agent has to interpret. When an operation can produce the same correct result every time through code, it belongs in a tool. Reserve agent judgment for what genuinely requires intelligence.
 
 - Deterministic operations belong in scripts and tools; non-deterministic steps stay in workflow instructions
 - Validation, normalization, and enforcement are tool responsibilities, not agent responsibilities
+
+## Tool Positioning
+
+Position tools where the agent reaches for them so the right capability is discoverable from context, not buried where the agent has to hunt. A tool that exists but isn't surfaced where it's needed effectively doesn't exist for the agent that needed it.
+
+- Tools are surfaced where the agent reaches — pre-positioned in context rather than requiring hunt-and-peck discovery
 
 ## Separation of Concerns
 
@@ -123,6 +136,16 @@ Completeness without verbosity. Every word must earn its place — if removing a
 - Instructions state what to do, not what not to do, unless the negative case is a common mistake
 - Scattered related content consolidates rather than repeating across locations
 - Duplicate logic or documentation signals a need to reorganize
+
+## Trigger Specificity
+
+Concepts trigger reliably only when they name a single mechanism. When one concept bundles two distinct mechanisms — even if they share an underlying discipline — the agent encountering a situation may apply the wrong mechanism, miss the right one, or hesitate between them. Split concepts along mechanism lines so each fires sharply with the right action at the right moment.
+
+- A rule covering two failure modes through different mechanisms is actually two rules
+- A need that names two distinct concerns is two needs
+- A principle that bundles two disciplines is two principles when each requires a different action
+- Sharing a discipline doesn't justify sharing a concept; sharing a mechanism does
+- Test: would an agent encountering a situation know exactly which action to take? If not, the concept is too broad
 
 ## Reuse Before Create
 
@@ -158,7 +181,7 @@ Build small pieces that combine naturally. Monolithic components that can't be c
 
 ## Idempotency
 
-Operations produce the same result whether run once or many times. Agent workflows retry frequently — any operation that changes behavior on repeated invocation causes cascading failures. Design every write operation to be safely re-runnable.
+Operations are safely re-runnable — repeated execution converges to the same state without destroying or duplicating prior work. Agent workflows retry frequently — any operation that changes behavior on repeated invocation causes cascading failures. Design every write operation to converge on retry.
 
 - Init operations detect existing state and skip gracefully
 - Upsert over insert — handle the "already exists" case by design
