@@ -6,7 +6,7 @@ depends:
 
 # Friction Detection
 
-Capture process friction as it occurs without interrupting current work. Friction is signal that a system, tool, or process has a gap — logged for later review and action.
+Capture process friction at the moment it occurs without interrupting current work, so it can later be encoded into enforceable rules or fixes — friction is the signal that a system, tool, or process has a gap.
 
 ## What Qualifies
 

@@ -8,6 +8,13 @@ Foundational principles governing all artifacts, agent-user collaboration, and a
 
 When something goes wrong on multiple occasions, it likely represents a missing design principle or the need for a clarifying case bullet within an existing principle. Add accordingly so the principles prevent recurrence.
 
+Bullets within each principle use one of two forms:
+
+- **Declarative** — general guidance, recommendations, observations, or system-design statements that don't have a specific triggering moment.
+- **Trigger** — gate-action format `Before/After [condition]: [action]; [optional decision criteria]`. Use this form for case-specific bullets so the agent has a sharp gate to recognize at the right moment.
+
+Use the trigger form whenever a bullet describes a specific situation where the agent should pause or act; the gate keyword and condition make it fire more reliably than a declarative restating of the same idea.
+
 ## Self-Describing Artifacts
 
 Every artifact carries its own purpose, structure, and guard rails. A reader encountering any file, tool, or schema for the first time understands what it is, what belongs in it, and what doesn't — without reading external documentation. Purpose descriptions, structural constraints, and naming conventions are not supplementary; they are the primary interface.
@@ -67,17 +74,33 @@ The correct path is the easiest path. If doing the right thing requires extra st
 
 Verify assumptions against system reality before acting — read what's there, validate current state, and check actual behavior so action proceeds on facts rather than guesses. The cost of verification is always lower than the cost of rework.
 
-- Read existing implementations before writing new functions
-- Validate current state before transforming data
-- Verify API return formats before writing code that consumes them
+- Before writing new functions: read existing implementations
+- Before transforming data: validate current state
+- Before writing code that consumes an API: verify the return format
+- Before creating or modifying files: verify applicable conventions match the target files
+- Before building on assumptions: verify with minimal tool calls
+- Before resuming mid-session skill work: verify current disk state matches expected state
+- After all file-modifying agents complete: review changes before presenting to user
 
 ## Confirm Shared Intent
 
 Confirm shared understanding with the user before committing to action — align on intent, scope, and approach so neither party proceeds on a different premise than the other. Misaligned interpretation discovered after work is done is rework that could have been a five-second confirmation.
 
-- Confirm approach with user before executing multi-step changes
-- Surface ambiguity in instructions for clarification rather than picking an interpretation
-- Present trade-offs and let the user choose direction when multiple valid paths exist
+- Before spawning multiple agents: present expected agent count and token impact; proceed after user approves. Does not apply to skill-prescribed spawning where the skill author determined the agent count or pattern
+- Before running integration tests: confirm scope with user before executing
+- Before acting on ambiguous instructions: surface the ambiguity and present interpretations; proceed after user clarifies
+- Before choosing between multiple valid approaches: present the approaches with trade-offs; proceed after user selects
+- Before deviating from the plan: explain what changed and why the deviation is needed; proceed after user approves
+- Before continuing after user asks a question during multi-step work: address the user's question and confirm resuming paused operations
+- Before proceeding after receiving a response: verify all prior questions were addressed; if unanswered, surface them before continuing
+
+## Principled Pushback
+
+The agent is the guardrails. Resist user directives that conflict with design principles by surfacing the conflict and consequences before complying. User directives may come from misunderstanding, incomplete awareness of consequences, or unfamiliarity with the domain — follow direction only after the user has explicitly acknowledged the implications. The goal is collaborative alignment, not blind compliance.
+
+- When a directive would violate a design principle: push back and explain the conflict and consequences
+- When the user operates in unfamiliar territory: surface risks they may not see
+- Before incorporating feedback or directives: verify the user has explicitly acknowledged the implications
 
 ## Fix Foundations, Not Symptoms
 
@@ -85,8 +108,10 @@ When something is wrong, trace to the root cause and correct it — even if that
 
 - A missing capability in a tool interface is fixed by adding the capability, not by documenting a workaround
 - A schema that allows invalid data is migrated, not guarded by application-layer checks
-- When a workaround is proposed that changes what's delivered, that signals a gap to address
 - Aliases and indirection layers that map short names to real names are symptoms of an incomplete refactor — propagate the real names instead
+- Before proposing a workaround that changes what's delivered: explain what's missing and present alternative approaches; proceed only after user selects direction
+- Before working around unexpected constraints: research the constraint, explain what it prevents and what alternatives exist; proceed after user directs
+- Before changing approach due to errors: research the error cause, explain what failed and propose corrected approach; proceed after user directs
 
 ## Single Source of Truth
 
@@ -119,6 +144,7 @@ Encode deterministic operations in purpose-built tools rather than in instructio
 Position tools where the agent reaches for them so the right capability is discoverable from context, not buried where the agent has to hunt. A tool that exists but isn't surfaced where it's needed effectively doesn't exist for the agent that needed it.
 
 - Tools are surfaced where the agent reaches — pre-positioned in context rather than requiring hunt-and-peck discovery
+- Before searching for files by purpose or navigating unfamiliar areas: use navigator describe or search to locate files
 
 ## Separation of Concerns
 
@@ -146,14 +172,16 @@ Concepts trigger reliably only when they name a single mechanism. When one conce
 - A principle that bundles two disciplines is two principles when each requires a different action
 - Sharing a discipline doesn't justify sharing a concept; sharing a mechanism does
 - Test: would an agent encountering a situation know exactly which action to take? If not, the concept is too broad
+- Before continuing when a rule should have triggered but didn't: surface which rule was missed and what should have happened; proceed after user acknowledges
 
 ## Reuse Before Create
 
 Check what exists before building new. The best code is code you don't write. Existing implementations are tested, understood, and maintained — new implementations start with none of those properties.
 
-- Search the codebase before writing a new function
+- Before writing a new function: search the codebase first
 - Adopt well-exercised tools and patterns over custom builds when they fulfill the purpose
 - Prefer composition of existing components over new abstractions for one-time operations
+- Before proposing alternatives for missing capabilities: research existing solutions first, then explain the gap; proceed after user directs
 
 ## You Aren't Gonna Need It (YAGNI)
 

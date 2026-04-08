@@ -6,7 +6,7 @@ depends:
 
 # Workflow
 
-How to operate in this project. Project-specific patterns implementing design principles.
+Project-specific operational patterns governing how agents work day-to-day in this project.
 
 ## Working Directory
 
@@ -26,10 +26,6 @@ Working directory must remain project root for the entire session. Use absolute 
 - Run only tests directly affected by current changes, scoped to narrowest relevant test file
 - Run broader suites only when explicitly requested
 - Exception: run full suite after structural changes (moves, renames, refactors) and before checkpoints — broken imports and cascading failures won't surface in narrow tests
-
-## Conventions
-
-Check conventions before creating or modifying files using the `governance_match` MCP tool. Pass all target file paths as an array in a single call. If matches are non-empty, read returned conventions you haven't already read, then follow their requirements.
 
 ## Naming
 
