@@ -76,7 +76,11 @@ Remove a plugin or the marketplace:
 
 ### Local development
 
-For contributors working on plugin source. Two approaches:
+For contributors working on plugin source.
+
+**After cloning, run `/ocd-init` and `/blueprint-init` in the cloned project to deploy local rules, conventions, and databases.** These files are gitignored — every clone initializes its own. Skipping init leaves the working agent without the rules that govern development here, and the plugin databases will be missing.
+
+Two approaches:
 
 #### Marketplace-based (recommended)
 
