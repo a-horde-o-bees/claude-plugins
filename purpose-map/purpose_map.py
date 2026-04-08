@@ -1,8 +1,8 @@
-"""Purpose map for ground-up project evaluation.
+"""Purpose map for project evaluation.
 
-Two entity types connected by four relationship types, plus location references:
+Two entity types connected by two relationship types, plus location references:
 
-  Needs       — problems to solve (the "why")
+  Needs       — concerns the project has (the "why")
   Components  — structural units that address needs (the "how")
 
 Entities use auto-generated short ids (c1, c2, ... for components; n1, n2, ...
@@ -10,18 +10,21 @@ for needs). The description is the load-bearing meaning. All displays render
 entries as `[id] description` so the id is always paired with its purpose,
 preventing reasoning from a name alone.
 
+Needs are project-implicit: the data structure lives within a project, so all
+needs belong to the project by definition. There is no separate ownership
+graph. Components are connected to needs only through the addressing graph,
+where each addressing edge carries a rationale describing the specific
+mechanism by which the component contributes.
+
 Edges:
 
   depends_on      — component depends on component (structural DAG)
-  refines         — child need refines parent need (need decomposition DAG)
-  owns            — component owns a need (single-owner allocation)
-  addresses       — component addresses a need (capability; partial OK)
+  addresses       — component addresses a need, with rationale (capability)
   component_paths — component → source-location reference (file path, optionally with #anchor)
 
-Each relationship is an independent graph over the same entities. Paths are
-non-authoritative location pointers — they record where the real artifact lived
-when the entry was created so a future reader can find it (or retrace it after
-a refactor).
+Paths are non-authoritative location pointers — they record where the real
+artifact lived when the entry was created so a future reader can find it
+(or retrace it after a refactor).
 
 Usage:
     python3 purpose-map/purpose_map.py <command> [args...]
@@ -39,34 +42,29 @@ Commands — needs:
 Commands — edges:
     depend <component> <dependency>                    Component depends on another
     undepend <component> <dependency>                  Remove dependency
-    refine <child-need> <parent-need> <rationale>      Child need refines parent need
-    unrefine <child-need> <parent-need>                Remove refinement
-    own <component> <need> <rationale>                 Component owns a need (single owner)
-    disown <component> <need>                          Remove ownership
     address <component> <need> <rationale>             Component addresses a need
     unaddress <component> <need>                       Remove addressing edge
-    set-rationale <type> <a> <b> <rationale>           Update rationale on an existing edge
-                                                       (type: address | refine | own)
+    set-rationale <component> <need> <rationale>       Update rationale on an existing addressing edge
     add-path <component> <path>                        Record a source-location path
     remove-path <component> <path>                     Remove a recorded path
 
-Rationales explain *why* an edge exists. They are required when creating
-addresses/refines/owns edges so the reasoning survives session boundaries
-and can be re-evaluated when descriptions change. Rationales are displayed
-by `how`, `why`, and the `addresses` view.
+Rationales explain *why* an addressing edge exists. They are required when
+creating addressing edges so the reasoning survives session boundaries and
+can be re-evaluated when descriptions change. Rationales are displayed by
+`how`, `why`, and the `addresses` view.
 
-Commands — lock:
-    lock <id>                              Lock a component or need
-    unlock <id>                            Unlock a component or need
+Commands — validation:
+    validate <id>                          Validate a component or need (mark as confirmed)
+    invalidate <id>                        Invalidate a component or need (remove validation)
 
 Commands — analysis:
-    dependencies [component-id] [--verify] Structural tree (with optional lock check)
-    ownership [component-id]               Owned needs and how each is addressed
-    addresses [id] [--gaps] [--orphans]    Addressing graph (entity, leaf gaps, or orphans)
+    dependencies [component-id] [--verify] Structural tree (with optional validation-chain check)
+    addresses [id] [--gaps] [--orphans]    Addressing graph (entity, gaps, or orphans)
     where <component-id>                   Recorded source-location paths for a component
-    why <component-id>                     Upward trace: addresses → need → refines → owner
-    how <need-id>                          Downward trace: direct addressers + refinements
-    summary                                Counts, root needs, addressing status
+    why <component-id>                     What needs does this component address?
+    how <need-id>                          What addresses this need? (with rationales)
+    compare <component-a> <component-b>    Compare two components by addressing edges (common needs + each-only needs)
+    summary                                Counts and per-need addressing status
 """
 
 import sqlite3
@@ -89,15 +87,15 @@ def _next_id(db, prefix, table):
     return f"{prefix}{(max(nums) + 1) if nums else 1}"
 
 
-def _comp_label(cid, description, locked):
-    """Format a component as '◈ [id] description' with lock marker."""
-    marker = "◈" if locked else "? ◈"
+def _comp_label(cid, description, validated):
+    """Format a component as '◈ [id] description' with validation marker."""
+    marker = "◈" if validated else "? ◈"
     return f"{marker} [{cid}] {description}"
 
 
-def _need_label(nid, description, locked):
-    """Format a need as '◇ [id] description' with lock marker."""
-    marker = "◇" if locked else "? ◇"
+def _need_label(nid, description, validated):
+    """Format a need as '◇ [id] description' with validation marker."""
+    marker = "◇" if validated else "? ◇"
     return f"{marker} [{nid}] {description}"
 
 
@@ -109,33 +107,19 @@ def get_db():
         CREATE TABLE IF NOT EXISTS components (
             id TEXT PRIMARY KEY,
             description TEXT NOT NULL,
-            locked INTEGER NOT NULL DEFAULT 0
+            validated INTEGER NOT NULL DEFAULT 0
         );
 
         CREATE TABLE IF NOT EXISTS needs (
             id TEXT PRIMARY KEY,
             description TEXT NOT NULL,
-            locked INTEGER NOT NULL DEFAULT 0
+            validated INTEGER NOT NULL DEFAULT 0
         );
 
         CREATE TABLE IF NOT EXISTS depends_on (
             component_id TEXT NOT NULL REFERENCES components(id) ON DELETE CASCADE,
             dependency_id TEXT NOT NULL REFERENCES components(id) ON DELETE CASCADE,
             PRIMARY KEY (component_id, dependency_id)
-        );
-
-        CREATE TABLE IF NOT EXISTS refines (
-            need_id TEXT NOT NULL REFERENCES needs(id) ON DELETE CASCADE,
-            refined_need_id TEXT NOT NULL REFERENCES needs(id) ON DELETE CASCADE,
-            rationale TEXT NOT NULL DEFAULT '',
-            PRIMARY KEY (need_id, refined_need_id)
-        );
-
-        CREATE TABLE IF NOT EXISTS owns (
-            component_id TEXT NOT NULL REFERENCES components(id) ON DELETE CASCADE,
-            need_id TEXT NOT NULL UNIQUE REFERENCES needs(id) ON DELETE CASCADE,
-            rationale TEXT NOT NULL DEFAULT '',
-            PRIMARY KEY (component_id, need_id)
         );
 
         CREATE TABLE IF NOT EXISTS addresses (
@@ -243,76 +227,6 @@ def undepend(db, comp_id, dep_id):
     print(f"Removed: {comp_id} depends on {dep_id}")
 
 
-# --- Refinement edge commands ---
-
-def refine(db, child_id, parent_id, rationale):
-    if not rationale or not rationale.strip():
-        print("Error: refine requires a rationale explaining why this child refines the parent")
-        sys.exit(1)
-    _check_need(db, child_id)
-    _check_need(db, parent_id)
-    if child_id == parent_id:
-        print("Error: a need cannot refine itself")
-        sys.exit(1)
-    if _would_cycle(db, "refines", "need_id", "refined_need_id", child_id, parent_id):
-        print(f"Error: {child_id} → {parent_id} would create a refinement cycle")
-        sys.exit(1)
-    try:
-        db.execute("INSERT INTO refines (need_id, refined_need_id, rationale) VALUES (?, ?, ?)",
-                    (child_id, parent_id, rationale.strip()))
-        db.commit()
-        print(f"Refinement: {child_id} refines {parent_id}")
-        print(f"  rationale: {rationale.strip()}")
-    except sqlite3.IntegrityError:
-        print("Error: refinement already exists")
-        sys.exit(1)
-
-
-def unrefine(db, child_id, parent_id):
-    cur = db.execute("DELETE FROM refines WHERE need_id = ? AND refined_need_id = ?",
-                     (child_id, parent_id))
-    if cur.rowcount == 0:
-        print("Error: refinement not found")
-        sys.exit(1)
-    db.commit()
-    print(f"Removed: {child_id} refines {parent_id}")
-
-
-# --- Ownership edge commands ---
-
-def own(db, comp_id, need_id, rationale):
-    if not rationale or not rationale.strip():
-        print("Error: own requires a rationale explaining why this component owns the need")
-        sys.exit(1)
-    _check_component(db, comp_id)
-    _check_need(db, need_id)
-    existing = db.execute(
-        "SELECT component_id FROM owns WHERE need_id = ?", (need_id,)
-    ).fetchone()
-    if existing:
-        if existing[0] == comp_id:
-            print("Error: ownership already exists")
-        else:
-            print(f"Error: '{need_id}' is already owned by '{existing[0]}'. "
-                  f"Disown first, or refine the need to express a separate concern.")
-        sys.exit(1)
-    db.execute("INSERT INTO owns (component_id, need_id, rationale) VALUES (?, ?, ?)",
-                (comp_id, need_id, rationale.strip()))
-    db.commit()
-    print(f"Ownership: {comp_id} owns {need_id}")
-    print(f"  rationale: {rationale.strip()}")
-
-
-def disown(db, comp_id, need_id):
-    cur = db.execute("DELETE FROM owns WHERE component_id = ? AND need_id = ?",
-                     (comp_id, need_id))
-    if cur.rowcount == 0:
-        print("Error: ownership not found")
-        sys.exit(1)
-    db.commit()
-    print(f"Removed: {comp_id} owns {need_id}")
-
-
 # --- Addressing edge commands ---
 
 def address(db, comp_id, need_id, rationale):
@@ -332,37 +246,21 @@ def address(db, comp_id, need_id, rationale):
         sys.exit(1)
 
 
-def set_rationale(db, edge_type, a, b, rationale):
-    """Update the rationale on an existing edge.
-
-    edge_type: one of 'address', 'refine', 'own' (also accepts plural forms).
-    """
+def set_rationale(db, a, b, rationale):
+    """Update the rationale on an existing addressing edge."""
     if not rationale or not rationale.strip():
         print("Error: rationale cannot be empty")
         sys.exit(1)
 
-    table_map = {
-        "address":   ("addresses", "component_id", "need_id"),
-        "addresses": ("addresses", "component_id", "need_id"),
-        "refine":    ("refines",   "need_id",      "refined_need_id"),
-        "refines":   ("refines",   "need_id",      "refined_need_id"),
-        "own":       ("owns",      "component_id", "need_id"),
-        "owns":      ("owns",      "component_id", "need_id"),
-    }
-    if edge_type not in table_map:
-        print(f"Error: unknown edge type '{edge_type}'. Use 'address', 'refine', or 'own'")
-        sys.exit(1)
-
-    table, col_a, col_b = table_map[edge_type]
     cur = db.execute(
-        f"UPDATE {table} SET rationale = ? WHERE {col_a} = ? AND {col_b} = ?",
+        "UPDATE addresses SET rationale = ? WHERE component_id = ? AND need_id = ?",
         (rationale.strip(), a, b)
     )
     if cur.rowcount == 0:
-        print(f"Error: {edge_type} edge {a} → {b} not found")
+        print(f"Error: addressing edge {a} → {b} not found")
         sys.exit(1)
     db.commit()
-    print(f"Updated rationale: {edge_type} {a} → {b}")
+    print(f"Updated rationale: address {a} → {b}")
     print(f"  rationale: {rationale.strip()}")
 
 
@@ -400,25 +298,25 @@ def remove_path(db, comp_id, path):
     print(f"Removed: {comp_id} @ {path}")
 
 
-# --- Lock commands ---
+# --- Validation commands ---
 
-def lock(db, item_id):
+def validate(db, item_id):
     for table in ("components", "needs"):
-        r = db.execute(f"UPDATE {table} SET locked = 1 WHERE id = ?", (item_id,))
+        r = db.execute(f"UPDATE {table} SET validated = 1 WHERE id = ?", (item_id,))
         if r.rowcount:
             db.commit()
-            print(f"Locked: {item_id}")
+            print(f"Validated: {item_id}")
             return
     print(f"Error: '{item_id}' not found")
     sys.exit(1)
 
 
-def unlock(db, item_id):
+def invalidate(db, item_id):
     for table in ("components", "needs"):
-        r = db.execute(f"UPDATE {table} SET locked = 0 WHERE id = ?", (item_id,))
+        r = db.execute(f"UPDATE {table} SET validated = 0 WHERE id = ?", (item_id,))
         if r.rowcount:
             db.commit()
-            print(f"Unlocked: {item_id}")
+            print(f"Invalidated: {item_id}")
             return
     print(f"Error: '{item_id}' not found")
     sys.exit(1)
@@ -429,10 +327,10 @@ def unlock(db, item_id):
 def dependencies(db, comp_id=None, verify=False):
     """Structural tree of components from depends_on edges only.
 
-    With --verify, also reports unlocked dependency ancestors for each component.
+    With --verify, also reports unvalidated dependency ancestors for each component.
     """
     if comp_id:
-        comp = db.execute("SELECT description, locked FROM components WHERE id = ?",
+        comp = db.execute("SELECT description, validated FROM components WHERE id = ?",
                           (comp_id,)).fetchone()
         if not comp:
             print(f"Error: component '{comp_id}' not found")
@@ -443,140 +341,48 @@ def dependencies(db, comp_id=None, verify=False):
             _verify_one(db, comp_id)
     else:
         roots = db.execute("""
-            SELECT c.id, c.description, c.locked FROM components c
+            SELECT c.id, c.description, c.validated FROM components c
             WHERE NOT EXISTS (
                 SELECT 1 FROM depends_on d WHERE d.component_id = c.id
             )
             ORDER BY CAST(SUBSTR(c.id, 2) AS INTEGER)
         """).fetchall()
-        for cid, cdesc, clocked in roots:
-            _dep_tree(db, cid, cdesc, clocked)
+        for cid, cdesc, cvalidated in roots:
+            _dep_tree(db, cid, cdesc, cvalidated)
 
         if verify:
             print()
             verify_all(db)
 
 
-def _dep_tree(db, comp_id, description, locked, header_prefix="", cont_prefix=""):
+def _dep_tree(db, comp_id, description, validated, header_prefix="", cont_prefix=""):
     """Print component and its dependent components."""
-    print(f"{header_prefix}{_comp_label(comp_id, description, locked)}")
+    print(f"{header_prefix}{_comp_label(comp_id, description, validated)}")
 
     dependents = db.execute("""
-        SELECT c.id, c.description, c.locked FROM depends_on d
+        SELECT c.id, c.description, c.validated FROM depends_on d
         JOIN components c ON c.id = d.component_id
         WHERE d.dependency_id = ? ORDER BY CAST(SUBSTR(c.id, 2) AS INTEGER)
     """, (comp_id,)).fetchall()
 
-    for i, (cid, cdesc, clocked) in enumerate(dependents):
+    for i, (cid, cdesc, cvalidated) in enumerate(dependents):
         is_last = i == len(dependents) - 1
         branch = "└── " if is_last else "├── "
         cont = "    " if is_last else "│   "
-        _dep_tree(db, cid, cdesc, clocked,
+        _dep_tree(db, cid, cdesc, cvalidated,
                   cont_prefix + branch, cont_prefix + cont)
 
 
-# --- Analysis: ownership ---
-
-def ownership(db, comp_id=None):
-    """For each owner, show owned needs and how each one is addressed.
-
-    Coverage traverses refinements: a need is considered addressed if it has
-    direct addressers OR all of its refinements are addressed.
-    """
-    if comp_id:
-        _ownership_one(db, comp_id)
-    else:
-        owners = db.execute("""
-            SELECT DISTINCT c.id FROM owns o
-            JOIN components c ON c.id = o.component_id
-            ORDER BY CAST(SUBSTR(c.id, 2) AS INTEGER)
-        """).fetchall()
-        for i, (oid,) in enumerate(owners):
-            _ownership_one(db, oid)
-            if i < len(owners) - 1:
-                print()
-
-
-def _ownership_one(db, comp_id):
-    comp = db.execute("SELECT description, locked FROM components WHERE id = ?",
-                      (comp_id,)).fetchone()
-    if not comp:
-        print(f"Error: component '{comp_id}' not found")
-        sys.exit(1)
-
-    owned = db.execute("""
-        SELECT n.id, n.description, n.locked FROM owns o
-        JOIN needs n ON n.id = o.need_id
-        WHERE o.component_id = ? ORDER BY CAST(SUBSTR(n.id, 2) AS INTEGER)
-    """, (comp_id,)).fetchall()
-
-    print(_comp_label(comp_id, comp[0], comp[1]))
-    if not owned:
-        print("  (no owned needs)")
-        return
-
-    print(f"  owns {len(owned)} need(s):")
-    addressed = 0
-    for nid, ndesc, nlocked in owned:
-        status, summary_text = _coverage(db, nid)
-        marker = {"covered": "✓", "partial": "~", "gap": "✗"}[status]
-        print(f"    {marker} {_need_label(nid, ndesc, nlocked)}")
-        print(f"        {summary_text}")
-        if status == "covered":
-            addressed += 1
-
-    pct = (addressed / len(owned) * 100) if owned else 0
-    print(f"  [{addressed}/{len(owned)}] {pct:.0f}% fully addressed")
-
-
-def _coverage(db, need_id, seen=None):
-    """Return (status, summary) for a need.
-
-    status: 'covered' (direct or all refinements covered),
-            'partial' (some refinements covered),
-            'gap'     (no direct addressers and no refinements, or all refinements gap)
-    """
-    seen = seen or set()
-    if need_id in seen:
-        return "gap", "(refinement cycle)"
-    seen = seen | {need_id}
-
+def _coverage(db, need_id):
+    """Return (status, summary) for a need: covered if any direct addressers, gap otherwise."""
     direct = [r[0] for r in db.execute(
         "SELECT component_id FROM addresses WHERE need_id = ? ORDER BY CAST(SUBSTR(component_id, 2) AS INTEGER)",
         (need_id,)
     ).fetchall()]
 
-    refinements = [r[0] for r in db.execute(
-        "SELECT need_id FROM refines WHERE refined_need_id = ? ORDER BY CAST(SUBSTR(need_id, 2) AS INTEGER)",
-        (need_id,)
-    ).fetchall()]
-
-    if direct and not refinements:
-        return "covered", "addressed by " + ", ".join(direct)
-
-    if not direct and not refinements:
-        return "gap", "unaddressed (no addressers, no refinements)"
-
-    # Refinements exist; recurse
-    sub_results = [(r, _coverage(db, r, seen)) for r in refinements]
-    covered_refs = [r for r, (s, _) in sub_results if s == "covered"]
-    gap_refs = [r for r, (s, _) in sub_results if s == "gap"]
-
-    parts = []
     if direct:
-        parts.append("direct: " + ", ".join(direct))
-    if covered_refs:
-        parts.append(f"covered refinements: {', '.join(covered_refs)}")
-    if gap_refs:
-        parts.append(f"gap refinements: {', '.join(gap_refs)}")
-
-    summary_text = "; ".join(parts)
-
-    if direct or all(s == "covered" for _, (s, _) in sub_results):
-        return "covered", summary_text
-    if any(s == "covered" or s == "partial" for _, (s, _) in sub_results):
-        return "partial", summary_text
-    return "gap", summary_text
+        return "covered", "addressed by " + ", ".join(direct)
+    return "gap", "unaddressed"
 
 
 # --- Analysis: addresses ---
@@ -600,68 +406,47 @@ def addresses_view(db, entity_id=None, gaps=False, orphans=False):
             print(f"Error: '{entity_id}' is not a known need or component")
             sys.exit(1)
     else:
-        # All root needs (needs with no refined parents)
-        roots = db.execute("""
-            SELECT n.id FROM needs n
-            WHERE NOT EXISTS (
-                SELECT 1 FROM refines r WHERE r.need_id = n.id
-            )
-            ORDER BY CAST(SUBSTR(n.id, 2) AS INTEGER)
+        # All needs
+        all_needs = db.execute("""
+            SELECT id FROM needs
+            ORDER BY CAST(SUBSTR(id, 2) AS INTEGER)
         """).fetchall()
-        for i, (nid,) in enumerate(roots):
+        for i, (nid,) in enumerate(all_needs):
             _addresses_for_need(db, nid)
-            if i < len(roots) - 1:
+            if i < len(all_needs) - 1:
                 print()
 
 
-def _addresses_for_need(db, need_id, indent="", seen=None):
-    """Tree of addressers for a need, with refinements expanded."""
-    seen = seen or set()
-    if need_id in seen:
-        print(f"{indent}◇ [{need_id}] (refinement cycle)")
-        return
-    seen = seen | {need_id}
-
-    need = db.execute("SELECT description, locked FROM needs WHERE id = ?",
+def _addresses_for_need(db, need_id):
+    """Show a need and its direct addressers with rationales."""
+    need = db.execute("SELECT description, validated FROM needs WHERE id = ?",
                       (need_id,)).fetchone()
-    print(f"{indent}{_need_label(need_id, need[0], need[1])}")
+    print(_need_label(need_id, need[0], need[1]))
 
     direct = db.execute("""
-        SELECT c.id, c.description, c.locked, a.rationale FROM addresses a
+        SELECT c.id, c.description, c.validated, a.rationale FROM addresses a
         JOIN components c ON c.id = a.component_id
         WHERE a.need_id = ? ORDER BY CAST(SUBSTR(c.id, 2) AS INTEGER)
     """, (need_id,)).fetchall()
 
-    refinements = db.execute("""
-        SELECT n.id, n.description, n.locked, r.rationale FROM refines r
-        JOIN needs n ON n.id = r.need_id
-        WHERE r.refined_need_id = ? ORDER BY CAST(SUBSTR(n.id, 2) AS INTEGER)
-    """, (need_id,)).fetchall()
-
-    if not direct and not refinements:
-        print(f"{indent}  ✗ unaddressed (gap)")
+    if not direct:
+        print(f"  ✗ unaddressed (gap)")
         return
 
-    for cid, cdesc, clocked, rationale in direct:
-        print(f"{indent}  ↳ {_comp_label(cid, cdesc, clocked)}")
+    for cid, cdesc, cvalidated, rationale in direct:
+        print(f"  ↳ {_comp_label(cid, cdesc, cvalidated)}")
         if rationale:
-            print(f"{indent}      rationale: {rationale}")
-
-    if refinements:
-        for nid, _, _, ref_rationale in refinements:
-            _addresses_for_need(db, nid, indent + "    ", seen)
-            if ref_rationale:
-                print(f"{indent}      refinement rationale: {ref_rationale}")
+            print(f"      rationale: {rationale}")
 
 
 def _addresses_for_component(db, comp_id):
     """What does this component address?"""
-    comp = db.execute("SELECT description, locked FROM components WHERE id = ?",
+    comp = db.execute("SELECT description, validated FROM components WHERE id = ?",
                       (comp_id,)).fetchone()
     print(_comp_label(comp_id, comp[0], comp[1]))
 
     addrs = db.execute("""
-        SELECT n.id, n.description, n.locked FROM addresses a
+        SELECT n.id, n.description, n.validated FROM addresses a
         JOIN needs n ON n.id = a.need_id
         WHERE a.component_id = ? ORDER BY CAST(SUBSTR(n.id, 2) AS INTEGER)
     """, (comp_id,)).fetchall()
@@ -670,35 +455,29 @@ def _addresses_for_component(db, comp_id):
         print("  (addresses nothing)")
         return
 
-    for nid, ndesc, nlocked in addrs:
-        print(f"  → {_need_label(nid, ndesc, nlocked)}")
+    for nid, ndesc, nvalidated in addrs:
+        print(f"  → {_need_label(nid, ndesc, nvalidated)}")
 
 
 def _show_leaf_gaps(db):
-    """Needs with no refinements and no direct addressers — actionable gaps."""
+    """Needs with no direct addressers — actionable gaps."""
     rows = db.execute("""
         SELECT n.id, n.description FROM needs n
-        WHERE NOT EXISTS (SELECT 1 FROM refines r WHERE r.refined_need_id = n.id)
-          AND NOT EXISTS (SELECT 1 FROM addresses a WHERE a.need_id = n.id)
+        WHERE NOT EXISTS (SELECT 1 FROM addresses a WHERE a.need_id = n.id)
         ORDER BY CAST(SUBSTR(n.id, 2) AS INTEGER)
     """).fetchall()
     if not rows:
-        print("No leaf gaps — every leaf need has at least one addresser")
+        print("No gaps — every need has at least one addresser")
         return
-    print(f"Leaf gaps ({len(rows)}) — needs with no refinements and no addressers:")
+    print(f"Gaps ({len(rows)}) — needs with no addressers:")
     for nid, desc in rows:
-        owner = db.execute(
-            "SELECT component_id FROM owns WHERE need_id = ?", (nid,)
-        ).fetchone()
-        owner_str = f"[{owner[0]}]" if owner else "unowned"
         print(f"  ✗ [{nid}] {desc}")
-        print(f"      owned by: {owner_str}")
 
 
 def _show_orphans(db):
     """Components that don't address anything."""
     rows = db.execute("""
-        SELECT c.id, c.description, c.locked FROM components c
+        SELECT c.id, c.description, c.validated FROM components c
         WHERE NOT EXISTS (SELECT 1 FROM addresses a WHERE a.component_id = c.id)
         ORDER BY CAST(SUBSTR(c.id, 2) AS INTEGER)
     """).fetchall()
@@ -706,8 +485,8 @@ def _show_orphans(db):
         print("No orphans — every component addresses at least one need")
         return
     print(f"Orphan components ({len(rows)}):")
-    for cid, desc, locked in rows:
-        print(f"  {_comp_label(cid, desc, locked)}")
+    for cid, desc, validated in rows:
+        print(f"  {_comp_label(cid, desc, validated)}")
 
 
 # --- Analysis: where, why, how ---
@@ -719,7 +498,7 @@ def where(db, comp_id):
     after refactors. If they're broken, retrace by purpose using navigator
     or by content using grep, then update.
     """
-    comp = db.execute("SELECT description, locked FROM components WHERE id = ?",
+    comp = db.execute("SELECT description, validated FROM components WHERE id = ?",
                       (comp_id,)).fetchone()
     if not comp:
         print(f"Error: component '{comp_id}' not found")
@@ -741,8 +520,8 @@ def where(db, comp_id):
 
 
 def why(db, comp_id):
-    """Upward trace: component → addresses → need → refines* → owner."""
-    comp = db.execute("SELECT description, locked FROM components WHERE id = ?",
+    """Upward trace: what needs does this component address?"""
+    comp = db.execute("SELECT description, validated FROM components WHERE id = ?",
                       (comp_id,)).fetchone()
     if not comp:
         print(f"Error: component '{comp_id}' not found")
@@ -751,7 +530,7 @@ def why(db, comp_id):
     print(_comp_label(comp_id, comp[0], comp[1]))
 
     addressed = db.execute("""
-        SELECT n.id, n.description, n.locked, a.rationale FROM addresses a
+        SELECT n.id, n.description, n.validated, a.rationale FROM addresses a
         JOIN needs n ON n.id = a.need_id
         WHERE a.component_id = ? ORDER BY CAST(SUBSTR(n.id, 2) AS INTEGER)
     """, (comp_id,)).fetchall()
@@ -760,107 +539,144 @@ def why(db, comp_id):
         print("  (addresses nothing)")
         return
 
-    for nid, ndesc, nlocked, rationale in addressed:
-        print(f"  ↑ addresses: {_need_label(nid, ndesc, nlocked)}")
+    for nid, ndesc, nvalidated, rationale in addressed:
+        print(f"  ↑ addresses: {_need_label(nid, ndesc, nvalidated)}")
         if rationale:
             print(f"      rationale: {rationale}")
-        _trace_refines_up(db, nid, "      ")
-
-
-def _trace_refines_up(db, need_id, indent, seen=None):
-    """Walk up the refinement chain showing parents and ultimate owners."""
-    seen = seen or set()
-    if need_id in seen:
-        return
-    seen = seen | {need_id}
-
-    owner = db.execute("""
-        SELECT c.id, c.description, c.locked FROM owns o
-        JOIN components c ON c.id = o.component_id
-        WHERE o.need_id = ?
-    """, (need_id,)).fetchone()
-    if owner:
-        print(f"{indent}owned by: {_comp_label(*owner)}")
-
-    parents = db.execute("""
-        SELECT n.id, n.description, n.locked FROM refines r
-        JOIN needs n ON n.id = r.refined_need_id
-        WHERE r.need_id = ? ORDER BY CAST(SUBSTR(n.id, 2) AS INTEGER)
-    """, (need_id,)).fetchall()
-    for pid, pdesc, plocked in parents:
-        print(f"{indent}refines: {_need_label(pid, pdesc, plocked)}")
-        _trace_refines_up(db, pid, indent + "  ", seen)
 
 
 def how(db, need_id):
-    """Downward trace: direct addressers + refinement subtree (recursively, with gaps)."""
+    """Show a need with all direct addressers and their rationales."""
     if not db.execute("SELECT 1 FROM needs WHERE id = ?", (need_id,)).fetchone():
         print(f"Error: need '{need_id}' not found")
         sys.exit(1)
-
-    owner = db.execute("""
-        SELECT c.id, c.description, c.locked FROM owns o
-        JOIN components c ON c.id = o.component_id
-        WHERE o.need_id = ?
-    """, (need_id,)).fetchone()
-    if owner:
-        print(f"(owned by: {_comp_label(*owner)})")
     _addresses_for_need(db, need_id)
+
+
+def compare(db, comp_a, comp_b):
+    """Compare two components by their addressing edges. Shows common needs
+    (both address) with each component's rationale side-by-side, and needs
+    that only one addresses.
+
+    Used to evaluate whether two components are doing the same thing through
+    overlapping mechanisms (e.g., a rule and a hook that enforce the same
+    constraint at different layers).
+    """
+    for cid in (comp_a, comp_b):
+        if not db.execute("SELECT 1 FROM components WHERE id = ?", (cid,)).fetchone():
+            print(f"Error: component '{cid}' not found")
+            sys.exit(1)
+
+    comp_a_data = db.execute(
+        "SELECT description, validated FROM components WHERE id = ?", (comp_a,)
+    ).fetchone()
+    comp_b_data = db.execute(
+        "SELECT description, validated FROM components WHERE id = ?", (comp_b,)
+    ).fetchone()
+
+    print(f"=== {comp_a} ===")
+    print(_comp_label(comp_a, comp_a_data[0], comp_a_data[1]))
+    print(f"\n=== {comp_b} ===")
+    print(_comp_label(comp_b, comp_b_data[0], comp_b_data[1]))
+
+    addr_a = {
+        row[0]: row for row in db.execute("""
+            SELECT n.id, n.description, n.validated, a.rationale
+            FROM addresses a JOIN needs n ON n.id = a.need_id
+            WHERE a.component_id = ?
+            ORDER BY CAST(SUBSTR(n.id, 2) AS INTEGER)
+        """, (comp_a,)).fetchall()
+    }
+    addr_b = {
+        row[0]: row for row in db.execute("""
+            SELECT n.id, n.description, n.validated, a.rationale
+            FROM addresses a JOIN needs n ON n.id = a.need_id
+            WHERE a.component_id = ?
+            ORDER BY CAST(SUBSTR(n.id, 2) AS INTEGER)
+        """, (comp_b,)).fetchall()
+    }
+
+    common = sorted(set(addr_a) & set(addr_b), key=lambda x: int(x[1:]))
+    only_a = sorted(set(addr_a) - set(addr_b), key=lambda x: int(x[1:]))
+    only_b = sorted(set(addr_b) - set(addr_a), key=lambda x: int(x[1:]))
+
+    if common:
+        print(f"\n=== COMMON NEEDS ({len(common)}) — both components address ===")
+        for nid in common:
+            row = addr_a[nid]
+            print(_need_label(nid, row[1], row[2]))
+            print(f"  {comp_a}: {row[3]}")
+            print(f"  {comp_b}: {addr_b[nid][3]}")
+
+    if only_a:
+        print(f"\n=== {comp_a} ONLY ({len(only_a)}) ===")
+        for nid in only_a:
+            row = addr_a[nid]
+            print(_need_label(nid, row[1], row[2]))
+            if row[3]:
+                print(f"  rationale: {row[3]}")
+
+    if only_b:
+        print(f"\n=== {comp_b} ONLY ({len(only_b)}) ===")
+        for nid in only_b:
+            row = addr_b[nid]
+            print(_need_label(nid, row[1], row[2]))
+            if row[3]:
+                print(f"  rationale: {row[3]}")
+
+    if not common and not only_a and not only_b:
+        print(f"\n(neither component addresses any need)")
 
 
 # --- Summary ---
 
 def summary(db):
-    """Counts, root needs, addressing status."""
+    """Counts and per-need addressing status."""
     comp_count = db.execute("SELECT COUNT(*) FROM components").fetchone()[0]
     need_count = db.execute("SELECT COUNT(*) FROM needs").fetchone()[0]
     dep_count = db.execute("SELECT COUNT(*) FROM depends_on").fetchone()[0]
-    ref_count = db.execute("SELECT COUNT(*) FROM refines").fetchone()[0]
-    own_count = db.execute("SELECT COUNT(*) FROM owns").fetchone()[0]
     addr_count = db.execute("SELECT COUNT(*) FROM addresses").fetchone()[0]
 
-    leaf_gaps = db.execute("""
+    gaps = db.execute("""
         SELECT COUNT(*) FROM needs n
-        WHERE NOT EXISTS (SELECT 1 FROM refines r WHERE r.refined_need_id = n.id)
-          AND NOT EXISTS (SELECT 1 FROM addresses a WHERE a.need_id = n.id)
+        WHERE NOT EXISTS (SELECT 1 FROM addresses a WHERE a.need_id = n.id)
     """).fetchone()[0]
 
-    locked_comps = db.execute(
-        "SELECT COUNT(*) FROM components WHERE locked = 1"
+    validated_comps = db.execute(
+        "SELECT COUNT(*) FROM components WHERE validated = 1"
     ).fetchone()[0]
-    locked_needs = db.execute(
-        "SELECT COUNT(*) FROM needs WHERE locked = 1"
+    validated_needs = db.execute(
+        "SELECT COUNT(*) FROM needs WHERE validated = 1"
     ).fetchone()[0]
 
-    print(f"Components: {comp_count} ({locked_comps} locked)")
-    print(f"Needs: {need_count} ({locked_needs} locked)")
-    print(f"Dependencies: {dep_count} | Refinements: {ref_count} | "
-          f"Ownership: {own_count} | Addresses: {addr_count}")
-    print(f"Leaf gaps: {leaf_gaps}")
+    print(f"Components: {comp_count} ({validated_comps} validated)")
+    print(f"Needs: {need_count} ({validated_needs} validated)")
+    print(f"Dependencies: {dep_count} | Addresses: {addr_count}")
+    print(f"Gaps: {gaps}")
 
-    roots = _root_needs(db)
-    if roots:
-        print(f"\nRoot needs ({len(roots)}):")
-        for (nid,) in roots:
-            row = db.execute(
-                "SELECT description, locked FROM needs WHERE id = ?", (nid,)
-            ).fetchone()
+    all_needs = db.execute("""
+        SELECT id, description, validated FROM needs
+        ORDER BY CAST(SUBSTR(id, 2) AS INTEGER)
+    """).fetchall()
+    if all_needs:
+        print(f"\nNeeds ({len(all_needs)}):")
+        for nid, desc, validated in all_needs:
             status, _ = _coverage(db, nid)
-            marker = {"covered": "✓", "partial": "~", "gap": "✗"}[status]
-            print(f"  {marker} {_need_label(nid, row[0], row[1])}")
+            marker = {"covered": "✓", "gap": "✗"}[status]
+            print(f"  {marker} {_need_label(nid, desc, validated)}")
 
 
 # --- Helpers ---
 
 def verify_all(db):
-    """Run lock-chain verify on every component."""
+    """Run validation-chain verify on every component."""
     all_comps = db.execute("SELECT id FROM components ORDER BY id").fetchall()
-    any_unlocked = False
+    any_unvalidated = False
     for (cid,) in all_comps:
         if not _verify_one(db, cid, quiet=True):
-            any_unlocked = True
-    if not any_unlocked:
-        print("✓ All dependency chains fully locked")
+            any_unvalidated = True
+    if not any_unvalidated:
+        print("✓ All dependency chains fully validated")
 
 
 def _verify_one(db, comp_id, quiet=False):
@@ -879,7 +695,7 @@ def _verify_one(db, comp_id, quiet=False):
             JOIN depends_on d ON d.component_id = a.id
             WHERE a.depth < 50
         )
-        SELECT DISTINCT c.id, c.description, c.locked
+        SELECT DISTINCT c.id, c.description, c.validated
         FROM ancestors a
         JOIN components c ON c.id = a.id
     """, (comp_id,)).fetchall()
@@ -889,27 +705,18 @@ def _verify_one(db, comp_id, quiet=False):
             print(f"✓ {comp_id} has no dependency ancestors")
         return True
 
-    unlocked = [(cid, desc) for cid, desc, locked in rows if not locked]
-    all_locked = not unlocked
+    unvalidated = [(cid, desc) for cid, desc, validated in rows if not validated]
+    all_validated = not unvalidated
 
-    if not quiet or not all_locked:
-        if all_locked:
-            print(f"✓ [{comp_id}] all dependencies locked")
+    if not quiet or not all_validated:
+        if all_validated:
+            print(f"✓ [{comp_id}] all dependencies validated")
         else:
-            print(f"✗ [{comp_id}] unlocked dependencies:")
-            for cid, desc in unlocked:
+            print(f"✗ [{comp_id}] unvalidated dependencies:")
+            for cid, desc in unvalidated:
                 print(f"    ✗ [{cid}] {desc}")
 
-    return all_locked
-
-
-def _root_needs(db):
-    """Needs that no other need refines (top of refinement chains)."""
-    return db.execute("""
-        SELECT n.id FROM needs n
-        WHERE NOT EXISTS (SELECT 1 FROM refines r WHERE r.need_id = n.id)
-        ORDER BY CAST(SUBSTR(n.id, 2) AS INTEGER)
-    """).fetchall()
+    return all_validated
 
 
 def _would_cycle(db, table, from_col, to_col, new_from, new_to):
@@ -954,28 +761,24 @@ COMMANDS = {
     "remove-need":      (remove_need,      1, "<id>"),
     "depend":           (depend,           2, "<component> <dependency>"),
     "undepend":         (undepend,         2, "<component> <dependency>"),
-    "refine":           (refine,           3, "<child-need> <parent-need> <rationale>"),
-    "unrefine":         (unrefine,         2, "<child-need> <parent-need>"),
-    "own":              (own,              3, "<component> <need> <rationale>"),
-    "disown":           (disown,           2, "<component> <need>"),
     "address":          (address,          3, "<component> <need> <rationale>"),
     "unaddress":        (unaddress,        2, "<component> <need>"),
-    "set-rationale":    (set_rationale,    4, "<address|refine|own> <a> <b> <rationale>"),
+    "set-rationale":    (set_rationale,    3, "<component> <need> <rationale>"),
     "add-path":         (add_path,         2, "<component> <path>"),
     "remove-path":      (remove_path,      2, "<component> <path>"),
-    "lock":             (lock,             1, "<id>"),
-    "unlock":           (unlock,           1, "<id>"),
+    "validate":         (validate,         1, "<id>"),
+    "invalidate":       (invalidate,       1, "<id>"),
     "dependencies":     (dependencies,     0, "[component-id] [--verify]"),
-    "ownership":        (ownership,        0, "[component-id]"),
     "addresses":        (addresses_view,   0, "[id] [--gaps] [--orphans]"),
     "where":            (where,            1, "<component-id>"),
     "why":              (why,              1, "<component-id>"),
     "how":              (how,              1, "<need-id>"),
+    "compare":          (compare,          2, "<component-a> <component-b>"),
     "summary":          (summary,          0, ""),
 }
 
-OPTIONAL_ARG_COMMANDS = {"dependencies", "ownership", "addresses"}
-RATIONALE_EDGE_COMMANDS = {"address", "refine", "own"}
+OPTIONAL_ARG_COMMANDS = {"dependencies", "addresses"}
+RATIONALE_EDGE_COMMANDS = {"address", "set-rationale"}
 
 
 def main():
@@ -1024,12 +827,6 @@ def main():
             print(f"Usage: {cmd} {usage}")
             sys.exit(1)
         func(db, args[0], args[1], " ".join(args[2:]))
-    elif cmd == "set-rationale":
-        # First three args are edge_type + two entity ids, rest joined as rationale
-        if len(args) < 4:
-            print(f"Usage: {cmd} {usage}")
-            sys.exit(1)
-        func(db, args[0], args[1], args[2], " ".join(args[3:]))
     else:
         if len(args) < argc:
             print(f"Usage: {cmd} {usage}")

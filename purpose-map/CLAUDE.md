@@ -30,7 +30,7 @@ A consequence: descriptions must be **clear and complete** because they are the 
 
 ### Relationship Types
 
-Four independent graphs over the same entity types. Each answers a different question.
+Two independent graphs over the entity types. Each answers a different question.
 
 **depends_on** (component → component) — Structural DAG. "This component needs that component to exist." If the dependency were removed, the dependent would need to be re-engineered or would cease to exist. Multiple dependencies per component allowed.
 
@@ -38,42 +38,18 @@ Four independent graphs over the same entity types. Each answers a different que
 - Plugins depend on the marketplace for delivery
 - Answers: **what must exist for this to work?**
 
-**refines** (need → need) — Need decomposition DAG. "This need is a sharper, more specific version of that one." A child need refines a parent need; addressing the child contributes to addressing the parent. Multiple parents allowed (same child can refine more than one parent).
+**addresses** (component → need) — Capability claim, with rationale. A claim that this component contributes to addressing a need. Partial contribution is fine — many components can address the same need, each through a different mechanism described in its rationale. The rationale is where component-specific implementation lives.
 
-- `recover-after-context-clear` refines `avoid-progress-loss`
-- `enforce-conventions` refines `prevent-mistakes`
-- Answers: **how does this need decompose into more specific concerns?**
-
-**owns** (component → need) — Single-owner allocation. A design decision about which component is accountable for a need. Each need has **exactly one owner** — enforced at the schema level. If two components both care about the same concern, the second creates a refinement and owns *that*.
-
-- The project owns root needs
-- A plugin owns the focused sub-needs (refinements) it is accountable for
-- Answers: **who is accountable for this?**
-
-**addresses** (component → need) — Capability claim. A claim that this component contributes to addressing a need. Partial contribution is fine — many components can address the same need, each handling part of it. Addressing edges cross structural boundaries freely.
-
-- A design principle addresses a project need
-- A skill addresses a specific refinement
+- A design principle addresses a project concern broadly
+- A rule addresses the same concern with a specific encoded mechanism
+- Both edges are valid; the rationales describe what each contributes
 - Answers: **how is this need being handled?**
 
-### Ownership vs Addressing
+### Project-implicit ownership
 
-`owns` and `addresses` answer different questions and must not be conflated. A component **owns** a need only when removing the component would also remove the concern itself. Plugins are mechanisms that *address* project concerns, not the parties accountable for those concerns. The project as a whole owns the broad concerns; plugins own only refinements that are genuinely plugin-specific (the concern would not exist without the plugin's mechanism).
+Needs are project-implicit: the data structure lives within a project, so all needs belong to the project by definition. There is no separate ownership graph. Components are connected to needs only through `addresses`.
 
-When deciding whether a plugin should own something, ask: *"If this plugin disappeared, would this concern disappear too, or would the project still need to find another way to handle it?"* If the latter, the plugin should `address` the need, not `own` it.
-
-### Layered Need Specificity
-
-Needs decompose by structural layer. **Project root needs** name broad concerns owned by the project as a whole. **Plugin refinements** name sharper sub-concerns that exist *because* a particular plugin's mechanism makes them exist — owned by the plugin per the disappearance test above.
-
-The grain of a need should match the grain of the components that address it:
-
-- **Project-general components** (e.g., design principles, the marketplace) address project-level needs directly. Their mechanism is general, not tied to any one plugin.
-- **Plugin-specific components** (e.g., rules, conventions, tools, skills inside a plugin) address plugin refinements primarily. Their mechanism *is* the plugin's mechanism, and the refinement names exactly that sub-concern.
-
-When a plugin-specific component is forced to address a project-level need directly, that's a signal the refinement layer is missing — the component is bridging a generalization gap that should be made explicit as a refined need owned by the plugin.
-
-Coverage propagates upward through refinements: addressing a refinement contributes to addressing its parent. A plugin can fully cover its own refinements while a project-level need still shows as "partial" because other plugins haven't carved their own refinements yet.
+This is intentional. The project owns its concerns; components contribute mechanisms for addressing them. A component is not "accountable for" a concern — it just has something to offer toward the concern. The contribution is captured by the addressing edge and described in its rationale.
 
 ### Source-Location Paths
 
@@ -84,23 +60,23 @@ Components can record one or more **paths** pointing at where the real artifact 
 - Conceptual components (`project`, `marketplace`) legitimately have no paths
 - Paths are **true at creation**; if they break after a refactor, retrace by purpose using navigator or by content using grep, then update with `add-path`/`remove-path`. No automatic validation — refactor resilience is intentional manual rectification, not silent auto-healing.
 
-### Lock Status
+### Validation Status
 
-Components and needs can be locked or unlocked.
+Components and needs can be validated or unvalidated.
 
-- Locked = confirmed, foundational, not under question
-- Unlocked = under evaluation, shown with `?` prefix in displays
+- Validated = confirmed as a real, distinct contribution to the model — its identity is settled
+- Unvalidated = identity still under question (might not belong, might overlap with another, might need to be split or rephrased), shown with `?` prefix in displays
+
+Validation is informational, not functional. Validated entities can still gain new addressing edges as later layers are evaluated — validation does not freeze the model. See *Validation criteria* below for when to validate each entity type.
 
 ## Schema
 
 ```sql
-components       (id, description, locked)
-needs            (id, description, locked)
+components       (id, description, validated)
+needs            (id, description, validated)
 depends_on       (component_id → dependency_id)
-refines          (need_id → refined_need_id)        -- child → parent
-owns             (component_id → need_id UNIQUE)    -- single owner per need
-addresses        (component_id → need_id)           -- many-to-many
-component_paths  (component_id → path)              -- source-location pointers
+addresses        (component_id → need_id, rationale) -- many-to-many
+component_paths  (component_id → path)               -- source-location pointers
 ```
 
 ## CLI
@@ -132,26 +108,13 @@ python3 purpose-map/purpose_map.py <command> [args...]
 | `depend <component> <dependency>` | Component depends on another |
 | `undepend <component> <dependency>` | Remove dependency |
 
-### Refinement edges
-
-| Command | Purpose |
-|---------|---------|
-| `refine <child-need> <parent-need>` | Child need refines parent need |
-| `unrefine <child-need> <parent-need>` | Remove refinement |
-
-### Ownership edges
-
-| Command | Purpose |
-|---------|---------|
-| `own <component> <need>` | Component owns a need (single owner; rejected if already owned) |
-| `disown <component> <need>` | Remove ownership |
-
 ### Addressing edges
 
 | Command | Purpose |
 |---------|---------|
-| `address <component> <need>` | Component addresses a need (partial contribution is fine) |
+| `address <component> <need> <rationale>` | Component addresses a need, with rationale describing the specific mechanism |
 | `unaddress <component> <need>` | Remove addressing edge |
+| `set-rationale <component> <need> <rationale>` | Update rationale on an existing addressing edge |
 
 ### Path references
 
@@ -160,62 +123,53 @@ python3 purpose-map/purpose_map.py <command> [args...]
 | `add-path <component> <path>` | Record a source-location path (file, directory, or `file#anchor`) |
 | `remove-path <component> <path>` | Remove a recorded path |
 
-### Lock commands
+### Validation commands
 
 | Command | Purpose |
 |---------|---------|
-| `lock <id>` | Lock a component or need |
-| `unlock <id>` | Unlock a component or need |
+| `validate <id>` | Validate a component or need (mark as confirmed) |
+| `invalidate <id>` | Invalidate a component or need (remove validation marker) |
 
 ### Analysis commands
 
-Three primary views, one per non-trivial graph, plus two cross-graph traversals and a summary.
-
 | Command | Purpose |
 |---------|---------|
-| `dependencies [comp] [--verify]` | Structural tree of components from `depends_on` edges only; optional lock-chain check |
-| `ownership [comp]` | For each owner, show owned needs and how each is addressed (covered / partial / gap) including coverage propagated through refinements |
-| `addresses [id] [--gaps] [--orphans]` | Addressing graph for a need or component; `--gaps` lists leaf needs nothing addresses; `--orphans` lists components addressing nothing |
+| `dependencies [comp] [--verify]` | Structural tree of components from `depends_on` edges only; optional validation-chain check |
+| `addresses [id] [--gaps] [--orphans]` | Addressing graph for a need or component; `--gaps` lists needs with no addressers; `--orphans` lists components addressing nothing |
 | `where <component>` | Recorded source-location paths for a component; the bridge from a db entry to the real artifact |
-| `why <component>` | Upward trace: what does this component address, what needs are those, what parent needs do they refine, and who owns the chain |
-| `how <need>` | Downward trace: direct addressers + refinement subtree (recursively), with leaf gaps marked |
-| `summary` | Counts, root needs (top of refinement chains), and per-root addressing status |
+| `why <component>` | What needs does this component address (with rationales) |
+| `how <need>` | What addresses this need (with rationales) |
+| `compare <component-a> <component-b>` | Side-by-side addressing comparison: common needs (both address, with each rationale shown) and each-only needs. Used to evaluate whether two components are doing overlapping work through the same or different mechanisms |
+| `summary` | Counts and per-need addressing status |
 
 ### Coverage status legend
 
 | Marker | Meaning |
 |--------|---------|
-| `✓` covered | Direct addressers exist, OR every refinement is covered |
-| `~` partial | Some refinements covered, some are gaps |
-| `✗` gap | No direct addressers and no covered refinements (or no refinements at all) |
-
-A "leaf gap" is a need with no refinements and no addressers — the actionable kind. Parent needs can show as gaps too, but the fix is usually to address one of their refinements (or add refinements first).
+| `✓` covered | At least one direct addresser |
+| `✗` gap | No direct addressers — actionable concern |
 
 ## Questions the Model Answers
 
 ### Justification — why does this exist?
 
-`why <component>` traces upward from the component through its addressing edges, then up the refinement chain to the owning component. Every component should address something. `addresses --orphans` finds components that address nothing — candidates for removal or unjustified existence.
-
-### Coverage — is this owner doing its job?
-
-`ownership <comp>` shows which of a component's owned needs are addressed (directly or via refinements) and which remain gaps. Coverage propagates upward through refinements: a parent need is "covered" when its refinements are covered.
+`why <component>` shows what the component addresses. Every component should address something. `addresses --orphans` finds components that address nothing — candidates for removal or unjustified existence.
 
 ### Gaps — where is the actionable work?
 
-`addresses --gaps` shows leaf needs (no refinements) with no addressers. These are the concrete unmet problems. Parent needs that are gaps because their refinements are gaps surface here too — through the leaves where the work actually has to land.
+`addresses --gaps` shows needs with no addressers. These are the concrete unmet concerns.
 
-### How does a need decompose?
+### How is this need addressed?
 
-`how <need>` walks down through direct addressers and refinements recursively, showing the full sub-tree with gap markers. This is the primary view for "what does it take to satisfy this need?"
+`how <need>` shows the need's direct addressers with their rationales. Each rationale describes the specific mechanism that component contributes.
 
 ### Impact — what happens if I remove this?
 
-`why <component>` shows what it addresses. If those needs have other addressers (check with `how <need>`), removal is safe. If it's the only addresser of a leaf need, removal opens a gap.
+`why <component>` shows what it addresses. If those needs have other addressers (check with `how <need>`), removal is safe. If it's the only addresser of a need, removal opens a gap.
 
 ### Foundation — can I trust what this builds on?
 
-`dependencies --verify` checks the structural dependency chain. All ancestors must be locked before this component's evaluation is trustworthy.
+`dependencies --verify` checks the structural dependency chain. All ancestors must be validated before this component's evaluation is trustworthy.
 
 ## Operational Protocol
 
@@ -224,50 +178,49 @@ Evaluation is **holistic**, not gap-driven. For any component, ask "what does th
 ### Evaluating a component
 
 1. `where <component>` — get the recorded source-location path so you can read the real artifact
-2. Read the actual deployed artifact (rule file, skill, tool) to ground the evaluation in reality. **Don't reason from the db description alone** — it's a summary, not the source of truth.
-3. If a need's or component's description seems too thin, ambiguous, or like it's conflating multiple concerns, **surface a suggested correction to the user with the old description, the proposed change, and the reason** — do not edit it autonomously. See *Description integrity* below.
-4. Ask: what needs does this component address? **All genuinely-fitting needs, not just one "primary" need.** Many components address multiple needs in different ways — wire every addressing edge that holds up under "would removing this component weaken handling of this need?"
-5. If the closest existing need is broader than what the component actually addresses, the right move is usually to **refine** — propose the child need and the refinement edge to the user; after confirmation, `add-need`, `refine <child> <parent>`, and address the child. Refinements preserve the parent's broader meaning and add specificity without disturbing existing edges.
-6. Propose each addressing edge to the user using *Relationship proposal format* (see below); wire `address <component> <need>` only after the user confirms each pair
-7. Run `ownership <owner>` to check coverage propagation
-8. If covered and the component's purpose is fully expressed by its addressing edges, `lock <component>`
-9. If not covered or the picture feels incomplete, leave unlocked and return after more components are wired
+2. Read the actual deployed artifact (rule file, skill, tool) with the `Read` tool to ground the evaluation in reality. **Don't reason from the db description alone** — it's a summary, not the source of truth.
+3. If a need's or component's description seems too thin, ambiguous, or like it's conflating multiple concerns, **surface a suggested correction to the user with the old description, the proposed change, and the reason** — do not edit it autonomously. After the user confirms, run `set-need <id> "..."` or `set-component <id> "..."`. See *Description integrity* below.
+4. Identify candidate addressing edges: what needs does this component address? **All genuinely-fitting needs, not just one "primary" need.** For each candidate, run `how <need-id>` to see existing addressers and their rationales — this surfaces overlap that should be noted in the proposal (see *Surface duplication, don't suppress it* below).
+5. Propose each addressing edge to the user using *Relationship proposal format* (see below), including the neighborhood scan from step 4. Wire confirmed edges with `address <component> <need> "<rationale>"` only after the user confirms each pair. The rationale is where component-specific mechanism lives — describe *how* this component addresses the need, not *what* the need is.
+6. Run `summary` to check coverage status and gaps.
+7. Run `validate <component>` once its identity is confirmed — distinct contribution to the model, clear purpose, not subsumed by another component. Coverage of its addressing edges does not need to be complete; new edges can be wired later as consumers are evaluated. See *Validation criteria*.
+8. Leave unvalidated when the component's identity is still under question — uncertain whether it belongs, might overlap with another, might need to be split or rephrased. (Use `invalidate <id>` to revert a previous validation.)
 
-### Inside-out evaluation order
+### Foundations-up evaluation order
 
-Work from leaves to root. Evaluate the innermost components (those with no further dependents) first, then lock containers as their children complete. `--verify` enforces this lock order through the dependency chain.
+Work from foundations to structure, not depth-first. Each layer depends on the layers below being settled — both structurally (the dependency chain) and conceptually (abstract concerns first, concrete mechanisms last). Both axes point the same direction: project needs settle first, then design principles, then the components that address them. Each layer builds on the certainty of the layers below.
 
-**Verify chicken-and-egg for container components:** when a layer of leaves depends on container components (e.g., principles depend on a `design-principles` aggregator that depends on `rules` that depends on `ocd`), `--verify` will fail on the leaves because the containers can't be locked until their children are locked. This is expected. Bypass `--verify` for leaves that depend on pure container components — the dependency chain is sound by inspection. Lock containers from innermost to outermost once their children are all locked.
+Containers can be validated with `validate <id>` whenever their identity (role and scope) is settled — they do not have to wait for descendants. Conflating container validation with descendant completeness mixes identity with progress; the worklist tracks progress, validation tracks identity.
 
-### Adding plugin-level refinements
+Run `dependencies <component> --verify` to check the structural dependency chain for unvalidated ancestors. It is informational — useful when you want to confirm the chain below a component is fully validated, not a gating check on whether you're allowed to validate something.
 
-Plugin refinements (see *Layered Need Specificity*) are added when a plugin has a mechanism that produces a sharper sub-concern than its parent project need — verified by the disappearance test in *Ownership vs Addressing*. Two patterns for *when* during evaluation:
+### Validation criteria
 
-1. **Bulk sketch at the project→plugin boundary.** Before evaluating a plugin's components (rules, conventions, tools, skills), sketch the obvious refinements its mechanism produces. Validate each against the disappearance test and the *Writing needs* guidance, propose to user, then `add-need` + `refine` + `own`. This makes the plugin's accountability landscape visible up front.
-2. **Incremental during component evaluation.** As a component is being evaluated, if its mechanism doesn't fit any existing need at the right grain — and the rationale is doing too much bridging work to make the addressing edge sound — propose a refinement at that point. Add the refinement first, then address it.
+Validation captures *identity*, not *coverage*. A validated entity is confirmed as a real, distinct contribution to the model — it belongs at the level where it sits, with a clear purpose. An unvalidated entity is one whose identity is still under question (might not belong, might overlap with another, might need to be split or rephrased).
 
-Use both. Bulk-sketch the obvious refinements at the boundary so the structure is visible; let the rest emerge as evaluation surfaces them. Avoid trying to enumerate every conceivable refinement in advance — that produces speculative needs that pollute the gap views.
+Validation is informational, not functional. Validated entities can still gain new addressing edges as later layers are evaluated — validation does not freeze the model. The `?` prefix on unvalidated entities asks "is this real and right?", not "is this still going to change?"
 
-A refinement is valid only if it passes both filters:
+**Needs** validate when their purpose is clear and they pass the *Writing needs* guidance — single business concern, third person, no embedded mechanisms or consequences, no decomposition into technical requirements. Coverage status (whether addressers exist) does not affect the validation decision.
 
-- **Disappearance test** — remove the plugin and the refinement evaporates as a distinct concern (not just "would be addressed differently"; it would not *exist* as a concern).
-- **Writing needs guidance** — the refinement description embeds the plugin-specific mechanism (which is what makes it a refinement), but otherwise follows the same standards as any other need.
+**Components** validate when the component is identified as a distinct, genuine contribution to the model — purpose is clear and not subsumed by another component. Addressing-edge completeness does not affect the validation decision; new edges can be wired later as consumers are evaluated.
 
-A refinement that just paraphrases its parent and "happens to be done by" the plugin is not a refinement — it's the parent in disguise. The plugin should `address` the parent in that case, not `own` a fake refinement.
+**Containers** validate when the container's role and scope are confirmed — "this layer holds these kinds of things, with this identity." Children do not need to be fully evaluated first. Conflating container validation with descendant completeness mixes identity with progress; the worklist tracks progress, validation tracks identity.
+
+**Commands.** Use `validate <id>` to mark a need or component as validated, and `invalidate <id>` to revert. Both work on either entity type.
 
 ### Description integrity
 
-Do not edit descriptions autonomously during evaluation. Surface a suggested correction to the user instead, with the old text, proposed change, and rationale.
+Do not edit descriptions autonomously during evaluation. Surface a suggested correction to the user instead, with the old text, proposed change, and rationale. After the user confirms, run `set-need <id> "..."` for needs or `set-component <id> "..."` for components.
 
 Two reasons:
 - **Mid-evaluation rewording can invalidate prior addressing edges** that were correct under the older meaning. The user has the broader perspective to judge whether to sharpen, hold the broader meaning, split into multiple entities, or leave it alone.
-- **An agent focused on the current wiring will tend to over-sharpen** toward that one relationship, narrowing a deliberately-broad parent into something it wasn't meant to be. The right move when a component's concern is sharper than the parent need is `refine` (add a child), not `set-need` (rewrite the parent).
+- **An agent focused on the current wiring will tend to over-sharpen** toward that one relationship, narrowing a deliberately-broad need into something it wasn't meant to be. The right move when a component's concern is sharper than an existing need is to surface the gap and propose a new sibling need to the user, not to rewrite the existing one.
 
 ### Writing needs
 
-Need descriptions are the entity (see *Identifiers*) — they must carry the full meaning without relying on a name. The following guidance applies to all needs, with the first rule splitting by level.
+Need descriptions are the entity (see *Identifiers*) — they must carry the full meaning without relying on a name.
 
-**Stay ungrounded at the project level.** Project-owned needs name concerns broadly — no domain lists, no example failure modes, no embedded mechanisms. Grounding goes in refinements that exist *because* a specific domain or mechanism matters; the parent stays broad enough to admit any future refinement that fits. Refinements relax this because their job is to sharpen toward a specific angle.
+**Business concerns, not technical requirements.** Need descriptions name the concern broadly — what we want to accomplish, not how to accomplish it. Decomposing a business concern into a technical requirement (e.g., "address this concern *via X mechanism*") prematurely binds the concern to one implementation, removing flexibility for refactoring. The whole point of an AI-led system is that the agent picks the mechanism; the model shouldn't pre-bind it. If a description names a specific mechanism, encoding strategy, file format, or tool, it has slipped from concern into requirement — strip the technical specifics and keep the business intent.
 
 **Mechanisms and consequences out, constitutive parts in.** A description names the concern itself. Phrases that name *one of several* ways to address the concern (mechanism) or *one of several* outcomes of failing it (consequence) get stripped — they pick a single instance from a broader picture and quietly narrow the need. Phrases that are *constitutive* — the asymmetry, framing, or definition that makes the concern exist as itself — get kept. Test: "if I removed this phrase, would the concern still exist as itself?" Yes → mechanism or consequence, drop. No → constitutive, keep.
 
@@ -275,22 +228,26 @@ Need descriptions are the entity (see *Identifiers*) — they must carry the ful
 
 **Third person.** "Reduce X", "Prevent Y", "Allow Z" — never "Allow me", "I may not see". First person sneaks in when the writer is talking to themselves; the description should read the same way to anyone.
 
-**Test against neighbors by mechanism, not name.** When two needs sound overlapping by their names, check the mechanisms. If each names a different mechanism for the same harm, they are distinct (interpersonal alignment and epistemic verification both reduce wrong-action waste, but through different remedies and at different phases). If the mechanisms collapse to one, merge the needs or refine one out of the other.
+**Decompose by splitting, not by parent/child.** When a concern feels too broad and benefits from being split into more specific concerns, create new sibling needs at the same level rather than introducing a parent/child relationship. Sibling needs are independently addressable and the relationship between related concerns lives in their descriptions, not in a structural link.
+
+**Test against neighbors by mechanism, not name.** When two needs sound overlapping by their names, check the mechanisms. If each names a different concern with a different remedy, they are distinct. If the concerns collapse into one, merge them.
 
 **Cut verbose phrasing.** Every word earns its place. Long "rather than" tails that re-explain the goal can usually be deleted; "from within any X" can usually become "across X". If a phrase doesn't change the meaning when removed, remove it.
 
 ### Writing rationales
 
-A rationale is the reasoning for one edge — the mechanism by which this component addresses this need (or why this child refines this parent, etc.). Rationales describe their relationship in isolation; cross-edge comparison is a reading-time operation, not a writing-time one.
+A rationale is the reasoning for one addressing edge — the specific mechanism by which this component addresses this need. Rationales are where component-specific implementation lives. They describe their relationship in isolation; cross-edge comparison is a reading-time operation, not a writing-time one.
 
-- **No contrast.** Don't write "different mechanism from cX" or "pairs with cY" or "distinct from cZ's angle." When the reader wants to compare edges that share an endpoint, they read all the relevant rationales together. If you need contrast to make your mechanism description clear, the description isn't precise enough — sharpen it instead.
+Because needs are intentionally mechanism-free (see *Writing needs*), the rationale carries the full description of *how* this component contributes. This is the right place for "encoded as a rule", "blocked at runtime by a hook", "captured into a friction queue", "verified by reading the file" — anything that names a specific implementation choice.
+
 - **Mechanism, not restatement.** Don't say "c8 addresses n3 because n3 is about avoiding reinvention." That just paraphrases the edge's existence. Say *how* the component addresses the need — what action, structure, or discipline it contributes that handles the need.
+- **No contrast.** Don't write "different mechanism from cX" or "pairs with cY" or "distinct from cZ's angle." When the reader wants to compare edges that share an endpoint, they read all the relevant rationales together. If you need contrast to make your mechanism description clear, the description isn't precise enough — sharpen it instead.
 - **Avoid comparative locators.** "Producer-side / consumer-side", "upstream / downstream", "structural / behavioral" all imply a contrast partner. They're fine if the partner doesn't need to be named to understand them, but prefer concrete mechanism descriptions when possible ("operates at build time" rather than "producer-side").
 - **Stand-alone test.** Read your rationale with the rest of the database hidden. If it makes sense without knowing about any other edge, it's good. If it depends on the reader having just read another rationale, trim it.
 
 ### Relationship proposal format
 
-Wiring is not autonomous. Every relationship proposed during evaluation — `depend`, `refine`, `own`, `address` — is presented to the user for confirmation before being wired. Reasoning from ids alone is impossible by design (see *Identifiers*); the proposal must show full descriptions so the user can evaluate the pairing on its merits without recalling what an id refers to.
+Wiring is not autonomous. Every relationship proposed during evaluation — `depend`, `address` — is presented to the user for confirmation before being wired. Reasoning from ids alone is impossible by design (see *Identifiers*); the proposal must show full descriptions so the user can evaluate the pairing on its merits without recalling what an id refers to.
 
 **Format.** Each proposal covers one component, shown once at the top in `[id] description` form. Proposed addressing edges appear underneath in two groups:
 
@@ -301,7 +258,20 @@ Wiring is not autonomous. Every relationship proposed during evaluation — `dep
 
 **No name-style headings on proposals.** A proposal block contains only `[id] description` pairs, never a separate name, label, or summary heading for the component being evaluated. Headings like "## c6 — Epistemic Humility" reintroduce the named-object failure mode that the no-name design (see *Identifiers*) exists to prevent — the eye lands on the label and skips the description, and the rationale gets evaluated against a mental shorthand instead of the actual statement.
 
-After the user confirms a component's proposal, wire its edges and re-run `ownership <owner>` to show the coverage update before moving to the next component.
+**Surface duplication, don't suppress it.** Before proposing addressing edges, run `how <need-id>` for each candidate need to see all existing addressers and their rationales. Use this to (a) notice components that the new edge might overlap with, and (b) compare your proposed mechanism against the existing ones.
+
+The proposal then includes the standard *Recommended* and *Considered and rejected* groups *plus* a brief **Duplication scan** noting any existing addressers whose mechanism overlaps with the proposed mechanism. The edge is still formed when the relationship is accurate — multi-edge addressing is valid and expected. The duplication scan exists to make overlap *visible* so the user can decide whether it's complementary (defense in depth, distinct mechanisms at different layers) or redundant (same mechanism, two implementations) and choose what to do.
+
+This interacts with two existing rules:
+
+- **"Don't reject because another addresser exists"** (see *Operational notes*) prevents *missing* edges by reflexively rejecting valid additions.
+- **"Surface duplication"** prevents *invisible* duplication by making the scan part of the proposal.
+
+Both rules result in the edge being formed when the relationship is accurate. They differ only in what the proposal output makes visible: the first ensures the edge is not blocked; the second ensures any overlap is named for the user to evaluate.
+
+**Component-add duplication scan.** When proposing a *new component* (not just a new edge), search existing components for similar purpose first. Use `dependencies <parent>` to list components in the target layer (e.g., `dependencies c4` for rule-layer components), then read each description. For plugin components, also check whether the proposed contribution overlaps with already-validated components in adjacent layers. If a candidate overlaps significantly, the proposal should explicitly note the overlap and either: revise the new description to make the distinction clear, fold the new contribution into an existing component, or split the existing one to make room. If two existing components are themselves potentially overlapping, run `compare <component-a> <component-b>` to see their addressing edges side-by-side.
+
+After the user confirms a component's proposal, wire its edges and re-run `summary` to show the coverage update before moving to the next component.
 
 Example:
 
@@ -324,23 +294,19 @@ Considered and rejected:
   supply-side (don't make new), not consumption-side (organize what exists).
 ```
 
-### Single-ownership guidance
-
-Each need has exactly one owner — enforced at the schema level. If two components both seem to own the same need, that's a signal to **refine**: create a child need that captures the second component's specific concern and let it own the refinement, leaving the original ownership intact.
-
 ### Operational notes
 
-- The four graphs are independent: a component can depend on one thing, own a different need, address yet another, and that need can refine still another. Don't assume they align.
+- The two graphs (`depends_on` and `addresses`) are independent: a component can depend on one thing and address yet another. Don't assume they align.
 - **Multi-edge addressing is valid and expected.** A component can address several needs when each edge holds up on its own — don't artificially narrow to a single "primary" need.
-- **Don't reject an edge because another component already addresses the same need.** `addresses` is many-to-many. Two components can address the same need through different mechanisms — producer-side vs consumer-side, structural vs behavioral, upstream vs downstream. Each mechanism is its own contribution. Test the candidate edge on its own merits, not on whether someone else has "taken" that need. Rejection rationales like "X already owns this" or "X is the better vehicle" should trigger a check: is the candidate's mechanism actually the same as X's, or just aimed at the same need from a different angle?
+- **Don't reject an edge because another component already addresses the same need.** `addresses` is many-to-many. Two components can address the same need through different mechanisms. Each mechanism is its own contribution. Test the candidate edge on its own merits, not on whether someone else has "taken" that need. Rejection rationales like "X is the better vehicle" should trigger a check: is the candidate's mechanism actually the same as X's, or just aimed at the same need from a different angle?
 - **Read the source, not the summary.** The db description is a one-line gist. Use `where <component>` to find the real artifact and read it before evaluating.
-- Don't populate intermediate needs speculatively — only add refinements when the evaluation actually needs them to make addressing clearer.
-- When adding a new need or component, propose its initial edges in the same step so floating entities don't pollute the gap/orphan views.
+- Don't add needs speculatively — only add a need when it names a real concern that's missing from the model.
+- When adding a new component, propose its initial addressing edges in the same step so floating components don't pollute the orphan view.
 
 ### Tree display conventions
 
 - `◈` — components
 - `◇` — needs
-- `?` prefix — unlocked, under evaluation
-- No prefix — locked, confirmed
+- `?` prefix — unvalidated (identity still under question)
+- No prefix — validated (identity confirmed)
 - Tree characters (`├──`, `└──`, `│`) show descent
