@@ -1,15 +1,27 @@
 # Purpose Map
 
-Decision-making tool for validating why things exist and choosing what to build. Self-contained in this folder — database, CLI, and documentation. No dependencies outside this directory.
+purpose-map answers one question: **is this component justified by a specific unmet need?** Use it before adding anything to the project, and use it to audit what's already there. A component is justified when it points at a sub-concern that no existing component addresses through any mechanism. A component that can't make that pointer isn't justified — remove it, merge it, or rewrite it until it can.
+
+For the test to mean anything, needs must be specific enough that *unmet* is a real state. Saturation at the root level (every component plausibly addressing the top-level concern) makes the test unfalsifiable. The model resists this by structuring needs as a tree, refining root concerns into sharper sub-needs as discovery requires, and forbidding components from attaching to root needs at all — every addressing edge must land on a refined sub-need where the unmet test is actually answerable.
+
+Self-contained in this folder — database, CLI, and documentation. No dependencies outside this directory.
 
 ## Files in this folder
 
 - **`purpose_map.py`** — implementation. The CLI and the only thing that touches the database.
 - **`purpose-map.db`** — SQLite database. The live state of the model.
 - **`CLAUDE.md`** (this file) — **operational reference**. The "how to use the tool": data model, schema, CLI, evaluation protocol, design principles for using the model. Stable across evaluation passes — only changes when the tool itself changes. Read on entry to any session.
+- **`architecture.md`** — **design rationale**. The "why the tool is shaped this way": the problem it solves, the structural and methodological decisions that make it work, alternatives that don't, and how the techniques reinforce each other. Stable across evaluation passes — only changes when the methodology itself evolves. Read when context on *why* is needed; CLAUDE.md is enough for *how*.
 - **`state.md`** — **resumption state**. The "where we are in the current evaluation pass": current data snapshot, scope and boundaries of the in-progress work, outstanding questions, next steps. Mutates session-to-session as the work advances. Read after CLAUDE.md to pick up where the last session left off.
 
-Keep these cleanly separated. If something is *how to use the tool*, it goes in CLAUDE.md. If something is *the current status of the work*, it goes in state.md. When in doubt: would a brand-new evaluation pass on a different project still need this? If yes, CLAUDE.md. If no, state.md.
+Keep these cleanly separated:
+- If something is *how to use the tool*, it goes in CLAUDE.md.
+- If something is *why the tool is shaped this way*, it goes in architecture.md.
+- If something is *the current status of the work*, it goes in state.md.
+
+When in doubt about CLAUDE.md vs architecture.md: if the agent needs it to *do* the next operational step, CLAUDE.md. If it explains *why that step exists*, architecture.md.
+
+When in doubt about CLAUDE.md/architecture.md vs state.md: would a brand-new evaluation pass on a different project still need this? If yes, CLAUDE.md or architecture.md. If no, state.md.
 
 ## Data Model
 
@@ -17,7 +29,7 @@ SQLite database (`purpose-map.db`) with two entity types connected by four relat
 
 ### Entity Types
 
-- **Needs** — problems to solve (the "why").
+- **Needs** — problems to solve (the "why"), organized as a tree via `parent_id`. Root needs (parent_id NULL) are project-level business concerns; refined sub-needs are added under parents as discovery requires more specificity.
 - **Components** — structural units (the "how"). Anything that exists and can address needs.
 
 ### Identifiers
@@ -38,12 +50,19 @@ Two independent graphs over the entity types. Each answers a different question.
 - Plugins depend on the marketplace for delivery
 - Answers: **what must exist for this to work?**
 
-**addresses** (component → need) — Capability claim, with rationale. A claim that this component contributes to addressing a need. Partial contribution is fine — many components can address the same need, each through a different mechanism described in its rationale. The rationale is where component-specific implementation lives.
+**addresses** (component → refined need) — Capability claim, with rationale. A claim that this component contributes to addressing a specific sub-concern. Partial contribution is fine — many components can address the same sub-need through different mechanisms described in their rationales. The rationale is where component-specific implementation lives.
 
-- A design principle addresses a project concern broadly
-- A rule addresses the same concern with a specific encoded mechanism
-- Both edges are valid; the rationales describe what each contributes
-- Answers: **how is this need being handled?**
+Wiring rules (enforced by the CLI):
+
+- A component cannot address a root need (must attach at depth ≥ 1)
+- A component cannot address both a need and any ancestor of that need
+- A component cannot address both a need and any descendant of that need
+- Attach at the most specific sub-need where the component's mechanism actually applies — go as narrow as the contribution warrants, no narrower
+- Cross-branch addressing is allowed: a component may address sibling nodes, multiple branches, or multiple trees if its mechanism genuinely spans them
+
+The "no root, no ancestor, no descendant" rules force every addressing edge to land at the level of specificity where "is this unmet?" has a meaningful answer, and prevent the same component from claiming the same concern at multiple levels of granularity.
+
+Answers: **how is this specific sub-concern being handled?**
 
 ### Project-implicit ownership
 
@@ -73,10 +92,10 @@ Validation is informational, not functional. Validated entities can still gain n
 
 ```sql
 components       (id, description, validated)
-needs            (id, description, validated)
+needs            (id, parent_id, description, validated)  -- parent_id NULL for roots
 depends_on       (component_id → dependency_id)
-addresses        (component_id → need_id, rationale) -- many-to-many
-component_paths  (component_id → path)               -- source-location pointers
+addresses        (component_id → need_id, rationale)      -- many-to-many; need must not be a root
+component_paths  (component_id → path)                    -- source-location pointers
 ```
 
 ## CLI
@@ -97,9 +116,11 @@ python3 purpose-map/purpose_map.py <command> [args...]
 
 | Command | Purpose |
 |---------|---------|
-| `add-need <description>` | Create a need (id auto-assigned: `n{n}`) |
+| `add-need <description>` | Create a root need (id auto-assigned: `n{n}`); rare after initial bootstrap |
+| `refine <parent-id> <description>` | Add a child need under an existing parent (the primary way to extend the tree during evaluation) |
 | `set-need <id> <description>` | Update description |
-| `remove-need <id>` | Remove need and its edges |
+| `set-parent <need-id> <parent-id\|root>` | Re-parent a need; use `root` to make it a root |
+| `remove-need <id>` | Remove a need; refused if it has children — re-parent or remove them first |
 
 ### Dependency edges
 
@@ -135,19 +156,22 @@ python3 purpose-map/purpose_map.py <command> [args...]
 | Command | Purpose |
 |---------|---------|
 | `dependencies [comp] [--verify]` | Structural tree of components from `depends_on` edges only; optional validation-chain check |
-| `addresses [id] [--gaps] [--orphans]` | Addressing graph for a need or component; `--gaps` lists needs with no addressers; `--orphans` lists components addressing nothing |
+| `needs [root-id]` | Tree view of needs with coverage markers (full tree or rooted at given need) |
+| `addresses [id] [--gaps] [--orphans]` | Addressing graph for a need or component; `--gaps` lists leaf needs with no addressers; `--orphans` lists components addressing nothing |
 | `where <component>` | Recorded source-location paths for a component; the bridge from a db entry to the real artifact |
 | `why <component>` | What needs does this component address (with rationales) |
 | `how <need>` | What addresses this need (with rationales) |
 | `compare <component-a> <component-b>` | Side-by-side addressing comparison: common needs (both address, with each rationale shown) and each-only needs. Used to evaluate whether two components are doing overlapping work through the same or different mechanisms |
-| `summary` | Counts and per-need addressing status |
+| `summary` | High-level counts and gap status |
 
 ### Coverage status legend
 
 | Marker | Meaning |
 |--------|---------|
-| `✓` covered | At least one direct addresser |
-| `✗` gap | No direct addressers — actionable concern |
+| `✓` covered | Has direct addressers OR a descendant is addressed |
+| `✗` gap | Non-root leaf with no addressers — actionable: needs a component |
+| `○` unrefined | Root with no children — actionable: needs refinement before any component can address it |
+| (space) abstract | Interior or root with children but no addressed descendants yet |
 
 ## Questions the Model Answers
 
@@ -173,18 +197,34 @@ python3 purpose-map/purpose_map.py <command> [args...]
 
 ## Operational Protocol
 
-Evaluation is **holistic**, not gap-driven. For any component, ask "what does this address?" — wiring every genuinely-fitting addressing edge — rather than "what hole can this fill?"
+Evaluation is **live invention**, not catalog-fitting. The model starts with project-level needs and grows by inventing components in response to discovered unmet sub-needs. For each component-add, the test is: *what specific unmet sub-need does this address?* If the test can't be answered against an existing or proposed sub-need, the component isn't justified — focus elsewhere or remove the component from the project entirely.
+
+The discipline this enforces:
+
+- **Refinement is reactive, not anticipatory.** Don't pre-decompose the need tree. Refine when adding a component reveals an existing parent is too broad to attach to with the right specificity.
+- **Every component must justify itself by attaching to ≥1 unmet sub-need.** A component that claims only what other components already address through the same mechanism isn't justified.
+- **Some current components may not survive re-evaluation.** If a component can't make the unmet pointer, the right move is to remove it from the project, not to fudge an attachment. The model exists to surface this.
 
 ### Evaluating a component
 
-1. `where <component>` — get the recorded source-location path so you can read the real artifact
-2. Read the actual deployed artifact (rule file, skill, tool) with the `Read` tool to ground the evaluation in reality. **Don't reason from the db description alone** — it's a summary, not the source of truth.
-3. If a need's or component's description seems too thin, ambiguous, or like it's conflating multiple concerns, **surface a suggested correction to the user with the old description, the proposed change, and the reason** — do not edit it autonomously. After the user confirms, run `set-need <id> "..."` or `set-component <id> "..."`. See *Description integrity* below.
-4. Identify candidate addressing edges: what needs does this component address? **All genuinely-fitting needs, not just one "primary" need.** For each candidate, run `how <need-id>` to see existing addressers and their rationales — this surfaces overlap that should be noted in the proposal (see *Surface duplication, don't suppress it* below).
-5. Propose each addressing edge to the user using *Relationship proposal format* (see below), including the neighborhood scan from step 4. Wire confirmed edges with `address <component> <need> "<rationale>"` only after the user confirms each pair. The rationale is where component-specific mechanism lives — describe *how* this component addresses the need, not *what* the need is.
-6. Run `summary` to check coverage status and gaps.
-7. Run `validate <component>` once its identity is confirmed — distinct contribution to the model, clear purpose, not subsumed by another component. Coverage of its addressing edges does not need to be complete; new edges can be wired later as consumers are evaluated. See *Validation criteria*.
-8. Leave unvalidated when the component's identity is still under question — uncertain whether it belongs, might overlap with another, might need to be split or rephrased. (Use `invalidate <id>` to revert a previous validation.)
+1. **Read the source artifact.** Use `where`, navigator, or grep to find the real file/code. **Don't reason from the description alone** — read what's actually there.
+2. **Identify the specific concern(s) the component contributes to.** Not "what broad need does this fit," but "what specific sub-concern does this component's mechanism actually solve?" Be concrete: name the failure mode it prevents, the friction it closes, the work it eliminates.
+3. **Locate the most-specific applicable need in the existing tree.** Use `needs` to scan the tree. For each candidate concern from step 2, find the deepest existing sub-need that captures it.
+4. **If no existing sub-need is specific enough, refine.** Run `refine <parent-id> <description>` to add a child sub-need under the most relevant parent. Description-quality rules from *Writing needs* still apply: business-level, mechanism-free, single concern. If you find yourself wanting to name a mechanism, the refinement isn't ready — sharpen the concern.
+5. **Run the duplication scan.** `how <sub-need-id>` shows existing addressers. Compare your proposed mechanism against what's already there. If your component would contribute through a mechanism another component already provides, that's a duplication signal — either the components should merge, or one should be removed, or the proposed component isn't justified.
+6. **Propose the addressing edge(s) to the user** using *Relationship proposal format*. Show the sub-need, the rationale (the specific mechanism this component contributes), and any refinements required. Wait for confirmation per edge.
+7. **Wire confirmed edges** with `address <component> <sub-need> "<rationale>"`. The CLI enforces: cannot address roots, cannot address an ancestor of an already-addressed need, cannot address a descendant of an already-addressed need.
+8. **Verify component claims against the implementation before validating.** Verification depends on the kind of component:
+    - **Functional components** (tools, MCP servers, scripts) — run the function, call the tool, exercise the mechanism. Confirm the claim matches reality.
+    - **Descriptive components** (rules, conventions, principles) — read the implementation the component governs and verify the description captures both *file-level conformance* (does the implementation follow the convention's per-file rules?) **and** *composition patterns* (does the convention capture how files relate to each other across the project?). The composition check is critical for conventions that govern multi-file systems — verifying individual files in isolation misses architectural patterns the convention should describe. The audit gap shows up later when downstream consumers (other agents, future evaluators) follow the convention literally and produce structurally inconsistent implementations.
+    - If verification fails, the discrepancy is one of: (a) an implementation bug to fix, (b) a convention/description gap to fill, or (c) a wrong claim to revise.
+    - Verification happens before validation because validation should not lock in claims that don't hold.
+9. **Validate the component** once its identity is confirmed — distinct contribution to the model, clear purpose, attached to at least one unmet sub-need that no other component addresses through the same mechanism. For components with functional claims, validation also requires empirical verification has succeeded. See *Validation criteria*.
+10. **If the unmet test fails** — every plausible attachment point either has no fit, or is already addressed through the same mechanism by another component — the component isn't justified. Surface this to the user with the analysis. The right next step is to remove the component from the project (not from the model).
+
+### Foundations-up evaluation order during live invention
+
+Add components in dependency order. Most foundational first: project containers, then the components they depend on, then the components those depend on. Each addition tests itself against the existing model state, which only contains foundations validated in earlier steps. This prevents the failure mode of justifying components against future-promised attachments.
 
 ### Foundations-up evaluation order
 
@@ -224,13 +264,17 @@ Need descriptions are the entity (see *Identifiers*) — they must carry the ful
 
 **Mechanisms and consequences out, constitutive parts in.** A description names the concern itself. Phrases that name *one of several* ways to address the concern (mechanism) or *one of several* outcomes of failing it (consequence) get stripped — they pick a single instance from a broader picture and quietly narrow the need. Phrases that are *constitutive* — the asymmetry, framing, or definition that makes the concern exist as itself — get kept. Test: "if I removed this phrase, would the concern still exist as itself?" Yes → mechanism or consequence, drop. No → constitutive, keep.
 
+**Test by inversion: "what would have had to go wrong for this to be needed?"** When proposing or refining a need that a component will address, work backward from the component to the failure mode it prevents. The need should name that failure mode in third person ("Prevent the agent from X"), not the mechanism that prevents it ("Verify X before acting"). Trigger bullets and case-specific bullets in a principle typically enumerate the specific instances of the underlying failure — the unified failure mode across them is the constitutive concern. This complements the constitutive-vs-mechanism rule: failure modes are constitutive (the concern is preventing them); the actions that prevent them are mechanism-flavored and belong in the addressing-edge rationale, not in the need text.
+
 **Common red flag: "so X" / "to X" tails.** A trailing clause that names a specific outcome of addressing the concern is almost always picking one consequence among many. If the concern has multiple downstream effects, the description should name none of them and let each addresser describe in its rationale the specific consequences its mechanism targets.
 
 **Third person.** "Reduce X", "Prevent Y", "Allow Z" — never "Allow me", "I may not see". First person sneaks in when the writer is talking to themselves; the description should read the same way to anyone.
 
-**Decompose by splitting, not by parent/child.** When a concern feels too broad and benefits from being split into more specific concerns, create new sibling needs at the same level rather than introducing a parent/child relationship. Sibling needs are independently addressable and the relationship between related concerns lives in their descriptions, not in a structural link.
+**Refine when discovery requires it; don't pre-decompose.** Needs form a tree via `parent_id`. Roots are project-level concerns and cannot be addressed directly — every addressing edge must land on a refined sub-need. When adding a component reveals that the most-specific existing sub-need is still too broad to capture what the component actually contributes, run `refine <parent> <description>` to add a sharper child. Refinement is reactive — it happens at the moment a component requires it, not in anticipation of components that might later need it. Pre-decomposing the tree before discovery pre-binds it to imagined future needs and re-introduces the saturation failure mode the tree is meant to prevent.
 
-**Test against neighbors by mechanism, not name.** When two needs sound overlapping by their names, check the mechanisms. If each names a different concern with a different remedy, they are distinct. If the concerns collapse into one, merge them.
+**Sub-needs follow the same writing rules as roots.** Refined children are *business sub-concerns at finer grain*, not technical requirements. Same rules apply: no embedded mechanisms, no consequences, third person, single concern. If a refinement names a specific implementation choice, file format, or tool, it has slipped from concern into requirement — strip the mechanism and re-state the concern.
+
+**Test against neighbors by mechanism, not name.** When two needs sound overlapping by their names, check the mechanisms. If each names a different concern with a different remedy, they are distinct. If the concerns collapse into one, merge them. This applies at every level of the tree.
 
 **Cut verbose phrasing.** Every word earns its place. Long "rather than" tails that re-explain the goal can usually be deleted; "from within any X" can usually become "across X". If a phrase doesn't change the meaning when removed, remove it.
 
@@ -244,6 +288,24 @@ Because needs are intentionally mechanism-free (see *Writing needs*), the ration
 - **No contrast.** Don't write "different mechanism from cX" or "pairs with cY" or "distinct from cZ's angle." When the reader wants to compare edges that share an endpoint, they read all the relevant rationales together. If you need contrast to make your mechanism description clear, the description isn't precise enough — sharpen it instead.
 - **Avoid comparative locators.** "Producer-side / consumer-side", "upstream / downstream", "structural / behavioral" all imply a contrast partner. They're fine if the partner doesn't need to be named to understand them, but prefer concrete mechanism descriptions when possible ("operates at build time" rather than "producer-side").
 - **Stand-alone test.** Read your rationale with the rest of the database hidden. If it makes sense without knowing about any other edge, it's good. If it depends on the reader having just read another rationale, trim it.
+
+### Router vs destination
+
+When a rule routes the agent toward a tool or mechanism, the rule's contribution is the *routing* — encoding the decision, publishing the reach, closing the agent-instinct vs system-capability gap. The capability at the destination (token efficiency, verification quality, indexed lookup, accuracy, etc.) is a property of the destination component, not of the rule that points at it. A rationale must describe what *this component* does, not what *some other component it points at* does.
+
+If your rationale describes properties of a component the rule depends on rather than what the rule itself does, the edge is mis-attributed. Either drop it (the property belongs to the destination, which will claim the need when its own evaluation reaches it) or reframe the rationale to claim only the routing effect. Track expected future reclamations in `state.md` so they aren't lost.
+
+**Test:** what produces the claimed effect — your rule's own behavior, or some other component's properties? If the rule itself, the edge is correct. If another component, the edge belongs there.
+
+### Override vs description
+
+Rules exist to override default agent behavior. A rule that *describes* default behavior — telling the agent to do what it would already do without instruction — is vestigial: it has no failure to prevent because the failure can't occur. Such a rule (or rule bullet) should be removed from the project, not wired as an addressing edge in the model.
+
+Common origin: a rule was written when the system had friction with some default behavior; the friction was later fixed at the system level (hook, tool, runtime); the rule entry was reversed to describe the new default rather than removed entirely. The vestigial entry takes up context that could be used for actual overrides.
+
+**Test:** if the failure mode the rule prevents *cannot occur* in the current system (because the system's default behavior already produces the right outcome), the rule is describing a default and should be flagged for removal. Surface to the user with the analysis so the project can drop the entry. Do not wire an addressing edge for such a rule — there's nothing to address.
+
+**When to apply:** before proposing the addressing edge for any rule (especially Layer C rules), ask "is this an override or a description of default behavior?" If a description, halt the wiring proposal, add a project-level action item to remove the entry, and move on. The model should only contain components that produce real effects.
 
 ### Relationship proposal format
 
@@ -297,16 +359,22 @@ Considered and rejected:
 ### Operational notes
 
 - The two graphs (`depends_on` and `addresses`) are independent: a component can depend on one thing and address yet another. Don't assume they align.
-- **Multi-edge addressing is valid and expected.** A component can address several needs when each edge holds up on its own — don't artificially narrow to a single "primary" need.
-- **Don't reject an edge because another component already addresses the same need.** `addresses` is many-to-many. Two components can address the same need through different mechanisms. Each mechanism is its own contribution. Test the candidate edge on its own merits, not on whether someone else has "taken" that need. Rejection rationales like "X is the better vehicle" should trigger a check: is the candidate's mechanism actually the same as X's, or just aimed at the same need from a different angle?
+- **Multi-edge addressing is valid and expected.** A component can address several sub-needs when each edge holds up on its own — don't artificially narrow to a single "primary" need.
+- **Don't reject an edge because another component already addresses the same need.** `addresses` is many-to-many. Two components can address the same sub-need through different mechanisms. Each mechanism is its own contribution. Test the candidate edge on its own merits. Rejection rationales like "X is the better vehicle" should trigger a check: is the candidate's mechanism actually the same as X's, or just aimed at the same concern from a different angle?
+- **Address at the most-specific applicable sub-need.** If your component's mechanism only applies to one specific sub-concern, address that sub-concern, not its parent. The CLI rejects ancestor + descendant combinations on the same component to enforce this. If you want to claim a broader concern, the answer is to address the broader sub-need *instead of* the narrower one, not in addition to it.
 - **Read the source, not the summary.** The db description is a one-line gist. Use `where <component>` to find the real artifact and read it before evaluating.
-- Don't add needs speculatively — only add a need when it names a real concern that's missing from the model.
+- **Don't add needs speculatively.** Refine only when a component you're adding actually requires a sharper sub-concern than exists. Speculative refinement is the same anti-pattern as speculative decomposition.
 - When adding a new component, propose its initial addressing edges in the same step so floating components don't pollute the orphan view.
 
 ### Tree display conventions
 
 - `◈` — components
-- `◇` — needs
+- `☆` — root needs (parent_id NULL)
+- `◇` — non-root needs (refined sub-needs)
 - `?` prefix — unvalidated (identity still under question)
 - No prefix — validated (identity confirmed)
+- `✓` — covered (need has direct addressers or addressed descendants)
+- `✗` — gap (non-root leaf with no addressers — needs a component)
+- `○` — unrefined (root with no children — needs refinement before addressing)
+- (space) — abstract (interior or root with children but no addressed descendants yet)
 - Tree characters (`├──`, `└──`, `│`) show descent

@@ -2,7 +2,7 @@
 
 Two entity types connected by two relationship types, plus location references:
 
-  Needs       — concerns the project has (the "why")
+  Needs       — concerns the project has (the "why"), organized as a tree
   Components  — structural units that address needs (the "how")
 
 Entities use auto-generated short ids (c1, c2, ... for components; n1, n2, ...
@@ -10,16 +10,24 @@ for needs). The description is the load-bearing meaning. All displays render
 entries as `[id] description` so the id is always paired with its purpose,
 preventing reasoning from a name alone.
 
-Needs are project-implicit: the data structure lives within a project, so all
-needs belong to the project by definition. There is no separate ownership
-graph. Components are connected to needs only through the addressing graph,
-where each addressing edge carries a rationale describing the specific
-mechanism by which the component contributes.
+Needs form a tree via parent_id. Root needs (parent_id IS NULL) are the
+project's high-level business concerns. Refined sub-needs are added under
+parents as discovery requires more specificity — refinement is reactive,
+not pre-planned. Components cannot address root needs directly; every
+addressing edge must land on a refined sub-need where 'is this unmet?' is
+a meaningful question.
+
+Wiring rules (enforced by the CLI):
+
+  - A component cannot address a root need (must attach at depth >= 1)
+  - A component cannot address both a need and any ancestor of that need
+  - A component cannot address both a need and any descendant of that need
+  - Attach at the most specific sub-need where the component's mechanism applies
 
 Edges:
 
   depends_on      — component depends on component (structural DAG)
-  addresses       — component addresses a need, with rationale (capability)
+  addresses       — component addresses a refined need, with rationale (capability)
   component_paths — component → source-location reference (file path, optionally with #anchor)
 
 Paths are non-authoritative location pointers — they record where the real
@@ -35,14 +43,16 @@ Commands — components:
     remove-component <id>                  Remove component and its edges
 
 Commands — needs:
-    add-need <description>                 Add a need (id auto-assigned: n{n})
+    add-need <description>                 Add a root need (id auto-assigned: n{n})
+    refine <parent-id> <description>       Add a child need under an existing parent
     set-need <id> <description>            Update description
-    remove-need <id>                       Remove need and its edges
+    set-parent <need-id> <parent-id|root>  Re-parent a need (use 'root' to make it a root)
+    remove-need <id>                       Remove need (refused if it has children)
 
 Commands — edges:
     depend <component> <dependency>                    Component depends on another
     undepend <component> <dependency>                  Remove dependency
-    address <component> <need> <rationale>             Component addresses a need
+    address <component> <need> <rationale>             Component addresses a refined need
     unaddress <component> <need>                       Remove addressing edge
     set-rationale <component> <need> <rationale>       Update rationale on an existing addressing edge
     add-path <component> <path>                        Record a source-location path
@@ -58,13 +68,14 @@ Commands — validation:
     invalidate <id>                        Invalidate a component or need (remove validation)
 
 Commands — analysis:
-    dependencies [component-id] [--verify] Structural tree (with optional validation-chain check)
+    dependencies [component-id] [--verify] Structural tree of components (with optional validation-chain check)
+    needs [root-id]                        Tree view of needs (full tree, or rooted at given need)
     addresses [id] [--gaps] [--orphans]    Addressing graph (entity, gaps, or orphans)
     where <component-id>                   Recorded source-location paths for a component
     why <component-id>                     What needs does this component address?
     how <need-id>                          What addresses this need? (with rationales)
     compare <component-a> <component-b>    Compare two components by addressing edges (common needs + each-only needs)
-    summary                                Counts and per-need addressing status
+    summary                                High-level counts and gap status
 """
 
 import sqlite3
@@ -93,9 +104,10 @@ def _comp_label(cid, description, validated):
     return f"{marker} [{cid}] {description}"
 
 
-def _need_label(nid, description, validated):
-    """Format a need as '◇ [id] description' with validation marker."""
-    marker = "◇" if validated else "? ◇"
+def _need_label(nid, description, validated, is_root=False):
+    """Format a need as '◇ [id] description' (or '☆' for roots) with validation marker."""
+    glyph = "☆" if is_root else "◇"
+    marker = glyph if validated else f"? {glyph}"
     return f"{marker} [{nid}] {description}"
 
 
@@ -112,6 +124,7 @@ def get_db():
 
         CREATE TABLE IF NOT EXISTS needs (
             id TEXT PRIMARY KEY,
+            parent_id TEXT REFERENCES needs(id),
             description TEXT NOT NULL,
             validated INTEGER NOT NULL DEFAULT 0
         );
@@ -135,6 +148,13 @@ def get_db():
             PRIMARY KEY (component_id, path)
         );
     """)
+
+    # Schema migration: add parent_id to needs if missing (legacy dbs)
+    existing_cols = {row[1] for row in db.execute("PRAGMA table_info(needs)").fetchall()}
+    if "parent_id" not in existing_cols:
+        db.execute("ALTER TABLE needs ADD COLUMN parent_id TEXT REFERENCES needs(id)")
+        db.commit()
+
     return db
 
 
@@ -170,11 +190,22 @@ def remove_component(db, comp_id):
 # --- Need commands ---
 
 def add_need(db, description):
+    """Add a root need (parent_id NULL). Use `refine` to add a child need."""
     new_id = _next_id(db, "n", "needs")
-    db.execute("INSERT INTO needs (id, description) VALUES (?, ?)",
+    db.execute("INSERT INTO needs (id, parent_id, description) VALUES (?, NULL, ?)",
                 (new_id, description))
     db.commit()
-    print(f"Added: [{new_id}] {description}")
+    print(f"Added root: [{new_id}] {description}")
+
+
+def refine(db, parent_id, description):
+    """Add a child need under an existing parent need."""
+    _check_need(db, parent_id)
+    new_id = _next_id(db, "n", "needs")
+    db.execute("INSERT INTO needs (id, parent_id, description) VALUES (?, ?, ?)",
+                (new_id, parent_id, description))
+    db.commit()
+    print(f"Added: [{new_id}] (child of {parent_id}) {description}")
 
 
 def set_need(db, need_id, description):
@@ -187,13 +218,61 @@ def set_need(db, need_id, description):
     print(f"Updated: [{need_id}] {description}")
 
 
+def set_parent(db, need_id, parent_id):
+    """Re-parent a need. Use 'root' as parent_id to make it a root."""
+    _check_need(db, need_id)
+    if parent_id == "root":
+        new_parent = None
+    else:
+        _check_need(db, parent_id)
+        if need_id == parent_id:
+            print("Error: a need cannot be its own parent")
+            sys.exit(1)
+        if _need_would_cycle(db, need_id, parent_id):
+            print(f"Error: setting {need_id}'s parent to {parent_id} would create a cycle")
+            sys.exit(1)
+        new_parent = parent_id
+
+    db.execute("UPDATE needs SET parent_id = ? WHERE id = ?", (new_parent, need_id))
+    db.commit()
+    if new_parent is None:
+        print(f"Re-parented: {need_id} → root")
+    else:
+        print(f"Re-parented: {need_id} → child of {parent_id}")
+
+
 def remove_need(db, need_id):
+    """Remove a need. Refused if it has children — re-parent or remove them first."""
+    children = db.execute(
+        "SELECT COUNT(*) FROM needs WHERE parent_id = ?", (need_id,)
+    ).fetchone()[0]
+    if children > 0:
+        print(f"Error: need {need_id} has {children} child need(s); remove or re-parent them first")
+        sys.exit(1)
     cur = db.execute("DELETE FROM needs WHERE id = ?", (need_id,))
     if cur.rowcount == 0:
         print(f"Error: need '{need_id}' not found")
         sys.exit(1)
     db.commit()
     print(f"Removed need: [{need_id}]")
+
+
+def _need_would_cycle(db, need_id, new_parent_id):
+    """Check if making need_id a child of new_parent_id would create a cycle.
+
+    Walks ancestors of new_parent_id; if we reach need_id, the new edge would
+    form a cycle.
+    """
+    rows = db.execute("""
+        WITH RECURSIVE ancestors(id) AS (
+            SELECT ?
+            UNION
+            SELECT n.parent_id FROM needs n JOIN ancestors a ON n.id = a.id
+            WHERE n.parent_id IS NOT NULL
+        )
+        SELECT 1 FROM ancestors WHERE id = ?
+    """, (new_parent_id, need_id)).fetchone()
+    return bool(rows)
 
 
 # --- Dependency edge commands ---
@@ -235,6 +314,49 @@ def address(db, comp_id, need_id, rationale):
         sys.exit(1)
     _check_component(db, comp_id)
     _check_need(db, need_id)
+
+    # Constraint: cannot address a root need (parent_id IS NULL)
+    parent = db.execute("SELECT parent_id FROM needs WHERE id = ?", (need_id,)).fetchone()
+    if parent[0] is None:
+        print(f"Error: cannot address root need {need_id} — refine it into more specific child needs first")
+        print(f"  Use 'refine {need_id} <description>' to add a child need, then address the child.")
+        sys.exit(1)
+
+    # Constraint: cannot address both a need and any ancestor of that need
+    ancestor_addressed = db.execute("""
+        WITH RECURSIVE ancestors(id) AS (
+            SELECT parent_id FROM needs WHERE id = ? AND parent_id IS NOT NULL
+            UNION
+            SELECT n.parent_id FROM needs n JOIN ancestors a ON n.id = a.id
+            WHERE n.parent_id IS NOT NULL
+        )
+        SELECT a.id FROM ancestors a
+        WHERE EXISTS (SELECT 1 FROM addresses WHERE component_id = ? AND need_id = a.id)
+        LIMIT 1
+    """, (need_id, comp_id)).fetchone()
+    if ancestor_addressed:
+        print(f"Error: {comp_id} already addresses {ancestor_addressed[0]}, an ancestor of {need_id}")
+        print(f"  A component cannot address both a need and its ancestor — pick the most specific applicable.")
+        print(f"  Either unaddress {ancestor_addressed[0]} (if {need_id} is the right level) or skip this edge.")
+        sys.exit(1)
+
+    # Constraint: cannot address both a need and any descendant of that need
+    descendant_addressed = db.execute("""
+        WITH RECURSIVE descendants(id) AS (
+            SELECT id FROM needs WHERE parent_id = ?
+            UNION
+            SELECT n.id FROM needs n JOIN descendants d ON n.parent_id = d.id
+        )
+        SELECT d.id FROM descendants d
+        WHERE EXISTS (SELECT 1 FROM addresses WHERE component_id = ? AND need_id = d.id)
+        LIMIT 1
+    """, (need_id, comp_id)).fetchone()
+    if descendant_addressed:
+        print(f"Error: {comp_id} already addresses {descendant_addressed[0]}, a descendant of {need_id}")
+        print(f"  A component cannot address both a need and its descendant — pick the most specific applicable.")
+        print(f"  Either unaddress {descendant_addressed[0]} (if {need_id} is the right level) or skip this edge.")
+        sys.exit(1)
+
     try:
         db.execute("INSERT INTO addresses (component_id, need_id, rationale) VALUES (?, ?, ?)",
                     (comp_id, need_id, rationale.strip()))
@@ -373,8 +495,68 @@ def _dep_tree(db, comp_id, description, validated, header_prefix="", cont_prefix
                   cont_prefix + branch, cont_prefix + cont)
 
 
+# --- Analysis: needs tree ---
+
+def needs_tree(db, root_id=None):
+    """Tree view of needs, with coverage markers on each node.
+
+    Without arguments, shows all root needs and their subtrees.
+    With a need id, shows the subtree rooted at that need.
+    """
+    if root_id:
+        _check_need(db, root_id)
+        need = db.execute(
+            "SELECT description, validated, parent_id FROM needs WHERE id = ?", (root_id,)
+        ).fetchone()
+        _need_tree(db, root_id, need[0], need[1], is_root=(need[2] is None))
+    else:
+        roots = db.execute("""
+            SELECT id, description, validated FROM needs
+            WHERE parent_id IS NULL
+            ORDER BY CAST(SUBSTR(id, 2) AS INTEGER)
+        """).fetchall()
+        if not roots:
+            print("(no needs)")
+            return
+        for nid, ndesc, nvalidated in roots:
+            _need_tree(db, nid, ndesc, nvalidated, is_root=True)
+
+
+def _need_tree(db, need_id, description, validated, header_prefix="", cont_prefix="", is_root=False):
+    """Print need and its child needs recursively, with coverage markers."""
+    status, _ = _coverage(db, need_id)
+    marker = {"covered": "✓", "gap": "✗", "abstract": " ", "unrefined": "○"}[status]
+    direct_count = db.execute(
+        "SELECT COUNT(*) FROM addresses WHERE need_id = ?", (need_id,)
+    ).fetchone()[0]
+
+    label = _need_label(need_id, description, validated, is_root=is_root)
+    suffix = f"  ({direct_count} addresser{'s' if direct_count != 1 else ''})" if direct_count else ""
+    print(f"{header_prefix}{marker} {label}{suffix}")
+
+    children = db.execute("""
+        SELECT id, description, validated FROM needs
+        WHERE parent_id = ?
+        ORDER BY CAST(SUBSTR(id, 2) AS INTEGER)
+    """, (need_id,)).fetchall()
+
+    for i, (cid, cdesc, cvalidated) in enumerate(children):
+        is_last = i == len(children) - 1
+        branch = "└── " if is_last else "├── "
+        cont = "    " if is_last else "│   "
+        _need_tree(db, cid, cdesc, cvalidated,
+                   cont_prefix + branch, cont_prefix + cont, is_root=False)
+
+
 def _coverage(db, need_id):
-    """Return (status, summary) for a need: covered if any direct addressers, gap otherwise."""
+    """Return (status, summary) for a need.
+
+    Statuses:
+    - 'covered'   — has direct addressers OR a descendant is addressed
+    - 'gap'       — non-root leaf with no addressers (actionable: needs a component)
+    - 'unrefined' — root with no children (actionable: needs refinement before addressing)
+    - 'abstract'  — interior or root with children but no addressed descendants yet
+    """
     direct = [r[0] for r in db.execute(
         "SELECT component_id FROM addresses WHERE need_id = ? ORDER BY CAST(SUBSTR(component_id, 2) AS INTEGER)",
         (need_id,)
@@ -382,7 +564,34 @@ def _coverage(db, need_id):
 
     if direct:
         return "covered", "addressed by " + ", ".join(direct)
-    return "gap", "unaddressed"
+
+    has_children = db.execute(
+        "SELECT 1 FROM needs WHERE parent_id = ?", (need_id,)
+    ).fetchone() is not None
+
+    if has_children:
+        # Interior or root: check if any descendant is addressed
+        descendant_addressed = db.execute("""
+            WITH RECURSIVE descendants(id) AS (
+                SELECT id FROM needs WHERE parent_id = ?
+                UNION
+                SELECT n.id FROM needs n JOIN descendants d ON n.parent_id = d.id
+            )
+            SELECT 1 FROM descendants d
+            WHERE EXISTS (SELECT 1 FROM addresses WHERE need_id = d.id)
+            LIMIT 1
+        """, (need_id,)).fetchone()
+        if descendant_addressed:
+            return "covered", "covered via descendants"
+        return "abstract", "no descendants addressed yet"
+
+    # No children, no direct addressers
+    is_root = db.execute(
+        "SELECT parent_id FROM needs WHERE id = ?", (need_id,)
+    ).fetchone()[0] is None
+    if is_root:
+        return "unrefined", "root needs refinement before addressing"
+    return "gap", "unaddressed leaf"
 
 
 # --- Analysis: addresses ---
@@ -419,9 +628,9 @@ def addresses_view(db, entity_id=None, gaps=False, orphans=False):
 
 def _addresses_for_need(db, need_id):
     """Show a need and its direct addressers with rationales."""
-    need = db.execute("SELECT description, validated FROM needs WHERE id = ?",
+    need = db.execute("SELECT description, validated, parent_id FROM needs WHERE id = ?",
                       (need_id,)).fetchone()
-    print(_need_label(need_id, need[0], need[1]))
+    print(_need_label(need_id, need[0], need[1], is_root=(need[2] is None)))
 
     direct = db.execute("""
         SELECT c.id, c.description, c.validated, a.rationale FROM addresses a
@@ -446,7 +655,7 @@ def _addresses_for_component(db, comp_id):
     print(_comp_label(comp_id, comp[0], comp[1]))
 
     addrs = db.execute("""
-        SELECT n.id, n.description, n.validated FROM addresses a
+        SELECT n.id, n.description, n.validated, n.parent_id FROM addresses a
         JOIN needs n ON n.id = a.need_id
         WHERE a.component_id = ? ORDER BY CAST(SUBSTR(n.id, 2) AS INTEGER)
     """, (comp_id,)).fetchall()
@@ -455,21 +664,28 @@ def _addresses_for_component(db, comp_id):
         print("  (addresses nothing)")
         return
 
-    for nid, ndesc, nvalidated in addrs:
-        print(f"  → {_need_label(nid, ndesc, nvalidated)}")
+    for nid, ndesc, nvalidated, nparent in addrs:
+        print(f"  → {_need_label(nid, ndesc, nvalidated, is_root=(nparent is None))}")
 
 
 def _show_leaf_gaps(db):
-    """Needs with no direct addressers — actionable gaps."""
+    """Refined leaf needs (non-root, no children) with no direct addressers.
+
+    Unrefined roots (roots with no children) are not gaps — they need
+    refinement before they can be addressed. Interior needs are abstract
+    grouping nodes. Only refined leaves are actionable gaps.
+    """
     rows = db.execute("""
         SELECT n.id, n.description FROM needs n
-        WHERE NOT EXISTS (SELECT 1 FROM addresses a WHERE a.need_id = n.id)
+        WHERE n.parent_id IS NOT NULL
+          AND NOT EXISTS (SELECT 1 FROM needs c WHERE c.parent_id = n.id)
+          AND NOT EXISTS (SELECT 1 FROM addresses a WHERE a.need_id = n.id)
         ORDER BY CAST(SUBSTR(n.id, 2) AS INTEGER)
     """).fetchall()
     if not rows:
-        print("No gaps — every need has at least one addresser")
+        print("No gaps — every refined leaf need has at least one addresser")
         return
-    print(f"Gaps ({len(rows)}) — needs with no addressers:")
+    print(f"Gaps ({len(rows)}) — refined leaf needs with no addressers:")
     for nid, desc in rows:
         print(f"  ✗ [{nid}] {desc}")
 
@@ -530,7 +746,7 @@ def why(db, comp_id):
     print(_comp_label(comp_id, comp[0], comp[1]))
 
     addressed = db.execute("""
-        SELECT n.id, n.description, n.validated, a.rationale FROM addresses a
+        SELECT n.id, n.description, n.validated, a.rationale, n.parent_id FROM addresses a
         JOIN needs n ON n.id = a.need_id
         WHERE a.component_id = ? ORDER BY CAST(SUBSTR(n.id, 2) AS INTEGER)
     """, (comp_id,)).fetchall()
@@ -539,8 +755,8 @@ def why(db, comp_id):
         print("  (addresses nothing)")
         return
 
-    for nid, ndesc, nvalidated, rationale in addressed:
-        print(f"  ↑ addresses: {_need_label(nid, ndesc, nvalidated)}")
+    for nid, ndesc, nvalidated, rationale, nparent in addressed:
+        print(f"  ↑ addresses: {_need_label(nid, ndesc, nvalidated, is_root=(nparent is None))}")
         if rationale:
             print(f"      rationale: {rationale}")
 
@@ -581,7 +797,7 @@ def compare(db, comp_a, comp_b):
 
     addr_a = {
         row[0]: row for row in db.execute("""
-            SELECT n.id, n.description, n.validated, a.rationale
+            SELECT n.id, n.description, n.validated, a.rationale, n.parent_id
             FROM addresses a JOIN needs n ON n.id = a.need_id
             WHERE a.component_id = ?
             ORDER BY CAST(SUBSTR(n.id, 2) AS INTEGER)
@@ -589,7 +805,7 @@ def compare(db, comp_a, comp_b):
     }
     addr_b = {
         row[0]: row for row in db.execute("""
-            SELECT n.id, n.description, n.validated, a.rationale
+            SELECT n.id, n.description, n.validated, a.rationale, n.parent_id
             FROM addresses a JOIN needs n ON n.id = a.need_id
             WHERE a.component_id = ?
             ORDER BY CAST(SUBSTR(n.id, 2) AS INTEGER)
@@ -604,7 +820,7 @@ def compare(db, comp_a, comp_b):
         print(f"\n=== COMMON NEEDS ({len(common)}) — both components address ===")
         for nid in common:
             row = addr_a[nid]
-            print(_need_label(nid, row[1], row[2]))
+            print(_need_label(nid, row[1], row[2], is_root=(row[4] is None)))
             print(f"  {comp_a}: {row[3]}")
             print(f"  {comp_b}: {addr_b[nid][3]}")
 
@@ -612,7 +828,7 @@ def compare(db, comp_a, comp_b):
         print(f"\n=== {comp_a} ONLY ({len(only_a)}) ===")
         for nid in only_a:
             row = addr_a[nid]
-            print(_need_label(nid, row[1], row[2]))
+            print(_need_label(nid, row[1], row[2], is_root=(row[4] is None)))
             if row[3]:
                 print(f"  rationale: {row[3]}")
 
@@ -620,7 +836,7 @@ def compare(db, comp_a, comp_b):
         print(f"\n=== {comp_b} ONLY ({len(only_b)}) ===")
         for nid in only_b:
             row = addr_b[nid]
-            print(_need_label(nid, row[1], row[2]))
+            print(_need_label(nid, row[1], row[2], is_root=(row[4] is None)))
             if row[3]:
                 print(f"  rationale: {row[3]}")
 
@@ -631,15 +847,32 @@ def compare(db, comp_a, comp_b):
 # --- Summary ---
 
 def summary(db):
-    """Counts and per-need addressing status."""
+    """High-level counts and actionable status. Use `needs` for the tree view."""
     comp_count = db.execute("SELECT COUNT(*) FROM components").fetchone()[0]
     need_count = db.execute("SELECT COUNT(*) FROM needs").fetchone()[0]
+    root_count = db.execute(
+        "SELECT COUNT(*) FROM needs WHERE parent_id IS NULL"
+    ).fetchone()[0]
+    leaf_count = db.execute("""
+        SELECT COUNT(*) FROM needs n
+        WHERE NOT EXISTS (SELECT 1 FROM needs c WHERE c.parent_id = n.id)
+    """).fetchone()[0]
     dep_count = db.execute("SELECT COUNT(*) FROM depends_on").fetchone()[0]
     addr_count = db.execute("SELECT COUNT(*) FROM addresses").fetchone()[0]
 
+    # Unrefined roots: roots with no children (need refinement before any component can address)
+    unrefined = db.execute("""
+        SELECT COUNT(*) FROM needs n
+        WHERE n.parent_id IS NULL
+          AND NOT EXISTS (SELECT 1 FROM needs c WHERE c.parent_id = n.id)
+    """).fetchone()[0]
+
+    # Gaps: refined leaves (non-root, no children) with no addressers
     gaps = db.execute("""
         SELECT COUNT(*) FROM needs n
-        WHERE NOT EXISTS (SELECT 1 FROM addresses a WHERE a.need_id = n.id)
+        WHERE n.parent_id IS NOT NULL
+          AND NOT EXISTS (SELECT 1 FROM needs c WHERE c.parent_id = n.id)
+          AND NOT EXISTS (SELECT 1 FROM addresses a WHERE a.need_id = n.id)
     """).fetchone()[0]
 
     validated_comps = db.execute(
@@ -650,20 +883,11 @@ def summary(db):
     ).fetchone()[0]
 
     print(f"Components: {comp_count} ({validated_comps} validated)")
-    print(f"Needs: {need_count} ({validated_needs} validated)")
+    print(f"Needs: {need_count} ({root_count} roots, {leaf_count} leaves, {validated_needs} validated)")
     print(f"Dependencies: {dep_count} | Addresses: {addr_count}")
-    print(f"Gaps: {gaps}")
-
-    all_needs = db.execute("""
-        SELECT id, description, validated FROM needs
-        ORDER BY CAST(SUBSTR(id, 2) AS INTEGER)
-    """).fetchall()
-    if all_needs:
-        print(f"\nNeeds ({len(all_needs)}):")
-        for nid, desc, validated in all_needs:
-            status, _ = _coverage(db, nid)
-            marker = {"covered": "✓", "gap": "✗"}[status]
-            print(f"  {marker} {_need_label(nid, desc, validated)}")
+    print(f"Unrefined roots: {unrefined} (need refinement before any component can address)")
+    print(f"Gaps: {gaps} (refined leaves with no addressers)")
+    print(f"\nUse `needs` to view the need tree.")
 
 
 # --- Helpers ---
@@ -757,7 +981,9 @@ COMMANDS = {
     "set-component":    (set_component,    2, "<id> <description>"),
     "remove-component": (remove_component, 1, "<id>"),
     "add-need":         (add_need,         1, "<description>"),
+    "refine":           (refine,           2, "<parent-id> <description>"),
     "set-need":         (set_need,         2, "<id> <description>"),
+    "set-parent":       (set_parent,       2, "<need-id> <parent-id|root>"),
     "remove-need":      (remove_need,      1, "<id>"),
     "depend":           (depend,           2, "<component> <dependency>"),
     "undepend":         (undepend,         2, "<component> <dependency>"),
@@ -769,6 +995,7 @@ COMMANDS = {
     "validate":         (validate,         1, "<id>"),
     "invalidate":       (invalidate,       1, "<id>"),
     "dependencies":     (dependencies,     0, "[component-id] [--verify]"),
+    "needs":            (needs_tree,       0, "[root-id]"),
     "addresses":        (addresses_view,   0, "[id] [--gaps] [--orphans]"),
     "where":            (where,            1, "<component-id>"),
     "why":              (why,              1, "<component-id>"),
@@ -777,8 +1004,9 @@ COMMANDS = {
     "summary":          (summary,          0, ""),
 }
 
-OPTIONAL_ARG_COMMANDS = {"dependencies", "addresses"}
+OPTIONAL_ARG_COMMANDS = {"dependencies", "addresses", "needs"}
 RATIONALE_EDGE_COMMANDS = {"address", "set-rationale"}
+ID_PLUS_TEXT_COMMANDS = {"set-component", "set-need", "refine"}
 
 
 def main():
@@ -815,8 +1043,8 @@ def main():
             print(f"Usage: {cmd} {usage}")
             sys.exit(1)
         func(db, " ".join(args))
-    elif cmd in ("set-component", "set-need"):
-        # First arg is id, rest joined as description
+    elif cmd in ID_PLUS_TEXT_COMMANDS:
+        # First arg is id, rest joined as multi-word text (description)
         if len(args) < 2:
             print(f"Usage: {cmd} {usage}")
             sys.exit(1)
