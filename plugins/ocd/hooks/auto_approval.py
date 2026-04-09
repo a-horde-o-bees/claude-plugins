@@ -147,15 +147,37 @@ def match_bash_pattern(command: str, pattern_str: str) -> bool:
         Bash(path/*)     — command starts with path/
         Bash(verb)       — exact match on first word
         Bash(.claude/*)  — command starts with .claude/
+
+    Absolute-path executables (e.g., /usr/bin/python3, .venv/bin/python3 resolved
+    to an absolute path) are normalized to basename before matching :* and exact-
+    match patterns. So Bash(python3:*) matches /usr/bin/python3 the same as plain
+    python3. Path-prefix patterns (Bash(path/*)) match literally with no
+    normalization — they're meant for matching literal paths, not executable names.
     """
     inner = pattern_str
+
+    if not command:
+        return False
+
+    # Build candidates: literal command and (if first word is absolute path)
+    # the basename-normalized version
+    candidates = [command]
+    first_word = command.split()[0]
+    if first_word.startswith("/"):
+        basename = first_word.rsplit("/", 1)[-1]
+        if basename:
+            normalized = basename + command[len(first_word):]
+            candidates.append(normalized)
+
     if inner.endswith(":*"):
         prefix = inner[:-2]
-        return command == prefix or command.startswith(prefix + " ")
+        return any(c == prefix or c.startswith(prefix + " ") for c in candidates)
     if inner.endswith("*"):
+        # Path-prefix pattern — match literally without normalization
         prefix = inner[:-1]
         return command.startswith(prefix)
-    return command.split()[0] == inner if command else False
+    # Exact first-word match
+    return any(c.split()[0] == inner for c in candidates)
 
 
 def is_bash_allowed(command: str, settings: dict) -> bool:

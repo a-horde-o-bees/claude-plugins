@@ -364,3 +364,62 @@ class TestSettingsMerge:
         project_s = {"permissions": {"allow": ["Bash(ls:*)"], "deny": []}}
         merged = auto_approval.merge_settings(global_s, project_s)
         assert merged["permissions"]["allow"].count("Bash(ls:*)") == 1
+
+
+# =========================================================================
+# Bash pattern matching with absolute-path normalization
+# =========================================================================
+
+
+class TestMatchBashPatternBasename:
+    """Absolute-path executables should match basename patterns.
+
+    Without normalization, an agent calling /usr/bin/python3 would not match
+    Bash(python3:*), forcing manual approval. The hook normalizes the first
+    word to its basename when it's an absolute path, so executable-name
+    patterns match regardless of whether the command uses an absolute path
+    or a bare executable name.
+    """
+
+    def test_bare_executable_matches_wildcard(self) -> None:
+        assert auto_approval.match_bash_pattern("python3 -m pytest", "python3:*")
+
+    def test_absolute_path_matches_wildcard(self) -> None:
+        assert auto_approval.match_bash_pattern(
+            "/usr/bin/python3 -m pytest", "python3:*"
+        )
+
+    def test_venv_absolute_path_matches_wildcard(self) -> None:
+        assert auto_approval.match_bash_pattern(
+            "/home/dev/projects/claude-plugins/.venv/bin/python3 -m pytest test_x.py",
+            "python3:*",
+        )
+
+    def test_absolute_path_matches_exact_first_word(self) -> None:
+        assert auto_approval.match_bash_pattern("/usr/bin/pwd", "pwd")
+
+    def test_absolute_path_matches_multiword_prefix(self) -> None:
+        assert auto_approval.match_bash_pattern("/usr/bin/uv sync foo", "uv sync:*")
+
+    def test_basename_mismatch_does_not_match(self) -> None:
+        assert not auto_approval.match_bash_pattern("/usr/bin/python2", "python3:*")
+
+    def test_relative_path_executable_unchanged(self) -> None:
+        # Existing .venv/bin/* style should still work
+        assert auto_approval.match_bash_pattern(
+            ".venv/bin/python3 -m pytest", ".venv/bin/*"
+        )
+
+    def test_path_prefix_pattern_does_not_normalize(self) -> None:
+        # Bash(path/*) is a literal path-prefix pattern and should not match
+        # when given an absolute path with the same basename
+        assert not auto_approval.match_bash_pattern(
+            "/home/dev/.venv/bin/python3", ".venv/bin/*"
+        )
+
+    def test_no_first_word_no_match(self) -> None:
+        assert not auto_approval.match_bash_pattern("", "python3:*")
+
+    def test_bare_basename_only_matches(self) -> None:
+        # /python3 (no parent dir before basename) should still match
+        assert auto_approval.match_bash_pattern("/python3", "python3:*")
