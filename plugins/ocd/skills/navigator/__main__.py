@@ -186,8 +186,8 @@ def _dispatch_governance_for(args: argparse.Namespace) -> None:
     if not result["matches"]:
         print("No governance matches.")
         return
-    print("Criteria:")
-    for c in result["criteria"]:
+    print("Conventions:")
+    for c in result["conventions"]:
         print(f"  {c}")
     print()
     for file_path in args.files:

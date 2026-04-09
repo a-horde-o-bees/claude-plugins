@@ -72,9 +72,85 @@ When a server's tool count grows beyond what an agent can scan in one `tools/lis
 
 The threshold is a judgment call, not a hard number. Signs it's needed: agents repeatedly call the wrong tool, or fail to find tools they need. The alternative to a discovery tool is restructuring into multiple focused servers — prefer this when groups have genuinely independent concerns.
 
+## Server Instructions
+
+The MCP server's `instructions` field provides server-level guidance that complements per-tool descriptions. Where tool descriptions cover what an individual tool does and when to choose it, server instructions cover the server's overall positioning — the category of tasks it handles, when to reach for this server's tools at all, and how the server fits alongside other tools (built-in or other servers).
+
+A server instructions field conveys:
+
+- **Category** — what kinds of tasks this server is for
+- **Reach trigger** — situations where the agent should reach for this server's tools
+- **Cross-tool positioning** — when to prefer this server's tools over alternatives (built-in tools, other servers, manual approaches)
+- **High-level mental model** — the conceptual frame the agent needs to use the server effectively
+
+Server instructions are not the place for per-tool details, parameter schemas, or implementation specifics — those live in individual tool descriptions. Server instructions are higher-altitude: they orient the agent so the agent knows which server to reach for, after which the tool descriptions take over.
+
+Loaded by Claude Code at server connection time and available throughout the session. Truncated at 2KB, so prioritize the most important orientation information first.
+
+Cross-tool positioning that publishes "when to reach for this server" belongs in the `instructions` field, not in a separate rule file or external document. Rules and external docs do not republish what an MCP server can self-publish through its protocol-level metadata.
+
 ## Server Architecture
 
 - Business logic separated from server presentation — the server file dispatches to domain modules; tool handlers are thin wrappers that validate, delegate, and format
 - The server is a presentation layer — the same functions are callable from CLI, tests, or other code paths
 - Database paths and configuration via environment variables, not hardcoded paths
 - Server module docstring states the server's domain scope and transport
+
+## Server-Skill Composition
+
+MCP server files are thin presentation layers; business logic lives in skill packages, not in the server file or its siblings. The skill package owns the domain (database, parsing, file I/O, decision logic); the server file owns the MCP exposure (tool decorators, structured serialization, error wrapping).
+
+Standard structure for an MCP server:
+
+```
+plugins/<plugin>/
+├── skills/
+│   └── <name>/                  ← Business logic as a Python package
+│       ├── __init__.py          ← Facade — public functions the server calls
+│       ├── _db.py               ← Internal modules per python.md decomposition
+│       ├── _store.py
+│       └── (other internals)
+└── servers/
+    └── <name>.py                ← Thin MCP server: FastMCP setup + tool decorators
+```
+
+The server file:
+
+- Imports the skill's public functions: `from skills.<name> import describe, list_entries, ...`
+- Defines `mcp = FastMCP("<plugin>-<name>", instructions="...")` with cross-tool positioning
+- Decorates thin wrappers with `@mcp.tool()` — each wrapper validates, delegates to a skill function, and serializes the result
+- Handles JSON in/out and error wrapping via shared helpers (see *Shared Server Helpers* below)
+
+**Anti-pattern:** business logic in the server file directly, or in sibling `_*.py` files inside `servers/`. This couples MCP exposure to business logic and prevents the skill from being callable from CLI, tests, or other code paths. Skills must remain independently consumable.
+
+## Server Launching
+
+Server files are launched via the plugin's `run.py` module launcher, which establishes proper `__package__` context via `runpy.run_module()`. The launcher handles sys.path bootstrap once, in one place — server files do not manipulate `sys.path` themselves.
+
+`.mcp.json` invocation pattern:
+
+```json
+"<plugin>-<name>": {
+  "command": "${CLAUDE_PLUGIN_DATA}/venv/bin/python3",
+  "args": ["${CLAUDE_PLUGIN_ROOT}/run.py", "servers.<name>"]
+}
+```
+
+For this to work:
+
+- `servers/` must be a proper Python package (contain `__init__.py`)
+- Server files use clean imports: `from . import _helpers`, `from skills.<name> import ...`
+- No `sys.path` manipulation in individual server files (per `python.md`)
+
+The launcher pattern is documented in `python.md` Import Pattern section; this convention specifies its application to MCP servers.
+
+## Shared Server Helpers
+
+Shared utility functions used by multiple server files in the same plugin live in `servers/_helpers.py` per `python.md`'s `_helpers.py` standard internal module type. Standard helpers:
+
+- `_ok(result)` — serialize a successful result as a JSON string
+- `_err(e)` — wrap an exception as a JSON error response
+
+Server files import these via the package: `from . import _helpers` or `from ._helpers import _ok, _err`.
+
+Project-root resolution helpers (e.g., `_project_root()` reading `CLAUDE_PROJECT_DIR` with fallback to cwd) live in `_helpers.py` when used by more than one server.

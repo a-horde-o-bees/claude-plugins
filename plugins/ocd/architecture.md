@@ -63,11 +63,10 @@ Template files in `rules/` deploy to `.claude/rules/` via `/ocd-init`. Users own
 
 | Rule | Scope |
 |------|-------|
-| `ocd-design-principles.md` | Foundational principles governing all artifacts |
-| `ocd-communication.md` | Agent-user interaction triggers and alignment gates |
-| `ocd-workflow.md` | Working directory discipline, testing, system documentation |
+| `ocd-design-principles.md` | Foundational principles governing all artifacts and agent behavior |
+| `ocd-workflow.md` | Working directory, agents, testing — execution discipline for working in this project |
+| `ocd-system-documentation.md` | README and architecture.md requirements per system, with nesting and currency rules |
 | `ocd-process-flow-notation.md` | Structured programming notation for skill workflows |
-| `ocd-navigator.md` | Navigator CLI usage guide loaded as always-on context |
 
 Rules use the template-deployed model: templates in `rules/` are the source during plugin development; deployed copies in `.claude/rules/` are the product. `scripts/sync-templates.py` syncs deployed back to templates before commits.
 
@@ -122,6 +121,21 @@ Workflow-only skills with no Python infrastructure (SKILL.md only):
 | `status` | Report plugin version, rules state, skill status |
 | `pdf` | Export markdown to PDF with GitHub-style CSS |
 
+## MCP Servers
+
+Agent-facing tools exposed over the Model Context Protocol. Each server lives as a single file in `servers/` and is registered in `.mcp.json`. Claude Code starts the servers on session connect and routes tool calls by name.
+
+| Server | Entry point | Role |
+|--------|-------------|------|
+| `ocd-navigator` | `servers/navigator.py` | Project structure index, governance discovery, reference mapping. Delegates to `skills/navigator` for business logic. |
+| `ocd-friction` | `servers/friction.py` | Friction log capture and triage. Reads and writes `.claude/ocd/friction/*.md` files. |
+| `ocd-decisions` | `servers/decisions.py` | Decisions index management. Reads and writes `decisions.md` and `decisions/*.md` at the project root. |
+| `ocd-stash` | `servers/stash.py` | Stash holding area for ideas, future work, and unaddressed observations. Reads and writes `.claude/stash/stash.md` per project with fallback to `~/.claude/stash/stash.md` for unattached entries. |
+
+Server modules are thin presentation layers: tool handlers validate, delegate to a domain module, and serialize the result. Business logic for standalone servers without an accompanying skill package lives alongside the server as `servers/_{domain}_store.py` — the internal module pattern used for `decisions` and `stash`.
+
+Server-level `instructions` fields publish when to reach for each server's tools; individual tool descriptions cover per-tool semantics.
+
 ## Plugin Framework
 
 `plugin/__init__.py` — generic deployment, formatting, skill discovery, and orchestration shared across plugins. Propagated identically to every plugin via pre-commit hook.
@@ -171,6 +185,7 @@ plugins/ocd/
 │   ├── init/                    — deployment orchestration
 │   ├── status/                  — plugin status reporting
 │   └── pdf/                     — markdown-to-PDF export
+├── servers/                     — MCP servers (navigator, friction, decisions, stash)
 ├── plugin/                      — generic plugin framework (shared across plugins)
 ├── patterns/                    — reusable agent workflow patterns
 ├── run.py                       — module launcher with package context

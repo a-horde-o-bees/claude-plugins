@@ -103,6 +103,14 @@ def process_path(db_path: str, target_path: str) -> str:
     ...
 ```
 
+### Hook Scripts
+
+Hook scripts are standalone modules invoked directly by `hooks.json` configuration — no package wrapping, no `__init__.py` or `__main__.py` facade. Each hook script is a single `.py` file with its own entry point (e.g., `session_start.py`, `auto_approval.py`) that Claude Code invokes via interpreter prefix.
+
+### Script Invocation
+
+Python scripts are invoked via interpreter prefix (`python3 script.py`), not via shebangs with execute permissions. No `#!/usr/bin/env python3` headers. No `chmod +x` on `.py` files.
+
 ### Separate Module vs Internal Module
 
 Use `_{purpose}.py` (internal) when functions exist to support the package and have no independent consumers. Use `{name}.py` (separate module) when the domain has its own CLI subcommands, independent tests, or is consumed by multiple packages. Example: `client.py` is separate because the CLI exposes its subcommands directly; `_parser.py` is internal because only the facade calls its functions.

@@ -181,3 +181,51 @@ class TestSkillCLI:
         result = run("skills.navigator", "governance-for", "--help")
         assert result.returncode == 0
         assert "files" in result.stdout
+
+
+# ===========================================================================
+# MCP server invocation
+# ===========================================================================
+
+
+def _run_server_briefly(module: str) -> subprocess.CompletedProcess:
+    """Launch an MCP server through run.py with empty stdin and a short timeout.
+
+    A successful import lets the server reach mcp.run() which reads from stdin.
+    Empty stdin produces EOF; the FastMCP stdio loop exits cleanly. An import
+    failure inside run.py exits non-zero before mcp.run() is reached.
+    """
+    import os
+    full_env = os.environ.copy()
+    full_env["CLAUDE_PROJECT_DIR"] = str(Path.cwd())
+    full_env["CLAUDE_PLUGIN_ROOT"] = str(PLUGIN_ROOT)
+    return subprocess.run(
+        [sys.executable, RUN_PY, module],
+        capture_output=True, text=True, env=full_env,
+        input="", timeout=10,
+    )
+
+
+class TestServerInvocation:
+    """Each MCP server module loads cleanly through run.py.
+
+    Verifies the launcher establishes package context so relative imports
+    inside servers/ resolve. Catches ImportError and missing __init__.py
+    issues that unit tests miss because they patch sys.path themselves.
+    """
+
+    def test_navigator_loads(self) -> None:
+        result = _run_server_briefly("servers.navigator")
+        assert result.returncode == 0, result.stderr
+
+    def test_friction_loads(self) -> None:
+        result = _run_server_briefly("servers.friction")
+        assert result.returncode == 0, result.stderr
+
+    def test_decisions_loads(self) -> None:
+        result = _run_server_briefly("servers.decisions")
+        assert result.returncode == 0, result.stderr
+
+    def test_stash_loads(self) -> None:
+        result = _run_server_briefly("servers.stash")
+        assert result.returncode == 0, result.stderr

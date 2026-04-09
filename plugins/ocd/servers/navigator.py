@@ -14,23 +14,33 @@ from __future__ import annotations
 
 import json
 import os
-import sys
 from pathlib import Path
 
 from mcp.server.fastmcp import FastMCP
 
-# Add the plugin root to sys.path so we can import the navigator package
-_plugin_root = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(_plugin_root))
+import skills.navigator as nav
+from skills.navigator import scan_path
 
-import skills.navigator as nav  # noqa: E402
-from skills.navigator import scan_path  # noqa: E402
+from ._helpers import _err, _ok
 
 # --- Configuration ---
 
 DB_PATH = os.environ.get("DB_PATH", ".claude/ocd/navigator/navigator.db")
 
-mcp = FastMCP("ocd-navigator")
+mcp = FastMCP(
+    "ocd-navigator",
+    instructions="""Project structure index. Use Navigator first when orienting in unfamiliar areas — it indexes file purposes, structure, governance relationships, and metrics so the agent doesn't have to read every file to find what it needs.
+
+Prefer Navigator for purpose-based queries:
+- Find files by what they do → paths_search (vs Grep, which searches content)
+- Browse structure with descriptions → paths_describe (start with '.' for top-level overview)
+- Check which rules and conventions govern files → governance_match (before creating or modifying files)
+- Locate skills across discovery locations → skills_resolve
+
+Prefer Grep for content patterns (function names, string literals, regex matching) and Glob for file name patterns (extensions, naming conventions).
+
+Use Navigator first for orientation, then Grep/Glob for specific code searches once you know where to look.""",
+)
 
 # --- Helpers ---
 
@@ -53,16 +63,6 @@ def _auto_scan(target_path: str = ".") -> None:
         scan_path(DB_PATH, target_path)
     except Exception:
         pass
-
-
-def _ok(result) -> str:
-    """Serialize result as JSON string."""
-    return json.dumps(result, default=str)
-
-
-def _err(e: Exception) -> str:
-    """Wrap exception as JSON error."""
-    return json.dumps({"error": str(e)})
 
 
 # ============================================================
@@ -110,7 +110,9 @@ def paths_list(
 
 @mcp.tool()
 def paths_search(pattern: str) -> str:
-    """Search file descriptions by keyword. Find files by what they do, not their name.
+    """Search file descriptions by keyword. Find files by what they do, not by what they contain or how they're named.
+
+    Use this when you know what a file does but not where it lives — Grep searches content (slower for purpose queries), paths_search searches indexed descriptions.
 
     Returns {pattern, results: [{path, type, description}]}.
     """

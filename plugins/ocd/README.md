@@ -21,10 +21,10 @@ Convention files deployed to `.claude/rules/` via `/ocd-init`. Auto-loaded every
 
 | Capability | Rule file | Purpose |
 |------------|-----------|---------|
-| `agent-authoring` | `ocd-agent-authoring.md` | Writing style, process flow notation, CLI design conventions |
-| `communication` | `ocd-communication.md` | Agent-user interaction style: alignment, feedback, questions |
-| `workflow` | `ocd-workflow.md` | Execution discipline: agents, testing, code practices |
-| `navigator` | `ocd-navigator.md` | Navigator CLI awareness and usage guide |
+| `design-principles` | `ocd-design-principles.md` | Foundational principles governing all artifacts and agent behavior |
+| `workflow` | `ocd-workflow.md` | Execution discipline: working directory, agents, testing |
+| `system-documentation` | `ocd-system-documentation.md` | README and architecture.md requirements per system, with nesting and currency rules |
+| `process-flow-notation` | `ocd-process-flow-notation.md` | Structured programming notation for agent workflows |
 
 ### Hook: Permission enforcement
 
@@ -53,6 +53,17 @@ Agent-facing entry point at `skills/navigator/__main__.py`. Agents call `--help`
 | `get-undescribed` | Find entries needing descriptions (used by /ocd-navigator skill) |
 | `set <path> --description` | Write description for entry (used by /ocd-navigator skill) |
 | `init --db <path>` | Create database with schema and seed rules |
+
+### MCP Servers
+
+Agent-facing tools exposed over the Model Context Protocol. Registered in `.mcp.json`; started by Claude Code on session connect.
+
+| Server | Tools | Purpose |
+|--------|-------|---------|
+| `ocd-navigator` | `paths_*`, `governance_*`, `skills_*`, `references_*`, `scope_*` | Project structure index, governance discovery, reference mapping |
+| `ocd-friction` | `friction_*` | Capture and triage process friction encountered during workflows |
+| `ocd-decisions` | `decisions_record`, `decisions_list`, `decisions_get`, `decisions_update`, `decisions_remove` | Record and maintain non-obvious project choices in `decisions.md` and `decisions/*.md` |
+| `ocd-stash` | `stash_add`, `stash_review`, `stash_remove`, `stash_promote` | Capture ideas and future work to `.claude/stash/stash.md` (project-scoped) with fallback to `~/.claude/stash/stash.md` for unattached entries |
 
 ## License
 
