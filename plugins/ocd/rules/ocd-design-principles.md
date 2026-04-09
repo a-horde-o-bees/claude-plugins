@@ -24,6 +24,17 @@ Every artifact carries its own purpose, structure, and guard rails. A reader enc
 - Directory layout reveals architecture without a guide
 - Architectural decisions are recorded with the reasoning that produced them, not just the outcome
 
+## Capture Rationale
+
+The "why" behind every significant decision, design choice, or structural change is preserved alongside the artifact — not left to inspection, memory, or future re-derivation. Rationale is not supplementary; it's essential content that enables future maintenance, refactoring, and extension to proceed from informed understanding rather than guesswork.
+
+- Decision records include context, alternatives considered, choice, and consequences — not just the choice
+- Addressing edges carry rationales describing the specific mechanism, not just the targeting relationship
+- Architecture documents explain *why* the design is shaped this way, not only *what exists*
+- Commit messages explain the reasoning behind a change, not only the change itself
+- When encountering an existing choice with missing rationale: recover it before acting, or surface the gap to the user — acting on guessed rationale is how intentional decisions get inadvertently undone
+- Rationale in stable artifacts is forward-looking — phrase guidance as what to do now, not what changed from before. "X used to do Y; now Z" expires when the historical state goes extinct; "X does Z" is permanent. Historical context belongs in commit messages, not in conventions, principles, or architecture documents
+
 ## Progressive Disclosure
 
 Reveal information in layers — overview first, details on demand. Every level of a system is understandable without descending into the levels below it. A reader at any depth sees complete context for that depth and clear paths to go deeper when needed.

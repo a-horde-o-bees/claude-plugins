@@ -160,13 +160,13 @@ The prefix can appear after an em dash (`1. Commit — skill: /ocd-commit`) or s
     1. Suggest session restart
 ```
 
-## Skill Argument Notation
+## Argument Notation
 
-Notation for skill `argument-hint` frontmatter and workflow argument references. Required in always-on context — agents must parse argument hints to understand skill interfaces and follow `{flag}` references to resolve values during workflow execution.
+PFN content declares arguments in CLI-style format and references them in workflow steps using `--flag` (presence checks and iteration) and `{flag}` (value resolution). Used wherever PFN content needs parameterized inputs — skill `argument-hint` frontmatter is the primary current consumer, but the notation applies equally to referenced markdown sections with parameters, parameterized workflow invocations, and any PFN content declaring required inputs.
 
-### Argument Hint Format
+### Declaration Format
 
-The `argument-hint` field in SKILL.md frontmatter declares skill arguments using CLI-style format. Agents read this to understand what arguments a skill accepts, which are required, and what values they expect.
+Arguments are declared using CLI-style format. The declaration appears wherever the PFN content is defined — in SKILL.md frontmatter this is the `argument-hint` field; in a referenced markdown section this may be a designated header or preamble. Agents read the declaration to understand what arguments the content accepts, which are required, and what values they expect.
 
 Format elements:
 
@@ -198,9 +198,9 @@ Examples:
 - `--target` — required flag with required choice value; skill name or free text
 - `[--delegate]` — optional boolean flag
 
-### Workflow Argument References
+### Reference Syntax
 
-Workflows reference arguments using two forms — `--flag` for flag existence and `{flag}` for flag value. This separates presence checks from value resolution, making data flow explicit.
+PFN content references its declared arguments using two forms — `--flag` for flag existence and `{flag}` for flag value. This separates presence checks from value resolution, making data flow explicit.
 
 `--flag` refers to the flag itself — existence, iteration over instances:
 
@@ -235,6 +235,3 @@ Reference patterns in workflow steps:
     1. Execute inline
 ```
 
-### Relationship to Process Flow Notation
-
-Skill Argument Notation extends Process Flow Notation for skill-specific constructs. PFN defines how to write workflow steps (conditionals, iteration, flow control). Argument notation defines how those steps reference skill inputs. Both are required context — PFN for step structure, argument notation for data flow within steps.

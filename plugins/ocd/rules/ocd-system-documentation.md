@@ -6,7 +6,7 @@ depends:
 
 # System Documentation
 
-What documentation each system maintains, how nested systems relate, and when to check or update documentation.
+Every system maintains documentation that captures the information a consumer or developer needs to work with it, separated by concern across nesting levels and kept current with system state.
 
 ## System Boundaries
 
@@ -14,39 +14,23 @@ The project root is always a system. Beyond the root, a system is any structural
 
 ## Required Documents
 
-Every system maintains at its root:
+Every system maintains both a consumer-facing entry point and a developer-facing design reference at its root, so the information needed to understand and work with the system is captured in known locations rather than rediscovered each time.
 
 - `README.md` — user/consumer facing: what it does, how to install, configure, use
 - `architecture.md` — system facing: layers, components, relationships, design patterns, key implementation details
 
-## Nesting
+## Nesting Discipline
 
-Systems may contain subsystems. Parent documentation gives a generalized description of each subsystem — what it does and how it relates to the whole. Subsystems describe themselves in their own documentation.
+Parent documentation describes each subsystem generally and links down; subsystems describe themselves in detail. Neither layer re-explains content that belongs to the other, so readers can navigate from general to specific without encountering duplicated or conflicting descriptions.
 
 - Parent README describes each subsystem's purpose and links to the subsystem's README for details
 - Parent architecture.md describes each subsystem's role in the overall architecture and links to the subsystem's architecture.md for internals
 - Neither parent document re-explains content that belongs to the subsystem's own documentation
 - A reader navigates from general to specific: project root → system → subsystem
 
-## Decisions
+## Documentation Currency
 
-`decisions.md` lives at the project root (not per-system) with detail files in `decisions/`. Decisions are preventative — they record non-obvious choices to prevent backtracking.
-
-`decisions.md` is the index — one line per decision, implicit timeline by insertion order. `decisions/` holds detail files when reasoning is worth preserving.
-
-- Simple: `- **[Title]** — one-line summary`
-- With detail: `- **[Title]** — one-line summary → [detail](decisions/file.md)`
-
-Record when alternatives were considered and rejected, or when reasoning is not derivable from code or conventions. Detail files follow:
-
-- **Context** — what problem or question prompted the decision
-- **Options Considered** — alternatives evaluated with trade-offs
-- **Decision** — what was chosen and why
-- **Consequences** — what this enables, constrains, and how to mitigate risks
-
-Do not record implementation details, choices dictated by convention, or standard patterns obvious from reading code. Update existing entries when direction changes. Remove entries and detail files when the decision is no longer relevant.
-
-## Behavioral Triggers
+Documentation tracks current system state — modifications to a system trigger corresponding documentation updates so the recorded description doesn't drift from reality.
 
 - Before modifying a system, check for its architecture reference
 - After significant structural changes (new tables, new layers, changed tool interfaces), update the architecture reference
