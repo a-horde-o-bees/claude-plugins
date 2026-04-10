@@ -1,15 +1,14 @@
 ---
 name: checkpoint
-description: Commit, push, refresh marketplace, update plugins, and detect restart need
+description: Commit, push, refresh marketplace, update plugins, recommend restart
 allowed-tools:
   - Skill
-  - Bash(git diff *)
   - Bash(claude plugins *)
 ---
 
 # /checkpoint
 
-Bundle the full development checkpoint cycle — commit, push, marketplace refresh, plugin update, restart detection. Ensures every step runs and reports the result.
+Bundle the full development checkpoint cycle — commit, push, marketplace refresh, plugin update, restart recommendation. Ensures every step runs and reports the result.
 
 ## Trigger
 
@@ -29,15 +28,9 @@ User runs `/checkpoint`
     - bash: `claude plugins update ocd@a-horde-o-bees`
     - bash: `claude plugins update blueprint@a-horde-o-bees`
 
-5. Detect restart need:
-    1. {pushed-commits} = commits pushed in step 2
-    2. Check if any pushed commit modified rule or hook files — bash: `git diff --name-only {pre-push-ref}..HEAD -- 'plugins/*/rules/' 'plugins/*/hooks/'`
-    3. If any matches: {restart-needed} = true
-    4. Else: {restart-needed} = false
-
 ### Report
 
 - Commits pushed: count and branch
 - Plugins updated: versions
-- If {restart-needed}: recommend session restart (`/exit` then `claude --continue`) — rules are auto-loaded into context at session start, and hook scripts run from the cached install, so both pick up changes only after restart
-- If not {restart-needed}: checkpoint complete, no restart needed
+- If commits were pushed: recommend session restart (`/exit` then `claude --continue`) — rules, hooks, MCP servers, and skill code all run from the cached plugin install and pick up changes only after restart
+- If nothing was pushed: checkpoint complete, no restart needed
