@@ -13,7 +13,7 @@ Tool design and server architecture conventions for MCP servers exposed as plugi
 
 Tool names follow `object_action` format — the domain object first, then the operation. Agents discover related tools by scanning for a shared prefix. Names map to the server's internal module structure: tools backed by `_governance.py` are prefixed `governance_`, tools backed by `_skills.py` are prefixed `skills_`.
 
-Examples: `governance_match`, `governance_list`, `paths_describe`, `skills_resolve` — not `list_governance`, `describe_path`, `resolve_skill`.
+Examples: `governance_match`, `governance_list`, `paths_get`, `skills_resolve` — not `list_governance`, `describe_path`, `resolve_skill`.
 
 ## Tool Descriptions
 

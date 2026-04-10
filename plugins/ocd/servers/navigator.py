@@ -33,7 +33,7 @@ mcp = FastMCP(
 
 Prefer Navigator for purpose-based queries:
 - Find files by what they do → paths_search (vs Grep, which searches content)
-- Browse structure with descriptions → paths_describe (start with '.' for top-level overview)
+- Browse structure with descriptions → paths_get (start with '.' for top-level overview)
 - Check which rules and conventions govern files → governance_match (before creating or modifying files)
 - Locate skills across discovery locations → skills_resolve
 
@@ -71,15 +71,17 @@ def _auto_scan(target_path: str = ".") -> None:
 
 
 @mcp.tool()
-def paths_describe(target_path: str) -> str:
-    """Describe entry at path. Files return type, description, stale flag. Directories return entry info plus children array.
+def paths_get(paths: str | list[str]) -> str:
+    """Retrieve entry details for one or more paths. Files return type, description, stale flag. Directories return entry info plus children.
 
+    Single path returns one entry dict. Multiple paths return {entries: [dict, ...]}.
     Start with '.' for top-level overview. Children with description=null need descriptions.
     """
     if err := _check_db(): return err
-    _auto_scan(target_path)
+    target = paths if isinstance(paths, str) else (paths[0] if paths else ".")
+    _auto_scan(target)
     try:
-        return _ok(nav.paths_describe(DB_PATH, target_path))
+        return _ok(nav.paths_get(DB_PATH, paths))
     except Exception as e:
         return _err(e)
 
@@ -125,7 +127,7 @@ def paths_search(pattern: str) -> str:
 
 
 @mcp.tool()
-def paths_set(
+def paths_upsert(
     entry_path: str,
     description: str | None = None,
     exclude: int | None = None,
@@ -138,8 +140,8 @@ def paths_set(
     if err := _check_db(): return err
     _auto_scan()
     try:
-        return _ok(nav.paths_set(DB_PATH, entry_path, description=description,
-                                 exclude=exclude, traverse=traverse))
+        return _ok(nav.paths_upsert(DB_PATH, entry_path, description=description,
+                                    exclude=exclude, traverse=traverse))
     except Exception as e:
         return _err(e)
 

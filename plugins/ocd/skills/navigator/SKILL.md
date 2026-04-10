@@ -26,7 +26,7 @@ Navigator maintains SQLite index of project files and directories with human-wri
   - `paths_undescribed` returns one directory per call — deepest first, ensuring children are described before parents
   - Entries with `description=null` need descriptions written from scratch
   - Entries with `stale=true` need re-evaluation — file changed but description may still be accurate
-  - `paths_set` records description and clears stale marker, updating stored hash to current — entry is now reviewed against current contents
+  - `paths_upsert` records description and clears stale marker, updating stored hash to current — entry is now reviewed against current contents
   - Loop terminates when `paths_undescribed` returns `done=true`
 
 Depth-first ordering is structural, not preference — parent directory descriptions are derived from their children's descriptions, so children must be finalized first. Each `paths_undescribed` call returns only leaf-level work within returned directory; child directories with their own undescribed entries appear in earlier iterations.
@@ -62,17 +62,17 @@ User runs `/ocd-navigator`
     5. For each child in {work}.listing.children where description is null:
         1. Read file
         2. Write description following Description Guidelines
-        3. paths_set: entry_path={child.path}, description="..."
+        3. paths_upsert: entry_path={child.path}, description="..."
     6. For each child in {work}.listing.children where stale is true:
         1. Read file
         2. Compare current file scope against existing stale description
         3. If description still accurately reflects file scope and role:
-            1. paths_set: entry_path={child.path}, description={existing description} — clears stale marker
+            1. paths_upsert: entry_path={child.path}, description={existing description} — clears stale marker
         4. Else:
             1. Write updated description following Description Guidelines
-            2. paths_set: entry_path={child.path}, description="..."
+            2. paths_upsert: entry_path={child.path}, description="..."
     7. Describe directory — informed by all children now visible in listing
-        1. paths_set: entry_path={work}.target, description="..."
+        1. paths_upsert: entry_path={work}.target, description="..."
 
 ### Report
 
@@ -85,4 +85,4 @@ User runs `/ocd-navigator`
 - Preserve existing descriptions that already conform to guidelines — do not overwrite unless they violate Description Guidelines rules
 - No description length limit — follow Description Guidelines guidance, not brevity constraints
 - Directories with `traverse=0` are listed but not entered — describe directory itself, not its contents
-- `paths_set` always clears stale marker — whether description changes or stays same, running `paths_set` marks entry as reviewed against current file contents
+- `paths_upsert` always clears stale marker — whether description changes or stays same, running `paths_upsert` marks entry as reviewed against current file contents

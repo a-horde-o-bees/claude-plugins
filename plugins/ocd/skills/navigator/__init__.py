@@ -33,8 +33,22 @@ from ._skills import skills_resolve, skills_list
 logger = logging.getLogger(__name__)
 
 
-def paths_describe(db_path: str, target_path: str) -> dict:
-    """Describe an entry at path. Files return entry info. Directories return entry info with children."""
+def paths_get(db_path: str, paths: str | list[str]) -> dict:
+    """Retrieve entry details for one or more paths.
+
+    Files return type, description, stale flag. Directories return entry
+    info plus children. Single path returns one dict; multiple paths
+    return {"entries": [dict, ...]}.
+    """
+    if isinstance(paths, str):
+        return _paths_get_single(db_path, paths)
+
+    entries = [_paths_get_single(db_path, p) for p in paths]
+    return {"entries": entries}
+
+
+def _paths_get_single(db_path: str, target_path: str) -> dict:
+    """Retrieve entry details for a single path."""
     target_path = target_path.rstrip("/")
     if target_path == ".":
         target_path = ""
@@ -168,13 +182,13 @@ def paths_undescribed(db_path: str) -> dict:
             "remaining": len(work_entries),
             "directories": len(work_dirs),
             "target": deepest,
-            "listing": paths_describe(db_path, deepest),
+            "listing": paths_get(db_path, deepest),
         }
     finally:
         conn.close()
 
 
-def paths_set(
+def paths_upsert(
     db_path: str,
     entry_path: str,
     description: str | None = None,

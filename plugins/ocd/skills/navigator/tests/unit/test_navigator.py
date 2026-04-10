@@ -26,8 +26,8 @@ from skills.navigator import (
     paths_list,
     paths_remove,
     paths_search,
-    paths_set,
-    paths_describe,
+    paths_upsert,
+    paths_get,
 )
 
 
@@ -353,22 +353,22 @@ class TestInitDb:
 
 class TestDescribePath:
     def test_file_with_description(self, populated_db):
-        result = paths_describe(populated_db, "src/main.py")
+        result = paths_get(populated_db, "src/main.py")
         assert result["path"] == "src/main.py"
         assert result["description"] == "Application entry point"
         assert result["type"] == "file"
 
     def test_file_null_description(self, populated_db):
-        result = paths_describe(populated_db, "src/lib/core.py")
+        result = paths_get(populated_db, "src/lib/core.py")
         assert result["description"] is None
 
     def test_file_empty_description(self, populated_db):
-        result = paths_describe(populated_db, "src/config.py")
+        result = paths_get(populated_db, "src/config.py")
         assert result["path"] == "src/config.py"
         assert result["description"] == ""
 
     def test_directory_lists_children(self, populated_db):
-        result = paths_describe(populated_db, "src/lib")
+        result = paths_get(populated_db, "src/lib")
         assert result["path"] == "src/lib/"
         assert result["description"] == "Library modules"
         child_paths = [c["path"] for c in result["children"]]
@@ -383,11 +383,11 @@ class TestDescribePath:
         )
         conn.commit()
         conn.close()
-        result = paths_describe(db_path, "mydir")
+        result = paths_get(db_path, "mydir")
         assert result["description"] is None
 
     def test_directory_children_sorted_dirs_first(self, populated_db):
-        result = paths_describe(populated_db, "src")
+        result = paths_get(populated_db, "src")
         children = result["children"]
         # lib/ (directory) should come before .py files
         lib_idx = next(i for i, c in enumerate(children) if c["type"] == "directory")
@@ -395,12 +395,12 @@ class TestDescribePath:
         assert lib_idx < main_idx
 
     def test_children_null_show_question_mark(self, populated_db):
-        result = paths_describe(populated_db, "src/lib")
+        result = paths_get(populated_db, "src/lib")
         core = next(c for c in result["children"] if "core.py" in c["path"])
         assert core["description"] is None
 
     def test_children_empty_no_marker(self, populated_db):
-        result = paths_describe(populated_db, "src")
+        result = paths_get(populated_db, "src")
         config = next(c for c in result["children"] if "config.py" in c["path"])
         assert config["description"] == ""
 
@@ -420,17 +420,17 @@ class TestDescribePath:
         )
         conn.commit()
         conn.close()
-        result = paths_describe(db_path, "dir")
+        result = paths_get(db_path, "dir")
         child_paths = [c["path"] for c in result["children"]]
         assert "dir/visible" in child_paths
         assert "dir/hidden" not in child_paths
 
     def test_not_found(self, db_path):
-        result = paths_describe(db_path, "nonexistent")
+        result = paths_get(db_path, "nonexistent")
         assert result["children"] is None
 
     def test_dot_path(self, populated_db):
-        result = paths_describe(populated_db, ".")
+        result = paths_get(populated_db, ".")
         assert result["path"] == "./"
 
 
@@ -441,18 +441,18 @@ class TestSetEntry:
     def test_add_new_file(self, db_path, tmp_path):
         f = tmp_path / "newfile.py"
         f.write_text("content")
-        result = paths_set(db_path, str(f), description="New file")
+        result = paths_upsert(db_path, str(f), description="New file")
         assert result["action"] == "added"
 
     def test_add_new_directory(self, db_path, tmp_path):
         d = tmp_path / "newdir"
         d.mkdir()
-        result = paths_set(db_path, str(d), description="New dir")
+        result = paths_upsert(db_path, str(d), description="New dir")
         assert result["action"] == "added"
         assert result["type"] == "directory"
 
     def test_update_existing(self, populated_db):
-        result = paths_set(populated_db, "src/main.py", description="Updated")
+        result = paths_upsert(populated_db, "src/main.py", description="Updated")
         assert result["action"] == "updated"
         conn = get_connection(populated_db)
         row = conn.execute("SELECT description FROM entries WHERE path = 'src/main.py'").fetchone()
@@ -460,39 +460,39 @@ class TestSetEntry:
         conn.close()
 
     def test_set_empty_string_description(self, populated_db):
-        paths_set(populated_db, "src/lib/core.py", description="")
+        paths_upsert(populated_db, "src/lib/core.py", description="")
         conn = get_connection(populated_db)
         row = conn.execute("SELECT description FROM entries WHERE path = 'src/lib/core.py'").fetchone()
         assert row["description"] == ""
         conn.close()
 
     def test_set_traverse_flag(self, populated_db):
-        paths_set(populated_db, "src/lib", traverse=0)
+        paths_upsert(populated_db, "src/lib", traverse=0)
         conn = get_connection(populated_db)
         row = conn.execute("SELECT traverse FROM entries WHERE path = 'src/lib'").fetchone()
         assert row["traverse"] == 0
         conn.close()
 
     def test_set_exclude_flag(self, populated_db):
-        paths_set(populated_db, "src/lib", exclude=1)
+        paths_upsert(populated_db, "src/lib", exclude=1)
         conn = get_connection(populated_db)
         row = conn.execute("SELECT exclude FROM entries WHERE path = 'src/lib'").fetchone()
         assert row["exclude"] == 1
         conn.close()
 
     def test_add_pattern(self, db_path):
-        result = paths_set(db_path, "**/*.log", exclude=1)
+        result = paths_upsert(db_path, "**/*.log", exclude=1)
         assert result["action"] == "added"
         assert result["type"] == "pattern"
 
     def test_no_changes(self, populated_db):
-        result = paths_set(populated_db, "src/main.py")
+        result = paths_upsert(populated_db, "src/main.py")
         assert result["action"] == "none"
 
     def test_stores_git_hash_on_describe(self, populated_db, tmp_path):
         f = tmp_path / "hashtest.py"
         f.write_text("content")
-        paths_set(populated_db, str(f), description="Test")
+        paths_upsert(populated_db, str(f), description="Test")
         conn = get_connection(populated_db)
         row = conn.execute(
             "SELECT git_hash FROM entries WHERE path = ?", (str(f),)
@@ -892,7 +892,7 @@ class TestScanPath:
         scan_path(db_path, str(src))
 
         # Set description (stores hash)
-        paths_set(db_path, main_path, description="Entry point")
+        paths_upsert(db_path, main_path, description="Entry point")
 
         # Modify file
         (src / "main.py").write_text("print('changed')")
@@ -933,7 +933,7 @@ class TestScanPath:
         scan_path(db_path, str(src))
 
         # Describe the src directory
-        paths_set(db_path, str(src), description="Source directory")
+        paths_upsert(db_path, str(src), description="Source directory")
 
         # Add a new file
         (src / "newfile.py").write_text("new content")
@@ -957,7 +957,7 @@ class TestScanPath:
 
         # Initial scan and describe parent
         scan_path(db_path, str(src))
-        paths_set(db_path, str(src), description="Source directory")
+        paths_upsert(db_path, str(src), description="Source directory")
 
         # Remove a file
         (src / "utils.py").unlink()
@@ -982,9 +982,9 @@ class TestScanPath:
 
         # Scan and describe both src and lib
         scan_path(db_path, str(src))
-        paths_set(db_path, str(src), description="Source directory")
-        paths_set(db_path, lib_path, description="Library modules")
-        paths_set(db_path, core_path, description="Core module")
+        paths_upsert(db_path, str(src), description="Source directory")
+        paths_upsert(db_path, lib_path, description="Library modules")
+        paths_upsert(db_path, core_path, description="Core module")
 
         # Modify core.py
         (src / "lib" / "core.py").write_text("class Updated: pass")
@@ -1025,7 +1025,7 @@ class TestStaleBehavior:
         conn.commit()
         conn.close()
 
-        paths_set(populated_db, "src/lib", description="Updated description")
+        paths_upsert(populated_db, "src/lib", description="Updated description")
 
         conn = get_connection(populated_db)
         row = conn.execute(
@@ -1062,7 +1062,7 @@ class TestStaleBehavior:
         conn.commit()
         conn.close()
 
-        result = paths_describe(populated_db, "src/main.py")
+        result = paths_get(populated_db, "src/main.py")
         assert result["stale"]
         assert result["description"] == "Application entry point"
 
@@ -1072,7 +1072,7 @@ class TestStaleBehavior:
         conn.commit()
         conn.close()
 
-        result = paths_describe(populated_db, "src/lib")
+        result = paths_get(populated_db, "src/lib")
         assert result["stale"]
         assert result["description"] == "Library modules"
 
@@ -1082,7 +1082,7 @@ class TestStaleBehavior:
         conn.commit()
         conn.close()
 
-        result = paths_describe(populated_db, "src")
+        result = paths_get(populated_db, "src")
         main_child = next(c for c in result["children"] if "main.py" in c["path"])
         assert main_child["stale"]
         assert main_child["description"] == "Application entry point"
@@ -1206,7 +1206,7 @@ class TestSetEntryMetrics:
     def test_stores_metrics_on_describe(self, db_path, tmp_path):
         f = tmp_path / "test.py"
         f.write_text("a = 1\nb = 2\n")
-        paths_set(db_path, str(f), description="Test file")
+        paths_upsert(db_path, str(f), description="Test file")
         conn = get_connection(db_path)
         row = conn.execute(
             "SELECT line_count, char_count FROM entries WHERE path = ?",
@@ -1219,9 +1219,9 @@ class TestSetEntryMetrics:
     def test_updates_metrics_on_redescribe(self, db_path, tmp_path):
         f = tmp_path / "test.py"
         f.write_text("a = 1\n")
-        paths_set(db_path, str(f), description="v1")
+        paths_upsert(db_path, str(f), description="v1")
         f.write_text("a = 1\nb = 2\nc = 3\n")
-        paths_set(db_path, str(f), description="v2")
+        paths_upsert(db_path, str(f), description="v2")
         conn = get_connection(db_path)
         row = conn.execute(
             "SELECT line_count FROM entries WHERE path = ?",

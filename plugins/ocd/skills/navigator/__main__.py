@@ -66,7 +66,7 @@ def _format_describe(result: dict) -> str:
 
 def _dispatch_describe(args: argparse.Namespace) -> None:
     _auto_scan(args)
-    print(_format_describe(paths_describe(args.db, args.path)))
+    print(_format_describe(paths_get(args.db, args.path)))
 
 
 def _dispatch_list(args: argparse.Namespace) -> None:
@@ -100,7 +100,7 @@ def _dispatch_set(args: argparse.Namespace) -> None:
     _auto_scan(args)
     exclude = int(args.exclude) if args.exclude is not None else None
     traverse = int(args.traverse) if args.traverse is not None else None
-    result = paths_set(
+    result = paths_upsert(
         args.db,
         args.path,
         description=args.description,
