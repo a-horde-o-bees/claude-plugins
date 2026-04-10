@@ -229,7 +229,7 @@ def governance_unclassified(db_path: str) -> dict:
 
         file_rows = conn.execute(
             "SELECT path FROM entries "
-            "WHERE entry_type = 'file' AND path NOT LIKE '%*%' AND exclude = 0"
+            "WHERE entry_type = 'file' AND exclude = 0"
         ).fetchall()
 
         unclassified: list[str] = []

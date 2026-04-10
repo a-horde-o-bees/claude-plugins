@@ -10,8 +10,7 @@ from skills.navigator._scanner import (
     _compute_git_hash,
     _compute_file_metrics,
     _mark_parents_stale,
-    _is_pattern,
-    _matches_any_rule,
+    _matches_any_pattern,
     scan_path,
 )
 from skills.navigator._governance import (
@@ -80,80 +79,63 @@ def populated_db(db_path):
 
 
 @pytest.fixture
-def db_with_rules(db_path):
-    """Database with pattern-based rules."""
+def db_with_patterns(db_path):
+    """Database with glob patterns in the patterns table."""
     conn = get_connection(db_path)
-    rules = [
-        ("**/__pycache__", None, None, 1, 0, None, None),
-        ("**/tests", None, None, 0, 0, "Test suites", None),
-        ("**/__init__.py", None, None, 0, 1, "Package marker", None),
+    pats = [
+        ("**/__pycache__", None, 1, 0, None),
+        ("**/tests", None, 0, 0, "Test suites"),
+        ("**/__init__.py", None, 0, 1, "Package marker"),
     ]
-    for r in rules:
+    for p in pats:
         conn.execute(
-            "INSERT INTO entries (path, parent_path, entry_type, exclude, traverse, description, git_hash) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?)", r,
+            "INSERT INTO patterns (pattern, entry_type, exclude, traverse, description) "
+            "VALUES (?, ?, ?, ?, ?)", p,
         )
     conn.commit()
     conn.close()
     return db_path
 
 
-# --- _is_pattern ---
+# --- _matches_any_pattern ---
 
 
-class TestIsPattern:
-    def test_glob_pattern(self):
-        assert _is_pattern("**/__init__.py") is True
-
-    def test_single_wildcard(self):
-        assert _is_pattern("src/*.py") is True
-
-    def test_concrete_path(self):
-        assert _is_pattern("src/main.py") is False
-
-    def test_directory_path(self):
-        assert _is_pattern("src/lib") is False
-
-
-# --- _matches_any_rule ---
-
-
-class TestMatchesAnyRule:
-    def _make_rules(self, patterns):
-        """Create mock rule rows from pattern strings."""
-        rules = []
-        for pat, desc in patterns:
-            rules.append({"path": pat, "exclude": 0, "traverse": 1, "description": desc})
-        return rules
+class TestMatchesAnyPattern:
+    def _make_patterns(self, items):
+        """Create mock pattern rows from (glob, description) pairs."""
+        return [
+            {"pattern": pat, "exclude": 0, "traverse": 1, "description": desc}
+            for pat, desc in items
+        ]
 
     def test_double_star_matches_nested(self):
-        rules = self._make_rules([("**/__init__.py", "Package marker")])
-        result = _matches_any_rule("src/lib/__init__.py", rules)
+        pats = self._make_patterns([("**/__init__.py", "Package marker")])
+        result = _matches_any_pattern("src/lib/__init__.py", pats)
         assert result is not None
         assert result["description"] == "Package marker"
 
     def test_double_star_matches_top_level(self):
-        rules = self._make_rules([("**/tests", "Test suites")])
-        result = _matches_any_rule("tests", rules)
+        pats = self._make_patterns([("**/tests", "Test suites")])
+        result = _matches_any_pattern("tests", pats)
         assert result is not None
 
     def test_no_match(self):
-        rules = self._make_rules([("**/__init__.py", "Package marker")])
-        result = _matches_any_rule("src/main.py", rules)
+        pats = self._make_patterns([("**/__init__.py", "Package marker")])
+        result = _matches_any_pattern("src/main.py", pats)
         assert result is None
 
     def test_literal_pattern(self):
-        rules = self._make_rules([("src/main.py", "Entry point")])
-        result = _matches_any_rule("src/main.py", rules)
+        pats = self._make_patterns([("src/main.py", "Entry point")])
+        result = _matches_any_pattern("src/main.py", pats)
         assert result is not None
 
     def test_literal_no_match(self):
-        rules = self._make_rules([("src/main.py", "Entry point")])
-        result = _matches_any_rule("src/other.py", rules)
+        pats = self._make_patterns([("src/main.py", "Entry point")])
+        result = _matches_any_pattern("src/other.py", pats)
         assert result is None
 
-    def test_empty_rules(self):
-        result = _matches_any_rule("src/main.py", [])
+    def test_empty_patterns(self):
+        result = _matches_any_pattern("src/main.py", [])
         assert result is None
 
 
@@ -286,13 +268,16 @@ class TestInitDb:
             result = init_db(db)
             assert "2 added" in result
             conn = get_connection(db)
-            rows = conn.execute("SELECT * FROM entries").fetchall()
+            rows = conn.execute("SELECT * FROM patterns").fetchall()
             assert len(rows) == 2
+            # Entries table should be empty — patterns don't leak in
+            entry_rows = conn.execute("SELECT * FROM entries").fetchall()
+            assert len(entry_rows) == 0
             conn.close()
         finally:
             db_ctx.SEED_PATH = original
 
-    def test_upserts_changed_seed_rules(self, tmp_path):
+    def test_upserts_changed_seed_patterns(self, tmp_path):
         csv_path = tmp_path / "seed.csv"
         csv_path.write_text(
             "path,entry_type,exclude,traverse,description\n"
@@ -304,7 +289,7 @@ class TestInitDb:
         try:
             db_ctx.SEED_PATH = csv_path
             init_db(db)
-            # Change the seed rule
+            # Change the seed pattern
             csv_path.write_text(
                 "path,entry_type,exclude,traverse,description\n"
                 "**/tests,directory,0,0,Updated description\n"
@@ -313,14 +298,14 @@ class TestInitDb:
             assert "1 updated" in result
             conn = get_connection(db)
             row = conn.execute(
-                "SELECT description FROM entries WHERE path = '**/tests'"
+                "SELECT description FROM patterns WHERE pattern = '**/tests'"
             ).fetchone()
             assert row[0] == "Updated description"
             conn.close()
         finally:
             db_ctx.SEED_PATH = original
 
-    def test_adds_new_seed_rules(self, tmp_path):
+    def test_adds_new_seed_patterns(self, tmp_path):
         csv_path = tmp_path / "seed.csv"
         csv_path.write_text(
             "path,entry_type,exclude,traverse,description\n"
@@ -332,7 +317,7 @@ class TestInitDb:
         try:
             db_ctx.SEED_PATH = csv_path
             init_db(db)
-            # Add a new seed rule
+            # Add a new seed pattern
             csv_path.write_text(
                 "path,entry_type,exclude,traverse,description\n"
                 "**/tests,directory,0,0,Test suites\n"
@@ -341,7 +326,7 @@ class TestInitDb:
             result = init_db(db)
             assert "1 added" in result
             conn = get_connection(db)
-            rows = conn.execute("SELECT * FROM entries").fetchall()
+            rows = conn.execute("SELECT * FROM patterns").fetchall()
             assert len(rows) == 2
             conn.close()
         finally:
@@ -480,10 +465,9 @@ class TestSetEntry:
         assert row["exclude"] == 1
         conn.close()
 
-    def test_add_pattern(self, db_path):
-        result = paths_upsert(db_path, "**/*.log", exclude=1)
-        assert result["action"] == "added"
-        assert result["type"] == "pattern"
+    def test_rejects_pattern(self, db_path):
+        with pytest.raises(ValueError, match="glob patterns"):
+            paths_upsert(db_path, "**/*.log", exclude=1)
 
     def test_no_changes(self, populated_db):
         result = paths_upsert(populated_db, "src/main.py")
@@ -532,7 +516,7 @@ class TestRemoveEntry:
         # Add a pattern rule
         conn = get_connection(populated_db)
         conn.execute(
-            "INSERT INTO entries (path, entry_type, exclude) VALUES ('**/*.log', NULL, 1)"
+            "INSERT INTO patterns (pattern, entry_type, exclude) VALUES ('**/*.log', NULL, 1)"
         )
         conn.commit()
         conn.close()
@@ -541,10 +525,10 @@ class TestRemoveEntry:
         assert result["action"] == "removed_all"
 
         conn = get_connection(populated_db)
-        concrete = conn.execute("SELECT COUNT(*) FROM entries WHERE path NOT LIKE '%*%'").fetchone()[0]
-        patterns = conn.execute("SELECT COUNT(*) FROM entries WHERE path LIKE '%*%'").fetchone()[0]
-        assert concrete == 0
-        assert patterns == 1
+        entries_count = conn.execute("SELECT COUNT(*) FROM entries").fetchone()[0]
+        patterns_count = conn.execute("SELECT COUNT(*) FROM patterns").fetchone()[0]
+        assert entries_count == 0
+        assert patterns_count == 1
         conn.close()
 
 
@@ -565,8 +549,9 @@ class TestSearchEntries:
         result = paths_search(populated_db, "nonexistent")
         assert result["results"] == []
 
-    def test_excludes_patterns(self, db_with_rules):
-        result = paths_search(db_with_rules, "Package")
+    def test_excludes_patterns(self, db_with_patterns):
+        """Patterns live in a separate table — search only hits entries."""
+        result = paths_search(db_with_patterns, "Package")
         assert result["results"] == []
 
 
@@ -656,11 +641,11 @@ class TestListFiles:
         conn = get_connection(db)
         conn.executescript(SCHEMA)
         conn.execute(
-            "INSERT INTO entries (path, entry_type, exclude) "
+            "INSERT INTO patterns (pattern, entry_type, exclude) "
             "VALUES ('**/__pycache__', NULL, 1)"
         )
         conn.execute(
-            "INSERT INTO entries (path, entry_type, exclude, traverse, description) "
+            "INSERT INTO patterns (pattern, entry_type, exclude, traverse, description) "
             "VALUES ('**/tests', NULL, 0, 0, 'Test suites')"
         )
         conn.commit()
@@ -763,14 +748,14 @@ class TestScanPath:
         # Seed rules
         conn = get_connection(db_path)
         conn.execute(
-            "INSERT INTO entries (path, entry_type, exclude) VALUES ('**/__pycache__', NULL, 1)"
+            "INSERT INTO patterns (pattern, entry_type, exclude) VALUES ('**/__pycache__', NULL, 1)"
         )
         conn.execute(
-            "INSERT INTO entries (path, entry_type, exclude, traverse, description) "
+            "INSERT INTO patterns (pattern, entry_type, exclude, traverse, description) "
             "VALUES ('**/tests', NULL, 0, 0, 'Test suites')"
         )
         conn.execute(
-            "INSERT INTO entries (path, entry_type, description) "
+            "INSERT INTO patterns (pattern, entry_type, description) "
             "VALUES ('**/__init__.py', NULL, 'Package marker')"
         )
         conn.commit()
@@ -793,7 +778,7 @@ class TestScanPath:
         conn = get_connection(db)
         conn.executescript(SCHEMA)
         conn.execute(
-            "INSERT INTO entries (path, entry_type, exclude) VALUES ('**/__pycache__', NULL, 1)"
+            "INSERT INTO patterns (pattern, entry_type, exclude) VALUES ('**/__pycache__', NULL, 1)"
         )
         conn.commit()
         conn.close()
@@ -804,7 +789,7 @@ class TestScanPath:
         # Check no entries for __pycache__ dir or its contents
         cache_path = str(cache)
         rows = conn.execute(
-            "SELECT path FROM entries WHERE (path = ? OR path LIKE ?) AND path NOT LIKE '%*%'",
+            "SELECT path FROM entries WHERE path = ? OR path LIKE ?",
             (cache_path, cache_path + "/%"),
         ).fetchall()
         assert len(rows) == 0
@@ -816,10 +801,10 @@ class TestScanPath:
 
         conn = get_connection(db_path)
         conn.execute(
-            "INSERT INTO entries (path, entry_type, exclude) VALUES ('**/__pycache__', NULL, 1)"
+            "INSERT INTO patterns (pattern, entry_type, exclude) VALUES ('**/__pycache__', NULL, 1)"
         )
         conn.execute(
-            "INSERT INTO entries (path, entry_type, exclude, traverse, description) "
+            "INSERT INTO patterns (pattern, entry_type, exclude, traverse, description) "
             "VALUES ('**/tests', NULL, 0, 0, 'Test suites')"
         )
         conn.commit()
@@ -848,10 +833,10 @@ class TestScanPath:
 
         conn = get_connection(db_path)
         conn.execute(
-            "INSERT INTO entries (path, entry_type, exclude) VALUES ('**/__pycache__', NULL, 1)"
+            "INSERT INTO patterns (pattern, entry_type, exclude) VALUES ('**/__pycache__', NULL, 1)"
         )
         conn.execute(
-            "INSERT INTO entries (path, entry_type, description) "
+            "INSERT INTO patterns (pattern, entry_type, description) "
             "VALUES ('**/__init__.py', NULL, 'Package marker')"
         )
         conn.commit()
@@ -915,7 +900,7 @@ class TestScanPath:
 
         conn = get_connection(db_path)
         conn.execute(
-            "INSERT INTO entries (path, entry_type, exclude) VALUES ('**/__pycache__', NULL, 1)"
+            "INSERT INTO patterns (pattern, entry_type, exclude) VALUES ('**/__pycache__', NULL, 1)"
         )
         conn.commit()
         conn.close()

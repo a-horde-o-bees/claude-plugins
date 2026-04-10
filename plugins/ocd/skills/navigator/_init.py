@@ -45,17 +45,15 @@ def _status_extra(plugin_name: str, project_dir: Path) -> list[dict]:
             ]
 
         total = conn.execute(
-            "SELECT COUNT(*) as c FROM entries WHERE path NOT LIKE '%*%'",
+            "SELECT COUNT(*) as c FROM entries",
         ).fetchone()["c"]
 
         undescribed = conn.execute(
-            "SELECT COUNT(*) as c FROM entries "
-            "WHERE path NOT LIKE '%*%' AND description IS NULL",
+            "SELECT COUNT(*) as c FROM entries WHERE description IS NULL",
         ).fetchone()["c"]
 
         stale = conn.execute(
-            "SELECT COUNT(*) as c FROM entries "
-            "WHERE path NOT LIKE '%*%' AND stale = 1",
+            "SELECT COUNT(*) as c FROM entries WHERE stale = 1",
         ).fetchone()["c"]
 
         conn.close()

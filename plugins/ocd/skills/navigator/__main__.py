@@ -483,14 +483,14 @@ def build_parser() -> argparse.ArgumentParser:
             "\n"
             "  path              Remove single entry\n"
             "  path --recursive  Remove directory and all children\n"
-            "  --all             Remove all concrete entries (preserves pattern rules)"
+            "  --all             Remove all concrete entries (patterns table unaffected)"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
         parents=[db_parent],
     )
     remove_p.add_argument("path", nargs="?", default=None, help="File or directory path to remove")
     remove_p.add_argument("--recursive", action="store_true", default=False, help="Remove directory and all children")
-    remove_p.add_argument("--all", action="store_true", default=False, help="Remove all concrete entries (preserves pattern rules)")
+    remove_p.add_argument("--all", action="store_true", default=False, help="Remove all concrete entries (patterns table unaffected)")
     remove_p.set_defaults(_dispatch=_dispatch_remove)
 
     # search

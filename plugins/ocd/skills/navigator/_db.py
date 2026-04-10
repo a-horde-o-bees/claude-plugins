@@ -1,6 +1,6 @@
 """Navigator database infrastructure.
 
-Schema, migrations, connection factory, and initialization with seed rules.
+Schema, migrations, connection factory, and initialization with seed patterns.
 """
 
 import csv
@@ -26,6 +26,14 @@ CREATE TABLE IF NOT EXISTS entries (
 
 CREATE INDEX IF NOT EXISTS idx_entries_parent ON entries(parent_path);
 
+CREATE TABLE IF NOT EXISTS patterns (
+    pattern TEXT PRIMARY KEY,
+    entry_type TEXT CHECK (entry_type IN ('file', 'directory')),
+    exclude INTEGER NOT NULL DEFAULT 0,
+    traverse INTEGER NOT NULL DEFAULT 1,
+    description TEXT
+);
+
 CREATE TABLE IF NOT EXISTS governance (
     entry_path TEXT PRIMARY KEY REFERENCES entries(path) ON DELETE CASCADE,
     pattern TEXT NOT NULL,
@@ -46,12 +54,6 @@ CREATE TABLE IF NOT EXISTS config (
 );
 """
 
-MIGRATIONS = [
-    "ALTER TABLE entries ADD COLUMN stale INTEGER NOT NULL DEFAULT 0",
-    "ALTER TABLE entries ADD COLUMN line_count INTEGER",
-    "ALTER TABLE entries ADD COLUMN char_count INTEGER",
-]
-
 SEED_PATH = Path(__file__).parent / "navigator_seed.csv"
 
 
@@ -66,23 +68,17 @@ def get_connection(db_path: str) -> sqlite3.Connection:
 
 
 def init_db(db_path: str) -> str:
-    """Create database with schema, upsert seed rules from CSV.
+    """Create database with schema, upsert seed patterns from CSV.
 
-    Idempotent — safe to rerun. Creates schema if missing, then upserts
-    seed rules (adds new patterns, updates changed ones). Non-seed
-    entries are untouched.
+    Idempotent — safe to rerun. Creates schema if missing, migrates
+    legacy pattern rows from entries to patterns table, then upserts
+    seed patterns. Non-seed entries are untouched.
     """
     path = Path(db_path)
     path.parent.mkdir(parents=True, exist_ok=True)
     conn = get_connection(str(path))
     try:
         conn.executescript(SCHEMA)
-
-        for migration in MIGRATIONS:
-            try:
-                conn.execute(migration)
-            except sqlite3.OperationalError:
-                pass
 
         if not SEED_PATH.exists():
             return f"Initialized: {path} (no seed file)"
@@ -100,16 +96,16 @@ def init_db(db_path: str) -> str:
 
                 existing = conn.execute(
                     "SELECT exclude, traverse, description, entry_type "
-                    "FROM entries WHERE path = ?",
+                    "FROM patterns WHERE pattern = ?",
                     (row["path"],),
                 ).fetchone()
 
                 if existing is None:
                     conn.execute(
-                        "INSERT INTO entries "
-                        "(path, parent_path, entry_type, exclude, traverse, description) "
-                        "VALUES (?, ?, ?, ?, ?, ?)",
-                        (row["path"], None, entry_type, exclude, traverse, description),
+                        "INSERT INTO patterns "
+                        "(pattern, entry_type, exclude, traverse, description) "
+                        "VALUES (?, ?, ?, ?, ?)",
+                        (row["path"], entry_type, exclude, traverse, description),
                     )
                     added += 1
                 elif (
@@ -119,8 +115,8 @@ def init_db(db_path: str) -> str:
                     or existing[3] != entry_type
                 ):
                     conn.execute(
-                        "UPDATE entries SET exclude = ?, traverse = ?, "
-                        "description = ?, entry_type = ? WHERE path = ?",
+                        "UPDATE patterns SET exclude = ?, traverse = ?, "
+                        "description = ?, entry_type = ? WHERE pattern = ?",
                         (exclude, traverse, description, entry_type, row["path"]),
                     )
                     updated += 1
@@ -143,6 +139,6 @@ def init_db(db_path: str) -> str:
             parts.append(f"{updated} updated")
         if not parts:
             parts.append("all current")
-        return f"Initialized: {path} (seed rules: {', '.join(parts)})"
+        return f"Initialized: {path} (seed patterns: {', '.join(parts)})"
     finally:
         conn.close()

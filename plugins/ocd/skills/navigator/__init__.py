@@ -16,7 +16,7 @@ from pathlib import Path
 
 # Local imports — used by functions in this module
 from ._db import get_connection
-from ._scanner import scan_path, _walk_filesystem, _is_pattern, _compute_file_metrics
+from ._scanner import scan_path, _walk_filesystem, _compute_file_metrics
 
 # Re-exports — public interface consumed by MCP server and CLI
 from ._governance import (
@@ -162,7 +162,7 @@ def paths_undescribed(db_path: str) -> dict:
     try:
         work_entries = conn.execute(
             "SELECT path, parent_path, entry_type FROM entries "
-            "WHERE (description IS NULL OR stale = 1) AND path NOT LIKE '%*%'"
+            "WHERE description IS NULL OR stale = 1"
         ).fetchall()
 
         if not work_entries:
@@ -195,27 +195,31 @@ def paths_upsert(
     exclude: int | None = None,
     traverse: int | None = None,
 ) -> dict:
-    """Create or update entry. Returns status dict."""
+    """Create or update entry. Returns status dict.
+
+    Only accepts concrete paths (files and directories), not glob patterns.
+    Patterns belong in the patterns table and are managed via seed CSV.
+    """
     entry_path = entry_path.rstrip("/")
     if entry_path == ".":
         entry_path = ""
 
-    is_pat = _is_pattern(entry_path)
+    if "*" in entry_path:
+        raise ValueError(
+            f"paths_upsert does not accept glob patterns: {entry_path!r}. "
+            "Patterns are managed via navigator_seed.csv."
+        )
 
-    if is_pat:
-        entry_type = None
-        parent_path = None
+    if os.path.isdir(entry_path) if entry_path else True:
+        entry_type = "directory"
+    elif os.path.isfile(entry_path):
+        entry_type = "file"
     else:
-        if os.path.isdir(entry_path) if entry_path else True:
-            entry_type = "directory"
-        elif os.path.isfile(entry_path):
-            entry_type = "file"
-        else:
-            entry_type = "file"
+        entry_type = "file"
 
-        parent_path = str(Path(entry_path).parent) if entry_path else None
-        if parent_path == ".":
-            parent_path = ""
+    parent_path = str(Path(entry_path).parent) if entry_path else None
+    if parent_path == ".":
+        parent_path = ""
 
     conn = get_connection(db_path)
     try:
@@ -224,7 +228,7 @@ def paths_upsert(
         ).fetchone()
 
         metrics = {"git_hash": None, "line_count": None, "char_count": None}
-        if description is not None and not is_pat and entry_type == "file":
+        if description is not None and entry_type == "file":
             metrics = _compute_file_metrics(entry_path)
 
         display = entry_path if entry_path else "."
@@ -276,8 +280,7 @@ def paths_upsert(
                 ),
             )
             conn.commit()
-            kind = entry_type or "pattern"
-            return {"action": "added", "path": display, "type": kind}
+            return {"action": "added", "path": display, "type": entry_type}
     finally:
         conn.close()
 
@@ -293,7 +296,7 @@ def paths_remove(
     try:
         if all_entries:
             result = conn.execute(
-                "DELETE FROM entries WHERE path NOT LIKE '%*%'"
+                "DELETE FROM entries"
             )
             conn.commit()
             return {"action": "removed_all", "count": result.rowcount}
@@ -332,7 +335,7 @@ def paths_search(db_path: str, pattern: str) -> dict:
     try:
         rows = conn.execute(
             "SELECT path, entry_type, description FROM entries "
-            "WHERE description LIKE ? AND path NOT LIKE '%*%' "
+            "WHERE description LIKE ? "
             "ORDER BY path",
             (f"%{pattern}%",),
         ).fetchall()

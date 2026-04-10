@@ -17,16 +17,11 @@ from ._frontmatter import normalize_patterns
 logger = logging.getLogger(__name__)
 
 
-def _is_pattern(path: str) -> bool:
-    """Check if path is a glob pattern."""
-    return "*" in path
-
-
-def _matches_any_rule(path: str, rules: list[sqlite3.Row]) -> sqlite3.Row | None:
-    """Check if path matches any pattern-based rule. Returns first match."""
+def _matches_any_pattern(path: str, patterns: list[sqlite3.Row]) -> sqlite3.Row | None:
+    """Check if path matches any glob pattern. Returns first match."""
     path_parts = Path(path).parts
-    for rule in rules:
-        pattern = rule["path"]
+    for rule in patterns:
+        pattern = rule["pattern"]
         pattern_parts = Path(pattern).parts
         if len(pattern_parts) == 0:
             continue
@@ -92,21 +87,20 @@ def _mark_parents_stale(conn: sqlite3.Connection, entry_path: str) -> list[str]:
 def _walk_filesystem(
     conn: sqlite3.Connection, target_path: str
 ) -> dict[str, str]:
-    """Walk filesystem with rule-based pruning.
+    """Walk filesystem with pattern-based pruning.
 
-    Loads exclude and shallow rules from database, walks target_path,
+    Loads exclude and shallow patterns from database, walks target_path,
     and returns filtered entries. Excluded paths are omitted entirely.
     Shallow directories are listed but not descended into.
 
     Returns dict mapping path to entry type ("file" or "directory").
     """
     pattern_rows = conn.execute(
-        "SELECT path, exclude, traverse, description FROM entries "
-        "WHERE path LIKE '%*%'"
+        "SELECT pattern, exclude, traverse, description FROM patterns"
     ).fetchall()
 
-    exclude_rules = [r for r in pattern_rows if r["exclude"]]
-    shallow_rules = [r for r in pattern_rows if not r["exclude"] and not r["traverse"]]
+    exclude_patterns = [r for r in pattern_rows if r["exclude"]]
+    shallow_patterns = [r for r in pattern_rows if not r["exclude"] and not r["traverse"]]
 
     disk_entries: dict[str, str] = {}
     scan_root = target_path if target_path else "."
@@ -120,14 +114,14 @@ def _walk_filesystem(
         remaining_dirs = []
         for d in dirnames:
             d_path = os.path.join(rel_dir, d) if rel_dir else d
-            if _matches_any_rule(d_path, exclude_rules):
+            if _matches_any_pattern(d_path, exclude_patterns):
                 continue
             concrete = conn.execute(
                 "SELECT traverse FROM entries "
                 "WHERE path = ? AND traverse = 0",
                 (d_path,),
             ).fetchone()
-            if concrete or _matches_any_rule(d_path, shallow_rules):
+            if concrete or _matches_any_pattern(d_path, shallow_patterns):
                 shallow_dirs.append(d)
             else:
                 remaining_dirs.append(d)
@@ -143,7 +137,7 @@ def _walk_filesystem(
 
         for filename in filenames:
             file_path = os.path.join(rel_dir, filename) if rel_dir else filename
-            if not _matches_any_rule(file_path, exclude_rules):
+            if not _matches_any_pattern(file_path, exclude_patterns):
                 disk_entries[file_path] = "file"
 
         for dirname in dirnames:
@@ -164,24 +158,23 @@ def scan_path(db_path: str, target_path: str) -> str:
     try:
         disk_entries = _walk_filesystem(conn, target_path)
 
-        # Load prescribed rules for auto-descriptions
+        # Load prescribed patterns for auto-descriptions
         pattern_rows = conn.execute(
-            "SELECT path, exclude, traverse, description FROM entries "
-            "WHERE path LIKE '%*%'"
+            "SELECT pattern, exclude, traverse, description FROM patterns"
         ).fetchall()
-        prescribed_rules = [r for r in pattern_rows if not r["exclude"] and r["description"]]
+        prescribed_patterns = [r for r in pattern_rows if not r["exclude"] and r["description"]]
 
         # Load concrete entries from database
         db_entries = {}
         if target_path:
             rows = conn.execute(
                 "SELECT path, git_hash FROM entries "
-                "WHERE (path = ? OR path LIKE ?) AND path NOT LIKE '%*%'",
+                "WHERE path = ? OR path LIKE ?",
                 (target_path, target_path + "/%"),
             ).fetchall()
         else:
             rows = conn.execute(
-                "SELECT path, git_hash FROM entries WHERE path NOT LIKE '%*%'"
+                "SELECT path, git_hash FROM entries"
             ).fetchall()
 
         for row in rows:
@@ -197,7 +190,7 @@ def scan_path(db_path: str, target_path: str) -> str:
                 if parent_path == ".":
                     parent_path = ""
 
-                rule = _matches_any_rule(path, prescribed_rules)
+                rule = _matches_any_pattern(path, prescribed_patterns)
                 description = rule["description"] if rule else None
                 metrics = _compute_file_metrics(path) if entry_type == "file" else {"git_hash": None, "line_count": None, "char_count": None}
 
@@ -220,7 +213,7 @@ def scan_path(db_path: str, target_path: str) -> str:
                 current_hash = metrics["git_hash"]
                 stored_hash = db_entries[path]
                 if stored_hash is not None and current_hash != stored_hash:
-                    rule = _matches_any_rule(path, prescribed_rules)
+                    rule = _matches_any_pattern(path, prescribed_patterns)
                     if rule:
                         conn.execute(
                             "UPDATE entries SET description = ?, stale = 0, git_hash = ?, line_count = ?, char_count = ? "
