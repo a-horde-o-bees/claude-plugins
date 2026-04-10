@@ -3,7 +3,10 @@
     "allow": [
       "Bash(./scripts/run-plugin.sh:*)",
       "mcp__plugin_blueprint_blueprint-research__*",
-      "mcp__plugin_ocd_ocd-navigator__*"
+      "mcp__plugin_ocd_ocd-navigator__*",
+      "mcp__plugin_ocd_ocd-friction__*",
+      "mcp__plugin_ocd_ocd-decisions__*",
+      "mcp__plugin_ocd_ocd-stash__*"
     ]
   },
   "hooks": {

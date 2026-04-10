@@ -27,7 +27,7 @@ def get_connection(db_path: str) -> sqlite3.Connection:
     conn.execute("PRAGMA busy_timeout=5000")
     conn.row_factory = sqlite3.Row
     conn.create_function(
-        "regexp", 2, lambda pattern, text: bool(re.search(pattern, text or ""))
+        "regexp", 2, lambda pattern, text: bool(re.search(pattern, text or "", re.IGNORECASE))
     )
     conn.executescript(SCHEMA)
     return conn
