@@ -131,14 +131,21 @@ The other 15 root needs (n1–n5, n7, n8, n12, n15–n21) are unrefined. They wi
 
 Carried over from v1. These are sub-needs that v1 incorrectly attached to operational rules (router pattern). When the destination components are re-added in v2, they should claim the relevant sub-needs.
 
-- **n14 sub-needs** (verification mechanisms) — should be claimed by **test framework infrastructure** when added (`pyproject.toml`, `plugins/<plugin>/pytest.ini`, `scripts/test.sh`, fixtures). v1 incorrectly attached n14 to c38 (testing rule) — that was a router-pattern misattribution. The capability lives in the test infrastructure, not in the rule that points at it.
+- ~~**n14 sub-needs**~~ — reclaimed by c48 (test infrastructure) via n37 in Layer D.
 - **n15** (wasted context tokens) — should be claimed by **navigator components** (the curated query shape). v1 attached this to navigator usage rule c34, also router-pattern.
 - **n16** (wasted time) — same as n15. Belongs to navigator's discovery capabilities, not the rule that routes to them.
 
 ## Other Open Items
 
 - **`c28` (Tool Positioning) had no recorded path in v1** — when re-adding, anchor target: `plugins/ocd/rules/ocd-design-principles.md#tool-positioning`.
-- **Convention loading on read** — stashed at `~/.claude/stash/convention-on-read.md`. Concerns conventions firing when files are *read*, not just modified. Might inform how navigator's `governance_match` is shaped during its evaluation.
+- **Convention loading on read** — stashed in project stash DB (entry #7). Concerns conventions firing when files are *read*, not just modified. Might inform how navigator's `governance_match` is shaped during its evaluation.
+
+## Modeling Decisions (this session)
+
+- **Files are containers, not components.** Rule files are extensions of c3 (rule delivery). Every section within a file must be a component or a purpose statement — nothing else earns its place in always-on context. Applied to all four rule files; all content now maps to components.
+- **Test files excluded from `uncovered`.** Test implementations are derivative of what they test. Test *infrastructure* (pytest.ini, conftest.py, test.sh) IS a component (c48); individual test files are not.
+- **Directory paths don't cover children in `uncovered`.** A component claiming `plugins/ocd/skills/friction/` does not suppress individual files within from showing as uncovered. Each file must be claimed independently.
+- **Needs don't have to be preventative.** "Automate environment setup" (n72) and "Ensure deployed artifacts and template artifacts stay aligned" (n71) are valid non-preventative need wordings.
 - **n9 and n10 are gaps in the id sequence** — these were removed during the v1 simplification (refinement-related needs that turned out to be technical requirements, not business concerns). The gap is preserved as historical record; do not reuse the ids.
 
 ## Worklist for Live Invention
