@@ -236,13 +236,42 @@ Updated system documentation rule to three-document model: README.md + architect
 
 evaluate-governance (c70) wired to n93 "Ensure governance artifacts are conformant, followable, and coherent" under n20. Friction items 1-4 document known implementation issues (missing sections, no checkpoint, no --auto, lens duplication). The skill needs redesigning from the ground up — starting from the need, not patching the current implementation. evaluate-skill and evaluate-documentation should follow the same needs-first approach after evaluate-governance is validated.
 
+**Governance infrastructure refactor (in progress):**
+
+Major simplification of the navigator's governance subsystem. Removed defunct infrastructure (governs table, governance_order, governance_graph, scanner governance section). Remaining governance functions (governance_match, governance_unclassified, governance_list) now use:
+
+- Custom `path_match` SQL function registered on every connection — delegates to `matches_pattern` for basename, `**` prefix, and full-path matching modes. Patterns stored exactly as written in frontmatter, no translation.
+- Separate `governance_includes` and `governance_excludes` normalized pattern tables — SQL JOINs replace Python loops.
+- Governance self-refreshes via `_ensure_current` (git_hash staleness check on governance table) before every query.
+- `governance_unclassified` triggers a scan internally to ensure entries are current.
+
+**Next refactor step — separate rules and conventions tables:**
+
+Current `governance` table conflates rules and conventions with an `auto_loaded` flag. Every query filters by this flag. Rules have `matches: "*"` patterns that clutter the includes table. Clean separation:
+
+```
+conventions (entry_path, matches, excludes, git_hash)
+convention_includes (entry_path, pattern)
+convention_excludes (entry_path, pattern)
+rules (entry_path, git_hash)
+```
+
+- `governance_match` → queries only convention tables, no filter needed
+- `governance_unclassified` → same, no filter
+- `governance_list` → unions both for display
+- No `*` patterns in includes table
+- Table names match domain language (rules vs conventions)
+
+Files to change: `_db.py` (schema), `_governance.py` (queries), `_init.py` (schema validation), `__init__.py` (exports), `servers/navigator.py` (MCP tools), `__main__.py` (CLI), tests. Reinit database after.
+
 **Next steps (in order):**
 
-1. Refactor root CLAUDE.md/architecture.md to match new three-document model (move architectural content out of CLAUDE.md)
-2. Check all validated system docs conform to the updated model
-3. Redesign evaluate-governance from the ground up based on n93
-4. Test by spawning an agent to rebuild a doc set and evaluate effectiveness
-5. Wire evaluate-skill and evaluate-documentation after evaluate-governance is validated
+1. Complete rules/conventions table separation (schema + queries + tests)
+2. Refactor root CLAUDE.md/architecture.md to match new three-document model
+3. Check all validated system docs conform to the updated model
+4. Redesign evaluate-governance from the ground up based on n93
+5. Test by spawning an agent to rebuild a doc set and evaluate effectiveness
+6. Wire evaluate-skill and evaluate-documentation after evaluate-governance is validated
 
 ### Deferred (post-v1, dev branch)
 

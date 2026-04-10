@@ -219,35 +219,6 @@ def governance_list() -> str:
 
 
 @mcp.tool()
-def governance_order() -> str:
-    """Topological ordering for evaluation sequence.
-
-    Returns {levels: [{level, entries}], cycle: null|[paths]}.
-    Level 0 has no governors. Use to determine dependency-safe evaluation order.
-    """
-    if err := _check_db(): return err
-    _auto_scan()
-    try:
-        return _ok(nav.governance_order(DB_PATH))
-    except Exception as e:
-        return _err(e)
-
-
-@mcp.tool()
-def governance_graph() -> str:
-    """Governance dependency edges, roots, and leaves.
-
-    Returns {roots: [...], edges: [{from, to}], leaves: [...]}.
-    """
-    if err := _check_db(): return err
-    _auto_scan()
-    try:
-        return _ok(nav.governance_graph(DB_PATH))
-    except Exception as e:
-        return _err(e)
-
-
-@mcp.tool()
 def governance_unclassified() -> str:
     """Find files with no governance coverage, grouped by extension.
 

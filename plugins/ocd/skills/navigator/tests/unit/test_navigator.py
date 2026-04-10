@@ -17,7 +17,6 @@ from skills.navigator._governance import (
     governance_unclassified,
     governance_match,
     governance_load,
-    governance_order,
     governance_list,
     _governance_is_stale,
 )
@@ -1313,25 +1312,6 @@ class TestGovernanceLoad:
         assert row["auto_loaded"] == 0
         conn.close()
 
-    def test_flips_dependencies_to_governs(self, gov_env):
-        governance_load(gov_env["db"], gov_env["project_dir"])
-        conn = get_connection(gov_env["db"])
-        # design-principles governs workflow (workflow depends on design-principles)
-        row = conn.execute(
-            "SELECT * FROM governs WHERE governor_path = '.claude/rules/design-principles.md' "
-            "AND governed_path = '.claude/rules/workflow.md'"
-        ).fetchone()
-        assert row is not None
-        conn.close()
-
-    def test_governs_count(self, gov_env):
-        governance_load(gov_env["db"], gov_env["project_dir"])
-        conn = get_connection(gov_env["db"])
-        count = conn.execute("SELECT COUNT(*) as c FROM governs").fetchone()["c"]
-        # design-principles governs workflow, design-principles governs python
-        assert count == 2
-        conn.close()
-
     def test_idempotent_reload(self, gov_env):
         governance_load(gov_env["db"], gov_env["project_dir"])
         governance_load(gov_env["db"], gov_env["project_dir"])
@@ -1353,7 +1333,6 @@ class TestGovernanceLoad:
     def test_returns_summary(self, gov_env):
         result = governance_load(gov_env["db"], gov_env["project_dir"])
         assert result["governance_entries"] == 3
-        assert result["governs_relationships"] == 2
 
 
 class TestGovernanceList:
@@ -1465,72 +1444,6 @@ class TestGovernanceMatchExcludes:
         assert ".claude/conventions/server.md" in result["conventions"]
 
 
-class TestGovernanceOrder:
-    @pytest.fixture
-    def ordered_db(self, tmp_path):
-        db = str(tmp_path / "gov.db")
-        conn = get_connection(db)
-        conn.executescript(SCHEMA)
-        conn.close()
-
-        _write_governance_file(tmp_path / ".claude/rules/principles.md", "*")
-        _write_governance_file(
-            tmp_path / ".claude/rules/workflow.md", "*",
-            governed_by=[".claude/rules/principles.md"],
-        )
-        _write_governance_file(
-            tmp_path / ".claude/conventions/python.md", "*.py",
-            governed_by=[".claude/rules/principles.md"],
-        )
-        _write_governance_file(
-            tmp_path / ".claude/conventions/skill-md.md", "SKILL.md",
-            governed_by=[".claude/rules/principles.md", ".claude/rules/workflow.md"],
-        )
-        governance_load(db, str(tmp_path))
-        return db
-
-    def test_level_ordering(self, ordered_db):
-        result = governance_order(ordered_db)
-        assert len(result["levels"]) >= 2
-        assert result["levels"][0]["level"] == 0
-        assert result["levels"][1]["level"] == 1
-
-    def test_root_at_level_0(self, ordered_db):
-        result = governance_order(ordered_db)
-        assert ".claude/rules/principles.md" in result["levels"][0]["entries"]
-
-    def test_dependents_after_dependencies(self, ordered_db):
-        result = governance_order(ordered_db)
-        # skill-md depends on both principles and workflow, so level 2
-        assert len(result["levels"]) >= 3
-        assert ".claude/conventions/skill-md.md" in result["levels"][2]["entries"]
-
-    def test_empty_governance(self, db_path):
-        result = governance_order(db_path)
-        assert result["levels"] == []
-        assert result["cycle"] is None
-
-    def test_cycle_detection(self, tmp_path):
-        db = str(tmp_path / "cycle.db")
-        conn = get_connection(db)
-        conn.executescript(SCHEMA)
-        conn.execute("INSERT INTO entries (path, entry_type) VALUES ('a.md', 'file')")
-        conn.execute("INSERT INTO entries (path, entry_type) VALUES ('b.md', 'file')")
-        conn.execute("INSERT INTO governance (entry_path, matches, auto_loaded) VALUES ('a.md', '*', 0)")
-        conn.execute("INSERT INTO governance (entry_path, matches, auto_loaded) VALUES ('b.md', '*', 0)")
-        conn.execute("INSERT INTO governs (governor_path, governed_path) VALUES ('a.md', 'b.md')")
-        conn.execute("INSERT INTO governs (governor_path, governed_path) VALUES ('b.md', 'a.md')")
-        conn.commit()
-        conn.close()
-
-        result = governance_order(db)
-        assert result["cycle"] is not None
-        assert "a.md" in result["cycle"]
-
-
-# --- Scan-time governance matching ---
-
-
 class TestScanGovernance:
     @pytest.fixture
     def gov_scan_tree(self, tmp_path):
@@ -1557,75 +1470,25 @@ class TestScanGovernance:
         governance_load(db, str(project))
         return {"project": project, "db": db}
 
-    def test_scan_populates_governs(self, gov_scan_tree):
-        scan_path(gov_scan_tree["db"], str(gov_scan_tree["project"]))
-        conn = get_connection(gov_scan_tree["db"])
-        rows = conn.execute("SELECT * FROM governs WHERE governor_path = '.claude/conventions/python.md'").fetchall()
-        governed = [r["governed_path"] for r in rows]
-        # Should match .py files but not README.md
-        assert any("app.py" in g for g in governed)
-        assert any("helper.py" in g for g in governed)
-        assert not any("README.md" in g for g in governed)
-        conn.close()
-
-    def test_scan_wildcard_governs_all_files(self, gov_scan_tree):
-        scan_path(gov_scan_tree["db"], str(gov_scan_tree["project"]))
-        conn = get_connection(gov_scan_tree["db"])
-        rows = conn.execute("SELECT * FROM governs WHERE governor_path = '.claude/rules/all.md'").fetchall()
-        governed = [r["governed_path"] for r in rows]
-        assert any("app.py" in g for g in governed)
-        assert any("README.md" in g for g in governed)
-        assert any("helper.py" in g for g in governed)
-        conn.close()
-
-    def test_scan_removes_stale_governs(self, gov_scan_tree):
-        scan_path(gov_scan_tree["db"], str(gov_scan_tree["project"]))
-        # Delete a file
-        app_py = gov_scan_tree["project"] / "app.py"
-        app_py.unlink()
-        # Re-scan
-        scan_path(gov_scan_tree["db"], str(gov_scan_tree["project"]))
-        conn = get_connection(gov_scan_tree["db"])
-        rows = conn.execute(
-            "SELECT governed_path FROM governs WHERE governor_path = '.claude/conventions/python.md'"
-        ).fetchall()
-        governed = [r["governed_path"] for r in rows]
-        assert not any("app.py" in g for g in governed)
-        conn.close()
-
-    def test_scan_pattern_excludes_governance_from_pattern_match(self, gov_scan_tree):
-        # Before scan, only explicit governs exist from governance_load
-        conn = get_connection(gov_scan_tree["db"])
-        before = conn.execute(
-            "SELECT COUNT(*) as c FROM governs WHERE governor_path = '.claude/conventions/python.md'"
-        ).fetchone()["c"]
-        conn.close()
-
-        scan_path(gov_scan_tree["db"], str(gov_scan_tree["project"]))
-
-        # After scan, python.md governs .py files but NOT other governance entries
-        conn = get_connection(gov_scan_tree["db"])
-        rows = conn.execute(
-            "SELECT governed_path FROM governs WHERE governor_path = '.claude/conventions/python.md'"
-        ).fetchall()
-        governed = {r["governed_path"] for r in rows}
-        # Should have file entries from scan
-        assert any("app.py" in g for g in governed)
-        # Should NOT have governance entries added by scan pattern matching
-        assert ".claude/rules/all.md" not in governed
-        conn.close()
+    def test_governance_match_uses_glob_patterns(self, gov_scan_tree):
+        """governance_match uses GLOB-translated patterns from governance_patterns table."""
+        db = gov_scan_tree["db"]
+        result = governance_match(db, ["app.py", "README.md", "sub/helper.py"])
+        # Python convention matches .py files
+        assert ".claude/conventions/python.md" in result["matches"].get("app.py", [])
+        assert ".claude/conventions/python.md" in result["matches"].get("sub/helper.py", [])
+        # Python convention does not match README.md
+        assert ".claude/conventions/python.md" not in result["matches"].get("README.md", [])
 
     def test_governance_load_discovers_new_files(self, gov_scan_tree):
         """New convention files added after init are registered by governance_load."""
         project = gov_scan_tree["project"]
         db = gov_scan_tree["db"]
 
-        # Add a new convention file after initial governance_load
         _write_governance_file(
             project / ".claude/conventions/readme.md", "README.md",
         )
 
-        # governance_load picks up the new file
         governance_load(db, str(project))
 
         conn = get_connection(db)
@@ -1635,16 +1498,9 @@ class TestScanGovernance:
         ).fetchall()
         assert len(rows) == 1
 
-        # Scan then populates governs from the updated governance table
-        (project / "README.md").write_text("# Updated\n")
-        scan_path(db, str(project))
-
-        rows = conn.execute(
-            "SELECT governed_path FROM governs "
-            "WHERE governor_path = '.claude/conventions/readme.md'"
-        ).fetchall()
-        governed = [r["governed_path"] for r in rows]
-        assert any("README.md" in g for g in governed)
+        # governance_match finds the new convention
+        result = governance_match(db, ["README.md"])
+        assert ".claude/conventions/readme.md" in result["matches"].get("README.md", [])
         conn.close()
 
     def test_governance_stale_detects_new_files(self, gov_scan_tree):
@@ -1813,9 +1669,9 @@ class TestListPatternGetUnclassified:
         assert any("unknown.xyz" in f for f in all_unclassified)
 
 
-class TestListPatternScanGovernance:
+class TestListPatternGovernanceMatch:
     @pytest.fixture
-    def list_gov_scan_tree(self, tmp_path):
+    def list_gov_tree(self, tmp_path):
         project = tmp_path / "project"
         project.mkdir()
         (project / "test_app.py").write_text("x = 1\n")
@@ -1835,16 +1691,12 @@ class TestListPatternScanGovernance:
         governance_load(db, str(project))
         return {"project": project, "db": db}
 
-    def test_scan_populates_governs_for_all_patterns(self, list_gov_scan_tree):
-        scan_path(list_gov_scan_tree["db"], str(list_gov_scan_tree["project"]))
-        conn = get_connection(list_gov_scan_tree["db"])
-        rows = conn.execute(
-            "SELECT governed_path FROM governs "
-            "WHERE governor_path = '.claude/conventions/testing.md'"
-        ).fetchall()
-        governed = {r["governed_path"] for r in rows}
-        assert any("test_app.py" in g for g in governed)
-        assert any("utils_test.py" in g for g in governed)
-        assert any("conftest.py" in g for g in governed)
-        assert not any(g.endswith("/app.py") or g == "app.py" for g in governed)
-        conn.close()
+    def test_governance_match_all_list_patterns(self, list_gov_tree):
+        db = list_gov_tree["db"]
+        result = governance_match(db, [
+            "test_app.py", "utils_test.py", "conftest.py", "app.py",
+        ])
+        assert ".claude/conventions/testing.md" in result["matches"].get("test_app.py", [])
+        assert ".claude/conventions/testing.md" in result["matches"].get("utils_test.py", [])
+        assert ".claude/conventions/testing.md" in result["matches"].get("conftest.py", [])
+        assert "app.py" not in result["matches"]

@@ -23,8 +23,6 @@ from ._governance import (
     governance_load,
     governance_list,
     governance_match,
-    governance_order,
-    governance_graph,
     governance_unclassified,
 )
 from ._references import references_map

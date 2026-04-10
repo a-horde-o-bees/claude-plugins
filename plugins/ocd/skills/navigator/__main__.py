@@ -199,47 +199,10 @@ def _dispatch_governance_for(args: argparse.Namespace) -> None:
             print(f"  {c}")
 
 
-def _dispatch_governance_order(args: argparse.Namespace) -> None:
-    _auto_scan(args)
-    result = governance_order(args.db)
-    if result["cycle"]:
-        print(f"Cycle detected among: {', '.join(result['cycle'])}")
-        return
-    if not result["levels"]:
-        print("No governance entries.")
-        return
-    for level in result["levels"]:
-        print(f"Level {level['level']}:")
-        for path in level["entries"]:
-            print(f"  {path}")
-
-
 def _dispatch_governance_load(args: argparse.Namespace) -> None:
     project_dir = args.project_dir or os.getcwd()
     result = governance_load(args.db, project_dir)
-    print(f"Loaded {result['governance_entries']} governance entries, "
-          f"{result['governs_relationships']} governs relationships")
-
-
-def _dispatch_governance_graph(args: argparse.Namespace) -> None:
-    _auto_scan(args)
-    result = governance_graph(args.db)
-    if not result["roots"] and not result["edges"]:
-        print("No governance entries.")
-        return
-    if result["roots"]:
-        print(f"Roots ({len(result['roots'])}):")
-        for r in result["roots"]:
-            print(f"  {r}")
-        print()
-    print(f"Edges ({len(result['edges'])}):")
-    for edge in result["edges"]:
-        print(f"  {edge['from']}  -->  {edge['to']}")
-    if result["leaves"]:
-        print()
-        print(f"Leaves ({len(result['leaves'])}):")
-        for l in result["leaves"]:
-            print(f"  {l}")
+    print(f"Loaded {result['governance_entries']} governance entries")
 
 
 def _dispatch_get_unclassified(args: argparse.Namespace) -> None:
@@ -599,68 +562,22 @@ def build_parser() -> argparse.ArgumentParser:
     gf_p.add_argument("files", nargs="+", help="File paths to check governance for")
     gf_p.set_defaults(_dispatch=_dispatch_governance_for)
 
-    # governance-order
-    go_p = commands.add_parser(
-        "governance-order",
-        help="Topological ordering of governance entries for evaluation sequence",
-        description=(
-            "Show governance entries ordered by dependency level.\n"
-            "Level 0 has no governors; level N is governed only by\n"
-            "levels 0..N-1. Replaces conventions list-self.\n"
-            "Auto-scans before execution.\n"
-            "\n"
-            "Output format:\n"
-            "  Level 0:\n"
-            "    <path>\n"
-            "  Level 1:\n"
-            "    <path>"
-        ),
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        parents=[db_parent],
-    )
-    go_p.set_defaults(_dispatch=_dispatch_governance_order)
-
     # governance-load
     gl_p = commands.add_parser(
         "governance-load",
         help="Load governance data from frontmatter in rules and conventions",
         description=(
             "Scan .claude/rules/ and .claude/conventions/ for files with\n"
-            "governance frontmatter (pattern + depends fields). Populates\n"
-            "governance table with patterns and governs table with\n"
-            "dependency relationships.\n"
+            "governance frontmatter. Populates governance table with patterns\n"
+            "and translates to GLOB-ready patterns for efficient matching.\n"
             "\n"
-            "Idempotent — safe to rerun. Existing data is updated,\n"
-            "not duplicated."
+            "Idempotent — skips when governance is current."
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
         parents=[db_parent],
     )
     gl_p.add_argument("--project-dir", default=None, help="Project root (default: cwd)")
     gl_p.set_defaults(_dispatch=_dispatch_governance_load)
-
-    # governance-graph
-    gg_p = commands.add_parser(
-        "governance-graph",
-        help="Show governance-to-governance edges, roots, and leaves",
-        description=(
-            "Display which governance entries govern which other governance\n"
-            "entries. Shows roots (no governor), edges (governs relationships),\n"
-            "and leaves (govern no other governance entries).\n"
-            "Auto-scans before execution.\n"
-            "\n"
-            "Output format:\n"
-            "  Roots (N):\n"
-            "    <path>\n"
-            "  Edges (N):\n"
-            "    <governor>  -->  <governed>\n"
-            "  Leaves (N):\n"
-            "    <path>"
-        ),
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        parents=[db_parent],
-    )
-    gg_p.set_defaults(_dispatch=_dispatch_governance_graph)
 
     # get-unclassified (governance coverage)
     gu2_p = commands.add_parser(

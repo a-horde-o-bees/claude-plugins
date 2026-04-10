@@ -12,7 +12,6 @@ import sqlite3
 from pathlib import Path
 
 from ._db import get_connection
-from ._frontmatter import matches_pattern, normalize_patterns
 
 logger = logging.getLogger(__name__)
 
@@ -244,42 +243,6 @@ def scan_path(db_path: str, target_path: str) -> str:
                 removed.append(f"- {path}")
                 for p in _mark_parents_stale(conn, path):
                     staled_parents.add(p)
-
-        # Governance pattern matching — populate governs from governance patterns
-        gov_rows = conn.execute(
-            "SELECT entry_path, matches, excludes FROM governance"
-        ).fetchall()
-        if gov_rows:
-            gov_paths = {r["entry_path"] for r in gov_rows}
-            # Get all non-governance file entries in scope
-            file_entries = [
-                path for path, etype in disk_entries.items()
-                if etype == "file" and path not in gov_paths
-            ]
-            for gov in gov_rows:
-                include_patterns = normalize_patterns(gov["matches"])
-                exclude_patterns = normalize_patterns(gov["excludes"]) if gov["excludes"] else []
-                gov_path = gov["entry_path"]
-                for file_path in file_entries:
-                    included = any(
-                        matches_pattern(file_path, p) for p in include_patterns
-                    )
-                    if not included:
-                        continue
-                    if exclude_patterns and any(
-                        matches_pattern(file_path, p) for p in exclude_patterns
-                    ):
-                        continue
-                    conn.execute(
-                        "INSERT OR IGNORE INTO governs (governor_path, governed_path) "
-                        "VALUES (?, ?)",
-                        (gov_path, file_path),
-                    )
-            # Remove stale governs for files no longer on disk
-            conn.execute(
-                "DELETE FROM governs WHERE governed_path NOT IN "
-                "(SELECT path FROM entries)"
-            )
 
         conn.commit()
 

@@ -1,7 +1,11 @@
 """Governance operations.
 
-Governance loading, matching, ordering, and analysis. Operates on the
-governance and governs tables in the navigator database.
+Governance loading, matching, and analysis. Operates on the governance,
+governance_includes, and governance_excludes tables in the navigator database.
+
+Governance data self-refreshes: query functions check staleness via
+git_hash comparison and reload from disk when stale. The governance
+module manages its own freshness independently from the scanner.
 
 All functions return structured data (dicts/lists). Formatting for
 CLI display belongs in __main__.py.
@@ -13,7 +17,7 @@ import hashlib
 from pathlib import Path
 
 from ._db import get_connection
-from ._frontmatter import matches_pattern, normalize_patterns, scan_governance_dirs
+from ._frontmatter import normalize_patterns, scan_governance_dirs
 
 
 def _git_hash(file_path: str) -> str | None:
@@ -41,9 +45,9 @@ def _infer_project_dir(db_path: str) -> str | None:
 def _governance_is_stale(db_path: str, project_dir: str) -> bool:
     """Check if governance table needs updating from disk.
 
-    Compares the set of governance file paths on disk against the set in the
-    database, then compares git hashes stored in the governance table against
-    current file content. Returns True when governance data needs reloading.
+    Compares the set of governance file paths on disk against the database,
+    then compares git hashes stored in the governance table against current
+    file content. Returns True when governance data needs reloading.
     """
     rules_dir = Path(project_dir) / ".claude" / "rules"
     conv_dir = Path(project_dir) / ".claude" / "conventions"
@@ -95,15 +99,16 @@ def _ensure_current(db_path: str) -> None:
 def governance_load(db_path: str, project_dir: str) -> dict:
     """Load governance entries from frontmatter in rules and conventions.
 
-    Skips when governance table is current (file set and hashes match disk).
+    Parses frontmatter, stores raw patterns in governance table, normalizes
+    patterns into governance_includes and governance_excludes tables, and
+    records git_hash for staleness detection. Skips when current.
     Idempotent — safe to rerun.
     """
     if not _governance_is_stale(db_path, project_dir):
         conn = get_connection(db_path)
         try:
             gov_count = conn.execute("SELECT COUNT(*) as c FROM governance").fetchone()["c"]
-            rel_count = conn.execute("SELECT COUNT(*) as c FROM governs").fetchone()["c"]
-            return {"governance_entries": gov_count, "governs_relationships": rel_count}
+            return {"governance_entries": gov_count}
         finally:
             conn.close()
 
@@ -111,6 +116,9 @@ def governance_load(db_path: str, project_dir: str) -> dict:
 
     conn = get_connection(db_path)
     try:
+        conn.execute("DELETE FROM governance_includes")
+        conn.execute("DELETE FROM governance_excludes")
+
         for entry_path, entry in entries.items():
             file_hash = _git_hash(str(Path(project_dir) / entry_path))
             conn.execute(
@@ -125,22 +133,23 @@ def governance_load(db_path: str, project_dir: str) -> dict:
                 (entry_path, entry["matches"], entry.get("excludes"), auto_loaded, file_hash),
             )
 
-        for entry_path, entry in entries.items():
-            for dep in entry["governed_by"]:
+            for pattern in normalize_patterns(entry["matches"]):
                 conn.execute(
-                    "INSERT OR IGNORE INTO governs (governor_path, governed_path) "
-                    "VALUES (?, ?)",
-                    (dep, entry_path),
+                    "INSERT INTO governance_includes (entry_path, pattern) VALUES (?, ?)",
+                    (entry_path, pattern),
                 )
+
+            if entry.get("excludes"):
+                for pattern in normalize_patterns(entry["excludes"]):
+                    conn.execute(
+                        "INSERT INTO governance_excludes (entry_path, pattern) VALUES (?, ?)",
+                        (entry_path, pattern),
+                    )
 
         conn.commit()
 
         gov_count = conn.execute("SELECT COUNT(*) as c FROM governance").fetchone()["c"]
-        rel_count = conn.execute("SELECT COUNT(*) as c FROM governs").fetchone()["c"]
-        return {
-            "governance_entries": gov_count,
-            "governs_relationships": rel_count,
-        }
+        return {"governance_entries": gov_count}
     finally:
         conn.close()
 
@@ -176,36 +185,35 @@ def governance_match(db_path: str, file_paths: list[str], include_rules: bool = 
     By default returns only conventions (on-demand) since rules are always
     loaded into agent context. Set include_rules=True for governance
     evaluation where rules themselves are the evaluation target.
+
+    Uses path_match() custom SQL function for matching — same semantics
+    as matches_pattern (basename, ** prefix, full-path modes).
     """
     _ensure_current(db_path)
     conn = get_connection(db_path)
     try:
-        gov_rows = conn.execute(
-            "SELECT entry_path, matches, excludes, auto_loaded FROM governance ORDER BY entry_path"
-        ).fetchall()
+        placeholders = ", ".join("(?)" for _ in file_paths)
+        params: list[str] = list(file_paths)
+
+        auto_filter = "" if include_rules else "AND g.auto_loaded = 0"
+
+        query = f"""
+            WITH files(path) AS (VALUES {placeholders})
+            SELECT DISTINCT f.path AS file_path, gi.entry_path
+            FROM files f
+            JOIN governance_includes gi ON path_match(f.path, gi.pattern)
+            JOIN governance g ON gi.entry_path = g.entry_path {auto_filter}
+            LEFT JOIN governance_excludes ge
+                ON gi.entry_path = ge.entry_path AND path_match(f.path, ge.pattern)
+            WHERE ge.entry_path IS NULL
+            ORDER BY f.path, gi.entry_path
+        """
+
+        rows = conn.execute(query, params).fetchall()
 
         result_matches: dict[str, list[str]] = {}
-        for file_path in file_paths:
-            file_matches = []
-            for gov in gov_rows:
-                if not include_rules and gov["auto_loaded"]:
-                    continue
-                include_patterns = normalize_patterns(gov["matches"])
-                included = any(
-                    matches_pattern(file_path, p) for p in include_patterns
-                )
-                if not included:
-                    continue
-                if gov["excludes"]:
-                    exclude_patterns = normalize_patterns(gov["excludes"])
-                    excluded = any(
-                        matches_pattern(file_path, p) for p in exclude_patterns
-                    )
-                    if excluded:
-                        continue
-                file_matches.append(gov["entry_path"])
-            if file_matches:
-                result_matches[file_path] = sorted(file_matches)
+        for row in rows:
+            result_matches.setdefault(row["file_path"], []).append(row["entry_path"])
 
         conventions = sorted({c for cs in result_matches.values() for c in cs})
 
@@ -217,151 +225,40 @@ def governance_match(db_path: str, file_paths: list[str], include_rules: bool = 
         conn.close()
 
 
-def governance_order(db_path: str) -> dict:
-    """Topological ordering of governance entries via governs relationships.
-
-    Returns levels where level 0 has no governors, level N is governed
-    only by levels 0..N-1. Uses Kahn's algorithm.
-    """
-    _ensure_current(db_path)
-    conn = get_connection(db_path)
-    try:
-        gov_paths = [
-            row["entry_path"]
-            for row in conn.execute("SELECT entry_path FROM governance").fetchall()
-        ]
-
-        if not gov_paths:
-            return {"levels": [], "cycle": None}
-
-        gov_set = set(gov_paths)
-
-        edges = conn.execute(
-            "SELECT governor_path, governed_path FROM governs"
-        ).fetchall()
-
-        in_degree: dict[str, int] = {p: 0 for p in gov_paths}
-        dependents: dict[str, list[str]] = {p: [] for p in gov_paths}
-
-        for edge in edges:
-            gov = edge["governor_path"]
-            dep = edge["governed_path"]
-            if gov in gov_set and dep in gov_set:
-                in_degree[dep] += 1
-                dependents[gov].append(dep)
-
-        levels: list[list[str]] = []
-        current = sorted(p for p in in_degree if in_degree[p] == 0)
-
-        while current:
-            levels.append(current)
-            next_level = []
-            for node in current:
-                for dep in dependents[node]:
-                    in_degree[dep] -= 1
-                    if in_degree[dep] == 0:
-                        next_level.append(dep)
-            current = sorted(set(next_level))
-
-        remaining = sorted(p for p in in_degree if in_degree[p] > 0)
-
-        return {
-            "levels": [{"level": i, "entries": level} for i, level in enumerate(levels)],
-            "cycle": remaining if remaining else None,
-        }
-    finally:
-        conn.close()
-
-
-def governance_graph(db_path: str) -> dict:
-    """Governance dependency edges, roots, and leaves."""
-    _ensure_current(db_path)
-    conn = get_connection(db_path)
-    try:
-        gov_paths = {
-            row["entry_path"]
-            for row in conn.execute("SELECT entry_path FROM governance").fetchall()
-        }
-
-        if not gov_paths:
-            return {"roots": [], "edges": [], "leaves": []}
-
-        edges = conn.execute(
-            "SELECT governor_path, governed_path FROM governs"
-        ).fetchall()
-
-        gov_edges: dict[str, list[str]] = {p: [] for p in gov_paths}
-        governed_set: set[str] = set()
-        for edge in edges:
-            gov = edge["governor_path"]
-            dep = edge["governed_path"]
-            if gov in gov_paths and dep in gov_paths:
-                gov_edges[gov].append(dep)
-                governed_set.add(dep)
-
-        roots = sorted(gov_paths - governed_set)
-        leaves = sorted(p for p in gov_paths if not gov_edges[p])
-
-        edge_list = []
-        for gov in sorted(gov_edges):
-            for target in sorted(gov_edges[gov]):
-                edge_list.append({"from": gov, "to": target})
-
-        return {
-            "roots": roots,
-            "edges": edge_list,
-            "leaves": leaves,
-        }
-    finally:
-        conn.close()
-
-
 def governance_unclassified(db_path: str) -> dict:
-    """Find file entries with no governance coverage, grouped by extension."""
+    """Find file entries with no governance coverage, grouped by extension.
+
+    Scans the filesystem first to ensure entries are current, then uses
+    path_match() custom SQL function for single-query evaluation.
+    """
+    project_dir = _infer_project_dir(db_path)
+    if project_dir is not None:
+        from ._scanner import scan_path
+
+        scan_path(db_path, project_dir)
     _ensure_current(db_path)
     conn = get_connection(db_path)
     try:
-        gov_rows = conn.execute(
-            "SELECT entry_path, matches, excludes FROM governance"
-        ).fetchall()
-
-        if not gov_rows:
-            return {"total": 0, "by_extension": {}}
-
-        gov_paths = {r["entry_path"] for r in gov_rows}
-
-        file_rows = conn.execute(
-            "SELECT path FROM entries "
-            "WHERE entry_type = 'file' AND exclude = 0"
-        ).fetchall()
-
-        unclassified: list[str] = []
-        for row in file_rows:
-            file_path = row["path"]
-            if file_path in gov_paths:
-                continue
-            matched = False
-            for gov in gov_rows:
-                include_patterns = normalize_patterns(gov["matches"])
-                included = any(
-                    matches_pattern(file_path, p) for p in include_patterns
+        rows = conn.execute("""
+            SELECT e.path FROM entries e
+            WHERE e.entry_type = 'file' AND e.exclude = 0
+            AND e.path NOT IN (SELECT entry_path FROM governance)
+            AND NOT EXISTS (
+                SELECT 1 FROM governance_includes gi
+                JOIN governance g ON gi.entry_path = g.entry_path AND g.auto_loaded = 0
+                WHERE path_match(e.path, gi.pattern)
+                AND gi.entry_path NOT IN (
+                    SELECT ge.entry_path FROM governance_excludes ge
+                    WHERE path_match(e.path, ge.pattern)
                 )
-                if not included:
-                    continue
-                if gov["excludes"]:
-                    exclude_patterns = normalize_patterns(gov["excludes"])
-                    excluded = any(
-                        matches_pattern(file_path, p) for p in exclude_patterns
-                    )
-                    if excluded:
-                        continue
-                matched = True
-                break
-            if not matched:
-                unclassified.append(file_path)
+            )
+            ORDER BY e.path
+        """).fetchall()
+
+        unclassified = [row["path"] for row in rows]
 
         by_ext: dict[str, list[str]] = {}
-        for path in sorted(unclassified):
+        for path in unclassified:
             ext = Path(path).suffix or "(no extension)"
             by_ext.setdefault(ext, []).append(path)
 
