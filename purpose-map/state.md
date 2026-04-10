@@ -209,13 +209,40 @@ Governance system changes driven by convention consumption analysis:
 
 `governed_by` serves evaluation ordering only — not runtime convention loading. Runtime loading is handled by the convention gate hook.
 
-### Layer G — Conventions
+### Layer G — Conventions ✓ COMPLETE
 
-10 convention files in `plugins/ocd/conventions/` (after mcp-relational merged into mcp-server). Convention gate hook validates that conventions are surfaced automatically — the mechanism is tested.
+10 convention files as single components (c57–c64), each with one conformance sub-need under n8 (n77–n84). Simplified sub-need pattern: "Ensure [file type] files follow project standards." Existing n63/n64/n65 aligned to match. Convention dependencies follow `governed_by` chains: c59/c60/c61/c62 depend on c57 (markdown base), c63 depends on c37 (python), c64 depends on c62 (skill-md). c37 and c38 (pre-existing) unchanged.
 
-### Layer H — Skills
+Convention system documentation (README.md, architecture.md) added as paths to delivery components c3 (rules) and c36 (conventions).
 
-init, status, navigator skill, commit, push, evaluate-skill, evaluate-governance, evaluate-documentation, pdf.
+### Layer H — Skills (in progress)
+
+Completed: c65 init, c66 status, c67 commit, c68 push, c69 pdf, c70 evaluate-governance. Navigator already covered as c40.
+
+Remaining: evaluate-skill, evaluate-documentation.
+
+**Methodology refinements during Layer H:**
+
+- **Duplication scan as precision lens** — when the scan surfaces mechanism differences, use the contrast to sharpen need descriptions on both the target need AND related needs exposed in the scan. Codified in CLAUDE.md step 5.
+- **Preventative vs enabling framing** — "If we remove everything addressing this need, does something go wrong (preventative) or does something just not exist (enabling)?" Codified in CLAUDE.md writing guidelines.
+- **Consequences vs addressing** — addressing edges map to needs directly addressed through primary mechanism, not downstream consequences. Wiring to every consequence dilutes the model. Codified in CLAUDE.md opening section.
+- **n72 split** — "Automate environment setup" was too vague; split into n85 (dev invocation config), n86 (runtime dependency provisioning), n87 (governance deployment) using the duplication-scan precision lens.
+
+**System documentation model update:**
+
+Updated system documentation rule to three-document model: README.md + architecture.md (required for every system) + CLAUDE.md/SKILL.md (optional, when agent procedures exist). Document separation enforced — operational docs reference architecture.md, don't duplicate it. Root CLAUDE.md/architecture.md need refactoring to match.
+
+**Evaluate skills redesign:**
+
+evaluate-governance (c70) wired to n93 "Ensure governance artifacts are conformant, followable, and coherent" under n20. Friction items 1-4 document known implementation issues (missing sections, no checkpoint, no --auto, lens duplication). The skill needs redesigning from the ground up — starting from the need, not patching the current implementation. evaluate-skill and evaluate-documentation should follow the same needs-first approach after evaluate-governance is validated.
+
+**Next steps (in order):**
+
+1. Refactor root CLAUDE.md/architecture.md to match new three-document model (move architectural content out of CLAUDE.md)
+2. Check all validated system docs conform to the updated model
+3. Redesign evaluate-governance from the ground up based on n93
+4. Test by spawning an agent to rebuild a doc set and evaluate effectiveness
+5. Wire evaluate-skill and evaluate-documentation after evaluate-governance is validated
 
 ### Deferred (post-v1, dev branch)
 

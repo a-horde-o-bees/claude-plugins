@@ -4,6 +4,8 @@ purpose-map answers one question: **is this component justified by a specific un
 
 For the test to mean anything, needs must be specific enough that *unmet* is a real state. The model resists saturation by structuring needs as a tree, refining root concerns into sharper sub-needs as discovery requires, and forbidding components from attaching to root needs — every addressing edge must land on a refined sub-need where the unmet test is actually answerable.
 
+Addressing edges map components to needs they directly address through their primary mechanism — not to downstream consequences of that mechanism. A governance evaluation skill that checks conformity, followability, and coherence directly addresses the need for governance quality evaluation. It also *consequently* improves conformity and reduces agent-system friction, but those are effects of catching quality issues, not the component's primary contribution. Wiring edges to every consequence dilutes the model into completeness-of-mapping rather than justification, making "is this unmet?" harder to answer — the same saturation failure the tree structure exists to prevent.
+
 Self-contained in this folder — database, CLI, and documentation. No dependencies outside this directory.
 
 ## Files
@@ -207,7 +209,7 @@ Use `dependencies <component> --verify` to check for unvalidated ancestors — i
 2. **Identify the specific concern(s) the component contributes to.** Not "what broad need does this fit," but "what specific sub-concern does this component's mechanism actually solve?" Name the failure mode it prevents, the friction it closes, the work it eliminates.
 3. **Locate the most-specific applicable need in the existing tree.** Use `needs` to scan. For each concern from step 2, find the deepest existing sub-need that captures it.
 4. **If no existing sub-need is specific enough, refine.** Run `refine <parent-id> <description>`. Writing rules from *Needs* still apply. If you find yourself wanting to name a mechanism, the refinement isn't ready — sharpen the concern.
-5. **Run the duplication scan.** `how <sub-need-id>` shows existing addressers. If your component would contribute through a mechanism another already provides, that's a duplication signal — merge, remove, or conclude it isn't justified.
+5. **Run the duplication scan.** `how <sub-need-id>` shows existing addressers. If your component would contribute through a mechanism another already provides, that's a duplication signal — merge, remove, or conclude it isn't justified. When the scan surfaces mechanism differences, use the contrast as a precision lens: is the target need description as precise as it could be given the distinct mechanisms? Are the *other* needs exposed in the scan — the needs addressed by the other components that appeared — as precise as they could be? The contrast is bidirectional; it informs every need it touches, not just the one being wired.
 6. **Propose the addressing edge(s) to the user** using *Proposal format*. Include the sub-need, the rationale, and any refinements required. Propose initial edges in the same step as the component so orphans don't pollute the view. Wait for confirmation.
 7. **Wire confirmed edges** with `address <component> <sub-need> "<rationale>"`.
 8. **Verify claims against the implementation before validating:**
@@ -274,7 +276,7 @@ Need descriptions are the entity (see *Identifiers*) — they must carry the ful
 
 **Test by inversion: "what would have had to go wrong for this to be needed?"** Work backward from the component to the failure mode it prevents. The need should name that failure mode in third person ("Prevent the agent from X"), not the mechanism that prevents it ("Verify X before acting"). Trigger bullets in a principle typically enumerate specific instances of the underlying failure — the unified failure mode is the constitutive concern.
 
-**Not all needs are preventative.** The inversion test is a sharpening technique, not a constraint on need form. Some needs are genuinely about enabling or ensuring — "Automate environment setup", "Ensure deployed artifacts and template artifacts stay aligned." Use the inversion test when it helps; don't force preventative framing when the concern doesn't have a natural failure mode.
+**Preventative vs enabling framing.** Test: "If we remove everything addressing this need, does something specific go *wrong*, or does something just *not exist*?" Goes wrong → preventative ("Prevent the agent from breaking path assumptions"). Doesn't exist → enabling ("Allow the user to centrally examine plugin state", "Automate project governance deployment", "Ensure commits capture coherent topics"). The inversion test is a sharpening technique for preventative needs; don't force preventative framing when the concern doesn't have a natural failure mode.
 
 **Common red flag: "so X" / "to X" tails.** A trailing clause that names a specific outcome is almost always picking one consequence among many. If the concern has multiple downstream effects, name none and let each addresser describe the specific consequences its mechanism targets.
 
