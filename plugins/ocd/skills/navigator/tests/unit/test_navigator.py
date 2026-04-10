@@ -19,6 +19,7 @@ from skills.navigator._governance import (
     governance_load,
     governance_order,
     governance_list,
+    _governance_is_stale,
 )
 from skills.navigator import (
     paths_undescribed,
@@ -1613,6 +1614,54 @@ class TestScanGovernance:
         # Should NOT have governance entries added by scan pattern matching
         assert ".claude/rules/all.md" not in governed
         conn.close()
+
+    def test_governance_load_discovers_new_files(self, gov_scan_tree):
+        """New convention files added after init are registered by governance_load."""
+        project = gov_scan_tree["project"]
+        db = gov_scan_tree["db"]
+
+        # Add a new convention file after initial governance_load
+        _write_governance_file(
+            project / ".claude/conventions/readme.md", "README.md",
+        )
+
+        # governance_load picks up the new file
+        governance_load(db, str(project))
+
+        conn = get_connection(db)
+        rows = conn.execute(
+            "SELECT entry_path FROM governance "
+            "WHERE entry_path = '.claude/conventions/readme.md'"
+        ).fetchall()
+        assert len(rows) == 1
+
+        # Scan then populates governs from the updated governance table
+        (project / "README.md").write_text("# Updated\n")
+        scan_path(db, str(project))
+
+        rows = conn.execute(
+            "SELECT governed_path FROM governs "
+            "WHERE governor_path = '.claude/conventions/readme.md'"
+        ).fetchall()
+        governed = [r["governed_path"] for r in rows]
+        assert any("README.md" in g for g in governed)
+        conn.close()
+
+    def test_governance_stale_detects_new_files(self, gov_scan_tree):
+        """_governance_is_stale returns True when new governance files appear on disk."""
+        project = gov_scan_tree["project"]
+        db = gov_scan_tree["db"]
+
+        # Initially not stale
+        assert not _governance_is_stale(db, str(project))
+
+        # Add a new convention file
+        _write_governance_file(
+            project / ".claude/conventions/readme.md", "README.md",
+        )
+
+        # Now stale
+        assert _governance_is_stale(db, str(project))
 
 
 class TestNormalizePatterns:

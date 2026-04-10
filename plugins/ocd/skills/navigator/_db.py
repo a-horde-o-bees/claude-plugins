@@ -38,7 +38,8 @@ CREATE TABLE IF NOT EXISTS governance (
     entry_path TEXT PRIMARY KEY REFERENCES entries(path) ON DELETE CASCADE,
     matches TEXT NOT NULL,
     excludes TEXT,
-    auto_loaded INTEGER NOT NULL DEFAULT 0
+    auto_loaded INTEGER NOT NULL DEFAULT 0,
+    git_hash TEXT
 );
 
 CREATE TABLE IF NOT EXISTS governs (

@@ -9,31 +9,120 @@ CLI display belongs in __main__.py.
 
 from __future__ import annotations
 
+import hashlib
 from pathlib import Path
 
 from ._db import get_connection
 from ._frontmatter import matches_pattern, normalize_patterns, scan_governance_dirs
 
 
+def _git_hash(file_path: str) -> str | None:
+    """Compute git-compatible blob hash for a file."""
+    try:
+        data = Path(file_path).read_bytes()
+    except (OSError, IsADirectoryError):
+        return None
+    header = f"blob {len(data)}\0".encode()
+    return hashlib.sha1(header + data).hexdigest()
+
+
+def _infer_project_dir(db_path: str) -> str | None:
+    """Infer project directory from database path convention.
+
+    Navigator db is at .claude/ocd/navigator/navigator.db relative to project root.
+    Returns None if db_path doesn't match the convention (e.g. test databases).
+    """
+    db = Path(db_path).resolve()
+    if len(db.parts) >= 5 and db.parts[-4:] == (".claude", "ocd", "navigator", "navigator.db"):
+        return str(db.parents[3])
+    return None
+
+
+def _governance_is_stale(db_path: str, project_dir: str) -> bool:
+    """Check if governance table needs updating from disk.
+
+    Compares the set of governance file paths on disk against the set in the
+    database, then compares git hashes stored in the governance table against
+    current file content. Returns True when governance data needs reloading.
+    """
+    rules_dir = Path(project_dir) / ".claude" / "rules"
+    conv_dir = Path(project_dir) / ".claude" / "conventions"
+
+    disk_paths: set[str] = set()
+    for scan_dir in (rules_dir, conv_dir):
+        if scan_dir.is_dir():
+            for md_file in scan_dir.glob("*.md"):
+                if md_file.is_file():
+                    disk_paths.add(str(md_file.relative_to(project_dir)))
+
+    conn = get_connection(db_path)
+    try:
+        db_rows = conn.execute(
+            "SELECT entry_path, git_hash FROM governance"
+        ).fetchall()
+        db_paths = {row["entry_path"] for row in db_rows}
+
+        if disk_paths != db_paths:
+            return True
+
+        for row in db_rows:
+            stored_hash = row["git_hash"]
+            if stored_hash is None:
+                return True
+            current_hash = _git_hash(
+                str(Path(project_dir) / row["entry_path"])
+            )
+            if current_hash != stored_hash:
+                return True
+
+        return False
+    finally:
+        conn.close()
+
+
+def _ensure_current(db_path: str) -> None:
+    """Refresh governance from disk if stale. Called before every query.
+
+    Skips when db_path doesn't match the conventional navigator path
+    (e.g. test databases at arbitrary locations).
+    """
+    project_dir = _infer_project_dir(db_path)
+    if project_dir is None:
+        return
+    governance_load(db_path, project_dir)
+
+
 def governance_load(db_path: str, project_dir: str) -> dict:
     """Load governance entries from frontmatter in rules and conventions.
 
+    Skips when governance table is current (file set and hashes match disk).
     Idempotent — safe to rerun.
     """
+    if not _governance_is_stale(db_path, project_dir):
+        conn = get_connection(db_path)
+        try:
+            gov_count = conn.execute("SELECT COUNT(*) as c FROM governance").fetchone()["c"]
+            rel_count = conn.execute("SELECT COUNT(*) as c FROM governs").fetchone()["c"]
+            return {"governance_entries": gov_count, "governs_relationships": rel_count}
+        finally:
+            conn.close()
+
     entries = scan_governance_dirs(Path(project_dir))
 
     conn = get_connection(db_path)
     try:
         for entry_path, entry in entries.items():
+            file_hash = _git_hash(str(Path(project_dir) / entry_path))
             conn.execute(
-                "INSERT OR IGNORE INTO entries (path, entry_type) VALUES (?, 'file')",
-                (entry_path,),
+                "INSERT INTO entries (path, entry_type, git_hash) VALUES (?, 'file', ?) "
+                "ON CONFLICT(path) DO UPDATE SET git_hash = excluded.git_hash",
+                (entry_path, file_hash),
             )
             auto_loaded = 1 if "/rules/" in entry_path else 0
             conn.execute(
-                "INSERT OR REPLACE INTO governance (entry_path, matches, excludes, auto_loaded) "
-                "VALUES (?, ?, ?, ?)",
-                (entry_path, entry["matches"], entry.get("excludes"), auto_loaded),
+                "INSERT OR REPLACE INTO governance (entry_path, matches, excludes, auto_loaded, git_hash) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (entry_path, entry["matches"], entry.get("excludes"), auto_loaded, file_hash),
             )
 
         for entry_path, entry in entries.items():
@@ -58,6 +147,7 @@ def governance_load(db_path: str, project_dir: str) -> dict:
 
 def governance_list(db_path: str) -> list[dict]:
     """List all governance entries with patterns and loading mode."""
+    _ensure_current(db_path)
     conn = get_connection(db_path)
     try:
         rows = conn.execute(
@@ -87,6 +177,7 @@ def governance_match(db_path: str, file_paths: list[str], include_rules: bool = 
     loaded into agent context. Set include_rules=True for governance
     evaluation where rules themselves are the evaluation target.
     """
+    _ensure_current(db_path)
     conn = get_connection(db_path)
     try:
         gov_rows = conn.execute(
@@ -132,6 +223,7 @@ def governance_order(db_path: str) -> dict:
     Returns levels where level 0 has no governors, level N is governed
     only by levels 0..N-1. Uses Kahn's algorithm.
     """
+    _ensure_current(db_path)
     conn = get_connection(db_path)
     try:
         gov_paths = [
@@ -183,6 +275,7 @@ def governance_order(db_path: str) -> dict:
 
 def governance_graph(db_path: str) -> dict:
     """Governance dependency edges, roots, and leaves."""
+    _ensure_current(db_path)
     conn = get_connection(db_path)
     try:
         gov_paths = {
@@ -225,6 +318,7 @@ def governance_graph(db_path: str) -> dict:
 
 def governance_unclassified(db_path: str) -> dict:
     """Find file entries with no governance coverage, grouped by extension."""
+    _ensure_current(db_path)
     conn = get_connection(db_path)
     try:
         gov_rows = conn.execute(
