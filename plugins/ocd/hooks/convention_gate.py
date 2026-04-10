@@ -22,19 +22,7 @@ from pathlib import Path
 def _get_db_path() -> Path | None:
     """Resolve navigator database path."""
     project_dir = Path(os.environ.get("CLAUDE_PROJECT_DIR", os.getcwd()))
-
-    plugin_root = os.environ.get("CLAUDE_PLUGIN_ROOT")
-    if plugin_root:
-        plugin_name = Path(plugin_root).name
-    else:
-        plugin_root_file = project_dir / ".claude" / "ocd" / ".plugin_root"
-        try:
-            value = plugin_root_file.read_text().strip()
-            plugin_name = Path(value).name if value else "ocd"
-        except (FileNotFoundError, PermissionError):
-            plugin_name = "ocd"
-
-    db_path = project_dir / ".claude" / plugin_name / "navigator" / "navigator.db"
+    db_path = project_dir / ".claude" / "ocd" / "navigator" / "navigator.db"
     return db_path if db_path.exists() else None
 
 
