@@ -1,44 +1,73 @@
 """MCP server for stash operations.
 
 Agent-facing tools for capturing ideas, future work, and unaddressed
-observations into a markdown holding area. Business logic lives in
-``_stash_store``; this server is a thin presentation layer.
+observations into a SQLite database. Business logic lives in
+skills.stash; this server is a thin presentation layer that handles
+scope-to-database resolution.
 
-Tools follow object_action naming: stash_add, stash_review,
-stash_remove, stash_promote. All return structured JSON.
+Two scopes:
+- project — entries belonging to the current project, stored at
+  <project>/.claude/ocd/stash/stash.db
+- user — cross-project entries, stored at ~/.claude/ocd/stash/stash.db
 
-Runs via stdio transport. Project root from CLAUDE_PROJECT_DIR env
-var, falling back to the current working directory.
+Tools follow object_action naming: stash_add, stash_list, stash_search,
+stash_get, stash_update, stash_remove. All return structured JSON.
+
+Runs via stdio transport. Project root from CLAUDE_PROJECT_DIR env var,
+falling back to the current working directory.
 """
 
 from __future__ import annotations
 
+import os
+from pathlib import Path
+
 from mcp.server.fastmcp import FastMCP
 
-from . import _stash_store as store
+import skills.stash as stash_skill
+
 from ._helpers import _err, _ok, _project_root
 
 # --- Configuration ---
 
+STASH_DB_REL = os.environ.get("STASH_DB", ".claude/ocd/stash/stash.db")
+
+
+def _project_db() -> str:
+    return os.path.join(str(_project_root()), STASH_DB_REL)
+
+
+def _user_db() -> str:
+    override = os.environ.get("STASH_USER_DB")
+    if override:
+        return str(Path(override).expanduser())
+    return str(Path.home() / ".claude" / "ocd" / "stash" / "stash.db")
+
+
+def _resolve_db(scope: str) -> str:
+    if scope == "user":
+        return _user_db()
+    return _project_db()
+
 
 mcp = FastMCP(
     "ocd-stash",
-    instructions="""Markdown holding area for ideas, future work, and unaddressed observations. Reach for these tools when something surfaces mid-work that should be captured for later without breaking flow.
+    instructions="""SQLite holding area for ideas, future work, and unaddressed observations. Reach for these tools when something surfaces mid-work that should be captured for later without breaking flow.
 
 Capture fast — a three-second stash beats a ten-minute detour. Return to the work in progress immediately after adding.
 
-Project vs unattached routing:
-- Project-belonging info (ideas tied to the current codebase) → stash_add with default unattached=false; lands in <project>/.claude/stash/stash.md
-- Cross-project ideas or observations not tied to any particular codebase → stash_add with unattached=true; lands in ~/.claude/stash/stash.md under ## Unattached
+Project vs user routing:
+- Project-belonging info (ideas tied to the current codebase) → stash_add with default scope="project"
+- Cross-project ideas or observations not tied to any particular codebase → stash_add with scope="user"
 
 When stash is the right mechanism vs alternatives:
 - Problems encountered mid-workflow (rule violations, tool gaps, unexpected state) → friction tools, not stash
 - Settled choices with rationale worth preserving → decisions tools, not stash
 - Stash is for ideas, future work, and observations not yet acted on — the holding area between noticing and doing
 
-Default to simple entries. Use the detail argument only when substantial context (constraints, approaches explored, blockers) would be lost in a one-line summary — the server writes it to a companion {slug}.md file and links it from the entry.
+Default to simple entries. Use detail_md only when substantial context (constraints, approaches explored, blockers) would be lost in a one-line summary.
 
-Lifecycle: stash is a holding area, not a permanent record. Call stash_remove when an entry has been addressed or moved to a tracker. Use stash_promote when an entry captured as unattached turns out to belong to the current project.""",
+Lifecycle: stash is a holding area, not a permanent record. Call stash_remove when an entry has been addressed or moved to a tracker. Use stash_update with a different scope to promote an entry from user to project when it turns out to belong to the current codebase.""",
 )
 
 
@@ -49,87 +78,180 @@ Lifecycle: stash is a holding area, not a permanent record. Call stash_remove wh
 
 @mcp.tool()
 def stash_add(
-    title: str,
     summary: str,
-    detail: str | None = None,
-    unattached: bool = False,
+    detail_md: str | None = None,
+    scope: str = "project",
 ) -> str:
     """Add an entry to the stash. Capture fast — do not deliberate.
 
-    Use when something surfaces mid-work that should be captured for later without breaking the current flow. Default routing is to the current project's stash.
+    Use when something surfaces mid-work that should be captured for later without breaking the current flow.
 
     Args:
-        title: Short title identifying the entry. Must be unique within its target section.
-        summary: One-line description suitable for the scannable entry list.
-        detail: Optional substantial context — constraints, approaches explored, what blocked progress. When provided, the server writes a companion {slug}.md file next to stash.md and links it from the entry line. Use only when a one-line summary would lose meaningful information.
-        unattached: When true, routes the entry to the user-level stash (~/.claude/stash/stash.md) under ## Unattached. Use for cross-project ideas. When false (default), routes to <project>/.claude/stash/stash.md.
+        summary: One-line description suitable for scanning.
+        detail_md: Optional substantial context — constraints, approaches explored, what blocked progress.
+        scope: "project" (default) or "user". Project entries belong to the current codebase; user entries are cross-project.
 
-    Returns {action, scope, section, stash_file, detail_file, entry} on success.
+    Returns {id, summary, has_detail, created_at, updated_at}.
     """
     try:
-        return _ok(
-            store.add(
-                _project_root(),
-                title=title,
-                summary=summary,
-                detail=detail,
-                unattached=unattached,
+        return _ok(stash_skill.stash_add(
+            _resolve_db(scope), summary=summary, detail_md=detail_md,
+        ))
+    except Exception as e:
+        return _err(e)
+
+
+@mcp.tool()
+def stash_list(
+    ids: list[int] | None = None,
+    scope: str = "project",
+    limit: int | None = None,
+) -> str:
+    """List stash entries metadata in insertion order.
+
+    Use to survey what has been stashed before starting related work, or to find ids for stash_get / stash_update / stash_remove.
+
+    Args:
+        ids: Optional list of specific ids to retrieve.
+        scope: "project" (default) or "user".
+        limit: Optional cap on entries returned.
+
+    Returns {total, entries: [{id, summary, has_detail, created_at, updated_at}]}.
+    """
+    try:
+        return _ok(stash_skill.stash_list(
+            _resolve_db(scope), ids=ids, limit=limit,
+        ))
+    except Exception as e:
+        return _err(e)
+
+
+@mcp.tool()
+def stash_search(pattern: str, scope: str = "project") -> str:
+    """Regex search across summary and detail_md fields.
+
+    Use to find stash entries by keyword or pattern without scanning the full list.
+
+    Args:
+        pattern: Regular expression to match against summary and detail_md.
+        scope: "project" (default) or "user".
+
+    Returns {total, entries: [{id, summary, has_detail, created_at, updated_at}]}.
+    """
+    try:
+        return _ok(stash_skill.stash_search(
+            _resolve_db(scope), pattern=pattern,
+        ))
+    except Exception as e:
+        return _err(e)
+
+
+@mcp.tool()
+def stash_get(ids: list[int], scope: str = "project") -> str:
+    """Return full stash entry content including detail_md.
+
+    Use when reviewing a stashed idea to understand its full context.
+
+    Args:
+        ids: List of entry ids to retrieve with full content.
+        scope: "project" (default) or "user".
+
+    Returns {entries: [{id, summary, detail_md, created_at, updated_at}]}.
+    """
+    try:
+        return _ok(stash_skill.stash_get(
+            _resolve_db(scope), ids=ids,
+        ))
+    except Exception as e:
+        return _err(e)
+
+
+@mcp.tool()
+def stash_update(
+    id: int,
+    summary: str | None = None,
+    detail_md: str | None = None,
+    scope: str = "project",
+) -> str:
+    """Update an existing stash entry, or promote it across scopes.
+
+    Normal update: modifies fields in the specified scope's database.
+    Cross-scope promotion: if the entry is not found in the specified scope
+    but exists in the other scope, moves it to the specified scope.
+
+    Args:
+        id: The entry id to update.
+        summary: New summary. None leaves unchanged.
+        detail_md: New detail markdown. None leaves unchanged; empty string "" clears to null.
+        scope: Target scope — "project" (default) or "user". If the entry lives in the other scope, it is moved here.
+
+    Returns {id, summary, has_detail, created_at, updated_at} on normal update.
+    Returns {action: "promoted", from_scope, to_scope, entry} on cross-scope move.
+    """
+    try:
+        target_db = _resolve_db(scope)
+        other_scope = "user" if scope == "project" else "project"
+        other_db = _resolve_db(other_scope)
+
+        # Try normal update in target scope first
+        try:
+            result = stash_skill.stash_update(
+                target_db, id=id, summary=summary, detail_md=detail_md,
             )
+            return _ok(result)
+        except ValueError:
+            pass
+
+        # Not found in target scope — check the other scope for promotion
+        try:
+            full = stash_skill.stash_get(other_db, ids=id)
+        except Exception:
+            full = {"entries": []}
+
+        if not full["entries"]:
+            raise ValueError(
+                f"No stash entry with id {id} in either scope; "
+                "call stash_list to see available entries"
+            )
+
+        # Cross-scope promotion: add to target, remove from source
+        entry = full["entries"][0]
+        new_summary = summary if summary is not None else entry["summary"]
+        if detail_md is not None:
+            new_detail = None if detail_md == "" else detail_md
+        else:
+            new_detail = entry["detail_md"]
+
+        new_entry = stash_skill.stash_add(
+            target_db, summary=new_summary, detail_md=new_detail,
         )
+        stash_skill.stash_remove(other_db, id=id)
+
+        return _ok({
+            "action": "promoted",
+            "from_scope": other_scope,
+            "to_scope": scope,
+            "entry": new_entry,
+        })
+
     except Exception as e:
         return _err(e)
 
 
 @mcp.tool()
-def stash_review(scope: str = "project") -> str:
-    """List stash entries grouped by section.
-
-    Use to survey what has been stashed before starting related work, or to flag entries that recent work may have addressed.
+def stash_remove(id: int, scope: str = "project") -> str:
+    """Remove a stash entry when it has been addressed or moved to a tracker.
 
     Args:
-        scope: "project" (default) reads only the current project's stash. "user" reads only the user-level stash. "all" reads both and returns results for each.
+        id: The entry id to remove.
+        scope: "project" (default) or "user".
 
-    Returns {scope, results: [{scope, stash_file, exists, sections, total}]}. Each section has a heading (null for the top section of the project file) and an entries array. Entries with companion detail files include detail_content inline so the agent does not need a second read.
+    Returns {removed: {entry metadata}, remaining: N}.
     """
     try:
-        return _ok(store.review(_project_root(), scope=scope))
-    except Exception as e:
-        return _err(e)
-
-
-@mcp.tool()
-def stash_remove(title: str, scope: str = "project") -> str:
-    """Remove an entry by exact title. Also deletes the companion detail file when present.
-
-    Use when an entry has been addressed, moved to an issue tracker, or superseded. Stash is a queue, not an archive — resolved entries leave the file.
-
-    Args:
-        title: Exact title of the entry to remove.
-        scope: "project" (default) removes from the current project stash. "user" removes from the user-level stash. "all" searches both and removes the first match.
-
-    Returns {action: "removed"|"not_found", scope, stash_file, detail_deleted, entry}.
-    """
-    try:
-        return _ok(
-            store.remove(_project_root(), title=title, scope=scope)
-        )
-    except Exception as e:
-        return _err(e)
-
-
-@mcp.tool()
-def stash_promote(title: str) -> str:
-    """Move an entry from the user-level stash into the current project stash.
-
-    Use when an idea captured as unattached is recognized as belonging to the current project. Moves the companion detail file alongside when present.
-
-    Args:
-        title: Exact title of the user-level entry to promote.
-
-    Returns {action: "promoted"|"not_found", from_stash_file, to_stash_file, entry} on success, or {error} on conflict with an existing project-side entry.
-    """
-    try:
-        return _ok(store.promote(_project_root(), title=title))
+        return _ok(stash_skill.stash_remove(
+            _resolve_db(scope), id=id,
+        ))
     except Exception as e:
         return _err(e)
 

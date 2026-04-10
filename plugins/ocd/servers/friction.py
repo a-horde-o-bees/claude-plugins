@@ -1,35 +1,31 @@
 """MCP server for friction discipline.
 
-Agent-facing tools for logging, querying, and resolving process friction.
-Friction is the signal that a system, tool, or process has a gap. Every
-encounter is a Fix or Log decision — this server owns the Log path.
+Agent-facing tools for logging, querying, searching, updating, and
+removing process friction. Friction is the signal that a system, tool,
+or process has a gap. Every encounter is a Fix or Log decision — this
+server owns the Log path. Business logic lives in skills.friction;
+this server is a thin presentation layer.
 
-Entries live as timestamped bullets in `.claude/ocd/friction/{system}.md`,
-one file per system the friction is *about*. Markdown is the storage
-format — queue-not-archive lifecycle, human-inspectable, compatible with
-existing logs.
+Tools follow object_action naming: friction_add, friction_list,
+friction_search, friction_get, friction_update, friction_remove,
+friction_systems_list. All return structured JSON.
 
-Tools follow object_action naming: friction_log, friction_list,
-friction_resolve, friction_systems. All return structured JSON.
-
-Runs via stdio transport. Friction directory from FRICTION_DIR env var.
+Runs via stdio transport. Database path from FRICTION_DB env var.
 """
 
 from __future__ import annotations
 
 import os
-import re
-from dataclasses import dataclass
-from datetime import date
-from pathlib import Path
 
 from mcp.server.fastmcp import FastMCP
+
+import skills.friction as friction_skill
 
 from ._helpers import _err, _ok
 
 # --- Configuration ---
 
-FRICTION_DIR = Path(os.environ.get("FRICTION_DIR", ".claude/ocd/friction"))
+FRICTION_DB = os.environ.get("FRICTION_DB", ".claude/ocd/friction/friction.db")
 
 mcp = FastMCP(
     "ocd-friction",
@@ -49,95 +45,12 @@ Log and continue when:
 
 Deciding question: is the current context better equipped than a future session would be? Complex friction rooted in a rich context web is worth fixing now — context won't regenerate cheaply. Simple friction with standalone context is fine to queue.
 
-When logging: use friction_log immediately at the moment of encounter — do not wait until the task completes, context degrades. The `system` argument names the system the friction is *about*, not the workflow that surfaced it. Friction with navigator discovered during evaluate-governance goes to system='navigator', not 'evaluate-governance'.
+When logging: use friction_add immediately at the moment of encounter — do not wait until the task completes, context degrades. The `system` argument names the system the friction is *about*, not the workflow that surfaced it. Friction with navigator discovered during evaluate-governance goes to system='navigator', not 'evaluate-governance'.
 
-When friction is fixed: use friction_resolve to clear the entry. Logs are a queue, not an archive — only unresolved friction remains.
+When friction is fixed: use friction_remove to clear the entry. Logs are a queue, not an archive — only unresolved friction remains.
 
-Use friction_list to review the queue before starting related work. Use friction_systems for an overview of where friction has accumulated.""",
+Use friction_list to review the queue before starting related work. Use friction_systems_list for an overview of where friction has accumulated. Use friction_search to find entries matching a pattern. Use friction_get to read full detail on specific entries.""",
 )
-
-# --- Entry parsing and formatting ---
-
-_ENTRY_RE = re.compile(
-    r"^- (?P<logged_on>\d{4}-\d{2}-\d{2}) — "
-    r"(?P<what_happened>.*?); "
-    r"expected (?P<expected>.*?); "
-    r"workaround: (?P<workaround>.*)$"
-)
-
-_SAFE_SYSTEM_RE = re.compile(r"^[a-zA-Z0-9_][a-zA-Z0-9_\-]*$")
-
-
-@dataclass
-class Entry:
-    logged_on: str
-    what_happened: str
-    expected: str
-    workaround: str
-
-    def format(self) -> str:
-        return (
-            f"- {self.logged_on} — {self.what_happened}; "
-            f"expected {self.expected}; workaround: {self.workaround}"
-        )
-
-    def to_dict(self, system: str, index: int) -> dict:
-        return {
-            "system": system,
-            "index": index,
-            "logged_on": self.logged_on,
-            "what_happened": self.what_happened,
-            "expected": self.expected,
-            "workaround": self.workaround,
-        }
-
-
-def _validate_system(system: str) -> None:
-    if not _SAFE_SYSTEM_RE.match(system):
-        raise ValueError(
-            f"Invalid system name: {system!r}. "
-            "Use alphanumerics, underscore, or dash; no path separators."
-        )
-
-
-def _system_path(system: str) -> Path:
-    _validate_system(system)
-    return FRICTION_DIR / f"{system}.md"
-
-
-def _parse_entries(content: str) -> list[Entry]:
-    entries: list[Entry] = []
-    for line in content.splitlines():
-        if not line.strip():
-            continue
-        match = _ENTRY_RE.match(line)
-        if match:
-            entries.append(Entry(**match.groupdict()))
-    return entries
-
-
-def _read_entries(system: str) -> list[Entry]:
-    path = _system_path(system)
-    if not path.exists():
-        return []
-    return _parse_entries(path.read_text())
-
-
-def _write_entries(system: str, entries: list[Entry]) -> None:
-    path = _system_path(system)
-    if not entries:
-        if path.exists():
-            path.unlink()
-        return
-    path.parent.mkdir(parents=True, exist_ok=True)
-    body = "\n".join(entry.format() for entry in entries) + "\n"
-    path.write_text(body)
-
-
-def _list_systems() -> list[str]:
-    if not FRICTION_DIR.exists():
-        return []
-    return sorted(p.stem for p in FRICTION_DIR.glob("*.md"))
 
 
 # ============================================================
@@ -146,144 +59,146 @@ def _list_systems() -> list[str]:
 
 
 @mcp.tool()
-def friction_log(
+def friction_add(
     system: str,
-    what_happened: str,
-    expected: str,
-    workaround: str,
+    summary: str,
+    detail_md: str | None = None,
 ) -> str:
-    """Append a friction entry for a system. Auto-timestamps with today's date.
+    """Add a friction entry for a system.
 
-    Call immediately at the moment of friction — do not wait until the task completes.
-    Context degrades; capture while it's rich.
+    Call immediately at the moment of friction — do not wait until the task
+    completes. Context degrades; capture while it's rich.
 
     Args:
         system: The system the friction is *about*, not the workflow that surfaced it.
-            Friction with navigator discovered during evaluate-governance uses 'navigator'.
             Alphanumerics, underscore, dash — no path separators.
-        what_happened: Concise description of the gap, rule violation, tool miss, or breakdown.
-        expected: What the agent expected to be the case or to work.
-        workaround: What was done instead, or "none — blocked" if no workaround existed.
+        summary: Concise description of the gap, rule violation, tool miss, or breakdown.
+        detail_md: Optional markdown with extended context — what happened, expected
+            behavior, workaround used. Use when the summary alone would lose important
+            context for a future session.
 
-    Returns {logged_on, system, index, path} on success; {error} on invalid system name.
+    Returns {id, system, summary, has_detail, created_at, updated_at}.
     """
     try:
-        _validate_system(system)
-        entries = _read_entries(system)
-        entry = Entry(
-            logged_on=date.today().isoformat(),
-            what_happened=what_happened.strip(),
-            expected=expected.strip(),
-            workaround=workaround.strip(),
-        )
-        entries.append(entry)
-        _write_entries(system, entries)
-        return _ok({
-            "logged_on": entry.logged_on,
-            "system": system,
-            "index": len(entries) - 1,
-            "path": str(_system_path(system)),
-        })
+        return _ok(friction_skill.friction_add(FRICTION_DB, system, summary, detail_md=detail_md))
     except Exception as e:
         return _err(e)
 
 
 @mcp.tool()
-def friction_list(system: str | None = None, limit: int | None = None) -> str:
-    """List unresolved friction entries. Optionally scope to one system.
+def friction_list(
+    system: str | None = None,
+    ids: list[int] | None = None,
+    limit: int | None = None,
+) -> str:
+    """List friction entries as metadata (no detail content).
 
-    Use before starting related work to surface known gaps, and during review
-    to decide what to fix next. Entries include a stable index within their system
-    that friction_resolve consumes.
+    Use before starting related work to surface known gaps. Returns metadata
+    only — use friction_get for full detail_md content.
 
     Args:
-        system: If provided, return entries only from this system. If omitted, return
-            entries from all systems.
-        limit: Optional cap on total entries returned. Most-recent-first across systems.
+        system: If provided, return entries only from this system.
+        ids: If provided, return metadata for these specific entry ids (ignores other filters).
+        limit: Optional cap on total entries returned.
 
-    Returns {total, entries: [{system, index, logged_on, what_happened, expected, workaround}]}.
+    Returns {total, entries: [{id, system, summary, has_detail, created_at, updated_at}]}.
     """
     try:
-        if system is not None:
-            _validate_system(system)
-            systems = [system]
-        else:
-            systems = _list_systems()
-
-        rows: list[dict] = []
-        for sys_name in systems:
-            for idx, entry in enumerate(_read_entries(sys_name)):
-                rows.append(entry.to_dict(sys_name, idx))
-
-        rows.sort(key=lambda r: r["logged_on"], reverse=True)
-        if limit is not None and limit >= 0:
-            rows = rows[:limit]
-
-        return _ok({"total": len(rows), "entries": rows})
+        return _ok(friction_skill.friction_list(FRICTION_DB, system=system, ids=ids, limit=limit))
     except Exception as e:
         return _err(e)
 
 
 @mcp.tool()
-def friction_resolve(system: str, entry_index: int) -> str:
-    """Remove a resolved friction entry by its index within a system.
+def friction_search(pattern: str, system: str | None = None) -> str:
+    """Regex search across summary and detail content.
 
-    Call after the underlying cause is fixed and verified. Friction logs are a queue,
-    not an archive — resolved entries leave the file. Deleting the last entry removes
-    the system file entirely.
+    Use to find friction entries matching a pattern when you don't know
+    which system they belong to.
 
     Args:
-        system: The system name whose entry should be cleared.
-        entry_index: Zero-based index within that system's entries, as returned by
-            friction_list. Indices may shift after a resolve — re-list before the next
-            resolve in a batch.
+        pattern: Regex pattern to match against summary and detail_md.
+        system: If provided, restrict search to this system.
 
-    Returns {removed: entry_dict, remaining} on success; {error} if out of range.
+    Returns {total, entries: [{id, system, summary, has_detail, created_at, updated_at}]}.
     """
     try:
-        _validate_system(system)
-        entries = _read_entries(system)
-        if entry_index < 0 or entry_index >= len(entries):
-            return _ok({
-                "error": (
-                    f"entry_index {entry_index} out of range for system "
-                    f"{system!r} ({len(entries)} entries)"
-                ),
-            })
-        removed = entries.pop(entry_index)
-        _write_entries(system, entries)
-        return _ok({
-            "removed": removed.to_dict(system, entry_index),
-            "remaining": len(entries),
-        })
+        return _ok(friction_skill.friction_search(FRICTION_DB, pattern, system=system))
     except Exception as e:
         return _err(e)
 
 
 @mcp.tool()
-def friction_systems() -> str:
-    """List all systems with friction logs, with entry counts.
+def friction_get(ids: list[int]) -> str:
+    """Get full friction entries including detail_md content.
+
+    Use after friction_list or friction_search to read the full detail
+    of specific entries.
+
+    Args:
+        ids: List of entry ids to retrieve.
+
+    Returns {entries: [{id, system, summary, detail_md, created_at, updated_at}]}.
+    """
+    try:
+        return _ok(friction_skill.friction_get(FRICTION_DB, ids))
+    except Exception as e:
+        return _err(e)
+
+
+@mcp.tool()
+def friction_update(
+    id: int,
+    summary: str | None = None,
+    detail_md: str | None = None,
+    system: str | None = None,
+) -> str:
+    """Update fields on an existing friction entry.
+
+    None = don't touch the field. Empty string "" clears detail_md.
+
+    Args:
+        id: Entry id to update.
+        summary: New summary text.
+        detail_md: New detail markdown. Pass "" to clear.
+        system: New system name.
+
+    Returns updated entry metadata.
+    """
+    try:
+        return _ok(friction_skill.friction_update(FRICTION_DB, id, summary=summary, detail_md=detail_md, system=system))
+    except Exception as e:
+        return _err(e)
+
+
+@mcp.tool()
+def friction_remove(id: int) -> str:
+    """Remove a resolved friction entry by id.
+
+    Call after the underlying cause is fixed and verified. Friction logs
+    are a queue, not an archive — resolved entries are deleted.
+
+    Args:
+        id: Entry id to remove.
+
+    Returns {removed: {entry metadata}, remaining: N}.
+    """
+    try:
+        return _ok(friction_skill.friction_remove(FRICTION_DB, id))
+    except Exception as e:
+        return _err(e)
+
+
+@mcp.tool()
+def friction_systems_list() -> str:
+    """List all systems with friction entries, with counts.
 
     Use for an overview of where friction has accumulated across the project.
-    Systems with zero entries are not listed — empty files are pruned on resolve.
 
-    Returns {total_systems, total_entries, systems: [{system, count}]}.
+    Returns {total_systems, total_entries, systems: [{name, count}]}.
     """
     try:
-        rows = []
-        total_entries = 0
-        for sys_name in _list_systems():
-            count = len(_read_entries(sys_name))
-            if count == 0:
-                continue
-            rows.append({"system": sys_name, "count": count})
-            total_entries += count
-        rows.sort(key=lambda r: r["count"], reverse=True)
-        return _ok({
-            "total_systems": len(rows),
-            "total_entries": total_entries,
-            "systems": rows,
-        })
+        return _ok(friction_skill.friction_systems_list(FRICTION_DB))
     except Exception as e:
         return _err(e)
 
