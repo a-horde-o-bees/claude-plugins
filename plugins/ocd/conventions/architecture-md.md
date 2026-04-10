@@ -25,7 +25,7 @@ Document the system's internal structure:
 - **Design patterns** — non-obvious patterns and why they were chosen
 - **Key implementation details** — concurrency model, error handling strategy, performance constraints
 
-Include what a developer needs to modify the system safely. Exclude user-facing content (installation, configuration, usage) — that belongs in README.md.
+Include what a developer needs to modify the system safely. Exclude user-facing content (installation, configuration, usage) — that belongs in README.md. Exclude agent-facing procedures (workflow rules the agent follows, tool invocation patterns for automation) — that belongs in CLAUDE.md or SKILL.md.
 
 ## Nesting
 

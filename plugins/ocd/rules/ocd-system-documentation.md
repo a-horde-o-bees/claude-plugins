@@ -14,10 +14,26 @@ The project root is always a system. Beyond the root, a system is any structural
 
 ## Required Documents
 
-Every system maintains both a consumer-facing entry point and a developer-facing design reference at its root, so the information needed to understand and work with the system is captured in known locations rather than rediscovered each time.
+Every system maintains a consumer-facing entry point and a developer-facing design reference at its root. Systems with agent-facing procedures add an operational reference. Together these three documents capture everything needed to use, understand, and operate the system — each from a different perspective.
 
-- `README.md` — user/consumer facing: what it does, how to install, configure, use
-- `architecture.md` — system facing: layers, components, relationships, design patterns, key implementation details
+| Document | Consumer | Question answered |
+|----------|----------|-------------------|
+| `CLAUDE.md` / `SKILL.md` | Agent | How do I operate this? |
+| `README.md` | User | How do I use this? |
+| `architecture.md` | Developer | How does this work inside? |
+
+- `README.md` — what it does, how to install, configure, use. Required for every system
+- `architecture.md` — layers, components, relationships, design patterns, key implementation details. Required for every system
+- `CLAUDE.md` / `SKILL.md` — operational procedures, workflow rules, tool invocation patterns. Present only when the system has agent-facing procedures. Skills use `SKILL.md`; other systems use `CLAUDE.md`
+
+## Document Separation
+
+Each document serves one consumer perspective. Architectural content belongs in architecture.md, not duplicated in operational or consumer documents. When an operational document (CLAUDE.md or SKILL.md) needs structural context, it directs the agent to read architecture.md rather than re-explaining the architecture.
+
+- `README.md` excludes technical internals — those belong in architecture.md
+- `architecture.md` excludes user-facing content — that belongs in README.md
+- `CLAUDE.md` / `SKILL.md` excludes architectural descriptions — it references architecture.md and contains only procedures
+- When a procedure requires architectural context to be actionable, the operational document directs the reader to architecture.md rather than embedding the context inline
 
 ## Nesting Discipline
 
