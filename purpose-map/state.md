@@ -182,17 +182,36 @@ All four rule files fully decomposed into section-level components. Every sectio
 
 Test files excluded from `uncovered` tracking — they're derivative of what they test, not independent components.
 
-### Layer E — Navigator
+### Layer E — Navigator ✓ COMPLETE
 
-Navigator facade (capability), navigator MCP server (interface router), navigator CLI (interface router). Reclaims n15, n16, n14-related sub-needs from v1.
+c40 evaluated as cohesive package (glob path `plugins/ocd/skills/navigator/*` + `plugins/ocd/servers/navigator.py`). Three new edges added: n29 (stale detection), n74 (file-purpose capture — new sub-need under n22), n22→n74 refinement. SKILL.md consumed into c40 via glob; n74 ties its population workflow into the model. Stale rationales fixed (paths_describe → paths_get).
 
-### Layer F — Plugin hooks
+### Layer F — Plugin hooks ✓ COMPLETE
 
-`session_start.py` (persists plugin root), `auto_approval.py` (permission enforcement).
+Three components, each with distinct addressing:
+- c52 — `install_deps.sh` → n72 (automate environment setup)
+- c53 — `session_start.py` → n70 (prevent per-entry-point bootstrap)
+- c54 — `auto_approval.py` → n55 (directory enforcement) + n75 (permission prompt interruptions, new sub-need under n19)
+
+`hooks.json` added as path to c2 (plugin packaging).
+
+### Pre-Layer-G infrastructure work ✓ COMPLETE
+
+Governance system changes driven by convention consumption analysis:
+
+1. **Frontmatter rename**: `pattern` → `matches`, `depends` → `governed_by`, new `excludes` field. Clean break — no backward compatibility.
+2. **Convention gate hook**: PreToolUse on Read/Edit/Write surfaces applicable conventions via `additionalContext`. Read is informational; Edit/Write is directive ("immediately refactor if non-conforming"). Replaces manual governance_match calls — the design principles bullet was removed.
+3. **mcp-server/mcp-relational merge**: Single convention with `excludes: ["__init__.py", "_helpers.py"]`. New sections for standardized verbs, markdown detail storage, domain-specific operations. c39 absorbed into c38.
+4. **Pattern matching**: Shared `matches_pattern` function supports basename, `**` prefix, and full-path matching. `mcp-server.md` uses `**/servers/*.py` for depth-independent matching.
+5. **System documentation**: README.md + architecture.md for both conventions and rules systems.
+6. **Convention consumption tests**: 22 backend tests (governance_match behavior) + 7 agent-level tests (`--run-agent` flag, spawns `claude -p`). All passing.
+7. **Clean Break principle** added to design principles.
+
+`governed_by` serves evaluation ordering only — not runtime convention loading. Runtime loading is handled by the convention gate hook.
 
 ### Layer G — Conventions
 
-Cannot start until navigator's `governance_match` is validated (since the convention loading mechanism depends on it). 11 convention files in `plugins/ocd/conventions/`.
+10 convention files in `plugins/ocd/conventions/` (after mcp-relational merged into mcp-server). Convention gate hook validates that conventions are surfaced automatically — the mechanism is tested.
 
 ### Layer H — Skills
 
@@ -208,8 +227,6 @@ init, status, navigator skill, commit, push, evaluate-skill, evaluate-governance
 - `purpose-map/CLAUDE.md` — tool documentation, schema, operational protocol (read this first)
 - `purpose-map/purpose_map.py` — implementation
 - `purpose-map/purpose-map.db` — live v2 database
-- `purpose-map/purpose-map-v1.db` — v1 snapshot (read-only reference)
 - `plugins/ocd/rules/*.md` — OCD rule files (deployed copies in `.claude/rules/`)
 - `plugins/ocd/conventions/*.md` — OCD conventions
 - `plugins/ocd/skills/*/SKILL.md` — OCD skills
-- `~/.claude/stash/convention-on-read.md` — stashed idea about convention loading
