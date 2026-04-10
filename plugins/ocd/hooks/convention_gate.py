@@ -4,7 +4,7 @@ Non-blocking — allows the tool call and injects convention paths via
 additionalContext so the agent is systematically aware of applicable
 conventions whenever it touches a file.
 
-On Read: informational — "these conventions govern this file"
+On Read: informational — "read conventions, awareness only"
 On Edit/Write: directive — "read conventions and conform, refactor if needed"
 
 Runs governance_match against the navigator database. If the database
@@ -39,7 +39,8 @@ def _build_context(file_path: str, conventions: list[str], is_mutation: bool) ->
         )
     return (
         f"Conventions govern `{file_path}`:\n"
-        f"{conv_list}"
+        f"{conv_list}\n\n"
+        "Read each convention you haven't already loaded in this session."
     )
 
 
