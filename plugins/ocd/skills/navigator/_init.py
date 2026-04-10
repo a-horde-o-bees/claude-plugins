@@ -33,7 +33,7 @@ def _status_extra(plugin_name: str, project_dir: Path) -> list[dict]:
     try:
         conn = _db.get_connection(str(db_path))
 
-        expected_tables = {"entries", "governance", "governs", "config"}
+        expected_tables = {"entries", "conventions", "rules", "config"}
         actual_tables = {row[0] for row in conn.execute(
             "SELECT name FROM sqlite_master WHERE type='table'",
         ).fetchall()}

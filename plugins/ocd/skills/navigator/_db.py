@@ -34,26 +34,30 @@ CREATE TABLE IF NOT EXISTS patterns (
     description TEXT
 );
 
-CREATE TABLE IF NOT EXISTS governance (
-    entry_path TEXT PRIMARY KEY REFERENCES entries(path) ON DELETE CASCADE,
+CREATE TABLE IF NOT EXISTS conventions (
+    entry_path TEXT PRIMARY KEY,
     matches TEXT NOT NULL,
     excludes TEXT,
-    auto_loaded INTEGER NOT NULL DEFAULT 0,
     git_hash TEXT
 );
 
-CREATE TABLE IF NOT EXISTS governance_includes (
-    entry_path TEXT NOT NULL REFERENCES governance(entry_path) ON DELETE CASCADE,
+CREATE TABLE IF NOT EXISTS convention_includes (
+    entry_path TEXT NOT NULL REFERENCES conventions(entry_path) ON DELETE CASCADE,
     pattern TEXT NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS governance_excludes (
-    entry_path TEXT NOT NULL REFERENCES governance(entry_path) ON DELETE CASCADE,
+CREATE TABLE IF NOT EXISTS convention_excludes (
+    entry_path TEXT NOT NULL REFERENCES conventions(entry_path) ON DELETE CASCADE,
     pattern TEXT NOT NULL
 );
 
-CREATE INDEX IF NOT EXISTS idx_governance_includes_entry ON governance_includes(entry_path);
-CREATE INDEX IF NOT EXISTS idx_governance_excludes_entry ON governance_excludes(entry_path);
+CREATE INDEX IF NOT EXISTS idx_convention_includes_entry ON convention_includes(entry_path);
+CREATE INDEX IF NOT EXISTS idx_convention_excludes_entry ON convention_excludes(entry_path);
+
+CREATE TABLE IF NOT EXISTS rules (
+    entry_path TEXT PRIMARY KEY,
+    git_hash TEXT
+);
 
 CREATE TABLE IF NOT EXISTS config (
     key TEXT PRIMARY KEY,

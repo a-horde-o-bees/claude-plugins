@@ -1290,44 +1290,45 @@ class TestGovernanceLoad:
     def test_loads_governance_entries(self, gov_env):
         governance_load(gov_env["db"], gov_env["project_dir"])
         conn = get_connection(gov_env["db"])
-        count = conn.execute("SELECT COUNT(*) as c FROM governance").fetchone()["c"]
-        assert count == 3
+        rule_count = conn.execute("SELECT COUNT(*) as c FROM rules").fetchone()["c"]
+        conv_count = conn.execute("SELECT COUNT(*) as c FROM conventions").fetchone()["c"]
+        assert rule_count == 2
+        assert conv_count == 1
         conn.close()
 
-    def test_sets_auto_loaded_for_rules(self, gov_env):
+    def test_rules_in_rules_table(self, gov_env):
         governance_load(gov_env["db"], gov_env["project_dir"])
         conn = get_connection(gov_env["db"])
         row = conn.execute(
-            "SELECT auto_loaded FROM governance WHERE entry_path = '.claude/rules/design-principles.md'"
+            "SELECT entry_path FROM rules WHERE entry_path = '.claude/rules/design-principles.md'"
         ).fetchone()
-        assert row["auto_loaded"] == 1
+        assert row is not None
         conn.close()
 
-    def test_sets_not_auto_loaded_for_conventions(self, gov_env):
+    def test_conventions_in_conventions_table(self, gov_env):
         governance_load(gov_env["db"], gov_env["project_dir"])
         conn = get_connection(gov_env["db"])
         row = conn.execute(
-            "SELECT auto_loaded FROM governance WHERE entry_path = '.claude/conventions/python.md'"
+            "SELECT entry_path FROM conventions WHERE entry_path = '.claude/conventions/python.md'"
         ).fetchone()
-        assert row["auto_loaded"] == 0
+        assert row is not None
         conn.close()
 
     def test_idempotent_reload(self, gov_env):
         governance_load(gov_env["db"], gov_env["project_dir"])
         governance_load(gov_env["db"], gov_env["project_dir"])
         conn = get_connection(gov_env["db"])
-        count = conn.execute("SELECT COUNT(*) as c FROM governance").fetchone()["c"]
-        assert count == 3
+        rule_count = conn.execute("SELECT COUNT(*) as c FROM rules").fetchone()["c"]
+        conv_count = conn.execute("SELECT COUNT(*) as c FROM conventions").fetchone()["c"]
+        assert rule_count == 2
+        assert conv_count == 1
         conn.close()
 
-    def test_creates_entry_rows(self, gov_env):
+    def test_does_not_write_entries_table(self, gov_env):
         governance_load(gov_env["db"], gov_env["project_dir"])
         conn = get_connection(gov_env["db"])
-        row = conn.execute(
-            "SELECT entry_type FROM entries WHERE path = '.claude/rules/design-principles.md'"
-        ).fetchone()
-        assert row is not None
-        assert row["entry_type"] == "file"
+        count = conn.execute("SELECT COUNT(*) as c FROM entries").fetchone()["c"]
+        assert count == 0
         conn.close()
 
     def test_returns_summary(self, gov_env):
@@ -1340,16 +1341,21 @@ class TestGovernanceList:
         db = str(tmp_path / "gov.db")
         conn = get_connection(db)
         conn.executescript(SCHEMA)
-        conn.execute("INSERT INTO entries (path, entry_type) VALUES ('rules/a.md', 'file')")
-        conn.execute("INSERT INTO governance (entry_path, matches, auto_loaded) VALUES ('rules/a.md', '*', 1)")
+        conn.execute("INSERT INTO rules (entry_path, git_hash) VALUES ('rules/a.md', 'abc')")
+        conn.execute(
+            "INSERT INTO conventions (entry_path, matches, git_hash) "
+            "VALUES ('.claude/conventions/py.md', '\"*.py\"', 'def')"
+        )
         conn.commit()
         conn.close()
 
         result = governance_list(db)
-        assert len(result) == 1
-        assert result[0]["path"] == "rules/a.md"
-        assert result[0]["mode"] == "rule"
-        assert result[0]["matches"] == "*"
+        assert len(result) == 2
+        rule = next(r for r in result if r["mode"] == "rule")
+        conv = next(r for r in result if r["mode"] == "convention")
+        assert rule["path"] == "rules/a.md"
+        assert rule["matches"] == "*"
+        assert conv["path"] == ".claude/conventions/py.md"
 
     def test_empty(self, db_path):
         result = governance_list(db_path)
@@ -1471,7 +1477,7 @@ class TestScanGovernance:
         return {"project": project, "db": db}
 
     def test_governance_match_uses_glob_patterns(self, gov_scan_tree):
-        """governance_match uses GLOB-translated patterns from governance_patterns table."""
+        """governance_match uses patterns from convention_includes table."""
         db = gov_scan_tree["db"]
         result = governance_match(db, ["app.py", "README.md", "sub/helper.py"])
         # Python convention matches .py files
@@ -1493,7 +1499,7 @@ class TestScanGovernance:
 
         conn = get_connection(db)
         rows = conn.execute(
-            "SELECT entry_path FROM governance "
+            "SELECT entry_path FROM conventions "
             "WHERE entry_path = '.claude/conventions/readme.md'"
         ).fetchall()
         assert len(rows) == 1
