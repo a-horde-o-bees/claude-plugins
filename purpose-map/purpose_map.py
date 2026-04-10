@@ -908,7 +908,18 @@ def uncovered(db):
         print(f"Error: git ls-files failed: {result.stderr.strip()}")
         sys.exit(1)
 
-    source_files = {line for line in result.stdout.splitlines() if line}
+    def _is_test_file(path):
+        """Test implementations are derivative of what they test, not independent components."""
+        parts = path.split("/")
+        if any(p == "tests" for p in parts):
+            return True
+        name = parts[-1] if parts else ""
+        return name.startswith("test_") or name == "conftest.py"
+
+    source_files = {
+        line for line in result.stdout.splitlines()
+        if line and not _is_test_file(line)
+    }
 
     # All paths claimed by components (normalize: strip trailing / and #anchors)
     claimed_paths = set()
@@ -916,30 +927,19 @@ def uncovered(db):
         base = p.split("#")[0].rstrip("/")
         claimed_paths.add(base)
 
-    # Also collect claimed directories so files under them count as covered
-    claimed_dirs = {p + "/" for p in claimed_paths}
-    claimed_dirs |= {p for p in claimed_paths if not p.endswith("/")}
-
     def _is_covered(file_path):
-        if file_path in claimed_paths:
-            return True
-        # Check if any claimed directory is a parent
-        for d in claimed_dirs:
-            if file_path.startswith(d + "/") or file_path.startswith(d):
-                # Exact match already handled; check directory containment
-                pass
-        # Check ancestor directories
-        parts = file_path.split("/")
-        for i in range(len(parts)):
-            ancestor = "/".join(parts[:i + 1])
-            if ancestor in claimed_paths:
-                return True
-        return False
+        """A file is covered if any component_path names it exactly.
+
+        Anchored paths (file#section) cover the file. Directory paths
+        cover only the directory itself, not files within it — each
+        file must be claimed independently.
+        """
+        return file_path in claimed_paths
 
     uncovered_files = sorted(f for f in source_files if not _is_covered(f))
 
     if not uncovered_files:
-        print("All navigator-indexed files are covered by component paths.")
+        print("All git-tracked files are covered by component paths.")
         return
 
     # Group by top-level directory

@@ -157,13 +157,25 @@ Order of component re-add. Process from foundations up. For each candidate, foll
 
 Graceful Degradation principle (to be authored) will become c25 when added to the rule file.
 
-### Layer C — Rules
+### Layer C — Rules ✓ COMPLETE
 
-Workflow + sub-rules, friction, system-documentation, decisions, process-flow-notation (with PFN/SAN children), navigator usage rule.
+All four rule files fully decomposed into section-level components. Every section is a component; only purpose statements remain as structural metadata. File-as-container principle established: rule files are extensions of c3 (rule delivery), not independent components.
 
-### Layer D — Project-level infrastructure
+- **ocd-design-principles.md**: c4–c24, c33 (principles), c45 (recurrence heuristic), c46 (bullet form guidance)
+- **ocd-workflow.md**: c25–c28 (sections)
+- **ocd-system-documentation.md**: c30–c32 (sections), c44 (system boundaries)
+- **ocd-process-flow-notation.md**: c35 (single cohesive component)
+- Friction, decisions, navigator rules dissolved into MCP servers (c41, c42, c43, c40) during Step 3
 
-`run.py` launcher, pytest configs (`pyproject.toml`, `plugins/<plugin>/pytest.ini`), `scripts/test.sh`, test fixtures.
+### Layer D — Project-level infrastructure ✓ COMPLETE
+
+- c47 — Module launcher (`run.py`). Addresses n70 (prevent per-entry-point bootstrap).
+- c48 — Test infrastructure (`pyproject.toml`, `pytest.ini`, `conftest.py`, `test.sh`). Addresses n37 (exercise code through tests).
+- c49 — Template sync (`sync-templates.py`). Addresses n71 (deployed/template alignment).
+- c50 — Plugin CLI runner (`run-plugin.sh`). Addresses n72 (automate environment setup).
+- c51 — AST extraction (`pyextract.py`). Addresses n73 (partial Python file reads).
+
+Test files excluded from `uncovered` tracking — they're derivative of what they test, not independent components.
 
 ### Layer E — Navigator
 
