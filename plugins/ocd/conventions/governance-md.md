@@ -1,8 +1,11 @@
 ---
-pattern:
+matches:
   - ".claude/rules/*.md"
   - ".claude/conventions/*.md"
-depends:
+excludes:
+  - "architecture.md"
+  - "README.md"
+governed_by:
   - .claude/conventions/markdown.md
   - .claude/rules/ocd-design-principles.md
 ---
@@ -15,38 +18,49 @@ Content and structure standards for rules and conventions — the files that gov
 
 YAML frontmatter is required. Fields define how the governance system discovers and orders these files.
 
-### pattern (required)
+### matches (required)
 
 Declares which files this governance entry applies to. The navigator matches file paths against these patterns using `fnmatch`.
 
 Single pattern as quoted string:
 
 ```yaml
-pattern: "*.py"
+matches: "*.py"
 ```
 
 Multiple patterns as block-style YAML list:
 
 ```yaml
-pattern:
+matches:
   - "test_*.*"
   - "*_test.*"
   - "conftest.*"
 ```
 
-Rules that apply universally use `pattern: "*"`. Conventions use patterns specific to their target file type. Path patterns (e.g. `.claude/rules/*.md`) match against the full project-relative path; basename patterns (e.g. `*.py`) match against the filename alone.
+Rules that apply universally use `matches: "*"`. Conventions use patterns specific to their target file type. Path patterns (e.g. `.claude/rules/*.md`) match against the full project-relative path; basename patterns (e.g. `*.py`) match against the filename alone.
 
-### depends (optional)
+### excludes (optional)
 
-Lists governance dependencies — other governance files this entry builds on. YAML block list of paths relative to project root.
+Patterns for files that should not match this governance entry even when they match `matches:`. Same format and matching rules as `matches:`.
 
 ```yaml
-depends:
+matches: "servers/*.py"
+excludes:
+  - "__init__.py"
+  - "_helpers.py"
+```
+
+### governed_by (optional)
+
+Lists governance entries this file builds on. Defines evaluation ordering — which governance entries must be stable before this one is evaluated. YAML block list of paths relative to project root.
+
+```yaml
+governed_by:
   - .claude/rules/ocd-design-principles.md
   - .claude/conventions/markdown.md
 ```
 
-Dependencies are governance relationships only — they define evaluation order and coherence checking in the governance chain. Tool references, implementation details, and runtime dependencies do not belong here.
+Governance relationships only — they define evaluation order and coherence checking in the governance chain. Tool references, implementation details, and runtime dependencies do not belong here.
 
 ## Body Structure
 

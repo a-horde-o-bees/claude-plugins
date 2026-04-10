@@ -1,6 +1,6 @@
 ---
-pattern: "README.md"
-depends:
+matches: "README.md"
+governed_by:
   - .claude/rules/ocd-design-principles.md
   - .claude/rules/ocd-system-documentation.md
   - .claude/conventions/markdown.md

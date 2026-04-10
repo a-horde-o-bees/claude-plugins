@@ -1,8 +1,13 @@
 """Governance frontmatter parser.
 
-Reads pattern and depends fields from YAML frontmatter in governance
-files (rules and conventions). No PyYAML dependency — parses the
-specific structure used by governance frontmatter.
+Reads matches, excludes, and governed_by fields from YAML frontmatter
+in governance files (rules and conventions). No PyYAML dependency —
+parses the specific structure used by governance frontmatter.
+
+Fields:
+  matches:      (required) file patterns this governance entry applies to
+  excludes:     (optional) file patterns to exclude from matches
+  governed_by:  (optional) governance files this entry builds on (evaluation ordering)
 """
 
 from __future__ import annotations
@@ -14,8 +19,8 @@ from pathlib import Path
 def parse_governance(file_path: Path) -> dict | None:
     """Extract governance frontmatter from a markdown file.
 
-    Returns {pattern, depends} dict if governance frontmatter exists,
-    None if file has no frontmatter or no pattern field.
+    Returns {matches, excludes, governed_by} dict if governance frontmatter
+    exists, None if file has no frontmatter or no matches field.
     """
     try:
         content = file_path.read_text()
@@ -26,59 +31,79 @@ def parse_governance(file_path: Path) -> dict | None:
     if not lines or lines[0].strip() != "---":
         return None
 
-    pattern = None
-    pattern_items: list[str] = []
-    depends: list[str] = []
-    in_pattern = False
-    in_depends = False
+    matches = None
+    matches_items: list[str] = []
+    excludes = None
+    excludes_items: list[str] = []
+    governed_by: list[str] = []
+    in_matches = False
+    in_excludes = False
+    in_governed_by = False
+
+    def _end_block() -> None:
+        nonlocal matches, matches_items, excludes, excludes_items
+        nonlocal in_matches, in_excludes, in_governed_by
+        if in_matches and matches_items:
+            matches = json.dumps(matches_items)
+        if in_excludes and excludes_items:
+            excludes = json.dumps(excludes_items)
+        in_matches = False
+        in_excludes = False
+        in_governed_by = False
 
     for line in lines[1:]:
         stripped = line.strip()
         if stripped == "---":
             break
 
-        if stripped.startswith("pattern:"):
-            in_depends = False
-            in_pattern = False
-            value = stripped[len("pattern:"):].strip()
+        if stripped.startswith("matches:"):
+            _end_block()
+            value = stripped[len("matches:"):].strip()
             if value.startswith("["):
-                # Flow-style: pattern: ["a", "b"]
-                pattern = value
+                matches = value
             elif value:
-                # Single value: pattern: "*.py"
-                pattern = value.strip('"').strip("'")
+                matches = value.strip('"').strip("'")
             else:
-                # Block-style list follows
-                in_pattern = True
-                pattern_items = []
+                in_matches = True
+                matches_items = []
 
-        elif in_pattern and stripped.startswith("- "):
-            pattern_items.append(stripped[2:].strip().strip('"').strip("'"))
+        elif in_matches and stripped.startswith("- "):
+            matches_items.append(stripped[2:].strip().strip('"').strip("'"))
 
-        elif stripped == "depends:" or (stripped.startswith("depends:") and not stripped[len("depends:"):].strip()):
-            if in_pattern and pattern_items:
-                pattern = json.dumps(pattern_items)
-            in_pattern = False
-            in_depends = True
+        elif stripped.startswith("excludes:"):
+            _end_block()
+            value = stripped[len("excludes:"):].strip()
+            if value.startswith("["):
+                excludes = value
+            elif value:
+                excludes = value.strip('"').strip("'")
+            else:
+                in_excludes = True
+                excludes_items = []
 
-        elif in_depends and stripped.startswith("- "):
-            depends.append(stripped[2:].strip().strip('"').strip("'"))
+        elif in_excludes and stripped.startswith("- "):
+            excludes_items.append(stripped[2:].strip().strip('"').strip("'"))
+
+        elif stripped.startswith("governed_by:"):
+            _end_block()
+            in_governed_by = True
+
+        elif in_governed_by and stripped.startswith("- "):
+            governed_by.append(stripped[2:].strip().strip('"').strip("'"))
 
         else:
-            if in_pattern and pattern_items:
-                # End of pattern block — store as JSON array for normalize_patterns
-                pattern = json.dumps(pattern_items)
-            in_pattern = False
-            in_depends = False
+            _end_block()
 
-    # Handle pattern block at end of frontmatter
-    if in_pattern and pattern_items:
-        pattern = json.dumps(pattern_items)
+    # Handle block at end of frontmatter
+    if in_matches and matches_items:
+        matches = json.dumps(matches_items)
+    if in_excludes and excludes_items:
+        excludes = json.dumps(excludes_items)
 
-    if pattern is None:
+    if matches is None:
         return None
 
-    return {"pattern": pattern, "depends": depends}
+    return {"matches": matches, "excludes": excludes, "governed_by": governed_by}
 
 
 def scan_governance_dirs(
@@ -88,8 +113,8 @@ def scan_governance_dirs(
 ) -> dict[str, dict]:
     """Scan governance directories for files with governance frontmatter.
 
-    Returns {relative_path: {pattern, depends}} map for all governance
-    files found. Paths are relative to project_dir.
+    Returns {relative_path: {matches, excludes, governed_by}} map for all
+    governance files found. Paths are relative to project_dir.
     """
     result: dict[str, dict] = {}
 

@@ -1,6 +1,6 @@
 ---
-pattern: "_init.py"
-depends:
+matches: "_init.py"
+governed_by:
   - .claude/rules/ocd-design-principles.md
   - .claude/conventions/python.md
 ---

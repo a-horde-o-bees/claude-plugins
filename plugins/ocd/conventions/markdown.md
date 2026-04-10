@@ -1,6 +1,6 @@
 ---
-pattern: "*.md"
-depends:
+matches: "*.md"
+governed_by:
   - .claude/rules/ocd-design-principles.md
 ---
 

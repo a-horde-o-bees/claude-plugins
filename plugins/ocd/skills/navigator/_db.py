@@ -36,7 +36,8 @@ CREATE TABLE IF NOT EXISTS patterns (
 
 CREATE TABLE IF NOT EXISTS governance (
     entry_path TEXT PRIMARY KEY REFERENCES entries(path) ON DELETE CASCADE,
-    pattern TEXT NOT NULL,
+    matches TEXT NOT NULL,
+    excludes TEXT,
     auto_loaded INTEGER NOT NULL DEFAULT 0
 );
 

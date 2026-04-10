@@ -102,15 +102,15 @@ def _parse_skill_refs(file_path: str) -> list[str]:
 
 
 def _parse_governance_refs(file_path: str) -> list[str]:
-    """Extract depends: references from governance frontmatter.
+    """Extract governed_by: references from governance frontmatter.
 
-    Returns project-relative paths from the depends field. These are
+    Returns project-relative paths from the governed_by field. These are
     already project-relative in the frontmatter.
     """
     parsed = parse_governance(Path(file_path))
     if parsed is None:
         return []
-    return parsed.get("depends", [])
+    return parsed.get("governed_by", [])
 
 
 def _classify_and_parse(file_path: str) -> list[str]:

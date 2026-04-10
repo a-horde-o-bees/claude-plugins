@@ -1,19 +1,59 @@
 ---
-pattern: "servers/*.py"
-depends:
+matches: "servers/*.py"
+excludes:
+  - "__init__.py"
+  - "_helpers.py"
+governed_by:
   - .claude/rules/ocd-design-principles.md
   - .claude/conventions/python.md
 ---
 
 # MCP Server Conventions
 
-Tool design and server architecture conventions for MCP servers exposed as plugin tools via FastMCP. Applies to Python server files in `servers/` directories.
+Tool design, server architecture, and data conventions for MCP servers exposed as plugin tools via FastMCP. Applies to server files in `servers/` directories — not to package infrastructure (`__init__.py`, `_helpers.py`).
 
 ## Tool Naming
 
 Tool names follow `object_action` format — the domain object first, then the operation. Agents discover related tools by scanning for a shared prefix. Names map to the server's internal module structure: tools backed by `_governance.py` are prefixed `governance_`, tools backed by `_skills.py` are prefixed `skills_`.
 
 Examples: `governance_match`, `governance_list`, `paths_get`, `skills_resolve` — not `list_governance`, `describe_path`, `resolve_skill`.
+
+## Standardized Verbs
+
+Servers that manage collections of records use a standard verb set. Each verb has fixed semantics — agents learn the pattern once and apply it across servers.
+
+| Verb | Operation | Returns |
+|------|-----------|---------|
+| `add` | Create new entry | Created entry with assigned id |
+| `list` | Retrieve collection metadata | Compact entries with `has_detail` flag, without content |
+| `get` | Retrieve full entry | Complete entry including `detail_md` content |
+| `search` | Find entries by pattern | Matching entries (regex across summary and detail) |
+| `update` | Modify existing entry | Updated entry |
+| `remove` | Delete entry | Confirmation |
+
+Metadata operations (`list`, `search`) return compact representations — enough to identify and select. Full-read operations (`get`) include complete content. This separation prevents loading detail content the agent doesn't need.
+
+### Domain-Specific Operations
+
+When a server's domain requires operations that don't map to the standard verbs, use descriptive names that convey the operation's purpose. The `object_action` naming convention still applies — the operation name replaces a standard verb.
+
+Examples from navigator: `governance_match` (match files to conventions), `governance_order` (topological sort), `skills_resolve` (locate a skill by name), `scope_analyze` (composite analysis across references, sizes, and governance). These are domain operations, not CRUD — they combine data or apply domain logic that doesn't reduce to add/get/update/remove.
+
+A server may mix standard verbs with domain-specific operations. The friction server uses all six standard verbs plus `friction_systems_list` (aggregate view by system). Standard verbs handle the individual-record lifecycle; domain operations handle cross-cutting queries.
+
+## Markdown Detail Storage
+
+Servers that store entries with optional rich content use a two-tier pattern: a summary for scanning, and an optional markdown blob for detail.
+
+| Field | Purpose | Present in |
+|-------|---------|------------|
+| `summary` | One-line description for scanning | All responses |
+| `detail_md` | Optional markdown content for extended context | `get` responses only |
+| `has_detail` | Boolean flag indicating detail_md exists | `list` responses |
+
+This separation means `list` responses stay compact — the agent sees what exists and decides whether to `get` the full content.
+
+Update behavior for `detail_md`: pass `None` to leave unchanged, pass empty string `""` to clear to null.
 
 ## Tool Descriptions
 
@@ -154,3 +194,34 @@ Shared utility functions used by multiple server files in the same plugin live i
 Server files import these via the package: `from . import _helpers` or `from ._helpers import _ok, _err`.
 
 Project-root resolution helpers (e.g., `_project_root()` reading `CLAUDE_PROJECT_DIR` with fallback to cwd) live in `_helpers.py` when used by more than one server.
+
+## Relational Data Storage
+
+Servers that need persistent storage for relational data use SQLite with WAL mode for concurrent access. This is not a mandate for all servers — only those whose domain involves structured records with relationships.
+
+### Aggregate Star Schema
+
+Relational MCP databases follow the aggregate star schema pattern — star schema structure with ownership-based cascade behavior.
+
+- **Root table** — central entity; other tables join to it via foreign keys
+- **Satellite tables** — child records that belong to a root record
+- **Junction tables** — many-to-many relationships; owned by both sides
+
+Every foreign key implies ownership. The root record and all reachable children form an **aggregate** — a consistency boundary where no orphans may exist outside it.
+
+### Cascade Behavior
+
+Delete operations cascade through the ownership tree. Cascade logic must be dynamic — derived from FK metadata at runtime, not hardcoded table names.
+
+### Schema Conventions
+
+- Root table primary key: `TEXT` (formatted prefix + number) or `INTEGER PRIMARY KEY AUTOINCREMENT`
+- Foreign keys: non-nullable, enforce ownership
+- Composite primary keys on satellite tables where natural key exists
+- CHECK constraints enforce valid values for enum-like fields
+
+### Aggregate-Aware Tools
+
+Tools operate within aggregate boundaries. A tool that modifies a satellite record understands its relationship to the root — validation, cascade implications, and consistency checks are tool responsibilities, not caller responsibilities.
+
+Registration and mutation tools accept arrays for batch processing. The tool handles per-item dedup, validation, and error collection internally — the caller provides the batch, the tool returns per-item results.

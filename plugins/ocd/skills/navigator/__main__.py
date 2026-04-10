@@ -177,7 +177,8 @@ def _dispatch_governance(args: argparse.Namespace) -> None:
         print("No governance entries.")
         return
     for entry in entries:
-        print(f"{entry['path']}  {entry['pattern']}  [{entry['mode']}]")
+        excludes = f"  excludes: {entry['excludes']}" if entry.get("excludes") else ""
+        print(f"{entry['path']}  {entry['matches']}  [{entry['mode']}]{excludes}")
 
 
 def _dispatch_governance_for(args: argparse.Namespace) -> None:

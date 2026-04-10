@@ -149,13 +149,13 @@ class TestParseSkillRefs:
 
 
 class TestParseGovernanceRefs:
-    def test_extracts_depends(self, tmp_path: Path) -> None:
-        """Governance depends: field is returned as references."""
+    def test_extracts_governed_by(self, tmp_path: Path) -> None:
+        """Governance governed_by: field is returned as references."""
         gov_file = tmp_path / "rule.md"
         gov_file.write_text(
             "---\n"
-            "pattern: \"*.md\"\n"
-            "depends:\n"
+            "matches: \"*.md\"\n"
+            "governed_by:\n"
             "  - .claude/rules/design.md\n"
             "  - .claude/conventions/markdown.md\n"
             "---\n\n"
@@ -164,12 +164,12 @@ class TestParseGovernanceRefs:
         refs = _parse_governance_refs(str(gov_file))
         assert refs == [".claude/rules/design.md", ".claude/conventions/markdown.md"]
 
-    def test_no_depends(self, tmp_path: Path) -> None:
-        """Governance without depends returns empty list."""
+    def test_no_governed_by(self, tmp_path: Path) -> None:
+        """Governance without governed_by returns empty list."""
         gov_file = tmp_path / "rule.md"
         gov_file.write_text(
             "---\n"
-            "pattern: \"*\"\n"
+            "matches: \"*\"\n"
             "---\n\n"
             "# Rule\n"
         )
@@ -217,8 +217,8 @@ class TestClassifyAndParse:
         rule = rules_dir / "test-rule.md"
         rule.write_text(
             "---\n"
-            "pattern: \"*\"\n"
-            "depends:\n"
+            "matches: \"*\"\n"
+            "governed_by:\n"
             "  - .claude/rules/parent.md\n"
             "---\n\n"
             "# Rule\n"

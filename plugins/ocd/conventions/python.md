@@ -1,6 +1,6 @@
 ---
-pattern: "*.py"
-depends:
+matches: "*.py"
+governed_by:
   - .claude/rules/ocd-design-principles.md
 ---
 

@@ -1,6 +1,6 @@
 ---
-pattern: "SKILL.md"
-depends:
+matches: "SKILL.md"
+governed_by:
   - .claude/rules/ocd-design-principles.md
   - .claude/rules/ocd-process-flow-notation.md
   - .claude/conventions/markdown.md

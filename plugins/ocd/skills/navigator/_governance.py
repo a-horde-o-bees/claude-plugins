@@ -32,13 +32,13 @@ def governance_load(db_path: str, project_dir: str) -> dict:
             )
             auto_loaded = 1 if "/rules/" in entry_path else 0
             conn.execute(
-                "INSERT OR REPLACE INTO governance (entry_path, pattern, auto_loaded) "
-                "VALUES (?, ?, ?)",
-                (entry_path, entry["pattern"], auto_loaded),
+                "INSERT OR REPLACE INTO governance (entry_path, matches, excludes, auto_loaded) "
+                "VALUES (?, ?, ?, ?)",
+                (entry_path, entry["matches"], entry.get("excludes"), auto_loaded),
             )
 
         for entry_path, entry in entries.items():
-            for dep in entry["depends"]:
+            for dep in entry["governed_by"]:
                 conn.execute(
                     "INSERT OR IGNORE INTO governs (governor_path, governed_path) "
                     "VALUES (?, ?)",
@@ -62,18 +62,21 @@ def governance_list(db_path: str) -> list[dict]:
     conn = get_connection(db_path)
     try:
         rows = conn.execute(
-            "SELECT g.entry_path, g.pattern, g.auto_loaded "
+            "SELECT g.entry_path, g.matches, g.excludes, g.auto_loaded "
             "FROM governance g ORDER BY g.entry_path"
         ).fetchall()
 
-        return [
-            {
+        result = []
+        for row in rows:
+            entry = {
                 "path": row["entry_path"],
-                "pattern": row["pattern"],
+                "matches": row["matches"],
                 "mode": "rule" if row["auto_loaded"] else "convention",
             }
-            for row in rows
-        ]
+            if row["excludes"]:
+                entry["excludes"] = row["excludes"]
+            result.append(entry)
+        return result
     finally:
         conn.close()
 
@@ -88,29 +91,39 @@ def governance_match(db_path: str, file_paths: list[str], include_rules: bool = 
     conn = get_connection(db_path)
     try:
         gov_rows = conn.execute(
-            "SELECT entry_path, pattern, auto_loaded FROM governance ORDER BY entry_path"
+            "SELECT entry_path, matches, excludes, auto_loaded FROM governance ORDER BY entry_path"
         ).fetchall()
 
-        matches: dict[str, list[str]] = {}
+        result_matches: dict[str, list[str]] = {}
         for file_path in file_paths:
             basename = Path(file_path).name
             file_matches = []
             for gov in gov_rows:
                 if not include_rules and gov["auto_loaded"]:
                     continue
-                patterns = normalize_patterns(gov["pattern"])
-                if any(
+                include_patterns = normalize_patterns(gov["matches"])
+                included = any(
                     fnmatch.fnmatch(basename, p) or fnmatch.fnmatch(file_path, p)
-                    for p in patterns
-                ):
-                    file_matches.append(gov["entry_path"])
+                    for p in include_patterns
+                )
+                if not included:
+                    continue
+                if gov["excludes"]:
+                    exclude_patterns = normalize_patterns(gov["excludes"])
+                    excluded = any(
+                        fnmatch.fnmatch(basename, p) or fnmatch.fnmatch(file_path, p)
+                        for p in exclude_patterns
+                    )
+                    if excluded:
+                        continue
+                file_matches.append(gov["entry_path"])
             if file_matches:
-                matches[file_path] = sorted(file_matches)
+                result_matches[file_path] = sorted(file_matches)
 
-        conventions = sorted({c for cs in matches.values() for c in cs})
+        conventions = sorted({c for cs in result_matches.values() for c in cs})
 
         return {
-            "matches": matches,
+            "matches": result_matches,
             "conventions": conventions,
         }
     finally:
@@ -219,7 +232,7 @@ def governance_unclassified(db_path: str) -> dict:
     conn = get_connection(db_path)
     try:
         gov_rows = conn.execute(
-            "SELECT entry_path, pattern FROM governance"
+            "SELECT entry_path, matches, excludes FROM governance"
         ).fetchall()
 
         if not gov_rows:
@@ -240,13 +253,23 @@ def governance_unclassified(db_path: str) -> dict:
             basename = Path(file_path).name
             matched = False
             for gov in gov_rows:
-                patterns = normalize_patterns(gov["pattern"])
-                if any(
+                include_patterns = normalize_patterns(gov["matches"])
+                included = any(
                     fnmatch.fnmatch(basename, p) or fnmatch.fnmatch(file_path, p)
-                    for p in patterns
-                ):
-                    matched = True
-                    break
+                    for p in include_patterns
+                )
+                if not included:
+                    continue
+                if gov["excludes"]:
+                    exclude_patterns = normalize_patterns(gov["excludes"])
+                    excluded = any(
+                        fnmatch.fnmatch(basename, p) or fnmatch.fnmatch(file_path, p)
+                        for p in exclude_patterns
+                    )
+                    if excluded:
+                        continue
+                matched = True
+                break
             if not matched:
                 unclassified.append(file_path)
 

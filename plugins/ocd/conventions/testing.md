@@ -1,9 +1,9 @@
 ---
-pattern:
+matches:
   - "test_*.*"
   - "*_test.*"
   - "conftest.*"
-depends:
+governed_by:
   - .claude/rules/ocd-design-principles.md
 ---
 

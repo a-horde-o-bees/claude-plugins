@@ -30,17 +30,24 @@ from skills.navigator import (
 )
 
 
-def _write_governance_file(path: Path, pattern, depends: list = None) -> None:
+def _write_governance_file(path: Path, matches, governed_by: list = None, excludes=None) -> None:
     """Create a markdown file with governance frontmatter at path."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    if isinstance(pattern, list):
-        quoted = ", ".join(f'"{p}"' for p in pattern)
-        lines = ["---", f"pattern: [{quoted}]"]
+    if isinstance(matches, list):
+        quoted = ", ".join(f'"{p}"' for p in matches)
+        lines = ["---", f"matches: [{quoted}]"]
     else:
-        lines = ["---", f'pattern: "{pattern}"']
-    if depends:
-        lines.append("depends:")
-        for dep in depends:
+        lines = ["---", f'matches: "{matches}"']
+    if excludes:
+        if isinstance(excludes, list):
+            lines.append("excludes:")
+            for exc in excludes:
+                lines.append(f'  - "{exc}"')
+        else:
+            lines.append(f'excludes: "{excludes}"')
+    if governed_by:
+        lines.append("governed_by:")
+        for dep in governed_by:
             lines.append(f"  - {dep}")
     lines += ["---", ""]
     path.write_text("\n".join(lines))
@@ -1272,11 +1279,11 @@ class TestGovernanceLoad:
         _write_governance_file(tmp_path / ".claude/rules/design-principles.md", "*")
         _write_governance_file(
             tmp_path / ".claude/rules/workflow.md", "*",
-            depends=[".claude/rules/design-principles.md"],
+            governed_by=[".claude/rules/design-principles.md"],
         )
         _write_governance_file(
             tmp_path / ".claude/conventions/python.md", "*.py",
-            depends=[".claude/rules/design-principles.md"],
+            governed_by=[".claude/rules/design-principles.md"],
         )
         return {"db": db, "project_dir": str(tmp_path)}
 
@@ -1354,7 +1361,7 @@ class TestGovernanceList:
         conn = get_connection(db)
         conn.executescript(SCHEMA)
         conn.execute("INSERT INTO entries (path, entry_type) VALUES ('rules/a.md', 'file')")
-        conn.execute("INSERT INTO governance (entry_path, pattern, auto_loaded) VALUES ('rules/a.md', '*', 1)")
+        conn.execute("INSERT INTO governance (entry_path, matches, auto_loaded) VALUES ('rules/a.md', '*', 1)")
         conn.commit()
         conn.close()
 
@@ -1362,7 +1369,7 @@ class TestGovernanceList:
         assert len(result) == 1
         assert result[0]["path"] == "rules/a.md"
         assert result[0]["mode"] == "rule"
-        assert result[0]["pattern"] == "*"
+        assert result[0]["matches"] == "*"
 
     def test_empty(self, db_path):
         result = governance_list(db_path)
@@ -1380,7 +1387,7 @@ class TestGovernanceMatch:
         _write_governance_file(tmp_path / ".claude/rules/principles.md", "*")
         _write_governance_file(
             tmp_path / ".claude/conventions/python.md", "*.py",
-            depends=[".claude/rules/principles.md"],
+            governed_by=[".claude/rules/principles.md"],
         )
         governance_load(db, str(tmp_path))
         return db
@@ -1413,6 +1420,50 @@ class TestGovernanceMatch:
         assert ".claude/rules/principles.md" not in result["conventions"]
 
 
+class TestGovernanceMatchExcludes:
+    @pytest.fixture
+    def excludes_db(self, tmp_path):
+        db = str(tmp_path / "gov.db")
+        conn = get_connection(db)
+        conn.executescript(SCHEMA)
+        conn.close()
+
+        _write_governance_file(tmp_path / ".claude/rules/principles.md", "*")
+        _write_governance_file(
+            tmp_path / ".claude/conventions/server.md", "servers/*.py",
+            excludes=["__init__.py", "_helpers.py"],
+        )
+        _write_governance_file(
+            tmp_path / ".claude/conventions/python.md", "*.py",
+        )
+        governance_load(db, str(tmp_path))
+        return db
+
+    def test_excludes_filters_basename(self, excludes_db):
+        result = governance_match(excludes_db, ["servers/__init__.py"])
+        # Python convention matches, but server convention excludes __init__.py
+        matched = result["matches"].get("servers/__init__.py", [])
+        assert ".claude/conventions/python.md" in matched
+        assert ".claude/conventions/server.md" not in matched
+
+    def test_excludes_allows_normal_files(self, excludes_db):
+        result = governance_match(excludes_db, ["servers/navigator.py"])
+        matched = result["matches"]["servers/navigator.py"]
+        assert ".claude/conventions/server.md" in matched
+        assert ".claude/conventions/python.md" in matched
+
+    def test_excludes_filters_helpers(self, excludes_db):
+        result = governance_match(excludes_db, ["servers/_helpers.py"])
+        matched = result["matches"].get("servers/_helpers.py", [])
+        assert ".claude/conventions/server.md" not in matched
+        assert ".claude/conventions/python.md" in matched
+
+    def test_excludes_in_conventions_list(self, excludes_db):
+        result = governance_match(excludes_db, ["servers/__init__.py", "servers/navigator.py"])
+        # server.md appears in conventions because it matched navigator.py
+        assert ".claude/conventions/server.md" in result["conventions"]
+
+
 class TestGovernanceOrder:
     @pytest.fixture
     def ordered_db(self, tmp_path):
@@ -1424,15 +1475,15 @@ class TestGovernanceOrder:
         _write_governance_file(tmp_path / ".claude/rules/principles.md", "*")
         _write_governance_file(
             tmp_path / ".claude/rules/workflow.md", "*",
-            depends=[".claude/rules/principles.md"],
+            governed_by=[".claude/rules/principles.md"],
         )
         _write_governance_file(
             tmp_path / ".claude/conventions/python.md", "*.py",
-            depends=[".claude/rules/principles.md"],
+            governed_by=[".claude/rules/principles.md"],
         )
         _write_governance_file(
             tmp_path / ".claude/conventions/skill-md.md", "SKILL.md",
-            depends=[".claude/rules/principles.md", ".claude/rules/workflow.md"],
+            governed_by=[".claude/rules/principles.md", ".claude/rules/workflow.md"],
         )
         governance_load(db, str(tmp_path))
         return db
@@ -1464,8 +1515,8 @@ class TestGovernanceOrder:
         conn.executescript(SCHEMA)
         conn.execute("INSERT INTO entries (path, entry_type) VALUES ('a.md', 'file')")
         conn.execute("INSERT INTO entries (path, entry_type) VALUES ('b.md', 'file')")
-        conn.execute("INSERT INTO governance (entry_path, pattern, auto_loaded) VALUES ('a.md', '*', 0)")
-        conn.execute("INSERT INTO governance (entry_path, pattern, auto_loaded) VALUES ('b.md', '*', 0)")
+        conn.execute("INSERT INTO governance (entry_path, matches, auto_loaded) VALUES ('a.md', '*', 0)")
+        conn.execute("INSERT INTO governance (entry_path, matches, auto_loaded) VALUES ('b.md', '*', 0)")
         conn.execute("INSERT INTO governs (governor_path, governed_path) VALUES ('a.md', 'b.md')")
         conn.execute("INSERT INTO governs (governor_path, governed_path) VALUES ('b.md', 'a.md')")
         conn.commit()
@@ -1500,7 +1551,7 @@ class TestScanGovernance:
         _write_governance_file(project / ".claude/rules/all.md", "*")
         _write_governance_file(
             project / ".claude/conventions/python.md", "*.py",
-            depends=[".claude/rules/all.md"],
+            governed_by=[".claude/rules/all.md"],
         )
         governance_load(db, str(project))
         return {"project": project, "db": db}
@@ -1580,51 +1631,70 @@ class TestNormalizePatterns:
 
 
 class TestBlockStylePattern:
-    def test_block_style_pattern_parsed(self, tmp_path):
-        """Block-style YAML list for pattern is parsed correctly."""
+    def test_block_style_matches_parsed(self, tmp_path):
+        """Block-style YAML list for matches is parsed correctly."""
         gov_file = tmp_path / "testing.md"
         gov_file.write_text(
             "---\n"
-            "pattern:\n"
+            "matches:\n"
             '  - "test_*.*"\n'
             '  - "*_test.*"\n'
             '  - "conftest.*"\n'
-            "depends:\n"
+            "governed_by:\n"
             "  - .claude/rules/design.md\n"
             "---\n\n"
             "# Testing\n"
         )
         result = parse_governance(gov_file)
         assert result is not None
-        patterns = normalize_patterns(result["pattern"])
+        patterns = normalize_patterns(result["matches"])
         assert patterns == ["test_*.*", "*_test.*", "conftest.*"]
+        assert result["governed_by"] == [".claude/rules/design.md"]
 
-    def test_flow_style_still_works(self, tmp_path):
-        """Flow-style YAML list for pattern still works (backwards compat)."""
+    def test_flow_style_matches(self, tmp_path):
+        """Flow-style YAML list for matches works."""
         gov_file = tmp_path / "testing.md"
         gov_file.write_text(
             '---\n'
-            'pattern: ["test_*.*", "*_test.*"]\n'
+            'matches: ["test_*.*", "*_test.*"]\n'
             '---\n\n'
             '# Testing\n'
         )
         result = parse_governance(gov_file)
         assert result is not None
-        patterns = normalize_patterns(result["pattern"])
+        patterns = normalize_patterns(result["matches"])
         assert patterns == ["test_*.*", "*_test.*"]
 
-    def test_single_pattern_unchanged(self, tmp_path):
-        """Single string pattern still works."""
+    def test_single_matches(self, tmp_path):
+        """Single string matches works."""
         gov_file = tmp_path / "python.md"
         gov_file.write_text(
             '---\n'
-            'pattern: "*.py"\n'
+            'matches: "*.py"\n'
             '---\n\n'
             '# Python\n'
         )
         result = parse_governance(gov_file)
         assert result is not None
-        assert result["pattern"] == "*.py"
+        assert result["matches"] == "*.py"
+
+    def test_excludes_parsed(self, tmp_path):
+        """Excludes field is parsed from frontmatter."""
+        gov_file = tmp_path / "server.md"
+        gov_file.write_text(
+            '---\n'
+            'matches: "servers/*.py"\n'
+            'excludes:\n'
+            '  - "__init__.py"\n'
+            '  - "_helpers.py"\n'
+            '---\n\n'
+            '# Server\n'
+        )
+        result = parse_governance(gov_file)
+        assert result is not None
+        assert result["matches"] == "servers/*.py"
+        excludes = normalize_patterns(result["excludes"])
+        assert excludes == ["__init__.py", "_helpers.py"]
 
 
 class TestListPatternGovernanceFor:

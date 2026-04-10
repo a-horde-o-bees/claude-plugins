@@ -34,7 +34,7 @@ mcp = FastMCP(
 Prefer Navigator for purpose-based queries:
 - Find files by what they do → paths_search (vs Grep, which searches content)
 - Browse structure with descriptions → paths_get (start with '.' for top-level overview)
-- Check which rules and conventions govern files → governance_match (before creating or modifying files)
+- Check which rules and conventions govern files → governance_match
 - Locate skills across discovery locations → skills_resolve
 
 Prefer Grep for content patterns (function names, string literals, regex matching) and Glob for file name patterns (extensions, naming conventions).
@@ -188,13 +188,10 @@ def paths_remove(
 
 @mcp.tool()
 def governance_match(file_paths: list[str], include_rules: bool = False) -> str:
-    """Find which conventions apply to files. Call before creating or modifying files.
+    """Find which conventions apply to files.
 
     Returns only conventions (on-demand) by default. Rules are excluded — they are
-    always loaded into agent context. Read each returned convention you haven't already
-    read, then follow its requirements.
-
-    Set include_rules=true only for governance evaluation where rules themselves
+    always loaded into agent context. Set include_rules=true when rules themselves
     are the evaluation target.
 
     Returns {matches: {file: [convention_paths]}, conventions: [all_unique]}.

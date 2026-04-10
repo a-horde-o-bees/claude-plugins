@@ -1,6 +1,6 @@
 ---
-pattern: "*/evaluate-*/SKILL.md"
-depends:
+matches: "*/evaluate-*/SKILL.md"
+governed_by:
   - .claude/rules/ocd-design-principles.md
   - .claude/conventions/skill-md.md
 ---

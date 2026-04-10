@@ -30,6 +30,16 @@
             "timeout": 10
           }
         ]
+      },
+      {
+        "matcher": "Read|Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/run.py hooks.convention_gate",
+            "timeout": 10
+          }
+        ]
       }
     ]
   }

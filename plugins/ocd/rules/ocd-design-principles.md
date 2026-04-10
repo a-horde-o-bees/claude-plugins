@@ -1,5 +1,5 @@
 ---
-pattern: "*"
+matches: "*"
 ---
 
 # Design Principles
@@ -88,7 +88,6 @@ Verify assumptions against system reality before acting — read what's there, v
 - Before writing new functions: read existing implementations
 - Before transforming data: validate current state
 - Before writing code that consumes an API: verify the return format
-- Before creating or modifying files: verify applicable conventions match the target files
 - Before building on assumptions: verify with minimal tool calls
 - Before resuming mid-session skill work: verify current disk state matches expected state
 - After all file-modifying agents complete: review changes before presenting to user
@@ -130,7 +129,6 @@ One authoritative source for each concept. Derived artifacts validate against th
 
 - Templates are authoritative for file structure; product files conform
 - Tool implementations are authoritative for business logic; instructions reference tools by name
-- When a refactor touches any name, path, or pattern, every reference is updated as if the old form never existed — no compatibility shims, no split conventions
 - Describe current reality only; do not reference previous states, removed features, or change history
 - Rules and conventions are living context, not immutable constraints — flag conflicts and evaluate which should yield; during normal execution, follow rules without re-litigating
 
@@ -244,3 +242,12 @@ Findings and assertions are bounded by what was actually examined. The agent dis
 - **Absence of evidence is not evidence of absence** — not finding something means the search didn't surface it, not that it doesn't exist; state what was searched and what wasn't found, without concluding nonexistence
 - **Acknowledge sample bias** — findings reflect the entities examined, with whatever selection criteria, discovery paths, and depth limits shaped the sample; claims apply to the sample, not the population, unless the sample demonstrably covers the population
 - **Open-world assumption** — what hasn't been observed may still exist; default to "not yet found" rather than "does not exist"; the system's knowledge is incomplete by nature and assertions should reflect that
+
+## Clean Break
+
+Refactors propagate completely — every reference is updated and the old form is deleted in the same change. No compatibility shims, migration code, legacy aliases, or dual-name support. A refactored system has one representation, not a new one layered over backward-compatible acceptance of the old.
+
+- Before adding any backward-compatibility shim, migration path, or legacy alias during a refactor: ask the user if backward compatibility is needed; the default answer is no
+- When renaming a field, column, or key: update every reference and delete the old form; do not accept both old and new
+- When changing a schema: write the new schema; do not detect and migrate the old
+- When a change breaks external consumers: surface the break to the user; do not paper over it with compatibility layers that create dead code paths

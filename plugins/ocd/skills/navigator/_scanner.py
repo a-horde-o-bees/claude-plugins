@@ -247,7 +247,7 @@ def scan_path(db_path: str, target_path: str) -> str:
 
         # Governance pattern matching — populate governs from governance patterns
         gov_rows = conn.execute(
-            "SELECT entry_path, pattern FROM governance"
+            "SELECT entry_path, matches, excludes FROM governance"
         ).fetchall()
         if gov_rows:
             gov_paths = {r["entry_path"] for r in gov_rows}
@@ -257,19 +257,27 @@ def scan_path(db_path: str, target_path: str) -> str:
                 if etype == "file" and path not in gov_paths
             ]
             for gov in gov_rows:
-                patterns = normalize_patterns(gov["pattern"])
+                include_patterns = normalize_patterns(gov["matches"])
+                exclude_patterns = normalize_patterns(gov["excludes"]) if gov["excludes"] else []
                 gov_path = gov["entry_path"]
                 for file_path in file_entries:
                     basename = Path(file_path).name
-                    if any(
+                    included = any(
                         fnmatch.fnmatch(basename, p) or fnmatch.fnmatch(file_path, p)
-                        for p in patterns
+                        for p in include_patterns
+                    )
+                    if not included:
+                        continue
+                    if exclude_patterns and any(
+                        fnmatch.fnmatch(basename, p) or fnmatch.fnmatch(file_path, p)
+                        for p in exclude_patterns
                     ):
-                        conn.execute(
-                            "INSERT OR IGNORE INTO governs (governor_path, governed_path) "
-                            "VALUES (?, ?)",
-                            (gov_path, file_path),
-                        )
+                        continue
+                    conn.execute(
+                        "INSERT OR IGNORE INTO governs (governor_path, governed_path) "
+                        "VALUES (?, ?)",
+                        (gov_path, file_path),
+                    )
             # Remove stale governs for files no longer on disk
             conn.execute(
                 "DELETE FROM governs WHERE governed_path NOT IN "
