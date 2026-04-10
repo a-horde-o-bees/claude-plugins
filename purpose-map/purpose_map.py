@@ -921,20 +921,27 @@ def uncovered(db):
         if line and not _is_test_file(line)
     }
 
-    # All paths claimed by components (normalize: strip trailing / and #anchors)
-    claimed_paths = set()
+    # Separate exact paths from glob patterns
+    from fnmatch import fnmatch
+    exact_paths = set()
+    glob_patterns = []
     for (p,) in db.execute("SELECT path FROM component_paths").fetchall():
         base = p.split("#")[0].rstrip("/")
-        claimed_paths.add(base)
+        if "*" in base or "?" in base:
+            glob_patterns.append(base)
+        else:
+            exact_paths.add(base)
 
     def _is_covered(file_path):
-        """A file is covered if any component_path names it exactly.
+        """A file is covered if a component_path names it exactly or matches via glob.
 
-        Anchored paths (file#section) cover the file. Directory paths
-        cover only the directory itself, not files within it — each
-        file must be claimed independently.
+        Anchored paths (file#section) cover the file. Glob patterns
+        (e.g. skills/friction/*) cover matching files. Directory paths
+        without globs cover only the directory itself.
         """
-        return file_path in claimed_paths
+        if file_path in exact_paths:
+            return True
+        return any(fnmatch(file_path, pat) for pat in glob_patterns)
 
     uncovered_files = sorted(f for f in source_files if not _is_covered(f))
 

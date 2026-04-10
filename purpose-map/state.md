@@ -142,11 +142,9 @@ Carried over from v1. These are sub-needs that v1 incorrectly attached to operat
 
 ## Modeling Decisions (this session)
 
-- **Files are containers, not components.** Rule files are extensions of c3 (rule delivery). Every section within a file must be a component or a purpose statement — nothing else earns its place in always-on context. Applied to all four rule files; all content now maps to components.
-- **Test files excluded from `uncovered`.** Test implementations are derivative of what they test. Test *infrastructure* (pytest.ini, conftest.py, test.sh) IS a component (c48); individual test files are not.
-- **Directory paths don't cover children in `uncovered`.** A component claiming `plugins/ocd/skills/friction/` does not suppress individual files within from showing as uncovered. Each file must be claimed independently.
-- **Needs don't have to be preventative.** "Automate environment setup" (n72) and "Ensure deployed artifacts and template artifacts stay aligned" (n71) are valid non-preventative need wordings.
 - **n9 and n10 are gaps in the id sequence** — these were removed during the v1 simplification (refinement-related needs that turned out to be technical requirements, not business concerns). The gap is preserved as historical record; do not reuse the ids.
+
+Durable modeling guidance has been promoted to CLAUDE.md: files-as-containers (*Files are containers, not components*), coverage exclusions (*Coverage exclusions*), cohesive vs parallel path strategy (*Source-Location Paths*), non-preventative needs (*Writing needs*).
 
 ## Worklist for Live Invention
 
