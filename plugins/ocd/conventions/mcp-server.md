@@ -1,5 +1,5 @@
 ---
-matches: "servers/*.py"
+matches: "**/servers/*.py"
 excludes:
   - "__init__.py"
   - "_helpers.py"

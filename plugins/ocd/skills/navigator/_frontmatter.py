@@ -12,6 +12,7 @@ Fields:
 
 from __future__ import annotations
 
+import fnmatch
 import json
 from pathlib import Path
 
@@ -142,3 +143,30 @@ def normalize_patterns(pattern: str) -> list[str]:
     if pattern.startswith("["):
         return json.loads(pattern)
     return [pattern]
+
+
+def matches_pattern(file_path: str, pattern: str) -> bool:
+    """Match a file path against a governance pattern.
+
+    Three matching modes, checked in order:
+
+    1. Basename: "*.py" matches any .py file regardless of directory
+    2. ** prefix: "**/servers/*.py" matches servers/*.py at any depth
+    3. Full path: "servers/*.py" matches files at exactly that path
+
+    Used by governance_match, governance_unclassified, and scan-time
+    governance matching.
+    """
+    basename = Path(file_path).name
+    if fnmatch.fnmatch(basename, pattern):
+        return True
+    pattern_parts = Path(pattern).parts
+    if pattern_parts and pattern_parts[0] == "**":
+        target = str(Path(*pattern_parts[1:]))
+        path_parts = Path(file_path).parts
+        for i in range(len(path_parts)):
+            candidate = str(Path(*path_parts[i:]))
+            if fnmatch.fnmatch(candidate, target):
+                return True
+        return False
+    return fnmatch.fnmatch(file_path, pattern)

@@ -12,12 +12,12 @@ import sqlite3
 from pathlib import Path
 
 from ._db import get_connection
-from ._frontmatter import normalize_patterns
+from ._frontmatter import matches_pattern, normalize_patterns
 
 logger = logging.getLogger(__name__)
 
 
-def _matches_any_pattern(path: str, patterns: list[sqlite3.Row]) -> sqlite3.Row | None:
+def _matches_pattern_any(path: str, patterns: list[sqlite3.Row]) -> sqlite3.Row | None:
     """Check if path matches any glob pattern. Returns first match."""
     path_parts = Path(path).parts
     for rule in patterns:
@@ -114,14 +114,14 @@ def _walk_filesystem(
         remaining_dirs = []
         for d in dirnames:
             d_path = os.path.join(rel_dir, d) if rel_dir else d
-            if _matches_any_pattern(d_path, exclude_patterns):
+            if _matches_pattern_any(d_path, exclude_patterns):
                 continue
             concrete = conn.execute(
                 "SELECT traverse FROM entries "
                 "WHERE path = ? AND traverse = 0",
                 (d_path,),
             ).fetchone()
-            if concrete or _matches_any_pattern(d_path, shallow_patterns):
+            if concrete or _matches_pattern_any(d_path, shallow_patterns):
                 shallow_dirs.append(d)
             else:
                 remaining_dirs.append(d)
@@ -137,7 +137,7 @@ def _walk_filesystem(
 
         for filename in filenames:
             file_path = os.path.join(rel_dir, filename) if rel_dir else filename
-            if not _matches_any_pattern(file_path, exclude_patterns):
+            if not _matches_pattern_any(file_path, exclude_patterns):
                 disk_entries[file_path] = "file"
 
         for dirname in dirnames:
@@ -190,7 +190,7 @@ def scan_path(db_path: str, target_path: str) -> str:
                 if parent_path == ".":
                     parent_path = ""
 
-                rule = _matches_any_pattern(path, prescribed_patterns)
+                rule = _matches_pattern_any(path, prescribed_patterns)
                 description = rule["description"] if rule else None
                 metrics = _compute_file_metrics(path) if entry_type == "file" else {"git_hash": None, "line_count": None, "char_count": None}
 
@@ -213,7 +213,7 @@ def scan_path(db_path: str, target_path: str) -> str:
                 current_hash = metrics["git_hash"]
                 stored_hash = db_entries[path]
                 if stored_hash is not None and current_hash != stored_hash:
-                    rule = _matches_any_pattern(path, prescribed_patterns)
+                    rule = _matches_pattern_any(path, prescribed_patterns)
                     if rule:
                         conn.execute(
                             "UPDATE entries SET description = ?, stale = 0, git_hash = ?, line_count = ?, char_count = ? "
@@ -261,16 +261,13 @@ def scan_path(db_path: str, target_path: str) -> str:
                 exclude_patterns = normalize_patterns(gov["excludes"]) if gov["excludes"] else []
                 gov_path = gov["entry_path"]
                 for file_path in file_entries:
-                    basename = Path(file_path).name
                     included = any(
-                        fnmatch.fnmatch(basename, p) or fnmatch.fnmatch(file_path, p)
-                        for p in include_patterns
+                        matches_pattern(file_path, p) for p in include_patterns
                     )
                     if not included:
                         continue
                     if exclude_patterns and any(
-                        fnmatch.fnmatch(basename, p) or fnmatch.fnmatch(file_path, p)
-                        for p in exclude_patterns
+                        matches_pattern(file_path, p) for p in exclude_patterns
                     ):
                         continue
                     conn.execute(

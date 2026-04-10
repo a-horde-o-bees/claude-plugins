@@ -9,11 +9,10 @@ CLI display belongs in __main__.py.
 
 from __future__ import annotations
 
-import fnmatch
 from pathlib import Path
 
 from ._db import get_connection
-from ._frontmatter import normalize_patterns, scan_governance_dirs
+from ._frontmatter import matches_pattern, normalize_patterns, scan_governance_dirs
 
 
 def governance_load(db_path: str, project_dir: str) -> dict:
@@ -96,23 +95,20 @@ def governance_match(db_path: str, file_paths: list[str], include_rules: bool = 
 
         result_matches: dict[str, list[str]] = {}
         for file_path in file_paths:
-            basename = Path(file_path).name
             file_matches = []
             for gov in gov_rows:
                 if not include_rules and gov["auto_loaded"]:
                     continue
                 include_patterns = normalize_patterns(gov["matches"])
                 included = any(
-                    fnmatch.fnmatch(basename, p) or fnmatch.fnmatch(file_path, p)
-                    for p in include_patterns
+                    matches_pattern(file_path, p) for p in include_patterns
                 )
                 if not included:
                     continue
                 if gov["excludes"]:
                     exclude_patterns = normalize_patterns(gov["excludes"])
                     excluded = any(
-                        fnmatch.fnmatch(basename, p) or fnmatch.fnmatch(file_path, p)
-                        for p in exclude_patterns
+                        matches_pattern(file_path, p) for p in exclude_patterns
                     )
                     if excluded:
                         continue
@@ -250,21 +246,18 @@ def governance_unclassified(db_path: str) -> dict:
             file_path = row["path"]
             if file_path in gov_paths:
                 continue
-            basename = Path(file_path).name
             matched = False
             for gov in gov_rows:
                 include_patterns = normalize_patterns(gov["matches"])
                 included = any(
-                    fnmatch.fnmatch(basename, p) or fnmatch.fnmatch(file_path, p)
-                    for p in include_patterns
+                    matches_pattern(file_path, p) for p in include_patterns
                 )
                 if not included:
                     continue
                 if gov["excludes"]:
                     exclude_patterns = normalize_patterns(gov["excludes"])
                     excluded = any(
-                        fnmatch.fnmatch(basename, p) or fnmatch.fnmatch(file_path, p)
-                        for p in exclude_patterns
+                        matches_pattern(file_path, p) for p in exclude_patterns
                     )
                     if excluded:
                         continue

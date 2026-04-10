@@ -37,14 +37,20 @@ matches:
   - "conftest.*"
 ```
 
-Rules that apply universally use `matches: "*"`. Conventions use patterns specific to their target file type. Path patterns (e.g. `.claude/rules/*.md`) match against the full project-relative path; basename patterns (e.g. `*.py`) match against the filename alone.
+Rules that apply universally use `matches: "*"`. Conventions use patterns specific to their target file type.
+
+Matching modes:
+
+- **Basename**: `*.py` matches any `.py` file regardless of directory depth
+- **Path with wildcard prefix**: `**/servers/*.py` matches `servers/*.py` at any depth in the directory tree. Use `**/` prefix when the target directory may be nested (e.g. under `plugins/`)
+- **Full path**: `.claude/rules/*.md` matches files at exactly that project-relative path
 
 ### excludes (optional)
 
 Patterns for files that should not match this governance entry even when they match `matches:`. Same format and matching rules as `matches:`.
 
 ```yaml
-matches: "servers/*.py"
+matches: "**/servers/*.py"
 excludes:
   - "__init__.py"
   - "_helpers.py"
