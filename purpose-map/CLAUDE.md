@@ -256,6 +256,14 @@ Two reasons:
 - **Mid-evaluation rewording can invalidate prior addressing edges** that were correct under the older meaning. The user has the broader perspective to judge whether to sharpen, hold the broader meaning, split into multiple entities, or leave it alone.
 - **An agent focused on the current wiring will tend to over-sharpen** toward that one relationship, narrowing a deliberately-broad need into something it wasn't meant to be. The right move when a component's concern is sharper than an existing need is to surface the gap and propose a new sibling need to the user, not to rewrite the existing one.
 
+### Writing component descriptions
+
+Component descriptions name the role and architectural shape — what the component is and what kind of contribution it makes. They survive refactoring: a rename, a storage migration, or a verb change should not invalidate the description.
+
+- **Role and shape, not API surface.** Name what the component does and how it's structured (MCP server, SQLite-backed, skill package). Don't enumerate function names, tool names, parameters, or file formats — those are implementation details visible in the source artifact itself (reachable via `where`).
+- **Architectural properties over implementation details.** "SQLite-backed with separate project and user databases" survives; "stash_add, stash_review, stash_remove, stash_promote" doesn't.
+- **Server instructions content is worth naming** — it encodes the agent-facing decision framework, which is a durable design choice even when tool names change.
+
 ### Writing needs
 
 Need descriptions are the entity (see *Identifiers*) — they must carry the full meaning without relying on a name.

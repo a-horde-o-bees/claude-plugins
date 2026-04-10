@@ -63,7 +63,8 @@ Project vs user routing:
 When stash is the right mechanism vs alternatives:
 - Problems encountered mid-workflow (rule violations, tool gaps, unexpected state) → friction tools, not stash
 - Settled choices with rationale worth preserving → decisions tools, not stash
-- Stash is for ideas, future work, and observations not yet acted on — the holding area between noticing and doing
+- User-specific knowledge (preferences, feedback on agent behavior, personal context) → Claude memory, not stash
+- Project-specific knowledge any user of the project would benefit from → stash, not memory
 
 Default to simple entries. Use detail_md only when substantial context (constraints, approaches explored, blockers) would be lost in a one-line summary.
 

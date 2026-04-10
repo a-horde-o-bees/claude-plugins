@@ -76,6 +76,7 @@ Commands — analysis:
     how <need-id>                          What addresses this need? (with rationales)
     compare <component-a> <component-b>    Compare two components by addressing edges (common needs + each-only needs)
     summary                                High-level counts and gap status
+    uncovered                              Project files not attached to any component (cross-refs navigator DB)
 """
 
 import sqlite3
@@ -890,6 +891,74 @@ def summary(db):
     print(f"\nUse `needs` to view the need tree.")
 
 
+def uncovered(db):
+    """Show project files not attached to any component.
+
+    Cross-references git-tracked files against component_paths
+    to find source artifacts with no component ownership.
+    """
+    import subprocess
+
+    project_root = Path(__file__).parent.parent
+    result = subprocess.run(
+        ["git", "ls-files"],
+        capture_output=True, text=True, cwd=str(project_root),
+    )
+    if result.returncode != 0:
+        print(f"Error: git ls-files failed: {result.stderr.strip()}")
+        sys.exit(1)
+
+    source_files = {line for line in result.stdout.splitlines() if line}
+
+    # All paths claimed by components (normalize: strip trailing / and #anchors)
+    claimed_paths = set()
+    for (p,) in db.execute("SELECT path FROM component_paths").fetchall():
+        base = p.split("#")[0].rstrip("/")
+        claimed_paths.add(base)
+
+    # Also collect claimed directories so files under them count as covered
+    claimed_dirs = {p + "/" for p in claimed_paths}
+    claimed_dirs |= {p for p in claimed_paths if not p.endswith("/")}
+
+    def _is_covered(file_path):
+        if file_path in claimed_paths:
+            return True
+        # Check if any claimed directory is a parent
+        for d in claimed_dirs:
+            if file_path.startswith(d + "/") or file_path.startswith(d):
+                # Exact match already handled; check directory containment
+                pass
+        # Check ancestor directories
+        parts = file_path.split("/")
+        for i in range(len(parts)):
+            ancestor = "/".join(parts[:i + 1])
+            if ancestor in claimed_paths:
+                return True
+        return False
+
+    uncovered_files = sorted(f for f in source_files if not _is_covered(f))
+
+    if not uncovered_files:
+        print("All navigator-indexed files are covered by component paths.")
+        return
+
+    # Group by top-level directory
+    groups = {}
+    for f in uncovered_files:
+        parts = f.split("/")
+        group = parts[0] if len(parts) > 1 else "."
+        groups.setdefault(group, []).append(f)
+
+    total = len(uncovered_files)
+    print(f"Uncovered files: {total} (not attached to any component)\n")
+    for group in sorted(groups):
+        files = groups[group]
+        print(f"{group}/ ({len(files)})")
+        for f in files:
+            print(f"  {f}")
+        print()
+
+
 # --- Helpers ---
 
 def verify_all(db):
@@ -1002,6 +1071,7 @@ COMMANDS = {
     "how":              (how,              1, "<need-id>"),
     "compare":          (compare,          2, "<component-a> <component-b>"),
     "summary":          (summary,          0, ""),
+    "uncovered":        (uncovered,        0, ""),
 }
 
 OPTIONAL_ARG_COMMANDS = {"dependencies", "addresses", "needs"}

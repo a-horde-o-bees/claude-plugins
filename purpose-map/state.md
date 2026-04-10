@@ -61,13 +61,17 @@ The "convey purpose through name" need (raised during c2 evaluation) is a real c
 
 **MCP foundation lock-in (post-Layer-C reframe):** The evaluation pass shifted from survey-mode to fix-foundations-mode. Recognized the MCP pattern as the correct shape for process tooling. Locked in the foundation in dependency order: convention delivery (c36) → python.md (c37) → mcp-server.md (c38) → mcp-relational.md (c39) → navigator package (c40, combined backend + MCP server). Then migrated friction, decisions, and stash from rule-based / user-level skill to MCP servers via parallel agents.
 
-**Step 3 migrations complete:**
+**Step 3 migrations complete (subsequently restructured — see Step 4):**
 
-- **c29 (friction rule)** → removed; replaced by **c41 (friction MCP)** at `plugins/ocd/servers/friction.py`. Same addressing edges (n59 signal preservation, n44 multi-edge with c12 Fix Foundations) plus n28/n49 from MCP shape.
-- **c34 (decisions rule)** → removed; replaced by **c42 (decisions MCP)** at `plugins/ocd/servers/decisions.py` + `_decisions_store.py`. Same addressing edge (n61 multi-edge with c33 Capture Rationale) plus n28/n49.
-- **Stash skill** → replaced by **c43 (stash MCP)** at `plugins/ocd/servers/stash.py` + `_stash_store.py`. New sub-need n68 under n2 (*Prevent the agent or user from losing ideas and observations when they can't be acted on immediately*). Project-scoped storage at `<project>/.claude/stash/`, user-level fallback for unattached entries.
+- **c29 (friction rule)** → removed; replaced by **c41 (friction MCP)**. Same addressing edges (n59 signal preservation, n44 multi-edge with c12 Fix Foundations) plus n28/n49 from MCP shape.
+- **c34 (decisions rule)** → removed; replaced by **c42 (decisions MCP)**. Same addressing edge (n61 multi-edge with c33 Capture Rationale) plus n28/n49.
+- **Stash skill** → replaced by **c43 (stash MCP)**. New sub-need n68 under n2 (*Prevent the agent or user from losing ideas and observations when they can't be acted on immediately*).
 
-All three MCP servers tested (24 + 26 + 35 unit tests; 355 ocd tests total), registered in `plugins/ocd/.mcp.json`, server `instructions` and tool descriptions follow the conventions locked in at Step 1.
+**Step 4 — SQLite migration and unified verb standardization:**
+
+All three record-keeping MCP servers (c41, c42, c43) rewritten from markdown-file storage to SQLite with WAL concurrency. Unified verb set (add, list, search, get, update, remove) replaces per-service naming. All records use id-based identity with summary + optional detail_md blob. Navigator (c40) CRUD tools renamed: paths_describe → paths_get (with multi-path support), paths_set → paths_upsert. Case-insensitive regex search across all three services. Old markdown storage (decisions.md, decisions/, .claude/stash/) removed after data migrated. Business logic separated into skill packages (`skills/<name>/_db.py` + `__init__.py`); servers are thin wrappers passing db_path from env vars. Stash uses separate project and user databases instead of scope column.
+
+432 tests total (skill unit + server wiring unit + server integration), registered in `plugins/ocd/.mcp.json` with per-service DB env vars.
 
 **Methodology evolution captured during this work:**
 
