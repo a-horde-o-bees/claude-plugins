@@ -217,17 +217,31 @@ Every foreign key implies ownership. The root record and all reachable children 
 
 ### Cascade Behavior
 
-Delete operations cascade through the ownership tree. Cascade logic must be dynamic — derived from FK metadata at runtime, not hardcoded table names.
+Child-record cleanup is declared in the schema, not performed in code. Every foreign key pointing at an owning row is declared with `ON DELETE CASCADE`. A delete against a root row then walks the ownership tree automatically — the remove operation's Python code is a single `DELETE FROM root WHERE id = ?`, and SQLite removes every reachable child.
+
+SQLite ships with foreign-key enforcement **off by default**. Every connection factory that opens a database with foreign keys must enable it explicitly:
+
+```python
+def get_connection(db_path: str) -> sqlite3.Connection:
+    conn = sqlite3.connect(db_path)
+    conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA busy_timeout=5000")
+    conn.execute("PRAGMA foreign_keys = ON")
+    conn.row_factory = sqlite3.Row
+    return conn
+```
+
+`PRAGMA foreign_keys` is per-connection, not per-database — it must run on every connection open, not once at schema creation. Without it, `ON DELETE CASCADE` clauses are silently ignored: deletes succeed, children are orphaned, and no error surfaces until a later query trips over the dangling rows. Cascade correctness is a connection-factory property as much as a schema property.
 
 ### Schema Conventions
 
 - Root table primary key: `TEXT` (formatted prefix + number) or `INTEGER PRIMARY KEY AUTOINCREMENT`
-- Foreign keys: non-nullable, enforce ownership
+- Foreign keys: non-nullable, declared with `ON DELETE CASCADE` to the owning row
 - Composite primary keys on satellite tables where natural key exists
 - CHECK constraints enforce valid values for enum-like fields
 
 ### Aggregate-Aware Tools
 
-Tools operate within aggregate boundaries. A tool that modifies a satellite record understands its relationship to the root — validation, cascade implications, and consistency checks are tool responsibilities, not caller responsibilities.
+Tools operate within aggregate boundaries. A tool that modifies a satellite record understands its relationship to the root — validation and consistency checks are tool responsibilities, not caller responsibilities. Cascade on delete is a schema responsibility, not a tool responsibility; tools should not walk aggregates manually to delete children.
 
 Registration and mutation tools accept arrays for batch processing. The tool handles per-item dedup, validation, and error collection internally — the caller provides the batch, the tool returns per-item results.
