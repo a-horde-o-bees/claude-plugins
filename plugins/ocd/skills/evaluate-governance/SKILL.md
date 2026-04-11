@@ -1,109 +1,119 @@
 ---
 name: ocd-evaluate-governance
 description: |
-  Evaluate the rules and conventions governance chain across conformity, efficacy, coherence, and prior art. Traverses dependency chain root-first to verify each layer builds correctly on its foundations.
+  Evaluate the rules and conventions governance chain level-by-level. A spawned agent walks foundations-first and reports findings with proposed fixes; the orchestrator classifies each finding against the shared triage criteria, auto-applies defects, and exits to user when observations need judgment. Convergence across waves is user-driven.
 argument-hint: "--target project"
 allowed-tools:
   - Read
   - Edit
+  - Bash
   - mcp__plugin_ocd_ocd-navigator__*
+  - mcp__plugin_ocd_ocd-governance__*
 ---
 
 # /ocd-evaluate-governance
 
-Evaluate the rules and conventions governance chain across four lenses in a single structured pass. Traverses the dependency chain root-first — design principles first, then rules that depend on them, then conventions that depend on those. Verifies each layer properly builds on its foundations and produces correct agent behavior.
+Evaluate the governance dependency chain in a single holistic pass, gated by the orchestrator between levels. A spawned agent walks the chain foundations-first and reports findings after each level. The orchestrator classifies findings against the shared triage criteria, auto-applies defects to disk, and exits to user when any observation at the current level needs judgment — so foundation changes are picked up in a fresh session before the next wave.
 
 ## Lenses
 
-| Lens | Question |
-|------|----------|
-| Conformity | Does each governance file follow its own governing conventions? |
-| Efficacy | Can an agent reading this governance chain behave correctly from cold? |
-| Coherence | Do layers build consistently on each other? No contradictions? |
-| Prior Art | Does the governance structure mirror established patterns? |
+This skill does not apply evaluation lenses as separate passes. A single agent reads the chain in dependency order with three concerns held simultaneously per `_evaluation-criteria.md`: active conformance against loaded governors, cold-reader friction, and coherence with what prior levels established. Splitting these into independent passes creates convergence loops where each pass's fixes invalidate the next; the holistic reading eliminates that spiral.
 
 ## Scope
 
-Full governance chain via `governance_order`. The governance files are a known, closed set — navigator maps every entry with its dependencies. No file path targeting needed.
+Full governance chain discovered via `governance_order`. Rules and conventions are a known, closed set — navigator maps every entry with its declared `governed_by` dependencies and produces topologically grouped levels. No file-path targeting.
 
 Accepted arguments:
+
 - `--target` — required; must be `project`
+
+## Protocol
+
+The orchestrator receives the level-grouped governance ordering from `governance_order` and dispatches a single long-running spawned agent that processes the chain one level at a time. After each level:
+
+1. The agent returns findings for that level in report-only form — no classification, no fixes
+2. The orchestrator reads `evaluation-triage.md` once and classifies each finding as Defect or Observation
+3. Defects are auto-applied directly to disk; because Defects are deterministic and intent-preserving by definition, the spawned agent's cached content from prior levels remains semantically valid for the next level's evaluation
+4. If any Observations exist at the current level, the orchestrator exits to user with the observations surfaced. The user applies or rejects them, then re-invokes the skill in a fresh session so Claude Code's session-loaded governance reflects the corrected chain
+5. Otherwise the orchestrator sends the agent a continuation message for the next level and repeats
+
+This per-level gating prevents the agent from spending tokens on later levels against a foundation that is about to change. On a clean traversal of all levels, the orchestrator presents a summary of applied Defects and exits normally.
+
+## Inputs
+
+- **Triage criteria** — `.claude/conventions/evaluation-triage.md`. Read by the orchestrator once at the start of Workflow; the spawned agent never reads this file. Governs the Defect / Observation classification the orchestrator applies to every returned finding.
+- **Evaluation criteria** — `${CLAUDE_PLUGIN_ROOT}/skills/evaluate-governance/_evaluation-criteria.md`. Read by the spawned agent at the start of its execution. Defines the reading disposition, what to surface, graph-anomaly semantics, and the finding return format.
 
 ## Trigger
 
-User runs `/ocd-evaluate-governance`
+User runs `/ocd-evaluate-governance --target project`.
 
 ## Route
 
 1. If not --target: Exit to user — respond with skill description and argument-hint
 2. If {target} is not `project`: Exit to user — target must be `project`
-3. Discover governance chain — governance_order:
-4. {evaluation-order} = levels from result (level 0 first)
-5. Collect all governance file paths across levels
-6. Get file sizes — paths_list: target_path=".", patterns=["*.md"], sizes=true
-7. Dispatch Workflow
+3. Verify working tree is clean — bash: `git status --porcelain`
+    1. If output is non-empty: Exit to user — working tree must be clean before evaluation; run `/ocd-commit` first so each convergence wave has a clean before/after diff
+4. Discover governance levels — mcp: `mcp__plugin_ocd_ocd-governance__governance_order`
+5. If result has any dangling references:
+    1. Present the dangling references to the user — which file declares each missing governor
+    2. Exit to user — fix the offending `governed_by` frontmatter and re-invoke; the evaluation cannot proceed against a graph with unresolved references
+6. {levels} = levels array from the result
+7. Present the plan to user — levels count, total files per level, prompt to confirm
+8. Dispatch Workflow
 
 ## Workflow
 
-1. Spawn agent with governance evaluation({evaluation-order}):
-    1. Read `${CLAUDE_PLUGIN_ROOT}/skills/evaluate-shared/_triage-criteria.md`
-    2. Read `${CLAUDE_PLUGIN_ROOT}/skills/evaluate-governance/_lenses.md`
-    3. Examine {evaluation-order} with file sizes — plan execution:
-        1. Files are processed in dependency order (level 0 first)
-        2. Context from earlier levels carries forward (what each layer establishes)
-        3. Determine if scope fits single agent or needs context-aware iteration
-    4. For each {level} in {evaluation-order}:
-        1. For each {file} in {level}:
-            1. Discover governance for this file — governance_match: file_paths=[{file}], include_rules=true
-            2. Read {file} and any governing files not yet read
-            3. **Conformity lens:**
-                1. Evaluate file against its matched conventions
-                2. Cite specific convention requirements with each finding
-            4. **Efficacy lens:**
-                1. Could an agent read this file and follow it correctly?
-                2. Are instructions unambiguous? Are all references resolvable?
-                3. For rules: do behavioral triggers have clear gate conditions?
-                4. For conventions: are content standards concrete enough to evaluate against?
-            5. **Coherence lens** (uses context from prior levels):
-                1. Does this file contradict anything established by its governors?
-                2. Does it extend governors' concepts consistently?
-                3. Are dependencies actually used? (governance relationship exists but no content references it)
-                4. Are there implicit dependencies not captured in the governance chain?
-    5. After all files — **Prior Art lens** (full governance chain in context):
-        1. Does the governance structure mirror established patterns (layered policies, rule engines, convention systems)?
-        2. Is the dependency chain depth appropriate?
-        3. Are there standard governance patterns this system should adopt?
-    6. Triage findings per `_triage-criteria.md`
-    7. Apply Defect fixes directly; reclassify to Observation when escalation rules apply
-    8. If scope exceeded context — return findings so far with remaining levels as checkpoint
-    9. Return:
-        - Scope: files evaluated by level, lenses applied
-        - Findings by lens
-        - Cross-lens interactions
-        - Changes applied (Defects)
-        - Observations requiring user judgment
-2. If agent returned incomplete (checkpoint):
-    1. Spawn continuation agent with remaining levels + accumulated findings + context summary
-    2. Repeat until complete
-3. Present final report
+1. Read `.claude/conventions/evaluation-triage.md`
+2. {current-level} = 0
+3. {applied-defects} = empty list
+4. {level-files} = paths from {levels}[{current-level}]
+5. Spawn agent with governance evaluation({current-level}, {level-files}):
+    1. Read `${CLAUDE_PLUGIN_ROOT}/skills/evaluate-governance/_evaluation-criteria.md`
+    2. For each {file} in the files handed in the current message:
+        1. Read {file}
+        2. Evaluate {file} per `_evaluation-criteria.md` against everything already in context
+        3. If a graph anomaly surfaces: Return — anomaly description and findings accumulated so far
+    3. Return — findings for the processed level in the criteria's format
+    4. Await continuation. On each resume, the orchestrator hands a new level number and file list; repeat from step 2
+6. {agent-ref} = reference to the spawned agent for later continuation
+7. Process level response. Label:
+    1. {response} = latest return from {agent-ref}
+    2. If {response} describes a graph anomaly:
+        1. Present the anomaly and any partial findings to the user
+        2. Work with the user to fix the offending `governed_by` frontmatter
+        3. Re-query `governance_order` — verify the correction is reflected
+        4. Go to step 2. Reset state and restart with the corrected {levels}
+    3. Classify each finding in {response} as Defect or Observation per `evaluation-triage.md`
+    4. For each Defect: apply its proposed fix directly to disk
+    5. {applied-defects} = {applied-defects} + newly applied defects
+    6. If any Observations exist in {response}:
+        1. Present applied Defects and outstanding Observations to the user, grouped by file, each with full context from the finding
+        2. Exit to user — "Observations at level {current-level} need user judgment. Apply or reject each, then re-invoke `/ocd-evaluate-governance` in a fresh session so the corrected governance loads before the next wave."
+    7. {current-level} = {current-level} + 1
+    8. If {current-level} >= count of {levels}:
+        1. Break loop — all levels complete
+    9. {level-files} = paths from {levels}[{current-level}]
+    10. Continue {agent-ref} with the next level — send a message carrying the new level number and file list; await the new return
+    11. Go to step 7. Process level response — read the new response and repeat
+8. Present Report
 
 ### Report
 
-1. **Scope** — governance chain traversed, levels and files evaluated
-2. **Findings by lens** — each finding with classification, file, location, recommended action
-3. **Cross-lens interactions** — where findings from different lenses affect each other
-4. **Coherence summary** — per-level assessment of how well each layer builds on its foundations
-5. **Change set** — Defect fixes applied with rationale
-6. **Observations** — findings requiring user judgment
+1. **Scope** — levels traversed with file counts per level
+2. **Applied Defects** — grouped by file; each entry shows location, the fix applied, and the source finding
+3. **Status** — one of:
+    - `clean` — all levels processed, no findings
+    - `defects applied` — all levels processed, Defects applied, no Observations outstanding
+    - `observations outstanding at level N` — evaluation exited at level N pending user judgment (report is surfaced mid-workflow, not in this final block)
+    - `restarted after anomaly` — one or more graph-anomaly restarts occurred before the successful run; applied Defects are from the final run only
 
 ## Rules
 
-- Agent spawns with no conversation history — project rules and CLAUDE.md load automatically
-- Root-first traversal is critical — agent must understand foundations before evaluating derived layers
-- Coherence lens uses accumulated context — what earlier levels established informs evaluation of later levels
-- A governance file should not be evaluated before its governors (dependency ordering)
-- Efficacy evaluates whether an agent can follow the governance, not whether the governance is "good"
-- Prior Art evaluates the system design after full chain is in context — not per-file
-- Context-aware iteration passes context summary (what each level established) to continuation agents
-- Single sequential agent strongly preferred — coherence depends on carrying context across the chain
-- governance_match output may include the file itself as governed — skip self-governance in coherence checks
+- The spawned agent is report-only. It does not triage findings, classify them, or apply fixes. The orchestrator owns all three concerns.
+- The orchestrator reads `evaluation-triage.md` at the start of Workflow. The spawned agent never reads the triage file — classification is the orchestrator's job.
+- Defects are deterministic and intent-preserving by definition. Auto-applying them cannot invalidate findings on deeper levels, so the spawned agent's cached content from prior levels remains semantically valid for the next level's evaluation after the orchestrator applies fixes.
+- Observations may change what governance files prescribe. After any Observation is applied to a governance file, Claude Code's session-cached rules are stale — a fresh session is required before re-evaluation can see the corrected chain. The orchestrator exits to user whenever Observations appear at the current level to enforce this.
+- Graph anomalies stop traversal immediately. The orchestrator handles them inline with the user, corrects the frontmatter, re-queries `governance_order` to verify, and restarts the workflow from Level 0. Partial findings accumulated before the anomaly are presented for user reference but not auto-applied — the frontmatter correction may have changed what counts as a valid finding.
+- `/ocd-commit` precondition gives each wave a clean before/after diff so the user can audit exactly what each convergence pass changed.
+- Convergence across multiple waves is user-driven. The skill is invoked repeatedly in fresh sessions until a pass produces no governance-file changes.
