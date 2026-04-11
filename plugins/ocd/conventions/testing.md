@@ -1,5 +1,5 @@
 ---
-matches:
+includes:
   - "test_*.*"
   - "*_test.*"
   - "conftest.*"

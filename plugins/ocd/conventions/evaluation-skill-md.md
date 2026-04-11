@@ -1,5 +1,5 @@
 ---
-matches: "*/evaluate-*/SKILL.md"
+includes: "*/evaluate-*/SKILL.md"
 governed_by:
   - .claude/rules/ocd-design-principles.md
   - .claude/conventions/skill-md.md
@@ -9,131 +9,71 @@ governed_by:
 
 Specialized SKILL.md conventions for domain-specific evaluation skills. Applies to skills with the `evaluate-` directory prefix. Supplements the general skill-md convention — evaluation skills follow both.
 
-Evaluation skills combine multiple evaluation lenses into one structured pass for a specific domain, eliminating cycling between general-purpose tools. One invocation, one report, one coherent change set.
+Evaluation skills produce structured findings on a target set through a single holistic pass by a spawned agent. The orchestrator handles triage and application; the spawned agent is report-only. One invocation produces one walk of the target set and one set of findings for the orchestrator to act on.
 
 ## Naming
 
 Directory: `evaluate-{domain}/`. Skill name: `{plugin}-evaluate-{domain}`. Domain names the target type.
 
-## Evaluation Lenses
+## Holistic Reading, Not Lenses
 
-Complete catalog of evaluation perspectives. Each lens is a distinct concern. Implementations select which lenses apply to their domain and document the selection in a Lenses section.
+Evaluation skills do not split their pass into independent lens traversals. A single agent reads the target set in the correct traversal order (dependency order, alphabetical, whatever the domain prescribes) and evaluates each target against every concern simultaneously per the skill's evaluation criteria file. Splitting into distinct lens passes creates convergence loops where each pass's fixes invalidate the next; the holistic reading prevents that spiral.
 
-### Conformity
+Each skill describes its own concerns in its own criteria file rather than selecting from a shared lens catalog. The concerns an evaluation skill holds are domain-specific and documenting them in a shared catalog creates either the illusion of a universal framework or the burden of adapting every lens to every domain.
 
-**Does the target follow applicable project conventions?**
+## Scope
 
-Load matching conventions via navigator `governance-for`. Evaluate target content against each convention's requirements. For targets spanning dependency chains, traverse root-first — evaluate foundational documents before derived ones, carrying forward what each layer establishes.
+Scope is domain-specific. Skill evaluation scopes to files and their references. Documentation evaluation scopes to a file type across systems. Governance scopes to a dependency chain.
 
-Failure modes:
+Scope also declares accepted arguments beyond `--target`. Arguments that don't fit the skill's domain are rejected with guidance. Document accepted arguments and their effect on scope.
 
-- Convention requirements not reflected in target content
-- Target contradicts convention guidance
-- Dependency chain traversal order incorrect or incomplete
+## Protocol
 
-### Efficacy
+The evaluation process — what the orchestrator receives, how it plans execution, how findings are returned and acted on.
 
-**Does the target achieve its stated purpose? Can a consumer use it correctly from cold?**
+The orchestrator receives the scoped target set from a domain-specific source (navigator tool, path list, or whatever the domain prescribes) and either dispatches a single spawned agent over the whole set or spawns an agent for the first sub-group and continues it cycle-by-cycle via `Continue {agent-ref} with:`. Per-cycle checkpointing is appropriate when the orchestrator needs to intervene between sub-groups — for example, when changes at an earlier level might affect how later levels should be evaluated.
 
-Evaluate whether an agent encountering the target for the first time could use it correctly without external context, trial and error, or user assistance.
+After each cycle (or at the end of a whole-set pass):
 
-Failure modes:
+1. The agent returns findings in report-only form — each finding carries file path, location, what is wrong, why, and a proposed fix or an explicit `needs judgment` flag
+2. The orchestrator classifies each finding against `evaluation-triage.md`
+3. Defects are auto-applied directly to disk; Observations are surfaced to the user
+4. The orchestrator decides whether to continue the agent for the next cycle, exit to user for judgment, or present a final report
 
-- Unbound references — names, paths, or variables referenced but never defined
-- Ambiguous instructions — multiple valid interpretations with different outcomes
-- Missing context — information required for correct use that isn't present or referenced
-- Unreachable content — sections that can never be reached via any path
-- Cross-reference gaps — referenced files, tools, or sections that don't exist
+If the target set evolves during evaluation (e.g., frontmatter corrections reorder a dependency chain), the orchestrator re-queries its domain source and restarts the pass. Partial findings accumulated before the restart are presented to the user for reference but not auto-applied, since the correction may have changed what counts as valid.
 
-### Quality
+## Report-Only Agent
 
-**Does the target follow best practices for its domain?**
+The spawned agent does not classify findings, apply fixes, or reason about triage. It reads, evaluates, and reports. The orchestrator owns triage (via `evaluation-triage.md`) and application. This separation is load-bearing:
 
-Evaluate structural decisions and patterns within the target's domain. What constitutes "best practice" varies by target type — implementations define domain-specific criteria.
+- Decoupling evaluation from classification lets the orchestrator apply uniform triage across all domains without requiring each agent to re-implement it
+- Keeping the agent report-only means its returns can be audited against a small, stable format
+- The orchestrator can interrupt between cycles without the agent holding stale classification state
 
-Failure modes:
+## Evaluation Criteria File
 
-- Anti-patterns specific to the target domain
-- Structural readiness — target has outgrown its natural scope
-- Naming and discoverability gaps
-- Error handling inappropriate for the domain
+Every evaluation skill carries its own evaluation criteria file alongside SKILL.md (e.g., `_evaluation-criteria.md`). The file is read by the spawned agent at the start of its execution and defines:
 
-### Prior Art
+- The reading disposition — what stance the agent holds as it walks the target set
+- What to surface — the active checks and friction cues the agent watches for
+- Domain-specific anomaly conditions that force an early return from the traversal, if any
+- The finding return format — file, location, what, why, proposed fix or needs judgment
 
-**Does the implementation mirror established patterns? If deviating, is it justified?**
-
-Evaluate whether the target reinvents something with a well-known solution. Surface standard patterns, established approaches, and widely-adopted conventions that the implementation could mirror instead.
-
-Failure modes:
-
-- Custom implementation of a well-known pattern without justification
-- Pattern transplanted from a fitting context into one where it doesn't fit
-- Missing standard structure consumers would expect for the domain
-- Deviation from established conventions without documented rationale
-
-### Coherence
-
-**Do related targets work together correctly? Is the system internally consistent?**
-
-Evaluate consistency across multiple related files. Targets that exist in a system — parent-child, dependency chain, cross-references — must be consistent with each other.
-
-Failure modes:
-
-- Parent re-explaining what child documents cover (progressive disclosure violation)
-- Cross-file contradictions — same concept described differently in related documents
-- Dependency chain gaps — layer references capabilities from a lower layer that don't exist
-- Orphaned references — targets assume related targets that are missing
+The criteria file is customized to the domain. Two evaluation skills targeting different things do not share criteria — governance evaluation looks for things skill evaluation does not, and vice versa.
 
 ## Skill Structure
 
-Evaluation skills follow the standard SKILL.md convention with additional required sections.
+Evaluation skills follow the standard SKILL.md convention with the following additions:
 
-### Lenses
-
-Declares which lenses from the catalog the skill uses. Documents any domain-specific adaptation of a lens. This is the implementation contract — what an evaluation pass covers.
-
-### Scope
-
-Defines what the skill evaluates and how it discovers targets. Scope is domain-specific: skill evaluation scopes to files and their references, documentation evaluation scopes to a file type across systems, governance scopes to dependency chains.
-
-Scope also declares accepted arguments beyond `--target`. Arguments that don't fit the stack's scope are rejected with guidance. Document accepted arguments and their effect on scope.
-
-### Protocol
-
-The evaluation process — what the orchestrating agent receives, how it plans execution, and how findings accumulate.
-
-The orchestrator receives the scoped file list with sizes from navigator. It examines file relationships — which files are related, which lenses need shared context across files, which can evaluate independently — and produces an execution plan. This is a judgment call, not a deterministic routing decision: file relationships and lens context requirements vary by domain and by the specific files in scope.
-
-Execution planning considerations:
-
-- Some lenses require the same agent to traverse the same files (shared context matters for cross-file coherence)
-- Some lenses are best served by an independent agent traversing the full scope (prior art evaluation doesn't depend on conformity findings)
-- Large scopes may require splitting into groups of related files, where each group is processed by one agent or through context-aware iteration — passing the remaining file list and accumulated findings to the next agent
-- File sizes inform how much work fits in one agent's context, but where to split depends on file relationships the orchestrator determines
-
-Context-aware iteration is the mechanism for when a group exceeds one agent's context. The agent processes what it can, then passes forward:
-
-- Files not yet evaluated
-- Accumulated findings so far
-- Any context needed for continuity (what was established in files already evaluated)
-
-The next agent picks up from the checkpoint with full awareness of prior findings.
-
-### Shared Infrastructure
-
-Triage criteria and report format are cross-cutting concerns shared across evaluation skills. Reference shared component files rather than duplicating — single source of truth.
-
-- **Triage criteria** — classifies findings as auto-fixable (Defect) or requiring judgment (Observation)
-- **Report format** — unified change set where fixes across lenses don't conflict
-
-Shared files live alongside evaluation skill directories, not inside any single skill.
+- Scope section documents accepted arguments and how targets are discovered
+- Protocol section describes orchestrator flow and per-cycle handling
+- Rules section documents the report-only agent invariant and other load-bearing invariants specific to the skill
 
 ## Report
 
 Every evaluation skill produces:
 
-1. **Scope** — what was evaluated and which lenses were applied
-2. **Findings by lens** — classified, located, with recommended action
-3. **Cross-lens interactions** — where fixing one finding would affect another
-4. **Change set** — unified fixes coherent across all lenses; Defects only
-5. **Observations** — findings requiring user judgment, with context from all applicable lenses
+1. **Scope** — what was evaluated (files, levels, groups)
+2. **Applied Defects** — grouped by file, each with location and applied fix
+3. **Observations** — surfaced when present, each with full context so the user can judge; presentation is interactive, not a final-report section, because Observations typically require the skill to exit to user for judgment
+4. **Status** — terminal outcome of the invocation (clean, defects applied, observations outstanding, anomaly restart)

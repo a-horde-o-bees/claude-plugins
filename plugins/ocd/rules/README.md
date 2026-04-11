@@ -16,7 +16,7 @@ Rules are passive context — the agent reads and follows them as part of its op
 
 ```yaml
 ---
-matches: "*"
+includes: "*"
 governed_by:
   - .claude/rules/ocd-design-principles.md
 ---
@@ -30,7 +30,7 @@ governed_by:
 
 Same fields as conventions:
 
-- **`matches`** (required) — typically `"*"` for rules since they apply universally. Specific patterns are possible but uncommon for rules.
+- **`includes`** (required) — typically `"*"` for rules since they apply universally. Specific patterns are possible but uncommon for rules.
 - **`excludes`** (optional) — patterns to exclude from matching.
 - **`governed_by`** (optional) — governance entries this rule builds on. Defines evaluation ordering.
 

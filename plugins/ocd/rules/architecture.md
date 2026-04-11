@@ -19,7 +19,7 @@ The `rules` table stores only the entry path and git_hash. Rules have no pattern
 
 ## Pattern Semantics
 
-Rules carry `matches: "*"` frontmatter for consistency with the governance file format, but the pattern is not stored or evaluated — Claude Code auto-loads every rule file regardless, and `governance_match` with `include_rules=True` returns whole-rule inclusion rather than per-pattern matching. File-type scoping is a convention concern, not a rule concern; guidance that should apply only to specific file types belongs in a convention.
+Rules carry `includes: "*"` frontmatter for consistency with the governance file format, but the pattern is not stored or evaluated — Claude Code auto-loads every rule file regardless, and `governance_match` with `include_rules=True` returns whole-rule inclusion rather than per-pattern matching. File-type scoping is a convention concern, not a rule concern; guidance that should apply only to specific file types belongs in a convention.
 
 ## Template and Deployment
 

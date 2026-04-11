@@ -21,19 +21,19 @@ PLUGIN_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 if str(PLUGIN_ROOT) not in sys.path:
     sys.path.insert(0, str(PLUGIN_ROOT))
 
-from skills.navigator._db import get_connection, SCHEMA
-from skills.navigator._governance import governance_load, governance_match
-from servers import navigator as nav_server
+from skills.governance._db import get_connection, SCHEMA
+from skills.governance import governance_load, governance_match
+from servers import governance as gov_server
 
 
-def _write_gov_file(path: Path, matches, excludes=None, governed_by=None):
+def _write_gov_file(path: Path, includes, excludes=None, governed_by=None):
     """Create a governance file with frontmatter."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    if isinstance(matches, list):
-        quoted = ", ".join(f'"{p}"' for p in matches)
-        lines = ["---", f"matches: [{quoted}]"]
+    if isinstance(includes, list):
+        quoted = ", ".join(f'"{p}"' for p in includes)
+        lines = ["---", f"includes: [{quoted}]"]
     else:
-        lines = ["---", f'matches: "{matches}"']
+        lines = ["---", f'includes: "{includes}"']
     if excludes:
         if isinstance(excludes, list):
             lines.append("excludes:")
@@ -225,24 +225,24 @@ class TestMCPServerLayer:
     @pytest.fixture
     def server_env(self, gov_env):
         with (
-            patch.object(nav_server, "DB_PATH", gov_env),
-            patch.object(nav_server, "_check_db", return_value=None),
+            patch.object(gov_server, "DB_PATH", gov_env),
+            patch.object(gov_server, "_check_db", return_value=None),
         ):
             yield gov_env
 
     def test_batch_python_files_via_server(self, server_env):
-        result = json.loads(nav_server.governance_match(
+        result = json.loads(gov_server.governance_match(
             [f"src/file{i}.py" for i in range(5)]
         ))
         assert result["conventions"] == [".claude/conventions/python.md"]
 
     def test_server_file_excludes_via_server(self, server_env):
-        result = json.loads(nav_server.governance_match(["servers/__init__.py"]))
+        result = json.loads(gov_server.governance_match(["servers/__init__.py"]))
         conventions = set(result["conventions"])
         assert ".claude/conventions/mcp-server.md" not in conventions
 
     def test_mixed_batch_via_server(self, server_env):
-        result = json.loads(nav_server.governance_match(
+        result = json.loads(gov_server.governance_match(
             ["src/app.py", "servers/friction.py", "skills/nav/SKILL.md"]
         ))
         conventions = set(result["conventions"])

@@ -20,14 +20,12 @@ from ._db import get_connection
 from ._scanner import scan_path, _walk_filesystem, _compute_file_metrics
 
 # Re-exports — public interface consumed by MCP server and CLI
-from ._governance import (
-    governance_load,
-    governance_list,
-    governance_match,
-    governance_unclassified,
-)
 from ._references import references_map
 from ._skills import skills_resolve, skills_list
+
+# Cross-skill: scope_analyze composites governance matching into its result,
+# so the facade imports governance_match from the governance skill.
+from skills.governance import governance_match
 
 logger = logging.getLogger(__name__)
 

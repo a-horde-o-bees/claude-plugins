@@ -1,5 +1,5 @@
 ---
-matches: "*"
+includes: "*"
 governed_by:
   - .claude/rules/ocd-design-principles.md
 ---

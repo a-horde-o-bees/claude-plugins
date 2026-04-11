@@ -1,5 +1,5 @@
 ---
-matches: "*"
+includes: "*"
 ---
 
 # Design Principles

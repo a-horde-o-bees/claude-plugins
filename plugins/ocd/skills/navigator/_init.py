@@ -1,8 +1,11 @@
 """Navigator skill infrastructure.
 
-Deploy conventions, initialize database with seeds, and load governance
-from frontmatter. Check DB health.
-Interface contract: init() and status() return {"files": [...], "extra": [...]}.
+Initialize the navigator database (entries and pattern tables) and
+report DB health. Governance (rules, conventions, dependency graph)
+is owned by the separate governance skill and initialized there.
+
+Interface contract: init() and status() return
+{"files": [...], "extra": [...]}.
 """
 
 import sqlite3
@@ -10,7 +13,7 @@ from pathlib import Path
 
 import plugin
 
-from . import _db, governance_load
+from . import _db
 
 
 def _plugin_name() -> str:
@@ -44,10 +47,13 @@ def _status_extra() -> list[dict]:
     try:
         conn = _db.get_connection(str(db_path))
 
-        expected_tables = {"entries", "conventions", "rules", "config"}
-        actual_tables = {row[0] for row in conn.execute(
-            "SELECT name FROM sqlite_master WHERE type='table'",
-        ).fetchall()}
+        expected_tables = {"entries", "patterns", "config"}
+        actual_tables = {
+            row[0]
+            for row in conn.execute(
+                "SELECT name FROM sqlite_master WHERE type='table'",
+            ).fetchall()
+        }
         if not expected_tables.issubset(actual_tables):
             conn.close()
             return [
@@ -69,10 +75,16 @@ def _status_extra() -> list[dict]:
 
         conn.close()
 
-        extra = [{"label": "overall status", "value": f"operational \u2014 {total} entries, {undescribed} undescribed, {stale} stale"}]
-        extra.append({"label": "action needed", "value": "/ocd-navigator"})
-
-        return extra
+        return [
+            {
+                "label": "overall status",
+                "value": (
+                    f"operational \u2014 {total} entries, "
+                    f"{undescribed} undescribed, {stale} stale"
+                ),
+            },
+            {"label": "action needed", "value": "/ocd-navigator"},
+        ]
 
     except sqlite3.Error as e:
         return [
@@ -81,44 +93,8 @@ def _status_extra() -> list[dict]:
         ]
 
 
-def _deploy_conventions(force: bool) -> list[dict]:
-    """Deploy convention templates to .claude/conventions/. Returns file status list."""
-    conv_src = plugin.get_plugin_root() / "conventions"
-    conv_dst = plugin.get_project_dir() / ".claude" / "conventions"
-
-    files = []
-    results = plugin.deploy_files(
-        src_dir=conv_src, dst_dir=conv_dst, pattern="*", force=force,
-    )
-    for r in results:
-        files.append({"path": f".claude/conventions/{r['name']}", "before": r["before"], "after": r["after"]})
-
-    return files
-
-
-def _conventions_status() -> list[dict]:
-    """Check convention deployment states. Returns file status list."""
-    conv_src = plugin.get_plugin_root() / "conventions"
-    conv_dst = plugin.get_project_dir() / ".claude" / "conventions"
-
-    files = []
-    if conv_src.is_dir():
-        for src in sorted(conv_src.glob("*")):
-            if not src.is_file():
-                continue
-            dst = conv_dst / src.name
-            state = plugin.compare_deployed(src, dst)
-            files.append({"path": f".claude/conventions/{src.name}", "before": state, "after": state})
-
-    return files
-
-
 def init(force: bool = False) -> dict:
-    """Deploy conventions and initialize navigator database. Returns {files, extra}."""
-    # Deploy conventions to .claude/conventions/
-    files = _deploy_conventions(force)
-
-    # Initialize database
+    """Initialize the navigator database."""
     db = _db_path()
     rel_path = _db_rel_path()
 
@@ -130,10 +106,6 @@ def init(force: bool = False) -> dict:
 
     result_msg = _db.init_db(str(db))
 
-    # Load governance from frontmatter in rules and conventions
-    governance_load(str(db))
-
-    after = "current"
     summary = ""
     if "(seed rules:" in result_msg:
         seed_part = result_msg.split("(seed rules: ")[1].rstrip(")")
@@ -143,10 +115,9 @@ def init(force: bool = False) -> dict:
     else:
         summary = "initialized"
 
-    files.append({"path": rel_path, "before": before, "after": after})
+    files = [{"path": rel_path, "before": before, "after": "current"}]
     extra = [{"label": "overall status", "value": summary}]
 
-    # Add action needed from status check
     status_extra = _status_extra()
     for item in status_extra:
         if item["label"] == "action needed":
@@ -156,16 +127,12 @@ def init(force: bool = False) -> dict:
 
 
 def status() -> dict:
-    """Check convention deployment and navigator DB state. Returns {files, extra}."""
-    # Convention deployment states
-    files = _conventions_status()
-
-    # Database state
+    """Check navigator DB state."""
     db = _db_path()
     rel_path = _db_rel_path()
 
     state = "current" if db.exists() else "absent"
-    files.append({"path": rel_path, "before": state, "after": state})
+    files = [{"path": rel_path, "before": state, "after": state}]
 
     extra = _status_extra()
     return {"files": files, "extra": extra}

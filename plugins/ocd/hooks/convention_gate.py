@@ -7,7 +7,7 @@ conventions whenever it touches a file.
 On Read: informational — "read conventions, awareness only"
 On Edit/Write: directive — "read conventions and conform, refactor if needed"
 
-Runs governance_match against the navigator database. If the database
+Runs governance_match against the governance database. If the database
 doesn't exist (not initialized), allows silently.
 """
 
@@ -21,12 +21,12 @@ import plugin
 
 
 def _get_db_path() -> Path | None:
-    """Resolve navigator database path."""
+    """Resolve governance database path."""
     try:
         project_dir = plugin.get_project_dir()
     except RuntimeError:
         return None
-    db_path = project_dir / ".claude" / "ocd" / "navigator" / "navigator.db"
+    db_path = project_dir / ".claude" / "ocd" / "governance" / "governance.db"
     return db_path if db_path.exists() else None
 
 
@@ -64,7 +64,7 @@ def main() -> None:
     if db_path is None:
         return
 
-    from skills.navigator._governance import governance_match
+    from skills.governance import governance_match
 
     try:
         result = governance_match(str(db_path), [file_path])

@@ -18,7 +18,7 @@ from pathlib import Path
 
 import plugin
 
-from ._frontmatter import parse_governance
+from skills.governance import parse_governance
 
 
 # --- Parsers ---

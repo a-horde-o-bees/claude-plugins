@@ -1,12 +1,12 @@
 """Governance frontmatter parser.
 
-Reads matches, excludes, and governed_by fields from YAML frontmatter
+Reads includes, excludes, and governed_by fields from YAML frontmatter
 in governance files (rules and conventions). No PyYAML dependency —
 parses the specific structure used by governance frontmatter.
 
 Fields:
-  matches:      (required) file patterns this governance entry applies to
-  excludes:     (optional) file patterns to exclude from matches
+  includes:     (required) file patterns this governance entry applies to
+  excludes:     (optional) file patterns to exclude from the include set
   governed_by:  (optional) governance files this entry builds on (evaluation ordering)
 """
 
@@ -46,49 +46,49 @@ def read_frontmatter(file_path: Path) -> list[str] | None:
 def parse_governance(file_path: Path) -> dict | None:
     """Extract governance frontmatter from a markdown file.
 
-    Returns {matches, excludes, governed_by} dict if governance frontmatter
-    exists, None if file has no frontmatter or no matches field.
+    Returns {includes, excludes, governed_by} dict if governance frontmatter
+    exists, None if file has no frontmatter or no includes field.
     """
     frontmatter_lines = read_frontmatter(file_path)
     if frontmatter_lines is None:
         return None
 
-    matches = None
-    matches_items: list[str] = []
+    includes = None
+    includes_items: list[str] = []
     excludes = None
     excludes_items: list[str] = []
     governed_by: list[str] = []
-    in_matches = False
+    in_includes = False
     in_excludes = False
     in_governed_by = False
 
     def _end_block() -> None:
-        nonlocal matches, matches_items, excludes, excludes_items
-        nonlocal in_matches, in_excludes, in_governed_by
-        if in_matches and matches_items:
-            matches = json.dumps(matches_items)
+        nonlocal includes, includes_items, excludes, excludes_items
+        nonlocal in_includes, in_excludes, in_governed_by
+        if in_includes and includes_items:
+            includes = json.dumps(includes_items)
         if in_excludes and excludes_items:
             excludes = json.dumps(excludes_items)
-        in_matches = False
+        in_includes = False
         in_excludes = False
         in_governed_by = False
 
     for line in frontmatter_lines:
         stripped = line.strip()
 
-        if stripped.startswith("matches:"):
+        if stripped.startswith("includes:"):
             _end_block()
-            value = stripped[len("matches:"):].strip()
+            value = stripped[len("includes:"):].strip()
             if value.startswith("["):
-                matches = value
+                includes = value
             elif value:
-                matches = value.strip('"').strip("'")
+                includes = value.strip('"').strip("'")
             else:
-                in_matches = True
-                matches_items = []
+                in_includes = True
+                includes_items = []
 
-        elif in_matches and stripped.startswith("- "):
-            matches_items.append(stripped[2:].strip().strip('"').strip("'"))
+        elif in_includes and stripped.startswith("- "):
+            includes_items.append(stripped[2:].strip().strip('"').strip("'"))
 
         elif stripped.startswith("excludes:"):
             _end_block()
@@ -115,15 +115,15 @@ def parse_governance(file_path: Path) -> dict | None:
             _end_block()
 
     # Handle block at end of frontmatter
-    if in_matches and matches_items:
-        matches = json.dumps(matches_items)
+    if in_includes and includes_items:
+        includes = json.dumps(includes_items)
     if in_excludes and excludes_items:
         excludes = json.dumps(excludes_items)
 
-    if matches is None:
+    if includes is None:
         return None
 
-    return {"matches": matches, "excludes": excludes, "governed_by": governed_by}
+    return {"includes": includes, "excludes": excludes, "governed_by": governed_by}
 
 
 def normalize_patterns(pattern: str) -> list[str]:
@@ -146,8 +146,7 @@ def matches_pattern(file_path: str, pattern: str) -> bool:
     2. ** prefix: "**/servers/*.py" matches servers/*.py at any depth
     3. Full path: "servers/*.py" matches files at exactly that path
 
-    Used by governance_match, governance_unclassified, and scan-time
-    governance matching.
+    Used by governance_match and scan-time governance matching.
     """
     basename = Path(file_path).name
     if fnmatch.fnmatch(basename, pattern):

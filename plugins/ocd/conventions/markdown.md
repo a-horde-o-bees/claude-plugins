@@ -1,5 +1,5 @@
 ---
-matches: "*.md"
+includes: "*.md"
 governed_by:
   - .claude/rules/ocd-design-principles.md
 ---
@@ -28,3 +28,9 @@ Formatting element types:
 Transitioning from any one type to a different type requires a blank line. Content that stays within the same type (consecutive list items, consecutive paragraphs, nested lists within a parent list) follows standard markdown rules for that element.
 
 YAML frontmatter (between `---` delimiters) is not a markdown formatting element — it is parsed separately before the markdown body. Blank line separation rules do not apply inside frontmatter.
+
+## Paragraph Wrapping
+
+Paragraphs are single lines in source. No manual line breaks within a paragraph — renderers handle visual wrapping based on viewport. Manual wrapping fragments paragraphs into a fixed visual layout, complicates diffs (any edit that shifts a word ripples through subsequent lines), and forces every editor to re-flow on every change.
+
+This rule applies to paragraph content only. Lists keep one item per line. Code blocks preserve their internal formatting. Tables follow markdown table syntax. Blank line separation between formatting elements is unchanged.

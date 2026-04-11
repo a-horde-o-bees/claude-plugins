@@ -1,5 +1,5 @@
 ---
-matches: "*"
+includes: "*"
 governed_by:
   - .claude/rules/ocd-design-principles.md
 ---
@@ -24,6 +24,7 @@ PFN constructs map to familiar programming concepts:
 | Exit loop | `Break loop` | `break` |
 | Exit to user | `Exit to user` | `sys.exit()` |
 | Agent call | `Spawn agent with:` | `async def` + `await` |
+| Agent resume | `Continue {agent-ref} with:` | Message to a running coroutine |
 | Return to caller | `Return` / `Return:` | `return` / `return value` |
 | Concurrency | `async` prefix | `asyncio.TaskGroup` |
 | Jump | `Go to step N. Label` | — |
@@ -76,6 +77,26 @@ Within skills, intelligent work delegation uses `Spawn agent with:` exclusively.
 2. Review all results
 ```
 
+`Continue {agent-ref} with:` resumes a previously-spawned agent for another cycle of work, retaining the agent's full accumulated context from prior cycles. The agent reference is captured as a variable from the `Spawn agent with:` step and referenced by name in subsequent `Continue` calls. Indented children are the instructions for the current cycle; the agent's `Return` at the end of each cycle hands control back to the caller, which may then `Continue` the same agent again or let the agent be garbage-collected.
+
+Use `Continue` when a long-running workflow needs orchestrator checkpoints between cycles and each cycle must build on prior reads or decisions. Use a fresh `Spawn agent with:` when no prior context is needed — fresh spawns start from cold and cost less when the work is independent.
+
+```
+1. Spawn agent with level evaluation({first-level-files}):
+    1. Read evaluation criteria
+    2. For each {file} in level files: Read and evaluate
+    3. Return:
+        - Findings for this level
+2. {agent-ref} = the spawned agent
+3. Process returned findings, decide whether to proceed
+4. If continue:
+    1. Continue {agent-ref} with next level({next-level-files}):
+        1. For each {file} in the new level files: Read and evaluate against already-loaded context from prior cycles
+        2. Return:
+            - Findings for this level
+5. Process the new return the same way
+```
+
 ## Conditionals
 
 `If X:`/`Else if X:`/`Else:` prefix. `If/Else if` is mutually exclusive — stop at first match. Chain may end with `Else if` or `Else`. `Else` is the universal fallback when all prior conditions fail. Repeated `If/If` at the same level is independent evaluation — multiple conditions may fire. Standalone `If` with no `Else` is valid — the alternative is "proceed to next step." Never mix the two forms in the same chain.
@@ -110,6 +131,24 @@ Within skills, intelligent work delegation uses `Spawn agent with:` exclusively.
 2. If condition:
     1. {selected-workflow} = Self-Evaluation
 3. Pass {target-directory} to target CLI
+```
+
+Curly-brace notation is reserved for values assigned once and referenced later. When a step describes the shape of returned data — the fields a `Return:` hands back, the structure of a tool's output, the format of a report — use plain prose, not `{name}`. Decoration without downstream reference adds no execution meaning and clutters the text.
+
+```
+1. Return:
+    - Scope evaluated
+    - Defects applied
+    - Observations requiring user judgment
+```
+
+Not:
+
+```
+1. Return:
+    - {scope}
+    - {defects-applied}
+    - {observations}
 ```
 
 ## Concurrency

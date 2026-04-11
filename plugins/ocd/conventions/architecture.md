@@ -6,7 +6,7 @@ How the convention system discovers, matches, and delivers file-type-specific gu
 
 Conventions and rules share a governance infrastructure implemented in the navigator skill package. The navigator database separates the two along domain lines, with conventions normalized into include/exclude pattern tables:
 
-- **`conventions`** — one row per convention file: `entry_path`, raw `matches` and `excludes` text, and `git_hash`
+- **`conventions`** — one row per convention file: `entry_path`, raw `includes` and `excludes` text, and `git_hash`
 - **`convention_includes`** — one row per normalized include pattern, keyed by `entry_path` (CASCADE on delete)
 - **`convention_excludes`** — one row per normalized exclude pattern, keyed by `entry_path` (CASCADE on delete)
 - **`rules`** — one row per rule file: `entry_path` and `git_hash`. Rules carry no patterns because they apply universally

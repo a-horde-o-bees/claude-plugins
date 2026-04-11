@@ -7,6 +7,7 @@ allowed-tools:
   - Read
   - Edit
   - mcp__plugin_ocd_ocd-navigator__*
+  - mcp__plugin_ocd_ocd-governance__*
 ---
 
 # /ocd-evaluate-skill
@@ -50,7 +51,7 @@ User runs `/ocd-evaluate-skill`
 1. Discover scope — scope_analyze: paths=[{skill-path}]
 2. {scope} = scope_analyze result (files with sizes, governance, references)
 3. Spawn agent with skill evaluation({skill-path}, {scope}):
-    1. Read `${CLAUDE_PLUGIN_ROOT}/skills/evaluate-shared/_triage-criteria.md`
+    1. Read `.claude/conventions/evaluation-triage.md`
     2. Read `${CLAUDE_PLUGIN_ROOT}/skills/evaluate-skill/_lenses.md`
     3. Read {skill-path}
     4. Follow cross-references — read all files listed in {scope}.files
@@ -71,7 +72,7 @@ User runs `/ocd-evaluate-skill`
         1. Does the skill's approach mirror established patterns for this type of workflow?
         2. Are there standard solutions the skill reinvents without justification?
         3. Surface alternatives the author may not have considered
-    9. Triage findings per `_triage-criteria.md`
+    9. Triage findings per `evaluation-triage.md`
     10. Apply Defect fixes directly; reclassify to Observation when escalation rules apply
     11. Return:
         - Scope: files evaluated and lenses applied

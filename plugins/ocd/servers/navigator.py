@@ -28,15 +28,16 @@ DB_PATH = os.environ.get("DB_PATH", ".claude/ocd/navigator/navigator.db")
 
 mcp = FastMCP(
     "ocd-navigator",
-    instructions="""Project structure index. Use Navigator first when orienting in unfamiliar areas — it indexes file purposes, structure, governance relationships, and metrics so the agent doesn't have to read every file to find what it needs.
+    instructions="""Project structure index. Use Navigator first when orienting in unfamiliar areas — it indexes file purposes, structure, and metrics so the agent doesn't have to read every file to find what it needs.
 
 Prefer Navigator for purpose-based queries:
 - Find files by what they do → paths_search (vs Grep, which searches content)
 - Browse structure with descriptions → paths_get (start with '.' for top-level overview)
-- Check which rules and conventions govern files → governance_match
 - Locate skills across discovery locations → skills_resolve
 
 Prefer Grep for content patterns (function names, string literals, regex matching) and Glob for file name patterns (extensions, naming conventions).
+
+For rules and conventions that govern files (which conventions apply, the governance chain, dependency ordering), reach for the ocd-governance server instead.
 
 Use Navigator first for orientation, then Grep/Glob for specific code searches once you know where to look.""",
 )
@@ -161,54 +162,6 @@ def paths_remove(
     try:
         return _ok(nav.paths_remove(DB_PATH, entry_path, recursive=recursive,
                                     all_entries=all_entries))
-    except Exception as e:
-        return _err(e)
-
-
-# ============================================================
-# governance_* — rules and conventions discovery
-# ============================================================
-
-
-@mcp.tool()
-def governance_match(file_paths: list[str], include_rules: bool = False) -> str:
-    """Find which conventions apply to files.
-
-    Returns only conventions (on-demand) by default. Rules are excluded — they are
-    always loaded into agent context. Set include_rules=true when rules themselves
-    are the evaluation target.
-
-    Returns {matches: {file: [convention_paths]}, conventions: [all_unique]}.
-    """
-    if err := _check_db(): return err
-    try:
-        return _ok(nav.governance_match(DB_PATH, file_paths, include_rules=include_rules))
-    except Exception as e:
-        return _err(e)
-
-
-@mcp.tool()
-def governance_list() -> str:
-    """List all governance entries. Returns array of {path, pattern, mode}.
-
-    Mode is 'rule' (auto-loaded) or 'convention' (on-demand).
-    """
-    if err := _check_db(): return err
-    try:
-        return _ok(nav.governance_list(DB_PATH))
-    except Exception as e:
-        return _err(e)
-
-
-@mcp.tool()
-def governance_unclassified() -> str:
-    """Find files with no governance coverage, grouped by extension.
-
-    Returns {total, by_extension: {ext: [paths]}}.
-    """
-    if err := _check_db(): return err
-    try:
-        return _ok(nav.governance_unclassified(DB_PATH))
     except Exception as e:
         return _err(e)
 

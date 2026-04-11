@@ -7,6 +7,7 @@ allowed-tools:
   - Read
   - Edit
   - mcp__plugin_ocd_ocd-navigator__*
+  - mcp__plugin_ocd_ocd-governance__*
 ---
 
 # /ocd-evaluate-documentation
@@ -52,7 +53,7 @@ User runs `/ocd-evaluate-documentation`
 ## Workflow
 
 1. Spawn agent with documentation evaluation({file-list}):
-    1. Read `${CLAUDE_PLUGIN_ROOT}/skills/evaluate-shared/_triage-criteria.md`
+    1. Read `.claude/conventions/evaluation-triage.md`
     2. Read `${CLAUDE_PLUGIN_ROOT}/skills/evaluate-documentation/_lenses.md`
     3. Examine {file-list} — plan execution:
         1. Group files by system (root, each plugin, each subsystem)
@@ -77,7 +78,7 @@ User runs `/ocd-evaluate-documentation`
             1. Consistent structure and depth?
             2. Orphaned references to docs that don't exist?
             3. Systems missing required docs?
-    6. Triage findings per `_triage-criteria.md`
+    6. Triage findings per `evaluation-triage.md`
     7. Apply Defect fixes directly; reclassify to Observation when escalation rules apply
     8. If scope exceeded context — return findings so far with remaining files as checkpoint
     9. Return:

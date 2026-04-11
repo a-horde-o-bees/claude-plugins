@@ -20,7 +20,7 @@ The `governance_match` tool accepts multiple file paths in one call — batch al
 
 ```yaml
 ---
-matches: "*.py"
+includes: "*.py"
 governed_by:
   - .claude/conventions/python.md
 ---
@@ -32,8 +32,8 @@ governed_by:
 
 ## Frontmatter Fields
 
-- **`matches`** (required) — file patterns this convention applies to. Basename patterns (`*.py`) match the filename; path patterns (`.claude/rules/*.md`) match the full project-relative path.
-- **`excludes`** (optional) — patterns for files that should not match even when they match `matches`.
+- **`includes`** (required) — file patterns this convention applies to. Basename patterns (`*.py`) match the filename; path patterns (`.claude/rules/*.md`) match the full project-relative path.
+- **`excludes`** (optional) — patterns for files that should not match even when they match `includes`.
 - **`governed_by`** (optional) — governance entries this convention builds on. Defines evaluation ordering — which entries must be stable before this one is evaluated.
 
 ## Relationship to Rules

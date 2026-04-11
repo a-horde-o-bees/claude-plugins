@@ -159,52 +159,6 @@ def _dispatch_list_skills(_args: argparse.Namespace) -> None:
         print(f"{skill['name']}  [{skill['source']}]  {skill['path']}")
 
 
-def _dispatch_governance(args: argparse.Namespace) -> None:
-    entries = governance_list(args.db)
-    if not entries:
-        print("No governance entries.")
-        return
-    for entry in entries:
-        excludes = f"  excludes: {entry['excludes']}" if entry.get("excludes") else ""
-        print(f"{entry['path']}  {entry['matches']}  [{entry['mode']}]{excludes}")
-
-
-def _dispatch_governance_for(args: argparse.Namespace) -> None:
-    result = governance_match(args.db, args.files)
-    if not result["matches"]:
-        print("No governance matches.")
-        return
-    print("Conventions:")
-    for c in result["conventions"]:
-        print(f"  {c}")
-    print()
-    for file_path in args.files:
-        if file_path not in result["matches"]:
-            continue
-        print(f"{file_path} follows:")
-        for c in result["matches"][file_path]:
-            print(f"  {c}")
-
-
-def _dispatch_governance_load(args: argparse.Namespace) -> None:
-    result = governance_load(args.db)
-    print(f"Loaded {result['governance_entries']} governance entries")
-
-
-def _dispatch_get_unclassified(args: argparse.Namespace) -> None:
-    result = governance_unclassified(args.db)
-    if result["total"] == 0:
-        print("All file entries have governance coverage.")
-        return
-    print(f"Unclassified: {result['total']} files without governance coverage")
-    print()
-    for ext in sorted(result["by_extension"]):
-        files = result["by_extension"][ext]
-        print(f"{ext} ({len(files)} files):")
-        for path in files:
-            print(f"  {path}")
-
-
 def build_parser() -> argparse.ArgumentParser:
     """Build standalone argument parser for navigator CLI."""
     db_parent = argparse.ArgumentParser(add_help=False)
@@ -507,80 +461,6 @@ def build_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     ls_p.set_defaults(_dispatch=_dispatch_list_skills)
-
-    # governance
-    gov_p = commands.add_parser(
-        "governance",
-        help="List all governance entries with patterns and loading mode",
-        description=(
-            "List governance entries (rules and conventions) registered in\n"
-            "the database. Shows entry path, glob pattern, and loading mode\n"
-            "(rule = auto-loaded every session, convention = on-demand).\n"
-            "\n"
-            "Output format:\n"
-            "  <path>  <pattern>  [rule|convention]"
-        ),
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        parents=[db_parent],
-    )
-    gov_p.set_defaults(_dispatch=_dispatch_governance)
-
-    # governance-for
-    gf_p = commands.add_parser(
-        "governance-for",
-        help="Find which governance entries govern given files",
-        description=(
-            "Match file paths against governance patterns to find which\n"
-            "rules and conventions apply. Replaces conventions list-matching.\n"
-            "Auto-scans before execution.\n"
-            "\n"
-            "Output format:\n"
-            "  Criteria: (sorted unique list)\n"
-            "  <file> follows: (per-file governance list)\n"
-            "\n"
-            "Line count tags [warn: N lines] and [fail: N lines] appear\n"
-            "when file exceeds configured thresholds."
-        ),
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        parents=[db_parent],
-    )
-    gf_p.add_argument("files", nargs="+", help="File paths to check governance for")
-    gf_p.set_defaults(_dispatch=_dispatch_governance_for)
-
-    # governance-load
-    gl_p = commands.add_parser(
-        "governance-load",
-        help="Load governance data from frontmatter in rules and conventions",
-        description=(
-            "Scan .claude/rules/ and .claude/conventions/ for files with\n"
-            "governance frontmatter. Populates the rules and conventions\n"
-            "tables with include and exclude patterns for matching.\n"
-            "\n"
-            "Idempotent — skips unchanged files via git_hash comparison."
-        ),
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        parents=[db_parent],
-    )
-    gl_p.set_defaults(_dispatch=_dispatch_governance_load)
-
-    # get-unclassified (governance coverage)
-    gu2_p = commands.add_parser(
-        "get-unclassified",
-        help="Find file entries with no governance coverage",
-        description=(
-            "List files that match no governance pattern. Groups by\n"
-            "file extension to surface which file types lack conventions.\n"
-            "Auto-scans before execution.\n"
-            "\n"
-            "Output format:\n"
-            "  Unclassified: N files without governance coverage\n"
-            "  .ext (N files):\n"
-            "    <path>"
-        ),
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        parents=[db_parent],
-    )
-    gu2_p.set_defaults(_dispatch=_dispatch_get_unclassified)
 
     return parser
 

@@ -34,31 +34,6 @@ CREATE TABLE IF NOT EXISTS patterns (
     description TEXT
 );
 
-CREATE TABLE IF NOT EXISTS conventions (
-    entry_path TEXT PRIMARY KEY,
-    matches TEXT NOT NULL,
-    excludes TEXT,
-    git_hash TEXT
-);
-
-CREATE TABLE IF NOT EXISTS convention_includes (
-    entry_path TEXT NOT NULL REFERENCES conventions(entry_path) ON DELETE CASCADE,
-    pattern TEXT NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS convention_excludes (
-    entry_path TEXT NOT NULL REFERENCES conventions(entry_path) ON DELETE CASCADE,
-    pattern TEXT NOT NULL
-);
-
-CREATE INDEX IF NOT EXISTS idx_convention_includes_entry ON convention_includes(entry_path);
-CREATE INDEX IF NOT EXISTS idx_convention_excludes_entry ON convention_excludes(entry_path);
-
-CREATE TABLE IF NOT EXISTS rules (
-    entry_path TEXT PRIMARY KEY,
-    git_hash TEXT
-);
-
 CREATE TABLE IF NOT EXISTS config (
     key TEXT PRIMARY KEY,
     value TEXT NOT NULL
@@ -68,18 +43,6 @@ CREATE TABLE IF NOT EXISTS config (
 SEED_PATH = Path(__file__).parent / "navigator_seed.csv"
 
 
-def _path_match(path: str, pattern: str) -> bool:
-    """Custom SQL function for governance pattern matching.
-
-    Registered as path_match(path, pattern) on every connection.
-    Delegates to matches_pattern which handles basename, ** prefix,
-    and full-path matching modes.
-    """
-    from ._frontmatter import matches_pattern
-
-    return matches_pattern(path, pattern)
-
-
 def get_connection(db_path: str) -> sqlite3.Connection:
     """Open database connection with WAL mode for concurrent access."""
     conn = sqlite3.connect(db_path)
@@ -87,7 +50,6 @@ def get_connection(db_path: str) -> sqlite3.Connection:
     conn.execute("PRAGMA busy_timeout=5000")
     conn.execute("PRAGMA foreign_keys = ON")
     conn.row_factory = sqlite3.Row
-    conn.create_function("path_match", 2, _path_match, deterministic=True)
     return conn
 
 

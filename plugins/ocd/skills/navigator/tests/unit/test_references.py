@@ -154,7 +154,7 @@ class TestParseGovernanceRefs:
         gov_file = tmp_path / "rule.md"
         gov_file.write_text(
             "---\n"
-            "matches: \"*.md\"\n"
+            "includes: \"*.md\"\n"
             "governed_by:\n"
             "  - .claude/rules/design.md\n"
             "  - .claude/conventions/markdown.md\n"
@@ -169,7 +169,7 @@ class TestParseGovernanceRefs:
         gov_file = tmp_path / "rule.md"
         gov_file.write_text(
             "---\n"
-            "matches: \"*\"\n"
+            "includes: \"*\"\n"
             "---\n\n"
             "# Rule\n"
         )
@@ -217,7 +217,7 @@ class TestClassifyAndParse:
         rule = rules_dir / "test-rule.md"
         rule.write_text(
             "---\n"
-            "matches: \"*\"\n"
+            "includes: \"*\"\n"
             "governed_by:\n"
             "  - .claude/rules/parent.md\n"
             "---\n\n"

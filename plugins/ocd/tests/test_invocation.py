@@ -149,19 +149,19 @@ class TestHookInvocation:
 
     def _setup_governance(self, tmp_path: Path, monkeypatch) -> None:
         """Shared governance setup for convention gate tests."""
-        from skills.navigator._db import init_db
-        from skills.navigator._governance import governance_load
+        from skills.governance._db import init_db
+        from skills.governance import governance_load
 
         monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(tmp_path))
 
-        db_path = tmp_path / ".claude" / "ocd" / "navigator" / "navigator.db"
+        db_path = tmp_path / ".claude" / "ocd" / "governance" / "governance.db"
         db_path.parent.mkdir(parents=True, exist_ok=True)
         init_db(str(db_path))
 
         conv_dir = tmp_path / ".claude" / "conventions"
         conv_dir.mkdir(parents=True, exist_ok=True)
         (conv_dir / "python.md").write_text(
-            '---\nmatches: "*.py"\n---\n\n# Python\n'
+            '---\nincludes: "*.py"\n---\n\n# Python\n'
         )
         governance_load(str(db_path))
 
@@ -223,9 +223,9 @@ class TestHookInvocation:
 
     def test_convention_gate_silent_for_ungoverned_file(self, tmp_path: Path) -> None:
         """Convention gate produces no output for files with no conventions."""
-        from skills.navigator._db import init_db
+        from skills.governance._db import init_db
 
-        db_path = tmp_path / ".claude" / "ocd" / "navigator" / "navigator.db"
+        db_path = tmp_path / ".claude" / "ocd" / "governance" / "governance.db"
         db_path.parent.mkdir(parents=True, exist_ok=True)
         init_db(str(db_path))
 
@@ -242,7 +242,7 @@ class TestHookInvocation:
         assert result.stdout == ""
 
     def test_convention_gate_silent_when_no_db(self, tmp_path: Path) -> None:
-        """Convention gate allows silently when navigator db doesn't exist."""
+        """Convention gate allows silently when governance db doesn't exist."""
         hook_input = json.dumps({
             "tool_name": "Edit",
             "tool_input": {"file_path": "src/app.py"},
@@ -257,19 +257,19 @@ class TestHookInvocation:
 
     def test_convention_gate_excludes_respected(self, tmp_path: Path, monkeypatch) -> None:
         """Convention gate respects excludes — __init__.py skips mcp-server."""
-        from skills.navigator._db import init_db
-        from skills.navigator._governance import governance_load
+        from skills.governance._db import init_db
+        from skills.governance import governance_load
 
         monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(tmp_path))
 
-        db_path = tmp_path / ".claude" / "ocd" / "navigator" / "navigator.db"
+        db_path = tmp_path / ".claude" / "ocd" / "governance" / "governance.db"
         db_path.parent.mkdir(parents=True, exist_ok=True)
         init_db(str(db_path))
 
         conv_dir = tmp_path / ".claude" / "conventions"
         conv_dir.mkdir(parents=True, exist_ok=True)
         (conv_dir / "mcp-server.md").write_text(
-            '---\nmatches: "servers/*.py"\nexcludes:\n  - "__init__.py"\n---\n\n# MCP\n'
+            '---\nincludes: "servers/*.py"\nexcludes:\n  - "__init__.py"\n---\n\n# MCP\n'
         )
         governance_load(str(db_path))
 
@@ -300,13 +300,14 @@ class TestSkillCLI:
         assert "describe" in result.stdout
         assert "scan" in result.stdout
 
-    def test_navigator_governance_help(self) -> None:
-        result = run("skills.navigator", "governance", "--help")
+    def test_governance_help(self) -> None:
+        result = run("skills.governance", "--help")
         assert result.returncode == 0
-        assert "governance" in result.stdout
+        assert "load" in result.stdout
+        assert "order" in result.stdout
 
-    def test_navigator_governance_for_help(self) -> None:
-        result = run("skills.navigator", "governance-for", "--help")
+    def test_governance_for_help(self) -> None:
+        result = run("skills.governance", "for", "--help")
         assert result.returncode == 0
         assert "files" in result.stdout
 
@@ -344,6 +345,10 @@ class TestServerInvocation:
 
     def test_navigator_loads(self) -> None:
         result = _run_server_briefly("servers.navigator")
+        assert result.returncode == 0, result.stderr
+
+    def test_governance_loads(self) -> None:
+        result = _run_server_briefly("servers.governance")
         assert result.returncode == 0, result.stderr
 
     def test_friction_loads(self) -> None:
