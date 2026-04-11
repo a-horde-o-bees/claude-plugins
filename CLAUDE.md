@@ -1,6 +1,6 @@
 # Project Instructions
 
-Operational procedures for agents working in the claude-plugins marketplace repository. For system structure and design, read `architecture.md`.
+Operational procedures for agents working in the claude-plugins marketplace repository. Read the sibling `architecture.md` before acting.
 
 ## Development Workflow
 
@@ -24,15 +24,11 @@ This is the primary source for patterns, supported fields, and examples. Fetch t
 
 Edit deployed copies in `.claude/rules/` and `.claude/conventions/`, never templates in `plugins/`. `/ocd-commit` runs `scripts/sync-templates.py` to sync deployed content back to templates before committing. A guard hook blocks direct template edits.
 
-For the template-deployed model and file layout, read `architecture.md`.
-
 ## Adding Python Dependencies
 
-Add the package to the plugin's `requirements.txt`. The SessionStart hook detects the change on next session start and reinstalls automatically into the plugin venv.
+Add the package to the target plugin's `requirements.txt`. The plugin's SessionStart hook detects the change on next session start and reinstalls into the plugin's isolated venv automatically.
 
 Prerequisite: `uv` must be installed on the user's system.
-
-For how the dependency system works (venv lifecycle, SessionStart hook mechanics, MCP server binding), read `architecture.md`.
 
 ## System and Global Tool Dependencies
 
@@ -44,19 +40,6 @@ Tools installed globally on the user's system (npm globals, system packages, sta
 ```
 
 Use `SessionStart` hooks for Python packages (isolated in plugin venv). Use runtime checks in skills for everything else.
-
-## Content Routing
-
-- **CLAUDE.md** — project-specific procedures for this repository
-- **Rules** — always-on agent behavior; loaded every conversation regardless of file being edited
-- **Conventions** — file-type-specific content standards; matched by pattern, applied when creating or modifying matching files
-
-Rules govern agent behavior. Conventions govern file content. If guidance applies regardless of which file is being edited, it belongs in a rule. If it applies only when working with a specific file type, it belongs in a convention.
-
-## README Scopes
-
-- **Root `README.md`** — developer and contributor facing
-- **Plugin `README.md`** — user facing; what it does, how to install, configure, use, and override
 
 ## Testing
 
