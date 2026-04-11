@@ -18,7 +18,7 @@ import hashlib
 from pathlib import Path
 
 from ._db import get_connection
-from ._frontmatter import normalize_patterns, scan_governance_dirs
+from ._frontmatter import normalize_patterns, parse_governance
 
 
 def _git_hash(file_path: str) -> str | None:
@@ -59,52 +59,8 @@ def _scan_disk_paths(project_dir: str) -> tuple[set[str], set[str]]:
     return rule_paths, conv_paths
 
 
-def _table_is_stale(
-    conn, table: str, disk_paths: set[str], project_dir: str,
-) -> bool:
-    """Check if a governance table's entries match disk state."""
-    db_rows = conn.execute(
-        f"SELECT entry_path, git_hash FROM {table}"  # noqa: S608
-    ).fetchall()
-    db_paths = {row["entry_path"] for row in db_rows}
-
-    if disk_paths != db_paths:
-        return True
-
-    for row in db_rows:
-        stored_hash = row["git_hash"]
-        if stored_hash is None:
-            return True
-        current_hash = _git_hash(
-            str(Path(project_dir) / row["entry_path"])
-        )
-        if current_hash != stored_hash:
-            return True
-
-    return False
-
-
-def _governance_is_stale(db_path: str, project_dir: str) -> bool:
-    """Check if rules or conventions tables need updating from disk.
-
-    Compares the set of governance file paths on disk against the database,
-    then compares git hashes against current file content. Returns True
-    when either table needs reloading.
-    """
-    rule_paths, conv_paths = _scan_disk_paths(project_dir)
-
-    conn = get_connection(db_path)
-    try:
-        return (
-            _table_is_stale(conn, "rules", rule_paths, project_dir)
-            or _table_is_stale(conn, "conventions", conv_paths, project_dir)
-        )
-    finally:
-        conn.close()
-
-
 def _ensure_current(db_path: str) -> None:
-    """Refresh governance from disk if stale. Called before every query.
+    """Refresh governance from disk before queries.
 
     Skips when db_path doesn't match the conventional navigator path
     (e.g. test databases at arbitrary locations).
@@ -115,61 +71,98 @@ def _ensure_current(db_path: str) -> None:
     governance_load(db_path, project_dir)
 
 
-def governance_load(db_path: str, project_dir: str) -> dict:
-    """Load governance entries from frontmatter in rules and conventions.
+def _reconcile_rules(conn, rule_paths: set[str], project_dir: str) -> None:
+    """Incrementally reconcile the rules table against disk state.
 
-    Parses frontmatter, stores rules in the rules table and conventions
-    in conventions/convention_includes/convention_excludes tables. Records
-    git_hash for staleness detection. Skips when current.
-    Idempotent — safe to rerun.
+    Rule files must carry governance frontmatter to count as rules —
+    subsystem documentation (README.md, architecture.md) living under
+    .claude/rules/ is filtered out.
     """
-    if not _governance_is_stale(db_path, project_dir):
-        conn = get_connection(db_path)
-        try:
-            rule_count = conn.execute("SELECT COUNT(*) as c FROM rules").fetchone()["c"]
-            conv_count = conn.execute("SELECT COUNT(*) as c FROM conventions").fetchone()["c"]
-            return {"governance_entries": rule_count + conv_count}
-        finally:
-            conn.close()
+    db_rules = {
+        row["entry_path"]: row["git_hash"]
+        for row in conn.execute("SELECT entry_path, git_hash FROM rules").fetchall()
+    }
 
-    entries = scan_governance_dirs(Path(project_dir))
+    for removed in db_rules.keys() - rule_paths:
+        conn.execute("DELETE FROM rules WHERE entry_path = ?", (removed,))
+
+    for path in rule_paths:
+        current_hash = _git_hash(str(Path(project_dir) / path))
+        if db_rules.get(path) == current_hash:
+            continue
+
+        entry = parse_governance(Path(project_dir) / path)
+        if entry is None:
+            conn.execute("DELETE FROM rules WHERE entry_path = ?", (path,))
+            continue
+
+        conn.execute(
+            "INSERT OR REPLACE INTO rules (entry_path, git_hash) VALUES (?, ?)",
+            (path, current_hash),
+        )
+
+
+def _reconcile_conventions(conn, conv_paths: set[str], project_dir: str) -> None:
+    """Incrementally reconcile the conventions tables against disk state.
+
+    CASCADE on convention_includes/convention_excludes handles pattern
+    table cleanup whenever a conventions row is deleted.
+    """
+    db_convs = {
+        row["entry_path"]: row["git_hash"]
+        for row in conn.execute("SELECT entry_path, git_hash FROM conventions").fetchall()
+    }
+
+    for removed in db_convs.keys() - conv_paths:
+        conn.execute("DELETE FROM conventions WHERE entry_path = ?", (removed,))
+
+    for path in conv_paths:
+        current_hash = _git_hash(str(Path(project_dir) / path))
+        if db_convs.get(path) == current_hash:
+            continue
+
+        entry = parse_governance(Path(project_dir) / path)
+        if entry is None:
+            # File has no frontmatter — drop any stale row
+            conn.execute("DELETE FROM conventions WHERE entry_path = ?", (path,))
+            continue
+
+        # Replace any existing row (CASCADE clears include/exclude patterns)
+        conn.execute("DELETE FROM conventions WHERE entry_path = ?", (path,))
+        conn.execute(
+            "INSERT INTO conventions (entry_path, matches, excludes, git_hash) "
+            "VALUES (?, ?, ?, ?)",
+            (path, entry["matches"], entry.get("excludes"), current_hash),
+        )
+
+        for pattern in normalize_patterns(entry["matches"]):
+            conn.execute(
+                "INSERT INTO convention_includes (entry_path, pattern) VALUES (?, ?)",
+                (path, pattern),
+            )
+
+        if entry.get("excludes"):
+            for pattern in normalize_patterns(entry["excludes"]):
+                conn.execute(
+                    "INSERT INTO convention_excludes (entry_path, pattern) VALUES (?, ?)",
+                    (path, pattern),
+                )
+
+
+def governance_load(db_path: str, project_dir: str) -> dict:
+    """Incrementally reconcile governance tables against disk state.
+
+    Single pass across rules and conventions: removes deleted entries,
+    adds new entries, updates changed entries. Frontmatter is parsed only
+    for new or changed convention files — unchanged files are skipped by
+    git_hash comparison. Safe to call before every query.
+    """
+    rule_paths, conv_paths = _scan_disk_paths(project_dir)
 
     conn = get_connection(db_path)
     try:
-        conn.execute("DELETE FROM convention_includes")
-        conn.execute("DELETE FROM convention_excludes")
-        conn.execute("DELETE FROM conventions")
-        conn.execute("DELETE FROM rules")
-
-        for entry_path, entry in entries.items():
-            file_hash = _git_hash(str(Path(project_dir) / entry_path))
-            is_rule = "/rules/" in entry_path
-
-            if is_rule:
-                conn.execute(
-                    "INSERT INTO rules (entry_path, git_hash) VALUES (?, ?)",
-                    (entry_path, file_hash),
-                )
-            else:
-                conn.execute(
-                    "INSERT INTO conventions (entry_path, matches, excludes, git_hash) "
-                    "VALUES (?, ?, ?, ?)",
-                    (entry_path, entry["matches"], entry.get("excludes"), file_hash),
-                )
-
-                for pattern in normalize_patterns(entry["matches"]):
-                    conn.execute(
-                        "INSERT INTO convention_includes (entry_path, pattern) VALUES (?, ?)",
-                        (entry_path, pattern),
-                    )
-
-                if entry.get("excludes"):
-                    for pattern in normalize_patterns(entry["excludes"]):
-                        conn.execute(
-                            "INSERT INTO convention_excludes (entry_path, pattern) VALUES (?, ?)",
-                            (entry_path, pattern),
-                        )
-
+        _reconcile_rules(conn, rule_paths, project_dir)
+        _reconcile_conventions(conn, conv_paths, project_dir)
         conn.commit()
 
         rule_count = conn.execute("SELECT COUNT(*) as c FROM rules").fetchone()["c"]

@@ -17,19 +17,40 @@ import json
 from pathlib import Path
 
 
+def read_frontmatter(file_path: Path) -> list[str] | None:
+    """Read YAML frontmatter lines from a file.
+
+    Opens the file and reads lines until the closing `---` delimiter,
+    returning the lines between (but not including) the delimiters.
+    Returns None if the file has no frontmatter — either missing the
+    opening delimiter, or EOF before the closing delimiter.
+
+    Only reads what's needed — stops at the closing delimiter without
+    loading the rest of the file.
+    """
+    try:
+        with file_path.open() as f:
+            first = f.readline()
+            if not first or first.strip() != "---":
+                return None
+            lines: list[str] = []
+            for line in f:
+                if line.strip() == "---":
+                    return lines
+                lines.append(line.rstrip("\n"))
+            return None
+    except (FileNotFoundError, PermissionError, OSError):
+        return None
+
+
 def parse_governance(file_path: Path) -> dict | None:
     """Extract governance frontmatter from a markdown file.
 
     Returns {matches, excludes, governed_by} dict if governance frontmatter
     exists, None if file has no frontmatter or no matches field.
     """
-    try:
-        content = file_path.read_text()
-    except (FileNotFoundError, PermissionError, OSError):
-        return None
-
-    lines = content.splitlines()
-    if not lines or lines[0].strip() != "---":
+    frontmatter_lines = read_frontmatter(file_path)
+    if frontmatter_lines is None:
         return None
 
     matches = None
@@ -52,10 +73,8 @@ def parse_governance(file_path: Path) -> dict | None:
         in_excludes = False
         in_governed_by = False
 
-    for line in lines[1:]:
+    for line in frontmatter_lines:
         stripped = line.strip()
-        if stripped == "---":
-            break
 
         if stripped.startswith("matches:"):
             _end_block()
@@ -105,33 +124,6 @@ def parse_governance(file_path: Path) -> dict | None:
         return None
 
     return {"matches": matches, "excludes": excludes, "governed_by": governed_by}
-
-
-def scan_governance_dirs(
-    project_dir: Path,
-    rules_dir: str = ".claude/rules",
-    conventions_dir: str = ".claude/conventions",
-) -> dict[str, dict]:
-    """Scan governance directories for files with governance frontmatter.
-
-    Returns {relative_path: {matches, excludes, governed_by}} map for all
-    governance files found. Paths are relative to project_dir.
-    """
-    result: dict[str, dict] = {}
-
-    for dir_rel in (rules_dir, conventions_dir):
-        scan_dir = project_dir / dir_rel
-        if not scan_dir.is_dir():
-            continue
-        for md_file in sorted(scan_dir.glob("*.md")):
-            if not md_file.is_file():
-                continue
-            parsed = parse_governance(md_file)
-            if parsed is not None:
-                rel_path = str(md_file.relative_to(project_dir))
-                result[rel_path] = parsed
-
-    return result
 
 
 def normalize_patterns(pattern: str) -> list[str]:

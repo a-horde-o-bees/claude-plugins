@@ -5,7 +5,11 @@ from pathlib import Path
 import pytest
 
 from skills.navigator._db import get_connection, init_db, SCHEMA
-from skills.navigator._frontmatter import normalize_patterns, parse_governance
+from skills.navigator._frontmatter import (
+    normalize_patterns,
+    parse_governance,
+    read_frontmatter,
+)
 from skills.navigator._scanner import (
     _compute_git_hash,
     _compute_file_metrics,
@@ -18,7 +22,6 @@ from skills.navigator._governance import (
     governance_match,
     governance_load,
     governance_list,
-    _governance_is_stale,
 )
 from skills.navigator import (
     paths_undescribed,
@@ -1509,21 +1512,82 @@ class TestScanGovernance:
         assert ".claude/conventions/readme.md" in result["matches"].get("README.md", [])
         conn.close()
 
-    def test_governance_stale_detects_new_files(self, gov_scan_tree):
-        """_governance_is_stale returns True when new governance files appear on disk."""
+    def test_governance_load_removes_deleted_files(self, gov_scan_tree):
+        """governance_load removes rows for files deleted from disk."""
         project = gov_scan_tree["project"]
         db = gov_scan_tree["db"]
 
-        # Initially not stale
-        assert not _governance_is_stale(db, str(project))
+        # Delete the convention file from disk
+        (project / ".claude/conventions/python.md").unlink()
+        governance_load(db, str(project))
 
-        # Add a new convention file
+        conn = get_connection(db)
+        rows = conn.execute(
+            "SELECT entry_path FROM conventions "
+            "WHERE entry_path = '.claude/conventions/python.md'"
+        ).fetchall()
+        assert len(rows) == 0
+        # CASCADE cleared pattern tables too
+        include_rows = conn.execute(
+            "SELECT entry_path FROM convention_includes "
+            "WHERE entry_path = '.claude/conventions/python.md'"
+        ).fetchall()
+        assert len(include_rows) == 0
+        conn.close()
+
+    def test_governance_load_updates_changed_files(self, gov_scan_tree):
+        """governance_load picks up content changes to existing files."""
+        project = gov_scan_tree["project"]
+        db = gov_scan_tree["db"]
+
+        # Overwrite python.md with a different pattern
         _write_governance_file(
-            project / ".claude/conventions/readme.md", "README.md",
+            project / ".claude/conventions/python.md", "*.pyi",
         )
+        governance_load(db, str(project))
 
-        # Now stale
-        assert _governance_is_stale(db, str(project))
+        result = governance_match(db, ["app.pyi"])
+        assert ".claude/conventions/python.md" in result["matches"].get("app.pyi", [])
+        # Old pattern no longer matches
+        result = governance_match(db, ["app.py"])
+        assert "app.py" not in result["matches"]
+
+    def test_governance_load_ignores_rule_dir_files_without_frontmatter(self, gov_scan_tree):
+        """Subsystem docs under .claude/rules/ without frontmatter are not rules."""
+        project = gov_scan_tree["project"]
+        db = gov_scan_tree["db"]
+
+        # Drop a README with no governance frontmatter into the rules dir
+        (project / ".claude/rules/README.md").write_text("# Rules\n\nSubsystem docs.\n")
+        governance_load(db, str(project))
+
+        conn = get_connection(db)
+        row = conn.execute(
+            "SELECT entry_path FROM rules WHERE entry_path = '.claude/rules/README.md'"
+        ).fetchone()
+        assert row is None
+        conn.close()
+
+    def test_governance_load_preserves_unchanged_hash(self, gov_scan_tree):
+        """Unchanged files keep their stored git_hash across reloads."""
+        project = gov_scan_tree["project"]
+        db = gov_scan_tree["db"]
+
+        conn = get_connection(db)
+        before = conn.execute(
+            "SELECT git_hash FROM conventions WHERE entry_path = '.claude/conventions/python.md'"
+        ).fetchone()["git_hash"]
+        conn.close()
+
+        governance_load(db, str(project))
+
+        conn = get_connection(db)
+        after = conn.execute(
+            "SELECT git_hash FROM conventions WHERE entry_path = '.claude/conventions/python.md'"
+        ).fetchone()["git_hash"]
+        conn.close()
+
+        assert before == after
 
 
 class TestNormalizePatterns:
@@ -1539,6 +1603,44 @@ class TestNormalizePatterns:
 
     def test_empty_list(self):
         assert normalize_patterns("[]") == []
+
+
+class TestReadFrontmatter:
+    def test_reads_frontmatter_between_delimiters(self, tmp_path):
+        f = tmp_path / "doc.md"
+        f.write_text("---\nkey: value\nother: thing\n---\n\n# Body\n")
+        assert read_frontmatter(f) == ["key: value", "other: thing"]
+
+    def test_returns_none_when_no_opening_delimiter(self, tmp_path):
+        f = tmp_path / "doc.md"
+        f.write_text("# Just a heading\n\nNo frontmatter here.\n")
+        assert read_frontmatter(f) is None
+
+    def test_returns_none_when_missing_closing_delimiter(self, tmp_path):
+        f = tmp_path / "doc.md"
+        f.write_text("---\nkey: value\nstill going\n")
+        assert read_frontmatter(f) is None
+
+    def test_returns_none_for_empty_file(self, tmp_path):
+        f = tmp_path / "doc.md"
+        f.write_text("")
+        assert read_frontmatter(f) is None
+
+    def test_returns_none_for_missing_file(self, tmp_path):
+        assert read_frontmatter(tmp_path / "nope.md") is None
+
+    def test_stops_at_closing_without_reading_body(self, tmp_path):
+        f = tmp_path / "doc.md"
+        body_marker = "SENTINEL_SHOULD_NOT_BE_PARSED"
+        f.write_text(f"---\nkey: value\n---\n\n{body_marker}\n")
+        lines = read_frontmatter(f)
+        assert lines == ["key: value"]
+        assert body_marker not in (lines or [])
+
+    def test_empty_frontmatter_block(self, tmp_path):
+        f = tmp_path / "doc.md"
+        f.write_text("---\n---\n\n# Body\n")
+        assert read_frontmatter(f) == []
 
 
 class TestBlockStylePattern:
