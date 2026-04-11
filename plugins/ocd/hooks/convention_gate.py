@@ -14,14 +14,18 @@ doesn't exist (not initialized), allows silently.
 from __future__ import annotations
 
 import json
-import os
 import sys
 from pathlib import Path
+
+import plugin
 
 
 def _get_db_path() -> Path | None:
     """Resolve navigator database path."""
-    project_dir = Path(os.environ.get("CLAUDE_PROJECT_DIR", os.getcwd()))
+    try:
+        project_dir = plugin.get_project_dir()
+    except RuntimeError:
+        return None
     db_path = project_dir / ".claude" / "ocd" / "navigator" / "navigator.db"
     return db_path if db_path.exists() else None
 

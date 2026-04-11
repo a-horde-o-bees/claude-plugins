@@ -18,9 +18,10 @@ import os
 
 from mcp.server.fastmcp import FastMCP
 
+import plugin
 import skills.decisions as decisions_skill
 
-from ._helpers import _err, _ok, _project_root
+from ._helpers import _err, _ok
 
 # --- Configuration ---
 
@@ -28,7 +29,7 @@ from ._helpers import _err, _ok, _project_root
 def _db_path() -> str:
     """Resolve decisions database path relative to project root."""
     rel = os.environ.get("DECISIONS_DB", ".claude/ocd/decisions/decisions.db")
-    return os.path.join(str(_project_root()), rel)
+    return str(plugin.get_project_dir() / rel)
 
 
 mcp = FastMCP(

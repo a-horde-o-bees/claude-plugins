@@ -16,12 +16,19 @@ if str(PLUGIN_ROOT) not in sys.path:
     sys.path.insert(0, str(PLUGIN_ROOT))
 
 from skills.navigator._db import get_connection, SCHEMA
+import skills.navigator as nav_skill
 from servers import navigator as nav_server
 
 
 @pytest.fixture
-def db(tmp_path):
-    """Create a temp DB with schema and seed entries, patch server to use it."""
+def db(tmp_path, monkeypatch):
+    """Create a temp DB with schema and seed entries, patch server to use it.
+
+    The facade's _ensure_scanned is mocked out — scan behavior is tested
+    extensively in skill unit tests, and integration tests here isolate
+    server behavior from filesystem reconciliation.
+    """
+    monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(tmp_path))
     db_path = str(tmp_path / "nav.db")
     conn = get_connection(db_path)
     conn.executescript(SCHEMA)
@@ -45,7 +52,7 @@ def db(tmp_path):
 
     with (
         patch.object(nav_server, "DB_PATH", db_path),
-        patch.object(nav_server, "_auto_scan", return_value=None),
+        patch.object(nav_skill, "_ensure_scanned", return_value=None),
         patch.object(nav_server, "_check_db", return_value=None),
     ):
         yield db_path

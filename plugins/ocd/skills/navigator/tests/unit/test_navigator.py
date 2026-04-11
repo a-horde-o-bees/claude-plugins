@@ -58,7 +58,11 @@ def _write_governance_file(path: Path, matches, governed_by: list = None, exclud
 
 @pytest.fixture
 def db_path(tmp_path):
-    """Create a temporary database with schema."""
+    """Create a temporary database with schema at tmp_path root.
+
+    Lives outside the per-test CLAUDE_PROJECT_DIR (tmp_path/project) so
+    the scanner doesn't index the database file as a project entry.
+    """
     path = str(tmp_path / "test.db")
     conn = get_connection(path)
     conn.executescript(SCHEMA)
@@ -67,8 +71,23 @@ def db_path(tmp_path):
 
 
 @pytest.fixture
-def populated_db(db_path):
-    """Database with sample entries."""
+def populated_db(db_path, project_dir):
+    """Database with sample entries and real files on disk matching them.
+
+    Files are created under the project_dir so the scanner's reconciliation
+    leaves the fixture entries in place instead of deleting them.
+    """
+    files = {
+        "src/lib/utils.py": "utils",
+        "src/lib/core.py": "core",
+        "src/main.py": "main",
+        "src/config.py": "",
+    }
+    for rel, content in files.items():
+        target = project_dir / rel
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(content)
+
     conn = get_connection(db_path)
     entries = [
         ("src", None, "directory", 0, 1, "Source code", None),
@@ -156,7 +175,7 @@ class TestComputeGitHash:
     def test_file_hash(self, tmp_path):
         f = tmp_path / "test.txt"
         f.write_text("hello\n")
-        h = _compute_git_hash(str(f))
+        h = _compute_git_hash(f)
         assert h is not None
         assert len(h) == 40
 
@@ -165,20 +184,20 @@ class TestComputeGitHash:
         f2 = tmp_path / "b.txt"
         f1.write_text("content")
         f2.write_text("content")
-        assert _compute_git_hash(str(f1)) == _compute_git_hash(str(f2))
+        assert _compute_git_hash(f1) == _compute_git_hash(f2)
 
     def test_different_content_different_hash(self, tmp_path):
         f1 = tmp_path / "a.txt"
         f2 = tmp_path / "b.txt"
         f1.write_text("content1")
         f2.write_text("content2")
-        assert _compute_git_hash(str(f1)) != _compute_git_hash(str(f2))
+        assert _compute_git_hash(f1) != _compute_git_hash(f2)
 
     def test_nonexistent_file(self):
-        assert _compute_git_hash("/nonexistent/file.txt") is None
+        assert _compute_git_hash(Path("/nonexistent/file.txt")) is None
 
     def test_directory(self, tmp_path):
-        assert _compute_git_hash(str(tmp_path)) is None
+        assert _compute_git_hash(tmp_path) is None
 
 
 # --- _mark_parents_stale ---
@@ -399,7 +418,11 @@ class TestDescribePath:
         config = next(c for c in result["children"] if "config.py" in c["path"])
         assert config["description"] == ""
 
-    def test_excludes_excluded_children(self, db_path):
+    def test_excludes_excluded_children(self, db_path, project_dir):
+        (project_dir / "dir").mkdir()
+        (project_dir / "dir" / "hidden").write_text("")
+        (project_dir / "dir" / "visible").write_text("")
+
         conn = get_connection(db_path)
         conn.execute(
             "INSERT INTO entries (path, parent_path, entry_type, description) "
@@ -582,7 +605,8 @@ class TestGetUndescribed:
         assert result["remaining"] > 0
         assert result["directories"] > 0
 
-    def test_no_work_remaining(self, db_path):
+    def test_no_work_remaining(self, db_path, project_dir):
+        (project_dir / "a.py").write_text("")
         conn = get_connection(db_path)
         conn.execute(
             "INSERT INTO entries (path, entry_type, description) VALUES ('a.py', 'file', 'Described')"
@@ -607,7 +631,9 @@ class TestGetUndescribed:
         result = paths_undescribed(db_path)
         assert result["done"]
 
-    def test_directory_itself_null(self, db_path):
+    def test_directory_itself_null(self, db_path, project_dir):
+        (project_dir / "dir").mkdir()
+        (project_dir / "dir" / "file.py").write_text("")
         conn = get_connection(db_path)
         conn.execute(
             "INSERT INTO entries (path, parent_path, entry_type, description) "
@@ -629,10 +655,9 @@ class TestGetUndescribed:
 
 class TestListFiles:
     @pytest.fixture
-    def list_tree(self, tmp_path):
+    def list_tree(self, project_dir, tmp_path):
         """Create filesystem tree with database and seed rules for list testing."""
-        project = tmp_path / "project"
-        project.mkdir()
+        project = project_dir
         (project / "main.py").write_text("print('hello')")
         (project / "README.md").write_text("# Readme")
         src = project / "src"
@@ -664,7 +689,7 @@ class TestListFiles:
         return {"project": project, "db": db}
 
     def test_lists_all_files(self, list_tree):
-        result = paths_list(list_tree["db"], str(list_tree["project"]))
+        result = paths_list(list_tree["db"], "")
         names = [Path(e["path"]).name for e in result]
         assert "main.py" in names
         assert "README.md" in names
@@ -673,18 +698,18 @@ class TestListFiles:
         assert "notes.md" in names
 
     def test_excludes_pycache_files(self, list_tree):
-        result = paths_list(list_tree["db"], str(list_tree["project"]))
+        result = paths_list(list_tree["db"], "")
         all_paths = [e["path"] for e in result]
         assert not any("main.cpython.pyc" in p for p in all_paths)
 
     def test_no_directories_in_output(self, list_tree):
-        result = paths_list(list_tree["db"], str(list_tree["project"]))
+        result = paths_list(list_tree["db"], "")
         for entry in result:
             assert not entry["path"].endswith("/")
 
     def test_pattern_filters_by_extension(self, list_tree):
         result = paths_list(
-            list_tree["db"], str(list_tree["project"]), patterns=["*.py"]
+            list_tree["db"], "", patterns=["*.py"]
         )
         for entry in result:
             assert entry["path"].endswith(".py")
@@ -694,7 +719,7 @@ class TestListFiles:
 
     def test_pattern_excludes_non_matching(self, list_tree):
         result = paths_list(
-            list_tree["db"], str(list_tree["project"]), patterns=["*.py"]
+            list_tree["db"], "", patterns=["*.py"]
         )
         all_paths = [e["path"] for e in result]
         assert not any("README.md" in p for p in all_paths)
@@ -702,24 +727,24 @@ class TestListFiles:
 
     def test_multiple_patterns(self, list_tree):
         result = paths_list(
-            list_tree["db"], str(list_tree["project"]),
+            list_tree["db"], "",
             patterns=["*.py", "*.md"],
         )
         assert len(result) == 5
 
     def test_pattern_no_match(self, list_tree):
         result = paths_list(
-            list_tree["db"], str(list_tree["project"]), patterns=["*.rs"]
+            list_tree["db"], "", patterns=["*.rs"]
         )
         assert result == []
 
     def test_sorted_output(self, list_tree):
-        result = paths_list(list_tree["db"], str(list_tree["project"]))
+        result = paths_list(list_tree["db"], "")
         file_paths = [e["path"] for e in result]
         assert file_paths == sorted(file_paths)
 
     def test_shallow_dir_contents_excluded(self, list_tree):
-        result = paths_list(list_tree["db"], str(list_tree["project"]))
+        result = paths_list(list_tree["db"], "")
         all_paths = [e["path"] for e in result]
         assert not any("test_main.py" in p for p in all_paths)
 
@@ -729,10 +754,10 @@ class TestListFiles:
 
 class TestScanPath:
     @pytest.fixture
-    def scan_tree(self, tmp_path, db_path):
+    def scan_tree(self, project_dir, db_path):
         """Create a filesystem tree and database for scan testing."""
         # Create filesystem
-        src = tmp_path / "src"
+        src = project_dir / "src"
         src.mkdir()
         (src / "main.py").write_text("print('hello')")
         (src / "utils.py").write_text("def helper(): pass")
@@ -749,7 +774,7 @@ class TestScanPath:
         tests.mkdir()
         (tests / "test_main.py").write_text("def test(): pass")
 
-        return {"tmp_path": tmp_path, "db_path": db_path, "src": src}
+        return {"project_dir": project_dir, "db_path": db_path, "src": src}
 
     def test_adds_missing_entries(self, scan_tree):
         db_path = scan_tree["db_path"]
@@ -771,16 +796,14 @@ class TestScanPath:
         conn.commit()
         conn.close()
 
-        result = scan_path(db_path, str(src))
+        result = scan_path(db_path, "src")
         assert "Added" in result
         assert "removed 0" in result
 
-    def test_excludes_pycache(self, tmp_path):
+    def test_excludes_pycache(self, project_dir, tmp_path):
         """Test exclusion with isolated filesystem and database."""
-        src = tmp_path / "project"
-        src.mkdir()
-        (src / "main.py").write_text("print('hello')")
-        cache = src / "__pycache__"
+        (project_dir / "main.py").write_text("print('hello')")
+        cache = project_dir / "__pycache__"
         cache.mkdir()
         (cache / "main.cpython.pyc").write_text("bytecode")
 
@@ -793,14 +816,12 @@ class TestScanPath:
         conn.commit()
         conn.close()
 
-        scan_path(db, str(src))
+        scan_path(db)
 
         conn = get_connection(db)
         # Check no entries for __pycache__ dir or its contents
-        cache_path = str(cache)
         rows = conn.execute(
-            "SELECT path FROM entries WHERE path = ? OR path LIKE ?",
-            (cache_path, cache_path + "/%"),
+            "SELECT path FROM entries WHERE path = '__pycache__' OR path LIKE '__pycache__/%'"
         ).fetchall()
         assert len(rows) == 0
         conn.close()
@@ -820,11 +841,11 @@ class TestScanPath:
         conn.commit()
         conn.close()
 
-        scan_path(db_path, str(src))
+        scan_path(db_path, "src")
 
         conn = get_connection(db_path)
         # tests directory itself should exist
-        tests_path = str(src / "tests")
+        tests_path = "src/tests"
         tests_row = conn.execute(
             "SELECT * FROM entries WHERE path = ?", (tests_path,)
         ).fetchone()
@@ -852,10 +873,10 @@ class TestScanPath:
         conn.commit()
         conn.close()
 
-        scan_path(db_path, str(src))
+        scan_path(db_path, "src")
 
         conn = get_connection(db_path)
-        init_path = str(src / "lib" / "__init__.py")
+        init_path = "src/lib/__init__.py"
         row = conn.execute(
             "SELECT description FROM entries WHERE path = ?", (init_path,)
         ).fetchone()
@@ -864,27 +885,26 @@ class TestScanPath:
 
     def test_removes_stale_entries(self, scan_tree):
         db_path = scan_tree["db_path"]
-        src = scan_tree["src"]
 
         conn = get_connection(db_path)
         conn.execute(
             "INSERT INTO entries (path, parent_path, entry_type, description) "
             "VALUES (?, ?, 'file', 'Gone')",
-            (str(src / "deleted.py"), str(src)),
+            ("src/deleted.py", "src"),
         )
         conn.commit()
         conn.close()
 
-        result = scan_path(db_path, str(src))
+        result = scan_path(db_path, "src")
         assert "removed 1" in result
 
     def test_detects_changed_files(self, scan_tree):
         db_path = scan_tree["db_path"]
         src = scan_tree["src"]
-        main_path = str(src / "main.py")
+        main_path = "src/main.py"
 
         # First scan to populate
-        scan_path(db_path, str(src))
+        scan_path(db_path, "src")
 
         # Set description (stores hash)
         paths_upsert(db_path, main_path, description="Entry point")
@@ -892,7 +912,7 @@ class TestScanPath:
         # Modify file
         (src / "main.py").write_text("print('changed')")
 
-        result = scan_path(db_path, str(src))
+        result = scan_path(db_path, "src")
         assert "changed 1" in result
 
         # Description should be preserved but marked stale
@@ -915,8 +935,8 @@ class TestScanPath:
         conn.commit()
         conn.close()
 
-        scan_path(db_path, str(src))
-        result = scan_path(db_path, str(src))
+        scan_path(db_path, "src")
+        result = scan_path(db_path, "src")
         assert "Added 0" in result
         assert "removed 0" in result
 
@@ -925,22 +945,22 @@ class TestScanPath:
         src = scan_tree["src"]
 
         # Initial scan
-        scan_path(db_path, str(src))
+        scan_path(db_path, "src")
 
         # Describe the src directory
-        paths_upsert(db_path, str(src), description="Source directory")
+        paths_upsert(db_path, "src", description="Source directory")
 
         # Add a new file
         (src / "newfile.py").write_text("new content")
 
-        result = scan_path(db_path, str(src))
+        result = scan_path(db_path, "src")
         assert "Added 1" in result
         assert "staled" in result
 
         # Parent should be stale with description preserved
         conn = get_connection(db_path)
         row = conn.execute(
-            "SELECT description, stale FROM entries WHERE path = ?", (str(src),)
+            "SELECT description, stale FROM entries WHERE path = ?", ("src",)
         ).fetchone()
         assert row["description"] == "Source directory"
         assert row["stale"] == 1
@@ -951,19 +971,19 @@ class TestScanPath:
         src = scan_tree["src"]
 
         # Initial scan and describe parent
-        scan_path(db_path, str(src))
-        paths_upsert(db_path, str(src), description="Source directory")
+        scan_path(db_path, "src")
+        paths_upsert(db_path, "src", description="Source directory")
 
         # Remove a file
         (src / "utils.py").unlink()
 
-        result = scan_path(db_path, str(src))
+        result = scan_path(db_path, "src")
         assert "removed 1" in result
         assert "staled" in result
 
         conn = get_connection(db_path)
         row = conn.execute(
-            "SELECT description, stale FROM entries WHERE path = ?", (str(src),)
+            "SELECT description, stale FROM entries WHERE path = ?", ("src",)
         ).fetchone()
         assert row["description"] == "Source directory"
         assert row["stale"] == 1
@@ -972,19 +992,19 @@ class TestScanPath:
     def test_stale_ancestor_chain(self, scan_tree):
         db_path = scan_tree["db_path"]
         src = scan_tree["src"]
-        lib_path = str(src / "lib")
-        core_path = str(src / "lib" / "core.py")
+        lib_path = "src/lib"
+        core_path = "src/lib/core.py"
 
         # Scan and describe both src and lib
-        scan_path(db_path, str(src))
-        paths_upsert(db_path, str(src), description="Source directory")
+        scan_path(db_path, "src")
+        paths_upsert(db_path, "src", description="Source directory")
         paths_upsert(db_path, lib_path, description="Library modules")
         paths_upsert(db_path, core_path, description="Core module")
 
         # Modify core.py
         (src / "lib" / "core.py").write_text("class Updated: pass")
 
-        scan_path(db_path, str(src))
+        scan_path(db_path, "src")
 
         conn = get_connection(db_path)
         # File itself stale
@@ -1003,7 +1023,7 @@ class TestScanPath:
 
         # Grandparent stale
         row = conn.execute(
-            "SELECT description, stale FROM entries WHERE path = ?", (str(src),)
+            "SELECT description, stale FROM entries WHERE path = ?", ("src",)
         ).fetchone()
         assert row["description"] == "Source directory"
         assert row["stale"] == 1
@@ -1090,7 +1110,7 @@ class TestComputeFileMetrics:
     def test_text_file(self, tmp_path):
         f = tmp_path / "test.txt"
         f.write_text("line1\nline2\nline3\n")
-        m = _compute_file_metrics(str(f))
+        m = _compute_file_metrics(f)
         assert m["git_hash"] is not None
         assert len(m["git_hash"]) == 40
         assert m["line_count"] == 3
@@ -1099,13 +1119,13 @@ class TestComputeFileMetrics:
     def test_file_no_trailing_newline(self, tmp_path):
         f = tmp_path / "test.txt"
         f.write_text("line1\nline2")
-        m = _compute_file_metrics(str(f))
+        m = _compute_file_metrics(f)
         assert m["line_count"] == 2
 
     def test_empty_file(self, tmp_path):
         f = tmp_path / "empty.txt"
         f.write_text("")
-        m = _compute_file_metrics(str(f))
+        m = _compute_file_metrics(f)
         assert m["git_hash"] is not None
         assert m["line_count"] == 0
         assert m["char_count"] == 0
@@ -1113,18 +1133,18 @@ class TestComputeFileMetrics:
     def test_single_newline(self, tmp_path):
         f = tmp_path / "newline.txt"
         f.write_text("\n")
-        m = _compute_file_metrics(str(f))
+        m = _compute_file_metrics(f)
         assert m["line_count"] == 1
         assert m["char_count"] == 1
 
     def test_directory(self, tmp_path):
-        m = _compute_file_metrics(str(tmp_path))
+        m = _compute_file_metrics(tmp_path)
         assert m["git_hash"] is None
         assert m["line_count"] is None
         assert m["char_count"] is None
 
     def test_nonexistent(self):
-        m = _compute_file_metrics("/nonexistent/file.txt")
+        m = _compute_file_metrics(Path("/nonexistent/file.txt"))
         assert m["git_hash"] is None
         assert m["line_count"] is None
         assert m["char_count"] is None
@@ -1132,8 +1152,8 @@ class TestComputeFileMetrics:
     def test_consistent_with_git_hash(self, tmp_path):
         f = tmp_path / "test.txt"
         f.write_text("content")
-        m = _compute_file_metrics(str(f))
-        h = _compute_git_hash(str(f))
+        m = _compute_file_metrics(f)
+        h = _compute_git_hash(f)
         assert m["git_hash"] == h
 
 
@@ -1142,18 +1162,16 @@ class TestComputeFileMetrics:
 
 class TestScanMetrics:
     @pytest.fixture
-    def metrics_tree(self, tmp_path, db_path):
-        project = tmp_path / "project"
-        project.mkdir()
-        (project / "a.py").write_text("line1\nline2\n")
-        (project / "b.md").write_text("# Title\n\nBody text here.\n")
-        sub = project / "sub"
+    def metrics_tree(self, project_dir, db_path):
+        (project_dir / "a.py").write_text("line1\nline2\n")
+        (project_dir / "b.md").write_text("# Title\n\nBody text here.\n")
+        sub = project_dir / "sub"
         sub.mkdir()
         (sub / "c.py").write_text("x = 1\n")
-        return {"project": project, "db": db_path}
+        return {"project": project_dir, "db": db_path}
 
     def test_scan_stores_line_count(self, metrics_tree):
-        scan_path(metrics_tree["db"], str(metrics_tree["project"]))
+        scan_path(metrics_tree["db"])
         conn = get_connection(metrics_tree["db"])
         row = conn.execute(
             "SELECT line_count FROM entries WHERE path LIKE '%a.py'"
@@ -1162,7 +1180,7 @@ class TestScanMetrics:
         conn.close()
 
     def test_scan_stores_char_count(self, metrics_tree):
-        scan_path(metrics_tree["db"], str(metrics_tree["project"]))
+        scan_path(metrics_tree["db"])
         conn = get_connection(metrics_tree["db"])
         row = conn.execute(
             "SELECT char_count FROM entries WHERE path LIKE '%a.py'"
@@ -1171,11 +1189,11 @@ class TestScanMetrics:
         conn.close()
 
     def test_scan_updates_metrics_on_change(self, metrics_tree):
-        scan_path(metrics_tree["db"], str(metrics_tree["project"]))
+        scan_path(metrics_tree["db"])
         # Modify file
         a_py = metrics_tree["project"] / "a.py"
         a_py.write_text("line1\nline2\nline3\n")
-        scan_path(metrics_tree["db"], str(metrics_tree["project"]))
+        scan_path(metrics_tree["db"])
         conn = get_connection(metrics_tree["db"])
         row = conn.execute(
             "SELECT line_count FROM entries WHERE path LIKE '%a.py'"
@@ -1184,7 +1202,7 @@ class TestScanMetrics:
         conn.close()
 
     def test_directories_have_null_metrics(self, metrics_tree):
-        scan_path(metrics_tree["db"], str(metrics_tree["project"]))
+        scan_path(metrics_tree["db"])
         conn = get_connection(metrics_tree["db"])
         row = conn.execute(
             "SELECT line_count, char_count FROM entries WHERE entry_type = 'directory' LIMIT 1"
@@ -1231,26 +1249,24 @@ class TestSetEntryMetrics:
 
 class TestListSizes:
     @pytest.fixture
-    def sizes_tree(self, tmp_path):
-        project = tmp_path / "project"
-        project.mkdir()
-        (project / "a.py").write_text("line1\nline2\n")
-        (project / "b.md").write_text("# Title\n")
+    def sizes_tree(self, project_dir, tmp_path):
+        (project_dir / "a.py").write_text("line1\nline2\n")
+        (project_dir / "b.md").write_text("# Title\n")
         db = str(tmp_path / "sizes.db")
         conn = get_connection(db)
         conn.executescript(SCHEMA)
         conn.close()
         # Scan to populate entries with metrics
-        scan_path(db, str(project))
-        return {"project": project, "db": db}
+        scan_path(db)
+        return {"project": project_dir, "db": db}
 
     def test_sizes_false_no_columns(self, sizes_tree):
-        result = paths_list(sizes_tree["db"], str(sizes_tree["project"]), sizes=False)
+        result = paths_list(sizes_tree["db"], "", sizes=False)
         for entry in result:
             assert "line_count" not in entry
 
     def test_sizes_true_has_columns(self, sizes_tree):
-        result = paths_list(sizes_tree["db"], str(sizes_tree["project"]), sizes=True)
+        result = paths_list(sizes_tree["db"], "", sizes=True)
         for entry in result:
             assert "line_count" in entry
             assert "char_count" in entry
@@ -1259,7 +1275,7 @@ class TestListSizes:
 
     def test_sizes_values_correct(self, sizes_tree):
         result = paths_list(
-            sizes_tree["db"], str(sizes_tree["project"]),
+            sizes_tree["db"], "",
             patterns=["*.py"], sizes=True,
         )
         assert len(result) == 1
@@ -1272,26 +1288,26 @@ class TestListSizes:
 
 class TestGovernanceLoad:
     @pytest.fixture
-    def gov_env(self, tmp_path):
+    def gov_env(self, project_dir, tmp_path):
         """Create governance files and database for governance testing."""
         db = str(tmp_path / "gov.db")
         conn = get_connection(db)
         conn.executescript(SCHEMA)
         conn.close()
 
-        _write_governance_file(tmp_path / ".claude/rules/design-principles.md", "*")
+        _write_governance_file(project_dir / ".claude/rules/design-principles.md", "*")
         _write_governance_file(
-            tmp_path / ".claude/rules/workflow.md", "*",
+            project_dir / ".claude/rules/workflow.md", "*",
             governed_by=[".claude/rules/design-principles.md"],
         )
         _write_governance_file(
-            tmp_path / ".claude/conventions/python.md", "*.py",
+            project_dir / ".claude/conventions/python.md", "*.py",
             governed_by=[".claude/rules/design-principles.md"],
         )
-        return {"db": db, "project_dir": str(tmp_path)}
+        return {"db": db}
 
     def test_loads_governance_entries(self, gov_env):
-        governance_load(gov_env["db"], gov_env["project_dir"])
+        governance_load(gov_env["db"])
         conn = get_connection(gov_env["db"])
         rule_count = conn.execute("SELECT COUNT(*) as c FROM rules").fetchone()["c"]
         conv_count = conn.execute("SELECT COUNT(*) as c FROM conventions").fetchone()["c"]
@@ -1300,7 +1316,7 @@ class TestGovernanceLoad:
         conn.close()
 
     def test_rules_in_rules_table(self, gov_env):
-        governance_load(gov_env["db"], gov_env["project_dir"])
+        governance_load(gov_env["db"])
         conn = get_connection(gov_env["db"])
         row = conn.execute(
             "SELECT entry_path FROM rules WHERE entry_path = '.claude/rules/design-principles.md'"
@@ -1309,7 +1325,7 @@ class TestGovernanceLoad:
         conn.close()
 
     def test_conventions_in_conventions_table(self, gov_env):
-        governance_load(gov_env["db"], gov_env["project_dir"])
+        governance_load(gov_env["db"])
         conn = get_connection(gov_env["db"])
         row = conn.execute(
             "SELECT entry_path FROM conventions WHERE entry_path = '.claude/conventions/python.md'"
@@ -1318,8 +1334,8 @@ class TestGovernanceLoad:
         conn.close()
 
     def test_idempotent_reload(self, gov_env):
-        governance_load(gov_env["db"], gov_env["project_dir"])
-        governance_load(gov_env["db"], gov_env["project_dir"])
+        governance_load(gov_env["db"])
+        governance_load(gov_env["db"])
         conn = get_connection(gov_env["db"])
         rule_count = conn.execute("SELECT COUNT(*) as c FROM rules").fetchone()["c"]
         conv_count = conn.execute("SELECT COUNT(*) as c FROM conventions").fetchone()["c"]
@@ -1328,35 +1344,32 @@ class TestGovernanceLoad:
         conn.close()
 
     def test_does_not_write_entries_table(self, gov_env):
-        governance_load(gov_env["db"], gov_env["project_dir"])
+        governance_load(gov_env["db"])
         conn = get_connection(gov_env["db"])
         count = conn.execute("SELECT COUNT(*) as c FROM entries").fetchone()["c"]
         assert count == 0
         conn.close()
 
     def test_returns_summary(self, gov_env):
-        result = governance_load(gov_env["db"], gov_env["project_dir"])
+        result = governance_load(gov_env["db"])
         assert result["governance_entries"] == 3
 
 
 class TestGovernanceList:
-    def test_lists_entries(self, tmp_path):
+    def test_lists_entries(self, project_dir, tmp_path):
         db = str(tmp_path / "gov.db")
         conn = get_connection(db)
         conn.executescript(SCHEMA)
-        conn.execute("INSERT INTO rules (entry_path, git_hash) VALUES ('rules/a.md', 'abc')")
-        conn.execute(
-            "INSERT INTO conventions (entry_path, matches, git_hash) "
-            "VALUES ('.claude/conventions/py.md', '\"*.py\"', 'def')"
-        )
-        conn.commit()
         conn.close()
+
+        _write_governance_file(project_dir / ".claude/rules/design-principles.md", "*")
+        _write_governance_file(project_dir / ".claude/conventions/py.md", "*.py")
 
         result = governance_list(db)
         assert len(result) == 2
         rule = next(r for r in result if r["mode"] == "rule")
         conv = next(r for r in result if r["mode"] == "convention")
-        assert rule["path"] == "rules/a.md"
+        assert rule["path"] == ".claude/rules/design-principles.md"
         assert rule["matches"] == "*"
         assert conv["path"] == ".claude/conventions/py.md"
 
@@ -1367,18 +1380,18 @@ class TestGovernanceList:
 
 class TestGovernanceMatch:
     @pytest.fixture
-    def gov_db(self, tmp_path):
+    def gov_db(self, project_dir, tmp_path):
         db = str(tmp_path / "gov.db")
         conn = get_connection(db)
         conn.executescript(SCHEMA)
         conn.close()
 
-        _write_governance_file(tmp_path / ".claude/rules/principles.md", "*")
+        _write_governance_file(project_dir / ".claude/rules/principles.md", "*")
         _write_governance_file(
-            tmp_path / ".claude/conventions/python.md", "*.py",
+            project_dir / ".claude/conventions/python.md", "*.py",
             governed_by=[".claude/rules/principles.md"],
         )
-        governance_load(db, str(tmp_path))
+        governance_load(db)
         return db
 
     def test_matches_conventions_only(self, gov_db):
@@ -1411,21 +1424,21 @@ class TestGovernanceMatch:
 
 class TestGovernanceMatchExcludes:
     @pytest.fixture
-    def excludes_db(self, tmp_path):
+    def excludes_db(self, project_dir, tmp_path):
         db = str(tmp_path / "gov.db")
         conn = get_connection(db)
         conn.executescript(SCHEMA)
         conn.close()
 
-        _write_governance_file(tmp_path / ".claude/rules/principles.md", "*")
+        _write_governance_file(project_dir / ".claude/rules/principles.md", "*")
         _write_governance_file(
-            tmp_path / ".claude/conventions/server.md", "servers/*.py",
+            project_dir / ".claude/conventions/server.md", "servers/*.py",
             excludes=["__init__.py", "_helpers.py"],
         )
         _write_governance_file(
-            tmp_path / ".claude/conventions/python.md", "*.py",
+            project_dir / ".claude/conventions/python.md", "*.py",
         )
-        governance_load(db, str(tmp_path))
+        governance_load(db)
         return db
 
     def test_excludes_filters_basename(self, excludes_db):
@@ -1455,17 +1468,17 @@ class TestGovernanceMatchExcludes:
 
 class TestScanGovernance:
     @pytest.fixture
-    def gov_scan_tree(self, tmp_path):
+    def gov_scan_tree(self, project_dir):
         """Project tree with governance loaded, ready for scan."""
-        project = tmp_path / "project"
-        project.mkdir()
+        project = project_dir
         (project / "app.py").write_text("x = 1\n")
         (project / "README.md").write_text("# Readme\n")
         sub = project / "sub"
         sub.mkdir()
         (sub / "helper.py").write_text("y = 2\n")
 
-        db = str(tmp_path / "scan_gov.db")
+        db_file = project.parent / "scan_gov.db"
+        db = str(db_file)
         conn = get_connection(db)
         conn.executescript(SCHEMA)
         conn.close()
@@ -1476,7 +1489,7 @@ class TestScanGovernance:
             project / ".claude/conventions/python.md", "*.py",
             governed_by=[".claude/rules/all.md"],
         )
-        governance_load(db, str(project))
+        governance_load(db)
         return {"project": project, "db": db}
 
     def test_governance_match_uses_glob_patterns(self, gov_scan_tree):
@@ -1498,7 +1511,7 @@ class TestScanGovernance:
             project / ".claude/conventions/readme.md", "README.md",
         )
 
-        governance_load(db, str(project))
+        governance_load(db)
 
         conn = get_connection(db)
         rows = conn.execute(
@@ -1519,7 +1532,7 @@ class TestScanGovernance:
 
         # Delete the convention file from disk
         (project / ".claude/conventions/python.md").unlink()
-        governance_load(db, str(project))
+        governance_load(db)
 
         conn = get_connection(db)
         rows = conn.execute(
@@ -1544,7 +1557,7 @@ class TestScanGovernance:
         _write_governance_file(
             project / ".claude/conventions/python.md", "*.pyi",
         )
-        governance_load(db, str(project))
+        governance_load(db)
 
         result = governance_match(db, ["app.pyi"])
         assert ".claude/conventions/python.md" in result["matches"].get("app.pyi", [])
@@ -1559,7 +1572,7 @@ class TestScanGovernance:
 
         # Drop a README with no governance frontmatter into the rules dir
         (project / ".claude/rules/README.md").write_text("# Rules\n\nSubsystem docs.\n")
-        governance_load(db, str(project))
+        governance_load(db)
 
         conn = get_connection(db)
         row = conn.execute(
@@ -1579,7 +1592,7 @@ class TestScanGovernance:
         ).fetchone()["git_hash"]
         conn.close()
 
-        governance_load(db, str(project))
+        governance_load(db)
 
         conn = get_connection(db)
         after = conn.execute(
@@ -1712,18 +1725,18 @@ class TestBlockStylePattern:
 
 class TestListPatternGovernanceFor:
     @pytest.fixture
-    def list_gov_db(self, tmp_path):
+    def list_gov_db(self, project_dir, tmp_path):
         db = str(tmp_path / "gov.db")
         conn = get_connection(db)
         conn.executescript(SCHEMA)
         conn.close()
 
-        _write_governance_file(tmp_path / ".claude/rules/all.md", "*")
+        _write_governance_file(project_dir / ".claude/rules/all.md", "*")
         _write_governance_file(
-            tmp_path / ".claude/conventions/testing.md",
+            project_dir / ".claude/conventions/testing.md",
             ["test_*.*", "*_test.*", "conftest.*"],
         )
-        governance_load(db, str(tmp_path))
+        governance_load(db)
         return db
 
     def test_matches_test_prefix(self, list_gov_db):
@@ -1752,9 +1765,8 @@ class TestListPatternGovernanceFor:
 
 
 class TestListPatternGetUnclassified:
-    def test_list_pattern_covers_files(self, tmp_path):
-        project = tmp_path / "project"
-        project.mkdir()
+    def test_list_pattern_covers_files(self, project_dir, tmp_path):
+        project = project_dir
         (project / "test_app.py").write_text("x = 1\n")
         (project / "unknown.xyz").write_text("data\n")
 
@@ -1767,8 +1779,8 @@ class TestListPatternGetUnclassified:
             project / ".claude/conventions/testing.md",
             ["test_*.*", "*_test.*", "conftest.*"],
         )
-        governance_load(db, str(project))
-        scan_path(db, str(project))
+        governance_load(db)
+        scan_path(db)
 
         result = governance_unclassified(db)
         # test_app.py should be classified, unknown.xyz should not
@@ -1779,9 +1791,8 @@ class TestListPatternGetUnclassified:
 
 class TestListPatternGovernanceMatch:
     @pytest.fixture
-    def list_gov_tree(self, tmp_path):
-        project = tmp_path / "project"
-        project.mkdir()
+    def list_gov_tree(self, project_dir, tmp_path):
+        project = project_dir
         (project / "test_app.py").write_text("x = 1\n")
         (project / "utils_test.py").write_text("y = 2\n")
         (project / "conftest.py").write_text("z = 3\n")
@@ -1796,7 +1807,7 @@ class TestListPatternGovernanceMatch:
             project / ".claude/conventions/testing.md",
             ["test_*.*", "*_test.*", "conftest.*"],
         )
-        governance_load(db, str(project))
+        governance_load(db)
         return {"project": project, "db": db}
 
     def test_governance_match_all_list_patterns(self, list_gov_tree):

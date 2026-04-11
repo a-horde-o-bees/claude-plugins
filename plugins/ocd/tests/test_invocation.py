@@ -157,10 +157,12 @@ class TestHookInvocation:
         assert plugin_root_file.exists()
         assert plugin_root_file.read_text() == str(PLUGIN_ROOT)
 
-    def _setup_governance(self, tmp_path: Path) -> None:
+    def _setup_governance(self, tmp_path: Path, monkeypatch) -> None:
         """Shared governance setup for convention gate tests."""
         from skills.navigator._db import init_db
         from skills.navigator._governance import governance_load
+
+        monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(tmp_path))
 
         db_path = tmp_path / ".claude" / "ocd" / "navigator" / "navigator.db"
         db_path.parent.mkdir(parents=True, exist_ok=True)
@@ -171,11 +173,11 @@ class TestHookInvocation:
         (conv_dir / "python.md").write_text(
             '---\nmatches: "*.py"\n---\n\n# Python\n'
         )
-        governance_load(str(db_path), str(tmp_path))
+        governance_load(str(db_path))
 
-    def test_convention_gate_edit_returns_directive(self, tmp_path: Path) -> None:
+    def test_convention_gate_edit_returns_directive(self, tmp_path: Path, monkeypatch) -> None:
         """Edit injects directive additionalContext — read and conform."""
-        self._setup_governance(tmp_path)
+        self._setup_governance(tmp_path, monkeypatch)
         hook_input = json.dumps({
             "tool_name": "Edit",
             "tool_input": {"file_path": "src/app.py"},
@@ -192,9 +194,9 @@ class TestHookInvocation:
         assert "python.md" in ctx
         assert "immediately refactor" in ctx
 
-    def test_convention_gate_write_returns_directive(self, tmp_path: Path) -> None:
+    def test_convention_gate_write_returns_directive(self, tmp_path: Path, monkeypatch) -> None:
         """Write injects directive additionalContext — same as Edit."""
-        self._setup_governance(tmp_path)
+        self._setup_governance(tmp_path, monkeypatch)
         hook_input = json.dumps({
             "tool_name": "Write",
             "tool_input": {"file_path": "src/new_module.py"},
@@ -210,9 +212,9 @@ class TestHookInvocation:
         assert "python.md" in ctx
         assert "immediately refactor" in ctx
 
-    def test_convention_gate_read_returns_informational(self, tmp_path: Path) -> None:
+    def test_convention_gate_read_returns_informational(self, tmp_path: Path, monkeypatch) -> None:
         """Read injects informational context — no refactor directive."""
-        self._setup_governance(tmp_path)
+        self._setup_governance(tmp_path, monkeypatch)
         hook_input = json.dumps({
             "tool_name": "Read",
             "tool_input": {"file_path": "src/app.py"},
@@ -263,10 +265,12 @@ class TestHookInvocation:
         assert result.returncode == 0
         assert result.stdout == ""
 
-    def test_convention_gate_excludes_respected(self, tmp_path: Path) -> None:
+    def test_convention_gate_excludes_respected(self, tmp_path: Path, monkeypatch) -> None:
         """Convention gate respects excludes — __init__.py skips mcp-server."""
         from skills.navigator._db import init_db
         from skills.navigator._governance import governance_load
+
+        monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(tmp_path))
 
         db_path = tmp_path / ".claude" / "ocd" / "navigator" / "navigator.db"
         db_path.parent.mkdir(parents=True, exist_ok=True)
@@ -277,7 +281,7 @@ class TestHookInvocation:
         (conv_dir / "mcp-server.md").write_text(
             '---\nmatches: "servers/*.py"\nexcludes:\n  - "__init__.py"\n---\n\n# MCP\n'
         )
-        governance_load(str(db_path), str(tmp_path))
+        governance_load(str(db_path))
 
         hook_input = json.dumps({
             "tool_name": "Edit",

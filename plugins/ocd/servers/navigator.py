@@ -19,7 +19,6 @@ from pathlib import Path
 from mcp.server.fastmcp import FastMCP
 
 import skills.navigator as nav
-from skills.navigator import scan_path
 
 from ._helpers import _err, _ok
 
@@ -57,14 +56,6 @@ def _check_db() -> str | None:
     return None
 
 
-def _auto_scan(target_path: str = ".") -> None:
-    """Run filesystem scan before query. Silent — discards output."""
-    try:
-        scan_path(DB_PATH, target_path)
-    except Exception:
-        pass
-
-
 # ============================================================
 # paths_* — project structure navigation
 # ============================================================
@@ -78,8 +69,6 @@ def paths_get(paths: str | list[str]) -> str:
     Start with '.' for top-level overview. Children with description=null need descriptions.
     """
     if err := _check_db(): return err
-    target = paths if isinstance(paths, str) else (paths[0] if paths else ".")
-    _auto_scan(target)
     try:
         return _ok(nav.paths_get(DB_PATH, paths))
     except Exception as e:
@@ -102,7 +91,6 @@ def paths_list(
         sizes: If true, include line_count and char_count per file.
     """
     if err := _check_db(): return err
-    _auto_scan(target_path)
     try:
         return _ok(nav.paths_list(DB_PATH, target_path, patterns=patterns,
                                   excludes=excludes, sizes=sizes))
@@ -119,7 +107,6 @@ def paths_search(pattern: str) -> str:
     Returns {pattern, results: [{path, type, description}]}.
     """
     if err := _check_db(): return err
-    _auto_scan()
     try:
         return _ok(nav.paths_search(DB_PATH, pattern))
     except Exception as e:
@@ -138,7 +125,6 @@ def paths_upsert(
     Returns {action: "added"|"updated"|"none", path, ...}.
     """
     if err := _check_db(): return err
-    _auto_scan()
     try:
         return _ok(nav.paths_upsert(DB_PATH, entry_path, description=description,
                                     exclude=exclude, traverse=traverse))
@@ -155,7 +141,6 @@ def paths_undescribed() -> str:
     Call repeatedly during /ocd-navigator workflow until done is true.
     """
     if err := _check_db(): return err
-    _auto_scan()
     try:
         return _ok(nav.paths_undescribed(DB_PATH))
     except Exception as e:
@@ -173,7 +158,6 @@ def paths_remove(
     Returns {action: "removed"|"removed_recursive"|"removed_all"|"not_found"|"error", ...}.
     """
     if err := _check_db(): return err
-    _auto_scan()
     try:
         return _ok(nav.paths_remove(DB_PATH, entry_path, recursive=recursive,
                                     all_entries=all_entries))
@@ -197,7 +181,6 @@ def governance_match(file_paths: list[str], include_rules: bool = False) -> str:
     Returns {matches: {file: [convention_paths]}, conventions: [all_unique]}.
     """
     if err := _check_db(): return err
-    _auto_scan()
     try:
         return _ok(nav.governance_match(DB_PATH, file_paths, include_rules=include_rules))
     except Exception as e:
@@ -211,7 +194,6 @@ def governance_list() -> str:
     Mode is 'rule' (auto-loaded) or 'convention' (on-demand).
     """
     if err := _check_db(): return err
-    _auto_scan()
     try:
         return _ok(nav.governance_list(DB_PATH))
     except Exception as e:
@@ -225,7 +207,6 @@ def governance_unclassified() -> str:
     Returns {total, by_extension: {ext: [paths]}}.
     """
     if err := _check_db(): return err
-    _auto_scan()
     try:
         return _ok(nav.governance_unclassified(DB_PATH))
     except Exception as e:
@@ -298,7 +279,6 @@ def scope_analyze(paths: list[str]) -> str:
     governance_index: {convention: [files]}, total_lines, total_files}.
     """
     if err := _check_db(): return err
-    _auto_scan()
     try:
         return _ok(nav.scope_analyze(DB_PATH, paths))
     except Exception as e:

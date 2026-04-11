@@ -12,30 +12,16 @@ Parsers:
 
 from __future__ import annotations
 
-import os
 import re
 from collections import deque
 from pathlib import Path
+
+import plugin
 
 from ._frontmatter import parse_governance
 
 
 # --- Parsers ---
-
-
-def _resolve_plugin_root() -> Path | None:
-    """Resolve CLAUDE_PLUGIN_ROOT from environment or persisted file."""
-    env = os.environ.get("CLAUDE_PLUGIN_ROOT")
-    if env:
-        return Path(env)
-    plugin_root_file = Path(".claude/ocd/.plugin_root")
-    try:
-        value = plugin_root_file.read_text().strip()
-        if value:
-            return Path(value)
-    except (FileNotFoundError, PermissionError):
-        pass
-    return None
 
 
 # File extensions that indicate a file reference (not a command invocation)
@@ -81,9 +67,7 @@ def _parse_skill_refs(file_path: str) -> list[str]:
                 # Env var path — resolve only if it's a file reference
                 if not _FILE_EXTENSIONS.search(ref):
                     continue
-                plugin_root = _resolve_plugin_root()
-                if not plugin_root:
-                    continue
+                plugin_root = plugin.get_plugin_root()
                 resolved = Path(ref.replace("${CLAUDE_PLUGIN_ROOT}", str(plugin_root)))
                 if resolved.exists():
                     refs.append(str(resolved.resolve()))

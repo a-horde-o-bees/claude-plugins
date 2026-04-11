@@ -10,6 +10,8 @@ import logging
 import sqlite3
 from pathlib import Path
 
+import plugin
+
 from . import _db as db
 
 logger = logging.getLogger(__name__)
@@ -18,13 +20,13 @@ logger = logging.getLogger(__name__)
 DB_REL_PATH = "blueprint/data/research.db"
 
 
-def _db_path(project_dir: Path) -> Path:
-    return project_dir / DB_REL_PATH
+def _db_path() -> Path:
+    return plugin.get_project_dir() / DB_REL_PATH
 
 
-def _status_extra(project_dir: Path) -> list[dict]:
+def _status_extra() -> list[dict]:
     """Check DB health and return extra lines."""
-    path = _db_path(project_dir)
+    path = _db_path()
 
     if not path.exists():
         return [
@@ -70,9 +72,9 @@ def _status_extra(project_dir: Path) -> list[dict]:
         ]
 
 
-def init(plugin_root: Path, project_dir: Path, force: bool = False) -> dict:
+def init(force: bool = False) -> dict:
     """Initialize research database. Returns {files, extra}."""
-    path = _db_path(project_dir)
+    path = _db_path()
 
     before = "current" if path.exists() else "absent"
 
@@ -88,7 +90,7 @@ def init(plugin_root: Path, project_dir: Path, force: bool = False) -> dict:
 
     extra = [{"label": "overall status", "value": "initialized"}]
 
-    status_extra = _status_extra(project_dir)
+    status_extra = _status_extra()
     for item in status_extra:
         if item["label"] == "action needed":
             extra.append(item)
@@ -96,12 +98,12 @@ def init(plugin_root: Path, project_dir: Path, force: bool = False) -> dict:
     return {"files": files, "extra": extra}
 
 
-def status(plugin_root: Path, project_dir: Path) -> dict:
+def status() -> dict:
     """Check research DB state. Returns {files, extra}."""
-    path = _db_path(project_dir)
+    path = _db_path()
 
     state = "current" if path.exists() else "absent"
     files = [{"path": DB_REL_PATH, "before": state, "after": state}]
 
-    extra = _status_extra(project_dir)
+    extra = _status_extra()
     return {"files": files, "extra": extra}

@@ -6,8 +6,9 @@ first — first match wins.
 """
 
 import json
-import os
 from pathlib import Path
+
+import plugin
 
 
 def _parse_frontmatter_name(skill_md: Path) -> str | None:
@@ -57,27 +58,6 @@ def _get_claude_home() -> Path:
     return Path.home() / ".claude"
 
 
-def _get_plugin_root() -> Path | None:
-    """Return plugin root from environment or persisted file.
-
-    Checks CLAUDE_PLUGIN_ROOT env var first (available in hook context),
-    then reads .claude/ocd/.plugin_root (written by SessionStart hook
-    for agent Bash commands where env var is not available).
-    """
-    env = os.environ.get("CLAUDE_PLUGIN_ROOT")
-    if env:
-        return Path(env)
-    project_dir = Path(os.environ.get("CLAUDE_PROJECT_DIR", os.getcwd()))
-    plugin_root_file = project_dir / ".claude" / "ocd" / ".plugin_root"
-    try:
-        value = plugin_root_file.read_text().strip()
-        if value:
-            return Path(value)
-    except (FileNotFoundError, PermissionError):
-        pass
-    return None
-
-
 def _get_marketplace_skill_dirs() -> list[Path]:
     """Read installed_plugins.json and return skill directories from installed plugins."""
     installed_path = _get_claude_home() / "plugins" / "installed_plugins.json"
@@ -113,8 +93,8 @@ def skills_resolve(name: str) -> Path | None:
 
     Returns absolute Path to SKILL.md or None if not found.
     """
-    project_dir = Path(os.environ.get("CLAUDE_PROJECT_DIR", os.getcwd()))
-    plugin_root = _get_plugin_root()
+    project_dir = plugin.get_project_dir()
+    plugin_root = plugin.get_plugin_root()
 
     # 1. Personal skills
     personal_skills = _get_claude_home() / "skills"
@@ -129,11 +109,10 @@ def skills_resolve(name: str) -> Path | None:
         return result
 
     # 3. Plugin dir (--plugin-dir)
-    if plugin_root:
-        plugin_skills = plugin_root / "skills"
-        result = _search_skills_dir(plugin_skills, name)
-        if result:
-            return result
+    plugin_skills = plugin_root / "skills"
+    result = _search_skills_dir(plugin_skills, name)
+    if result:
+        return result
 
     # 4. Marketplace plugins
     for marketplace_skills_dir in _get_marketplace_skill_dirs():
@@ -149,8 +128,8 @@ def skills_list() -> list[dict[str, str]]:
 
     Returns list of {name, source, path} dicts in priority order.
     """
-    project_dir = Path(os.environ.get("CLAUDE_PROJECT_DIR", os.getcwd()))
-    plugin_root = _get_plugin_root()
+    project_dir = plugin.get_project_dir()
+    plugin_root = plugin.get_plugin_root()
 
     results: list[dict[str, str]] = []
     seen_names: set[str] = set()
@@ -173,8 +152,7 @@ def skills_list() -> list[dict[str, str]]:
 
     _collect(_get_claude_home() / "skills", "personal")
     _collect(project_dir / ".claude" / "skills", "project")
-    if plugin_root:
-        _collect(plugin_root / "skills", "plugin-dir")
+    _collect(plugin_root / "skills", "plugin-dir")
     for marketplace_dir in _get_marketplace_skill_dirs():
         _collect(marketplace_dir, "marketplace")
 

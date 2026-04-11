@@ -6,7 +6,8 @@ not available (agent Bash commands only receive hook execution context).
 """
 
 import os
-from pathlib import Path
+
+import plugin
 
 
 def main() -> None:
@@ -14,8 +15,7 @@ def main() -> None:
     if not plugin_root:
         return
 
-    project_dir = Path(os.environ.get("CLAUDE_PROJECT_DIR", os.getcwd()))
-    ocd_dir = project_dir / ".claude" / "ocd"
+    ocd_dir = plugin.get_project_dir() / ".claude" / "ocd"
     ocd_dir.mkdir(parents=True, exist_ok=True)
 
     plugin_root_file = ocd_dir / ".plugin_root"

@@ -17,36 +17,30 @@ from __future__ import annotations
 import hashlib
 from pathlib import Path
 
+import plugin
+
 from ._db import get_connection
 from ._frontmatter import normalize_patterns, parse_governance
 
 
-def _git_hash(file_path: str) -> str | None:
+def _git_hash(file_path: Path) -> str | None:
     """Compute git-compatible blob hash for a file."""
     try:
-        data = Path(file_path).read_bytes()
+        data = file_path.read_bytes()
     except (OSError, IsADirectoryError):
         return None
     header = f"blob {len(data)}\0".encode()
     return hashlib.sha1(header + data).hexdigest()
 
 
-def _infer_project_dir(db_path: str) -> str | None:
-    """Infer project directory from database path convention.
+def _scan_disk_paths() -> tuple[set[str], set[str]]:
+    """Scan governance directories and return (rule_paths, convention_paths).
 
-    Navigator db is at .claude/ocd/navigator/navigator.db relative to project root.
-    Returns None if db_path doesn't match the convention (e.g. test databases).
+    Paths are project-relative strings, anchored on plugin.get_project_dir().
     """
-    db = Path(db_path).resolve()
-    if len(db.parts) >= 5 and db.parts[-4:] == (".claude", "ocd", "navigator", "navigator.db"):
-        return str(db.parents[3])
-    return None
-
-
-def _scan_disk_paths(project_dir: str) -> tuple[set[str], set[str]]:
-    """Scan governance directories and return (rule_paths, convention_paths)."""
-    rules_dir = Path(project_dir) / ".claude" / "rules"
-    conv_dir = Path(project_dir) / ".claude" / "conventions"
+    project_dir = plugin.get_project_dir()
+    rules_dir = project_dir / ".claude" / "rules"
+    conv_dir = project_dir / ".claude" / "conventions"
 
     rule_paths: set[str] = set()
     conv_paths: set[str] = set()
@@ -60,24 +54,18 @@ def _scan_disk_paths(project_dir: str) -> tuple[set[str], set[str]]:
 
 
 def _ensure_current(db_path: str) -> None:
-    """Refresh governance from disk before queries.
-
-    Skips when db_path doesn't match the conventional navigator path
-    (e.g. test databases at arbitrary locations).
-    """
-    project_dir = _infer_project_dir(db_path)
-    if project_dir is None:
-        return
-    governance_load(db_path, project_dir)
+    """Refresh governance from disk before queries."""
+    governance_load(db_path)
 
 
-def _reconcile_rules(conn, rule_paths: set[str], project_dir: str) -> None:
+def _reconcile_rules(conn, rule_paths: set[str]) -> None:
     """Incrementally reconcile the rules table against disk state.
 
     Rule files must carry governance frontmatter to count as rules —
     subsystem documentation (README.md, architecture.md) living under
     .claude/rules/ is filtered out.
     """
+    project_dir = plugin.get_project_dir()
     db_rules = {
         row["entry_path"]: row["git_hash"]
         for row in conn.execute("SELECT entry_path, git_hash FROM rules").fetchall()
@@ -87,11 +75,11 @@ def _reconcile_rules(conn, rule_paths: set[str], project_dir: str) -> None:
         conn.execute("DELETE FROM rules WHERE entry_path = ?", (removed,))
 
     for path in rule_paths:
-        current_hash = _git_hash(str(Path(project_dir) / path))
+        current_hash = _git_hash(project_dir / path)
         if db_rules.get(path) == current_hash:
             continue
 
-        entry = parse_governance(Path(project_dir) / path)
+        entry = parse_governance(project_dir / path)
         if entry is None:
             conn.execute("DELETE FROM rules WHERE entry_path = ?", (path,))
             continue
@@ -102,12 +90,13 @@ def _reconcile_rules(conn, rule_paths: set[str], project_dir: str) -> None:
         )
 
 
-def _reconcile_conventions(conn, conv_paths: set[str], project_dir: str) -> None:
+def _reconcile_conventions(conn, conv_paths: set[str]) -> None:
     """Incrementally reconcile the conventions tables against disk state.
 
     CASCADE on convention_includes/convention_excludes handles pattern
     table cleanup whenever a conventions row is deleted.
     """
+    project_dir = plugin.get_project_dir()
     db_convs = {
         row["entry_path"]: row["git_hash"]
         for row in conn.execute("SELECT entry_path, git_hash FROM conventions").fetchall()
@@ -117,11 +106,11 @@ def _reconcile_conventions(conn, conv_paths: set[str], project_dir: str) -> None
         conn.execute("DELETE FROM conventions WHERE entry_path = ?", (removed,))
 
     for path in conv_paths:
-        current_hash = _git_hash(str(Path(project_dir) / path))
+        current_hash = _git_hash(project_dir / path)
         if db_convs.get(path) == current_hash:
             continue
 
-        entry = parse_governance(Path(project_dir) / path)
+        entry = parse_governance(project_dir / path)
         if entry is None:
             # File has no frontmatter — drop any stale row
             conn.execute("DELETE FROM conventions WHERE entry_path = ?", (path,))
@@ -149,20 +138,21 @@ def _reconcile_conventions(conn, conv_paths: set[str], project_dir: str) -> None
                 )
 
 
-def governance_load(db_path: str, project_dir: str) -> dict:
+def governance_load(db_path: str) -> dict:
     """Incrementally reconcile governance tables against disk state.
 
     Single pass across rules and conventions: removes deleted entries,
     adds new entries, updates changed entries. Frontmatter is parsed only
     for new or changed convention files — unchanged files are skipped by
-    git_hash comparison. Safe to call before every query.
+    git_hash comparison. Project root resolves from plugin.get_project_dir.
+    Safe to call before every query.
     """
-    rule_paths, conv_paths = _scan_disk_paths(project_dir)
+    rule_paths, conv_paths = _scan_disk_paths()
 
     conn = get_connection(db_path)
     try:
-        _reconcile_rules(conn, rule_paths, project_dir)
-        _reconcile_conventions(conn, conv_paths, project_dir)
+        _reconcile_rules(conn, rule_paths)
+        _reconcile_conventions(conn, conv_paths)
         conn.commit()
 
         rule_count = conn.execute("SELECT COUNT(*) as c FROM rules").fetchone()["c"]
@@ -254,16 +244,11 @@ def governance_match(db_path: str, file_paths: list[str], include_rules: bool = 
 def governance_unclassified(db_path: str) -> dict:
     """Find file entries with no convention coverage, grouped by extension.
 
-    Scans the filesystem first to ensure entries are current, then uses
-    path_match() custom SQL function for single-query evaluation.
+    Uses path_match() custom SQL function for single-query evaluation.
     Only checks convention coverage — rules apply universally and don't
-    classify individual files.
+    classify individual files. Callers must ensure navigator entries are
+    populated first (the facade layer owns that contract).
     """
-    project_dir = _infer_project_dir(db_path)
-    if project_dir is not None:
-        from ._scanner import scan_path
-
-        scan_path(db_path, project_dir)
     _ensure_current(db_path)
     conn = get_connection(db_path)
     try:

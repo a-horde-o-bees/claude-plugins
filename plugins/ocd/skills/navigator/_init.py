@@ -8,21 +8,32 @@ Interface contract: init() and status() return {"files": [...], "extra": [...]}.
 import sqlite3
 from pathlib import Path
 
-from . import _db, governance_load
 import plugin
 
-
-def _db_path(plugin_name: str, project_dir: Path) -> Path:
-    return project_dir / ".claude" / plugin_name / "navigator" / "navigator.db"
+from . import _db, governance_load
 
 
-def _db_rel_path(plugin_name: str) -> str:
-    return f".claude/{plugin_name}/navigator/navigator.db"
+def _plugin_name() -> str:
+    return plugin.get_plugin_name(plugin.get_plugin_root())
 
 
-def _status_extra(plugin_name: str, project_dir: Path) -> list[dict]:
+def _db_path() -> Path:
+    return (
+        plugin.get_project_dir()
+        / ".claude"
+        / _plugin_name()
+        / "navigator"
+        / "navigator.db"
+    )
+
+
+def _db_rel_path() -> str:
+    return f".claude/{_plugin_name()}/navigator/navigator.db"
+
+
+def _status_extra() -> list[dict]:
     """Check DB health and return extra lines."""
-    db_path = _db_path(plugin_name, project_dir)
+    db_path = _db_path()
 
     if not db_path.exists():
         return [
@@ -70,12 +81,10 @@ def _status_extra(plugin_name: str, project_dir: Path) -> list[dict]:
         ]
 
 
-def _deploy_conventions(
-    plugin_root: Path, project_dir: Path, force: bool,
-) -> list[dict]:
+def _deploy_conventions(force: bool) -> list[dict]:
     """Deploy convention templates to .claude/conventions/. Returns file status list."""
-    conv_src = plugin_root / "conventions"
-    conv_dst = project_dir / ".claude" / "conventions"
+    conv_src = plugin.get_plugin_root() / "conventions"
+    conv_dst = plugin.get_project_dir() / ".claude" / "conventions"
 
     files = []
     results = plugin.deploy_files(
@@ -87,12 +96,10 @@ def _deploy_conventions(
     return files
 
 
-def _conventions_status(
-    plugin_root: Path, project_dir: Path,
-) -> list[dict]:
+def _conventions_status() -> list[dict]:
     """Check convention deployment states. Returns file status list."""
-    conv_src = plugin_root / "conventions"
-    conv_dst = project_dir / ".claude" / "conventions"
+    conv_src = plugin.get_plugin_root() / "conventions"
+    conv_dst = plugin.get_project_dir() / ".claude" / "conventions"
 
     files = []
     if conv_src.is_dir():
@@ -106,16 +113,14 @@ def _conventions_status(
     return files
 
 
-def init(plugin_root: Path, project_dir: Path, force: bool = False) -> dict:
+def init(force: bool = False) -> dict:
     """Deploy conventions and initialize navigator database. Returns {files, extra}."""
-    plugin_name = plugin.get_plugin_name(plugin_root)
-
     # Deploy conventions to .claude/conventions/
-    files = _deploy_conventions(plugin_root, project_dir, force)
+    files = _deploy_conventions(force)
 
     # Initialize database
-    db = _db_path(plugin_name, project_dir)
-    rel_path = _db_rel_path(plugin_name)
+    db = _db_path()
+    rel_path = _db_rel_path()
 
     before = "current" if db.exists() else "absent"
 
@@ -126,7 +131,7 @@ def init(plugin_root: Path, project_dir: Path, force: bool = False) -> dict:
     result_msg = _db.init_db(str(db))
 
     # Load governance from frontmatter in rules and conventions
-    governance_load(str(db), str(project_dir))
+    governance_load(str(db))
 
     after = "current"
     summary = ""
@@ -142,7 +147,7 @@ def init(plugin_root: Path, project_dir: Path, force: bool = False) -> dict:
     extra = [{"label": "overall status", "value": summary}]
 
     # Add action needed from status check
-    status_extra = _status_extra(plugin_name, project_dir)
+    status_extra = _status_extra()
     for item in status_extra:
         if item["label"] == "action needed":
             extra.append(item)
@@ -150,19 +155,17 @@ def init(plugin_root: Path, project_dir: Path, force: bool = False) -> dict:
     return {"files": files, "extra": extra}
 
 
-def status(plugin_root: Path, project_dir: Path) -> dict:
+def status() -> dict:
     """Check convention deployment and navigator DB state. Returns {files, extra}."""
-    plugin_name = plugin.get_plugin_name(plugin_root)
-
     # Convention deployment states
-    files = _conventions_status(plugin_root, project_dir)
+    files = _conventions_status()
 
     # Database state
-    db = _db_path(plugin_name, project_dir)
-    rel_path = _db_rel_path(plugin_name)
+    db = _db_path()
+    rel_path = _db_rel_path()
 
     state = "current" if db.exists() else "absent"
     files.append({"path": rel_path, "before": state, "after": state})
 
-    extra = _status_extra(plugin_name, project_dir)
+    extra = _status_extra()
     return {"files": files, "extra": extra}

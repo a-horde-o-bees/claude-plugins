@@ -19,16 +19,51 @@ from pathlib import Path
 
 
 def get_plugin_root() -> Path:
-    """Resolve plugin root from CLAUDE_PLUGIN_ROOT or script location."""
+    """Resolve plugin root from CLAUDE_PLUGIN_ROOT with __file__ fallback.
+
+    Falls back to a deterministic walk from this module's own file
+    position: plugin/__init__.py always lives at plugins/<name>/plugin/
+    relative to the plugin root, so the walk is correct across dev,
+    install cache, and any other install location.
+    """
     env = os.environ.get("CLAUDE_PLUGIN_ROOT")
     if env:
-        return Path(env)
-    return Path(__file__).parent.parent
+        return Path(env).resolve()
+    return Path(__file__).resolve().parent.parent
 
 
 def get_project_dir() -> Path:
-    """Resolve project directory from environment or cwd."""
-    return Path(os.environ.get("CLAUDE_PROJECT_DIR", os.getcwd()))
+    """Resolve project directory from CLAUDE_PROJECT_DIR.
+
+    Raises when unset — project identity is not inferable from working
+    directory. Claude Code sets this at runtime; scripts/run-plugin.sh
+    exports it; tests set it explicitly in subprocess env or via
+    monkeypatch.
+    """
+    env = os.environ.get("CLAUDE_PROJECT_DIR")
+    if not env:
+        raise RuntimeError(
+            "CLAUDE_PROJECT_DIR is not set. Run under Claude Code, via "
+            "scripts/run-plugin.sh, or set the variable explicitly."
+        )
+    return Path(env).resolve()
+
+
+def get_plugin_data_dir() -> Path:
+    """Resolve plugin data directory from CLAUDE_PLUGIN_DATA.
+
+    Raises when unset — this is Claude Code-managed per-plugin persistent
+    storage (venv, cached state) that survives plugin version upgrades
+    and is not inferable from the install directory, the project, or
+    the working directory.
+    """
+    env = os.environ.get("CLAUDE_PLUGIN_DATA")
+    if not env:
+        raise RuntimeError(
+            "CLAUDE_PLUGIN_DATA is not set. Required for plugin venv and "
+            "persistent state — must run under Claude Code plugin context."
+        )
+    return Path(env).resolve()
 
 
 def get_claude_home() -> Path:
@@ -590,7 +625,7 @@ def run_init(force: bool = False) -> None:
         if not has_init:
             continue
         mod = importlib.import_module(f"skills.{skill_name}._init")
-        result = mod.init(plugin_root, project_dir, force=force)
+        result = mod.init(force=force)
         header = f"/{plugin_name}-{skill_name}"
         for line in format_section(header, result["files"], result.get("extra")):
             print(line)
@@ -639,7 +674,7 @@ def run_status() -> None:
         if not has_init:
             continue
         mod = importlib.import_module(f"skills.{skill_name}._init")
-        result = mod.status(plugin_root, project_dir)
+        result = mod.status()
         header = f"/{plugin_name}-{skill_name}"
         for line in format_section(header, result["files"], result.get("extra")):
             print(line)

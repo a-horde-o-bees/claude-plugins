@@ -11,8 +11,9 @@ CLI display belongs in __main__.py. Presentation lives in __main__.py.
 
 import fnmatch
 import logging
-import os
 from pathlib import Path
+
+import plugin
 
 # Local imports — used by functions in this module
 from ._db import get_connection
@@ -31,6 +32,16 @@ from ._skills import skills_resolve, skills_list
 logger = logging.getLogger(__name__)
 
 
+def _ensure_scanned(db_path: str) -> None:
+    """Populate the entries table from disk before a read or write.
+
+    Every facade function that touches the entries table calls this
+    first — navigator owns its own population, callers never have to
+    scan before invoking a navigator function.
+    """
+    scan_path(db_path)
+
+
 def paths_get(db_path: str, paths: str | list[str]) -> dict:
     """Retrieve entry details for one or more paths.
 
@@ -38,6 +49,7 @@ def paths_get(db_path: str, paths: str | list[str]) -> dict:
     info plus children. Single path returns one dict; multiple paths
     return {"entries": [dict, ...]}.
     """
+    _ensure_scanned(db_path)
     if isinstance(paths, str):
         return _paths_get_single(db_path, paths)
 
@@ -109,6 +121,7 @@ def paths_list(
     Returns list of file dicts. Each dict has 'path' and optionally
     'line_count' and 'char_count' when sizes=True.
     """
+    _ensure_scanned(db_path)
     target_path = target_path.rstrip("/")
     if target_path == ".":
         target_path = ""
@@ -156,6 +169,7 @@ def paths_undescribed(db_path: str) -> dict:
     Returns progress info and directory listing. When no work remains,
     returns {"done": True}.
     """
+    _ensure_scanned(db_path)
     conn = get_connection(db_path)
     try:
         work_entries = conn.execute(
@@ -198,6 +212,7 @@ def paths_upsert(
     Only accepts concrete paths (files and directories), not glob patterns.
     Patterns belong in the patterns table and are managed via seed CSV.
     """
+    _ensure_scanned(db_path)
     entry_path = entry_path.rstrip("/")
     if entry_path == ".":
         entry_path = ""
@@ -208,9 +223,10 @@ def paths_upsert(
             "Patterns are managed via navigator_seed.csv."
         )
 
-    if os.path.isdir(entry_path) if entry_path else True:
+    absolute_entry = plugin.get_project_dir() / entry_path if entry_path else plugin.get_project_dir()
+    if absolute_entry.is_dir() if entry_path else True:
         entry_type = "directory"
-    elif os.path.isfile(entry_path):
+    elif absolute_entry.is_file():
         entry_type = "file"
     else:
         entry_type = "file"
@@ -227,7 +243,7 @@ def paths_upsert(
 
         metrics = {"git_hash": None, "line_count": None, "char_count": None}
         if description is not None and entry_type == "file":
-            metrics = _compute_file_metrics(entry_path)
+            metrics = _compute_file_metrics(plugin.get_project_dir() / entry_path)
 
         display = entry_path if entry_path else "."
 
@@ -290,6 +306,7 @@ def paths_remove(
     all_entries: bool = False,
 ) -> dict:
     """Remove entries. Returns status dict."""
+    _ensure_scanned(db_path)
     conn = get_connection(db_path)
     try:
         if all_entries:
@@ -329,6 +346,7 @@ def paths_remove(
 
 def paths_search(db_path: str, pattern: str) -> dict:
     """Search descriptions by pattern."""
+    _ensure_scanned(db_path)
     conn = get_connection(db_path)
     try:
         rows = conn.execute(
@@ -360,6 +378,7 @@ def scope_analyze(db_path: str, paths: list[str]) -> dict:
     database, and maps governance for all files. Returns a structured
     matrix for intelligent agent partitioning.
     """
+    _ensure_scanned(db_path)
     ref_result = references_map(paths)
     all_paths = [f["path"] for f in ref_result["files"]]
 

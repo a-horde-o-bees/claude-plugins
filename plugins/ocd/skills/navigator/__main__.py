@@ -1,23 +1,18 @@
 """Navigator CLI.
 
 Presentation layer: argument parsing and dispatch wrappers only.
-Business logic lives in __init__.py facade.
+Business logic lives in __init__.py facade. The facade guarantees
+the navigator database is populated before each read or write — CLI
+dispatch does not pre-scan.
 """
 
 import argparse
-import os
 import sys
 
 from . import *  # noqa: F403 — __all__ defines the public API
 
 
 DEFAULT_DB = ".claude/ocd/navigator/navigator.db"
-
-
-def _auto_scan(args: argparse.Namespace) -> None:
-    """Run scan before command execution. Silent — discards output."""
-    path = getattr(args, "path", None) or "."
-    scan_path(args.db, path)
 
 
 def _format_describe(result: dict) -> str:
@@ -65,12 +60,10 @@ def _format_describe(result: dict) -> str:
 
 
 def _dispatch_describe(args: argparse.Namespace) -> None:
-    _auto_scan(args)
     print(_format_describe(paths_get(args.db, args.path)))
 
 
 def _dispatch_list(args: argparse.Namespace) -> None:
-    _auto_scan(args)
     result = paths_list(
         args.db, args.path, patterns=args.pattern, excludes=args.exclude,
         sizes=args.sizes,
@@ -83,11 +76,10 @@ def _dispatch_list(args: argparse.Namespace) -> None:
 
 
 def _dispatch_scan(args: argparse.Namespace) -> None:
-    print(scan_path(args.db, args.path))
+    print(scan_path(args.db, args.path or ""))
 
 
 def _dispatch_get_undescribed(args: argparse.Namespace) -> None:
-    _auto_scan(args)
     result = paths_undescribed(args.db)
     if result["done"]:
         print("No work remaining.")
@@ -97,7 +89,6 @@ def _dispatch_get_undescribed(args: argparse.Namespace) -> None:
 
 
 def _dispatch_set(args: argparse.Namespace) -> None:
-    _auto_scan(args)
     exclude = int(args.exclude) if args.exclude is not None else None
     traverse = int(args.traverse) if args.traverse is not None else None
     result = paths_upsert(
@@ -116,7 +107,6 @@ def _dispatch_set(args: argparse.Namespace) -> None:
 
 
 def _dispatch_remove(args: argparse.Namespace) -> None:
-    _auto_scan(args)
     all_entries = getattr(args, "all", False)
     path = getattr(args, "path", None)
     result = paths_remove(
@@ -138,7 +128,6 @@ def _dispatch_remove(args: argparse.Namespace) -> None:
 
 
 def _dispatch_search(args: argparse.Namespace) -> None:
-    _auto_scan(args)
     result = paths_search(args.db, args.pattern)
     if not result["results"]:
         print(f'No entries matching "{result["pattern"]}"')
@@ -171,7 +160,6 @@ def _dispatch_list_skills(_args: argparse.Namespace) -> None:
 
 
 def _dispatch_governance(args: argparse.Namespace) -> None:
-    _auto_scan(args)
     entries = governance_list(args.db)
     if not entries:
         print("No governance entries.")
@@ -182,7 +170,6 @@ def _dispatch_governance(args: argparse.Namespace) -> None:
 
 
 def _dispatch_governance_for(args: argparse.Namespace) -> None:
-    _auto_scan(args)
     result = governance_match(args.db, args.files)
     if not result["matches"]:
         print("No governance matches.")
@@ -200,13 +187,11 @@ def _dispatch_governance_for(args: argparse.Namespace) -> None:
 
 
 def _dispatch_governance_load(args: argparse.Namespace) -> None:
-    project_dir = args.project_dir or os.getcwd()
-    result = governance_load(args.db, project_dir)
+    result = governance_load(args.db)
     print(f"Loaded {result['governance_entries']} governance entries")
 
 
 def _dispatch_get_unclassified(args: argparse.Namespace) -> None:
-    _auto_scan(args)
     result = governance_unclassified(args.db)
     if result["total"] == 0:
         print("All file entries have governance coverage.")
@@ -576,7 +561,6 @@ def build_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         parents=[db_parent],
     )
-    gl_p.add_argument("--project-dir", default=None, help="Project root (default: cwd)")
     gl_p.set_defaults(_dispatch=_dispatch_governance_load)
 
     # get-unclassified (governance coverage)

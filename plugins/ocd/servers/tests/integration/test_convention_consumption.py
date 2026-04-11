@@ -50,7 +50,7 @@ def _write_gov_file(path: Path, matches, excludes=None, governed_by=None):
 
 
 @pytest.fixture
-def gov_env(tmp_path):
+def gov_env(tmp_path, monkeypatch):
     """Set up a realistic governance environment mirroring the project structure.
 
     Conventions:
@@ -62,6 +62,7 @@ def gov_env(tmp_path):
     Rules:
     - design-principles.md: matches * (auto-loaded, excluded from governance_match by default)
     """
+    monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(tmp_path))
     db_path = str(tmp_path / "nav.db")
     conn = get_connection(db_path)
     conn.executescript(SCHEMA)
@@ -91,7 +92,7 @@ def gov_env(tmp_path):
         governed_by=[".claude/rules/design-principles.md"],
     )
 
-    governance_load(db_path, str(tmp_path))
+    governance_load(db_path)
     return db_path
 
 
@@ -225,7 +226,6 @@ class TestMCPServerLayer:
     def server_env(self, gov_env):
         with (
             patch.object(nav_server, "DB_PATH", gov_env),
-            patch.object(nav_server, "_auto_scan", return_value=None),
             patch.object(nav_server, "_check_db", return_value=None),
         ):
             yield gov_env

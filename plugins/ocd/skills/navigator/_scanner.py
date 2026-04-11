@@ -1,7 +1,9 @@
 """Navigator filesystem scanning.
 
 Walks filesystem with rule-based pruning, computes git-compatible hashes,
-detects changes, and syncs database state.
+detects changes, and syncs database state. All walking is anchored on
+the project root resolved via plugin.get_project_dir(); paths stored in
+the entries table are always project-relative.
 """
 
 import fnmatch
@@ -10,6 +12,8 @@ import logging
 import os
 import sqlite3
 from pathlib import Path
+
+import plugin
 
 from ._db import get_connection
 
@@ -36,14 +40,17 @@ def _matches_pattern_any(path: str, patterns: list[sqlite3.Row]) -> sqlite3.Row 
     return None
 
 
-def _compute_file_metrics(file_path: str) -> dict:
+def _compute_file_metrics(file_path: Path) -> dict:
     """Compute git hash, line count, and char count from a single file read.
+
+    file_path must be an absolute path (callers that start from project-
+    relative data compose with plugin.get_project_dir first).
 
     Returns dict with keys: git_hash, line_count, char_count.
     All values None for directories or on read error.
     """
     try:
-        data = Path(file_path).read_bytes()
+        data = file_path.read_bytes()
     except (OSError, IsADirectoryError):
         return {"git_hash": None, "line_count": None, "char_count": None}
     header = f"blob {len(data)}\0".encode()
@@ -53,7 +60,7 @@ def _compute_file_metrics(file_path: str) -> dict:
     return {"git_hash": git_hash, "line_count": line_count, "char_count": char_count}
 
 
-def _compute_git_hash(file_path: str) -> str | None:
+def _compute_git_hash(file_path: Path) -> str | None:
     """Compute git-compatible blob hash for a file. Returns hex digest or None for directories."""
     return _compute_file_metrics(file_path)["git_hash"]
 
@@ -84,13 +91,17 @@ def _mark_parents_stale(conn: sqlite3.Connection, entry_path: str) -> list[str]:
 
 
 def _walk_filesystem(
-    conn: sqlite3.Connection, target_path: str
+    conn: sqlite3.Connection, target_subpath: str
 ) -> dict[str, str]:
     """Walk filesystem with pattern-based pruning.
 
-    Loads exclude and shallow patterns from database, walks target_path,
-    and returns filtered entries. Excluded paths are omitted entirely.
-    Shallow directories are listed but not descended into.
+    Walks `plugin.get_project_dir() / target_subpath` (empty subpath
+    means the whole project). All paths in the returned dict are
+    project-relative strings, independent of working directory.
+
+    Loads exclude and shallow patterns from database. Excluded paths
+    are omitted entirely; shallow directories are listed but not
+    descended into.
 
     Returns dict mapping path to entry type ("file" or "directory").
     """
@@ -101,18 +112,22 @@ def _walk_filesystem(
     exclude_patterns = [r for r in pattern_rows if r["exclude"]]
     shallow_patterns = [r for r in pattern_rows if not r["exclude"] and not r["traverse"]]
 
+    project_dir = plugin.get_project_dir()
+    scan_root = project_dir / target_subpath if target_subpath else project_dir
+
     disk_entries: dict[str, str] = {}
-    scan_root = target_path if target_path else "."
 
     for dirpath, dirnames, filenames in os.walk(scan_root):
-        rel_dir = os.path.normpath(dirpath)
-        if rel_dir == ".":
+        abs_dir = Path(dirpath)
+        if abs_dir == project_dir:
             rel_dir = ""
+        else:
+            rel_dir = str(abs_dir.relative_to(project_dir))
 
         shallow_dirs = []
         remaining_dirs = []
         for d in dirnames:
-            d_path = os.path.join(rel_dir, d) if rel_dir else d
+            d_path = f"{rel_dir}/{d}" if rel_dir else d
             if _matches_pattern_any(d_path, exclude_patterns):
                 continue
             concrete = conn.execute(
@@ -128,34 +143,43 @@ def _walk_filesystem(
         dirnames[:] = remaining_dirs
 
         for d in shallow_dirs:
-            d_path = os.path.join(rel_dir, d) if rel_dir else d
+            d_path = f"{rel_dir}/{d}" if rel_dir else d
             disk_entries[d_path] = "directory"
 
-        if rel_dir and rel_dir != target_path:
+        if rel_dir and rel_dir != target_subpath:
             disk_entries[rel_dir] = "directory"
 
         for filename in filenames:
-            file_path = os.path.join(rel_dir, filename) if rel_dir else filename
+            file_path = f"{rel_dir}/{filename}" if rel_dir else filename
             if not _matches_pattern_any(file_path, exclude_patterns):
                 disk_entries[file_path] = "file"
 
         for dirname in dirnames:
-            dir_path = os.path.join(rel_dir, dirname) if rel_dir else dirname
+            dir_path = f"{rel_dir}/{dirname}" if rel_dir else dirname
             disk_entries[dir_path] = "directory"
 
     return disk_entries
 
 
-def scan_path(db_path: str, target_path: str) -> str:
+def scan_path(db_path: str, target_subpath: str = "") -> str:
     """Sync filesystem to database. Auto-adds missing, auto-removes stale.
-    Reports entries needing descriptions. Returns formatted report."""
-    target_path = target_path.rstrip("/")
-    if target_path == ".":
-        target_path = ""
+
+    target_subpath is relative to the project root (empty means whole
+    project). Walking is always anchored on plugin.get_project_dir(),
+    independent of working directory. Paths stored in the entries table
+    are project-relative.
+
+    Returns formatted report.
+    """
+    target_subpath = target_subpath.rstrip("/")
+    if target_subpath == ".":
+        target_subpath = ""
+
+    project_dir = plugin.get_project_dir()
 
     conn = get_connection(db_path)
     try:
-        disk_entries = _walk_filesystem(conn, target_path)
+        disk_entries = _walk_filesystem(conn, target_subpath)
 
         # Load prescribed patterns for auto-descriptions
         pattern_rows = conn.execute(
@@ -165,11 +189,11 @@ def scan_path(db_path: str, target_path: str) -> str:
 
         # Load concrete entries from database
         db_entries = {}
-        if target_path:
+        if target_subpath:
             rows = conn.execute(
                 "SELECT path, git_hash FROM entries "
                 "WHERE path = ? OR path LIKE ?",
-                (target_path, target_path + "/%"),
+                (target_subpath, target_subpath + "/%"),
             ).fetchall()
         else:
             rows = conn.execute(
@@ -191,7 +215,10 @@ def scan_path(db_path: str, target_path: str) -> str:
 
                 rule = _matches_pattern_any(path, prescribed_patterns)
                 description = rule["description"] if rule else None
-                metrics = _compute_file_metrics(path) if entry_type == "file" else {"git_hash": None, "line_count": None, "char_count": None}
+                if entry_type == "file":
+                    metrics = _compute_file_metrics(project_dir / path)
+                else:
+                    metrics = {"git_hash": None, "line_count": None, "char_count": None}
 
                 conn.execute(
                     "INSERT OR IGNORE INTO entries "
@@ -208,7 +235,7 @@ def scan_path(db_path: str, target_path: str) -> str:
         changed = []
         for path in sorted(disk_entries):
             if path in db_entries and disk_entries[path] == "file":
-                metrics = _compute_file_metrics(path)
+                metrics = _compute_file_metrics(project_dir / path)
                 current_hash = metrics["git_hash"]
                 stored_hash = db_entries[path]
                 if stored_hash is not None and current_hash != stored_hash:
@@ -238,7 +265,7 @@ def scan_path(db_path: str, target_path: str) -> str:
         # Auto-remove stale entries
         removed = []
         for path in sorted(db_entries):
-            if path not in disk_entries and path != target_path:
+            if path not in disk_entries and path != target_subpath:
                 conn.execute("DELETE FROM entries WHERE path = ?", (path,))
                 removed.append(f"- {path}")
                 for p in _mark_parents_stale(conn, path):
@@ -247,7 +274,7 @@ def scan_path(db_path: str, target_path: str) -> str:
         conn.commit()
 
         # Format report
-        display_target = target_path + "/" if target_path else "./"
+        display_target = target_subpath + "/" if target_subpath else "./"
         lines = [f"Scan: {display_target}"]
         summary_parts = [f"Added {len(added)}", f"removed {len(removed)}"]
         if changed:

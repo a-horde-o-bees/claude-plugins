@@ -13,8 +13,8 @@ Two scopes:
 Tools follow object_action naming: stash_add, stash_list, stash_search,
 stash_get, stash_update, stash_remove. All return structured JSON.
 
-Runs via stdio transport. Project root from CLAUDE_PROJECT_DIR env var,
-falling back to the current working directory.
+Runs via stdio transport. Project root from plugin framework helper
+(plugin.get_project_dir).
 """
 
 from __future__ import annotations
@@ -24,9 +24,10 @@ from pathlib import Path
 
 from mcp.server.fastmcp import FastMCP
 
+import plugin
 import skills.stash as stash_skill
 
-from ._helpers import _err, _ok, _project_root
+from ._helpers import _err, _ok
 
 # --- Configuration ---
 
@@ -34,7 +35,7 @@ STASH_DB_REL = os.environ.get("STASH_DB", ".claude/ocd/stash/stash.db")
 
 
 def _project_db() -> str:
-    return os.path.join(str(_project_root()), STASH_DB_REL)
+    return str(plugin.get_project_dir() / STASH_DB_REL)
 
 
 def _user_db() -> str:
