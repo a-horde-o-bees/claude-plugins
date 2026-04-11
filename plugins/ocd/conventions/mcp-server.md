@@ -193,7 +193,7 @@ Shared utility functions used by multiple server files in the same plugin live i
 
 Server files import these via the package: `from . import _helpers` or `from ._helpers import _ok, _err`.
 
-Project, plugin, and plugin-data paths resolve through the plugin framework helpers (`plugin.get_project_dir()`, `plugin.get_plugin_root()`, `plugin.get_plugin_data_dir()`) — see `python.md` *Project, Plugin, and Data Directory Resolution*. Servers do not define their own project-root helpers.
+Project, plugin, and plugin-data paths resolve through the plugin framework helpers (`plugin.get_project_dir()`, `plugin.get_plugin_root()`, `plugin.get_plugin_data_dir()`) — see `python.md` *Project, Plugin, and Data Directory Resolution*. Servers do not define their own project-root helpers. `CLAUDE_PROJECT_DIR` is propagated to MCP subprocesses via the `env` block in `.mcp.json`.
 
 ## Relational Data Storage
 
