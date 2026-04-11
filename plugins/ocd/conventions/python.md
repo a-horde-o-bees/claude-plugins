@@ -75,6 +75,8 @@ Never:
 - `path.parents[N]` walks from arbitrary paths (e.g., a database path) to derive project or plugin root — fragile and breaks when layout changes
 - Accept `project_dir` or `plugin_root` as a function argument when the caller would only be re-resolving it — the helpers are the single source of truth. Skill entry points (`init`, `status`) take only their own skill-specific arguments (e.g., `force`); they resolve shared paths internally
 
+One documented exception: MCP server subprocesses launched by Claude Code bootstrap `CLAUDE_PROJECT_DIR` from cwd at import time via `servers/_helpers.py`, because Claude Code guarantees the MCP server cwd matches the project directory but does not propagate the env var automatically and does not expand variable references in `.mcp.json` env blocks. See `mcp-server.md` *MCP Subprocess Environment Bootstrap*. This is the only place cwd is permitted as a project-directory source.
+
 ### Error Handling
 
 Validation logic raises exceptions — no `print()` + `sys.exit()` in non-CLI code. CLI dispatch layer catches errors and exits cleanly with error message.

@@ -193,7 +193,13 @@ Shared utility functions used by multiple server files in the same plugin live i
 
 Server files import these via the package: `from . import _helpers` or `from ._helpers import _ok, _err`.
 
-Project, plugin, and plugin-data paths resolve through the plugin framework helpers (`plugin.get_project_dir()`, `plugin.get_plugin_root()`, `plugin.get_plugin_data_dir()`) — see `python.md` *Project, Plugin, and Data Directory Resolution*. Servers do not define their own project-root helpers. `CLAUDE_PROJECT_DIR` is propagated to MCP subprocesses via the `env` block in `.mcp.json`.
+Project, plugin, and plugin-data paths resolve through the plugin framework helpers (`plugin.get_project_dir()`, `plugin.get_plugin_root()`, `plugin.get_plugin_data_dir()`) — see `python.md` *Project, Plugin, and Data Directory Resolution*. Servers do not define their own project-root helpers.
+
+### MCP Subprocess Environment Bootstrap
+
+Claude Code launches MCP servers with cwd set to the project root but does not propagate `CLAUDE_PROJECT_DIR` to the subprocess environment. Variable references inside `.mcp.json` env block values are not expanded — the literal string `${CLAUDE_PROJECT_DIR}` passes through unchanged, which corrupts path resolution silently (writes land in a directory literally named `${CLAUDE_PROJECT_DIR}` under cwd).
+
+The servers package bootstraps `CLAUDE_PROJECT_DIR` from `Path.cwd().resolve()` at import time (in `servers/_helpers.py`) when the variable is missing. This is the only place in the codebase permitted to derive the project directory from cwd — the exception is safe because the MCP-server cwd is a Claude Code launch-time contract, not a user-influenced working directory. Code running outside the MCP subprocess (hooks, CLI, tests) must continue to set `CLAUDE_PROJECT_DIR` explicitly.
 
 ## Relational Data Storage
 

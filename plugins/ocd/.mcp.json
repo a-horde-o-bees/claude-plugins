@@ -4,32 +4,28 @@
       "command": "${CLAUDE_PLUGIN_DATA}/venv/bin/python3",
       "args": ["${CLAUDE_PLUGIN_ROOT}/run.py", "servers.navigator"],
       "env": {
-        "DB_PATH": ".claude/ocd/navigator/navigator.db",
-        "CLAUDE_PROJECT_DIR": "${CLAUDE_PROJECT_DIR}"
+        "DB_PATH": ".claude/ocd/navigator/navigator.db"
       }
     },
     "ocd-friction": {
       "command": "${CLAUDE_PLUGIN_DATA}/venv/bin/python3",
       "args": ["${CLAUDE_PLUGIN_ROOT}/run.py", "servers.friction"],
       "env": {
-        "FRICTION_DB": ".claude/ocd/friction/friction.db",
-        "CLAUDE_PROJECT_DIR": "${CLAUDE_PROJECT_DIR}"
+        "FRICTION_DB": ".claude/ocd/friction/friction.db"
       }
     },
     "ocd-decisions": {
       "command": "${CLAUDE_PLUGIN_DATA}/venv/bin/python3",
       "args": ["${CLAUDE_PLUGIN_ROOT}/run.py", "servers.decisions"],
       "env": {
-        "DECISIONS_DB": ".claude/ocd/decisions/decisions.db",
-        "CLAUDE_PROJECT_DIR": "${CLAUDE_PROJECT_DIR}"
+        "DECISIONS_DB": ".claude/ocd/decisions/decisions.db"
       }
     },
     "ocd-stash": {
       "command": "${CLAUDE_PLUGIN_DATA}/venv/bin/python3",
       "args": ["${CLAUDE_PLUGIN_ROOT}/run.py", "servers.stash"],
       "env": {
-        "STASH_DB": ".claude/ocd/stash/stash.db",
-        "CLAUDE_PROJECT_DIR": "${CLAUDE_PROJECT_DIR}"
+        "STASH_DB": ".claude/ocd/stash/stash.db"
       }
     }
   }
