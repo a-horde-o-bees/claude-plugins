@@ -59,6 +59,22 @@ Use `pathlib.Path` throughout:
 - Exception: pattern-matching interfaces (glob patterns, regex on paths) operate on `str` representations since they match text, not filesystem objects
 - When user input is interpolated into file paths, validate containment with `Path.is_relative_to()` to prevent path traversal
 
+### Project, Plugin, and Data Directory Resolution
+
+Three absolute paths always resolve through the plugin framework helpers in `plugin/__init__.py` — never through direct environment reads, never from `os.getcwd()`, never through parent walks from arbitrary paths:
+
+- `plugin.get_project_dir()` — resolves `CLAUDE_PROJECT_DIR`; raises when unset because project identity is not inferable from working directory
+- `plugin.get_plugin_root()` — resolves `CLAUDE_PLUGIN_ROOT`; falls back to a deterministic walk from `plugin/__init__.py`'s own `__file__` position, which is intrinsic to the code layout
+- `plugin.get_plugin_data_dir()` — resolves `CLAUDE_PLUGIN_DATA`; raises when unset because per-plugin persistent storage is Claude Code–managed and inferable from nothing
+
+All three return absolute canonical paths (`Path.resolve()`). Absolute is required for disk I/O — callers that need display-friendly paths compute `relative_to()` at the point of use. The project's relative-path convention is preserved: database entries, tool output, and embedded command paths remain project-relative; the absolute root is local plumbing for reading files.
+
+Never:
+
+- `os.environ.get("CLAUDE_PROJECT_DIR", os.getcwd())` — silent cwd fallback corrupts state when run from the wrong directory
+- `path.parents[N]` walks from arbitrary paths (e.g., a database path) to derive project or plugin root — fragile and breaks when layout changes
+- Accept `project_dir` or `plugin_root` as a function argument when the caller would only be re-resolving it — the helpers are the single source of truth. Skill entry points (`init`, `status`) take only their own skill-specific arguments (e.g., `force`); they resolve shared paths internally
+
 ### Error Handling
 
 Validation logic raises exceptions — no `print()` + `sys.exit()` in non-CLI code. CLI dispatch layer catches errors and exits cleanly with error message.

@@ -193,7 +193,7 @@ Shared utility functions used by multiple server files in the same plugin live i
 
 Server files import these via the package: `from . import _helpers` or `from ._helpers import _ok, _err`.
 
-Project-root resolution helpers (e.g., `_project_root()` reading `CLAUDE_PROJECT_DIR` with fallback to cwd) live in `_helpers.py` when used by more than one server.
+Project, plugin, and plugin-data paths resolve through the plugin framework helpers (`plugin.get_project_dir()`, `plugin.get_plugin_root()`, `plugin.get_plugin_data_dir()`) — see `python.md` *Project, Plugin, and Data Directory Resolution*. Servers do not define their own project-root helpers.
 
 ## Relational Data Storage
 

@@ -13,8 +13,10 @@ Conventions for `_init.py` modules — skill infrastructure that implements `ini
 
 Every `_init.py` exports two functions returning `{"files": [...], "extra": [...]}`:
 
-- `init(plugin_root, project_dir, force=False)` — deploy skill infrastructure
-- `status(plugin_root, project_dir)` — report skill infrastructure state
+- `init(force=False)` — deploy skill infrastructure
+- `status()` — report skill infrastructure state
+
+Skill entry points take only their own skill-specific arguments. Project and plugin paths are resolved internally via the plugin framework helpers (`plugin.get_project_dir()`, `plugin.get_plugin_root()`, `plugin.get_plugin_data_dir()`) — see `python.md` *Project, Plugin, and Data Directory Resolution*. Never accept those paths as parameters.
 
 `files` entries: `{"path": str, "before": str, "after": str}` — relative deployed path with state transitions (`absent`, `current`, `divergent`).
 
