@@ -68,6 +68,15 @@ governed_by:
 
 Governance relationships only — they define evaluation order and coherence checking in the governance chain. Tool references, implementation details, and runtime dependencies do not belong here.
 
+## File Granularity
+
+A governance file groups content that shares its governance contract — the `matches` pattern, `excludes` patterns, `governed_by` dependencies, and auto-load behavior declared in its frontmatter. A file's boundary is where the governance contract shifts, not where a reader perceives a topic break.
+
+- A single governance file carries multiple sections when all sections share the governance contract the file declares
+- Before splitting a governance file because "it's getting long": check whether the sections share the contract. If yes, the file is cohesive even at length — size-driven splits belong to Composability, which fires at context-capacity limits
+- Before bundling new content into an existing governance file: verify the content shares `matches`, `excludes`, `governed_by`, and auto-load behavior. If any differs, it belongs in a different file
+- Before writing new governance content: read both rule-side and convention-side framing before committing to either bucket. Guidance that fires regardless of which file is touched belongs in a rule; guidance that applies only when working with a specific file type belongs in a convention — reading only one side's framing risks putting the content in the wrong place
+
 ## Body Structure
 
 Rules define behavioral triggers with gate conditions — when to do what. Conventions define content standards with concrete requirements — what a conforming file contains.

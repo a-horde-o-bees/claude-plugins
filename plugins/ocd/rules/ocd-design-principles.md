@@ -72,15 +72,6 @@ Enforce correctness through structure, not documentation. When the system's stru
 - Purpose-built interfaces accept only meaningful inputs rather than generic parameters requiring documentation
 - Structural and organizational decisions are deterministic — produce the same result regardless of who evaluates them
 
-## Pit of Success
-
-The correct path is the easiest path. If doing the right thing requires extra steps, ceremony, or knowledge that isn't embedded in the system, the system is wrong — not the user. Each improvement should simultaneously make correct usage easier and incorrect usage harder.
-
-- Templates define structure so agents don't invent formats
-- Domain tools encode business logic so agents express intent rather than constructing operations
-- Conventions auto-match by file pattern rather than requiring manual lookup
-- When a dependency is unavailable, the system degrades to a functional state with clear guidance — not silent failure or cryptic errors
-
 ## Verify Against Reality
 
 Verify assumptions against system reality before acting — read what's there, validate current state, and check actual behavior so action proceeds on facts rather than guesses. The cost of verification is always lower than the cost of rework.
@@ -233,6 +224,15 @@ The primary consumer of every tool, output, and error message is an agent. Desig
 - Output is structured and consistent — predictable markers, no decorative formatting
 - Tool descriptions state their purpose in terms an agent can match to a task
 - Instructions reference files by path, not by name — an agent should never need to search for a file
+
+## Graceful Degradation
+
+When a dependency is unavailable or a precondition isn't met, the system continues to function in a reduced but useful state and reports exactly what's missing and how to restore it. Silent failure, cryptic error cascades, and all-or-nothing behavior each force the reader to debug the system to understand what went wrong — the system should carry that work, not push it onto the reader.
+
+- Missing state is a valid state — operations on half-populated or absent data report what's present and what's missing, rather than refusing the whole request
+- Status reporting distinguishes stages of readiness (absent, initialized, stale, error) and pairs each with its corrective command
+- Error output names the specific missing piece and the specific next action, not a generic failure category
+- Before execution relies on an external tool or environment variable: verify availability and name the corrective command if missing, rather than letting a downstream call surface an unhelpful error
 
 ## Epistemic Humility
 
