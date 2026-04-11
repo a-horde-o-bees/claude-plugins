@@ -25,16 +25,24 @@ def main() -> None:
 
     init_p = commands.add_parser(
         "init",
-        help="Deploy rules and initialize skill infrastructure",
+        help="Deploy rules and initialize server subsystem infrastructure",
     )
     init_p.add_argument(
         "--force", action="store_true",
-        help="Overwrite existing rules and conventions with plugin defaults",
+        help="Overwrite existing state with plugin defaults; destructive",
+    )
+    init_p.add_argument(
+        "--system", default=None,
+        help="Scope init to one server subsystem (governance, navigator, log, ...)",
     )
 
-    commands.add_parser(
+    status_p = commands.add_parser(
         "status",
-        help="Report plugin version, rules state, and skill infrastructure status",
+        help="Report plugin version, rules state, and server subsystem status",
+    )
+    status_p.add_argument(
+        "--system", default=None,
+        help="Scope status to one server subsystem (governance, navigator, log, ...)",
     )
 
     perm_p = commands.add_parser(
@@ -74,9 +82,9 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.command == "init":
-        run_init(force=args.force)
+        run_init(force=args.force, system=args.system)
     elif args.command == "status":
-        run_status()
+        run_status(system=args.system)
     elif args.command == "permissions":
         if args.perm_command == "report":
             run_permissions_report()

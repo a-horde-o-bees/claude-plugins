@@ -324,24 +324,43 @@ def get_rules_states(plugin_root: Path, project_dir: Path) -> list[dict]:
     return results
 
 
-# --- Skill discovery ---
+# --- System and skill discovery ---
 
 
-def _discover_skills(plugin_root: Path) -> list[tuple[str, bool]]:
-    """Discover all skills. Returns [(name, has_init)] sorted by name.
+def _discover_systems(plugin_root: Path) -> list[str]:
+    """Discover server subsystems with init infrastructure.
 
-    has_init is True if the skill has scripts/_init.py (infrastructure skill).
+    Returns sorted list of server package names whose package contains
+    an _init.py module (conforming to the init/status contract).
+    Server subsystems own state — database files, deployed conventions,
+    configuration — and their init routines bootstrap or refresh that state.
+    """
+    servers_dir = plugin_root / "servers"
+    if not servers_dir.is_dir():
+        return []
+
+    return sorted(
+        init_path.parent.name
+        for init_path in servers_dir.glob("*/_init.py")
+    )
+
+
+def _discover_workflow_skills(plugin_root: Path) -> list[str]:
+    """Discover workflow skills. Returns sorted list of skill names.
+
+    Workflow skills are pure slash command workflows without persistent state —
+    each has a SKILL.md in plugins/<plugin>/skills/<name>/ and is invoked as
+    `/<name>`. They are listed in init/status output so the user sees what
+    commands the plugin ships, but the plugin does not deploy or track them.
     """
     skills_dir = plugin_root / "skills"
     if not skills_dir.is_dir():
         return []
 
-    skills = []
-    for skill_md in sorted(skills_dir.glob("*/SKILL.md")):
-        name = skill_md.parent.name
-        init_path = skill_md.parent / "_init.py"
-        skills.append((name, init_path.is_file()))
-    return skills
+    return sorted(
+        skill_md.parent.name
+        for skill_md in skills_dir.glob("*/SKILL.md")
+    )
 
 
 # --- Orchestration ---
@@ -634,91 +653,117 @@ def run_permissions_clean(scope: str) -> None:
         print(f"  non-recommended retained: {len(non_rec)} patterns (not managed by plugin)")
 
 
-def run_init(force: bool = False) -> None:
-    """Generic init: deploy rules, call skill init hooks. Prints unified output."""
+def run_init(force: bool = False, system: str | None = None) -> None:
+    """Generic init: deploy rules, call server subsystem init hooks, list skills.
+
+    system: when provided, scopes init to one server subsystem — rules and
+    workflow skill listing are skipped, and only the named subsystem's init
+    runs. Unknown system names print an error listing available subsystems.
+
+    force: passed through to each subsystem's init(), which defines its own
+    destructive semantics (typically rebuilds the database from empty state).
+    """
     plugin_root = get_plugin_root()
     project_dir = get_project_dir()
     plugin_name = get_plugin_name(plugin_root)
 
-    print(f"{plugin_name} init")
+    systems = _discover_systems(plugin_root)
+    if system is not None and system not in systems:
+        print(f"Unknown system: {system}")
+        print(f"Available: {', '.join(systems)}" if systems else "No systems discovered.")
+        return
+
+    print(f"{plugin_name} init" + (f" --system {system}" if system else ""))
     print()
 
-    # Rules
-    rules = deploy_rules(plugin_root, project_dir, force=force)
-    for line in format_section("Rules", rules):
-        print(line)
-    print()
+    rules: list[dict] = []
 
-    # Skills
-    skills = _discover_skills(plugin_root)
-    for skill_name, has_init in skills:
-        if not has_init:
-            continue
-        mod = importlib.import_module(f"servers.{skill_name}._init")
-        result = mod.init(force=force)
-        header = f"/{skill_name}"
-        for line in format_section(header, result["files"], result.get("extra")):
+    # Rules (plugin-wide; skipped when scoped to a single subsystem)
+    if system is None:
+        rules = deploy_rules(plugin_root, project_dir, force=force)
+        for line in format_section("Rules", rules):
             print(line)
         print()
 
-    # Bare skills
-    for skill_name, has_init in skills:
-        if has_init or skill_name in _META_SKILLS:
-            continue
-        print(format_bare_skill(plugin_name, skill_name))
+    # Server subsystems
+    target_systems = [system] if system is not None else systems
+    for system_name in target_systems:
+        mod = importlib.import_module(f"servers.{system_name}._init")
+        result = mod.init(force=force)
+        for line in format_section(system_name, result["files"], result.get("extra")):
+            print(line)
+        print()
+
+    # Workflow skills (only when not scoped)
+    if system is None:
+        skills = _discover_workflow_skills(plugin_root)
+        shown = [s for s in skills if s not in _META_SKILLS]
+        if shown:
+            print("Skills")
+            for skill_name in shown:
+                print(f"  {format_bare_skill(plugin_name, skill_name)}")
+            print()
 
     # Footer
     rules_changed = any(r["before"] != r["after"] for r in rules)
     if rules_changed:
-        print()
         print("Done. Restart Claude session to load new rules.")
     else:
-        print()
         print("Done.")
 
 
-def run_status() -> None:
-    """Generic status: check rules, call skill status hooks. Prints unified output."""
+def run_status(system: str | None = None) -> None:
+    """Generic status: report rules, server subsystems, and workflow skills.
+
+    system: when provided, scopes output to one server subsystem —
+    header, rules, and skill listing are skipped. Unknown system names
+    print an error listing available subsystems.
+    """
     plugin_root = get_plugin_root()
     project_dir = get_project_dir()
     claude_home = get_claude_home()
-
     plugin_name = get_plugin_name(plugin_root)
-    installed_version = get_installed_version(plugin_root)
-    source_version, marketplace_name = find_marketplace_source(
-        plugin_name, plugin_root, claude_home,
-    )
 
-    print(format_header(plugin_name, installed_version, source_version, marketplace_name))
-    print()
+    systems = _discover_systems(plugin_root)
+    if system is not None and system not in systems:
+        print(f"Unknown system: {system}")
+        print(f"Available: {', '.join(systems)}" if systems else "No systems discovered.")
+        return
 
-    # Rules
-    rules = get_rules_states(plugin_root, project_dir)
-    for line in format_section("Rules", rules):
-        print(line)
-    print()
+    # Header and rules (plugin-wide; skipped when scoped to a single subsystem)
+    if system is None:
+        installed_version = get_installed_version(plugin_root)
+        source_version, marketplace_name = find_marketplace_source(
+            plugin_name, plugin_root, claude_home,
+        )
+        print(format_header(plugin_name, installed_version, source_version, marketplace_name))
+        print()
 
-    # Skills
-    skills = _discover_skills(plugin_root)
-    for skill_name, has_init in skills:
-        if not has_init:
-            continue
-        mod = importlib.import_module(f"servers.{skill_name}._init")
-        result = mod.status()
-        header = f"/{skill_name}"
-        for line in format_section(header, result["files"], result.get("extra")):
+        rules = get_rules_states(plugin_root, project_dir)
+        for line in format_section("Rules", rules):
             print(line)
         print()
 
-    # Bare skills
-    for skill_name, has_init in skills:
-        if has_init or skill_name in _META_SKILLS:
-            continue
-        print(format_bare_skill(plugin_name, skill_name))
+    # Server subsystems
+    target_systems = [system] if system is not None else systems
+    for system_name in target_systems:
+        mod = importlib.import_module(f"servers.{system_name}._init")
+        result = mod.status()
+        for line in format_section(system_name, result["files"], result.get("extra")):
+            print(line)
+        print()
 
-    # Permissions status
-    print()
-    _show_permissions_status(plugin_root)
+    # Workflow skills and permissions (only when not scoped)
+    if system is None:
+        skills = _discover_workflow_skills(plugin_root)
+        shown = [s for s in skills if s not in _META_SKILLS]
+        if shown:
+            print("Skills")
+            for skill_name in shown:
+                print(f"  {format_bare_skill(plugin_name, skill_name)}")
+            print()
+
+        _show_permissions_status(plugin_root)
 
 
 
