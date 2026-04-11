@@ -6,8 +6,8 @@ excludes:
   - "architecture.md"
   - "README.md"
 governed_by:
-  - .claude/conventions/markdown.md
-  - .claude/rules/ocd-design-principles.md
+  - .claude/conventions/ocd/markdown.md
+  - .claude/rules/ocd/design-principles.md
 ---
 
 # Governance File Conventions
@@ -62,8 +62,8 @@ Lists governance entries this file builds on. Defines evaluation ordering — wh
 
 ```yaml
 governed_by:
-  - .claude/rules/ocd-design-principles.md
-  - .claude/conventions/markdown.md
+  - .claude/rules/ocd/design-principles.md
+  - .claude/conventions/ocd/markdown.md
 ```
 
 Governance relationships only — they define evaluation order and coherence checking in the governance chain. Tool references, implementation details, and runtime dependencies do not belong here.

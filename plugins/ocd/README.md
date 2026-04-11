@@ -6,25 +6,25 @@ Deterministic enforcement of permissions, rules, and structural conventions for 
 
 ```
 /plugin install ocd
-/ocd-init
+/init
 ```
 
-Restart Claude session after init to load rules. Run `/ocd-status` to verify plugin version, init state, and update availability.
+Restart Claude session after init to load rules. Run `/status` to verify plugin version, init state, and update availability.
 
-`/ocd-init` deploys rules to `.claude/rules/`, convention templates, and initializes skill infrastructure. Use `--force` to overwrite existing files with plugin defaults.
+`/init` deploys rules to `.claude/rules/`, convention templates, and initializes skill infrastructure. Use `--force` to overwrite existing files with plugin defaults.
 
 ## Capabilities
 
 ### Rules
 
-Convention files deployed to `.claude/rules/` via `/ocd-init`. Auto-loaded every session. Users can inspect, edit, or delete deployed rules — they own the files.
+Convention files deployed to `.claude/rules/` via `/init`. Auto-loaded every session. Users can inspect, edit, or delete deployed rules — they own the files.
 
 | Capability | Rule file | Purpose |
 |------------|-----------|---------|
-| `design-principles` | `ocd-design-principles.md` | Foundational principles governing all artifacts and agent behavior |
-| `workflow` | `ocd-workflow.md` | Execution discipline: working directory, agents, testing |
-| `system-documentation` | `ocd-system-documentation.md` | README and architecture.md requirements per system, with nesting and currency rules |
-| `process-flow-notation` | `ocd-process-flow-notation.md` | Structured programming notation for agent workflows |
+| `design-principles` | `design-principles.md` | Foundational principles governing all artifacts and agent behavior |
+| `workflow` | `workflow.md` | Execution discipline: working directory, agents, testing |
+| `system-documentation` | `system-documentation.md` | README and architecture.md requirements per system, with nesting and currency rules |
+| `process-flow-notation` | `process-flow-notation.md` | Structured programming notation for agent workflows |
 
 ### Hook: Permission enforcement
 
@@ -36,7 +36,7 @@ PreToolUse hook on Bash, Edit, and Write tools. Two evaluation layers:
 
 ### Skill: Navigator
 
-`/ocd-navigator` — maintenance workflow for the project navigation database. Scans filesystem, detects changes, and guides description writing for project files and directories.
+`/navigator` — maintenance workflow for the project navigation database. Scans filesystem, detects changes, and guides description writing for project files and directories.
 
 The navigator database (`.claude/ocd/navigator/navigator.db`) indexes project structure with human-written descriptions so agents can find files by purpose without reading every file. Agents use the CLI tool inline during tasks; the skill is for maintenance only.
 
@@ -50,8 +50,8 @@ Agent-facing entry point at `skills/navigator/__main__.py`. Agents call `--help`
 | `list [path] [--pattern "*.py"] [--exclude ".claude/*"]` | Enumerate non-excluded file paths for tool consumption |
 | `search --pattern <term>` | Find files by purpose across project |
 | `scan [path]` | Sync filesystem to database after changes |
-| `get-undescribed` | Find entries needing descriptions (used by /ocd-navigator skill) |
-| `set <path> --description` | Write description for entry (used by /ocd-navigator skill) |
+| `get-undescribed` | Find entries needing descriptions (used by /navigator skill) |
+| `set <path> --description` | Write description for entry (used by /navigator skill) |
 | `init --db <path>` | Create database with schema and seed rules |
 
 ### MCP Servers
@@ -60,10 +60,10 @@ Agent-facing tools exposed over the Model Context Protocol. Registered in `.mcp.
 
 | Server | Tools | Purpose |
 |--------|-------|---------|
-| `ocd-navigator` | `paths_*`, `governance_*`, `skills_*`, `references_*`, `scope_*` | Project structure index, governance discovery, reference mapping |
-| `ocd-friction` | `friction_*` | Capture and triage process friction encountered during workflows |
-| `ocd-decisions` | `decisions_record`, `decisions_list`, `decisions_get`, `decisions_update`, `decisions_remove` | Record and maintain non-obvious project choices in `decisions.md` and `decisions/*.md` |
-| `ocd-stash` | `stash_add`, `stash_review`, `stash_remove`, `stash_promote` | Capture ideas and future work to `.claude/stash/stash.md` (project-scoped) with fallback to `~/.claude/stash/stash.md` for unattached entries |
+| `navigator` | `paths_*`, `governance_*`, `skills_*`, `references_*`, `scope_*` | Project structure index, governance discovery, reference mapping |
+| `friction` | `friction_*` | Capture and triage process friction encountered during workflows |
+| `decisions` | `decisions_record`, `decisions_list`, `decisions_get`, `decisions_update`, `decisions_remove` | Record and maintain non-obvious project choices in `decisions.md` and `decisions/*.md` |
+| `stash` | `stash_add`, `stash_review`, `stash_remove`, `stash_promote` | Capture ideas and future work to `.claude/stash/stash.md` (project-scoped) with fallback to `~/.claude/stash/stash.md` for unattached entries |
 
 ## License
 

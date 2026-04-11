@@ -1,9 +1,9 @@
 ---
 includes: "SKILL.md"
 governed_by:
-  - .claude/rules/ocd-design-principles.md
-  - .claude/rules/ocd-process-flow-notation.md
-  - .claude/conventions/markdown.md
+  - .claude/rules/ocd/design-principles.md
+  - .claude/rules/ocd/process-flow-notation.md
+  - .claude/conventions/ocd/markdown.md
 ---
 
 # SKILL.md Conventions
@@ -25,7 +25,7 @@ Fields:
 
 | Field | Default | Description |
 |-------|---------|-------------|
-| `name` | Directory name | Slash command name. Lowercase letters, numbers, hyphens only (max 64 characters). Plugin skills use plugin-name prefix (e.g., `ocd-navigator` not `navigator`) so plugin name surfaces during search. |
+| `name` | Directory name | Slash command name. Lowercase letters, numbers, hyphens only (max 64 characters). Do not prefix with the plugin name — Claude Code namespaces plugin slash commands automatically (`/<plugin>:<command>` on collision, `/<command>` when unique), so a redundant prefix double-namespaces. |
 | `description` | First markdown paragraph | Claude uses this to decide when skill is relevant. Loaded into context at metadata level before full body. |
 | `argument-hint` | None | Autocomplete hint shown after `/command`. Format follows Skill Argument Notation in Process Flow Notation rules. |
 | `disable-model-invocation` | `false` | Prevents Claude from auto-loading skill |
@@ -112,7 +112,7 @@ Skills define their own deterministic {target} values (e.g., `project`, `self`) 
 Navigator CLI resolves skill names across all discovery locations in priority order:
 
 ```
-python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.navigator resolve-skill <name>
+python3 ${CLAUDE_PLUGIN_ROOT}/run.py servers.navigator.cli resolve-skill <name>
 ```
 
 Exits with code 1 if skill not found. Skills should Exit to user with error when resolution fails.

@@ -1,9 +1,9 @@
 ---
 includes: "*/evaluate-*/SKILL.md"
 governed_by:
-  - .claude/conventions/evaluation-skill-md.md
-  - .claude/conventions/markdown.md
-  - .claude/rules/ocd-design-principles.md
+  - .claude/conventions/ocd/evaluation-skill-md.md
+  - .claude/conventions/ocd/markdown.md
+  - .claude/rules/ocd/design-principles.md
 ---
 
 # Evaluation Triage Criteria

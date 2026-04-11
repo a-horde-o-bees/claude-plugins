@@ -21,9 +21,9 @@ PLUGIN_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 if str(PLUGIN_ROOT) not in sys.path:
     sys.path.insert(0, str(PLUGIN_ROOT))
 
-from skills.governance._db import get_connection, SCHEMA
-from skills.governance import governance_load, governance_match
-from servers import governance as gov_server
+from servers.governance._db import get_connection, SCHEMA
+from servers.governance import governance_load, governance_match
+import servers.governance.__main__ as gov_server
 
 
 def _write_gov_file(path: Path, includes, excludes=None, governed_by=None):
@@ -75,20 +75,20 @@ def gov_env(tmp_path, monkeypatch):
 
     # Conventions
     _write_gov_file(
-        tmp_path / ".claude/conventions/python.md", "*.py",
+        tmp_path / ".claude/conventions/ocd/python.md", "*.py",
         governed_by=[".claude/rules/design-principles.md"],
     )
     _write_gov_file(
-        tmp_path / ".claude/conventions/mcp-server.md", "servers/*.py",
+        tmp_path / ".claude/conventions/ocd/mcp-server.md", "servers/*.py",
         excludes=["__init__.py", "_helpers.py"],
-        governed_by=[".claude/rules/design-principles.md", ".claude/conventions/python.md"],
+        governed_by=[".claude/rules/design-principles.md", ".claude/conventions/ocd/python.md"],
     )
     _write_gov_file(
-        tmp_path / ".claude/conventions/skill-md.md", "SKILL.md",
+        tmp_path / ".claude/conventions/ocd/skill-md.md", "SKILL.md",
         governed_by=[".claude/rules/design-principles.md"],
     )
     _write_gov_file(
-        tmp_path / ".claude/conventions/markdown.md", "*.md",
+        tmp_path / ".claude/conventions/ocd/markdown.md", "*.md",
         governed_by=[".claude/rules/design-principles.md"],
     )
 
@@ -101,7 +101,7 @@ class TestSingleFileBaseline:
 
     def test_single_python_file_returns_one_convention(self, gov_env):
         result = governance_match(gov_env, ["src/app.py"])
-        assert result["conventions"] == [".claude/conventions/python.md"]
+        assert result["conventions"] == [".claude/conventions/ocd/python.md"]
         assert len(result["matches"]["src/app.py"]) == 1
 
     def test_rules_excluded_by_default(self, gov_env):
@@ -116,7 +116,7 @@ class TestBatchSameConvention:
         files = [f"src/file{i}.py" for i in range(5)]
         result = governance_match(gov_env, files)
         # Conventions list is deduplicated — python.md appears once
-        assert result["conventions"] == [".claude/conventions/python.md"]
+        assert result["conventions"] == [".claude/conventions/ocd/python.md"]
 
     def test_per_file_matches_all_present(self, gov_env):
         files = [f"src/file{i}.py" for i in range(5)]
@@ -124,7 +124,7 @@ class TestBatchSameConvention:
         # Each file individually matches python.md
         for f in files:
             assert f in result["matches"]
-            assert ".claude/conventions/python.md" in result["matches"][f]
+            assert ".claude/conventions/ocd/python.md" in result["matches"][f]
 
     def test_batch_equals_individual_conventions(self, gov_env):
         """Batch call returns same conventions as individual calls combined."""
@@ -146,20 +146,20 @@ class TestMixedConventions:
         files = ["src/a.py", "src/b.py", "src/c.py", "skills/nav/SKILL.md", "skills/init/SKILL.md"]
         result = governance_match(gov_env, files)
         conventions = set(result["conventions"])
-        assert ".claude/conventions/python.md" in conventions
-        assert ".claude/conventions/skill-md.md" in conventions
+        assert ".claude/conventions/ocd/python.md" in conventions
+        assert ".claude/conventions/ocd/skill-md.md" in conventions
         # SKILL.md also matches markdown.md (*.md)
-        assert ".claude/conventions/markdown.md" in conventions
+        assert ".claude/conventions/ocd/markdown.md" in conventions
         # Exactly these three, no more
         assert len(conventions) == 3
 
     def test_each_file_gets_correct_conventions(self, gov_env):
         files = ["src/a.py", "skills/nav/SKILL.md"]
         result = governance_match(gov_env, files)
-        assert result["matches"]["src/a.py"] == [".claude/conventions/python.md"]
+        assert result["matches"]["src/a.py"] == [".claude/conventions/ocd/python.md"]
         skill_conventions = set(result["matches"]["skills/nav/SKILL.md"])
-        assert ".claude/conventions/skill-md.md" in skill_conventions
-        assert ".claude/conventions/markdown.md" in skill_conventions
+        assert ".claude/conventions/ocd/skill-md.md" in skill_conventions
+        assert ".claude/conventions/ocd/markdown.md" in skill_conventions
 
 
 class TestServerFileConventions:
@@ -168,29 +168,29 @@ class TestServerFileConventions:
     def test_server_file_gets_both_conventions(self, gov_env):
         result = governance_match(gov_env, ["servers/navigator.py"])
         conventions = set(result["conventions"])
-        assert ".claude/conventions/python.md" in conventions
-        assert ".claude/conventions/mcp-server.md" in conventions
+        assert ".claude/conventions/ocd/python.md" in conventions
+        assert ".claude/conventions/ocd/mcp-server.md" in conventions
         assert len(conventions) == 2
 
     def test_server_init_excluded_from_mcp_convention(self, gov_env):
         result = governance_match(gov_env, ["servers/__init__.py"])
         conventions = set(result["conventions"])
         # __init__.py matches python.md but is excluded from mcp-server.md
-        assert ".claude/conventions/python.md" in conventions
-        assert ".claude/conventions/mcp-server.md" not in conventions
+        assert ".claude/conventions/ocd/python.md" in conventions
+        assert ".claude/conventions/ocd/mcp-server.md" not in conventions
 
     def test_server_helpers_excluded_from_mcp_convention(self, gov_env):
         result = governance_match(gov_env, ["servers/_helpers.py"])
         conventions = set(result["conventions"])
-        assert ".claude/conventions/python.md" in conventions
-        assert ".claude/conventions/mcp-server.md" not in conventions
+        assert ".claude/conventions/ocd/python.md" in conventions
+        assert ".claude/conventions/ocd/mcp-server.md" not in conventions
 
     def test_multiple_server_files_deduplicated(self, gov_env):
         files = ["servers/friction.py", "servers/decisions.py", "servers/navigator.py"]
         result = governance_match(gov_env, files)
         conventions = set(result["conventions"])
         # Same two conventions for all three files
-        assert conventions == {".claude/conventions/python.md", ".claude/conventions/mcp-server.md"}
+        assert conventions == {".claude/conventions/ocd/python.md", ".claude/conventions/ocd/mcp-server.md"}
 
 
 class TestIdempotentCalls:
@@ -234,18 +234,18 @@ class TestMCPServerLayer:
         result = json.loads(gov_server.governance_match(
             [f"src/file{i}.py" for i in range(5)]
         ))
-        assert result["conventions"] == [".claude/conventions/python.md"]
+        assert result["conventions"] == [".claude/conventions/ocd/python.md"]
 
     def test_server_file_excludes_via_server(self, server_env):
         result = json.loads(gov_server.governance_match(["servers/__init__.py"]))
         conventions = set(result["conventions"])
-        assert ".claude/conventions/mcp-server.md" not in conventions
+        assert ".claude/conventions/ocd/mcp-server.md" not in conventions
 
     def test_mixed_batch_via_server(self, server_env):
         result = json.loads(gov_server.governance_match(
             ["src/app.py", "servers/friction.py", "skills/nav/SKILL.md"]
         ))
         conventions = set(result["conventions"])
-        assert ".claude/conventions/python.md" in conventions
-        assert ".claude/conventions/mcp-server.md" in conventions
-        assert ".claude/conventions/skill-md.md" in conventions
+        assert ".claude/conventions/ocd/python.md" in conventions
+        assert ".claude/conventions/ocd/mcp-server.md" in conventions
+        assert ".claude/conventions/ocd/skill-md.md" in conventions

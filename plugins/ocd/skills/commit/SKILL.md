@@ -1,5 +1,5 @@
 ---
-name: ocd-commit
+name: commit
 allowed-tools:
   - Bash(git *)
   - Bash(python3 scripts/sync-templates.py)
@@ -9,7 +9,7 @@ description: >
   results, and executes commits sequentially with version bumps.
 ---
 
-# /ocd-commit
+# /commit
 
 Commit working tree changes grouped by topic for readable git history. Each commit represents one coherent topic — easy to find how specific change was implemented when examining history later. Grouping separates unrelated changes so each commit is narrow, focused window into what was done and why.
 
@@ -17,7 +17,7 @@ Fully automated — analyzes changes, groups by topic, drafts messages, executes
 
 ## Trigger
 
-User runs `/ocd-commit`
+User runs `/commit`
 
 ## Workflow
 

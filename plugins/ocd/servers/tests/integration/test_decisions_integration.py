@@ -15,7 +15,7 @@ PLUGIN_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 if str(PLUGIN_ROOT) not in sys.path:
     sys.path.insert(0, str(PLUGIN_ROOT))
 
-from servers import decisions as decisions_server
+import servers.decisions.__main__ as decisions_server
 
 
 @pytest.fixture

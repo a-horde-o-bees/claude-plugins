@@ -1,14 +1,14 @@
 ---
-name: ocd-navigator
+name: navigator
 description: Scan project directory and populate navigator database with file and folder descriptions
 argument-hint: "[directory-path] [--delegate] (defaults to project root)"
 allowed-tools:
   - Read
   - Bash(python3 *)
-  - mcp__plugin_ocd_ocd-navigator__*
+  - mcp__plugin_ocd_navigator__*
 ---
 
-# /ocd-navigator
+# /navigator
 
 Scan filesystem and populate navigator database. Deterministic operations (add/remove/change detection) are handled by CLI scan. Description writing is handled by agent, working depth-first via `paths_undescribed` MCP tool.
 
@@ -33,7 +33,7 @@ Depth-first ordering is structural, not preference — parent directory descript
 
 ## Trigger
 
-User runs `/ocd-navigator`
+User runs `/navigator`
 
 ## Route
 
@@ -52,7 +52,7 @@ User runs `/ocd-navigator`
 ## Workflow
 
 1. Read `${CLAUDE_PLUGIN_ROOT}/skills/navigator/references/description-guidelines.md` for Description Guidelines
-2. Run `python3 ${CLAUDE_PLUGIN_ROOT}/run.py skills.navigator scan <target>` — syncs filesystem to database, reports added/removed/changed counts
+2. Run `python3 ${CLAUDE_PLUGIN_ROOT}/run.py servers.navigator.cli scan <target>` — syncs filesystem to database, reports added/removed/changed counts
 3. While not done:
     1. {work} = paths_undescribed:
     2. If {work}.done: Break loop

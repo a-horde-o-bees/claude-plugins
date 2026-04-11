@@ -1,7 +1,7 @@
 """Server wiring tests for decisions MCP server.
 
 Verifies that the thin server layer correctly delegates to
-skills.decisions and wraps results with _ok/_err. Does not spin up
+servers.decisions and wraps results with _ok/_err. Does not spin up
 FastMCP — tests the tool functions directly with a real temp database.
 """
 
@@ -13,7 +13,7 @@ from unittest.mock import patch
 
 import pytest
 
-import servers.decisions as server
+import servers.decisions.__main__ as server
 
 
 @pytest.fixture

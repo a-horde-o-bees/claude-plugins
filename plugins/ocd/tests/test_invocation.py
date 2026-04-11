@@ -38,7 +38,7 @@ def run(module: str, *args: str, stdin: str | None = None, env: dict | None = No
 class TestPluginCLI:
     """Verify plugin init/status invoke through run.py and exercise
     the full import chain: run.py → plugin/__main__.py → plugin/__init__.py
-    → importlib.import_module(skills.X._init) → import plugin."""
+    → importlib.import_module(servers.X._init) → import plugin."""
 
     def test_status_exits_zero(self) -> None:
         result = run("plugin", "status")
@@ -54,7 +54,7 @@ class TestPluginCLI:
 
     def test_status_shows_skills(self) -> None:
         result = run("plugin", "status")
-        assert "/ocd-navigator" in result.stdout
+        assert "/navigator" in result.stdout
 
     def test_init_exits_zero(self, tmp_path: Path) -> None:
         result = run("plugin", "init", env={"CLAUDE_PROJECT_DIR": str(tmp_path)})
@@ -149,8 +149,8 @@ class TestHookInvocation:
 
     def _setup_governance(self, tmp_path: Path, monkeypatch) -> None:
         """Shared governance setup for convention gate tests."""
-        from skills.governance._db import init_db
-        from skills.governance import governance_load
+        from servers.governance._db import init_db
+        from servers.governance import governance_load
 
         monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(tmp_path))
 
@@ -223,7 +223,7 @@ class TestHookInvocation:
 
     def test_convention_gate_silent_for_ungoverned_file(self, tmp_path: Path) -> None:
         """Convention gate produces no output for files with no conventions."""
-        from skills.governance._db import init_db
+        from servers.governance._db import init_db
 
         db_path = tmp_path / ".claude" / "ocd" / "governance" / "governance.db"
         db_path.parent.mkdir(parents=True, exist_ok=True)
@@ -257,8 +257,8 @@ class TestHookInvocation:
 
     def test_convention_gate_excludes_respected(self, tmp_path: Path, monkeypatch) -> None:
         """Convention gate respects excludes — __init__.py skips mcp-server."""
-        from skills.governance._db import init_db
-        from skills.governance import governance_load
+        from servers.governance._db import init_db
+        from servers.governance import governance_load
 
         monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(tmp_path))
 
@@ -295,19 +295,19 @@ class TestSkillCLI:
     """Verify skill packages invoke through run.py."""
 
     def test_navigator_help(self) -> None:
-        result = run("skills.navigator", "--help")
+        result = run("servers.navigator.cli", "--help")
         assert result.returncode == 0
         assert "describe" in result.stdout
         assert "scan" in result.stdout
 
     def test_governance_help(self) -> None:
-        result = run("skills.governance", "--help")
+        result = run("servers.governance.cli", "--help")
         assert result.returncode == 0
         assert "load" in result.stdout
         assert "order" in result.stdout
 
     def test_governance_for_help(self) -> None:
-        result = run("skills.governance", "for", "--help")
+        result = run("servers.governance.cli", "for", "--help")
         assert result.returncode == 0
         assert "files" in result.stdout
 

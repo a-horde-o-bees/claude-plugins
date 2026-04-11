@@ -1,5 +1,5 @@
 ---
-name: ocd-md-to-pdf
+name: md-to-pdf
 description: Export markdown files to professionally formatted PDF using GitHub-standardized CSS styling.
 argument-hint: "--src <file> [--src <file> ...] --dest <dir>"
 allowed-tools:
@@ -9,13 +9,13 @@ allowed-tools:
   - Bash(mv *)
 ---
 
-# /ocd-md-to-pdf
+# /md-to-pdf
 
 Export markdown files to PDF using md-to-pdf with GitHub-standardized CSS styling.
 
 ## Trigger
 
-User runs `/ocd-md-to-pdf`.
+User runs `/md-to-pdf`.
 
 ## Route
 

@@ -1,8 +1,8 @@
 ---
 includes: "_init.py"
 governed_by:
-  - .claude/rules/ocd-design-principles.md
-  - .claude/conventions/python.md
+  - .claude/rules/ocd/design-principles.md
+  - .claude/conventions/ocd/python.md
 ---
 
 # Skill Init Conventions

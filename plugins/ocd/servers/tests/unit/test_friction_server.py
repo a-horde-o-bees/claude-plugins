@@ -18,7 +18,7 @@ PLUGIN_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 if str(PLUGIN_ROOT) not in sys.path:
     sys.path.insert(0, str(PLUGIN_ROOT))
 
-from servers import friction as friction_server
+import servers.friction.__main__ as friction_server
 
 
 class TestFrictionAddDelegates:

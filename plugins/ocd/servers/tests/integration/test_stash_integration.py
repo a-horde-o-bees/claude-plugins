@@ -15,7 +15,7 @@ PLUGIN_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 if str(PLUGIN_ROOT) not in sys.path:
     sys.path.insert(0, str(PLUGIN_ROOT))
 
-from servers import stash as stash_server
+import servers.stash.__main__ as stash_server
 
 
 @pytest.fixture

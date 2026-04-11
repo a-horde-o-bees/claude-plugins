@@ -1,7 +1,7 @@
 ---
 includes: "*.py"
 governed_by:
-  - .claude/rules/ocd-design-principles.md
+  - .claude/rules/ocd/design-principles.md
 ---
 
 # Python Conventions

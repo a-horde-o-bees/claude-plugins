@@ -184,11 +184,17 @@ def compare_deployed(src: Path, dst: Path) -> str:
 
 
 def deploy_files(
-    src_dir: Path, dst_dir: Path, pattern: str = "*.md", force: bool = False,
+    src_dir: Path,
+    dst_dir: Path,
+    pattern: str = "*.md",
+    force: bool = False,
+    exclude: set[str] | None = None,
 ) -> list[dict]:
     """Deploy template files from src_dir to dst_dir.
 
-    Returns list of {name, before, after} dicts.
+    Returns list of {name, before, after} dicts. Files whose names are in
+    exclude are skipped entirely — used for source-only documentation that
+    should not deploy.
     """
     dst_dir.mkdir(parents=True, exist_ok=True)
     results = []
@@ -196,7 +202,10 @@ def deploy_files(
     if not src_dir.is_dir():
         return results
 
+    skip_names = exclude or set()
     for src in sorted(src_dir.glob(pattern)):
+        if src.name in skip_names:
+            continue
         if not src.is_file():
             continue
         dst = dst_dir / src.name
@@ -254,23 +263,40 @@ def format_section(header: str, items: list[dict], extra: list[dict] | None = No
 
 
 def format_bare_skill(plugin_name: str, skill_name: str) -> str:
-    """Render a skill header with no infrastructure."""
-    return f"/{plugin_name}-{skill_name}"
+    """Render a skill header with no infrastructure.
+
+    Claude Code namespaces plugin slash commands automatically
+    (`/<plugin>:<command>` on collision, `/<command>` when unique),
+    so the skill name is used verbatim without a plugin prefix.
+    """
+    del plugin_name  # retained for signature compatibility with init-skill branch
+    return f"/{skill_name}"
 
 
 # --- Rules ---
 
 
+RULES_SOURCE_ONLY = {"README.md", "architecture.md"}
+
+
 def deploy_rules(plugin_root: Path, project_dir: Path, force: bool = False) -> list[dict]:
-    """Deploy rule files. Returns [{path, before, after}] with relative deployed paths."""
+    """Deploy rule files. Returns [{path, before, after}] with relative deployed paths.
+
+    Rules deploy to .claude/rules/{plugin_name}/ per-plugin subfolder for
+    cross-plugin collision avoidance. Framework documentation (README.md,
+    architecture.md) is plugin-source-only and excluded from deployment.
+    """
+    plugin_name = plugin_root.name
+    deployed_rel = f".claude/rules/{plugin_name}"
     results = deploy_files(
         src_dir=plugin_root / "rules",
-        dst_dir=project_dir / ".claude" / "rules",
+        dst_dir=project_dir / ".claude" / "rules" / plugin_name,
         pattern="*.md",
         force=force,
+        exclude=RULES_SOURCE_ONLY,
     )
     for r in results:
-        r["path"] = f".claude/rules/{r.pop('name')}"
+        r["path"] = f"{deployed_rel}/{r.pop('name')}"
     return results
 
 
@@ -280,14 +306,18 @@ def get_rules_states(plugin_root: Path, project_dir: Path) -> list[dict]:
     if not src_dir.is_dir():
         return []
 
+    plugin_name = plugin_root.name
+    deployed_rel = f".claude/rules/{plugin_name}"
     results = []
     for src in sorted(src_dir.glob("*.md")):
+        if src.name in RULES_SOURCE_ONLY:
+            continue
         if not src.is_file():
             continue
-        dst = project_dir / ".claude" / "rules" / src.name
+        dst = project_dir / ".claude" / "rules" / plugin_name / src.name
         state = compare_deployed(src, dst)
         results.append({
-            "path": f".claude/rules/{src.name}",
+            "path": f"{deployed_rel}/{src.name}",
             "before": state,
             "after": state,
         })
@@ -341,11 +371,11 @@ def _show_permissions_status(plugin_root: Path) -> None:
 
     if redundant:
         print(f"  redundancy: {len(redundant)} patterns present in both scopes")
-        print(f"  action needed: /ocd-init --permissions — consolidate to one scope")
+        print(f"  action needed: /init --permissions — consolidate to one scope")
     elif not proj_rec and not user_rec:
-        print(f"  action needed: /ocd-init --permissions — setup recommended patterns")
+        print(f"  action needed: /init --permissions — setup recommended patterns")
     elif len(proj_rec) < len(recommended) and len(user_rec) < len(recommended):
-        print(f"  action needed: /ocd-init --permissions — incomplete at both scopes")
+        print(f"  action needed: /init --permissions — incomplete at both scopes")
 
 
 def _merge_permissions(plugin_root: Path, scope: str) -> None:
@@ -624,9 +654,9 @@ def run_init(force: bool = False) -> None:
     for skill_name, has_init in skills:
         if not has_init:
             continue
-        mod = importlib.import_module(f"skills.{skill_name}._init")
+        mod = importlib.import_module(f"servers.{skill_name}._init")
         result = mod.init(force=force)
-        header = f"/{plugin_name}-{skill_name}"
+        header = f"/{skill_name}"
         for line in format_section(header, result["files"], result.get("extra")):
             print(line)
         print()
@@ -673,9 +703,9 @@ def run_status() -> None:
     for skill_name, has_init in skills:
         if not has_init:
             continue
-        mod = importlib.import_module(f"skills.{skill_name}._init")
+        mod = importlib.import_module(f"servers.{skill_name}._init")
         result = mod.status()
-        header = f"/{plugin_name}-{skill_name}"
+        header = f"/{skill_name}"
         for line in format_section(header, result["files"], result.get("extra")):
             print(line)
         print()

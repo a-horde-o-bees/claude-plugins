@@ -22,7 +22,7 @@ The `governance_match` tool accepts multiple file paths in one call — batch al
 ---
 includes: "*.py"
 governed_by:
-  - .claude/conventions/python.md
+  - .claude/conventions/ocd/python.md
 ---
 ```
 

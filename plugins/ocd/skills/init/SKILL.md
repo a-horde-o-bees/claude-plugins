@@ -1,5 +1,5 @@
 ---
-name: ocd-init
+name: init
 description: Initialize ocd conventions and skill infrastructure in current project
 argument-hint: "[--force] [--permissions]"
 allowed-tools:
@@ -7,13 +7,13 @@ allowed-tools:
   - Bash(python3 *)
 ---
 
-# /ocd-init
+# /init
 
 Deploy rules, conventions, and skill infrastructure to the current project. Safe by default — only deploys absent files, skips files the user has edited.
 
 ## Trigger
 
-User runs `/ocd-init`
+User runs `/init`
 
 ## Route
 

@@ -1,17 +1,17 @@
 ---
-name: ocd-status
+name: status
 description: Show plugin version, rule states, skill infrastructure status, and actionable next steps
 allowed-tools:
   - Bash(python3 *)
 ---
 
-# /ocd-status
+# /status
 
 Report plugin infrastructure state — version, rule deployment status, skill infrastructure, and permissions coverage.
 
 ## Trigger
 
-User runs `/ocd-status`
+User runs `/status`
 
 ## Workflow
 

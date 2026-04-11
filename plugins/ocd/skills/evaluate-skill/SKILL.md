@@ -1,16 +1,16 @@
 ---
-name: ocd-evaluate-skill
+name: evaluate-skill
 description: |
   Evaluate a skill across conformity, efficacy, quality, and prior art in one pass. Follows cross-references into component files. Produces unified change set.
 argument-hint: "--target </skill-name | path/to/SKILL.md>"
 allowed-tools:
   - Read
   - Edit
-  - mcp__plugin_ocd_ocd-navigator__*
-  - mcp__plugin_ocd_ocd-governance__*
+  - mcp__plugin_ocd_navigator__*
+  - mcp__plugin_ocd_governance__*
 ---
 
-# /ocd-evaluate-skill
+# /evaluate-skill
 
 Evaluate a skill's SKILL.md and referenced files across four lenses in a single structured pass. Eliminates cycling between convention checks, efficacy tests, and best-practice reviews by combining all relevant concerns for skills into one evaluation.
 
@@ -28,11 +28,11 @@ Evaluate a skill's SKILL.md and referenced files across four lenses in a single 
 Target is a single skill — its SKILL.md plus all files it references (component `_*.md` files, `references/` files, CLI scripts invoked by steps). The evaluator follows cross-references to build the complete file set.
 
 Accepted arguments:
-- `--target` — required; skill name (`/ocd-navigator`) or path to SKILL.md
+- `--target` — required; skill name (`/navigator`) or path to SKILL.md
 
 ## Trigger
 
-User runs `/ocd-evaluate-skill`
+User runs `/evaluate-skill`
 
 ## Route
 
@@ -51,7 +51,7 @@ User runs `/ocd-evaluate-skill`
 1. Discover scope — scope_analyze: paths=[{skill-path}]
 2. {scope} = scope_analyze result (files with sizes, governance, references)
 3. Spawn agent with skill evaluation({skill-path}, {scope}):
-    1. Read `.claude/conventions/evaluation-triage.md`
+    1. Read `.claude/conventions/ocd/evaluation-triage.md`
     2. Read `${CLAUDE_PLUGIN_ROOT}/skills/evaluate-skill/_lenses.md`
     3. Read {skill-path}
     4. Follow cross-references — read all files listed in {scope}.files

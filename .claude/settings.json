@@ -4,10 +4,10 @@
       "Bash(./scripts/run-plugin.sh:*)",
       "Bash(bash scripts/test.sh:*)",
       "mcp__plugin_blueprint_blueprint-research__*",
-      "mcp__plugin_ocd_ocd-navigator__*",
-      "mcp__plugin_ocd_ocd-friction__*",
-      "mcp__plugin_ocd_ocd-decisions__*",
-      "mcp__plugin_ocd_ocd-stash__*"
+      "mcp__plugin_ocd_navigator__*",
+      "mcp__plugin_ocd_friction__*",
+      "mcp__plugin_ocd_decisions__*",
+      "mcp__plugin_ocd_stash__*"
     ]
   },
   "hooks": {

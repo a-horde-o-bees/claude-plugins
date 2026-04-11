@@ -19,16 +19,51 @@ from pathlib import Path
 
 
 def get_plugin_root() -> Path:
-    """Resolve plugin root from CLAUDE_PLUGIN_ROOT or script location."""
+    """Resolve plugin root from CLAUDE_PLUGIN_ROOT with __file__ fallback.
+
+    Falls back to a deterministic walk from this module's own file
+    position: plugin/__init__.py always lives at plugins/<name>/plugin/
+    relative to the plugin root, so the walk is correct across dev,
+    install cache, and any other install location.
+    """
     env = os.environ.get("CLAUDE_PLUGIN_ROOT")
     if env:
-        return Path(env)
-    return Path(__file__).parent.parent
+        return Path(env).resolve()
+    return Path(__file__).resolve().parent.parent
 
 
 def get_project_dir() -> Path:
-    """Resolve project directory from environment or cwd."""
-    return Path(os.environ.get("CLAUDE_PROJECT_DIR", os.getcwd()))
+    """Resolve project directory from CLAUDE_PROJECT_DIR.
+
+    Raises when unset — project identity is not inferable from working
+    directory. Claude Code sets this at runtime; scripts/run-plugin.sh
+    exports it; tests set it explicitly in subprocess env or via
+    monkeypatch.
+    """
+    env = os.environ.get("CLAUDE_PROJECT_DIR")
+    if not env:
+        raise RuntimeError(
+            "CLAUDE_PROJECT_DIR is not set. Run under Claude Code, via "
+            "scripts/run-plugin.sh, or set the variable explicitly."
+        )
+    return Path(env).resolve()
+
+
+def get_plugin_data_dir() -> Path:
+    """Resolve plugin data directory from CLAUDE_PLUGIN_DATA.
+
+    Raises when unset — this is Claude Code-managed per-plugin persistent
+    storage (venv, cached state) that survives plugin version upgrades
+    and is not inferable from the install directory, the project, or
+    the working directory.
+    """
+    env = os.environ.get("CLAUDE_PLUGIN_DATA")
+    if not env:
+        raise RuntimeError(
+            "CLAUDE_PLUGIN_DATA is not set. Required for plugin venv and "
+            "persistent state — must run under Claude Code plugin context."
+        )
+    return Path(env).resolve()
 
 
 def get_claude_home() -> Path:
@@ -149,11 +184,17 @@ def compare_deployed(src: Path, dst: Path) -> str:
 
 
 def deploy_files(
-    src_dir: Path, dst_dir: Path, pattern: str = "*.md", force: bool = False,
+    src_dir: Path,
+    dst_dir: Path,
+    pattern: str = "*.md",
+    force: bool = False,
+    exclude: set[str] | None = None,
 ) -> list[dict]:
     """Deploy template files from src_dir to dst_dir.
 
-    Returns list of {name, before, after} dicts.
+    Returns list of {name, before, after} dicts. Files whose names are in
+    exclude are skipped entirely — used for source-only documentation that
+    should not deploy.
     """
     dst_dir.mkdir(parents=True, exist_ok=True)
     results = []
@@ -161,7 +202,10 @@ def deploy_files(
     if not src_dir.is_dir():
         return results
 
+    skip_names = exclude or set()
     for src in sorted(src_dir.glob(pattern)):
+        if src.name in skip_names:
+            continue
         if not src.is_file():
             continue
         dst = dst_dir / src.name
@@ -219,25 +263,40 @@ def format_section(header: str, items: list[dict], extra: list[dict] | None = No
 
 
 def format_bare_skill(plugin_name: str, skill_name: str) -> str:
-    """Render a skill header with no infrastructure."""
-    return f"/{plugin_name}-{skill_name}"
+    """Render a skill header with no infrastructure.
 
-
+    Claude Code namespaces plugin slash commands automatically
+    (`/<plugin>:<command>` on collision, `/<command>` when unique),
+    so the skill name is used verbatim without a plugin prefix.
+    """
+    del plugin_name  # retained for signature compatibility with init-skill branch
+    return f"/{skill_name}"
 
 
 # --- Rules ---
 
 
+RULES_SOURCE_ONLY = {"README.md", "architecture.md"}
+
+
 def deploy_rules(plugin_root: Path, project_dir: Path, force: bool = False) -> list[dict]:
-    """Deploy rule files. Returns [{path, before, after}] with relative deployed paths."""
+    """Deploy rule files. Returns [{path, before, after}] with relative deployed paths.
+
+    Rules deploy to .claude/rules/{plugin_name}/ per-plugin subfolder for
+    cross-plugin collision avoidance. Framework documentation (README.md,
+    architecture.md) is plugin-source-only and excluded from deployment.
+    """
+    plugin_name = plugin_root.name
+    deployed_rel = f".claude/rules/{plugin_name}"
     results = deploy_files(
         src_dir=plugin_root / "rules",
-        dst_dir=project_dir / ".claude" / "rules",
+        dst_dir=project_dir / ".claude" / "rules" / plugin_name,
         pattern="*.md",
         force=force,
+        exclude=RULES_SOURCE_ONLY,
     )
     for r in results:
-        r["path"] = f".claude/rules/{r.pop('name')}"
+        r["path"] = f"{deployed_rel}/{r.pop('name')}"
     return results
 
 
@@ -247,14 +306,18 @@ def get_rules_states(plugin_root: Path, project_dir: Path) -> list[dict]:
     if not src_dir.is_dir():
         return []
 
+    plugin_name = plugin_root.name
+    deployed_rel = f".claude/rules/{plugin_name}"
     results = []
     for src in sorted(src_dir.glob("*.md")):
+        if src.name in RULES_SOURCE_ONLY:
+            continue
         if not src.is_file():
             continue
-        dst = project_dir / ".claude" / "rules" / src.name
+        dst = project_dir / ".claude" / "rules" / plugin_name / src.name
         state = compare_deployed(src, dst)
         results.append({
-            "path": f".claude/rules/{src.name}",
+            "path": f"{deployed_rel}/{src.name}",
             "before": state,
             "after": state,
         })
@@ -287,6 +350,290 @@ def _discover_skills(plugin_root: Path) -> list[tuple[str, bool]]:
 _META_SKILLS = {"init", "status"}
 
 
+
+def _show_permissions_status(plugin_root: Path) -> None:
+    """Print permissions coverage for status display."""
+    recommended = _get_recommended_patterns(plugin_root)
+    if not recommended:
+        return
+
+    both = _get_both_settings()
+    print("Permissions")
+
+    for scope in ("project", "user"):
+        present = recommended & both[scope]["allow"]
+        print(f"  {scope}: {len(present)}/{len(recommended)} recommended patterns")
+
+    # Check for redundancy or gaps
+    proj_rec = recommended & both["project"]["allow"]
+    user_rec = recommended & both["user"]["allow"]
+    redundant = proj_rec & user_rec
+
+    if redundant:
+        print(f"  redundancy: {len(redundant)} patterns present in both scopes")
+        print(f"  action needed: /init --permissions — consolidate to one scope")
+    elif not proj_rec and not user_rec:
+        print(f"  action needed: /init --permissions — setup recommended patterns")
+    elif len(proj_rec) < len(recommended) and len(user_rec) < len(recommended):
+        print(f"  action needed: /init --permissions — incomplete at both scopes")
+
+
+def _merge_permissions(plugin_root: Path, scope: str) -> None:
+    """Merge recommended auto-approve patterns into settings.json.
+
+    Additive only — adds patterns not already present, never removes.
+    scope: 'project' or 'user'
+    """
+    ref_path = plugin_root / "templates" / "settings.json"
+    if not ref_path.exists():
+        print("  recommended-permissions.json not found")
+        return
+
+    ref = read_json(ref_path)
+    categories = ref.get("categories", {})
+
+    if scope == "project":
+        settings_path = get_project_dir() / ".claude" / "settings.json"
+    else:
+        settings_path = get_claude_home() / "settings.json"
+
+    settings = read_json(settings_path)
+    existing = set(settings.get("permissions", {}).get("allow", []))
+
+    added = []
+    for cat_name, cat in categories.items():
+        desc = cat.get("description", cat_name)
+        cat_added = []
+        for pattern in cat.get("patterns", []):
+            if pattern not in existing:
+                cat_added.append(pattern)
+        if cat_added:
+            added.append((desc, cat_added))
+
+    if not added:
+        print(f"  {scope} settings — all recommended patterns already present")
+        return
+
+    # Merge
+    if "permissions" not in settings:
+        settings["permissions"] = {}
+    if "allow" not in settings["permissions"]:
+        settings["permissions"]["allow"] = []
+
+    total = 0
+    for desc, patterns in added:
+        settings["permissions"]["allow"].extend(patterns)
+        total += len(patterns)
+
+    settings_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(settings_path, "w") as f:
+        json.dump(settings, f, indent=2)
+        f.write("\n")
+
+    print(f"  {scope} settings — added {total} patterns:")
+    for desc, patterns in added:
+        print(f"    {desc}: {len(patterns)} patterns")
+
+
+# --- Permissions analysis ---
+
+
+def _settings_path(scope: str) -> Path:
+    """Resolve settings.json path for a scope."""
+    if scope == "project":
+        return get_project_dir() / ".claude" / "settings.json"
+    return get_claude_home() / "settings.json"
+
+
+def _get_both_settings() -> dict:
+    """Read settings at both scopes.
+
+    Returns {scope: {path, allow, deny}} for project and user.
+    """
+    result = {}
+    for scope in ("project", "user"):
+        path = _settings_path(scope)
+        settings = read_json(path)
+        perms = settings.get("permissions", {})
+        result[scope] = {
+            "path": str(path),
+            "allow": set(perms.get("allow", [])),
+            "deny": set(perms.get("deny", [])),
+        }
+    return result
+
+
+def _get_recommended_patterns(plugin_root: Path) -> set[str]:
+    """Flat set of all template patterns across categories."""
+    ref = read_json(plugin_root / "templates" / "settings.json")
+    patterns = set()
+    for cat in ref.get("categories", {}).values():
+        patterns.update(cat.get("patterns", []))
+    return patterns
+
+
+def _get_recommended_by_category(plugin_root: Path) -> dict:
+    """Template patterns grouped by category with descriptions."""
+    ref = read_json(plugin_root / "templates" / "settings.json")
+    return ref.get("categories", {})
+
+
+def run_permissions_report() -> None:
+    """Structured report of both scopes' permission state."""
+    plugin_root = get_plugin_root()
+    categories = _get_recommended_by_category(plugin_root)
+    recommended = _get_recommended_patterns(plugin_root)
+    both = _get_both_settings()
+
+    print("Permissions Report")
+    print()
+
+    for scope in ("project", "user"):
+        s = both[scope]
+        present = recommended & s["allow"]
+        non_rec = s["allow"] - recommended
+
+        print(f"{scope} ({s['path']}):")
+        print(f"  status: {len(present)}/{len(recommended)} recommended patterns")
+
+        if len(present) < len(recommended):
+            for cat_name, cat in categories.items():
+                cat_patterns = set(cat.get("patterns", []))
+                cat_present = cat_patterns & s["allow"]
+                if len(cat_present) < len(cat_patterns):
+                    missing = sorted(cat_patterns - s["allow"])
+                    print(f"  {cat.get('description', cat_name)}: "
+                          f"{len(cat_present)}/{len(cat_patterns)}"
+                          f" — missing: {', '.join(missing)}")
+
+        if non_rec:
+            print(f"  non-recommended: {len(non_rec)} patterns")
+        print()
+
+    # Cross-scope analysis
+    proj_rec = recommended & both["project"]["allow"]
+    user_rec = recommended & both["user"]["allow"]
+    redundant = proj_rec & user_rec
+    if redundant:
+        print(f"cross-scope: {len(redundant)} recommended patterns present in both scopes")
+    else:
+        print("cross-scope: no redundancy")
+
+
+def run_permissions_deploy(scope: str) -> None:
+    """Deploy recommended patterns to exactly one scope."""
+    plugin_root = get_plugin_root()
+
+    print("Permissions Deploy")
+    print()
+    print(f"scope: {scope}")
+    _merge_permissions(plugin_root, scope)
+
+
+def run_permissions_analyze() -> None:
+    """Cross-scope health analysis."""
+    plugin_root = get_plugin_root()
+    recommended = _get_recommended_patterns(plugin_root)
+    both = _get_both_settings()
+
+    print("Permissions Analysis")
+    print()
+
+    needs_attention = False
+
+    # Redundancy
+    proj_rec = recommended & both["project"]["allow"]
+    user_rec = recommended & both["user"]["allow"]
+    redundant = sorted(proj_rec & user_rec)
+    print(f"redundancy:")
+    print(f"  count: {len(redundant)}")
+    if redundant:
+        needs_attention = True
+        for p in redundant:
+            print(f"    - {p}")
+    print()
+
+    # Broad patterns (non-recommended with wide wildcards)
+    broad = []
+    for scope in ("project", "user"):
+        non_rec = both[scope]["allow"] - recommended
+        for p in sorted(non_rec):
+            if p in ("*", "Bash(*)") or p.endswith(":*)") and p.count(":") == 1 and len(p.split("(")[0]) <= 4:
+                pass  # These are fine — short tool prefixes
+            if p in ("*", "Bash(*)"):
+                broad.append((p, scope))
+    print(f"broad-patterns:")
+    print(f"  count: {len(broad)}")
+    if broad:
+        needs_attention = True
+        for p, s in broad:
+            print(f"    - {p} (scope: {s})")
+    print()
+
+    # Contradictions
+    contradictions = []
+    for scope_a, scope_b in [("project", "user"), ("user", "project")]:
+        conflicts = both[scope_a]["allow"] & both[scope_b]["deny"]
+        for p in sorted(conflicts):
+            contradictions.append((p, f"allow in {scope_a}", f"deny in {scope_b}"))
+    print(f"contradictions:")
+    print(f"  count: {len(contradictions)}")
+    if contradictions:
+        needs_attention = True
+        for p, a, d in contradictions:
+            print(f"    - {p}: {a}, {d}")
+    print()
+
+    print(f"health: {'needs-attention' if needs_attention else 'clean'}")
+
+
+def run_permissions_clean(scope: str) -> None:
+    """Remove recommended patterns from scope that are redundant with the other scope.
+
+    Only removes patterns that exist in both the template AND the other
+    scope's allow list. Never touches non-recommended or deny patterns.
+    """
+    plugin_root = get_plugin_root()
+    recommended = _get_recommended_patterns(plugin_root)
+    both = _get_both_settings()
+    other_scope = "user" if scope == "project" else "project"
+
+    # Find recommended patterns in target scope that also exist at other scope
+    target_rec = recommended & both[scope]["allow"]
+    other_rec = recommended & both[other_scope]["allow"]
+    to_remove = sorted(target_rec & other_rec)
+
+    print("Permissions Clean")
+    print()
+    print(f"scope: {scope}")
+
+    if not to_remove:
+        print(f"  nothing to clean — no redundant recommended patterns")
+        return
+
+    # Read and modify settings
+    path = _settings_path(scope)
+    settings = read_json(path)
+    allow = settings.get("permissions", {}).get("allow", [])
+
+    remove_set = set(to_remove)
+    new_allow = [p for p in allow if p not in remove_set]
+    settings["permissions"]["allow"] = new_allow
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w") as f:
+        json.dump(settings, f, indent=2)
+        f.write("\n")
+
+    retained_rec = target_rec - remove_set
+    non_rec = both[scope]["allow"] - recommended
+    print(f"  removed: {len(to_remove)} patterns (redundant with {other_scope})")
+    if retained_rec:
+        print(f"  retained: {len(retained_rec)} recommended patterns (not in {other_scope})")
+    if non_rec:
+        print(f"  non-recommended retained: {len(non_rec)} patterns (not managed by plugin)")
+
+
 def run_init(force: bool = False) -> None:
     """Generic init: deploy rules, call skill init hooks. Prints unified output."""
     plugin_root = get_plugin_root()
@@ -307,9 +654,9 @@ def run_init(force: bool = False) -> None:
     for skill_name, has_init in skills:
         if not has_init:
             continue
-        mod = importlib.import_module(f"skills.{skill_name}._init")
-        result = mod.init(plugin_root, project_dir, force=force)
-        header = f"/{plugin_name}-{skill_name}"
+        mod = importlib.import_module(f"servers.{skill_name}._init")
+        result = mod.init(force=force)
+        header = f"/{skill_name}"
         for line in format_section(header, result["files"], result.get("extra")):
             print(line)
         print()
@@ -356,9 +703,9 @@ def run_status() -> None:
     for skill_name, has_init in skills:
         if not has_init:
             continue
-        mod = importlib.import_module(f"skills.{skill_name}._init")
-        result = mod.status(plugin_root, project_dir)
-        header = f"/{plugin_name}-{skill_name}"
+        mod = importlib.import_module(f"servers.{skill_name}._init")
+        result = mod.status()
+        header = f"/{skill_name}"
         for line in format_section(header, result["files"], result.get("extra")):
             print(line)
         print()
@@ -369,9 +716,9 @@ def run_status() -> None:
             continue
         print(format_bare_skill(plugin_name, skill_name))
 
-
-
-
+    # Permissions status
+    print()
+    _show_permissions_status(plugin_root)
 
 
 

@@ -1,16 +1,16 @@
 ---
-name: ocd-evaluate-documentation
+name: evaluate-documentation
 description: |
   Evaluate architecture.md and README.md files across conformity, coherence, and prior art. Checks nesting, progressive disclosure, and cross-document consistency.
 argument-hint: "--target <project | architecture | readme>"
 allowed-tools:
   - Read
   - Edit
-  - mcp__plugin_ocd_ocd-navigator__*
-  - mcp__plugin_ocd_ocd-governance__*
+  - mcp__plugin_ocd_navigator__*
+  - mcp__plugin_ocd_governance__*
 ---
 
-# /ocd-evaluate-documentation
+# /evaluate-documentation
 
 Evaluate project documentation files across three lenses in a single structured pass. Checks whether architecture.md and README.md files follow their conventions, maintain progressive disclosure across system boundaries, and mirror established documentation patterns.
 
@@ -34,7 +34,7 @@ Accepted arguments:
 
 ## Trigger
 
-User runs `/ocd-evaluate-documentation`
+User runs `/evaluate-documentation`
 
 ## Route
 
@@ -53,7 +53,7 @@ User runs `/ocd-evaluate-documentation`
 ## Workflow
 
 1. Spawn agent with documentation evaluation({file-list}):
-    1. Read `.claude/conventions/evaluation-triage.md`
+    1. Read `.claude/conventions/ocd/evaluation-triage.md`
     2. Read `${CLAUDE_PLUGIN_ROOT}/skills/evaluate-documentation/_lenses.md`
     3. Examine {file-list} — plan execution:
         1. Group files by system (root, each plugin, each subsystem)

@@ -1,34 +1,34 @@
 {
   "mcpServers": {
-    "ocd-navigator": {
+    "navigator": {
       "command": "${CLAUDE_PLUGIN_DATA}/venv/bin/python3",
       "args": ["${CLAUDE_PLUGIN_ROOT}/run.py", "servers.navigator"],
       "env": {
         "DB_PATH": ".claude/ocd/navigator/navigator.db"
       }
     },
-    "ocd-governance": {
+    "governance": {
       "command": "${CLAUDE_PLUGIN_DATA}/venv/bin/python3",
       "args": ["${CLAUDE_PLUGIN_ROOT}/run.py", "servers.governance"],
       "env": {
         "GOVERNANCE_DB": ".claude/ocd/governance/governance.db"
       }
     },
-    "ocd-friction": {
+    "friction": {
       "command": "${CLAUDE_PLUGIN_DATA}/venv/bin/python3",
       "args": ["${CLAUDE_PLUGIN_ROOT}/run.py", "servers.friction"],
       "env": {
         "FRICTION_DB": ".claude/ocd/friction/friction.db"
       }
     },
-    "ocd-decisions": {
+    "decisions": {
       "command": "${CLAUDE_PLUGIN_DATA}/venv/bin/python3",
       "args": ["${CLAUDE_PLUGIN_ROOT}/run.py", "servers.decisions"],
       "env": {
         "DECISIONS_DB": ".claude/ocd/decisions/decisions.db"
       }
     },
-    "ocd-stash": {
+    "stash": {
       "command": "${CLAUDE_PLUGIN_DATA}/venv/bin/python3",
       "args": ["${CLAUDE_PLUGIN_ROOT}/run.py", "servers.stash"],
       "env": {

@@ -64,7 +64,7 @@ def main() -> None:
     if db_path is None:
         return
 
-    from skills.governance import governance_match
+    from servers.governance import governance_match
 
     try:
         result = governance_match(str(db_path), [file_path])

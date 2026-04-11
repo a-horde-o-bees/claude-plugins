@@ -1,6 +1,6 @@
 # Description Guidelines
 
-Guidelines for writing path tree entry descriptions during `/ocd-navigator` scan/describe workflows.
+Guidelines for writing path tree entry descriptions during `/navigator` scan/describe workflows.
 
 ## Core Question
 

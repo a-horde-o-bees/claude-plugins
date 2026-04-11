@@ -1,5 +1,5 @@
 ---
-name: ocd-evaluate-governance
+name: evaluate-governance
 description: |
   Evaluate the rules and conventions governance chain level-by-level. A spawned agent walks foundations-first and reports findings with proposed fixes; the orchestrator classifies each finding against the shared triage criteria, auto-applies defects, and exits to user when observations need judgment. Convergence across waves is user-driven.
 argument-hint: "--target project"
@@ -7,11 +7,11 @@ allowed-tools:
   - Read
   - Edit
   - Bash
-  - mcp__plugin_ocd_ocd-navigator__*
-  - mcp__plugin_ocd_ocd-governance__*
+  - mcp__plugin_ocd_navigator__*
+  - mcp__plugin_ocd_governance__*
 ---
 
-# /ocd-evaluate-governance
+# /evaluate-governance
 
 Evaluate the governance dependency chain in a single holistic pass, gated by the orchestrator between levels. A spawned agent walks the chain foundations-first and reports findings after each level. The orchestrator classifies findings against the shared triage criteria, auto-applies defects to disk, and exits to user when any observation at the current level needs judgment — so foundation changes are picked up in a fresh session before the next wave.
 
@@ -41,20 +41,20 @@ This per-level gating prevents the agent from spending tokens on later levels ag
 
 ## Inputs
 
-- **Triage criteria** — `.claude/conventions/evaluation-triage.md`. Read by the orchestrator once at the start of Workflow; the spawned agent never reads this file. Governs the Defect / Observation classification the orchestrator applies to every returned finding.
+- **Triage criteria** — `.claude/conventions/ocd/evaluation-triage.md`. Read by the orchestrator once at the start of Workflow; the spawned agent never reads this file. Governs the Defect / Observation classification the orchestrator applies to every returned finding.
 - **Evaluation criteria** — `${CLAUDE_PLUGIN_ROOT}/skills/evaluate-governance/_evaluation-criteria.md`. Read by the spawned agent at the start of its execution. Defines the reading disposition, what to surface, graph-anomaly semantics, and the finding return format.
 
 ## Trigger
 
-User runs `/ocd-evaluate-governance --target project`.
+User runs `/evaluate-governance --target project`.
 
 ## Route
 
 1. If not --target: Exit to user — respond with skill description and argument-hint
 2. If {target} is not `project`: Exit to user — target must be `project`
 3. Verify working tree is clean — bash: `git status --porcelain`
-    1. If output is non-empty: Exit to user — working tree must be clean before evaluation; run `/ocd-commit` first so each convergence wave has a clean before/after diff
-4. Discover governance levels — mcp: `mcp__plugin_ocd_ocd-governance__governance_order`
+    1. If output is non-empty: Exit to user — working tree must be clean before evaluation; run `/commit` first so each convergence wave has a clean before/after diff
+4. Discover governance levels — mcp: `mcp__plugin_ocd_governance__governance_order`
 5. If result has any dangling references:
     1. Present the dangling references to the user — which file declares each missing governor
     2. Exit to user — fix the offending `governed_by` frontmatter and re-invoke; the evaluation cannot proceed against a graph with unresolved references
@@ -64,7 +64,7 @@ User runs `/ocd-evaluate-governance --target project`.
 
 ## Workflow
 
-1. Read `.claude/conventions/evaluation-triage.md`
+1. Read `.claude/conventions/ocd/evaluation-triage.md`
 2. {current-level} = 0
 3. {applied-defects} = empty list
 4. {level-files} = paths from {levels}[{current-level}]
@@ -89,7 +89,7 @@ User runs `/ocd-evaluate-governance --target project`.
     5. {applied-defects} = {applied-defects} + newly applied defects
     6. If any Observations exist in {response}:
         1. Present applied Defects and outstanding Observations to the user, grouped by file, each with full context from the finding
-        2. Exit to user — "Observations at level {current-level} need user judgment. Apply or reject each, then re-invoke `/ocd-evaluate-governance` in a fresh session so the corrected governance loads before the next wave."
+        2. Exit to user — "Observations at level {current-level} need user judgment. Apply or reject each, then re-invoke `/evaluate-governance` in a fresh session so the corrected governance loads before the next wave."
     7. {current-level} = {current-level} + 1
     8. If {current-level} >= count of {levels}:
         1. Break loop — all levels complete
@@ -115,5 +115,5 @@ User runs `/ocd-evaluate-governance --target project`.
 - Defects are deterministic and intent-preserving by definition. Auto-applying them cannot invalidate findings on deeper levels, so the spawned agent's cached content from prior levels remains semantically valid for the next level's evaluation after the orchestrator applies fixes.
 - Observations may change what governance files prescribe. After any Observation is applied to a governance file, Claude Code's session-cached rules are stale — a fresh session is required before re-evaluation can see the corrected chain. The orchestrator exits to user whenever Observations appear at the current level to enforce this.
 - Graph anomalies stop traversal immediately. The orchestrator handles them inline with the user, corrects the frontmatter, re-queries `governance_order` to verify, and restarts the workflow from Level 0. Partial findings accumulated before the anomaly are presented for user reference but not auto-applied — the frontmatter correction may have changed what counts as a valid finding.
-- `/ocd-commit` precondition gives each wave a clean before/after diff so the user can audit exactly what each convergence pass changed.
+- `/commit` precondition gives each wave a clean before/after diff so the user can audit exactly what each convergence pass changed.
 - Convergence across multiple waves is user-driven. The skill is invoked repeatedly in fresh sessions until a pass produces no governance-file changes.

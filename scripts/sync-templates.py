@@ -18,56 +18,50 @@ def discover_mappings() -> list[tuple[Path, Path]]:
     """Build (template, deployed) pairs from project structure.
 
     Scans both template and deployed directories to discover all files.
-    Rules: plugins/<plugin>/rules/<name>.md ↔ .claude/rules/<name>.md
-    Conventions: plugins/<plugin>/conventions/<name> ↔ .claude/conventions/<name>
+    Rules: plugins/<plugin>/rules/<name>.md ↔ .claude/rules/<plugin>/<name>.md
+    Conventions: plugins/<plugin>/conventions/<name>.md ↔ .claude/conventions/<plugin>/<name>.md
+
+    Plugin-rules and plugin-conventions README.md and architecture.md are
+    source-only documentation and are excluded from deployment.
     """
     mappings = []
     plugins_dir = PROJECT_ROOT / "plugins"
+    source_only = {"README.md", "architecture.md"}
+
+    def collect(
+        source_dir: Path,
+        deployed_dir: Path,
+    ) -> None:
+        seen: set[str] = set()
+
+        # From templates
+        if source_dir.is_dir():
+            for template in sorted(source_dir.glob("*.md")):
+                if template.name in source_only:
+                    continue
+                deployed = deployed_dir / template.name
+                mappings.append((template, deployed))
+                seen.add(template.name)
+
+        # From deployed (catch new files without templates)
+        if source_dir.is_dir() and deployed_dir.is_dir():
+            for deployed in sorted(deployed_dir.rglob("*.md")):
+                if deployed.name not in seen:
+                    template = source_dir / deployed.name
+                    mappings.append((template, deployed))
 
     for plugin_dir in sorted(plugins_dir.iterdir()):
         if not plugin_dir.is_dir():
             continue
 
-        rules_dir = plugin_dir / "rules"
-        conv_dir = plugin_dir / "conventions"
-
-        # Rules: template ↔ deployed
-        deployed_rules = PROJECT_ROOT / ".claude" / "rules"
-        seen_rules: set[str] = set()
-
-        # From templates
-        if rules_dir.is_dir():
-            for template in sorted(rules_dir.glob("*.md")):
-                deployed = deployed_rules / template.name
-                mappings.append((template, deployed))
-                seen_rules.add(template.name)
-
-        # From deployed (catch new rules without templates)
-        if rules_dir.is_dir() and deployed_rules.is_dir():
-            for deployed in sorted(deployed_rules.glob("*.md")):
-                if deployed.name not in seen_rules:
-                    template = rules_dir / deployed.name
-                    mappings.append((template, deployed))
-
-        # Conventions: template ↔ deployed
-        deployed_conv = PROJECT_ROOT / ".claude" / "conventions"
-        seen_conv: set[str] = set()
-
-        # From templates
-        if conv_dir.is_dir():
-            for template in sorted(conv_dir.iterdir()):
-                if not template.is_file():
-                    continue
-                deployed = deployed_conv / template.name
-                mappings.append((template, deployed))
-                seen_conv.add(template.name)
-
-        # From deployed (catch new conventions without templates)
-        if conv_dir.is_dir() and deployed_conv.is_dir():
-            for deployed in sorted(deployed_conv.glob("*.md")):
-                if deployed.name not in seen_conv:
-                    template = conv_dir / deployed.name
-                    mappings.append((template, deployed))
+        collect(
+            plugin_dir / "rules",
+            PROJECT_ROOT / ".claude" / "rules" / plugin_dir.name,
+        )
+        collect(
+            plugin_dir / "conventions",
+            PROJECT_ROOT / ".claude" / "conventions" / plugin_dir.name,
+        )
 
     return mappings
 

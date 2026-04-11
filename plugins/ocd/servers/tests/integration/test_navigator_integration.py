@@ -15,9 +15,9 @@ PLUGIN_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 if str(PLUGIN_ROOT) not in sys.path:
     sys.path.insert(0, str(PLUGIN_ROOT))
 
-from skills.navigator._db import get_connection, SCHEMA
-import skills.navigator as nav_skill
-from servers import navigator as nav_server
+from servers.navigator._db import get_connection, SCHEMA
+import servers.navigator as nav_skill
+import servers.navigator.__main__ as nav_server
 
 
 @pytest.fixture

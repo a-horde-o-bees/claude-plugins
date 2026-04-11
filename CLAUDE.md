@@ -10,7 +10,7 @@ When user asks to "checkpoint" progress: skill: `/checkpoint`
 
 Two ways to exercise a skill during development:
 
-- **Real invocation** — run via slash command (e.g., `/ocd-evaluate-governance`). Goes through the plugin cache. Claude Code loads everything under `plugins/<plugin>/` at session start — `SKILL.md` and every supporting file (component blocks, prompt fragments, anything in the skill directory). Edits are invisible to real invocations until `/checkpoint` refreshes the cache. Use for end-to-end orchestration verification.
+- **Real invocation** — run via slash command (e.g., `/evaluate-governance`). Goes through the plugin cache. Claude Code loads everything under `plugins/<plugin>/` at session start — `SKILL.md` and every supporting file (component blocks, prompt fragments, anything in the skill directory). Edits are invisible to real invocations until `/checkpoint` refreshes the cache. Use for end-to-end orchestration verification.
 - **Ad-hoc** — spawn a general-purpose agent via the Task tool with an explicit prompt that tells it to Read the skill's files by absolute path. Bypasses the cache — the agent reads from disk, so the latest edits propagate immediately. Use for iterating on component-file content (criteria, prompt fragments, shared instruction blocks) without the `/checkpoint` cycle between edits.
 
 Ad-hoc validates instruction content; real invocation validates orchestration. Before closing out skill work, verify via real invocation after a `/checkpoint`.
@@ -31,7 +31,7 @@ This is the primary source for patterns, supported fields, and examples. Fetch t
 
 ## Editing Rules and Conventions
 
-Edit deployed copies in `.claude/rules/` and `.claude/conventions/`, never templates in `plugins/`. `/ocd-commit` runs `scripts/sync-templates.py` to sync deployed content back to templates before committing. A guard hook blocks direct template edits.
+Edit deployed copies in `.claude/rules/` and `.claude/conventions/`, never templates in `plugins/`. `/commit` runs `scripts/sync-templates.py` to sync deployed content back to templates before committing. A guard hook blocks direct template edits.
 
 ## Adding Python Dependencies
 

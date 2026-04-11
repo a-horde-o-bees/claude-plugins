@@ -18,7 +18,7 @@ Rules are passive context — the agent reads and follows them as part of its op
 ---
 includes: "*"
 governed_by:
-  - .claude/rules/ocd-design-principles.md
+  - .claude/rules/ocd/design-principles.md
 ---
 ```
 

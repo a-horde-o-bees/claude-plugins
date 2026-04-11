@@ -55,14 +55,14 @@ Deny rules take precedence over allow rules. File paths resolve against allowed 
 
 ## Rules
 
-Template files in `rules/` deploy to `.claude/rules/` via `/ocd-init`. Users own the deployed copies — they can inspect, edit, or delete them.
+Template files in `rules/` deploy to `.claude/rules/` via `/init`. Users own the deployed copies — they can inspect, edit, or delete them.
 
 | Rule | Scope |
 |------|-------|
-| `ocd-design-principles.md` | Foundational principles governing all artifacts and agent behavior |
-| `ocd-workflow.md` | Working directory, agents, testing — execution discipline for working in this project |
-| `ocd-system-documentation.md` | README and architecture.md requirements per system, with nesting and currency rules |
-| `ocd-process-flow-notation.md` | Structured programming notation for skill workflows |
+| `design-principles.md` | Foundational principles governing all artifacts and agent behavior |
+| `workflow.md` | Working directory, agents, testing — execution discipline for working in this project |
+| `system-documentation.md` | README and architecture.md requirements per system, with nesting and currency rules |
+| `process-flow-notation.md` | Structured programming notation for skill workflows |
 
 Rules use the template-deployed model: templates in `rules/` are the source during plugin development; deployed copies in `.claude/rules/` are the product. `scripts/sync-templates.py` syncs deployed back to templates before commits.
 
@@ -123,16 +123,16 @@ Agent-facing tools exposed over the Model Context Protocol. Each server lives as
 
 | Server | Entry point | Role |
 |--------|-------------|------|
-| `ocd-navigator` | `servers/navigator.py` | Project structure index, governance discovery, reference mapping. Delegates to `skills/navigator` for business logic. |
-| `ocd-friction` | `servers/friction.py` | Friction log capture and triage. Reads and writes `.claude/ocd/friction/*.md` files. |
-| `ocd-decisions` | `servers/decisions.py` | Decisions index management. Reads and writes `decisions.md` and `decisions/*.md` at the project root. |
-| `ocd-stash` | `servers/stash.py` | Stash holding area for ideas, future work, and unaddressed observations. Reads and writes `.claude/stash/stash.md` per project with fallback to `~/.claude/stash/stash.md` for unattached entries. |
+| `navigator` | `servers/navigator/__main__.py` | Project structure index, governance discovery, reference mapping. Delegates to `servers/navigator` package for business logic. |
+| `friction` | `servers/friction/__main__.py` | Friction log capture and triage. Reads and writes `.claude/ocd/friction/*.md` files. |
+| `decisions` | `servers/decisions/__main__.py` | Decisions index management. Reads and writes `decisions.md` and `decisions/*.md` at the project root. |
+| `stash` | `servers/stash/__main__.py` | Stash holding area for ideas, future work, and unaddressed observations. Reads and writes `.claude/stash/stash.md` per project with fallback to `~/.claude/stash/stash.md` for unattached entries. |
 
 Server modules are thin presentation layers: tool handlers validate, delegate to a domain module, and serialize the result. Business logic for standalone servers without an accompanying skill package lives alongside the server as `servers/_{domain}_store.py` — the internal module pattern used for `decisions` and `stash`.
 
 Server-level `instructions` fields publish when to reach for each server's tools; individual tool descriptions cover per-tool semantics.
 
-`servers/_helpers.py` bootstraps `CLAUDE_PROJECT_DIR` from `Path.cwd().resolve()` at import time when the variable is missing. Claude Code launches MCP subprocesses with cwd set to the project root but does not propagate the env var and does not expand variable references inside `.mcp.json` env block values. Every server module imports `_helpers` for `_ok`/`_err`, so the bootstrap fires at process start. This is the only cwd-derived project-directory source in the codebase; hooks, CLI, and tests must set `CLAUDE_PROJECT_DIR` explicitly. See `.claude/conventions/mcp-server.md` *MCP Subprocess Environment Bootstrap* for the full rationale.
+`servers/_helpers.py` bootstraps `CLAUDE_PROJECT_DIR` from `Path.cwd().resolve()` at import time when the variable is missing. Claude Code launches MCP subprocesses with cwd set to the project root but does not propagate the env var and does not expand variable references inside `.mcp.json` env block values. Every server module imports `_helpers` for `_ok`/`_err`, so the bootstrap fires at process start. This is the only cwd-derived project-directory source in the codebase; hooks, CLI, and tests must set `CLAUDE_PROJECT_DIR` explicitly. See `.claude/conventions/ocd/mcp-server.md` *MCP Subprocess Environment Bootstrap* for the full rationale.
 
 ## Plugin Framework
 
@@ -154,7 +154,7 @@ python3 run.py hooks.auto_approval          # Hook invocation
 python3 run.py hooks.convention_gate        # Hook invocation
 python3 run.py plugin init [--force]        # Init orchestration
 python3 run.py plugin status                # Status reporting
-python3 run.py skills.navigator scan .     # Navigator CLI (operational)
+python3 run.py servers.navigator.cli scan .     # Navigator CLI (operational)
 ```
 
 Hooks are invoked by Claude Code via `hooks.json` configuration. Navigator agent-facing operations are exposed via MCP server (`servers/navigator.py`); CLI retained for operational commands (init, scan, governance-load). No shebangs or execute permissions — all scripts run via `python3` interpreter prefix.

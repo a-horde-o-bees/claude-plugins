@@ -1,8 +1,8 @@
 ---
 includes: "*/evaluate-*/SKILL.md"
 governed_by:
-  - .claude/rules/ocd-design-principles.md
-  - .claude/conventions/skill-md.md
+  - .claude/rules/ocd/design-principles.md
+  - .claude/conventions/ocd/skill-md.md
 ---
 
 # Evaluation Skill Conventions

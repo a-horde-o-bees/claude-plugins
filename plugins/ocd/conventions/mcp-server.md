@@ -1,16 +1,13 @@
 ---
-includes: "**/servers/*.py"
-excludes:
-  - "__init__.py"
-  - "_helpers.py"
+includes: "**/servers/*/__main__.py"
 governed_by:
-  - .claude/rules/ocd-design-principles.md
-  - .claude/conventions/python.md
+  - .claude/rules/ocd/design-principles.md
+  - .claude/conventions/ocd/python.md
 ---
 
 # MCP Server Conventions
 
-Tool design, server architecture, and data conventions for MCP servers exposed as plugin tools via FastMCP. Applies to server files in `servers/` directories — not to package infrastructure (`__init__.py`, `_helpers.py`).
+Tool design, server architecture, and data conventions for MCP servers exposed as plugin tools via FastMCP. Each server is a Python package under `servers/`; its MCP entry point is `__main__.py`. Library code and data-layer modules (`__init__.py`, `_db.py`, `_helpers.py`, etc.) in the same package are governed by general Python conventions, not this one.
 
 ## Tool Naming
 

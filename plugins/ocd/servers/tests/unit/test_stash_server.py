@@ -12,7 +12,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-import servers.stash as server
+import servers.stash.__main__ as server
 
 
 # ---------------------------------------------------------------------------
@@ -43,7 +43,7 @@ def mock_user_db(tmp_path, monkeypatch):
 
 class TestDelegation:
     def test_add_delegates_to_skill(self, mock_project_db):
-        with patch("servers.stash.stash_skill") as mock_skill:
+        with patch("servers.stash.__main__.stash_skill") as mock_skill:
             mock_skill.stash_add.return_value = {"id": 1, "summary": "test"}
             result = server.stash_add(summary="test", scope="project")
             mock_skill.stash_add.assert_called_once_with(
@@ -52,7 +52,7 @@ class TestDelegation:
             assert '"id": 1' in result
 
     def test_list_delegates_to_skill(self, mock_project_db):
-        with patch("servers.stash.stash_skill") as mock_skill:
+        with patch("servers.stash.__main__.stash_skill") as mock_skill:
             mock_skill.stash_list.return_value = {"total": 0, "entries": []}
             result = server.stash_list(scope="project")
             mock_skill.stash_list.assert_called_once_with(
@@ -61,7 +61,7 @@ class TestDelegation:
             assert '"total": 0' in result
 
     def test_get_delegates_to_skill(self, mock_project_db):
-        with patch("servers.stash.stash_skill") as mock_skill:
+        with patch("servers.stash.__main__.stash_skill") as mock_skill:
             mock_skill.stash_get.return_value = {"entries": []}
             result = server.stash_get(ids=[1], scope="project")
             mock_skill.stash_get.assert_called_once_with(
@@ -70,7 +70,7 @@ class TestDelegation:
             assert '"entries": []' in result
 
     def test_remove_delegates_to_skill(self, mock_project_db):
-        with patch("servers.stash.stash_skill") as mock_skill:
+        with patch("servers.stash.__main__.stash_skill") as mock_skill:
             mock_skill.stash_remove.return_value = {"removed": {"id": 1}, "remaining": 0}
             result = server.stash_remove(id=1, scope="project")
             mock_skill.stash_remove.assert_called_once_with(
@@ -79,7 +79,7 @@ class TestDelegation:
             assert '"remaining": 0' in result
 
     def test_user_scope_resolves_user_db(self, mock_user_db):
-        with patch("servers.stash.stash_skill") as mock_skill:
+        with patch("servers.stash.__main__.stash_skill") as mock_skill:
             mock_skill.stash_list.return_value = {"total": 0, "entries": []}
             server.stash_list(scope="user")
             mock_skill.stash_list.assert_called_once_with(
@@ -94,7 +94,7 @@ class TestDelegation:
 
 class TestErrorWrapping:
     def test_skill_exception_wrapped_as_err(self, mock_project_db):
-        with patch("servers.stash.stash_skill") as mock_skill:
+        with patch("servers.stash.__main__.stash_skill") as mock_skill:
             mock_skill.stash_add.side_effect = RuntimeError("db locked")
             result = server.stash_add(summary="test", scope="project")
             assert '"error"' in result
@@ -111,7 +111,7 @@ class TestCrossDbPromotion:
         self, mock_project_db, mock_user_db
     ):
         """When entry is not in project DB but exists in user DB, promote it."""
-        with patch("servers.stash.stash_skill") as mock_skill:
+        with patch("servers.stash.__main__.stash_skill") as mock_skill:
             # First call: stash_update on project DB raises (not found)
             mock_skill.stash_update.side_effect = ValueError("not found")
 
@@ -157,7 +157,7 @@ class TestCrossDbPromotion:
         self, mock_project_db, mock_user_db
     ):
         """When entry is not found in either scope, return error."""
-        with patch("servers.stash.stash_skill") as mock_skill:
+        with patch("servers.stash.__main__.stash_skill") as mock_skill:
             mock_skill.stash_update.side_effect = ValueError("not found")
             mock_skill.stash_get.return_value = {"entries": []}
 
@@ -169,7 +169,7 @@ class TestCrossDbPromotion:
         self, mock_project_db, mock_user_db
     ):
         """When entry is found in the target scope, no cross-DB logic runs."""
-        with patch("servers.stash.stash_skill") as mock_skill:
+        with patch("servers.stash.__main__.stash_skill") as mock_skill:
             mock_skill.stash_update.return_value = {
                 "id": 1, "summary": "updated", "has_detail": False,
                 "created_at": "t1", "updated_at": "t2",
