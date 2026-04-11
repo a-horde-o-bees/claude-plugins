@@ -10,17 +10,16 @@ Files are loaded as system context visible to the agent throughout the session. 
 
 ## Governance Registration
 
-Although rules auto-load through Claude Code's built-in mechanism, they are also registered in the navigator's governance database with `auto_loaded = 1`. This registration enables:
+Although rules auto-load through Claude Code's built-in mechanism, they are also registered in the navigator's `rules` table by path. Registration enables:
 
-- **`governance_match`** — can include rules when `include_rules=True` (used during governance evaluation). By default, rules are excluded from `governance_match` results since they're already in context.
-- **`governance_order`** — rules participate in topological ordering. Since rules are foundational (other governance entries build on them via `governed_by`), they appear at level 0.
-- **`governance_unclassified`** — rules with `matches: "*"` provide universal coverage, so files matching rules aren't flagged as unclassified.
+- **`governance_match`** — can include all registered rules when `include_rules=True` (used during governance evaluation). By default, rules are excluded from `governance_match` results since they're already in agent context.
+- **`governance_unclassified`** — rule files are excluded from the unclassified report so they aren't flagged as missing convention coverage.
+
+The `rules` table stores only the entry path and git_hash. Rules have no pattern columns because they apply universally — they are agent guidance, not file-type standards.
 
 ## Pattern Semantics
 
-Rules typically use `matches: "*"` — they apply universally regardless of which file is being worked on. This reflects their nature as behavioral guidance rather than file-specific content standards.
-
-Specific patterns on rules are permitted but uncommon. A rule with `matches: "*.py"` would only fire when Python files are the target, which is usually a convention's job. The distinction: rules with specific patterns still auto-load (the agent always sees them), but the pattern communicates scope of applicability.
+Rules carry `matches: "*"` frontmatter for consistency with the governance file format, but the pattern is not stored or evaluated — Claude Code auto-loads every rule file regardless, and `governance_match` with `include_rules=True` returns whole-rule inclusion rather than per-pattern matching. File-type scoping is a convention concern, not a rule concern; guidance that should apply only to specific file types belongs in a convention.
 
 ## Template and Deployment
 

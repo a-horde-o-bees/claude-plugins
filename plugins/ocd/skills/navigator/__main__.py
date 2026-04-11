@@ -553,10 +553,10 @@ def build_parser() -> argparse.ArgumentParser:
         help="Load governance data from frontmatter in rules and conventions",
         description=(
             "Scan .claude/rules/ and .claude/conventions/ for files with\n"
-            "governance frontmatter. Populates governance table with patterns\n"
-            "and translates to GLOB-ready patterns for efficient matching.\n"
+            "governance frontmatter. Populates the rules and conventions\n"
+            "tables with include and exclude patterns for matching.\n"
             "\n"
-            "Idempotent — skips when governance is current."
+            "Idempotent — skips unchanged files via git_hash comparison."
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
         parents=[db_parent],

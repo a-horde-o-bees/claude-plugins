@@ -1,49 +1,42 @@
 # Conventions Architecture
 
-How the convention system discovers, matches, and loads file-type-specific guidance.
+How the convention system discovers, matches, and delivers file-type-specific guidance.
 
 ## Governance Infrastructure
 
-Conventions and rules share a governance infrastructure implemented in the navigator skill package. The navigator database stores governance entries, their patterns, and their dependency relationships. Three database tables support this:
+Conventions and rules share a governance infrastructure implemented in the navigator skill package. The navigator database separates the two along domain lines, with conventions normalized into include/exclude pattern tables:
 
-- **`governance`** — each entry's path, `matches` pattern, optional `excludes` pattern, and auto-loaded flag (rules = 1, conventions = 0)
-- **`governs`** — directed edges from governor to governed, derived from `governed_by` frontmatter. Used by `governance_order` for topological evaluation ordering
+- **`conventions`** — one row per convention file: `entry_path`, raw `matches` and `excludes` text, and `git_hash`
+- **`convention_includes`** — one row per normalized include pattern, keyed by `entry_path` (CASCADE on delete)
+- **`convention_excludes`** — one row per normalized exclude pattern, keyed by `entry_path` (CASCADE on delete)
+- **`rules`** — one row per rule file: `entry_path` and `git_hash`. Rules carry no patterns because they apply universally
 - **`entries`** — the navigator's general file index; governance files appear here like any other file
 
-## Registration Flow
+Patterns are stored exactly as written in frontmatter. The runtime performs matching through the custom `path_match(path, pattern)` SQL function, registered on every connection and delegating to `matches_pattern` for basename, `**` prefix, and full-path modes.
 
-`governance_load` scans `.claude/rules/` and `.claude/conventions/` for markdown files with governance frontmatter. For each file found:
+## Self-Refresh
 
-1. Parse `matches`, `excludes`, and `governed_by` from YAML frontmatter
-2. Insert or update the governance table with the file's path, patterns, and auto-loaded flag
-3. For each `governed_by` entry, insert a `governs` edge (governor → governed)
+Every governance query calls `_ensure_current` first, which reconciles the `rules` and `conventions` tables against disk state. Reconciliation compares each file's current `git_hash` against the stored hash and re-parses only changed files. Deleted files are removed; new files are inserted with their include and exclude patterns. This means callers never need to run a separate load step — queries always see current disk state.
 
-Registration is idempotent — safe to rerun. Called during `/ocd-init` and can be triggered manually via the navigator CLI's `governance-load` command.
+`governance_load` is exposed as a standalone function for initialization flows and for the navigator CLI's `governance-load` command, but it runs the same reconciliation logic as `_ensure_current`.
 
 ## Pattern Matching
 
-`governance_match` is the runtime entry point. Given a list of file paths, it returns which conventions apply.
+`governance_match` takes a list of file paths and returns the conventions that apply to each. The query joins files against `convention_includes` via `path_match`, anti-joins against `convention_excludes`, and groups results by file.
 
-For each governance entry and each input file:
-
-1. Normalize the governance entry's `matches` field into a list of fnmatch patterns
-2. Test the file's **basename** against each pattern, and also the file's **full project-relative path**. Either matching is sufficient
-3. If matched, check the `excludes` patterns the same way. If excluded, skip
-4. Rules (auto_loaded = 1) are filtered out by default since they're already in agent context. Pass `include_rules=True` for governance evaluation workflows
+Rules are excluded from the match result by default because they are already in agent context. Passing `include_rules=True` adds every registered rule path to every file's match list — used by governance evaluation workflows where rules themselves are the evaluation target.
 
 The return value includes per-file matches and a deduplicated `conventions` list across all files.
 
-## Loading Discipline
+## Runtime Loading
 
-Conventions are not auto-loaded. The agent calls `governance_match` before creating or modifying files, reads the returned conventions, and follows them. This on-demand loading keeps session context focused — only guidance relevant to the current work is loaded.
+Conventions are not auto-loaded. A convention gate hook (PreToolUse on Read/Edit/Write) surfaces applicable conventions via `additionalContext` on every file-touching tool call. Read invocations receive the conventions as informational context; Edit and Write invocations receive a directive to refactor immediately if the file does not conform.
 
-The `governance_match` tool accepts batch input (multiple file paths). The agent should batch all target files in one call rather than calling per-file to avoid redundant lookups.
+The hook calls `governance_match` with the target file path and injects the matched convention paths into the tool-call context, so the agent sees exactly the governance that applies to the file it is about to touch — no manual lookup, no stale context across file boundaries.
 
 ## Evaluation Ordering
 
-`governance_order` returns a topological sort of all governance entries based on `governed_by` relationships. Level 0 entries have no governors; level N entries are governed only by levels 0..N-1. This ordering determines which conventions to evaluate first when checking conformity across the governance chain.
-
-`governance_graph` returns the raw dependency edges, roots, and leaves for visualization.
+The `governed_by` frontmatter field declares which governance entries a convention builds on. It is consumed at evaluation time by skills that walk the governance dependency chain root-first — it is not consumed by runtime convention loading.
 
 ## Template and Deployment
 
@@ -54,6 +47,6 @@ Convention files exist in two locations:
 
 Edit deployed copies. The `sync-templates.py` script propagates deployed → template changes before commits. `/ocd-init` deploys templates to the project.
 
-## Scan-Time Governance
+## Unclassified Coverage
 
-During filesystem scans, the scanner also populates the `governs` table with file-to-governance relationships. For each non-governance file on disk, the scanner checks which governance entries match it and records the edge. This enables `governance_unclassified` to report files with no governance coverage.
+`governance_unclassified` reports file entries that no convention covers. The query excludes files registered as rules or conventions (those are governance files, not governed files), then filters out files matched by any `convention_includes` pattern that is not also blocked by a `convention_excludes` pattern. Results are grouped by file extension so gaps are actionable at the file-type level.
