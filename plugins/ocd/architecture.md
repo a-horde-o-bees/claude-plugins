@@ -32,10 +32,6 @@ SQLite databases (.claude/ocd/)
 
 ## Hooks
 
-### SessionStart: Plugin Root Persistence
-
-`hooks/session_start.py` — writes `CLAUDE_PLUGIN_ROOT` to `.claude/ocd/.plugin_root` so agent Bash commands can resolve the plugin directory. Hook execution context provides the environment variable; agent Bash commands do not.
-
 ### PreToolUse: Permission Enforcement
 
 `hooks/auto_approval.py` — intercepts Bash, Edit, and Write tool calls. Two evaluation layers in fixed order:
@@ -136,6 +132,8 @@ Server modules are thin presentation layers: tool handlers validate, delegate to
 
 Server-level `instructions` fields publish when to reach for each server's tools; individual tool descriptions cover per-tool semantics.
 
+`servers/_helpers.py` bootstraps `CLAUDE_PROJECT_DIR` from `Path.cwd().resolve()` at import time when the variable is missing. Claude Code launches MCP subprocesses with cwd set to the project root but does not propagate the env var and does not expand variable references inside `.mcp.json` env block values. Every server module imports `_helpers` for `_ok`/`_err`, so the bootstrap fires at process start. This is the only cwd-derived project-directory source in the codebase; hooks, CLI, and tests must set `CLAUDE_PROJECT_DIR` explicitly. See `.claude/conventions/mcp-server.md` *MCP Subprocess Environment Bootstrap* for the full rationale.
+
 ## Plugin Framework
 
 `plugin/__init__.py` — generic deployment, formatting, skill discovery, and orchestration shared across plugins. Propagated identically to every plugin via pre-commit hook.
@@ -152,8 +150,8 @@ Key operations:
 All execution flows through `run.py`, which adds the plugin root to `sys.path` and runs the target module via `runpy.run_module`:
 
 ```
-python3 run.py hooks.session_start          # Hook invocation
 python3 run.py hooks.auto_approval          # Hook invocation
+python3 run.py hooks.convention_gate        # Hook invocation
 python3 run.py plugin init [--force]        # Init orchestration
 python3 run.py plugin status                # Status reporting
 python3 run.py skills.navigator scan .     # Navigator CLI (operational)
@@ -171,9 +169,10 @@ Navigator database uses WAL mode with 5-second busy timeout for concurrent acces
 plugins/ocd/
 ├── .claude-plugin/plugin.json   — plugin manifest (name, version, license)
 ├── hooks/
-│   ├── hooks.json               — hook registration (SessionStart, PreToolUse)
-│   ├── session_start.py         — persist plugin root for agent access
-│   └── auto_approval.py         — permission enforcement (hardcoded + dynamic)
+│   ├── hooks.json               — hook registration (SessionStart install_deps, PreToolUse)
+│   ├── install_deps.sh          — install/refresh plugin venv dependencies
+│   ├── auto_approval.py         — permission enforcement (hardcoded + dynamic)
+│   └── convention_gate.py       — surface applicable conventions on Read/Edit/Write
 ├── rules/                       — rule templates (source of truth during development)
 ├── conventions/                 — convention templates (deployed to .claude/conventions/)
 ├── templates/

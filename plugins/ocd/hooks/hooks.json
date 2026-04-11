@@ -9,15 +9,6 @@
             "timeout": 30
           }
         ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/run.py hooks.session_start",
-            "timeout": 10
-          }
-        ]
       }
     ],
     "PreToolUse": [

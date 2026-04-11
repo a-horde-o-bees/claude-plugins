@@ -147,16 +147,6 @@ class TestHookInvocation:
         assert result.returncode == 0
         assert result.stdout == ""
 
-    def test_session_start_writes_plugin_root(self, tmp_path: Path) -> None:
-        result = run(
-            "hooks.session_start",
-            env={"CLAUDE_PROJECT_DIR": str(tmp_path)},
-        )
-        assert result.returncode == 0, result.stderr
-        plugin_root_file = tmp_path / ".claude" / "ocd" / ".plugin_root"
-        assert plugin_root_file.exists()
-        assert plugin_root_file.read_text() == str(PLUGIN_ROOT)
-
     def _setup_governance(self, tmp_path: Path, monkeypatch) -> None:
         """Shared governance setup for convention gate tests."""
         from skills.navigator._db import init_db

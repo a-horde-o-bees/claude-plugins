@@ -123,7 +123,7 @@ def process_path(db_path: str, target_path: str) -> str:
 
 ### Hook Scripts
 
-Hook scripts are standalone modules invoked directly by `hooks.json` configuration — no package wrapping, no `__init__.py` or `__main__.py` facade. Each hook script is a single `.py` file with its own entry point (e.g., `session_start.py`, `auto_approval.py`) that Claude Code invokes via interpreter prefix.
+Hook scripts are standalone modules invoked directly by `hooks.json` configuration — no package wrapping, no `__init__.py` or `__main__.py` facade. Each hook script is a single `.py` file with its own entry point (e.g., `auto_approval.py`, `convention_gate.py`) that Claude Code invokes via interpreter prefix.
 
 ### Script Invocation
 
