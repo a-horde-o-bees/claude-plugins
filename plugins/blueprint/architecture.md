@@ -11,7 +11,7 @@ The research database supports the `/blueprint-research` skill across its cycle-
 ```
 Agent instructions (SKILL.md, phase references)
     ↓ MCP tool calls
-MCP server (servers/research_db.py)
+MCP server (servers/research_db/)
     ↓ function calls
 Business logic modules (skills/research/_*.py)
     ↓ SQL
@@ -234,7 +234,7 @@ MCP server runs via stdio transport, launched by the `.mcp.json` configuration:
 ```json
 {
   "command": "${CLAUDE_PLUGIN_DATA}/venv/bin/python3",
-  "args": ["${CLAUDE_PLUGIN_ROOT}/servers/research_db.py"],
+  "args": ["${CLAUDE_PLUGIN_ROOT}/run.py", "servers.research_db"],
   "env": { "DB_PATH": "blueprint/data/research.db" }
 }
 ```

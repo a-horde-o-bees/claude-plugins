@@ -22,7 +22,7 @@ def db(tmp_path):
 
     import servers.research_db as srv
     importlib.reload(srv)
-    srv.DB_PATH = db_path
+    srv._helpers.DB_PATH = db_path
 
     tools = {"path": db_path}
     for name in [

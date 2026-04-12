@@ -28,7 +28,7 @@ class TestMissingDatabase:
         os.environ["DB_PATH"] = str(tmp_path / "nonexistent.db")
         import servers.research_db as srv
         importlib.reload(srv)
-        srv.DB_PATH = str(tmp_path / "nonexistent.db")
+        srv._helpers.DB_PATH = str(tmp_path / "nonexistent.db")
 
         result = json.loads(srv.list_entities())
         assert "error" in result
