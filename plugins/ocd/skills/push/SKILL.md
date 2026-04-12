@@ -1,5 +1,4 @@
 ---
-name: push
 allowed-tools:
   - Skill
   - Bash(git *)

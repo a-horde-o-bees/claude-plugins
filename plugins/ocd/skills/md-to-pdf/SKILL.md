@@ -1,5 +1,4 @@
 ---
-name: md-to-pdf
 description: Export markdown files to professionally formatted PDF using GitHub-standardized CSS styling.
 argument-hint: "--src <file> [--src <file> ...] --dest <dir>"
 allowed-tools:
@@ -29,7 +28,7 @@ User runs `/md-to-pdf`.
 1. Ensure destination directory exists — bash: `mkdir -p {dest}`
 2. For each --src:
     1. Verify {src} exists
-    2. Convert — bash: `md-to-pdf {src} --stylesheet ${CLAUDE_PLUGIN_ROOT}/skills/pdf/github-markdown-light.css --stylesheet ${CLAUDE_PLUGIN_ROOT}/skills/pdf/print-supplement.css --body-class markdown-body`
+    2. Convert — bash: `md-to-pdf {src} --stylesheet ${CLAUDE_PLUGIN_ROOT}/skills/md-to-pdf/github-markdown-light.css --stylesheet ${CLAUDE_PLUGIN_ROOT}/skills/md-to-pdf/print-supplement.css --body-class markdown-body`
     3. Move PDF to destination — bash: `mv {source-dir}/{name}.pdf {dest}/`
     4. Report result
 

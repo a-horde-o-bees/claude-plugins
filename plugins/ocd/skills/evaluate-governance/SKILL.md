@@ -1,5 +1,4 @@
 ---
-name: evaluate-governance
 description: Evaluate the rules and conventions governance chain level-by-level. A spawned agent walks foundations-first and reports findings with proposed fixes; the orchestrator classifies each finding against the shared triage criteria, auto-applies defects, and exits to user when observations need judgment. Convergence across waves is user-driven.
 argument-hint: "--target project"
 allowed-tools:
