@@ -12,6 +12,7 @@ import pytest
 from servers.navigator import _skills
 from servers.navigator._skills import (
     _parse_frontmatter_name,
+    _skill_name,
     _search_skills_dir,
     skills_resolve,
     skills_list,
@@ -51,6 +52,15 @@ def _write_skill(base_dir: Path, dir_name: str, name: str) -> Path:
     skill_dir.mkdir(parents=True, exist_ok=True)
     skill_md = skill_dir / "SKILL.md"
     skill_md.write_text(f"---\nname: {name}\ndescription: Test skill\n---\n\n# /{name}\n")
+    return skill_md
+
+
+def _write_skill_no_name(base_dir: Path, dir_name: str) -> Path:
+    """Create a SKILL.md without frontmatter name field — falls back to directory name."""
+    skill_dir = base_dir / dir_name
+    skill_dir.mkdir(parents=True, exist_ok=True)
+    skill_md = skill_dir / "SKILL.md"
+    skill_md.write_text(f"---\ndescription: Test skill\n---\n\n# /{dir_name}\n")
     return skill_md
 
 
@@ -100,6 +110,25 @@ class TestParseFrontmatterName:
 
 
 # =========================================================================
+# Skill name resolution (frontmatter with directory fallback)
+# =========================================================================
+
+
+class TestSkillName:
+    def test_uses_frontmatter_name(self, tmp_path: Path) -> None:
+        skill_md = _write_skill(tmp_path / "skills", "my-dir", "custom-name")
+        assert _skill_name(skill_md) == "custom-name"
+
+    def test_falls_back_to_directory_name(self, tmp_path: Path) -> None:
+        skill_md = _write_skill_no_name(tmp_path / "skills", "status")
+        assert _skill_name(skill_md) == "status"
+
+    def test_frontmatter_takes_precedence(self, tmp_path: Path) -> None:
+        skill_md = _write_skill(tmp_path / "skills", "dir-name", "frontmatter-name")
+        assert _skill_name(skill_md) == "frontmatter-name"
+
+
+# =========================================================================
 # Directory search
 # =========================================================================
 
@@ -116,6 +145,13 @@ class TestSearchSkillsDir:
         skills_dir = tmp_path / "skills"
         _write_skill(skills_dir, "conventions", "ocd-conventions")
         assert _search_skills_dir(skills_dir, "nonexistent") is None
+
+    def test_finds_by_directory_name_fallback(self, tmp_path: Path) -> None:
+        skills_dir = tmp_path / "skills"
+        _write_skill_no_name(skills_dir, "status")
+        result = _search_skills_dir(skills_dir, "status")
+        assert result is not None
+        assert result.name == "SKILL.md"
 
     def test_missing_directory(self, tmp_path: Path) -> None:
         assert _search_skills_dir(tmp_path / "nonexistent", "any") is None
@@ -172,6 +208,12 @@ class TestResolveSkill:
         assert result is not None
         assert "marketplace_plugin" in str(result)
 
+    def test_resolves_by_directory_name_fallback(self, tmp_env: dict[str, Path]) -> None:
+        _write_skill_no_name(tmp_env["plugin"] / "skills", "status")
+        result = skills_resolve("status")
+        assert result is not None
+        assert "plugin" in str(result)
+
     def test_not_found(self, tmp_env: dict[str, Path]) -> None:
         assert skills_resolve("nonexistent") is None
 
@@ -195,6 +237,14 @@ class TestListSkills:
         skills = skills_list()
         assert len(skills) == 1
         assert skills[0]["source"] == "project"
+
+    def test_lists_skills_without_frontmatter_name(self, tmp_env: dict[str, Path]) -> None:
+        _write_skill_no_name(tmp_env["plugin"] / "skills", "status")
+        _write_skill_no_name(tmp_env["plugin"] / "skills", "commit")
+        skills = skills_list()
+        assert len(skills) == 2
+        names = {s["name"] for s in skills}
+        assert names == {"status", "commit"}
 
     def test_empty_when_no_skills(self, tmp_env: dict[str, Path]) -> None:
         assert skills_list() == []

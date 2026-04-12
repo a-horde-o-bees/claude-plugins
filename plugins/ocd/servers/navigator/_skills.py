@@ -33,11 +33,16 @@ def _parse_frontmatter_name(skill_md: Path) -> str | None:
     return None
 
 
+def _skill_name(skill_md: Path) -> str | None:
+    """Resolve skill name: frontmatter name field, falling back to directory name."""
+    return _parse_frontmatter_name(skill_md) or skill_md.parent.name
+
+
 def _search_skills_dir(directory: Path, name: str) -> Path | None:
     """Search skills directory for SKILL.md matching name.
 
-    Matches by frontmatter name field. Directory must contain
-    subdirectories with SKILL.md files.
+    Matches by frontmatter name field with directory name fallback.
+    Directory must contain subdirectories with SKILL.md files.
     """
     if not directory.is_dir():
         return None
@@ -46,8 +51,7 @@ def _search_skills_dir(directory: Path, name: str) -> Path | None:
         skill_md = skill_dir / "SKILL.md"
         if not skill_md.is_file():
             continue
-        frontmatter_name = _parse_frontmatter_name(skill_md)
-        if frontmatter_name == name:
+        if _skill_name(skill_md) == name:
             return skill_md
 
     return None
@@ -141,7 +145,7 @@ def skills_list() -> list[dict[str, str]]:
             skill_md = skill_dir / "SKILL.md"
             if not skill_md.is_file():
                 continue
-            name = _parse_frontmatter_name(skill_md)
+            name = _skill_name(skill_md)
             if name and name not in seen_names:
                 seen_names.add(name)
                 results.append({
