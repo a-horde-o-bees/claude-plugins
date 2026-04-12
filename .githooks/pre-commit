@@ -1,16 +1,22 @@
 #!/usr/bin/env bash
 #
-# Propagate shared files from ocd to all non-ocd plugins.
+# Pre-commit: sync templates to deployed copies, propagate shared plugin files.
 #
-# Canonical sources live in plugins/ocd/. Every plugin ships its own
-# copy so it can be installed independently. This hook keeps copies
-# in sync when canonicals change.
+# 1. Sync templates → deployed: ensures .claude/{rules,conventions,patterns}/
+#    match their plugin template sources at commit time.
+# 2. Propagate shared files: copies ocd plugin framework to all non-ocd plugins.
 #
 # Propagated files:
 #   plugin/__init__.py                     — generic plugin framework (to plugin/)
 #   plugin/__main__.py                     — CLI entry point (to plugin/)
 
 set -euo pipefail
+
+# --- Sync templates → deployed ---
+
+python3 scripts/sync-templates.py >/dev/null 2>&1 || true
+
+# --- Propagate shared plugin files ---
 
 # Map of canonical paths to target subdirectories within each plugin
 SHARED_FILES=(

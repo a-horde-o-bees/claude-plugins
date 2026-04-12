@@ -11,5 +11,6 @@ build/
 # Plugin-init deployed copies — every clone initializes its own
 .claude/rules/
 .claude/conventions/
+.claude/patterns/
 .claude/ocd/
 .claude/blueprint/research/

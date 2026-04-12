@@ -133,32 +133,31 @@ Cross-tool positioning that publishes "when to reach for this server" belongs in
 - Database paths and configuration via environment variables, not hardcoded paths
 - Server module docstring states the server's domain scope and transport
 
-## Server-Skill Composition
+## Server Package Structure
 
-MCP server files are thin presentation layers; business logic lives in skill packages, not in the server file or its siblings. The skill package owns the domain (database, parsing, file I/O, decision logic); the server file owns the MCP exposure (tool decorators, structured serialization, error wrapping).
+Each MCP server is a Python package under `servers/`. The package owns both the domain logic and the MCP exposure as separate modules within the same package.
 
-Standard structure for an MCP server:
+Standard structure:
 
 ```
 plugins/<plugin>/
-├── skills/
-│   └── <name>/                  ← Business logic as a Python package
-│       ├── __init__.py          ← Facade — public functions the server calls
-│       ├── _db.py               ← Internal modules per python.md decomposition
-│       ├── _store.py
-│       └── (other internals)
 └── servers/
-    └── <name>.py                ← Thin MCP server: FastMCP setup + tool decorators
+    └── <name>/                  ← Server as a Python package
+        ├── __init__.py          ← Facade — public functions (business logic)
+        ├── __main__.py          ← MCP entry point: FastMCP setup + tool decorators
+        ├── _db.py               ← Internal modules per python.md decomposition
+        ├── cli.py               ← Optional standalone CLI for debugging
+        └── (other internals)
 ```
 
-The server file:
+The MCP entry point (`__main__.py`):
 
-- Imports the skill's public functions: `from skills.<name> import describe, list_entries, ...`
-- Defines `mcp = FastMCP("<plugin>-<name>", instructions="...")` with cross-tool positioning
-- Decorates thin wrappers with `@mcp.tool()` — each wrapper validates, delegates to a skill function, and serializes the result
+- Imports the package as a namespace: `import servers.<name> as _<short>` — the underscore prefix signals a private reference to the same package, and the namespace avoids name collisions between tool wrapper functions and facade functions (both share names because FastMCP derives the tool name from the function name)
+- Defines `mcp = FastMCP("<name>", instructions="...")` with cross-tool positioning
+- Decorates thin wrappers with `@mcp.tool()` — each wrapper validates, delegates to a facade function, and serializes the result
 - Handles JSON in/out and error wrapping via shared helpers (see *Shared Server Helpers* below)
 
-**Anti-pattern:** business logic in the server file directly, or in sibling `_*.py` files inside `servers/`. This couples MCP exposure to business logic and prevents the skill from being callable from CLI, tests, or other code paths. Skills must remain independently consumable.
+The facade (`__init__.py`) owns all business logic — database operations, parsing, file I/O, decision logic. The MCP entry point is a thin presentation layer. The same functions are callable from CLI, tests, or other code paths.
 
 ## Server Launching
 
@@ -167,7 +166,7 @@ Server files are launched via the plugin's `run.py` module launcher, which estab
 `.mcp.json` invocation pattern:
 
 ```json
-"<plugin>-<name>": {
+"<name>": {
   "command": "${CLAUDE_PLUGIN_DATA}/venv/bin/python3",
   "args": ["${CLAUDE_PLUGIN_ROOT}/run.py", "servers.<name>"]
 }
@@ -176,7 +175,7 @@ Server files are launched via the plugin's `run.py` module launcher, which estab
 For this to work:
 
 - `servers/` must be a proper Python package (contain `__init__.py`)
-- Server files use clean imports: `from . import _helpers`, `from skills.<name> import ...`
+- Server packages use clean imports: `from . import _db`, `from .._helpers import _ok, _err`
 - No `sys.path` manipulation in individual server files (per `python.md`)
 
 The launcher pattern is documented in `python.md` Import Pattern section; this convention specifies its application to MCP servers.

@@ -324,6 +324,56 @@ def get_rules_states(plugin_root: Path, project_dir: Path) -> list[dict]:
     return results
 
 
+# --- Patterns ---
+
+
+PATTERNS_SOURCE_ONLY = {"README.md", "architecture.md"}
+
+
+def deploy_patterns(plugin_root: Path, project_dir: Path, force: bool = False) -> list[dict]:
+    """Deploy pattern files. Returns [{path, before, after}] with relative deployed paths.
+
+    Patterns deploy to .claude/patterns/{plugin_name}/ per-plugin subfolder.
+    Framework documentation is plugin-source-only and excluded from deployment.
+    """
+    plugin_name = plugin_root.name
+    deployed_rel = f".claude/patterns/{plugin_name}"
+    results = deploy_files(
+        src_dir=plugin_root / "patterns",
+        dst_dir=project_dir / ".claude" / "patterns" / plugin_name,
+        pattern="*.md",
+        force=force,
+        exclude=PATTERNS_SOURCE_ONLY,
+    )
+    for r in results:
+        r["path"] = f"{deployed_rel}/{r.pop('name')}"
+    return results
+
+
+def get_patterns_states(plugin_root: Path, project_dir: Path) -> list[dict]:
+    """Get state of each pattern file. Returns [{path, before, after}]."""
+    src_dir = plugin_root / "patterns"
+    if not src_dir.is_dir():
+        return []
+
+    plugin_name = plugin_root.name
+    deployed_rel = f".claude/patterns/{plugin_name}"
+    results = []
+    for src in sorted(src_dir.glob("*.md")):
+        if src.name in PATTERNS_SOURCE_ONLY:
+            continue
+        if not src.is_file():
+            continue
+        dst = project_dir / ".claude" / "patterns" / plugin_name / src.name
+        state = compare_deployed(src, dst)
+        results.append({
+            "path": f"{deployed_rel}/{src.name}",
+            "before": state,
+            "after": state,
+        })
+    return results
+
+
 # --- System and skill discovery ---
 
 
@@ -678,12 +728,18 @@ def run_init(force: bool = False, system: str | None = None) -> None:
 
     rules: list[dict] = []
 
-    # Rules (plugin-wide; skipped when scoped to a single subsystem)
+    # Rules and patterns (plugin-wide; skipped when scoped to a single subsystem)
     if system is None:
         rules = deploy_rules(plugin_root, project_dir, force=force)
         for line in format_section("Rules", rules):
             print(line)
         print()
+
+        patterns = deploy_patterns(plugin_root, project_dir, force=force)
+        if patterns:
+            for line in format_section("Patterns", patterns):
+                print(line)
+            print()
 
     # Server subsystems
     target_systems = [system] if system is not None else systems
@@ -730,7 +786,7 @@ def run_status(system: str | None = None) -> None:
         print(f"Available: {', '.join(systems)}" if systems else "No systems discovered.")
         return
 
-    # Header and rules (plugin-wide; skipped when scoped to a single subsystem)
+    # Header, rules, patterns (plugin-wide; skipped when scoped to a single subsystem)
     if system is None:
         installed_version = get_installed_version(plugin_root)
         source_version, marketplace_name = find_marketplace_source(
@@ -743,6 +799,12 @@ def run_status(system: str | None = None) -> None:
         for line in format_section("Rules", rules):
             print(line)
         print()
+
+        patterns = get_patterns_states(plugin_root, project_dir)
+        if patterns:
+            for line in format_section("Patterns", patterns):
+                print(line)
+            print()
 
     # Server subsystems
     target_systems = [system] if system is not None else systems

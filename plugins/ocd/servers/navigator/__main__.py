@@ -18,7 +18,7 @@ from pathlib import Path
 
 from mcp.server.fastmcp import FastMCP
 
-import servers.navigator as nav
+import servers.navigator as _nav
 
 from .._helpers import _err, _ok
 
@@ -71,7 +71,7 @@ def paths_get(paths: str | list[str]) -> str:
     """
     if err := _check_db(): return err
     try:
-        return _ok(nav.paths_get(DB_PATH, paths))
+        return _ok(_nav.paths_get(DB_PATH, paths))
     except Exception as e:
         return _err(e)
 
@@ -93,7 +93,7 @@ def paths_list(
     """
     if err := _check_db(): return err
     try:
-        return _ok(nav.paths_list(DB_PATH, target_path, patterns=patterns,
+        return _ok(_nav.paths_list(DB_PATH, target_path, patterns=patterns,
                                   excludes=excludes, sizes=sizes))
     except Exception as e:
         return _err(e)
@@ -109,7 +109,7 @@ def paths_search(pattern: str) -> str:
     """
     if err := _check_db(): return err
     try:
-        return _ok(nav.paths_search(DB_PATH, pattern))
+        return _ok(_nav.paths_search(DB_PATH, pattern))
     except Exception as e:
         return _err(e)
 
@@ -127,7 +127,7 @@ def paths_upsert(
     """
     if err := _check_db(): return err
     try:
-        return _ok(nav.paths_upsert(DB_PATH, entry_path, description=description,
+        return _ok(_nav.paths_upsert(DB_PATH, entry_path, description=description,
                                     exclude=exclude, traverse=traverse))
     except Exception as e:
         return _err(e)
@@ -143,7 +143,7 @@ def paths_undescribed() -> str:
     """
     if err := _check_db(): return err
     try:
-        return _ok(nav.paths_undescribed(DB_PATH))
+        return _ok(_nav.paths_undescribed(DB_PATH))
     except Exception as e:
         return _err(e)
 
@@ -160,7 +160,7 @@ def paths_remove(
     """
     if err := _check_db(): return err
     try:
-        return _ok(nav.paths_remove(DB_PATH, entry_path, recursive=recursive,
+        return _ok(_nav.paths_remove(DB_PATH, entry_path, recursive=recursive,
                                     all_entries=all_entries))
     except Exception as e:
         return _err(e)
@@ -178,7 +178,7 @@ def skills_resolve(name: str) -> str:
     Returns {path} on success, {error} if not found.
     """
     try:
-        result = nav.skills_resolve(name)
+        result = _nav.skills_resolve(name)
         if result:
             return _ok({"path": str(result)})
         return json.dumps({"error": f"Skill not found: {name}"})
@@ -193,7 +193,7 @@ def skills_list() -> str:
     Sources: personal, project, plugin-dir, marketplace.
     """
     try:
-        return _ok(nav.skills_list())
+        return _ok(_nav.skills_list())
     except Exception as e:
         return _err(e)
 
@@ -213,7 +213,7 @@ def references_map(paths: list[str], max_depth: int = 20) -> str:
     Returns {files: [{path, depth, references, referenced_by}], roots, total_files}.
     """
     try:
-        return _ok(nav.references_map(paths, max_depth=max_depth))
+        return _ok(_nav.references_map(paths, max_depth=max_depth))
     except Exception as e:
         return _err(e)
 
@@ -233,7 +233,7 @@ def scope_analyze(paths: list[str]) -> str:
     """
     if err := _check_db(): return err
     try:
-        return _ok(nav.scope_analyze(DB_PATH, paths))
+        return _ok(_nav.scope_analyze(DB_PATH, paths))
     except Exception as e:
         return _err(e)
 

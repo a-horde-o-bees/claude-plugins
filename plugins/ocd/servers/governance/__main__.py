@@ -18,7 +18,7 @@ from pathlib import Path
 
 from mcp.server.fastmcp import FastMCP
 
-import servers.governance as gov
+import servers.governance as _gov
 
 from .._helpers import _err, _ok
 
@@ -72,7 +72,7 @@ def governance_match(file_paths: list[str], include_rules: bool = False) -> str:
     """
     if err := _check_db(): return err
     try:
-        return _ok(gov.governance_match(DB_PATH, file_paths, include_rules=include_rules))
+        return _ok(_gov.governance_match(DB_PATH, file_paths, include_rules=include_rules))
     except Exception as e:
         return _err(e)
 
@@ -85,7 +85,7 @@ def governance_list() -> str:
     """
     if err := _check_db(): return err
     try:
-        return _ok(gov.governance_list(DB_PATH))
+        return _ok(_gov.governance_list(DB_PATH))
     except Exception as e:
         return _err(e)
 
@@ -108,6 +108,6 @@ def governance_order() -> str:
     """
     if err := _check_db(): return err
     try:
-        return _ok(gov.governance_order(DB_PATH))
+        return _ok(_gov.governance_order(DB_PATH))
     except Exception as e:
         return _err(e)

@@ -4,13 +4,13 @@ How the convention system discovers, matches, and delivers file-type-specific gu
 
 ## Governance Infrastructure
 
-Conventions and rules share a governance infrastructure implemented in the navigator skill package. The navigator database separates the two along domain lines, with conventions normalized into include/exclude pattern tables:
+Conventions and rules share a governance infrastructure implemented in the governance server package (`servers/governance/`). The governance database separates the two along domain lines, with conventions normalized into include/exclude pattern tables:
 
 - **`conventions`** — one row per convention file: `entry_path`, raw `includes` and `excludes` text, and `git_hash`
 - **`convention_includes`** — one row per normalized include pattern, keyed by `entry_path` (CASCADE on delete)
 - **`convention_excludes`** — one row per normalized exclude pattern, keyed by `entry_path` (CASCADE on delete)
 - **`rules`** — one row per rule file: `entry_path` and `git_hash`. Rules carry no patterns because they apply universally
-- **`entries`** — the navigator's general file index; governance files appear here like any other file
+- **`governance_depends_on`** — junction table tracking `governed_by` dependency edges between governance entries
 
 Patterns are stored exactly as written in frontmatter. The runtime performs matching through the custom `path_match(path, pattern)` SQL function, registered on every connection and delegating to `matches_pattern` for basename, `**` prefix, and full-path modes.
 
@@ -42,10 +42,10 @@ The `governed_by` frontmatter field declares which governance entries a conventi
 
 Convention files exist in two locations:
 
-- **Templates** — `plugins/ocd/conventions/` in the plugin source
-- **Deployed copies** — `.claude/conventions/` in the user's project
+- **Templates** — `plugins/ocd/conventions/` in the plugin source (flat, no subfolder)
+- **Deployed copies** — `.claude/conventions/ocd/` in the user's project (per-plugin subfolder)
 
-Edit deployed copies. The `sync-templates.py` script propagates deployed → template changes before commits. `/ocd-init` deploys templates to the project.
+Edit deployed copies. The `sync-templates.py` script propagates deployed → template changes before commits. `/init` deploys templates to the project.
 
 ## Unclassified Coverage
 

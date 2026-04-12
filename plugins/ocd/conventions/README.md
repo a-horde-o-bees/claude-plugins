@@ -16,7 +16,7 @@ The `governance_match` tool accepts multiple file paths in one call — batch al
 
 ## Creating a Convention
 
-1. Create a markdown file in `.claude/conventions/` with frontmatter:
+1. Create a markdown file in the plugin's conventions template directory (`plugins/<plugin>/conventions/`) with frontmatter:
 
 ```yaml
 ---
@@ -28,7 +28,7 @@ governed_by:
 
 2. Write content standards in the body — what a conforming file contains, not agent behavior triggers (those belong in rules).
 
-3. Run `/ocd-init` to register the convention in the governance database.
+3. Run `/init` to deploy the convention to `.claude/conventions/<plugin>/` and register it in the governance database.
 
 ## Frontmatter Fields
 
@@ -38,6 +38,8 @@ governed_by:
 
 ## Relationship to Rules
 
-Rules govern agent behavior (always loaded, fire by trigger condition). Conventions govern file content (loaded on demand, applied when matching files are created or modified). See `.claude/rules/README.md` for the rules system.
+Rules govern agent behavior (always loaded, fire by trigger condition). Conventions govern file content (loaded on demand, applied when matching files are created or modified). See `plugins/ocd/rules/README.md` for the rules system.
+
+Plugins deploy conventions into per-plugin subfolders (`.claude/conventions/<plugin>/`) so multiple plugins can ship conventions without filename collisions.
 
 Both share the same frontmatter format and governance infrastructure. The `governance-md.md` convention in this directory defines the shared content standards for both.

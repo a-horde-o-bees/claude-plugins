@@ -1,12 +1,15 @@
-"""Block direct edits to synced and propagated files in plugins/.
+"""Block direct edits to deployed and propagated files.
 
-Two sync mechanisms produce these files:
-1. OCD rules and convention templates — synced from .claude/ deployed copies
+Two categories of derived files should not be edited directly:
+1. Deployed rules, conventions, and patterns — synced from plugin templates
 2. Propagated files — copied from ocd to other plugins by pre-commit hook
 
 Edit canonical sources instead:
-- Rules/conventions: edit deployed copies in .claude/
+- Rules/conventions/patterns: edit templates in plugins/ocd/{rules,conventions,patterns}/
 - plugin/__init__.py, plugin/__main__.py: edit in plugins/ocd/plugin/
+
+After editing templates, run /sync-templates to push changes to deployed
+copies, or let the pre-commit hook do it automatically at commit time.
 """
 
 import json
@@ -14,7 +17,7 @@ import re
 import sys
 
 GUARDED_PATTERNS = [
-    re.compile(r"^plugins/ocd/(rules|conventions)/"),        # synced from .claude/
+    re.compile(r"^\.claude/(rules|conventions|patterns)/"),    # deployed from templates
     re.compile(r"^plugins/(?!ocd/)[^/]+/plugin/(__init__|__main__)\.py$"),  # propagated plugin framework
 ]
 
@@ -34,7 +37,7 @@ def main() -> None:
                 "hookSpecificOutput": {
                     "hookEventName": "PreToolUse",
                     "permissionDecision": "deny",
-                    "permissionDecisionReason": f"Synced or propagated file — edit the canonical source instead. Path: {path}",
+                    "permissionDecisionReason": f"Deployed or propagated file — edit the canonical source instead. Path: {path}",
                 },
             }
             json.dump(result, sys.stdout)

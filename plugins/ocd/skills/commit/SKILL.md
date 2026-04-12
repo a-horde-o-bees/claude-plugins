@@ -26,22 +26,15 @@ User runs `/commit`
     2. If no changes: Exit to user — report clean working tree
     3. Run `git diff --stat` — understand scope of changes
     4. Run `git log --oneline -5` — capture recent commit message style
-2. Sync deployed→template — run sync script and stage any synced files
-    ```bash
-    python3 scripts/sync-templates.py
-    ```
-    - Script compares deployed files against templates byte-for-byte; copies only when diverged
-    - Output is one synced file path per line; empty output means all templates are current
-    - Stage all synced paths with `git add`
-3. Include untracked files — group with related changes using same topic logic as modified files
+2. Include untracked files — group with related changes using same topic logic as modified files
     1. If any untracked file seems suspicious (e.g., large generated directories missing from .gitignore, credentials, build artifacts):
         1. Surface exceptions to user before committing — they may belong to group or need exclusion
     2. Else:
         1. Proceed without user approval
-4. Group changes by topic — goal is readable history where each commit is focused window into related changes
+3. Group changes by topic — goal is readable history where each commit is focused window into related changes
     1. Evaluate changed files for coherent topics — consider:
         - Skill directory — files in same skill are likely same topic
-        - Template synced from deployed — template groups with related skill or convention changes
+        - Template with convention or skill it affects
         - Convention and consumers — convention file with skills it affects
         - Tests with code — test files group with code they test
         - Plugin infrastructure — plugin.json, hooks, init scripts
@@ -50,15 +43,15 @@ User runs `/commit`
         1. Multiple commits — one per topic
         2. Order commits — dependencies first, consumers after
     4. If grouping is ambiguous: keep together — consequences of grouping related changes are negligible compared to splitting incorrectly
-5. Draft commit messages — one per group
+4. Draft commit messages — one per group
     1. Describe end-state results, not change journey
     2. Follow project's recent commit message style
-6. Determine version bumps — identify which plugins have changes per group
-7. For each {group} in {commit-groups}:
+5. Determine version bumps — identify which plugins have changes per group
+6. For each {group} in {commit-groups}:
     1. Bump version — read current version from plugin.json, increment z, write back
     2. Stage files — `git add` specific files for this group plus plugin.json
     3. Commit with drafted message; append co-author trailer
-8. Verify — run `git status`; report remaining changes or clean tree
+7. Verify — run `git status`; report remaining changes or clean tree
 
 ### Report
 
@@ -79,5 +72,4 @@ User runs `/commit`
 - Stage specific files by name — never use `git add -A` or `git add .`
 - Co-author trailer required: `Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>`
 - Commit order matters — if group B depends on changes in group A (e.g., convention before skill that uses it), commit A first
-- Deployed→template sync runs via `scripts/sync-templates.py` before grouping — deterministic byte comparison, only copies when content diverges
-- Synced templates are staged and committed alongside deployed copies — deployed copies are working files in `.claude/`, templates in `plugins/` are distribution artifacts
+- Templates in `plugins/` are the committed source of truth — deployed copies in `.claude/` are gitignored and synced by the pre-commit hook

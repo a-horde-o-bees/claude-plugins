@@ -29,9 +29,9 @@ When implementing plugin infrastructure (hooks, MCP servers, dependency manageme
 
 This is the primary source for patterns, supported fields, and examples. Fetch the page and review relevant sections before designing new plugin features.
 
-## Editing Rules and Conventions
+## Editing Rules, Conventions, and Patterns
 
-Edit deployed copies in `.claude/rules/` and `.claude/conventions/`, never templates in `plugins/`. `/commit` runs `scripts/sync-templates.py` to sync deployed content back to templates before committing. A guard hook blocks direct template edits.
+Edit templates in `plugins/ocd/{rules,conventions,patterns}/`, never deployed copies in `.claude/`. Run `/sync-templates` to push changes to deployed copies for testing. The pre-commit hook runs the same sync automatically at commit time. A guard hook blocks direct edits to deployed copies.
 
 ## Adding Python Dependencies
 

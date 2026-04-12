@@ -19,7 +19,7 @@ import os
 from mcp.server.fastmcp import FastMCP
 
 import plugin
-import servers.log as log_skill
+import servers.log as _log
 
 from .._helpers import _err, _ok
 
@@ -91,7 +91,7 @@ def log_add(
     """
     try:
         return _ok(
-            log_skill.log_add(
+            _log.log_add(
                 _db_path(),
                 log_type=log_type,
                 summary=summary,
@@ -125,7 +125,7 @@ def log_list(
     """
     try:
         return _ok(
-            log_skill.log_list(
+            _log.log_list(
                 _db_path(), log_type=log_type, tags=tags, ids=ids, limit=limit,
             )
         )
@@ -153,7 +153,7 @@ def log_search(
     """
     try:
         return _ok(
-            log_skill.log_search(
+            _log.log_search(
                 _db_path(), pattern=pattern, log_type=log_type, tags=tags,
             )
         )
@@ -174,7 +174,7 @@ def log_get(ids: list[int]) -> str:
     Returns {entries: [{id, log_type, summary, detail_md, tags, ...}]}.
     """
     try:
-        return _ok(log_skill.log_get(_db_path(), ids=ids))
+        return _ok(_log.log_get(_db_path(), ids=ids))
     except Exception as e:
         return _err(e)
 
@@ -201,7 +201,7 @@ def log_update(
     """
     try:
         return _ok(
-            log_skill.log_update(
+            _log.log_update(
                 _db_path(), id=id, summary=summary, detail_md=detail_md, tags=tags,
             )
         )
@@ -222,7 +222,7 @@ def log_remove(id: int) -> str:
     Returns {removed: {metadata}, remaining: N}.
     """
     try:
-        return _ok(log_skill.log_remove(_db_path(), id=id))
+        return _ok(_log.log_remove(_db_path(), id=id))
     except Exception as e:
         return _err(e)
 
@@ -247,7 +247,7 @@ def type_add(name: str, instructions: str) -> str:
     Returns {name, instructions, created_at, updated_at}.
     """
     try:
-        return _ok(log_skill.type_add(_db_path(), name=name, instructions=instructions))
+        return _ok(_log.type_add(_db_path(), name=name, instructions=instructions))
     except Exception as e:
         return _err(e)
 
@@ -263,7 +263,7 @@ def type_list() -> str:
     Returns {types: [{name, instructions, record_count, tag_count, ...}]}.
     """
     try:
-        return _ok(log_skill.type_list(_db_path()))
+        return _ok(_log.type_list(_db_path()))
     except Exception as e:
         return _err(e)
 
@@ -288,7 +288,7 @@ def type_update(
     """
     try:
         return _ok(
-            log_skill.type_update(
+            _log.type_update(
                 _db_path(), name=name, instructions=instructions, rename=rename,
             )
         )
@@ -311,7 +311,7 @@ def type_remove(name: str, force: bool = False) -> str:
     Returns {removed, records_deleted, tags_deleted, remaining_types}.
     """
     try:
-        return _ok(log_skill.type_remove(_db_path(), name=name, force=force))
+        return _ok(_log.type_remove(_db_path(), name=name, force=force))
     except Exception as e:
         return _err(e)
 
@@ -336,7 +336,7 @@ def tag_add(log_type: str, name: str) -> str:
     Returns {log_type, name, record_count}.
     """
     try:
-        return _ok(log_skill.tag_add(_db_path(), log_type=log_type, name=name))
+        return _ok(_log.tag_add(_db_path(), log_type=log_type, name=name))
     except Exception as e:
         return _err(e)
 
@@ -356,7 +356,7 @@ def tag_list(log_type: str | None = None) -> str:
     Returns {log_type, tags: [...]} with a type, or {by_type: {...}} without.
     """
     try:
-        return _ok(log_skill.tag_list(_db_path(), log_type=log_type))
+        return _ok(_log.tag_list(_db_path(), log_type=log_type))
     except Exception as e:
         return _err(e)
 
@@ -378,7 +378,7 @@ def tag_update(log_type: str, old: str, new: str) -> str:
     """
     try:
         return _ok(
-            log_skill.tag_update(_db_path(), log_type=log_type, old=old, new=new)
+            _log.tag_update(_db_path(), log_type=log_type, old=old, new=new)
         )
     except Exception as e:
         return _err(e)
@@ -398,7 +398,7 @@ def tag_remove(log_type: str, name: str) -> str:
     Returns {log_type, name, records_affected}.
     """
     try:
-        return _ok(log_skill.tag_remove(_db_path(), log_type=log_type, name=name))
+        return _ok(_log.tag_remove(_db_path(), log_type=log_type, name=name))
     except Exception as e:
         return _err(e)
 

@@ -1,10 +1,13 @@
-"""Sync deployed copies to template files.
+"""Sync template files to deployed copies.
 
-Compares deployed files in .claude/ against their template counterparts
-in plugins/. Copies deployed content to template when bytes differ.
-Prints synced file paths to stdout for the caller to stage.
+Compares plugin template files in plugins/ against their deployed
+counterparts in .claude/. Copies template content to deployed location
+when bytes differ. Templates are the working copies; deployed copies
+are derived artifacts consumed by Claude Code at runtime.
 
-Called by git pre-commit hook.
+Prints synced deployed file paths to stdout. Called by:
+- git pre-commit hook (ensures deployed copies are current at commit time)
+- /sync-templates skill (interactive sync for testing without committing)
 """
 
 import shutil
@@ -17,38 +20,30 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 def discover_mappings() -> list[tuple[Path, Path]]:
     """Build (template, deployed) pairs from project structure.
 
-    Scans both template and deployed directories to discover all files.
-    Rules: plugins/<plugin>/rules/<name>.md ↔ .claude/rules/<plugin>/<name>.md
-    Conventions: plugins/<plugin>/conventions/<name>.md ↔ .claude/conventions/<plugin>/<name>.md
+    Scans template directories to discover all deployable files.
+    Rules: plugins/<plugin>/rules/<name>.md → .claude/rules/<plugin>/<name>.md
+    Conventions: plugins/<plugin>/conventions/<name>.md → .claude/conventions/<plugin>/<name>.md
+    Patterns: plugins/<plugin>/patterns/<name>.md → .claude/patterns/<plugin>/<name>.md
 
-    Plugin-rules and plugin-conventions README.md and architecture.md are
-    source-only documentation and are excluded from deployment.
+    README.md and architecture.md in template directories are source-only
+    documentation and are excluded from deployment.
     """
     mappings = []
     plugins_dir = PROJECT_ROOT / "plugins"
     source_only = {"README.md", "architecture.md"}
 
     def collect(
-        source_dir: Path,
+        template_dir: Path,
         deployed_dir: Path,
     ) -> None:
-        seen: set[str] = set()
+        if not template_dir.is_dir():
+            return
 
-        # From templates
-        if source_dir.is_dir():
-            for template in sorted(source_dir.glob("*.md")):
-                if template.name in source_only:
-                    continue
-                deployed = deployed_dir / template.name
-                mappings.append((template, deployed))
-                seen.add(template.name)
-
-        # From deployed (catch new files without templates)
-        if source_dir.is_dir() and deployed_dir.is_dir():
-            for deployed in sorted(deployed_dir.rglob("*.md")):
-                if deployed.name not in seen:
-                    template = source_dir / deployed.name
-                    mappings.append((template, deployed))
+        for template in sorted(template_dir.glob("*.md")):
+            if template.name in source_only:
+                continue
+            deployed = deployed_dir / template.name
+            mappings.append((template, deployed))
 
     for plugin_dir in sorted(plugins_dir.iterdir()):
         if not plugin_dir.is_dir():
@@ -62,24 +57,28 @@ def discover_mappings() -> list[tuple[Path, Path]]:
             plugin_dir / "conventions",
             PROJECT_ROOT / ".claude" / "conventions" / plugin_dir.name,
         )
+        collect(
+            plugin_dir / "patterns",
+            PROJECT_ROOT / ".claude" / "patterns" / plugin_dir.name,
+        )
 
     return mappings
 
 
 def sync_pair(template: Path, deployed: Path) -> bool:
-    """Compare and sync a single template/deployed pair.
+    """Copy template to deployed location if bytes differ.
 
-    Returns True if template was updated, False if already current or
-    deployed file does not exist.
+    Returns True if deployed was updated, False if already current or
+    template does not exist.
     """
-    if not deployed.exists():
+    if not template.exists():
         return False
 
-    if template.exists() and template.read_bytes() == deployed.read_bytes():
+    if deployed.exists() and template.read_bytes() == deployed.read_bytes():
         return False
 
-    template.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(deployed, template)
+    deployed.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(template, deployed)
     return True
 
 
@@ -89,7 +88,7 @@ def main() -> int:
     current_count = 0
 
     for template, deployed in mappings:
-        rel = str(template.relative_to(PROJECT_ROOT))
+        rel = str(deployed.relative_to(PROJECT_ROOT))
         if sync_pair(template, deployed):
             synced.append(rel)
         else:
@@ -99,7 +98,7 @@ def main() -> int:
         for path in synced:
             print(path)
     else:
-        print(f"sync-templates: all {current_count} templates current", file=sys.stderr)
+        print(f"sync-templates: all {current_count} deployed copies current", file=sys.stderr)
 
     return 0
 
