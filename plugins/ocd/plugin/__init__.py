@@ -378,11 +378,11 @@ def get_patterns_states(plugin_root: Path, project_dir: Path) -> list[dict]:
 
 
 def deploy_logs(plugin_root: Path, project_dir: Path, force: bool = False) -> list[dict]:
-    """Deploy log templates. Returns [{path, before, after}] with relative deployed paths.
+    """Deploy log type templates. Returns [{path, before, after}] with relative deployed paths.
 
-    Logs deploy to .claude/logs/ — README.md at root, _template.md in each
-    type subdirectory. No plugin namespacing; logs are project-level infrastructure
-    owned by the user after first deployment.
+    Deploys _template.md from each type subdirectory in plugins/<plugin>/logs/
+    to .claude/logs/{type}/_template.md. No plugin namespacing; logs are
+    project-level infrastructure owned by the user after first deployment.
     """
     src_dir = plugin_root / "logs"
     dst_dir = project_dir / ".claude" / "logs"
@@ -392,12 +392,6 @@ def deploy_logs(plugin_root: Path, project_dir: Path, force: bool = False) -> li
     if not src_dir.is_dir():
         return results
 
-    # Root files (README.md)
-    for item in deploy_files(src_dir, dst_dir, pattern="*.md", force=force):
-        item["path"] = f"{deployed_rel}/{item.pop('name')}"
-        results.append(item)
-
-    # Per-type _template.md files
     for type_dir in sorted(src_dir.iterdir()):
         if not type_dir.is_dir():
             continue
@@ -410,7 +404,7 @@ def deploy_logs(plugin_root: Path, project_dir: Path, force: bool = False) -> li
 
 
 def get_logs_states(plugin_root: Path, project_dir: Path) -> list[dict]:
-    """Get state of each log template file. Returns [{path, before, after}]."""
+    """Get state of each log type template file. Returns [{path, before, after}]."""
     src_dir = plugin_root / "logs"
     if not src_dir.is_dir():
         return []
@@ -419,19 +413,6 @@ def get_logs_states(plugin_root: Path, project_dir: Path) -> list[dict]:
     deployed_rel = ".claude/logs"
     results = []
 
-    # Root files
-    for src in sorted(src_dir.glob("*.md")):
-        if not src.is_file():
-            continue
-        dst = dst_dir / src.name
-        state = compare_deployed(src, dst)
-        results.append({
-            "path": f"{deployed_rel}/{src.name}",
-            "before": state,
-            "after": state,
-        })
-
-    # Per-type templates
     for type_dir in sorted(src_dir.iterdir()):
         if not type_dir.is_dir():
             continue

@@ -14,19 +14,18 @@ allowed-tools:
 
 # /log
 
-Create, list, or remove project log entries. Log types and routing guidance live in `.claude/logs/routing.md`; each type's `_template.md` defines entry structure.
+Create, list, or remove project log entries. Log type routing is in always-on context via the log-routing rule; each type's `_template.md` in `.claude/logs/{type}/` defines entry structure.
 
 ## Route
 
-1. Read `.claude/logs/routing.md`
-2. If $ARGUMENTS contains "list": {action} = list
-3. Else if $ARGUMENTS contains "remove": {action} = remove
-4. Else: {action} = add
-5. Dispatch Workflow: {action}
+1. If $ARGUMENTS contains "list": {action} = list
+2. Else if $ARGUMENTS contains "remove": {action} = remove
+3. Else: {action} = add
+4. Dispatch Workflow: {action}
 
 ## Workflow: Add
 
-1. Determine log type from context using routing guidance
+1. Determine log type from context using the log-routing rule
 2. Read `.claude/logs/{type}/_template.md`
 3. {title} = descriptive title for the entry
 4. Create `.claude/logs/{type}/{title}.md`:
@@ -61,6 +60,5 @@ Create, list, or remove project log entries. Log types and routing guidance live
 ## Rules
 
 - Entry filenames are titles — descriptive, spaces allowed, no sequence numbers
-- Always read routing.md before creating entries — types may have been customized
 - Always read the type's _template.md before creating — structure varies by type
 - Remove entries that have been resolved, acted on, or moved to a tracker

@@ -56,11 +56,6 @@ def discover_mappings() -> list[tuple[Path, Path]]:
         if not logs_dir.is_dir():
             return
 
-        # Root infrastructure files (routing.md)
-        for template in sorted(logs_dir.glob("*.md")):
-            deployed = deployed_dir / template.name
-            mappings.append((template, deployed))
-
         # Per-type _template.md files
         for type_dir in sorted(logs_dir.iterdir()):
             if not type_dir.is_dir():

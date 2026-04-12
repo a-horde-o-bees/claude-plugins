@@ -1,10 +1,12 @@
-# Project Log
+---
+includes: "*"
+governed_by:
+  - .claude/rules/ocd/design-principles.md
+---
 
-Structured capture of non-obvious context that future sessions need. Each log type has its own folder; each entry is a markdown file named for its title.
+# Log Routing
 
-## When to Log
-
-Log at the moment of encounter. Context degrades when deferred.
+When the agent encounters information worth preserving for a future session, capture it as a log entry in `.claude/logs/`. Log at the moment of encounter — context degrades when deferred.
 
 ## Routing
 
@@ -15,7 +17,7 @@ Log at the moment of encounter. Context degrades when deferred.
 | problem | Observed defect or issue needing investigation later |
 | idea | Exploratory idea, future work, or improvement suggestion |
 
-**Routing vs alternatives:**
+## Routing vs Alternatives
 
 - Settled choice with rationale → decision
 - Mid-workflow gap or broken process → friction or problem
@@ -24,21 +26,7 @@ Log at the moment of encounter. Context degrades when deferred.
 
 ## Entry Format
 
-Filename is the title. Content opens with the title heading and a purpose statement.
-
-```
-.claude/logs/{type}/{Title}.md
-```
-
-```markdown
-# Title
-
-## Purpose
-
-What this entry captures and why it matters.
-```
-
-Each type's `_template.md` describes additional structure specific to that type.
+Each entry is a file in `.claude/logs/{type}/{Title}.md`. Filename is the title. Content opens with the title heading and a purpose statement. Read the type's `_template.md` for entry structure specific to that type.
 
 ## Lifecycle
 
@@ -46,4 +34,4 @@ Logs are a queue, not an archive. Delete entries when resolved, acted on, or mov
 
 ## Custom Types
 
-Add a folder to `.claude/logs/` with a `_template.md` describing what qualifies, what doesn't, and any entry structure guidance. The folder name is the type name.
+To add a log type: create a folder in `.claude/logs/` with a `_template.md` describing what qualifies, what doesn't, and entry structure guidance, then add the type to the routing table above.

@@ -12,8 +12,10 @@ This evaluation is in service of cutting a stable v1 of the ocd plugin and makin
 - ocd rule files: design-principles, workflow, system-documentation, process-flow-notation
 - ocd conventions
 - ocd patterns
-- ocd servers: navigator (MCP server + CLI), governance (MCP server + CLI), log (MCP server + CLI)
-- ocd skills: init, status, navigator, evaluate-skill, evaluate-governance, evaluate-documentation, commit, push, pdf
+- ocd servers: navigator (MCP server + CLI)
+- ocd libraries: governance (disk-only, no MCP)
+- ocd log templates and deployed entries (file-based, no MCP)
+- ocd skills: init, status, navigator, log, evaluate-skill, evaluate-governance, evaluate-documentation, commit, push, pdf
 - Plugin infrastructure: plugin framework, hooks, `run.py` launcher, sync-templates
 - Project-level infrastructure: pytest configs, `scripts/test.sh`, fixtures, plugin manifest
 
@@ -28,8 +30,7 @@ This evaluation is in service of cutting a stable v1 of the ocd plugin and makin
 
 Before resuming purpose-map evaluation:
 
-1. **Replace log MCP server with file-based logging** — the log server (`servers/log/`) is being replaced by markdown files in `.claude/log/{type}/`. The exported files already exist; the server needs to be retired and the agent-facing workflow updated so log entries are created/managed as files, not MCP tool calls. A rule or pattern should encode the routing guidance (when to use each log type) that currently lives in the MCP server instructions block.
-2. **Update purpose-map component paths** — the refactor moved files from `skills/` to `servers/`, renamed rules (dropped `ocd-` prefix), deleted `skills/governance/`, deleted `servers/{decisions,friction,stash}/`. Component paths in `purpose-map.db` are stale and will show broken references. Update paths as encountered during evaluation, not as a bulk sweep.
+1. **Update purpose-map component paths** — the refactor moved files from `skills/` to `servers/`, renamed rules (dropped `ocd-` prefix), deleted `skills/governance/`, deleted `servers/{decisions,friction,stash}/`, deleted `servers/log/`. Component paths in `purpose-map.db` are stale and will show broken references. Update paths as encountered during evaluation, not as a bulk sweep.
 
 ## Next Steps
 
@@ -41,7 +42,7 @@ Before resuming purpose-map evaluation:
 
 ## Open Items
 
-- **Convention loading on read** — concerns conventions firing when files are read, not just modified. Might inform how governance's `governance_match` is shaped during its evaluation.
+- **Convention loading on read** — concerns conventions firing when files are read, not just modified. Governance now reads from disk on every call (no database), so this is purely about hook behavior.
 - **`purpose-map/skill-migration.md`** — archival planning document for migrating the purpose-map evaluation workflow to a skill. References a stale component id (`c14 (Pit of Success)`) and the now-removed Pit of Success principle. Decide whether to action the migration or delete the document as abandoned planning.
 
 ## v1 Reference
@@ -63,4 +64,7 @@ python3 -c "import sqlite3; db = sqlite3.connect('purpose-map/purpose-map-v1.db'
 - `plugins/ocd/conventions/*.md` — OCD conventions (deployed to `.claude/conventions/ocd/`)
 - `plugins/ocd/patterns/*.md` — OCD patterns (deployed to `.claude/patterns/ocd/`)
 - `plugins/ocd/skills/*/SKILL.md` — OCD skills
-- `plugins/ocd/servers/*/` — OCD server packages (navigator, governance, log)
+- `plugins/ocd/servers/navigator/` — navigator MCP server package
+- `plugins/ocd/servers/governance/` — governance library (disk-only, no MCP)
+- `plugins/ocd/logs/` — log type templates (deployed to `.claude/logs/`)
+- `plugins/ocd/skills/log/SKILL.md` — /log skill
