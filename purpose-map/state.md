@@ -26,24 +26,22 @@ This evaluation is in service of cutting a stable v1 of the ocd plugin and makin
 
 **Re-add filter:** components that exist in v1 but cannot make the unmet pointer in v2 are not added to v2. They are removed from the project. The model is the audit; the rebuild has teeth.
 
-## Prerequisite Work
-
-1. ~~**Move governance from `servers/` to `lib/`**~~ — done. Governance moved to `plugins/ocd/lib/governance/`, all imports and docs updated.
-2. **Update purpose-map component paths** — the refactor moved files from `skills/` to `servers/`, renamed rules (dropped `ocd-` prefix), deleted `skills/governance/`, deleted `servers/{decisions,friction,stash}/`, deleted `servers/log/`. Component paths in `purpose-map.db` are stale and will show broken references. Update paths as encountered during evaluation, not as a bulk sweep.
-
 ## Next Steps
 
-1. **Redesign evaluate-skill** using the same needs-first approach as evaluate-governance, cross-referencing the patterns established by the governance skill's holistic single-pass model.
-2. **Redesign evaluate-documentation** using the same approach. Incorporate the leaves-first traversal insight (parent docs describe subsystems generally; each subsystem's docs carry the detail) and the observation that documentation lives in non-obvious surfaces — CLI help text, module docstrings, MCP tool descriptions, frontmatter `description:` fields, header purpose statements — not just the canonical README/architecture/CLAUDE.md/SKILL.md files.
-3. **Check all validated system docs conform to the three-document model** — driven by the rebuilt evaluate-documentation skill, not by hand. This is the mass audit step; it runs skill-driven so drift in non-obvious surfaces is caught the same way drift in canonical documents is caught.
+1. **Move template content under `templates/`** — `rules/`, `conventions/`, `patterns/`, `logs/` are all template content that deploys to `.claude/`. Move into `plugins/ocd/templates/{rules,conventions,patterns,logs}/` to separate "content that deploys" from "code that runs." Update deploy_* functions, sync-templates, guard-templates, CLAUDE.md, architecture.md, and purpose-map component paths. Delete sub-level docs (`rules/README.md`, `rules/architecture.md`, `conventions/README.md`, `conventions/architecture.md`) — governance explanation belongs at plugin root level. Lowercase all governance filenames. Delete empty `references/` directory. Delete `tools/auto_convergence.py` (YAGNI — `--auto` feature does not exist).
+2. **Update purpose-map component paths** — multiple refactors have made component paths stale. Update paths as encountered during evaluation, not as a bulk sweep.
+3. **Redesign evaluate-skill** using the same needs-first approach as evaluate-governance, cross-referencing the patterns established by the governance skill's holistic single-pass model.
+4. **Redesign evaluate-documentation** using the same approach. Incorporate the leaves-first traversal insight (parent docs describe subsystems generally; each subsystem's docs carry the detail) and the observation that documentation lives in non-obvious surfaces — CLI help text, module docstrings, MCP tool descriptions, frontmatter `description:` fields, header purpose statements — not just the canonical README/architecture/CLAUDE.md/SKILL.md files.
+5. **Check all validated system docs conform to the three-document model** — driven by the rebuilt evaluate-documentation skill, not by hand. This is the mass audit step; it runs skill-driven so drift in non-obvious surfaces is caught the same way drift in canonical documents is caught.
 
-**Rationale for the ordering:** documentation work is backloaded until the evaluate-documentation skill is rebuilt, so the mass audit (step 3) doesn't have to be re-walked when the skill lands.
+**Rationale for the ordering:** template reorganization first so all subsequent work references correct paths. Documentation work backloaded until the evaluate-documentation skill is rebuilt, so the mass audit (step 5) does not have to be re-walked when the skill lands.
 
 ## Open Items
 
-- **Convention loading on read** — conventions fire when files are read, not just modified. Governance now reads from disk on every call (no database), so this is purely about hook behavior.
+- **Convention loading on read** — conventions fire when files are read, not just modified. Governance reads from disk on every call (no database), so this is purely about hook behavior.
 - **`purpose-map/skill-migration.md`** — archival planning document for migrating the purpose-map evaluation workflow to a skill. References a stale component id (`c14 (Pit of Success)`) and the now-removed Pit of Success principle. Decide whether to action the migration or delete the document as abandoned planning.
 - **Purpose-map stale components removed, needs orphaned** — c41 (friction server), c42 (decisions server), c43 (stash server) removed from DB. Needs n59 (friction signals) and n68 (ideas/observations) are now gaps. These needs remain valid but need rewiring to new file-based log system components once those are evaluated and rebuilt.
+- **Blueprint decompositions** — research_db.py (MCP server, 1,137 lines) and blueprint test files need decomposition. research_db agent was blocked by hooks; blueprint test agent leaked to main and was reverted.
 
 ## v1 Reference
 
@@ -60,11 +58,13 @@ python3 -c "import sqlite3; db = sqlite3.connect('purpose-map/purpose-map-v1.db'
 - `purpose-map/CLAUDE.md` — tool documentation, schema, operational protocol (read this first)
 - `purpose-map/purpose_map.py` — implementation
 - `purpose-map/purpose-map.db` — live v2 database
-- `plugins/ocd/rules/*.md` — OCD rule files (deployed to `.claude/rules/ocd/`)
-- `plugins/ocd/conventions/*.md` — OCD conventions (deployed to `.claude/conventions/ocd/`)
-- `plugins/ocd/patterns/*.md` — OCD patterns (deployed to `.claude/patterns/ocd/`)
-- `plugins/ocd/skills/*/SKILL.md` — OCD skills
-- `plugins/ocd/servers/navigator/` — navigator MCP server package
-- `plugins/ocd/lib/governance/` — governance library (disk-only, no MCP)
+- `plugins/ocd/rules/*.md` — rule templates (deployed to `.claude/rules/ocd/`)
+- `plugins/ocd/conventions/*.md` — convention templates (deployed to `.claude/conventions/ocd/`)
+- `plugins/ocd/patterns/*.md` — pattern templates (deployed to `.claude/patterns/ocd/`)
 - `plugins/ocd/logs/` — log type templates (deployed to `.claude/logs/`)
-- `plugins/ocd/skills/log/SKILL.md` — /log skill
+- `plugins/ocd/skills/*/SKILL.md` — skills
+- `plugins/ocd/servers/navigator/` — navigator MCP server package
+- `plugins/ocd/lib/governance/` — governance library (disk-only)
+- `plugins/ocd/plugin/` — plugin framework (propagated to all plugins)
+- `plugins/ocd/hooks/` — auto-approval and convention gate hooks
+- `scripts/sync-templates.py` — template → deployed copy sync
