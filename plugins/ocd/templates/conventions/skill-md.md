@@ -51,12 +51,13 @@ Sections fall into three categories:
 
 | Section | Category | Description |
 |---------|----------|-------------|
-| `# /skill-name` | Prescribed | Title matching slash command |
+| `# /skill-name` | Prescribed | Title matching slash command; uses unqualified name (Claude Code handles namespace qualification at invocation) |
 | Description paragraph | Prescribed | What skill does (also serves as `description` fallback if no frontmatter) |
 | `## Trigger` | Prescribed | When user invokes this skill |
-| `## Route` | Prescribed | Resolve arguments, validate inputs, select Workflow, dispatch |
+| `## Route` | Prescribed | Resolve arguments, validate inputs, select Workflow, dispatch; omit for argument-free skills that dispatch directly to Workflow |
 | `## Workflow` | Prescribed | Numbered steps using Process Flow Notation; encapsulates everything agent needs to execute |
 | `## Rules` | Prescribed | Constraints and guardrails |
+| `## Error Handling` | Prescribed | How the skill responds to failures; minimum: report failure with available details. Skills with domain-specific error recovery replace the default with appropriate handling |
 | `## Process Model` | Common | Conceptual model of how skill operates and why — for skills where workflow correctness depends on mechanics not self-evident from steps themselves |
 | `## Components` | Common | Reusable content blocks shared across multiple workflows; prefer extracted `_{name}.md` files over inline sections |
 | `### Report` | Common | Output format subheading within Workflow — a content standard (what the report contains), distinct from PFN's `Return:` which is flow control |
