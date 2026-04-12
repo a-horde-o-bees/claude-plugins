@@ -13,7 +13,7 @@ Evaluation skills produce structured findings on a target set through a single h
 
 ## Naming
 
-Directory: `evaluate-{domain}/`. Skill name: `{plugin}-evaluate-{domain}`. Domain names the target type.
+Directory: `evaluate-{domain}/`. Skill name: `evaluate-{domain}`. Domain names the target type.
 
 ## Holistic Reading, Not Lenses
 
@@ -55,7 +55,7 @@ The spawned agent does not classify findings, apply fixes, or reason about triag
 Every evaluation skill carries its own evaluation criteria file alongside SKILL.md (e.g., `_evaluation-criteria.md`). The file is read by the spawned agent at the start of its execution and defines:
 
 - The reading disposition — what stance the agent holds as it walks the target set
-- What to surface — the active checks and friction cues the agent watches for
+- What to surface — a non-exhaustive inventory of active checks and friction cues the agent watches for. Frame as partial inventory, not checklist — the agent should surface friction that doesn't match any listed category rather than filtering it out
 - Domain-specific anomaly conditions that force an early return from the traversal, if any
 - The finding return format — file, location, what, why, proposed fix or needs judgment
 
@@ -75,5 +75,5 @@ Every evaluation skill produces:
 
 1. **Scope** — what was evaluated (files, levels, groups)
 2. **Applied Defects** — grouped by file, each with location and applied fix
-3. **Observations** — surfaced when present, each with full context so the user can judge; presentation is interactive, not a final-report section, because Observations typically require the skill to exit to user for judgment
+3. **Observations** — surfaced when present, each presented as-is from the agent's finding (file path, location, what is wrong, why, and proposed fix). Do not summarize or strip content — the user needs the full finding to make a judgment call. Presentation is interactive (exit to user), not a final-report section, because Observations typically require the skill to exit for judgment
 4. **Status** — terminal outcome of the invocation (clean, defects applied, observations outstanding, anomaly restart)

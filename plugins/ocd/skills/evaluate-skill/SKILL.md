@@ -1,34 +1,46 @@
 ---
 name: evaluate-skill
 description: |
-  Evaluate a skill across conformity, efficacy, quality, and prior art in one pass. Follows cross-references into component files. Produces unified change set.
+  Evaluate a skill's files in a single holistic pass. A spawned agent reads the skill and all referenced files against domain-specific evaluation criteria and reports findings; the orchestrator classifies each finding against the shared triage criteria, auto-applies defects, and exits to user when observations need judgment.
 argument-hint: "--target </skill-name | path/to/SKILL.md>"
 allowed-tools:
   - Read
   - Edit
+  - Bash
   - mcp__plugin_ocd_navigator__*
-  - mcp__plugin_ocd_governance__*
 ---
 
 # /evaluate-skill
 
-Evaluate a skill's SKILL.md and referenced files across four lenses in a single structured pass. Eliminates cycling between convention checks, efficacy tests, and best-practice reviews by combining all relevant concerns for skills into one evaluation.
+Evaluate a skill's SKILL.md and all referenced files in a single holistic pass. A spawned agent reads the full file set holding conformity, efficacy, quality, and prior art concerns simultaneously — not as separate passes. The orchestrator classifies returned findings against the shared triage criteria, auto-applies defects to disk, and exits to user when observations need judgment.
 
 ## Lenses
 
-| Lens | Question |
-|------|----------|
-| Conformity | Does the skill follow its matched governance conventions? |
-| Efficacy | Can an agent execute this skill correctly from cold? |
-| Quality | Does the skill follow best practices for its domain? |
-| Prior Art | Does the implementation mirror established patterns? |
+This skill does not apply evaluation concerns as separate passes. A single agent reads the skill's file set and evaluates each file against every concern simultaneously per `_evaluation-criteria.md`: conformity against matched governance, execution correctness from cold, structural quality against domain best practices, and alignment with established patterns. Splitting these into independent passes creates convergence loops where each pass's fixes invalidate the next; the holistic reading eliminates that spiral.
 
 ## Scope
 
-Target is a single skill — its SKILL.md plus all files it references (component `_*.md` files, `references/` files, CLI scripts invoked by steps). The evaluator follows cross-references to build the complete file set.
+Target is a single skill — its SKILL.md plus all files it references (component `_*.md` files, `references/` files, CLI scripts invoked by steps). scope_analyze follows cross-references to build the complete file set with governance metadata.
 
 Accepted arguments:
+
 - `--target` — required; skill name (`/navigator`) or path to SKILL.md
+
+## Protocol
+
+The orchestrator receives the scoped file set from `scope_analyze` and dispatches a single spawned agent over the whole set. The agent reads `_evaluation-criteria.md`, then reads every file while holding all concerns simultaneously, and returns findings in report-only form.
+
+After the agent returns:
+
+1. The orchestrator classifies each finding against `evaluation-triage.md`
+2. Defects are auto-applied directly to disk
+3. If any Observations exist, the orchestrator exits to user with applied Defects and outstanding Observations surfaced — the user applies or rejects each Observation, then re-invokes to verify
+4. If no Observations, the orchestrator presents a final report
+
+## Inputs
+
+- **Triage criteria** — `.claude/conventions/ocd/evaluation-triage.md`. Read by the orchestrator once at the start of Workflow; the spawned agent never reads this file. Governs the Defect / Observation classification the orchestrator applies to every returned finding.
+- **Evaluation criteria** — `${CLAUDE_PLUGIN_ROOT}/skills/evaluate-skill/_evaluation-criteria.md`. Read by the spawned agent at the start of its execution. Defines the reading disposition, what to surface, and the finding return format.
 
 ## Trigger
 
@@ -44,60 +56,50 @@ User runs `/evaluate-skill`
     2. {skill-path} = resolved path or {target}
 3. Else: Exit to user — target must be /skill-name or path to SKILL.md
 4. {target-directory} = parent of {skill-path}
-5. Dispatch Workflow
+5. Verify working tree is clean — bash: `git status --porcelain`
+    1. If output is non-empty: Exit to user — working tree must be clean before evaluation; run `/commit` first so applied changes have a clean diff
+6. Dispatch Workflow
 
 ## Workflow
 
-1. Discover scope — scope_analyze: paths=[{skill-path}]
-2. {scope} = scope_analyze result (files with sizes, governance, references)
-3. Spawn agent with skill evaluation({skill-path}, {scope}):
-    1. Read `.claude/conventions/ocd/evaluation-triage.md`
-    2. Read `${CLAUDE_PLUGIN_ROOT}/skills/evaluate-skill/_lenses.md`
-    3. Read {skill-path}
-    4. Follow cross-references — read all files listed in {scope}.files
-    5. **Conformity lens:**
-        1. For each file in {scope}.files:
-            1. Read governance files listed in that file's governance array
-            2. Evaluate file against its matched conventions
-            3. Cite specific convention rules with each finding
-    6. **Efficacy lens:**
-        1. For each condition, guard, and constraint: articulate what it protects against
-        2. For each variable: trace lifecycle (assignment, consumption, purpose)
-        3. Trace execution as process flow with inline citations
-        4. Verify comprehension against implementation — issues are gaps between intent and behavior
-    7. **Quality lens:**
-        1. Evaluate against domain criteria in `_lenses.md` Quality section
-        2. Check structural readiness — has the skill outgrown its current file structure?
-    8. **Prior Art lens:**
-        1. Does the skill's approach mirror established patterns for this type of workflow?
-        2. Are there standard solutions the skill reinvents without justification?
-        3. Surface alternatives the author may not have considered
-    9. Triage findings per `evaluation-triage.md`
-    10. Apply Defect fixes directly; reclassify to Observation when escalation rules apply
-    11. Return:
-        - Scope: files evaluated and lenses applied
-        - Findings by lens with classifications and locations
-        - Cross-lens interactions
-        - Changes applied (Defects)
-        - Observations requiring user judgment
-4. Present agent report
+1. Read `.claude/conventions/ocd/evaluation-triage.md`
+2. Discover scope — scope_analyze: paths=[{skill-path}]
+3. {scope} = scope_analyze result (files with sizes, governance, references)
+4. Spawn agent with skill evaluation({skill-path}, {scope}):
+    1. Read `${CLAUDE_PLUGIN_ROOT}/skills/evaluate-skill/_evaluation-criteria.md`
+    2. For each {file} in {scope}.files (starting with {skill-path}):
+        1. If {file} has governance entries in {scope}: read each governance file not already in context
+        2. Read {file}
+        3. Evaluate {file} per `_evaluation-criteria.md` against everything already in context
+    3. Return — findings in the criteria's format
+5. {findings} = returned findings
+6. Classify each finding in {findings} as Defect or Observation per `evaluation-triage.md`
+7. For each Defect: apply its proposed fix directly to disk
+8. {applied-defects} = list of applied defects
+9. If any Observations exist in {findings}:
+    1. Present applied Defects and outstanding Observations to the user, grouped by file. Present each Observation as-is from the agent's finding — location, what is wrong, why, and proposed fix. Do not summarize or strip content; the user needs the full finding to make a judgment call
+    2. Exit to user — "Observations need user judgment. Apply or reject each, then re-invoke `/evaluate-skill` to verify."
+10. Present Report
 
 ### Report
 
-1. **Scope** — files read and lenses applied
-2. **Findings by lens** — each finding with classification, location, recommended action
-3. **Cross-lens interactions** — where findings from different lenses affect each other
-4. **Change set** — Defect fixes applied with rationale
-5. **Observations** — findings requiring user judgment
+1. **Scope** — files evaluated
+2. **Applied Defects** — grouped by file; each entry shows location, the fix applied, and the source finding
+3. **Status** — one of:
+    - `clean` — all files processed, no findings
+    - `defects applied` — all files processed, Defects applied, no Observations outstanding
+    - `observations outstanding` — evaluation exited pending user judgment (report is surfaced mid-workflow, not in this final block)
 
 ## Rules
 
-- Agent spawns with no conversation history — project rules and CLAUDE.md load automatically
-- Evaluating agent reads component files at execution time, not pre-loaded by orchestrator
-- scope_analyze provides the full file set with governance — agent does not need separate governance discovery
-- Conformity evaluates each file against its dynamically matched governance, not hardcoded convention names
-- Efficacy traces execution flow; does not actually execute steps or spawn subagents
-- Quality criteria are domain-specific to skills — see `_lenses.md`
-- Prior Art draws on agent's training knowledge of standard patterns
-- Defect fixes preserve semantic meaning — reformat, never change what the skill communicates
-- Single sequential agent — conformity findings inform efficacy evaluation (shared context matters)
+- The spawned agent is report-only. It does not triage findings, classify them, or apply fixes. The orchestrator owns all three concerns.
+- The orchestrator reads `evaluation-triage.md` at the start of Workflow. The spawned agent never reads the triage file — classification is the orchestrator's job.
+- Defects are deterministic and intent-preserving by definition. Auto-applying them does not change what the skill communicates or how it controls execution.
+- Observations may require user judgment. The orchestrator exits to user whenever Observations appear so the user can evaluate each one.
+- scope_analyze provides the full file set with governance — the agent does not need separate governance discovery.
+- Conformity evaluates each file against its dynamically matched governance, not hardcoded convention names.
+- Efficacy traces execution flow; does not actually execute steps or spawn subagents.
+- Quality criteria are domain-specific to skills — see `_evaluation-criteria.md`.
+- Prior Art draws on the agent's training knowledge of standard patterns.
+- Single sequential agent — conformity findings inform efficacy evaluation (shared context matters).
+- `/commit` precondition gives each evaluation a clean diff so the user can audit exactly what was changed.
