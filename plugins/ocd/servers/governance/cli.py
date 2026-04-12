@@ -1,8 +1,8 @@
 """Governance CLI.
 
 Presentation layer — argument parsing and dispatch wrappers only.
-Business logic lives in __init__.py facade. The facade guarantees
-the governance database is populated before each read or write.
+Business logic lives in __init__.py facade. Functions read directly
+from disk on every call.
 """
 
 import argparse
@@ -10,17 +10,14 @@ import sys
 
 from . import (
     governance_list,
-    governance_load,
     governance_match,
     governance_order,
 )
 
 
-DEFAULT_DB = ".claude/ocd/governance/governance.db"
-
-
 def _dispatch_list(args: argparse.Namespace) -> None:
-    entries = governance_list(args.db)
+    del args  # no arguments used
+    entries = governance_list()
     if not entries:
         print("No governance entries.")
         return
@@ -30,7 +27,7 @@ def _dispatch_list(args: argparse.Namespace) -> None:
 
 
 def _dispatch_for(args: argparse.Namespace) -> None:
-    result = governance_match(args.db, args.files, include_rules=args.include_rules)
+    result = governance_match(args.files, include_rules=args.include_rules)
     if not result["matches"]:
         print("No governance matches.")
         return
@@ -46,13 +43,9 @@ def _dispatch_for(args: argparse.Namespace) -> None:
             print(f"  {c}")
 
 
-def _dispatch_load(args: argparse.Namespace) -> None:
-    result = governance_load(args.db)
-    print(f"Loaded {result['governance_entries']} governance entries")
-
-
 def _dispatch_order(args: argparse.Namespace) -> None:
-    result = governance_order(args.db)
+    del args  # no arguments used
+    result = governance_order()
     if result["dangling"]:
         print("Dangling governance references — fix frontmatter and re-run:")
         for d in result["dangling"]:
@@ -70,23 +63,13 @@ def _dispatch_order(args: argparse.Namespace) -> None:
 
 def build_parser() -> argparse.ArgumentParser:
     """Build argument parser for the governance CLI."""
-    db_parent = argparse.ArgumentParser(add_help=False)
-    db_parent.add_argument(
-        "--db",
-        default=DEFAULT_DB,
-        help=f"Path to governance database (default: {DEFAULT_DB})",
-    )
-
     parser = argparse.ArgumentParser(
         prog="governance",
         description=(
-            "Governance operations — loading, matching, and ordering rules\n"
-            "and conventions from frontmatter. The governance database is\n"
-            "self-refreshing: each query reloads changed files from disk\n"
-            "before answering.\n"
+            "Governance operations — matching and ordering rules and\n"
+            "conventions from frontmatter. Reads directly from disk.\n"
             "\n"
             "Commands:\n"
-            "  load    — reload rules and conventions from disk\n"
             "  list    — list all governance entries\n"
             "  for     — find conventions that govern given files\n"
             "  order   — topologically grouped levels for root-first traversal\n"
@@ -101,32 +84,17 @@ def build_parser() -> argparse.ArgumentParser:
 
     commands = parser.add_subparsers(dest="command", required=True)
 
-    load_p = commands.add_parser(
-        "load",
-        help="Reload rules and conventions from disk frontmatter",
-        description=(
-            "Scan .claude/rules/ and .claude/conventions/ for files with\n"
-            "governance frontmatter. Reloads changed files into the database.\n"
-            "Idempotent — skips unchanged files via git_hash comparison."
-        ),
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        parents=[db_parent],
-    )
-    load_p.set_defaults(_dispatch=_dispatch_load)
-
     list_p = commands.add_parser(
         "list",
         help="List all governance entries with patterns and loading mode",
         description=(
-            "List registered rules and conventions with include pattern and\n"
-            "loading mode (rule = auto-loaded every session, convention =\n"
-            "on-demand).\n"
+            "List rules and conventions with include pattern and loading\n"
+            "mode (rule = auto-loaded every session, convention = on-demand).\n"
             "\n"
             "Output format:\n"
             "  <path>  <pattern>  [rule|convention]"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        parents=[db_parent],
     )
     list_p.set_defaults(_dispatch=_dispatch_list)
 
@@ -147,7 +115,6 @@ def build_parser() -> argparse.ArgumentParser:
             "  <file> follows:  (per-file governance list)"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        parents=[db_parent],
     )
     for_p.add_argument("files", nargs="+", help="File paths to check governance for")
     for_p.add_argument(
@@ -177,7 +144,6 @@ def build_parser() -> argparse.ArgumentParser:
             "    <path>  (governed_by: <governor>, ...)"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        parents=[db_parent],
     )
     order_p.set_defaults(_dispatch=_dispatch_order)
 

@@ -6,20 +6,6 @@
       "env": {
         "DB_PATH": ".claude/ocd/navigator/navigator.db"
       }
-    },
-    "governance": {
-      "command": "${CLAUDE_PLUGIN_DATA}/venv/bin/python3",
-      "args": ["${CLAUDE_PLUGIN_ROOT}/run.py", "servers.governance"],
-      "env": {
-        "GOVERNANCE_DB": ".claude/ocd/governance/governance.db"
-      }
-    },
-    "log": {
-      "command": "${CLAUDE_PLUGIN_DATA}/venv/bin/python3",
-      "args": ["${CLAUDE_PLUGIN_ROOT}/run.py", "servers.log"],
-      "env": {
-        "LOG_DB": ".claude/ocd/log/log.db"
-      }
     }
   }
 }

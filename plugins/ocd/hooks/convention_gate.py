@@ -7,27 +7,14 @@ conventions whenever it touches a file.
 On Read: informational — "read conventions, awareness only"
 On Edit/Write: directive — "read conventions and conform, refactor if needed"
 
-Runs governance_match against the governance database. If the database
-doesn't exist (not initialized), allows silently.
+Reads governance files directly from disk — no database dependency.
+If convention files are missing or unreadable, allows silently.
 """
 
 from __future__ import annotations
 
 import json
 import sys
-from pathlib import Path
-
-import plugin
-
-
-def _get_db_path() -> Path | None:
-    """Resolve governance database path."""
-    try:
-        project_dir = plugin.get_project_dir()
-    except RuntimeError:
-        return None
-    db_path = project_dir / ".claude" / "ocd" / "governance" / "governance.db"
-    return db_path if db_path.exists() else None
 
 
 def _build_context(file_path: str, conventions: list[str], is_mutation: bool) -> str:
@@ -60,14 +47,10 @@ def main() -> None:
     if not file_path:
         return
 
-    db_path = _get_db_path()
-    if db_path is None:
-        return
-
-    from servers.governance import governance_match
-
     try:
-        result = governance_match(str(db_path), [file_path])
+        from servers.governance import governance_match
+
+        result = governance_match([file_path])
     except Exception:
         return
 

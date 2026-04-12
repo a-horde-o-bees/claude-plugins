@@ -149,21 +149,13 @@ class TestHookInvocation:
 
     def _setup_governance(self, tmp_path: Path, monkeypatch) -> None:
         """Shared governance setup for convention gate tests."""
-        from servers.governance._db import init_db
-        from servers.governance import governance_load
-
         monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(tmp_path))
-
-        db_path = tmp_path / ".claude" / "ocd" / "governance" / "governance.db"
-        db_path.parent.mkdir(parents=True, exist_ok=True)
-        init_db(str(db_path))
 
         conv_dir = tmp_path / ".claude" / "conventions"
         conv_dir.mkdir(parents=True, exist_ok=True)
         (conv_dir / "python.md").write_text(
             '---\nincludes: "*.py"\n---\n\n# Python\n'
         )
-        governance_load(str(db_path))
 
     def test_convention_gate_edit_returns_directive(self, tmp_path: Path, monkeypatch) -> None:
         """Edit injects directive additionalContext — read and conform."""
@@ -223,12 +215,6 @@ class TestHookInvocation:
 
     def test_convention_gate_silent_for_ungoverned_file(self, tmp_path: Path) -> None:
         """Convention gate produces no output for files with no conventions."""
-        from servers.governance._db import init_db
-
-        db_path = tmp_path / ".claude" / "ocd" / "governance" / "governance.db"
-        db_path.parent.mkdir(parents=True, exist_ok=True)
-        init_db(str(db_path))
-
         hook_input = json.dumps({
             "tool_name": "Edit",
             "tool_input": {"file_path": "src/app.py"},
@@ -241,8 +227,8 @@ class TestHookInvocation:
         assert result.returncode == 0
         assert result.stdout == ""
 
-    def test_convention_gate_silent_when_no_db(self, tmp_path: Path) -> None:
-        """Convention gate allows silently when governance db doesn't exist."""
+    def test_convention_gate_silent_when_no_conventions_dir(self, tmp_path: Path) -> None:
+        """Convention gate allows silently when conventions directory doesn't exist."""
         hook_input = json.dumps({
             "tool_name": "Edit",
             "tool_input": {"file_path": "src/app.py"},
@@ -257,21 +243,13 @@ class TestHookInvocation:
 
     def test_convention_gate_excludes_respected(self, tmp_path: Path, monkeypatch) -> None:
         """Convention gate respects excludes — __init__.py skips mcp-server."""
-        from servers.governance._db import init_db
-        from servers.governance import governance_load
-
         monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(tmp_path))
-
-        db_path = tmp_path / ".claude" / "ocd" / "governance" / "governance.db"
-        db_path.parent.mkdir(parents=True, exist_ok=True)
-        init_db(str(db_path))
 
         conv_dir = tmp_path / ".claude" / "conventions"
         conv_dir.mkdir(parents=True, exist_ok=True)
         (conv_dir / "mcp-server.md").write_text(
             '---\nincludes: "servers/*.py"\nexcludes:\n  - "__init__.py"\n---\n\n# MCP\n'
         )
-        governance_load(str(db_path))
 
         hook_input = json.dumps({
             "tool_name": "Edit",
@@ -347,10 +325,4 @@ class TestServerInvocation:
         result = _run_server_briefly("servers.navigator")
         assert result.returncode == 0, result.stderr
 
-    def test_governance_loads(self) -> None:
-        result = _run_server_briefly("servers.governance")
-        assert result.returncode == 0, result.stderr
 
-    def test_log_loads(self) -> None:
-        result = _run_server_briefly("servers.log")
-        assert result.returncode == 0, result.stderr

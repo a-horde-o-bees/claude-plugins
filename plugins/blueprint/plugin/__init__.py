@@ -374,6 +374,82 @@ def get_patterns_states(plugin_root: Path, project_dir: Path) -> list[dict]:
     return results
 
 
+# --- Logs ---
+
+
+def deploy_logs(plugin_root: Path, project_dir: Path, force: bool = False) -> list[dict]:
+    """Deploy log templates. Returns [{path, before, after}] with relative deployed paths.
+
+    Logs deploy to .claude/logs/ — README.md at root, _template.md in each
+    type subdirectory. No plugin namespacing; logs are project-level infrastructure
+    owned by the user after first deployment.
+    """
+    src_dir = plugin_root / "logs"
+    dst_dir = project_dir / ".claude" / "logs"
+    deployed_rel = ".claude/logs"
+    results = []
+
+    if not src_dir.is_dir():
+        return results
+
+    # Root files (README.md)
+    for item in deploy_files(src_dir, dst_dir, pattern="*.md", force=force):
+        item["path"] = f"{deployed_rel}/{item.pop('name')}"
+        results.append(item)
+
+    # Per-type _template.md files
+    for type_dir in sorted(src_dir.iterdir()):
+        if not type_dir.is_dir():
+            continue
+        type_name = type_dir.name
+        for item in deploy_files(type_dir, dst_dir / type_name, pattern="*.md", force=force):
+            item["path"] = f"{deployed_rel}/{type_name}/{item.pop('name')}"
+            results.append(item)
+
+    return results
+
+
+def get_logs_states(plugin_root: Path, project_dir: Path) -> list[dict]:
+    """Get state of each log template file. Returns [{path, before, after}]."""
+    src_dir = plugin_root / "logs"
+    if not src_dir.is_dir():
+        return []
+
+    dst_dir = project_dir / ".claude" / "logs"
+    deployed_rel = ".claude/logs"
+    results = []
+
+    # Root files
+    for src in sorted(src_dir.glob("*.md")):
+        if not src.is_file():
+            continue
+        dst = dst_dir / src.name
+        state = compare_deployed(src, dst)
+        results.append({
+            "path": f"{deployed_rel}/{src.name}",
+            "before": state,
+            "after": state,
+        })
+
+    # Per-type templates
+    for type_dir in sorted(src_dir.iterdir()):
+        if not type_dir.is_dir():
+            continue
+        type_name = type_dir.name
+        for src in sorted(type_dir.glob("*.md")):
+            if not src.is_file():
+                continue
+            dst = dst_dir / type_name / src.name
+            state = compare_deployed(src, dst)
+            results.append({
+                "path": f"{deployed_rel}/{type_name}/{src.name}",
+                "before": state,
+                "after": state,
+            })
+
+    return results
+
+
 # --- System and skill discovery ---
 
 
@@ -741,6 +817,12 @@ def run_init(force: bool = False, system: str | None = None) -> None:
                 print(line)
             print()
 
+        logs = deploy_logs(plugin_root, project_dir, force=force)
+        if logs:
+            for line in format_section("Logs", logs):
+                print(line)
+            print()
+
     # Server subsystems
     target_systems = [system] if system is not None else systems
     for system_name in target_systems:
@@ -803,6 +885,12 @@ def run_status(system: str | None = None) -> None:
         patterns = get_patterns_states(plugin_root, project_dir)
         if patterns:
             for line in format_section("Patterns", patterns):
+                print(line)
+            print()
+
+        logs = get_logs_states(plugin_root, project_dir)
+        if logs:
+            for line in format_section("Logs", logs):
                 print(line)
             print()
 

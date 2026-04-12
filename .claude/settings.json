@@ -4,8 +4,7 @@
       "Bash(./scripts/run-plugin.sh:*)",
       "Bash(bash scripts/test.sh:*)",
       "mcp__plugin_blueprint_blueprint-research__*",
-      "mcp__plugin_ocd_navigator__*",
-      "mcp__plugin_ocd_log__*"
+      "mcp__plugin_ocd_navigator__*"
     ]
   },
   "hooks": {

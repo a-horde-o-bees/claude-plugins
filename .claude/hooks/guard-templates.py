@@ -1,11 +1,12 @@
 """Block direct edits to deployed and propagated files.
 
 Two categories of derived files should not be edited directly:
-1. Deployed rules, conventions, and patterns — synced from plugin templates
+1. Deployed rules, conventions, patterns, and log infrastructure — synced from plugin templates
 2. Propagated files — copied from ocd to other plugins by pre-commit hook
 
 Edit canonical sources instead:
 - Rules/conventions/patterns: edit templates in plugins/ocd/{rules,conventions,patterns}/
+- Log infrastructure (routing.md, _template.md): edit in plugins/ocd/logs/
 - plugin/__init__.py, plugin/__main__.py: edit in plugins/ocd/plugin/
 
 After editing templates, run /sync-templates to push changes to deployed
@@ -18,6 +19,7 @@ import sys
 
 GUARDED_PATTERNS = [
     re.compile(r"^\.claude/(rules|conventions|patterns)/"),    # deployed from templates
+    re.compile(r"^\.claude/logs/(routing\.md|[^/]+/_template\.md)$"),  # deployed log infrastructure
     re.compile(r"^plugins/(?!ocd/)[^/]+/plugin/(__init__|__main__)\.py$"),  # propagated plugin framework
 ]
 

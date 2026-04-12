@@ -24,9 +24,11 @@ def discover_mappings() -> list[tuple[Path, Path]]:
     Rules: plugins/<plugin>/rules/<name>.md → .claude/rules/<plugin>/<name>.md
     Conventions: plugins/<plugin>/conventions/<name>.md → .claude/conventions/<plugin>/<name>.md
     Patterns: plugins/<plugin>/patterns/<name>.md → .claude/patterns/<plugin>/<name>.md
+    Logs: plugins/<plugin>/logs/routing.md → .claude/logs/routing.md
+          plugins/<plugin>/logs/<type>/_template.md → .claude/logs/<type>/_template.md
 
-    README.md and architecture.md in template directories are source-only
-    documentation and are excluded from deployment.
+    README.md and architecture.md in rules/conventions/patterns template
+    directories are source-only documentation and are excluded from deployment.
     """
     mappings = []
     plugins_dir = PROJECT_ROOT / "plugins"
@@ -35,15 +37,37 @@ def discover_mappings() -> list[tuple[Path, Path]]:
     def collect(
         template_dir: Path,
         deployed_dir: Path,
+        exclude: set[str] | None = None,
     ) -> None:
         if not template_dir.is_dir():
             return
 
+        skip = exclude or set()
         for template in sorted(template_dir.glob("*.md")):
-            if template.name in source_only:
+            if template.name in skip:
                 continue
             deployed = deployed_dir / template.name
             mappings.append((template, deployed))
+
+    def collect_logs(
+        logs_dir: Path,
+        deployed_dir: Path,
+    ) -> None:
+        if not logs_dir.is_dir():
+            return
+
+        # Root infrastructure files (routing.md)
+        for template in sorted(logs_dir.glob("*.md")):
+            deployed = deployed_dir / template.name
+            mappings.append((template, deployed))
+
+        # Per-type _template.md files
+        for type_dir in sorted(logs_dir.iterdir()):
+            if not type_dir.is_dir():
+                continue
+            for template in sorted(type_dir.glob("_template.md")):
+                deployed = deployed_dir / type_dir.name / template.name
+                mappings.append((template, deployed))
 
     for plugin_dir in sorted(plugins_dir.iterdir()):
         if not plugin_dir.is_dir():
@@ -52,14 +76,21 @@ def discover_mappings() -> list[tuple[Path, Path]]:
         collect(
             plugin_dir / "rules",
             PROJECT_ROOT / ".claude" / "rules" / plugin_dir.name,
+            exclude=source_only,
         )
         collect(
             plugin_dir / "conventions",
             PROJECT_ROOT / ".claude" / "conventions" / plugin_dir.name,
+            exclude=source_only,
         )
         collect(
             plugin_dir / "patterns",
             PROJECT_ROOT / ".claude" / "patterns" / plugin_dir.name,
+            exclude=source_only,
+        )
+        collect_logs(
+            plugin_dir / "logs",
+            PROJECT_ROOT / ".claude" / "logs",
         )
 
     return mappings
