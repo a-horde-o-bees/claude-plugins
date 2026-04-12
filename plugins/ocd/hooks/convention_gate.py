@@ -24,14 +24,14 @@ def _build_context(file_path: str, conventions: list[str], is_mutation: bool) ->
         return (
             f"Conventions apply to `{file_path}`:\n"
             f"{conv_list}\n\n"
-            "Read each convention you haven't already loaded in this session. "
-            "If this edit doesn't conform to the applicable conventions, "
-            "immediately refactor to fix conformance before proceeding to other work."
+            "Load any listed conventions not already in context. "
+            "Conform this edit to all applicable conventions; "
+            "refactor immediately if non-conformant."
         )
     return (
         f"Conventions govern `{file_path}`:\n"
         f"{conv_list}\n\n"
-        "Read each convention you haven't already loaded in this session."
+        "Load any listed conventions not already in context."
     )
 
 

@@ -10,30 +10,27 @@ When something goes wrong on multiple occasions, it likely represents a missing 
 
 Bullets within each principle use one of two forms:
 
-- **Declarative** — general guidance, recommendations, observations, or system-design statements that don't have a specific triggering moment.
+- **Declarative** — general guidance, recommendations, observations, or system-design statements that do not have a specific triggering moment.
 - **Trigger** — gate-action format `Before/After [condition]: [action]; [optional decision criteria]`. Use this form for case-specific bullets so the agent has a sharp gate to recognize at the right moment.
 
 Use the trigger form whenever a bullet describes a specific situation where the agent should pause or act; the gate keyword and condition make it fire more reliably than a declarative restating of the same idea.
 
 ## Self-Describing Artifacts
 
-Every artifact carries its own purpose, structure, and guard rails. A reader encountering any file, tool, or schema for the first time understands what it is, what belongs in it, and what doesn't — without reading external documentation. Purpose descriptions, structural constraints, and naming conventions are not supplementary; they are the primary interface.
+Every artifact carries its own purpose, structure, and guard rails. A reader encountering any file, tool, or schema for the first time understands what it is, what belongs in it, and what does not — without reading external documentation. Purpose descriptions, structural constraints, and naming conventions are not supplementary; they are the primary interface.
 
 - Files open with a purpose statement that survives implementation unchanged
 - Tool names describe their action without needing usage documentation
 - Directory layout reveals architecture without a guide
-- Architectural decisions are recorded with the reasoning that produced them, not just the outcome
 
 ## Capture Rationale
 
-The "why" behind every significant decision, design choice, or structural change is preserved alongside the artifact — not left to inspection, memory, or future re-derivation. Rationale is not supplementary; it's essential content that enables future maintenance, refactoring, and extension to proceed from informed understanding rather than guesswork.
+The reasoning behind significant choices — where alternatives existed and one was selected — is preserved alongside the choice, not left to inspection, memory, or future re-derivation. Without recorded rationale, intentional decisions are indistinguishable from accidents and future work risks undoing them by guesswork.
 
-- Decision records include context, alternatives considered, choice, and consequences — not just the choice
-- Addressing edges carry rationales describing the specific mechanism, not just the targeting relationship
-- Architecture documents explain *why* the design is shaped this way, not only *what exists*
-- Commit messages explain the reasoning behind a change, not only the change itself
-- When encountering an existing choice with missing rationale: recover it before acting, or surface the gap to the user — acting on guessed rationale is how intentional decisions get inadvertently undone
-- Rationale in stable artifacts is forward-looking — phrase guidance as what to do now, not what changed from before. "X used to do Y; now Z" expires when the historical state goes extinct; "X does Z" is permanent. Historical context belongs in commit messages, not in conventions, principles, or architecture documents
+- Choices record context and alternatives considered alongside the selected option — not just what was chosen
+- Commit messages explain why a change was made, not only what changed
+- When encountering a choice with missing rationale: recover it before acting, or surface the gap to the user — acting on guessed rationale is how intentional decisions get inadvertently undone
+- Rationale in stable artifacts is forward-looking — phrase as what to do now, not what changed from before. Historical context belongs in commit messages, not in conventions, principles, or architecture documents
 
 ## Progressive Disclosure
 
@@ -74,7 +71,7 @@ Enforce correctness through structure, not documentation. When the system's stru
 
 ## Verify Against Reality
 
-Verify assumptions against system reality before acting — read what's there, validate current state, and check actual behavior so action proceeds on facts rather than guesses. The cost of verification is always lower than the cost of rework.
+Verify assumptions against system reality before acting — read what exists, validate current state, and check actual behavior so action proceeds on facts rather than guesses. The cost of verification is always lower than the cost of rework.
 
 - Before writing new functions: read existing implementations
 - Before transforming data: validate current state
@@ -101,7 +98,6 @@ The agent is the guardrails. Resist user directives that conflict with design pr
 
 - When a directive would violate a design principle: push back and explain the conflict and consequences
 - When the user operates in unfamiliar territory: surface risks they may not see
-- Before incorporating feedback or directives: verify the user has explicitly acknowledged the implications
 
 ## Fix Foundations, Not Symptoms
 
@@ -110,7 +106,7 @@ When something is wrong, trace to the root cause and correct it — even if that
 - A missing capability in a tool interface is fixed by adding the capability, not by documenting a workaround
 - A schema that allows invalid data is migrated, not guarded by application-layer checks
 - Aliases and indirection layers that map short names to real names are symptoms of an incomplete refactor — propagate the real names instead
-- Before proposing a workaround that changes what's delivered: explain what's missing and present alternative approaches; proceed only after user selects direction
+- Before proposing a workaround that changes what is delivered: explain what is missing and present alternative approaches; proceed only after user selects direction
 - Before working around unexpected constraints: research the constraint, explain what it prevents and what alternatives exist; proceed after user directs
 - Before changing approach due to errors: research the error cause, explain what failed and propose corrected approach; proceed after user directs
 
@@ -127,7 +123,7 @@ One authoritative source for each concept. Derived artifacts validate against th
 
 Structure communicates intent — organization itself conveys meaning, so readers can locate relevant content without needing explanatory documentation. Names, locations, patterns, and hierarchies encode meaning that should be readable without a guide.
 
-- File numbering encodes dependency order
+- File naming and ordering encode relationships without needing a separate guide
 - Names are verbose and convey purpose — not truncated for visual format
 - Script names match the domain concept they implement
 - Each type of content has one home — rules govern behavior, conventions govern file content, CLAUDE.md governs project procedures
@@ -141,10 +137,10 @@ Encode deterministic operations in purpose-built tools rather than in instructio
 
 ## Tool Positioning
 
-Position tools where the agent reaches for them so the right capability is discoverable from context, not buried where the agent has to hunt. A tool that exists but isn't surfaced where it's needed effectively doesn't exist for the agent that needed it.
+Position tools where the agent reaches for them so the right capability is discoverable from context, not buried where the agent has to hunt. A tool that exists but is not surfaced where it is needed effectively does not exist for the agent that needed it.
 
 - Tools are surfaced where the agent reaches — pre-positioned in context rather than requiring hunt-and-peck discovery
-- Before searching for files by purpose or navigating unfamiliar areas: use navigator describe or search to locate files
+- Before exhaustive search: reach for index-based discovery tools first
 
 ## Separation of Concerns
 
@@ -159,7 +155,7 @@ Completeness without verbosity. Every word must earn its place — if removing a
 
 - Include examples only when a rule is ambiguous without one
 - Examples are generic — use concepts, not project-specific names
-- Instructions state what to do, not what not to do, unless the negative case is a common mistake
+- Positive examples suffice — add counter-examples only when the rule is ambiguous without one
 - Scattered related content consolidates rather than repeating across locations
 - Duplicate logic or documentation signals a need to reorganize
 
@@ -170,13 +166,13 @@ Concepts trigger reliably only when they name a single mechanism. When one conce
 - A rule covering two failure modes through different mechanisms is actually two rules
 - A need that names two distinct concerns is two needs
 - A principle that bundles two disciplines is two principles when each requires a different action
-- Sharing a discipline doesn't justify sharing a concept; sharing a mechanism does
+- Sharing a discipline does not justify sharing a concept; sharing a mechanism does
 - Test: would an agent encountering a situation know exactly which action to take? If not, the concept is too broad
-- Before continuing when a rule should have triggered but didn't: surface which rule was missed and what should have happened; proceed after user acknowledges
+- Before continuing when a rule should have triggered but did not: surface which rule was missed and what should have happened; proceed after user acknowledges
 
 ## Reuse Before Create
 
-Check what exists before building new. The best code is code you don't write. Existing implementations are tested, understood, and maintained — new implementations start with none of those properties.
+Check what exists before building new. The best code is code you do not write. Existing implementations are tested, understood, and maintained — new implementations start with none of those properties.
 
 - Before writing a new function: search the codebase first
 - Adopt well-exercised tools and patterns over custom builds when they fulfill the purpose
@@ -185,11 +181,11 @@ Check what exists before building new. The best code is code you don't write. Ex
 
 ## You Aren't Gonna Need It (YAGNI)
 
-Solve the problem in front of you, not hypothetical future problems. Don't build features, abstractions, or infrastructure for requirements that don't exist yet. When the future need materializes, solve it then with actual requirements — not imagined ones.
+Solve the problem in front of you, not hypothetical future problems. Do not build features, abstractions, or infrastructure for requirements that do not exist yet. When the future need materializes, solve it then with actual requirements — not imagined ones.
 
-- Don't add extension points for flexibility no one has asked for
-- Don't build abstractions until the pattern repeats — three concrete cases before one generic solution
-- Don't design for scale, configurability, or edge cases that haven't occurred
+- Do not add extension points for flexibility no one has asked for
+- Do not build abstractions until the pattern repeats — three concrete cases before one generic solution
+- Do not design for scale, configurability, or edge cases that have not occurred
 
 ## Resumability
 
@@ -201,7 +197,7 @@ Design systems that can be interrupted and continued from any point. State is ex
 
 ## Composability
 
-Build small pieces that combine naturally. Monolithic components that can't be consumed independently become bottlenecks — impossible to test, migrate, or fix without disrupting everything. Composable pieces can be understood, replaced, and recombined as needs change.
+Build small pieces that combine naturally. Monolithic components that cannot be consumed independently become bottlenecks — impossible to test, migrate, or fix without disrupting everything. Composable pieces can be understood, replaced, and recombined as needs change.
 
 - Tools do one thing and can be called in any order — no implicit sequencing between independent operations
 - Data models separate concerns into independent tables — each can be queried, modified, and migrated without affecting others
@@ -227,9 +223,9 @@ The primary consumer of every tool, output, and error message is an agent. Desig
 
 ## Graceful Degradation
 
-When a dependency is unavailable or a precondition isn't met, the system continues to function in a reduced but useful state and reports exactly what's missing and how to restore it. Silent failure, cryptic error cascades, and all-or-nothing behavior each force the reader to debug the system to understand what went wrong — the system should carry that work, not push it onto the reader.
+When a dependency is unavailable or a precondition is not met, the system continues to function in a reduced but useful state and reports exactly what is missing and how to restore it. Silent failure, cryptic error cascades, and all-or-nothing behavior each force the reader to debug the system to understand what went wrong — the system should carry that work, not push it onto the reader.
 
-- Missing state is a valid state — operations on half-populated or absent data report what's present and what's missing, rather than refusing the whole request
+- Missing state is a valid state — operations on half-populated or absent data report what is present and what is missing, rather than refusing the whole request
 - Status reporting distinguishes stages of readiness (absent, initialized, stale, error) and pairs each with its corrective command
 - Error output names the specific missing piece and the specific next action, not a generic failure category
 - Before execution relies on an external tool or environment variable: verify availability and name the corrective command if missing, rather than letting a downstream call surface an unhelpful error
@@ -238,10 +234,10 @@ When a dependency is unavailable or a precondition isn't met, the system continu
 
 Findings and assertions are bounded by what was actually examined. The agent distinguishes between what was observed, what was not found, and what is unknown. Universalizing from a sample, treating absence as impossibility, or asserting certainty beyond the evidence are reasoning failures — not stylistic choices.
 
-- **Scope claims to evidence** — "none of the 12 researched entities implement X" is a valid observation; "no system implements X" is not — it claims knowledge of the full landscape from a sample; always state the scope of the search alongside the conclusion
-- **Absence of evidence is not evidence of absence** — not finding something means the search didn't surface it, not that it doesn't exist; state what was searched and what wasn't found, without concluding nonexistence
-- **Acknowledge sample bias** — findings reflect the entities examined, with whatever selection criteria, discovery paths, and depth limits shaped the sample; claims apply to the sample, not the population, unless the sample demonstrably covers the population
-- **Open-world assumption** — what hasn't been observed may still exist; default to "not yet found" rather than "does not exist"; the system's knowledge is incomplete by nature and assertions should reflect that
+- "None of the 12 researched entities implement X" is a valid observation; "no system implements X" is not — it claims knowledge of the full landscape from a sample; always state the scope of the search alongside the conclusion
+- Not finding something means the search did not surface it, not that it does not exist; state what was searched and what was not found, without concluding nonexistence
+- Findings reflect the entities examined, with whatever selection criteria, discovery paths, and depth limits shaped the sample; claims apply to the sample, not the population, unless the sample demonstrably covers the population
+- What has not been observed may still exist; default to "not yet found" rather than "does not exist"; the system's knowledge is incomplete by nature and assertions should reflect that
 
 ## Clean Break
 
