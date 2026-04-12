@@ -19,14 +19,12 @@ When the agent encounters information worth preserving for a future session, cap
 
 ## Routing vs Alternatives
 
-- Settled choice with rationale → decision
-- Mid-workflow gap or broken process → friction or problem
 - User preferences or personal context → Claude memory, not log
 - Project knowledge any user would benefit from → log, not memory
 
 ## Entry Format
 
-Each entry is a file in `.claude/logs/{type}/{Title}.md`. Filename is the title. Content opens with the title heading and a purpose statement. Read the type's `_template.md` for entry structure specific to that type.
+Each entry is a file in `.claude/logs/{type}/{Title}.md`. Title is the entry's subject, used as both the filename and the level-1 heading. Read the type's `_template.md` for entry structure specific to that type.
 
 ## Lifecycle
 
