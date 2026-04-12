@@ -44,7 +44,9 @@ Reveal information in layers — overview first, details on demand. Every level 
 
 ### Purpose Statement
 
-The disclosure boundary between layers. A purpose statement tells a reader what something is and whether to go deeper — present at every structural boundary where a reader makes an include-or-skip decision.
+Canonical guidance for how agents write descriptions of any artifact. A purpose statement tells a reader what something is and whether to go deeper — present at every structural boundary where a reader makes an include-or-skip decision.
+
+- When writing a description for any artifact (file heading, skill description, navigator entry, tool help text, frontmatter field): follow Purpose Statement guidance
 
 A purpose statement conveys:
 
