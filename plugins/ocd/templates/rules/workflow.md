@@ -27,6 +27,16 @@ Verification of new code belongs in the test structure. Not in ad-hoc bash comma
 - Exploration and learning (reading code, querying state, understanding existing behavior) are different from verifying new code; explore freely, but verification of new code that you wrote requires a test
 - Test fixtures handle environment setup automatically while ad-hoc commands require inline env vars that need manual approval — and the durability cost matters more than the friction cost
 
+## Push Blocking
+
+Git push can be temporarily blocked for safe non-destructive testing or worktree-isolated evaluation. The block sets an invalid pushurl on `origin` — any push attempt fails loudly with `fatal: '/dev/null' does not appear to be a git repository`.
+
+- Block: `git config remote.origin.pushurl "file:///dev/null"`
+- Unblock: `git config --unset remote.origin.pushurl`
+- Check: `git config --get remote.origin.pushurl` — no output means unblocked
+
+When push fails unexpectedly with "does not appear to be a git repository": check whether pushurl is set. A left-over block from a crashed evaluation or interrupted test is the likely cause — unblock with the command above.
+
 ## Test Scope Selection
 
 Run tests at the scope that matches the change.

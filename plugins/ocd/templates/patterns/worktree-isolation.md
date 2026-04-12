@@ -5,14 +5,15 @@ Spawn an agent into a disposable git worktree for safe execution of state-modify
 ## Pattern
 
 ```
-1. Spawn agent with isolation: "worktree":
-    1. Block git push — bash: `git config --worktree remote.origin.pushurl "file:///dev/null"`
-    2. Execute operations in worktree
-    3. Observe results
-    4. Return:
+1. Block git push — bash: `git config remote.origin.pushurl "file:///dev/null"`
+2. Spawn agent with isolation: "worktree":
+    1. Execute operations in worktree
+    2. Observe results
+    3. Return:
         - Findings, output, or observations
-2. Process returned results
-3. Worktree auto-cleans if agent made no changes; otherwise path and branch are returned
+3. Unblock git push — bash: `git config --unset remote.origin.pushurl`
+4. Process returned results
+5. Worktree auto-cleans if agent made no changes; otherwise path and branch are returned
 ```
 
 ## Agent Capabilities
@@ -72,27 +73,21 @@ Skills with `Exit to user` or `AskUserQuestion` path gates represent branching r
 
 ### Push Blocking
 
-Worktree-scoped push blocking prevents the agent from pushing to any remote, even if the skill it executes contains push steps. Requires `extensions.worktreeConfig = true` in the repo (one-time setup). The block is stored in `.git/worktrees/<name>/config.worktree` — fully isolated from main and other worktrees. Cleaned up automatically when the worktree is removed.
-
-The agent must run the blocking command as its first step, before any other work. Include this in agent instructions:
+The orchestrator blocks push globally before spawning worktree agents and unblocks after all agents return. This is orchestrator-controlled — the worktree agent does not need to do anything.
 
 ```
-1. Block git push — bash: `git config --worktree remote.origin.pushurl "file:///dev/null"`
+1. Block git push — bash: `git config remote.origin.pushurl "file:///dev/null"`
+2. Spawn worktree agents
+3. Unblock git push — bash: `git config --unset remote.origin.pushurl`
 ```
 
-The agent should expect this command to produce no output. Any subsequent `git push` attempt will fail loudly with `fatal: '/dev/null' does not appear to be a git repository` — this is the expected safety behavior, not an error to investigate or work around. If the skill being exercised contains push steps, the agent records the push failure as "push blocked by worktree isolation" and continues.
+Any `git push` attempt while blocked fails loudly with `fatal: '/dev/null' does not appear to be a git repository` — expected safety behavior, not an error. The worktree agent should expect push failures and record them as "push blocked by worktree isolation" rather than investigating or working around them.
 
-One edge case: the agent could add a new remote and push to it. Low risk since skills reference `origin`, but workflows that add remotes need additional blocking for each new remote.
+Push is blocked globally (main repo and all worktrees) for the duration of the evaluation. Since the orchestrator waits for all agents before unblocking, this does not interfere with normal workflow.
 
-#### Prerequisite
+One edge case: the agent could add a new remote and push to it. Low risk since skills reference `origin`, but workflows that add remotes would bypass the block.
 
-Enable worktree-specific config once per repo (already enabled in this project):
-
-```
-git config extensions.worktreeConfig true
-```
-
-Requires git 2.25+ (January 2020).
+Why orchestrator-controlled: `git config --worktree` resolves scope from the current working directory. Worktree agents' Bash tools may not always run from the linked worktree path, causing `--worktree` to write to the main worktree's config instead of the linked worktree's. Orchestrator-controlled global blocking avoids this CWD sensitivity entirely.
 
 ### Loop and Infinite Recursion
 

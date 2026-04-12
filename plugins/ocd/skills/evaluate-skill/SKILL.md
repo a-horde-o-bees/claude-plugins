@@ -1,5 +1,4 @@
 ---
-name: evaluate-skill
 description: Evaluate a skill through static analysis of its files against governance and runtime exercise of its pathways in isolated worktrees. Produces findings classified as auto-applicable defects or observations requiring user judgment.
 argument-hint: "--target </skill-name | path/to/SKILL.md>"
 allowed-tools:
@@ -77,30 +76,32 @@ User runs `/evaluate-skill`
     1. For each route, determine the arguments needed to trigger that path
     2. Determine preconditions each route requires (e.g., uncommitted changes, specific file state)
     3. Skip routes that only exit to user with static messages — no runtime verification value
-    4. If no exercisable routes: skip to step 11
-8. For each {route} in exercisable routes:
+    4. If no exercisable routes: skip to step 13
+8. Block git push — bash: `git config remote.origin.pushurl "file:///dev/null"`
+9. For each {route} in exercisable routes:
     1. Spawn agent with runtime evaluation({route}, {skill-path}) and isolation: "worktree":
         1. Read `${CLAUDE_PLUGIN_ROOT}/skills/evaluate-skill/_runtime-evaluation.md`
         2. Exercise skill {route}.name with arguments {route}.arguments against {skill-path} per the runtime evaluation workflow
         3. Return:
             - Runtime findings
     - async agent per route
-9. Collect runtime findings from all route agents
-10. {runtime-findings} = collected findings
+10. Collect runtime findings from all route agents
+11. Unblock git push — bash: `git config --unset remote.origin.pushurl`
+12. {runtime-findings} = collected findings
 
 ### Triage
 
 > Defects are deterministic and intent-preserving — safe to auto-apply without changing what the skill communicates or how it controls execution. Observations require user judgment before proceeding.
 
-11. {findings} = {static-findings} + {runtime-findings}
-12. Classify each finding in {findings} as Defect or Observation per `evaluation-triage.md`
-13. For each Defect: apply its proposed fix directly to disk
-14. {applied-defects} = list of applied defects
-15. If any Observations exist in {findings}:
+13. {findings} = {static-findings} + {runtime-findings}
+14. Classify each finding in {findings} as Defect or Observation per `evaluation-triage.md`
+15. For each Defect: apply its proposed fix directly to disk
+16. {applied-defects} = list of applied defects
+17. If any Observations exist in {findings}:
     1. Present applied Defects grouped by file
     2. Present each Observation as-is from the agent's finding — file path, location, what is wrong, why, and proposed fix
     3. Exit to user — "Observations need user judgment. Apply or reject each, then re-invoke `/evaluate-skill` to verify."
-16. Present Report
+18. Present Report
 
 ### Report
 
@@ -121,7 +122,11 @@ User runs `/evaluate-skill`
 - Efficacy traces execution flow; does not actually execute steps or spawn subagents
 - Single sequential static agent — conformity findings inform efficacy evaluation (shared context matters)
 - Runtime agents invoke the skill via the Skill tool — not by manually executing workflow steps
-- Runtime agents block git push as their first step; push failures are expected safety behavior
+- Orchestrator blocks git push before spawning runtime agents and unblocks after all agents return; push failures inside worktree agents are expected safety behavior
 - Runtime agents execute `Spawn agent with:` steps themselves — Agent tool is unavailable in worktrees
 - Observations presented to the user include the agent's proposed fix verbatim — the proposed fix is the actionable recommendation the user evaluates; do not summarize or omit it
 - `/commit` precondition gives each evaluation a clean diff so the user can audit exactly what was changed
+
+## Error Handling
+
+- If push unblock (step 11) fails: warn user that `remote.origin.pushurl` may still be set and provide corrective command `git config --unset remote.origin.pushurl`
