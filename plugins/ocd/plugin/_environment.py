@@ -23,20 +23,29 @@ def get_plugin_root() -> Path:
 
 
 def get_project_dir() -> Path:
-    """Resolve project directory from CLAUDE_PROJECT_DIR.
+    """Resolve project directory from CLAUDE_PROJECT_DIR with git fallback.
 
-    Raises when unset — project identity is not inferable from working
-    directory. Claude Code sets this at runtime; scripts/run-plugin.sh
-    exports it; tests set it explicitly in subprocess env or via
-    monkeypatch.
+    Falls back to git repository root when the env var is unset —
+    deterministic within any checkout or worktree of the same repo.
+    Raises when neither the env var is set nor git root is discoverable.
     """
     env = os.environ.get("CLAUDE_PROJECT_DIR")
-    if not env:
-        raise RuntimeError(
-            "CLAUDE_PROJECT_DIR is not set. Run under Claude Code, via "
-            "scripts/run-plugin.sh, or set the variable explicitly."
-        )
-    return Path(env).resolve()
+    if env:
+        return Path(env).resolve()
+    import subprocess
+
+    result = subprocess.run(
+        ["git", "rev-parse", "--show-toplevel"],
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode == 0:
+        return Path(result.stdout.strip()).resolve()
+    raise RuntimeError(
+        "CLAUDE_PROJECT_DIR is not set and git root is not discoverable. "
+        "Run under Claude Code, via scripts/run-plugin.sh, or set the "
+        "variable explicitly."
+    )
 
 
 def get_plugin_data_dir() -> Path:

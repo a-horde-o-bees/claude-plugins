@@ -65,7 +65,7 @@ Use `pathlib.Path` throughout:
 
 Three absolute paths always resolve through the plugin framework helpers in `plugin/__init__.py` — never through direct environment reads, never from `os.getcwd()`, never through parent walks from arbitrary paths:
 
-- `plugin.get_project_dir()` — resolves `CLAUDE_PROJECT_DIR`; raises when unset because project identity is not inferable from working directory
+- `plugin.get_project_dir()` — resolves `CLAUDE_PROJECT_DIR`; falls back to `git rev-parse --show-toplevel` when unset, which is deterministic within any checkout or worktree of the same repo; raises when neither the env var is set nor git root is discoverable
 - `plugin.get_plugin_root()` — resolves `CLAUDE_PLUGIN_ROOT`; falls back to a deterministic walk from `plugin/__init__.py`'s own `__file__` position, which is intrinsic to the code layout
 - `plugin.get_plugin_data_dir()` — resolves `CLAUDE_PLUGIN_DATA`; raises when unset because per-plugin persistent storage is Claude Code–managed and inferable from nothing
 
