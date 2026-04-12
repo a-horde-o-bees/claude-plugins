@@ -9,10 +9,12 @@ This evaluation is in service of cutting a stable v1 of the ocd plugin and makin
 **In scope (must be re-justified through live invention before v1 ships):**
 
 - Design principles
-- ocd rule files: workflow, friction, system-documentation, decisions, process-flow-notation, navigator
+- ocd rule files: design-principles, workflow, system-documentation, process-flow-notation
 - ocd conventions
-- ocd tools: navigator (facade + MCP server + CLI), plugin hooks, `run.py` launcher
+- ocd patterns
+- ocd servers: navigator (MCP server + CLI), governance (MCP server + CLI), log (MCP server + CLI)
 - ocd skills: init, status, navigator, evaluate-skill, evaluate-governance, evaluate-documentation, commit, push, pdf
+- Plugin infrastructure: plugin framework, hooks, `run.py` launcher, sync-templates
 - Project-level infrastructure: pytest configs, `scripts/test.sh`, fixtures, plugin manifest
 
 **Deferred to post-v1 (continue on `dev` branch after v1 is cut):**
@@ -22,17 +24,24 @@ This evaluation is in service of cutting a stable v1 of the ocd plugin and makin
 
 **Re-add filter:** components that exist in v1 but cannot make the unmet pointer in v2 are not added to v2. They are removed from the project. The model is the audit; the rebuild has teeth.
 
+## Prerequisite Work
+
+Before resuming purpose-map evaluation:
+
+1. **Replace log MCP server with file-based logging** — the log server (`servers/log/`) is being replaced by markdown files in `.claude/log/{type}/`. The exported files already exist; the server needs to be retired and the agent-facing workflow updated so log entries are created/managed as files, not MCP tool calls. A rule or pattern should encode the routing guidance (when to use each log type) that currently lives in the MCP server instructions block.
+2. **Update purpose-map component paths** — the refactor moved files from `skills/` to `servers/`, renamed rules (dropped `ocd-` prefix), deleted `skills/governance/`, deleted `servers/{decisions,friction,stash}/`. Component paths in `purpose-map.db` are stale and will show broken references. Update paths as encountered during evaluation, not as a bulk sweep.
+
 ## Next Steps
 
 1. **Redesign evaluate-skill** using the same needs-first approach as evaluate-governance, cross-referencing the patterns established by the governance skill's holistic single-pass model.
-2. **Redesign evaluate-documentation** using the same approach. Incorporate the leaves-first traversal insight (parent docs describe subsystems generally; each subsystem's docs carry the detail) and log entry #26 (idea) that documentation lives in non-obvious surfaces — CLI help text, module docstrings, MCP tool descriptions, frontmatter `description:` fields, header purpose statements — not just the canonical README/architecture/CLAUDE.md/SKILL.md files.
+2. **Redesign evaluate-documentation** using the same approach. Incorporate the leaves-first traversal insight (parent docs describe subsystems generally; each subsystem's docs carry the detail) and the observation that documentation lives in non-obvious surfaces — CLI help text, module docstrings, MCP tool descriptions, frontmatter `description:` fields, header purpose statements — not just the canonical README/architecture/CLAUDE.md/SKILL.md files.
 3. **Check all validated system docs conform to the three-document model** — driven by the rebuilt evaluate-documentation skill, not by hand. This is the mass audit step; it runs skill-driven so drift in non-obvious surfaces is caught the same way drift in canonical documents is caught.
 
 **Rationale for the ordering:** documentation work is backloaded until the evaluate-documentation skill is rebuilt, so the mass audit (step 3) doesn't have to be re-walked when the skill lands.
 
 ## Open Items
 
-- **Convention loading on read** — concerns conventions firing when files are read, not just modified. Might inform how the governance `governance_match` is shaped during its evaluation.
+- **Convention loading on read** — concerns conventions firing when files are read, not just modified. Might inform how governance's `governance_match` is shaped during its evaluation.
 - **`purpose-map/skill-migration.md`** — archival planning document for migrating the purpose-map evaluation workflow to a skill. References a stale component id (`c14 (Pit of Success)`) and the now-removed Pit of Success principle. Decide whether to action the migration or delete the document as abandoned planning.
 
 ## v1 Reference
@@ -52,4 +61,6 @@ python3 -c "import sqlite3; db = sqlite3.connect('purpose-map/purpose-map-v1.db'
 - `purpose-map/purpose-map.db` — live v2 database
 - `plugins/ocd/rules/*.md` — OCD rule files (deployed to `.claude/rules/ocd/`)
 - `plugins/ocd/conventions/*.md` — OCD conventions (deployed to `.claude/conventions/ocd/`)
+- `plugins/ocd/patterns/*.md` — OCD patterns (deployed to `.claude/patterns/ocd/`)
 - `plugins/ocd/skills/*/SKILL.md` — OCD skills
+- `plugins/ocd/servers/*/` — OCD server packages (navigator, governance, log)
