@@ -58,10 +58,10 @@ python3 -c "import sqlite3; db = sqlite3.connect('purpose-map/purpose-map-v1.db'
 - `purpose-map/CLAUDE.md` — tool documentation, schema, operational protocol (read this first)
 - `purpose-map/purpose_map.py` — implementation
 - `purpose-map/purpose-map.db` — live v2 database
-- `plugins/ocd/rules/*.md` — rule templates (deployed to `.claude/rules/ocd/`)
-- `plugins/ocd/conventions/*.md` — convention templates (deployed to `.claude/conventions/ocd/`)
-- `plugins/ocd/patterns/*.md` — pattern templates (deployed to `.claude/patterns/ocd/`)
-- `plugins/ocd/logs/` — log type templates (deployed to `.claude/logs/`)
+- `plugins/ocd/templates/rules/*.md` — rule templates (deployed to `.claude/rules/ocd/`)
+- `plugins/ocd/templates/conventions/*.md` — convention templates (deployed to `.claude/conventions/ocd/`)
+- `plugins/ocd/templates/patterns/*.md` — pattern templates (deployed to `.claude/patterns/ocd/`)
+- `plugins/ocd/templates/logs/` — log type templates (deployed to `.claude/logs/`)
 - `plugins/ocd/skills/*/SKILL.md` — skills
 - `plugins/ocd/servers/navigator/` — navigator MCP server package
 - `plugins/ocd/lib/governance/` — governance library (disk-only)

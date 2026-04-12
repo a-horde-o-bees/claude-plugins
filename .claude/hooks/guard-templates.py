@@ -5,8 +5,8 @@ Two categories of derived files should not be edited directly:
 2. Propagated files — copied from ocd to other plugins by pre-commit hook
 
 Edit canonical sources instead:
-- Rules/conventions/patterns: edit templates in plugins/ocd/{rules,conventions,patterns}/
-- Log templates (_template.md): edit in plugins/ocd/logs/
+- Rules/conventions/patterns: edit templates in plugins/ocd/templates/{rules,conventions,patterns}/
+- Log templates (_template.md): edit in plugins/ocd/templates/logs/
 - plugin/__init__.py, plugin/__main__.py: edit in plugins/ocd/plugin/
 
 After editing templates, run /sync-templates to push changes to deployed

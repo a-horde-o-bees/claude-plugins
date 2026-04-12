@@ -25,7 +25,7 @@ def deploy_rules(plugin_root: Path, project_dir: Path, force: bool = False) -> l
     plugin_name = plugin_root.name
     deployed_rel = f".claude/rules/{plugin_name}"
     results = deploy_files(
-        src_dir=plugin_root / "rules",
+        src_dir=plugin_root / "templates" / "rules",
         dst_dir=project_dir / ".claude" / "rules" / plugin_name,
         pattern="*.md",
         force=force,
@@ -38,7 +38,7 @@ def deploy_rules(plugin_root: Path, project_dir: Path, force: bool = False) -> l
 
 def get_rules_states(plugin_root: Path, project_dir: Path) -> list[dict]:
     """Get state of each rule file. Returns [{path, before, after}]."""
-    src_dir = plugin_root / "rules"
+    src_dir = plugin_root / "templates" / "rules"
     if not src_dir.is_dir():
         return []
 
@@ -75,7 +75,7 @@ def deploy_conventions(plugin_root: Path, project_dir: Path, force: bool = False
     plugin_name = plugin_root.name
     deployed_rel = f".claude/conventions/{plugin_name}"
     results = deploy_files(
-        src_dir=plugin_root / "conventions",
+        src_dir=plugin_root / "templates" / "conventions",
         dst_dir=project_dir / ".claude" / "conventions" / plugin_name,
         pattern="*.md",
         force=force,
@@ -88,7 +88,7 @@ def deploy_conventions(plugin_root: Path, project_dir: Path, force: bool = False
 
 def get_conventions_states(plugin_root: Path, project_dir: Path) -> list[dict]:
     """Get state of each convention file. Returns [{path, before, after}]."""
-    src_dir = plugin_root / "conventions"
+    src_dir = plugin_root / "templates" / "conventions"
     if not src_dir.is_dir():
         return []
 
@@ -125,7 +125,7 @@ def deploy_patterns(plugin_root: Path, project_dir: Path, force: bool = False) -
     plugin_name = plugin_root.name
     deployed_rel = f".claude/patterns/{plugin_name}"
     results = deploy_files(
-        src_dir=plugin_root / "patterns",
+        src_dir=plugin_root / "templates" / "patterns",
         dst_dir=project_dir / ".claude" / "patterns" / plugin_name,
         pattern="*.md",
         force=force,
@@ -138,7 +138,7 @@ def deploy_patterns(plugin_root: Path, project_dir: Path, force: bool = False) -
 
 def get_patterns_states(plugin_root: Path, project_dir: Path) -> list[dict]:
     """Get state of each pattern file. Returns [{path, before, after}]."""
-    src_dir = plugin_root / "patterns"
+    src_dir = plugin_root / "templates" / "patterns"
     if not src_dir.is_dir():
         return []
 
@@ -166,11 +166,11 @@ def get_patterns_states(plugin_root: Path, project_dir: Path) -> list[dict]:
 def deploy_logs(plugin_root: Path, project_dir: Path, force: bool = False) -> list[dict]:
     """Deploy log type templates. Returns [{path, before, after}] with relative deployed paths.
 
-    Deploys _template.md from each type subdirectory in plugins/<plugin>/logs/
+    Deploys _template.md from each type subdirectory in plugins/<plugin>/templates/logs/
     to .claude/logs/{type}/_template.md. No plugin namespacing; logs are
     project-level infrastructure owned by the user after first deployment.
     """
-    src_dir = plugin_root / "logs"
+    src_dir = plugin_root / "templates" / "logs"
     dst_dir = project_dir / ".claude" / "logs"
     deployed_rel = ".claude/logs"
     results = []
@@ -191,7 +191,7 @@ def deploy_logs(plugin_root: Path, project_dir: Path, force: bool = False) -> li
 
 def get_logs_states(plugin_root: Path, project_dir: Path) -> list[dict]:
     """Get state of each log type template file. Returns [{path, before, after}]."""
-    src_dir = plugin_root / "logs"
+    src_dir = plugin_root / "templates" / "logs"
     if not src_dir.is_dir():
         return []
 

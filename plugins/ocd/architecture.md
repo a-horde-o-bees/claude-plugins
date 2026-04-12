@@ -69,7 +69,7 @@ Rules and conventions share a governance infrastructure implemented in `lib/gove
 
 ## Rules
 
-Template files in `rules/` deploy to `.claude/rules/` via `/init`. Users own the deployed copies — they can inspect, edit, or delete them.
+Template files in `templates/rules/` deploy to `.claude/rules/` via `/init`. Users own the deployed copies — they can inspect, edit, or delete them.
 
 | Rule | Scope |
 |------|-------|
@@ -78,7 +78,7 @@ Template files in `rules/` deploy to `.claude/rules/` via `/init`. Users own the
 | `system-documentation.md` | README and architecture.md requirements per system, with nesting and currency rules |
 | `process-flow-notation.md` | Structured programming notation for skill workflows |
 
-Rules use the template-deployed model: templates in `rules/` are the source of truth; deployed copies in `.claude/rules/ocd/` are derived. `scripts/sync-templates.py` syncs templates to deployed copies. A SessionEnd hook runs sync-templates automatically so the next session loads current rules.
+Rules use the template-deployed model: templates in `templates/rules/` are the source of truth; deployed copies in `.claude/rules/ocd/` are derived. `scripts/sync-templates.py` syncs templates to deployed copies. A SessionEnd hook runs sync-templates automatically so the next session loads current rules.
 
 ## Skills
 
@@ -201,11 +201,11 @@ plugins/ocd/
 │   ├── install_deps.sh          — install/refresh plugin venv dependencies
 │   ├── auto_approval/           — permission enforcement package (hardcoded + dynamic)
 │   └── convention_gate.py       — surface applicable conventions on Read/Edit/Write
-├── rules/                       — rule templates (deployed to .claude/rules/ocd/)
-├── conventions/                 — convention templates (deployed to .claude/conventions/ocd/)
-├── patterns/                    — pattern templates (deployed to .claude/patterns/ocd/)
-├── logs/                        — log type templates (deployed to .claude/logs/)
 ├── templates/
+│   ├── rules/                   — rule templates (deployed to .claude/rules/ocd/)
+│   ├── conventions/             — convention templates (deployed to .claude/conventions/ocd/)
+│   ├── patterns/                — pattern templates (deployed to .claude/patterns/ocd/)
+│   ├── logs/                    — log type templates (deployed to .claude/logs/)
 │   └── settings.json            — recommended auto-approve patterns
 ├── lib/
 │   └── governance/              — governance library (disk-only matching, listing, ordering)

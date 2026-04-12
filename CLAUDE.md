@@ -31,7 +31,7 @@ This is the primary source for patterns, supported fields, and examples. Fetch t
 
 ## Editing Rules, Conventions, and Patterns
 
-Edit templates in `plugins/ocd/{rules,conventions,patterns}/`, never deployed copies in `.claude/`. Run `/sync-templates` to push changes to deployed copies for testing. The pre-commit hook runs the same sync automatically at commit time. A guard hook blocks direct edits to deployed copies.
+Edit templates in `plugins/ocd/templates/{rules,conventions,patterns}/`, never deployed copies in `.claude/`. Run `/sync-templates` to push changes to deployed copies for testing. The pre-commit hook runs the same sync automatically at commit time. A guard hook blocks direct edits to deployed copies.
 
 ## Adding Python Dependencies
 
