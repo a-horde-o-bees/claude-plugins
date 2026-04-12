@@ -351,14 +351,6 @@ class TestServerInvocation:
         result = _run_server_briefly("servers.governance")
         assert result.returncode == 0, result.stderr
 
-    def test_friction_loads(self) -> None:
-        result = _run_server_briefly("servers.friction")
-        assert result.returncode == 0, result.stderr
-
-    def test_decisions_loads(self) -> None:
-        result = _run_server_briefly("servers.decisions")
-        assert result.returncode == 0, result.stderr
-
-    def test_stash_loads(self) -> None:
-        result = _run_server_briefly("servers.stash")
+    def test_log_loads(self) -> None:
+        result = _run_server_briefly("servers.log")
         assert result.returncode == 0, result.stderr

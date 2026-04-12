@@ -61,9 +61,8 @@ Agent-facing tools exposed over the Model Context Protocol. Registered in `.mcp.
 | Server | Tools | Purpose |
 |--------|-------|---------|
 | `navigator` | `paths_*`, `governance_*`, `skills_*`, `references_*`, `scope_*` | Project structure index, governance discovery, reference mapping |
-| `friction` | `friction_*` | Capture and triage process friction encountered during workflows |
-| `decisions` | `decisions_record`, `decisions_list`, `decisions_get`, `decisions_update`, `decisions_remove` | Record and maintain non-obvious project choices in `decisions.md` and `decisions/*.md` |
-| `stash` | `stash_add`, `stash_review`, `stash_remove`, `stash_promote` | Capture ideas and future work to `.claude/stash/stash.md` (project-scoped) with fallback to `~/.claude/stash/stash.md` for unattached entries |
+| `governance` | `governance_*` | Convention and rule governance: loading, matching, ordering, dependency analysis |
+| `log` | `log_*`, `type_*`, `tag_*` | Unified project log across types (decision, friction, problem, idea) with per-type tag management |
 
 ## License
 

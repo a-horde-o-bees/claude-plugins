@@ -124,11 +124,10 @@ Agent-facing tools exposed over the Model Context Protocol. Each server lives as
 | Server | Entry point | Role |
 |--------|-------------|------|
 | `navigator` | `servers/navigator/__main__.py` | Project structure index, governance discovery, reference mapping. Delegates to `servers/navigator` package for business logic. |
-| `friction` | `servers/friction/__main__.py` | Friction log capture and triage. Reads and writes `.claude/ocd/friction/*.md` files. |
-| `decisions` | `servers/decisions/__main__.py` | Decisions index management. Reads and writes `decisions.md` and `decisions/*.md` at the project root. |
-| `stash` | `servers/stash/__main__.py` | Stash holding area for ideas, future work, and unaddressed observations. Reads and writes `.claude/stash/stash.md` per project with fallback to `~/.claude/stash/stash.md` for unattached entries. |
+| `governance` | `servers/governance/__main__.py` | Convention and rule governance: loading, matching, ordering, and dependency analysis. |
+| `log` | `servers/log/__main__.py` | Unified project log across multiple types (decision, friction, problem, idea) with per-type tag management. |
 
-Server modules are thin presentation layers: tool handlers validate, delegate to a domain module, and serialize the result. Business logic for standalone servers without an accompanying skill package lives alongside the server as `servers/_{domain}_store.py` — the internal module pattern used for `decisions` and `stash`.
+Server modules are thin presentation layers: tool handlers validate, delegate to a domain module, and serialize the result.
 
 Server-level `instructions` fields publish when to reach for each server's tools; individual tool descriptions cover per-tool semantics.
 
@@ -184,7 +183,7 @@ plugins/ocd/
 │   ├── init/                    — deployment orchestration
 │   ├── status/                  — plugin status reporting
 │   └── pdf/                     — markdown-to-PDF export
-├── servers/                     — MCP servers (navigator, friction, decisions, stash)
+├── servers/                     — MCP servers (navigator, governance, log)
 ├── plugin/                      — generic plugin framework (shared across plugins)
 ├── patterns/                    — reusable agent workflow patterns
 ├── run.py                       — module launcher with package context

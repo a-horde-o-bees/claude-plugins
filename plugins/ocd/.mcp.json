@@ -14,27 +14,6 @@
         "GOVERNANCE_DB": ".claude/ocd/governance/governance.db"
       }
     },
-    "friction": {
-      "command": "${CLAUDE_PLUGIN_DATA}/venv/bin/python3",
-      "args": ["${CLAUDE_PLUGIN_ROOT}/run.py", "servers.friction"],
-      "env": {
-        "FRICTION_DB": ".claude/ocd/friction/friction.db"
-      }
-    },
-    "decisions": {
-      "command": "${CLAUDE_PLUGIN_DATA}/venv/bin/python3",
-      "args": ["${CLAUDE_PLUGIN_ROOT}/run.py", "servers.decisions"],
-      "env": {
-        "DECISIONS_DB": ".claude/ocd/decisions/decisions.db"
-      }
-    },
-    "stash": {
-      "command": "${CLAUDE_PLUGIN_DATA}/venv/bin/python3",
-      "args": ["${CLAUDE_PLUGIN_ROOT}/run.py", "servers.stash"],
-      "env": {
-        "STASH_DB": ".claude/ocd/stash/stash.db"
-      }
-    },
     "log": {
       "command": "${CLAUDE_PLUGIN_DATA}/venv/bin/python3",
       "args": ["${CLAUDE_PLUGIN_ROOT}/run.py", "servers.log"],
