@@ -28,11 +28,10 @@ This evaluation is in service of cutting a stable v1 of the ocd plugin and makin
 
 ## Next Steps
 
-1. **Redesign evaluate-skill** using the same needs-first approach as evaluate-governance, cross-referencing the patterns established by the governance skill's holistic single-pass model.
-2. **Redesign evaluate-documentation** using the same approach. Incorporate the leaves-first traversal insight (parent docs describe subsystems generally; each subsystem's docs carry the detail) and the observation that documentation lives in non-obvious surfaces — CLI help text, module docstrings, MCP tool descriptions, frontmatter `description:` fields, header purpose statements — not just the canonical README/architecture/CLAUDE.md/SKILL.md files.
-3. **Check all validated system docs conform to the three-document model** — driven by the rebuilt evaluate-documentation skill, not by hand. This is the mass audit step; it runs skill-driven so drift in non-obvious surfaces is caught the same way drift in canonical documents is caught.
+1. **Redesign evaluate-documentation** using the same approach as evaluate-skill. Incorporate the leaves-first traversal insight (parent docs describe subsystems generally; each subsystem's docs carry the detail) and the observation that documentation lives in non-obvious surfaces — CLI help text, module docstrings, MCP tool descriptions, frontmatter `description:` fields, header purpose statements — not just the canonical README/architecture/CLAUDE.md/SKILL.md files.
+2. **Check all validated system docs conform to the three-document model** — driven by the rebuilt evaluate-documentation skill, not by hand. This is the mass audit step; it runs skill-driven so drift in non-obvious surfaces is caught the same way drift in canonical documents is caught.
 
-**Rationale for the ordering:** documentation work backloaded until the evaluate-documentation skill is rebuilt, so the mass audit (step 3) does not have to be re-walked when the skill lands.
+**Rationale for the ordering:** documentation work backloaded until the evaluate-documentation skill is rebuilt, so the mass audit (step 2) does not have to be re-walked when the skill lands.
 
 ## Open Items
 
