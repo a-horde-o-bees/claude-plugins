@@ -1,9 +1,6 @@
 ---
 name: log
-description: |
-  Capture or manage project log entries — decisions, friction, problems, ideas.
-  Reach for this when encountering non-obvious context a future session will need:
-  choices with rejected alternatives, process gaps, observed defects, exploratory ideas.
+description: Capture or manage project log entries — decisions, friction, problems, ideas. Reach for this when encountering non-obvious context a future session will need — choices with rejected alternatives, process gaps, observed defects, exploratory ideas.
 argument-hint: "[add | list | remove]"
 allowed-tools:
   - Read

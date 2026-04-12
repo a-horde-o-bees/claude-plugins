@@ -35,7 +35,7 @@ Fields:
 | `context` | None | Set `fork` to run in subagent context |
 | `agent` | None | Subagent type when `context: fork` (e.g., `Explore`, `Plan`, `general-purpose`) |
 
-Multi-line descriptions — use YAML block scalar operator (`|` or `>`) for multi-line values. Bare multi-line descriptions (wrapped by formatters without operator) break parser.
+Scalar fields (description, name, argument-hint, etc.) are single lines — no artificial line breaks, consistent with the paragraph wrapping rule. Do not use YAML block scalar operators (`|` or `>`) for values that are a single paragraph.
 
 List fields (`allowed-tools`, etc.) — use YAML block-style lists, one item per line with `- ` prefix. Not flow-style arrays (`[a, b]`).
 

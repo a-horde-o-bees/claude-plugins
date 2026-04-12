@@ -1,7 +1,6 @@
 ---
 name: evaluate-skill
-description: |
-  Evaluate a skill's files in a single holistic pass. A spawned agent reads the skill and all referenced files against domain-specific evaluation criteria and reports findings; the orchestrator classifies each finding against the shared triage criteria, auto-applies defects, and exits to user when observations need judgment.
+description: Evaluate a skill's files in a single holistic pass. A spawned agent reads the skill and all referenced files against domain-specific evaluation criteria and reports findings; the orchestrator classifies each finding against the shared triage criteria, auto-applies defects, and exits to user when observations need judgment.
 argument-hint: "--target </skill-name | path/to/SKILL.md>"
 allowed-tools:
   - Read
