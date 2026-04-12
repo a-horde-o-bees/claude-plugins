@@ -1,6 +1,6 @@
-# Governance Evaluation Criteria
+# Governance Evaluation Workflow
 
-Instructions for an agent evaluating governance files in root-first dependency order. The orchestrator may hand you the chain one level at a time or all at once; either way, each file joins your context in the order given, and the experience of reading each file is itself the check for whether a future agent could follow it.
+Agent workflow for evaluating governance files in root-first dependency order. The orchestrator may hand you the chain one level at a time or all at once; each file joins your context in the order given, and the experience of reading each file is itself the check for whether a future agent could follow it.
 
 ## Reading Disposition
 

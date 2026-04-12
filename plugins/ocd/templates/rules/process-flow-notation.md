@@ -160,6 +160,19 @@ Subprocesses are extracted under their own heading with their own steps, referen
 
 Grouping headings organize contiguous steps within a single process. Steps continue numbering across headings — a heading is a label, not a numbering reset.
 
+Blockquotes (`>`) are non-executable context — rationale, purpose, or design notes for surrounding steps. They sit between steps without breaking numbering and are never acted on as part of the flow. Compose with grouping headings when both organization and explanation are needed.
+
+```
+3. Classify each finding as Defect or Observation
+
+> Defects are safe to auto-apply — deterministic and intent-preserving by definition. Observations may change what governance prescribes, so the orchestrator exits to user before continuing.
+
+4. For each Defect: apply its proposed fix directly to disk
+5. If any Observations exist:
+    1. Present to user
+    2. Exit to user
+```
+
 ## Invocation Types
 
 When a step delegates to a specific execution mechanism, an invocation type prefixes the command: `{mechanism}: {command}`. This disambiguates how the agent executes the step — which tool or interface to use.

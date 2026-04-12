@@ -250,14 +250,19 @@ Single-path skills use `## Workflow` without suffix.
 
 ### Components
 
-Components are reusable content blocks (prompts, evaluation criteria, reference material) shared across multiple workflows. Components serve workflows — they are never executed independently.
+Components are extracted `_{name}.md` files alongside SKILL.md. They carry content that the orchestrator does not need in its own context — agent workflows, evaluation criteria, reference material, prompt templates. Components serve workflows and are never executed independently.
 
-Prefer extracted `_{name}.md` files alongside SKILL.md over inline `## Components` sections. Extracted files scope agent context — each agent reads only files it needs, and intermediary agents (coordinators, dispatchers) pass file references without loading content they do not use.
+Two reasons to extract a component:
+
+- **Context scoping** — the orchestrator dispatches an agent with a focused file rather than carrying all agent-level detail in SKILL.md. A component file can contain a self-contained agent workflow (PFN steps the agent executes), evaluation criteria, or any instructions the agent needs that the orchestrator does not. Extract even for a single workflow when the motivation is keeping the orchestrator's context lean and the agent's context focused.
+- **Reuse** — content shared across multiple workflows lives in a component rather than duplicated inline.
+
+Prefer extracted files over inline `## Components` sections. Underscore prefix signals internal (consistent with `_{purpose}.py` pattern for internal modules).
 
 ```
 skill-name/
 ├── SKILL.md
-├── _instructions.md
+├── _agent-workflow.md
 └── _criteria.md
 ```
 
@@ -266,8 +271,8 @@ Workflows include explicit read steps for extracted components:
 ```
 ## Workflow: Mode A
 1. Spawn agent with evaluation({target}):
-    1. Read `_instructions.md` and `_criteria.md`
-    2. Follow instructions against {target}
+    1. Read `_criteria.md`
+    2. Follow criteria against {target}
     3. Return:
         - Results
 ### Report
@@ -277,8 +282,8 @@ Workflows include explicit read steps for extracted components:
 1. Spawn agent with coordination({targets}):
     1. For each {target} in {targets}:
         1. Spawn agent with evaluation({target}):
-            1. Read `_instructions.md` and `_criteria.md`
-            2. Follow instructions against {target}
+            1. Read `_criteria.md`
+            2. Follow criteria against {target}
             3. Return:
                 - Results
         - async agent per target
@@ -288,8 +293,6 @@ Workflows include explicit read steps for extracted components:
 ### Report
 - Mode B specific format
 ```
-
-When content is used by only one workflow, keep it as a workflow subsection — components are for content shared across 2+ workflows. Underscore prefix signals internal (consistent with `_{purpose}.py` pattern for internal modules).
 
 ## File Enumeration
 

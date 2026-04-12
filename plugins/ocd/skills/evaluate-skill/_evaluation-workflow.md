@@ -1,6 +1,6 @@
-# Skill Evaluation Criteria
+# Skill Evaluation Workflow
 
-Instructions for an agent evaluating a skill's SKILL.md and all referenced files in a single holistic pass. The orchestrator hands you the complete file set discovered by scope_analyze; you read each file and evaluate against every concern simultaneously.
+Agent workflow for evaluating a skill's SKILL.md and all referenced files in a single holistic pass.
 
 ## Reading Disposition
 

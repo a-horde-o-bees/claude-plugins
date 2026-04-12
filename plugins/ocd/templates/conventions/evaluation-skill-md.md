@@ -27,21 +27,6 @@ Scope is domain-specific. Skill evaluation scopes to files and their references.
 
 Scope also declares accepted arguments beyond `--target`. Arguments that don't fit the skill's domain are rejected with guidance. Document accepted arguments and their effect on scope.
 
-## Protocol
-
-The evaluation process — what the orchestrator receives, how it plans execution, how findings are returned and acted on.
-
-The orchestrator receives the scoped target set from a domain-specific source (navigator tool, path list, or whatever the domain prescribes) and either dispatches a single spawned agent over the whole set or spawns an agent for the first sub-group and continues it cycle-by-cycle via `Continue {agent-ref} with:`. Per-cycle checkpointing is appropriate when the orchestrator needs to intervene between sub-groups — for example, when changes at an earlier level might affect how later levels should be evaluated.
-
-After each cycle (or at the end of a whole-set pass):
-
-1. The agent returns findings in report-only form — each finding carries file path, location, what is wrong, why, and a proposed fix or an explicit `needs judgment` flag
-2. The orchestrator classifies each finding against `evaluation-triage.md`
-3. Defects are auto-applied directly to disk; Observations are surfaced to the user
-4. The orchestrator decides whether to continue the agent for the next cycle, exit to user for judgment, or present a final report
-
-If the target set evolves during evaluation (e.g., frontmatter corrections reorder a dependency chain), the orchestrator re-queries its domain source and restarts the pass. Partial findings accumulated before the restart are presented to the user for reference but not auto-applied, since the correction may have changed what counts as valid.
-
 ## Report-Only Agent
 
 The spawned agent does not classify findings, apply fixes, or reason about triage. It reads, evaluates, and reports. The orchestrator owns triage (via `evaluation-triage.md`) and application. This separation is load-bearing:
@@ -50,9 +35,9 @@ The spawned agent does not classify findings, apply fixes, or reason about triag
 - Keeping the agent report-only means its returns can be audited against a small, stable format
 - The orchestrator can interrupt between cycles without the agent holding stale classification state
 
-## Evaluation Criteria File
+## Evaluation Workflow File
 
-Every evaluation skill carries its own evaluation criteria file alongside SKILL.md (e.g., `_evaluation-criteria.md`). The file is read by the spawned agent at the start of its execution and defines:
+Every evaluation skill carries its own agent workflow file alongside SKILL.md (e.g., `_evaluation-workflow.md`). The file is read by the spawned agent at the start of its execution and defines:
 
 - The reading disposition — what stance the agent holds as it walks the target set
 - What to surface — a non-exhaustive inventory of active checks and friction cues the agent watches for. Frame as partial inventory, not checklist — the agent should surface friction that doesn't match any listed category rather than filtering it out
@@ -63,11 +48,16 @@ The criteria file is customized to the domain. Two evaluation skills targeting d
 
 ## Skill Structure
 
-Evaluation skills follow the standard SKILL.md convention with the following additions:
+Evaluation skills follow the standard SKILL.md section ordering with domain-specific additions:
 
-- Scope section documents accepted arguments and how targets are discovered
-- Protocol section describes orchestrator flow and per-cycle handling
-- Rules section documents the report-only agent invariant and other load-bearing invariants specific to the skill
+1. Process Model — holistic reading rationale and orchestration design (what the agent holds, how the orchestrator dispatches and triages)
+2. Scope — accepted arguments and target discovery
+3. Trigger
+4. Route
+5. Workflow — sole executable section; use PFN blockquotes for inline orchestration rationale (e.g., why defects are safe to auto-apply, why observations exit to user)
+6. Rules — report-only agent invariant and other load-bearing invariants specific to the skill
+
+Process Model covers the conceptual design at an appropriate level of abstraction. Detailed orchestration rationale lives in Workflow as blockquote context adjacent to the steps it explains, not in a separate Protocol section.
 
 ## Report
 
