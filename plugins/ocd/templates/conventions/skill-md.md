@@ -56,7 +56,7 @@ Sections fall into three categories:
 | `## Trigger` | Prescribed | When user invokes this skill |
 | `## Route` | Prescribed | Resolve arguments, validate inputs, select Workflow, dispatch; omit for argument-free skills that dispatch directly to Workflow |
 | `## Workflow` | Prescribed | Numbered steps using Process Flow Notation; encapsulates everything agent needs to execute |
-| `## Rules` | Prescribed | Constraints and guardrails |
+| `## Rules` | Common | Constraints and guardrails that apply broadly across the skill or govern multiple steps; omit when all constraints are step-specific and inlined |
 | `## Error Handling` | Prescribed | How the skill responds to failures; minimum: report failure with available details. Skills with domain-specific error recovery replace the default with appropriate handling |
 | `## Process Model` | Common | Conceptual model of how skill operates and why — for skills where workflow correctness depends on mechanics not self-evident from steps themselves |
 | `## Components` | Common | Reusable content blocks shared across multiple workflows; prefer extracted `_{name}.md` files over inline sections |
