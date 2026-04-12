@@ -158,9 +158,9 @@ Em dash (`—`) separates step label from optional description. Label is an acti
 
 Subprocesses are extracted under their own heading with their own steps, referenced by name in the parent flow. Heading depth is one level below the parent heading.
 
-Grouping headings organize contiguous steps within a single process. Steps continue numbering across headings — a heading is a label, not a numbering reset.
+Grouping headings organize contiguous steps within a single process. Steps continue numbering across headings — a heading is a label, not a numbering reset. Every grouping heading is followed by a blockquote explaining why these steps form a distinct group — the heading names the group, the blockquote conveys its purpose.
 
-Blockquotes (`>`) are non-executable context — rationale, purpose, or design notes for surrounding steps. They sit between steps without breaking numbering and are never acted on as part of the flow. Compose with grouping headings when both organization and explanation are needed.
+Blockquotes (`>`) are non-executable context — rationale, purpose, or design notes for surrounding steps. They sit between steps without breaking numbering and are never acted on as part of the flow. Blockquotes appear standalone between steps or after grouping headings — grouping headings require them, standalone use does not require a heading.
 
 ```
 3. Classify each finding as Defect or Observation
