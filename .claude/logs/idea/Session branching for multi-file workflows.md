@@ -1,4 +1,4 @@
-# Session branching wrapper: use rewind/fork as context management for O(C + NF) multi-file agent workflows
+# Session branching for multi-file workflows
 
 ## Purpose
 

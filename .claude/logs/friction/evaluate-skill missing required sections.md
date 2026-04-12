@@ -2,7 +2,7 @@
 tags: ["system:evaluate-skills"]
 ---
 
-# evaluate-skill missing Protocol and Shared Infrastructure sections required by evaluation-skill-md convention
+# evaluate-skill missing required sections
 
 ## Purpose
 

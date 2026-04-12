@@ -2,7 +2,7 @@
 tags: ["system:auto_approval"]
 ---
 
-# auto_approval handles for/while/until loops but not if/case/function control flow
+# auto_approval misses if-case-function splitting
 
 ## Purpose
 

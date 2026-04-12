@@ -2,7 +2,7 @@
 tags: ["system:evaluate-skills"]
 ---
 
-# evaluate-skill has no checkpoint/continuation handling unlike evaluate-governance and evaluate-documentation siblings
+# evaluate-skill lacks checkpoint continuation
 
 ## Purpose
 

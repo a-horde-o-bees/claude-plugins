@@ -1,4 +1,4 @@
-# Navigator populates internally — no caller-provided project paths
+# Navigator resolves project dir internally
 
 ## Purpose
 

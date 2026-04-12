@@ -1,4 +1,4 @@
-# Aggregate star schema: Dynamic FK introspection to cascade deletes through ownership tree
+# Star schema cascades via FK introspection
 
 ## Purpose
 

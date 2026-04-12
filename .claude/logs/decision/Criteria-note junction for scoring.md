@@ -1,4 +1,4 @@
-# Criteria-note model: Link criteria to entity notes for auditable, surgical assessment scoring
+# Criteria-note junction for scoring
 
 ## Purpose
 

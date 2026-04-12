@@ -1,4 +1,4 @@
-# ocd-status skill display: show available skills with prerequisite install commands in status output
+# ocd-status shows skills with install commands
 
 ## Purpose
 

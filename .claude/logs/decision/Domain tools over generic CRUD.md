@@ -1,4 +1,4 @@
-# MCP domain tools: Replace generic CRUD with domain tools encoding business logic (set/add/remove/clear)
+# Domain tools over generic CRUD
 
 ## Purpose
 

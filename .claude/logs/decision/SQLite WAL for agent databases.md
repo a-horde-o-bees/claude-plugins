@@ -1,4 +1,4 @@
-# Database engine: SQLite with WAL mode for zero-dependency file-based agent database
+# SQLite WAL for agent databases
 
 ## Purpose
 

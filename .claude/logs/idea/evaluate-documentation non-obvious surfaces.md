@@ -1,4 +1,4 @@
-# evaluate-documentation refactor: account for documentation in non-obvious locations (CLI help text, module docstrings, tool descriptions, etc.)
+# evaluate-documentation non-obvious surfaces
 
 ## Purpose
 

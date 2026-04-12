@@ -2,7 +2,7 @@
 tags: ["system:evaluate-skills"]
 ---
 
-# Lens content duplicated in three places: evaluation-skill-md convention, per-skill _lenses.md, and inline in SKILL.md body
+# Lens content duplicated across three files
 
 ## Purpose
 

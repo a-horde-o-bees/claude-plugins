@@ -1,4 +1,4 @@
-# Component extraction: Shared skill content in extracted files with explicit read steps per agent
+# Extract shared skill components to files
 
 ## Purpose
 

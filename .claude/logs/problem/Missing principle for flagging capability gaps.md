@@ -1,4 +1,4 @@
-# Design principles gap: "flag missing capabilities, don't silently substitute" not encoded as a principle or rule bullet
+# Missing principle for flagging capability gaps
 
 ## Purpose
 

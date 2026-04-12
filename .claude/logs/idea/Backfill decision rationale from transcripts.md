@@ -1,4 +1,4 @@
-# Backfill decision history from transcripts; known gap includes script execution model (shebangs/chmod vs python3 prefix)
+# Backfill decision rationale from transcripts
 
 ## Purpose
 

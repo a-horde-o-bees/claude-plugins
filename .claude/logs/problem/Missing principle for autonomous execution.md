@@ -1,4 +1,4 @@
-# Design principles gap: autonomous execution preference not encoded — reduce alignment checkpoints, default to proceed-and-report over ask-and-wait
+# Missing principle for autonomous execution
 
 ## Purpose
 

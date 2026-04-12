@@ -1,4 +1,4 @@
-# Purpose-map methodology has value beyond auditing; could become a migration tool or middle-stage analysis component
+# Purpose-map as reusable analysis tool
 
 ## Purpose
 

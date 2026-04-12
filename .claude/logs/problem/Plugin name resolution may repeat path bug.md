@@ -1,4 +1,4 @@
-# Investigate generic plugin name resolution in _init.py — may have same marketplace path bug as convention_gate had
+# Plugin name resolution may repeat path bug
 
 ## Purpose
 

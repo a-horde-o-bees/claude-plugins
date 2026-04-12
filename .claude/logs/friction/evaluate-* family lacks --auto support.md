@@ -2,7 +2,7 @@
 tags: ["system:evaluate-skills"]
 ---
 
-# evaluate-* family has no --auto support despite being fix-producing
+# evaluate-* family lacks --auto support
 
 ## Purpose
 

@@ -1,4 +1,4 @@
-# CLAUDE_PROJECT_DIR and CLAUDE_PLUGIN_DATA raise when unset; CLAUDE_PLUGIN_ROOT falls back to __file__
+# Plugin env vars raise vs fallback
 
 ## Purpose
 

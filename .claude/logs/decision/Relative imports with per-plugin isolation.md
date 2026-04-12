@@ -1,4 +1,4 @@
-# Python import pattern: Standard packages with relative imports per-plugin, mirroring production isolation in tests
+# Relative imports with per-plugin isolation
 
 ## Purpose
 

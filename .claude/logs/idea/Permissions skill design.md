@@ -1,4 +1,4 @@
-# /ocd-permissions skill: install, consolidate, review, and debug Claude Code settings across three layers
+# Permissions skill design
 
 ## Purpose
 

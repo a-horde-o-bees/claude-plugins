@@ -1,4 +1,4 @@
-# Template-deployed model: Source files marked template, deployed copies marked deployed in frontmatter
+# Template-deployed frontmatter stamps
 
 ## Purpose
 

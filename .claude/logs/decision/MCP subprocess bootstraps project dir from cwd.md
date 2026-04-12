@@ -1,4 +1,4 @@
-# MCP subprocess CLAUDE_PROJECT_DIR bootstrap from cwd — .mcp.json env expansion does not work
+# MCP subprocess bootstraps project dir from cwd
 
 ## Purpose
 

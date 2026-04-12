@@ -1,4 +1,4 @@
-# 6 planned blueprint plugin improvements: ingest pathway, conditional measures, PFN gaps, static recipe, dedup timing, gate criteria
+# Blueprint plugin post-v1 improvements
 
 ## Purpose
 
