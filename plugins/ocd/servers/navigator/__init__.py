@@ -394,7 +394,7 @@ def scope_analyze(db_path: str, paths: list[str]) -> dict:
     finally:
         conn.close()
 
-    gov_result = governance_match(db_path, all_paths)
+    gov_result = governance_match(all_paths)
     gov_matches = gov_result["matches"]
 
     files = []
