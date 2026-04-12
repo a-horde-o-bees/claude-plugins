@@ -189,12 +189,18 @@ def deploy_files(
     pattern: str = "*.md",
     force: bool = False,
     exclude: set[str] | None = None,
+    clear_orphans: bool = True,
 ) -> list[dict]:
     """Deploy template files from src_dir to dst_dir.
 
     Returns list of {name, before, after} dicts. Files whose names are in
     exclude are skipped entirely — used for source-only documentation that
     should not deploy.
+
+    When force is True, overwrites divergent deployed files. When force and
+    clear_orphans are both True, also removes files in dst_dir that have no
+    matching source template — use for plugin-owned subfolders. Set
+    clear_orphans=False when user content coexists with templates (e.g. logs).
     """
     dst_dir.mkdir(parents=True, exist_ok=True)
     results = []
@@ -203,6 +209,13 @@ def deploy_files(
         return results
 
     skip_names = exclude or set()
+
+    if force and clear_orphans:
+        src_names = {s.name for s in src_dir.glob(pattern) if s.is_file() and s.name not in skip_names}
+        for existing in dst_dir.glob(pattern):
+            if existing.is_file() and existing.name not in src_names:
+                existing.unlink()
+
     for src in sorted(src_dir.glob(pattern)):
         if src.name in skip_names:
             continue
@@ -324,6 +337,56 @@ def get_rules_states(plugin_root: Path, project_dir: Path) -> list[dict]:
     return results
 
 
+# --- Conventions ---
+
+
+CONVENTIONS_SOURCE_ONLY = {"README.md", "architecture.md"}
+
+
+def deploy_conventions(plugin_root: Path, project_dir: Path, force: bool = False) -> list[dict]:
+    """Deploy convention files. Returns [{path, before, after}] with relative deployed paths.
+
+    Conventions deploy to .claude/conventions/{plugin_name}/ per-plugin subfolder.
+    Framework documentation is plugin-source-only and excluded from deployment.
+    """
+    plugin_name = plugin_root.name
+    deployed_rel = f".claude/conventions/{plugin_name}"
+    results = deploy_files(
+        src_dir=plugin_root / "conventions",
+        dst_dir=project_dir / ".claude" / "conventions" / plugin_name,
+        pattern="*.md",
+        force=force,
+        exclude=CONVENTIONS_SOURCE_ONLY,
+    )
+    for r in results:
+        r["path"] = f"{deployed_rel}/{r.pop('name')}"
+    return results
+
+
+def get_conventions_states(plugin_root: Path, project_dir: Path) -> list[dict]:
+    """Get state of each convention file. Returns [{path, before, after}]."""
+    src_dir = plugin_root / "conventions"
+    if not src_dir.is_dir():
+        return []
+
+    plugin_name = plugin_root.name
+    deployed_rel = f".claude/conventions/{plugin_name}"
+    results = []
+    for src in sorted(src_dir.glob("*.md")):
+        if src.name in CONVENTIONS_SOURCE_ONLY:
+            continue
+        if not src.is_file():
+            continue
+        dst = project_dir / ".claude" / "conventions" / plugin_name / src.name
+        state = compare_deployed(src, dst)
+        results.append({
+            "path": f"{deployed_rel}/{src.name}",
+            "before": state,
+            "after": state,
+        })
+    return results
+
+
 # --- Patterns ---
 
 
@@ -396,7 +459,7 @@ def deploy_logs(plugin_root: Path, project_dir: Path, force: bool = False) -> li
         if not type_dir.is_dir():
             continue
         type_name = type_dir.name
-        for item in deploy_files(type_dir, dst_dir / type_name, pattern="*.md", force=force):
+        for item in deploy_files(type_dir, dst_dir / type_name, pattern="*.md", force=force, clear_orphans=False):
             item["path"] = f"{deployed_rel}/{type_name}/{item.pop('name')}"
             results.append(item)
 
@@ -792,6 +855,12 @@ def run_init(force: bool = False, system: str | None = None) -> None:
             print(line)
         print()
 
+        conventions = deploy_conventions(plugin_root, project_dir, force=force)
+        if conventions:
+            for line in format_section("Conventions", conventions):
+                print(line)
+            print()
+
         patterns = deploy_patterns(plugin_root, project_dir, force=force)
         if patterns:
             for line in format_section("Patterns", patterns):
@@ -862,6 +931,12 @@ def run_status(system: str | None = None) -> None:
         for line in format_section("Rules", rules):
             print(line)
         print()
+
+        conventions = get_conventions_states(plugin_root, project_dir)
+        if conventions:
+            for line in format_section("Conventions", conventions):
+                print(line)
+            print()
 
         patterns = get_patterns_states(plugin_root, project_dir)
         if patterns:

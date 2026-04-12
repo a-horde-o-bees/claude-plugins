@@ -174,7 +174,7 @@ class TestHookInvocation:
         assert output["hookSpecificOutput"]["permissionDecision"] == "allow"
         ctx = output["hookSpecificOutput"]["additionalContext"]
         assert "python.md" in ctx
-        assert "immediately refactor" in ctx
+        assert "refactor immediately" in ctx
 
     def test_convention_gate_write_returns_directive(self, tmp_path: Path, monkeypatch) -> None:
         """Write injects directive additionalContext — same as Edit."""
@@ -192,7 +192,7 @@ class TestHookInvocation:
         output = json.loads(result.stdout)
         ctx = output["hookSpecificOutput"]["additionalContext"]
         assert "python.md" in ctx
-        assert "immediately refactor" in ctx
+        assert "refactor immediately" in ctx
 
     def test_convention_gate_read_returns_informational(self, tmp_path: Path, monkeypatch) -> None:
         """Read injects informational context — no refactor directive."""
