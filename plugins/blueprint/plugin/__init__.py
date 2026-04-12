@@ -189,7 +189,7 @@ def deploy_files(
     pattern: str = "*.md",
     force: bool = False,
     exclude: set[str] | None = None,
-    clear_orphans: bool = True,
+    keep_orphans: bool = False,
 ) -> list[dict]:
     """Deploy template files from src_dir to dst_dir.
 
@@ -197,10 +197,9 @@ def deploy_files(
     exclude are skipped entirely — used for source-only documentation that
     should not deploy.
 
-    When force is True, overwrites divergent deployed files. When force and
-    clear_orphans are both True, also removes files in dst_dir that have no
-    matching source template — use for plugin-owned subfolders. Set
-    clear_orphans=False when user content coexists with templates (e.g. logs).
+    When force is True, overwrites divergent deployed files and removes
+    files in dst_dir that have no matching source template. Set
+    keep_orphans=True when user content coexists with templates (e.g. logs).
     """
     dst_dir.mkdir(parents=True, exist_ok=True)
     results = []
@@ -210,7 +209,7 @@ def deploy_files(
 
     skip_names = exclude or set()
 
-    if force and clear_orphans:
+    if force and not keep_orphans:
         src_names = {s.name for s in src_dir.glob(pattern) if s.is_file() and s.name not in skip_names}
         for existing in dst_dir.glob(pattern):
             if existing.is_file() and existing.name not in src_names:
@@ -459,7 +458,7 @@ def deploy_logs(plugin_root: Path, project_dir: Path, force: bool = False) -> li
         if not type_dir.is_dir():
             continue
         type_name = type_dir.name
-        for item in deploy_files(type_dir, dst_dir / type_name, pattern="*.md", force=force, clear_orphans=False):
+        for item in deploy_files(type_dir, dst_dir / type_name, pattern="*.md", force=force, keep_orphans=True):
             item["path"] = f"{deployed_rel}/{type_name}/{item.pop('name')}"
             results.append(item)
 
