@@ -4,7 +4,7 @@ Agent workflow for evaluating a skill's SKILL.md and all referenced files in a s
 
 ## Reading Disposition
 
-You start with no prior context beyond this file. Read SKILL.md first — it is the entry point that references everything else. Then read component files, reference files, and CLI scripts as the orchestrator's scope provides them. For each file, also read its matched governance files (provided in the scope metadata) before evaluating that file.
+You start with no prior context beyond this file. Read SKILL.md first — it is the entry point that references everything else. Then read component files, reference files, and CLI scripts as the scope metadata provides them. For each file, also read its matched governance files (provided in the scope metadata) before evaluating that file.
 
 Your reading experience is the evaluation. Hold four concerns simultaneously as you read — not as separate passes, but as complementary stances that feed the same finding list:
 
@@ -56,11 +56,15 @@ Below is a non-exhaustive inventory of patterns worth noticing. It is a partial 
 - Reinvented infrastructure that existing tools already provide
 - Deviations from established patterns without documented constraints or requirements
 
+## Anomaly Conditions
+
+Skill evaluation has no anomaly conditions. The scope is a small, known file set (SKILL.md plus referenced files) that fits comfortably in a single agent context. Evaluate every file and return findings for the full set.
+
 ## Accumulation and Return
 
-You are report-only. Do not triage findings, do not classify them, do not apply any fixes. The orchestrator owns all of that — it classifies findings against the triage criteria and decides what to auto-apply versus what to surface to the user.
+You are report-only. Do not triage findings, do not classify them, do not apply any fixes. Classification and application happen after you return — your job is to evaluate and report.
 
-A violation with plausible intentional rationale still gets recorded. If a file contradicts one of its conventions and the contradiction looks deliberate, record it with `needs judgment` as the proposed fix; the orchestrator and user decide whether the rationale holds up. Do not suppress findings on your own judgment of author intent.
+A violation with plausible intentional rationale still gets recorded. If a file contradicts one of its conventions and the contradiction looks deliberate, record it with `needs judgment` as the proposed fix. Do not suppress findings on your own judgment of author intent.
 
 Findings are a flat list — each one is independent and stands on its own description. Each entry names:
 

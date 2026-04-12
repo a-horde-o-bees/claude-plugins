@@ -40,7 +40,7 @@ User runs `/evaluate-skill`
     3. {skill-path} = resolved path
 3. Else if {target} is a path ending with `/SKILL.md`:
     1. {skill-path} = {target}
-4. Else: Exit to user — target must be /skill-name or path to SKILL.md
+4. Else: Exit to user — respond with skill description and argument-hint
 5. Verify working tree is clean — bash: `git status --porcelain`
     1. If output is non-empty: Exit to user — working tree must be clean before evaluation; run `/commit` first so applied changes have a clean diff
 6. Dispatch Workflow
@@ -67,7 +67,7 @@ User runs `/evaluate-skill`
 8. {applied-defects} = list of applied defects
 9. If any Observations exist in {findings}:
     1. Present applied Defects grouped by file
-    2. Present each Observation as-is from the agent's finding — location, what is wrong, why, and proposed fix
+    2. Present each Observation as-is from the agent's finding — file path, location, what is wrong, why, and proposed fix
     3. Exit to user — "Observations need user judgment. Apply or reject each, then re-invoke `/evaluate-skill` to verify."
 10. Present Report
 

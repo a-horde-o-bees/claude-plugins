@@ -1,10 +1,10 @@
 # Governance Evaluation Workflow
 
-Agent workflow for evaluating governance files in root-first dependency order. The orchestrator may hand you the chain one level at a time or all at once; each file joins your context in the order given, and the experience of reading each file is itself the check for whether a future agent could follow it.
+Agent workflow for evaluating governance files in root-first dependency order. You may receive the chain one level at a time or all at once; each file joins your context in the order given, and the experience of reading each file is itself the check for whether a future agent could follow it.
 
 ## Reading Disposition
 
-You start with no prior context beyond this file. Each governance file joins your context in the order the orchestrator sends it — foundations first, dependents after. You never look ahead. If you find yourself needing to know what a later file says, that itself is worth recording.
+You start with no prior context beyond this file. Each governance file joins your context in the order given — foundations first, dependents after. You never look ahead. If you find yourself needing to know what a later file says, that itself is worth recording.
 
 Your reading experience is the evaluation. A file that fails to make sense because it leans on an unestablished concept is a real problem, not a gap in your attention. Trust the friction.
 
@@ -54,15 +54,15 @@ When you find an anomaly, **stop traversal immediately**. Return:
 - A description of the anomaly — which file, what you observed, what the frontmatter would need to say to match reality
 - Every finding accumulated so far
 
-Partial findings are trustworthy: everything before the bail point was evaluated against context that had no ordering problem. The orchestrator will apply what it can, fix the frontmatter, and spawn a fresh agent with the corrected order. Do not route around an anomaly and keep reading.
+Partial findings are trustworthy: everything before the bail point was evaluated against context that had no ordering problem. Do not route around an anomaly and keep reading.
 
 ## Accumulation and Return
 
-You are report-only. Do not triage findings, do not classify them, do not apply any fixes. The orchestrator owns all of that — it classifies findings against the triage criteria and decides what to auto-apply versus what to surface to the user.
+You are report-only. Do not triage findings, do not classify them, do not apply any fixes. Classification and application happen after you return — your job is to evaluate and report.
 
-A violation with plausible intentional rationale still gets recorded. If a file contradicts one of its governors and the contradiction looks deliberate, record it with `needs judgment` as the proposed fix; the orchestrator and user decide whether the rationale holds up. Do not suppress findings on your own judgment of author intent.
+A violation with plausible intentional rationale still gets recorded. If a file contradicts one of its governors and the contradiction looks deliberate, record it with `needs judgment` as the proposed fix. Do not suppress findings on your own judgment of author intent.
 
-Findings are structurally a flat list — each one is independent and stands on its own description. Present them in whatever order the orchestrator finds most useful (grouped by level, grouped by file, flat) — grouping is a presentation choice, not a classification. Each entry names:
+Findings are structurally a flat list — each one is independent and stands on its own description. Present them in whatever grouping is most useful (by level, by file, flat) — grouping is a presentation choice, not a classification. Each entry names:
 
 - File path
 - Location (section, bullet, or line if helpful)
@@ -70,4 +70,4 @@ Findings are structurally a flat list — each one is independent and stands on 
 - Why — cite the governor rule contradicted, the concept that should have been consistent, or the friction a cold reader would hit
 - Proposed fix — a concrete deterministic edit if you can describe one that preserves intent, or the literal string `needs judgment` if the right fix requires choosing between alternatives, changing semantic meaning, or reasoning the original author would need to confirm
 
-Return the list when the orchestrator signals end of traversal (either you've exhausted the files you've been given, or you've been told no further levels will come). If a graph anomaly forces an early return, include the anomaly description alongside findings accumulated so far.
+Return the list when you have exhausted the files given to you, or when you are told no further levels will come. If a graph anomaly forces an early return, include the anomaly description alongside findings accumulated so far.

@@ -76,7 +76,7 @@ User runs `/evaluate-governance --target project`.
 10. For each Defect: apply its proposed fix directly to disk
 11. {applied-defects} = {applied-defects} + newly applied defects
 12. If any Observations exist in {response}:
-    1. Present applied Defects and outstanding Observations to the user, grouped by file. Present each Observation as-is from the agent's finding — location, what is wrong, why, and proposed fix. Do not summarize or strip content; the user needs the full finding to make a judgment call
+    1. Present applied Defects and outstanding Observations to the user, grouped by file. Present each Observation as-is from the agent's finding — file path, location, what is wrong, why, and proposed fix. Do not summarize or strip content; the user needs the full finding to make a judgment call
     2. Exit to user — "Observations at level {current-level} need user judgment. Apply or reject each, then re-invoke `/evaluate-governance` in a fresh session so the corrected governance loads before the next wave."
 13. {current-level} = {current-level} + 1
 14. If {current-level} >= count of {levels}: Break loop — all levels complete
