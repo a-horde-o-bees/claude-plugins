@@ -31,6 +31,8 @@ if TYPE_CHECKING:
 def process_data(client: ModuleAPI, source: str) -> None:
 ```
 
+Boolean parameters default to `False`. A `True` default requires callers to include the parameter only to turn it off — name the parameter so the opt-in meaning reads naturally when set to `True` (e.g. `keep_orphans=False` not `clear_orphans=True`).
+
 Type aliases — define aliases when same union type appears across multiple function signatures in module. Keep aliases in module that uses them, not centralized.
 
 Use `@dataclass` for value objects that group related fields. Prefer over plain dicts when shape is known and reused.
