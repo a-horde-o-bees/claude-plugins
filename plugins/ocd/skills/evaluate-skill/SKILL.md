@@ -123,4 +123,5 @@ User runs `/evaluate-skill`
 - Runtime agents invoke the skill via the Skill tool — not by manually executing workflow steps
 - Runtime agents block git push as their first step; push failures are expected safety behavior
 - Runtime agents execute `Spawn agent with:` steps themselves — Agent tool is unavailable in worktrees
+- Observations presented to the user include the agent's proposed fix verbatim — the proposed fix is the actionable recommendation the user evaluates; do not summarize or omit it
 - `/commit` precondition gives each evaluation a clean diff so the user can audit exactly what was changed

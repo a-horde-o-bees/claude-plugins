@@ -1,13 +1,12 @@
 ---
-name: status
-description: Report plugin infrastructure state — version, rule deployment status, skill infrastructure, and permissions coverage
+description: Report plugin infrastructure state
 allowed-tools:
   - Bash(python3 *)
 ---
 
 # /status
 
-Report plugin infrastructure state — version, rule deployment status, skill infrastructure, and permissions coverage.
+Report plugin infrastructure state.
 
 ## Trigger
 
@@ -20,7 +19,7 @@ User runs `/status`
 
 ### Report
 
-- CLI output from `python3 ${CLAUDE_PLUGIN_ROOT}/run.py plugin status`, unmodified
+- Plugin status CLI output
 
 ## Rules
 
