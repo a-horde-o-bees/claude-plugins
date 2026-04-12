@@ -10,21 +10,25 @@ When the agent encounters information worth preserving for a future session, cap
 
 ## Routing
 
-| Type | When to use |
-|------|-------------|
-| decision | Non-obvious choice where alternatives were considered and rejected |
-| friction | Process gap encountered during work that can't be fixed immediately |
-| problem | Observed defect or issue needing investigation later |
-| idea | Exploratory idea, future work, or improvement suggestion |
+## Log vs Memory
 
-## Routing vs Alternatives
+First decide whether to log at all:
 
 - User preferences or personal context → Claude memory, not log
 - Project knowledge any user would benefit from → log, not memory
 
+## Routing
+
+| Type | When to use |
+|------|-------------|
+| decision | Non-obvious choice where alternatives were considered and rejected |
+| friction | Gap between how a process should work and how it actually works — workflow-level, not artifact-level |
+| problem | Concrete defect in an artifact — wrong output, broken invariant, incorrect behavior |
+| idea | Exploratory idea, future work, or improvement suggestion |
+
 ## Entry Format
 
-Each entry is a file in `.claude/logs/{type}/{Title}.md`. Title is the entry's subject, used as both the filename and the level-1 heading. Read the type's `_template.md` for entry structure specific to that type.
+Each entry is a file in `.claude/logs/{type}/{Title}.md`. Title is the entry's subject, used as both the filename and the level-1 heading — short enough to scan in a directory listing, detailed enough to distinguish from siblings. Read the type's `_template.md` for entry structure specific to that type.
 
 ## Lifecycle
 

@@ -1,7 +1,6 @@
 ---
 includes:
   - "test_*.*"
-  - "*_test.*"
   - "conftest.*"
 governed_by:
   - .claude/rules/ocd/design-principles.md
@@ -165,11 +164,11 @@ Agent judgment, NL interpretation, and workflow execution quality cannot be caug
 
 For any component, ask:
 
-1. If deterministic: test traditionally
+1. If deterministic:
+    1. If contract agents depend on (output format, exit codes, help text): snapshot test
+    2. If invariants exist (properties that must hold for all inputs): property test
+    3. If idempotent by design: test idempotency explicitly
+    4. If security boundary: test exhaustively with adversarial cases
+    5. If silent failure would cause downstream agent malfunction: test regardless of code simplicity
+    6. If test merely restates configuration: skip — testing theater
 2. Else: evaluate through protocols, do not unit test
-3. If contract agents depend on (output format, exit codes, help text): snapshot test
-4. If invariants exist (properties that must hold for all inputs): property test
-5. If idempotent by design: test idempotency explicitly
-6. If security boundary: test exhaustively with adversarial cases
-7. If silent failure would cause downstream agent malfunction: test regardless of code simplicity
-8. If test merely restates configuration: skip — testing theater

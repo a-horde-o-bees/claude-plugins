@@ -87,7 +87,7 @@ User runs `/evaluate-governance --target project`.
     4. For each Defect: apply its proposed fix directly to disk
     5. {applied-defects} = {applied-defects} + newly applied defects
     6. If any Observations exist in {response}:
-        1. Present applied Defects and outstanding Observations to the user, grouped by file, each with full context from the finding
+        1. Present applied Defects and outstanding Observations to the user, grouped by file. Present each Observation as-is from the agent's finding — location, what is wrong, why, and proposed fix. Do not summarize or strip content; the user needs the full finding to make a judgment call
         2. Exit to user — "Observations at level {current-level} need user judgment. Apply or reject each, then re-invoke `/evaluate-governance` in a fresh session so the corrected governance loads before the next wave."
     7. {current-level} = {current-level} + 1
     8. If {current-level} >= count of {levels}:
@@ -115,4 +115,4 @@ User runs `/evaluate-governance --target project`.
 - Observations may change what governance files prescribe. After any Observation is applied to a governance file, Claude Code's session-cached rules are stale — a fresh session is required before re-evaluation can see the corrected chain. The orchestrator exits to user whenever Observations appear at the current level to enforce this.
 - Graph anomalies stop traversal immediately. The orchestrator handles them inline with the user, corrects the frontmatter, re-queries `governance_order` to verify, and restarts the workflow from Level 0. Partial findings accumulated before the anomaly are presented for user reference but not auto-applied — the frontmatter correction may have changed what counts as a valid finding.
 - `/commit` precondition gives each wave a clean before/after diff so the user can audit exactly what each convergence pass changed.
-- Convergence across multiple waves is user-driven. The skill is invoked repeatedly in fresh sessions until a pass produces no governance-file changes.
+- Convergence across multiple waves is user-driven. The skill is invoked repeatedly in fresh sessions until a pass produces no governance-file changes. Each re-invocation restarts from the last level where changes were applied — not from where the previous wave stopped — to verify the changes are clean before building on them.

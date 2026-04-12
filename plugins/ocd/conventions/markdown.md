@@ -6,7 +6,7 @@ governed_by:
 
 # Markdown Conventions
 
-Base content standards for all markdown files. Every other convention inherits from these requirements.
+Base content standards for all markdown files.
 
 ## Heading and Purpose Statement
 

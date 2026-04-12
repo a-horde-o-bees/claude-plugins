@@ -11,7 +11,7 @@ When something goes wrong on multiple occasions, it likely represents a missing 
 Bullets within each principle use one of two forms:
 
 - **Declarative** — general guidance, recommendations, observations, or system-design statements that do not have a specific triggering moment.
-- **Trigger** — gate-action format `Before/After [condition]: [action]; [optional decision criteria]`. Use this form for case-specific bullets so the agent has a sharp gate to recognize at the right moment.
+- **Trigger** — gate-action format `Before/After/When [condition]: [action]; [optional decision criteria]`. Use this form for case-specific bullets so the agent has a sharp gate to recognize at the right moment.
 
 Use the trigger form whenever a bullet describes a specific situation where the agent should pause or act; the gate keyword and condition make it fire more reliably than a declarative restating of the same idea.
 

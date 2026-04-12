@@ -6,7 +6,7 @@ governed_by:
 
 # System Documentation
 
-Every system maintains documentation that captures the information a consumer or developer needs to work with it, separated by concern across nesting levels and kept current with system state.
+Documentation requirements and structure for systems in this project.
 
 ## System Boundaries
 
@@ -46,8 +46,8 @@ Parent documentation describes each subsystem generally and links down; subsyste
 
 ## Documentation Currency
 
-Documentation tracks current system state — modifications to a system trigger corresponding documentation updates so the recorded description doesn't drift from reality.
+Documentation tracks current system state — modifications to a system trigger corresponding documentation updates so the recorded description does not drift from reality.
 
-- Before modifying a system, check for its architecture reference
-- After significant structural changes (new tables, new layers, changed tool interfaces), update the architecture reference
-- After adding or removing subsystems, update the parent system's documentation to reflect the current set
+- Before modifying a system: check for its architecture reference
+- After significant structural changes (new tables, new layers, changed tool interfaces): update the architecture reference
+- After adding or removing subsystems: update the parent system's documentation to reflect the current set

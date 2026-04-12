@@ -71,11 +71,11 @@ Three absolute paths always resolve through the plugin framework helpers in `plu
 
 All three return absolute canonical paths (`Path.resolve()`). Absolute is required for disk I/O — callers that need display-friendly paths compute `relative_to()` at the point of use. The project's relative-path convention is preserved: database entries, tool output, and embedded command paths remain project-relative; the absolute root is local plumbing for reading files.
 
-Never:
+Do not:
 
-- `os.environ.get("CLAUDE_PROJECT_DIR", os.getcwd())` — silent cwd fallback corrupts state when run from the wrong directory
-- `path.parents[N]` walks from arbitrary paths (e.g., a database path) to derive project or plugin root — fragile and breaks when layout changes
-- Accept `project_dir` or `plugin_root` as a function argument when the caller would only be re-resolving it — the helpers are the single source of truth. Skill entry points (`init`, `status`) take only their own skill-specific arguments (e.g., `force`); they resolve shared paths internally
+- Fall back to `os.getcwd()` when `CLAUDE_PROJECT_DIR` is unset — silent cwd fallback corrupts state when run from the wrong directory
+- Walk `path.parents[N]` from arbitrary paths to derive project or plugin root — fragile and breaks when layout changes
+- Accept `project_dir` or `plugin_root` as a function argument when the caller would only be re-resolving it — resolve shared paths internally via the helpers
 
 One documented exception: MCP server subprocesses launched by Claude Code bootstrap `CLAUDE_PROJECT_DIR` from cwd at import time via `servers/_helpers.py`, because Claude Code guarantees the MCP server cwd matches the project directory but does not propagate the env var automatically and does not expand variable references in `.mcp.json` env blocks. See `mcp-server.md` *MCP Subprocess Environment Bootstrap*. This is the only place cwd is permitted as a project-directory source.
 
@@ -129,7 +129,7 @@ Hook scripts are standalone modules invoked directly by `hooks.json` configurati
 
 ### Script Invocation
 
-Python scripts are invoked via interpreter prefix (`python3 script.py`), not via shebangs with execute permissions. No `#!/usr/bin/env python3` headers. No `chmod +x` on `.py` files.
+Python scripts are invoked via interpreter prefix (`python3 script.py`), not via shebangs with execute permissions.
 
 ### Separate Module vs Internal Module
 
@@ -157,8 +157,8 @@ Cross-package (e.g., skill `_init.py` referencing plugin framework):
 import plugin
 ```
 
-- No `sys.path` manipulation in individual scripts
-- No `# type: ignore` comments
+- Resolve import paths through package structure, not `sys.path` manipulation
+- Resolve type errors rather than suppressing with `# type: ignore`
 
 ## Testing
 
@@ -178,8 +178,8 @@ Fixtures provide isolated test state (temp directories, databases, environment v
 
 Integration tests requiring git worktree isolation (see testing convention) use a session-scoped pytest fixture:
 
-- Session-scoped fixture in `conftest.py` creates a detached worktree from HEAD via `git worktree add <path> HEAD --detach`
-- Fixture yields the worktree path; teardown removes it via `git worktree remove --force`
+- Session-scoped fixture in `conftest.py` creates and tears down the worktree
+- Fixture yields the worktree path
 - Per-test setup/teardown handles test-specific state (temp directories, staged files) within the worktree
 - `conftest.py` in the integration test directory owns the fixture
 

@@ -133,23 +133,7 @@ Use `Continue` when a long-running workflow needs orchestrator checkpoints betwe
 3. Pass {target-directory} to target CLI
 ```
 
-Curly-brace notation is reserved for values assigned once and referenced later. When a step describes the shape of returned data — the fields a `Return:` hands back, the structure of a tool's output, the format of a report — use plain prose, not `{name}`. Decoration without downstream reference adds no execution meaning and clutters the text.
-
-```
-1. Return:
-    - Scope evaluated
-    - Defects applied
-    - Observations requiring user judgment
-```
-
-Not:
-
-```
-1. Return:
-    - {scope}
-    - {defects-applied}
-    - {observations}
-```
+Curly-brace notation is reserved for values assigned once and referenced later. When a step describes the shape of returned data — the fields a `Return:` hands back, the structure of a tool's output, the format of a report — use plain prose, not `{name}`. Decoration without downstream reference adds no execution meaning and clutters the text. A return value that gets assigned to a variable for later use is a downstream reference and warrants `{name}`.
 
 ## Concurrency
 
@@ -225,17 +209,9 @@ Examples:
 --target <path | /skill-name | project | self | natural language goal> [--pattern <glob> ...] [--all] [--delegate]
 ```
 
-- `--target` — required flag with required choice value; must be one of: path, /skill-name, `project`, `self`, or natural language goal
-- `[--pattern <glob> ...]` — optional repeatable flag with value; each occurrence consumes glob text
-- `[--all]` — optional boolean flag; presence means include all
-- `[--delegate]` — optional boolean flag; presence means delegate execution
-
 ```
 --target </skill-name | natural language scenario> [--delegate]
 ```
-
-- `--target` — required flag with required choice value; skill name or free text
-- `[--delegate]` — optional boolean flag
 
 ### Reference Syntax
 
