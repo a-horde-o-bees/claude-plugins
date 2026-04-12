@@ -41,7 +41,7 @@ This evaluation is in service of cutting a stable v1 of the ocd plugin and makin
 - **Convention loading on read** — conventions fire when files are read, not just modified. Governance reads from disk on every call (no database), so this is purely about hook behavior.
 - **`purpose-map/skill-migration.md`** — archival planning document for migrating the purpose-map evaluation workflow to a skill. References a stale component id (`c14 (Pit of Success)`) and the now-removed Pit of Success principle. Decide whether to action the migration or delete the document as abandoned planning.
 - **Purpose-map stale components removed, needs orphaned** — c41 (friction server), c42 (decisions server), c43 (stash server) removed from DB. Needs n59 (friction signals) and n68 (ideas/observations) are now gaps. These needs remain valid but need rewiring to new file-based log system components once those are evaluated and rebuilt.
-- **Blueprint decompositions** — research_db.py (MCP server, 1,137 lines) and blueprint test files need decomposition. research_db agent was blocked by hooks; blueprint test agent leaked to main and was reverted.
+- **Governance evaluation paused at Level 1** — Level 0 clean, Level 1 observations applied but not verified. Conventions are stale from refactoring — consider redesigning evaluate-documentation or evaluate-skill before continuing governance evaluation so conventions can be updated systematically first.
 
 ## v1 Reference
 
