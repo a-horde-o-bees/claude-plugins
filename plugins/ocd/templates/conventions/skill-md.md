@@ -26,7 +26,7 @@ Fields:
 | Field | Default | Description |
 |-------|---------|-------------|
 | `name` | Directory name | Slash command name. Lowercase letters, numbers, hyphens only (max 64 characters). Do not prefix with the plugin name — Claude Code namespaces plugin slash commands automatically (`/<plugin>:<command>` on collision, `/<command>` when unique), so a redundant prefix double-namespaces. |
-| `description` | First markdown paragraph | Claude uses this to decide when skill is relevant. Loaded into context at metadata level before full body. |
+| `description` | First markdown paragraph | Canonical purpose statement — same text as the body description paragraph. Loaded at metadata level for skill discovery; Claude uses this to decide when skill is relevant. |
 | `argument-hint` | None | Autocomplete hint shown after `/command`. Format follows Skill Argument Notation in Process Flow Notation rules. |
 | `disable-model-invocation` | `false` | Prevents Claude from auto-loading skill |
 | `user-invocable` | `true` | Set `false` to hide from `/` menu |
@@ -52,7 +52,7 @@ Sections fall into three categories:
 | Section | Category | Description |
 |---------|----------|-------------|
 | `# /skill-name` | Prescribed | Title matching slash command; uses unqualified name (Claude Code handles namespace qualification at invocation) |
-| Description paragraph | Prescribed | What skill does (also serves as `description` fallback if no frontmatter) |
+| Description paragraph | Prescribed | Canonical purpose statement; doubles as `description` fallback when frontmatter omits it |
 | `## Trigger` | Prescribed | When user invokes this skill |
 | `## Route` | Prescribed | Resolve arguments, validate inputs, select Workflow, dispatch; omit for argument-free skills that dispatch directly to Workflow |
 | `## Workflow` | Prescribed | Numbered steps using Process Flow Notation; encapsulates everything agent needs to execute |

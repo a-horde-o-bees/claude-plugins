@@ -1,6 +1,6 @@
 ---
 name: status
-description: Show plugin version, rule states, skill infrastructure status, and actionable next steps
+description: Report plugin infrastructure state — version, rule deployment status, skill infrastructure, and permissions coverage
 allowed-tools:
   - Bash(python3 *)
 ---
@@ -20,7 +20,7 @@ User runs `/status`
 
 ### Report
 
-- CLI output from `plugin status` command, unmodified
+- CLI output from `python3 ${CLAUDE_PLUGIN_ROOT}/run.py plugin status`, unmodified
 
 ## Rules
 
