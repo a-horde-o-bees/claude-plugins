@@ -34,7 +34,7 @@ SQLite databases (.claude/ocd/)
 
 ### PreToolUse: Permission Enforcement
 
-`hooks/auto_approval.py` — intercepts Bash, Edit, and Write tool calls. Two evaluation layers in fixed order:
+`hooks/auto_approval/` — package that intercepts Bash, Edit, and Write tool calls. Two evaluation layers in fixed order:
 
 **Layer 1: Hardcoded blocks** — structural constraints that do not stick as prose instructions. Blocks directory changes (`cd`, `pushd`, `popd`) and `cat` (use Read tool). Returns inline guidance so the agent self-corrects without user intervention.
 
@@ -53,6 +53,20 @@ Deny rules take precedence over allow rules. File paths resolve against allowed 
 - `block(reason)` — emit `decision: block` with corrective guidance
 - No output — fall through to Claude Code's default permission prompt
 
+### PreToolUse: Convention Gate
+
+`hooks/convention_gate.py` — intercepts Read, Edit, and Write tool calls. Calls `governance_match` from `lib/governance/` with the target file path and injects matched convention paths into `additionalContext`. Read invocations receive conventions as informational context; Edit and Write invocations receive a directive to conform and refactor immediately if non-conformant.
+
+## Governance
+
+Rules and conventions share a governance infrastructure implemented in `lib/governance/`. The library reads directly from disk on every call — no database, no caching. It scans `.claude/rules/` and `.claude/conventions/` directories, parses YAML frontmatter, and performs in-memory pattern matching.
+
+**`governance_match`** takes file paths and returns applicable conventions. Rules are excluded by default (already in agent context); `include_rules=True` adds them for evaluation workflows.
+
+**`governance_order`** computes level-grouped dependency ordering from `governed_by` frontmatter using Tarjan's SCC algorithm. Produces foundation-first levels for evaluation traversal. Detects dangling references and cycles.
+
+**`governed_by`** frontmatter declares which governance entries a file builds on. Consumed at evaluation time by skills that walk the dependency chain — not consumed by runtime convention loading.
+
 ## Rules
 
 Template files in `rules/` deploy to `.claude/rules/` via `/init`. Users own the deployed copies — they can inspect, edit, or delete them.
@@ -64,7 +78,7 @@ Template files in `rules/` deploy to `.claude/rules/` via `/init`. Users own the
 | `system-documentation.md` | README and architecture.md requirements per system, with nesting and currency rules |
 | `process-flow-notation.md` | Structured programming notation for skill workflows |
 
-Rules use the template-deployed model: templates in `rules/` are the source during plugin development; deployed copies in `.claude/rules/` are the product. `scripts/sync-templates.py` syncs deployed back to templates before commits.
+Rules use the template-deployed model: templates in `rules/` are the source of truth; deployed copies in `.claude/rules/ocd/` are derived. `scripts/sync-templates.py` syncs templates to deployed copies. A SessionEnd hook runs sync-templates automatically so the next session loads current rules.
 
 ## Skills
 
@@ -78,12 +92,12 @@ Project structure index in SQLite. Agents query by purpose ("what does this file
 |--------|---------------|
 | `_db.py` | Schema, migrations, connection factory, seed rules from CSV |
 | `_scanner.py` | Filesystem walking with rule-based pruning, git hash change detection |
-| `_frontmatter.py` | Governance frontmatter parsing: pattern and depends from files |
-| `_governance.py` | Governance loading, matching, ordering, and analysis |
-| `__init__.py` | Business logic facade: describe, list, search, set, remove; re-exports from all modules |
-| `__main__.py` | CLI entry point with argparse |
-| `_init.py` | Deploy conventions, manifest, and database; report deployment states |
+| `_references.py` | File reference mapping — builds dependency DAG from skill, governance, and component references |
 | `_skills.py` | Resolves skill names to SKILL.md paths across discovery locations |
+| `__init__.py` | Business logic facade: paths, scan, scope analysis; re-exports from all modules |
+| `__main__.py` | MCP server entry point with FastMCP tool registrations |
+| `cli.py` | CLI entry point for operational commands (scan, describe) |
+| `_init.py` | Initialize navigator database; report deployment states |
 
 **Database schema:**
 
@@ -111,11 +125,15 @@ Workflow-only skills with no Python infrastructure (SKILL.md only):
 
 | Skill | Purpose |
 |-------|---------|
-| `commit` | Structured commit workflow with topic grouping |
+| `commit` | Topic-grouped commits with end-state descriptions |
 | `push` | Push to remote with pre-push commit check |
 | `init` | Deploy rules, conventions, and skill infrastructure |
 | `status` | Report plugin version, rules state, skill status |
+| `log` | Capture decisions, friction, problems, ideas as log entries |
 | `pdf` | Export markdown to PDF with GitHub-style CSS |
+| `evaluate-governance` | Evaluate governance chain conformity, followability, coherence |
+| `evaluate-skill` | Evaluate a skill across conformity, efficacy, quality |
+| `evaluate-documentation` | Evaluate README.md and architecture.md across systems |
 
 ## MCP Servers
 
@@ -142,14 +160,18 @@ Server-level `instructions` fields publish when to reach for each server's tools
 
 ## Plugin Framework
 
-`plugin/__init__.py` — generic deployment, formatting, skill discovery, and orchestration shared across plugins. Propagated identically to every plugin via pre-commit hook.
+`plugin/` — generic deployment, formatting, skill discovery, and orchestration shared across plugins. Propagated identically to every plugin via pre-commit hook. Decomposed into 8 internal modules:
 
-Key operations:
-
-- **Deploy** — copy template files to target directory, stamp `type: template` → `type: deployed` in frontmatter, detect absent/current/divergent states
-- **Skill discovery** — scan `skills/*/SKILL.md`, distinguish infrastructure skills (have `_init.py`) from bare skills (SKILL.md only)
-- **Permissions** — compare recommended auto-approve patterns against project and user settings, merge additively
-- **Marketplace** — resolve source version from local-directory marketplaces for update detection
+| Module | Responsibility |
+|--------|---------------|
+| `_environment.py` | Plugin path resolution (`get_project_dir`, `get_plugin_root`, `get_plugin_data_dir`) |
+| `_metadata.py` | Plugin version, name, marketplace source discovery |
+| `_deployment.py` | Template file deployment primitives (copy, stamp, compare, orphan clearing) |
+| `_formatting.py` | Output column alignment and section rendering |
+| `_content.py` | Deploy and state tracking for rules, conventions, patterns, logs |
+| `_discovery.py` | System and workflow skill discovery |
+| `_permissions.py` | Auto-approve pattern analysis, deployment, and cleanup |
+| `_orchestration.py` | `run_init` and `run_status` entry points |
 
 ## Entry Points
 
@@ -175,24 +197,32 @@ Navigator database uses WAL mode with 5-second busy timeout for concurrent acces
 plugins/ocd/
 ├── .claude-plugin/plugin.json   — plugin manifest (name, version, license)
 ├── hooks/
-│   ├── hooks.json               — hook registration (SessionStart install_deps, PreToolUse)
+│   ├── hooks.json               — hook registration (SessionStart, SessionEnd, PreToolUse)
 │   ├── install_deps.sh          — install/refresh plugin venv dependencies
-│   ├── auto_approval.py         — permission enforcement (hardcoded + dynamic)
+│   ├── auto_approval/           — permission enforcement package (hardcoded + dynamic)
 │   └── convention_gate.py       — surface applicable conventions on Read/Edit/Write
-├── rules/                       — rule templates (source of truth during development)
-├── conventions/                 — convention templates (deployed to .claude/conventions/)
+├── rules/                       — rule templates (deployed to .claude/rules/ocd/)
+├── conventions/                 — convention templates (deployed to .claude/conventions/ocd/)
+├── patterns/                    — pattern templates (deployed to .claude/patterns/ocd/)
+├── logs/                        — log type templates (deployed to .claude/logs/)
 ├── templates/
 │   └── settings.json            — recommended auto-approve patterns
+├── lib/
+│   └── governance/              — governance library (disk-only matching, listing, ordering)
+├── servers/
+│   └── navigator/               — MCP server package (project structure index)
 ├── skills/
-│   ├── navigator/               — project structure index, convention deployment (SQLite + CLI)
-│   ├── commit/                  — structured commit workflow
+│   ├── navigator/               — navigator maintenance workflow
+│   ├── commit/                  — topic-grouped commits
 │   ├── push/                    — push with pre-push checks
 │   ├── init/                    — deployment orchestration
 │   ├── status/                  — plugin status reporting
-│   └── pdf/                     — markdown-to-PDF export
-├── servers/                     — MCP servers (navigator, governance, log)
-├── plugin/                      — generic plugin framework (shared across plugins)
-├── patterns/                    — reusable agent workflow patterns
+│   ├── log/                     — log entry capture
+│   ├── pdf/                     — markdown-to-PDF export
+│   ├── evaluate-governance/     — governance chain evaluation
+│   ├── evaluate-skill/          — skill quality evaluation
+│   └── evaluate-documentation/  — system documentation evaluation
+├── plugin/                      — generic plugin framework (8 modules, shared across plugins)
 ├── run.py                       — module launcher with package context
 └── tests/                       — hook and invocation tests
 ```

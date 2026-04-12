@@ -17,14 +17,35 @@ Restart Claude session after init to load rules. Run `/status` to verify plugin 
 
 ### Rules
 
-Convention files deployed to `.claude/rules/` via `/init`. Auto-loaded every session. Users can inspect, edit, or delete deployed rules — they own the files.
+Always-on agent behavior guidance deployed to `.claude/rules/ocd/` via `/init`. Auto-loaded every session. Users own the deployed files.
 
-| Capability | Rule file | Purpose |
-|------------|-----------|---------|
-| `design-principles` | `design-principles.md` | Foundational principles governing all artifacts and agent behavior |
-| `workflow` | `workflow.md` | Execution discipline: working directory, agents, testing |
-| `system-documentation` | `system-documentation.md` | README and architecture.md requirements per system, with nesting and currency rules |
-| `process-flow-notation` | `process-flow-notation.md` | Structured programming notation for agent workflows |
+| Rule | Purpose |
+|------|---------|
+| `design-principles.md` | Foundational principles governing all artifacts and agent behavior |
+| `workflow.md` | Execution discipline: working directory, agents, testing |
+| `system-documentation.md` | README and architecture.md requirements per system |
+| `process-flow-notation.md` | Structured programming notation for agent workflows |
+| `log-routing.md` | When and how to capture decisions, friction, problems, and ideas as log entries |
+
+### Conventions
+
+File-type-specific content standards deployed to `.claude/conventions/ocd/` via `/init`. Loaded on demand — a convention gate hook surfaces applicable conventions when the agent touches a matching file.
+
+Each convention has YAML frontmatter declaring which files it applies to:
+
+```yaml
+---
+includes: "*.py"
+governed_by:
+  - .claude/conventions/ocd/python.md
+---
+```
+
+- **`includes`** — file patterns this convention applies to
+- **`excludes`** — (optional) patterns to exclude from matching
+- **`governed_by`** — (optional) governance entries this convention builds on, defining evaluation ordering
+
+Rules govern agent behavior (always loaded, universal). Conventions govern file content (loaded on demand, pattern-matched). Both share the same frontmatter format and governance infrastructure.
 
 ### Hook: Permission enforcement
 
@@ -53,6 +74,20 @@ Agent-facing entry point at `skills/navigator/__main__.py`. Agents call `--help`
 | `get-undescribed` | Find entries needing descriptions (used by /navigator skill) |
 | `set <path> --description` | Write description for entry (used by /navigator skill) |
 | `init --db <path>` | Create database with schema and seed rules |
+
+### Other Skills
+
+| Skill | Purpose |
+|-------|---------|
+| `/commit` | Topic-grouped commits with end-state descriptions |
+| `/push` | Push to remote with pre-push commit check |
+| `/init` | Deploy rules, conventions, and skill infrastructure |
+| `/status` | Report plugin version, rules state, skill status |
+| `/log` | Capture decisions, friction, problems, ideas as log entries |
+| `/pdf` | Export markdown to PDF with GitHub-style CSS |
+| `/evaluate-governance` | Evaluate governance chain conformity, followability, coherence |
+| `/evaluate-skill` | Evaluate a skill across conformity, efficacy, quality |
+| `/evaluate-documentation` | Evaluate README.md and architecture.md across systems |
 
 ### MCP Servers
 
