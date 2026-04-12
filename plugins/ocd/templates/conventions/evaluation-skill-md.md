@@ -13,7 +13,7 @@ Evaluation skills produce structured findings on a target set through a single h
 
 ## Naming
 
-Directory: `evaluate-{domain}/`. Skill name: `evaluate-{domain}`. Domain names the target type.
+Directory: `evaluate-<domain>/`. Skill name: `evaluate-<domain>`. Domain names the target type.
 
 ## Holistic Reading, Not Lenses
 
@@ -25,7 +25,7 @@ Each skill describes its own concerns in its own criteria file rather than selec
 
 Scope is domain-specific. Skill evaluation scopes to files and their references. Documentation evaluation scopes to a file type across systems. Governance scopes to a dependency chain.
 
-Scope also declares accepted arguments beyond `--target`. Arguments that don't fit the skill's domain are rejected with guidance. Document accepted arguments and their effect on scope.
+Scope also declares accepted arguments beyond `--target`. When unrecognized arguments are provided, the skill responds with its description and argument-hint (same as calling without arguments). Document accepted arguments and their effect on scope.
 
 ## Report-Only Agent
 
@@ -37,33 +37,35 @@ The spawned agent does not classify findings, apply fixes, or reason about triag
 
 ## Evaluation Workflow File
 
-Every evaluation skill carries its own agent workflow file alongside SKILL.md (e.g., `_evaluation-workflow.md`). The file is read by the spawned agent at the start of its execution and defines:
+Every evaluation skill carries its own `_evaluation-workflow.md` alongside SKILL.md. The agent reads it at the start of execution. The file follows a prescribed section structure; content within each section is customized to the domain. Two evaluation skills targeting different things do not share workflow files — governance evaluation watches for things skill evaluation does not, and vice versa.
 
-- The reading disposition — what stance the agent holds as it walks the target set
-- What to surface — a non-exhaustive inventory of active checks and friction cues the agent watches for. Frame as partial inventory, not checklist — the agent should surface friction that doesn't match any listed category rather than filtering it out
-- Domain-specific anomaly conditions that force an early return from the traversal, if any
-- The finding return format — file, location, what, why, proposed fix or needs judgment
+Prescribed sections:
 
-The criteria file is customized to the domain. Two evaluation skills targeting different things do not share criteria — governance evaluation looks for things skill evaluation does not, and vice versa.
+| Section | Content |
+|---------|---------|
+| `## Reading Disposition` | <What stance the agent holds as it walks the target set — domain-specific concerns the agent evaluates simultaneously> |
+| `## What to Surface` | <Non-exhaustive inventory of patterns worth noticing, organized under subsection headings by concern>. Frame as partial inventory, not checklist — the agent should surface friction that doesn't match any listed category rather than filtering it out |
+| `## <Anomaly Conditions>` | <Domain-specific conditions that force an early return from the traversal>. Omit section entirely if the domain has none; include a brief note explaining the absence if the convention's existence would otherwise make the omission ambiguous |
+| `## Accumulation and Return` | <Finding return format and report-only instructions>. The following elements are prescribed across all domains and must appear verbatim or equivalent: agent is report-only (no triage, no classification, no fixes); violations with plausible intentional rationale still get recorded with `needs judgment`; findings are a flat list where each entry names file path, location, what is wrong, why, and proposed fix or `needs judgment` |
 
 ## Skill Structure
 
-Evaluation skills follow the standard SKILL.md section ordering with domain-specific additions:
+Evaluation skills follow the standard SKILL.md section ordering. This convention promotes Process Model from Common to Prescribed (every evaluation skill needs it) and prescribes the section ordering below:
 
-1. Process Model — holistic reading rationale and orchestration design (what the agent holds, how the orchestrator dispatches and triages)
-2. Scope — accepted arguments and target discovery
+1. Process Model — <holistic reading rationale and dispatch/triage design for this domain>
+2. Scope — <accepted arguments and how target discovery works for this domain>
 3. Trigger
 4. Route
-5. Workflow — sole executable section; use PFN blockquotes for inline orchestration rationale (e.g., why defects are safe to auto-apply, why observations exit to user)
-6. Rules — report-only agent invariant and other load-bearing invariants specific to the skill
+5. Workflow — sole executable section; use PFN blockquotes for inline rationale (e.g., why defects are safe to auto-apply, why observations exit to user). Includes `### Report` per the Report template below
+6. Rules — must include the report-only agent invariant; <other load-bearing invariants specific to the domain>
 
-Process Model covers the conceptual design at an appropriate level of abstraction. Detailed orchestration rationale lives in Workflow as blockquote context adjacent to the steps it explains, not in a separate Protocol section.
+Process Model covers the conceptual design at an appropriate level of abstraction. Detailed rationale lives in Workflow as blockquote context adjacent to the steps it explains, not in a separate Protocol section.
 
 ## Report
 
-Every evaluation skill produces:
+Every evaluation skill includes a `### Report` subheading in Workflow. The skeleton below is prescribed; items marked with `<...>` are customized to the domain.
 
-1. **Scope** — what was evaluated (files, levels, groups)
-2. **Applied Defects** — grouped by file, each with location and applied fix
-3. **Observations** — surfaced when present, each presented as-is from the agent's finding (file path, location, what is wrong, why, and proposed fix). Do not summarize or strip content — the user needs the full finding to make a judgment call. Presentation is interactive (exit to user), not a final-report section, because Observations typically require the skill to exit for judgment
-4. **Status** — terminal outcome of the invocation (clean, defects applied, observations outstanding, anomaly restart)
+1. **Scope** — <what was evaluated: files, levels, groups, or other domain-appropriate unit>
+2. **Applied Defects** — grouped by file; each entry shows location, the fix applied, and the source finding
+3. **Observations** — presented as-is from agent findings (file path, location, what is wrong, why, and proposed fix). Do not summarize or strip content — the user needs the full finding to make a judgment call. Observations are surfaced interactively (exit to user) before the final report because they require user judgment before the skill can proceed
+4. **Status** — terminal outcome of the invocation. Common values include `clean`, `defects applied`, `observations outstanding`; <domain-specific statuses as needed, e.g., `restarted after anomaly` for governance>

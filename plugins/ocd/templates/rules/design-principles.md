@@ -220,6 +220,7 @@ The primary consumer of every tool, output, and error message is an agent. Desig
 - Output is structured and consistent — predictable markers, no decorative formatting
 - Tool descriptions state their purpose in terms an agent can match to a task
 - Instructions reference files by path, not by name — an agent should never need to search for a file
+- Instructions handed to agents are position-independent — the reader executes from the instructions alone without needing to know whether it is the top-level agent, a spawned subagent, or four levels deep in a delegation chain; terms like "orchestrator" or "caller" in handed-down content force the reader to infer its role rather than just act
 
 ## Graceful Degradation
 

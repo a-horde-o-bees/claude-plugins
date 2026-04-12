@@ -43,22 +43,25 @@ List fields (`allowed-tools`, etc.) — use YAML block-style lists, one item per
 
 Markdown body follows skill after frontmatter. Claude loads full body only when skill is invoked.
 
-Standard sections:
+Sections fall into three categories:
 
-| Section | Description |
-|---------|-------------|
-| `# /skill-name` | Title matching slash command |
-| Description paragraph | What skill does (also serves as `description` fallback if no frontmatter) |
-| `## Process Model` | Conceptual model of how skill operates and why (optional — for skills with non-obvious mechanics) |
-| `## Trigger` | When user invokes this skill |
-| `## Route` | Central orchestration section — resolve arguments, validate inputs, select Workflow, dispatch (inline or delegated); handles `--delegate` as dispatch modifier |
-| `## Workflow` | Numbered steps using Process Flow Notation; encapsulates everything agent needs to execute, including `### Report` subheading |
-| `## Components` | Reusable content blocks shared across multiple workflows; prefer extracted `_{name}.md` files over inline sections (optional — only for multi-path skills with shared content) |
-| `## Rules` | Constraints and guardrails |
+- **Prescribed** — every skill includes these (simple skills may reduce to title, description, and rules)
+- **Common** — established patterns with supporting infrastructure; include when relevant to the skill's domain
+- **Domain-specific** — child conventions define additional sections for their domain; this list is not exhaustive
 
-Not all sections required — simple skills may only need title, description, and rules list.
+| Section | Category | Description |
+|---------|----------|-------------|
+| `# /skill-name` | Prescribed | Title matching slash command |
+| Description paragraph | Prescribed | What skill does (also serves as `description` fallback if no frontmatter) |
+| `## Trigger` | Prescribed | When user invokes this skill |
+| `## Route` | Prescribed | Resolve arguments, validate inputs, select Workflow, dispatch |
+| `## Workflow` | Prescribed | Numbered steps using Process Flow Notation; encapsulates everything agent needs to execute |
+| `## Rules` | Prescribed | Constraints and guardrails |
+| `## Process Model` | Common | Conceptual model of how skill operates and why — for skills where workflow correctness depends on mechanics not self-evident from steps themselves |
+| `## Components` | Common | Reusable content blocks shared across multiple workflows; prefer extracted `_{name}.md` files over inline sections |
+| `### Report` | Common | Output format subheading within Workflow — a content standard (what the report contains), distinct from PFN's `Return:` which is flow control |
 
-Process Model is optional — only for skills where workflow correctness depends on mechanics not self-evident from steps themselves.
+Child conventions (e.g., evaluation-skill-md.md) may prescribe additional sections, promote Common sections to Prescribed for their domain, or define domain-specific subsections within Workflow.
 
 ### Orchestration vs Execution Boundary
 
@@ -76,7 +79,7 @@ String substitution variables available in body:
 
 ## Standard Arguments
 
-Reusable argument patterns for skills that accept targets, spawn agents, or scope evaluation. Not all arguments apply to every skill — include only those relevant to skill's domain. Arguments follow Skill Argument Notation defined in Process Flow Notation rules.
+Common argument patterns with established infrastructure. These are not exhaustive — skills define their own arguments for their domain. Include standard arguments when their infrastructure is relevant; define domain-specific arguments as needed. Arguments follow Skill Argument Notation defined in Process Flow Notation rules.
 
 | Argument | Role | Description |
 |----------|------|-------------|
@@ -218,7 +221,7 @@ Keep SKILL.md under 500 lines. Move detailed reference material to separate file
 Workflow section is self-contained — everything agent needs to execute belongs inside it or is referenced by it. This includes:
 
 - Numbered steps using Process Flow Notation
-- `### Report` subheading defining output format — this is a content standard (what the report contains), distinct from PFN's `Return:` which is flow control (where the agent block ends and what data it hands back)
+- `### Report` subheading when the skill produces structured output
 - Explicit file read steps for extracted components (`Read _component.md`)
 - Supporting subsections (e.g., file roles, interpreting results)
 
