@@ -15,17 +15,15 @@ from pathlib import Path
 
 import plugin
 
-# Local imports — used by functions in this module
-from ._db import get_connection
-from ._scanner import scan_path, _walk_filesystem, _compute_file_metrics
+from ._db import *  # noqa: F401,F403
+from ._scanner import *  # noqa: F401,F403
+from ._scanner import _walk_filesystem, _compute_file_metrics  # used by facade
+from ._references import *  # noqa: F401,F403
+from ._skills import *  # noqa: F401,F403
 
-# Re-exports — public interface consumed by MCP server and CLI
-from ._references import references_map
-from ._skills import skills_resolve, skills_list
-
-# Cross-skill: scope_analyze composites governance matching into its result,
-# so the facade imports governance_match from the governance skill.
-from servers.governance import governance_match
+# Cross-package: scope_analyze composites governance matching into its result,
+# so the facade imports governance_match from the governance library.
+from lib.governance import governance_match
 
 logger = logging.getLogger(__name__)
 

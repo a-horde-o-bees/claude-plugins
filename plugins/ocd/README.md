@@ -60,9 +60,16 @@ Agent-facing tools exposed over the Model Context Protocol. Registered in `.mcp.
 
 | Server | Tools | Purpose |
 |--------|-------|---------|
-| `navigator` | `paths_*`, `governance_*`, `skills_*`, `references_*`, `scope_*` | Project structure index, governance discovery, reference mapping |
-| `governance` | `governance_*` | Convention and rule governance: loading, matching, ordering, dependency analysis |
+| `navigator` | `paths_*`, `skills_*`, `references_*`, `scope_*` | Project structure index, reference mapping, scope analysis |
 | `log` | `log_*`, `type_*`, `tag_*` | Unified project log across types (decision, friction, problem, idea) with per-type tag management |
+
+## Libraries
+
+Python packages consumed as imports — no MCP server, no subprocess.
+
+| Library | Package | Purpose |
+|---------|---------|---------|
+| `governance` | `lib/governance/` | Convention and rule governance: matching files to applicable entries, listing entries, dependency ordering. Disk-only. |
 
 ## License
 

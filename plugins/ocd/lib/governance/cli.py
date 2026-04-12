@@ -6,6 +6,7 @@ from disk on every call.
 """
 
 import argparse
+import json
 import sys
 
 from . import (
@@ -44,8 +45,12 @@ def _dispatch_for(args: argparse.Namespace) -> None:
 
 
 def _dispatch_order(args: argparse.Namespace) -> None:
-    del args  # no arguments used
     result = governance_order()
+    if args.json:
+        print(json.dumps(result, indent=2))
+        if result["dangling"]:
+            sys.exit(1)
+        return
     if result["dangling"]:
         print("Dangling governance references — fix frontmatter and re-run:")
         for d in result["dangling"]:
@@ -144,6 +149,12 @@ def build_parser() -> argparse.ArgumentParser:
             "    <path>  (governed_by: <governor>, ...)"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    order_p.add_argument(
+        "--json",
+        action="store_true",
+        default=False,
+        help="Output as JSON for programmatic consumption",
     )
     order_p.set_defaults(_dispatch=_dispatch_order)
 

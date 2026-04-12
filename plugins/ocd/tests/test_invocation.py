@@ -279,13 +279,13 @@ class TestSkillCLI:
         assert "scan" in result.stdout
 
     def test_governance_help(self) -> None:
-        result = run("servers.governance.cli", "--help")
+        result = run("lib.governance.cli", "--help")
         assert result.returncode == 0
         assert "load" in result.stdout
         assert "order" in result.stdout
 
     def test_governance_for_help(self) -> None:
-        result = run("servers.governance.cli", "for", "--help")
+        result = run("lib.governance.cli", "for", "--help")
         assert result.returncode == 0
         assert "files" in result.stdout
 

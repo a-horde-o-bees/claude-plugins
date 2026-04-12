@@ -124,8 +124,15 @@ Agent-facing tools exposed over the Model Context Protocol. Each server lives as
 | Server | Entry point | Role |
 |--------|-------------|------|
 | `navigator` | `servers/navigator/__main__.py` | Project structure index, governance discovery, reference mapping. Delegates to `servers/navigator` package for business logic. |
-| `governance` | `servers/governance/__main__.py` | Convention and rule governance: loading, matching, ordering, and dependency analysis. |
 | `log` | `servers/log/__main__.py` | Unified project log across multiple types (decision, friction, problem, idea) with per-type tag management. |
+
+## Libraries
+
+Python packages consumed as imports — no MCP server, no subprocess. Located in `lib/`.
+
+| Library | Package | Role |
+|---------|---------|------|
+| `governance` | `lib/governance/` | Convention and rule governance: matching files to applicable governance entries, listing entries, and computing the level-grouped dependency order. Reads directly from disk on every call — no database, no caching. Consumed by the convention gate hook, navigator's `scope_analyze`, the governance CLI, and evaluation skills. |
 
 Server modules are thin presentation layers: tool handlers validate, delegate to a domain module, and serialize the result.
 

@@ -9,7 +9,7 @@ This evaluation is in service of cutting a stable v1 of the ocd plugin and makin
 **In scope (must be re-justified through live invention before v1 ships):**
 
 - Design principles
-- ocd rule files: design-principles, workflow, system-documentation, process-flow-notation
+- ocd rule files: design-principles, workflow, system-documentation, process-flow-notation, log-routing
 - ocd conventions
 - ocd patterns
 - ocd servers: navigator (MCP server + CLI)
@@ -28,9 +28,8 @@ This evaluation is in service of cutting a stable v1 of the ocd plugin and makin
 
 ## Prerequisite Work
 
-Before resuming purpose-map evaluation:
-
-1. **Update purpose-map component paths** — the refactor moved files from `skills/` to `servers/`, renamed rules (dropped `ocd-` prefix), deleted `skills/governance/`, deleted `servers/{decisions,friction,stash}/`, deleted `servers/log/`. Component paths in `purpose-map.db` are stale and will show broken references. Update paths as encountered during evaluation, not as a bulk sweep.
+1. ~~**Move governance from `servers/` to `lib/`**~~ — done. Governance moved to `plugins/ocd/lib/governance/`, all imports and docs updated.
+2. **Update purpose-map component paths** — the refactor moved files from `skills/` to `servers/`, renamed rules (dropped `ocd-` prefix), deleted `skills/governance/`, deleted `servers/{decisions,friction,stash}/`, deleted `servers/log/`. Component paths in `purpose-map.db` are stale and will show broken references. Update paths as encountered during evaluation, not as a bulk sweep.
 
 ## Next Steps
 
@@ -42,8 +41,9 @@ Before resuming purpose-map evaluation:
 
 ## Open Items
 
-- **Convention loading on read** — concerns conventions firing when files are read, not just modified. Governance now reads from disk on every call (no database), so this is purely about hook behavior.
+- **Convention loading on read** — conventions fire when files are read, not just modified. Governance now reads from disk on every call (no database), so this is purely about hook behavior.
 - **`purpose-map/skill-migration.md`** — archival planning document for migrating the purpose-map evaluation workflow to a skill. References a stale component id (`c14 (Pit of Success)`) and the now-removed Pit of Success principle. Decide whether to action the migration or delete the document as abandoned planning.
+- **Purpose-map stale components removed, needs orphaned** — c41 (friction server), c42 (decisions server), c43 (stash server) removed from DB. Needs n59 (friction signals) and n68 (ideas/observations) are now gaps. These needs remain valid but need rewiring to new file-based log system components once those are evaluated and rebuilt.
 
 ## v1 Reference
 
@@ -65,6 +65,6 @@ python3 -c "import sqlite3; db = sqlite3.connect('purpose-map/purpose-map-v1.db'
 - `plugins/ocd/patterns/*.md` — OCD patterns (deployed to `.claude/patterns/ocd/`)
 - `plugins/ocd/skills/*/SKILL.md` — OCD skills
 - `plugins/ocd/servers/navigator/` — navigator MCP server package
-- `plugins/ocd/servers/governance/` — governance library (disk-only, no MCP)
+- `plugins/ocd/lib/governance/` — governance library (disk-only, no MCP)
 - `plugins/ocd/logs/` — log type templates (deployed to `.claude/logs/`)
 - `plugins/ocd/skills/log/SKILL.md` — /log skill

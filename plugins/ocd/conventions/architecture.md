@@ -4,25 +4,11 @@ How the convention system discovers, matches, and delivers file-type-specific gu
 
 ## Governance Infrastructure
 
-Conventions and rules share a governance infrastructure implemented in the governance server package (`servers/governance/`). The governance database separates the two along domain lines, with conventions normalized into include/exclude pattern tables:
-
-- **`conventions`** — one row per convention file: `entry_path`, raw `includes` and `excludes` text, and `git_hash`
-- **`convention_includes`** — one row per normalized include pattern, keyed by `entry_path` (CASCADE on delete)
-- **`convention_excludes`** — one row per normalized exclude pattern, keyed by `entry_path` (CASCADE on delete)
-- **`rules`** — one row per rule file: `entry_path` and `git_hash`. Rules carry no patterns because they apply universally
-- **`governance_depends_on`** — junction table tracking `governed_by` dependency edges between governance entries
-
-Patterns are stored exactly as written in frontmatter. The runtime performs matching through the custom `path_match(path, pattern)` SQL function, registered on every connection and delegating to `matches_pattern` for basename, `**` prefix, and full-path modes.
-
-## Self-Refresh
-
-Every governance query calls `_ensure_current` first, which reconciles the `rules` and `conventions` tables against disk state. Reconciliation compares each file's current `git_hash` against the stored hash and re-parses only changed files. Deleted files are removed; new files are inserted with their include and exclude patterns. This means callers never need to run a separate load step — queries always see current disk state.
-
-`governance_load` is exposed as a standalone function for initialization flows and for the navigator CLI's `governance-load` command, but it runs the same reconciliation logic as `_ensure_current`.
+Conventions and rules share a governance infrastructure implemented in the governance library (`lib/governance/`). The library reads directly from disk on every call — no database, no caching. It scans `.claude/rules/` and `.claude/conventions/` directories, parses YAML frontmatter from each governance file, and performs in-memory pattern matching via `matches_pattern` for basename, `**` prefix, and full-path modes.
 
 ## Pattern Matching
 
-`governance_match` takes a list of file paths and returns the conventions that apply to each. The query joins files against `convention_includes` via `path_match`, anti-joins against `convention_excludes`, and groups results by file.
+`governance_match` takes a list of file paths and returns the conventions that apply to each. For each convention file, it parses the frontmatter for include/exclude patterns, tests each input path against the normalized patterns, and groups results by file.
 
 Rules are excluded from the match result by default because they are already in agent context. Passing `include_rules=True` adds every registered rule path to every file's match list — used by governance evaluation workflows where rules themselves are the evaluation target.
 
@@ -47,6 +33,3 @@ Convention files exist in two locations:
 
 Edit deployed copies. The `sync-templates.py` script propagates deployed → template changes before commits. `/init` deploys templates to the project.
 
-## Unclassified Coverage
-
-`governance_unclassified` reports file entries that no convention covers. The query excludes files registered as rules or conventions (those are governance files, not governed files), then filters out files matched by any `convention_includes` pattern that is not also blocked by a `convention_excludes` pattern. Results are grouped by file extension so gaps are actionable at the file-type level.

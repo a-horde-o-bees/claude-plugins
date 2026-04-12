@@ -8,14 +8,5 @@ Reads directly from disk — no database, no MCP server. Consumed
 by the convention_gate hook, the governance CLI, and evaluation skills.
 """
 
-from ._frontmatter import (  # noqa: F401
-    matches_pattern,
-    normalize_patterns,
-    parse_governance,
-    read_frontmatter,
-)
-from ._governance import (  # noqa: F401
-    governance_list,
-    governance_match,
-    governance_order,
-)
+from ._frontmatter import *  # noqa: F401,F403
+from ._governance import *  # noqa: F401,F403

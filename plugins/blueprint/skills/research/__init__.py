@@ -17,7 +17,7 @@ from . import _db as db
 from . import _templates as templates
 
 # Re-export domain modules — CLI imports from research, not from internal modules.
-from ._db import get_connection, init_db, normalize_url, retry_write  # noqa: F401
+from ._db import *  # noqa: F401,F403
 from ._entities import *  # noqa: F401,F403
 from ._measures import *  # noqa: F401,F403
 from ._merge import *  # noqa: F401,F403

@@ -109,12 +109,12 @@ skill-name/
 
 ### Facade Role
 
-Package `__init__.py` stays as public interface after decomposition. Imports from internal modules and re-exports or delegates. CLI (`__main__.py`) imports from the package via `from . import *` — internal module structure is invisible to callers.
+Package `__init__.py` stays as public interface after decomposition. Imports from internal modules via star imports and re-exports or delegates. The `_` prefix convention on private functions controls what star imports export — no `__all__` needed. CLI (`__main__.py`) imports from the package via `from . import *` — internal module structure is invisible to callers.
 
 ```python
 # __init__.py — facade after decomposition
-from ._storage import get_connection, init_db, SCHEMA
-from ._parser import parse_input
+from ._storage import *  # noqa: F403
+from ._parser import *  # noqa: F403
 
 def process_path(db_path: str, target_path: str) -> str:
     """Uses get_connection from _storage, stays in facade."""

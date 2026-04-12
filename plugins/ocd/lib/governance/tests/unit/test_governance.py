@@ -4,12 +4,12 @@ from pathlib import Path
 
 import pytest
 
-from servers.governance import (
+from lib.governance import (
     governance_list,
     governance_match,
     governance_order,
 )
-from servers.governance._frontmatter import (
+from lib.governance._frontmatter import (
     normalize_patterns,
     parse_governance,
     read_frontmatter,

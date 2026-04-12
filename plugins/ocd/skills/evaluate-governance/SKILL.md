@@ -8,7 +8,6 @@ allowed-tools:
   - Edit
   - Bash
   - mcp__plugin_ocd_navigator__*
-  - mcp__plugin_ocd_governance__*
 ---
 
 # /evaluate-governance
@@ -54,7 +53,7 @@ User runs `/evaluate-governance --target project`.
 2. If {target} is not `project`: Exit to user — target must be `project`
 3. Verify working tree is clean — bash: `git status --porcelain`
     1. If output is non-empty: Exit to user — working tree must be clean before evaluation; run `/commit` first so each convergence wave has a clean before/after diff
-4. Discover governance levels — mcp: `mcp__plugin_ocd_governance__governance_order`
+4. Discover governance levels — bash: `CLAUDE_PROJECT_DIR=$(pwd) python3 ${CLAUDE_PLUGIN_ROOT}/run.py lib.governance.cli order --json`
 5. If result has any dangling references:
     1. Present the dangling references to the user — which file declares each missing governor
     2. Exit to user — fix the offending `governed_by` frontmatter and re-invoke; the evaluation cannot proceed against a graph with unresolved references
@@ -82,7 +81,7 @@ User runs `/evaluate-governance --target project`.
     2. If {response} describes a graph anomaly:
         1. Present the anomaly and any partial findings to the user
         2. Work with the user to fix the offending `governed_by` frontmatter
-        3. Re-query `governance_order` — verify the correction is reflected
+        3. Re-query governance levels — bash: `CLAUDE_PROJECT_DIR=$(pwd) python3 ${CLAUDE_PLUGIN_ROOT}/run.py lib.governance.cli order --json`; verify the correction is reflected
         4. Go to step 2. Reset state and restart with the corrected {levels}
     3. Classify each finding in {response} as Defect or Observation per `evaluation-triage.md`
     4. For each Defect: apply its proposed fix directly to disk

@@ -18,7 +18,7 @@ from pathlib import Path
 
 import plugin
 
-from servers.governance import parse_governance
+from lib.governance import parse_governance
 
 
 # --- Parsers ---
