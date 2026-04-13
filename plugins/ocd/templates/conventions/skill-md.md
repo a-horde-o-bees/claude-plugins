@@ -3,7 +3,7 @@ includes: "SKILL.md"
 governed_by:
   - .claude/rules/ocd/design-principles.md
   - .claude/rules/ocd/process-flow-notation.md
-  - .claude/conventions/ocd/markdown.md
+  - .claude/rules/ocd/markdown.md
 ---
 
 # SKILL.md Conventions
@@ -41,26 +41,26 @@ List fields (`allowed-tools`, etc.) — use YAML block-style lists, one item per
 
 ## Body Structure
 
-Markdown body follows skill after frontmatter. Claude loads full body only when skill is invoked.
+Markdown body follows skill after frontmatter. Claude loads full body only when skill is invoked. Sections are ordered for progressive consumption — identity and concept first, then constraints, then execution, then error handling.
 
 Sections fall into three categories:
 
-- **Prescribed** — every skill includes these (simple skills may reduce to title, description, and rules)
-- **Common** — established patterns with supporting infrastructure; include when relevant to the skill's domain
+- **Prescribed** — every skill includes these
+- **Common** — established patterns; include when relevant to the skill's domain
 - **Domain-specific** — child conventions define additional sections for their domain; this list is not exhaustive
 
 | Section | Category | Description |
 |---------|----------|-------------|
-| `# /skill-name` | Prescribed | Title matching slash command; uses unqualified name (Claude Code handles namespace qualification at invocation) |
-| Description paragraph | Prescribed | Canonical purpose statement; doubles as `description` fallback when frontmatter omits it |
-| `## Trigger` | Prescribed | When user invokes this skill |
-| `## Route` | Prescribed | Resolve arguments, validate inputs, select Workflow, dispatch; omit for argument-free skills that dispatch directly to Workflow |
-| `## Workflow` | Prescribed | Numbered steps using Process Flow Notation; encapsulates everything agent needs to execute |
-| `## Rules` | Common | Constraints for the skill executor that apply broadly or govern multiple steps; agent-facing constraints belong in component files; omit when all constraints are step-specific and inlined |
-| `## Error Handling` | Prescribed | How the skill responds to failures; minimum: report failure with available details. Skills with domain-specific error recovery replace the default with appropriate handling |
-| `## Process Model` | Common | Conceptual model of how skill operates and why — for skills where workflow correctness depends on mechanics not self-evident from steps themselves |
-| `## Components` | Common | Reusable content blocks shared across multiple workflows; prefer extracted `_{name}.md` files over inline sections |
-| `### Report` | Common | Output format subheading within Workflow — a content standard (what the report contains), distinct from PFN's `Return:` which is flow control |
+| `# /skill-name` | Prescribed | Title matching slash command; unqualified name |
+| Description paragraph | Prescribed | Purpose statement per Purpose Statement guidance |
+| `## Process Model` | Common | How the skill operates and why — when mechanics are not self-evident from steps |
+| `## Scope` | Common | What the skill operates on and accepted arguments beyond `--target` |
+| `## Trigger` | Common | When/how the skill is invoked — include when trigger conditions are non-obvious |
+| `## Rules` | Common | Constraints for the skill executor; agent-facing constraints belong in component files |
+| `## Route` | Common | Resolve arguments, validate inputs, dispatch to Workflow |
+| `## Workflow` | Prescribed | Numbered steps using Process Flow Notation |
+| `### Report` | Common | Output format subheading within Workflow |
+| `## Error Handling` | Prescribed | How the skill responds to failures; minimum: report failure with available details |
 
 Child conventions (e.g., evaluation-skill-md.md) may prescribe additional sections, promote Common sections to Prescribed for their domain, or define domain-specific subsections within Workflow.
 
@@ -194,14 +194,9 @@ Single-path skills keep steps inline in `## Workflow`.
 
 ### Components
 
-Components are extracted `_{name}.md` files alongside SKILL.md. They carry content that the skill executor does not need in its own context — agent workflows, evaluation criteria, reference material, prompt templates, and agent-facing constraints. Components serve workflows and are never executed independently.
+Components are `_{name}.md` files alongside SKILL.md. They carry content that the skill executor does not need in its own context — agent workflows, evaluation criteria, reference material, prompt templates, and agent-facing constraints. Components serve workflows and are never executed independently. Underscore prefix signals internal (consistent with `_{purpose}.py` pattern for internal modules).
 
-Two reasons to extract a component:
-
-- **Context scoping** — the spawn instruction directs the agent to read a focused component file rather than carrying all agent-level detail in SKILL.md. A component file can contain a self-contained agent workflow (PFN steps the agent executes), evaluation criteria, or any instructions the agent needs that the skill executor does not. Extract even for a single workflow when the motivation is keeping the skill executor's context lean and the agent's context focused.
-- **Reuse** — content shared across multiple workflows lives in a component rather than duplicated inline.
-
-Prefer extracted files over inline `## Components` sections. Underscore prefix signals internal (consistent with `_{purpose}.py` pattern for internal modules).
+Components are always extracted files, not inline sections. File compartmentalization ensures each execution context receives exactly its own instructions — the skill executor reads SKILL.md, spawned agents read their component files. This holds even when no agents are spawned; consistent extraction keeps the pattern simple and the skill directory self-documenting.
 
 ```
 skill-name/
@@ -210,7 +205,7 @@ skill-name/
 └── _criteria.md
 ```
 
-Workflows include explicit read steps for extracted components:
+Workflows include explicit read steps for components:
 
 ```
 ## Workflow

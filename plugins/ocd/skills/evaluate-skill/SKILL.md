@@ -18,9 +18,9 @@ Two complementary phases — static analysis and runtime verification — run co
 
 **Static.** A single agent reads the skill's file set holding four concerns simultaneously — conformity against matched governance, execution correctness from cold, structural quality against domain best practices, and alignment with established patterns. All feed the same finding list per `_evaluation-workflow.md`. Splitting into independent passes creates convergence loops where each pass's fixes invalidate the next; the holistic reading eliminates that spiral.
 
-**Runtime.** Per-route agents invoke the skill with specific argument combinations in worktree-isolated environments, comparing actual behavior against documented claims per `_runtime-evaluation.md`. Worktree isolation ensures state-modifying skills execute safely — branch isolation, push blocking, and automatic cleanup.
+**Runtime.** Per-path agents invoke the skill with specific argument combinations in worktree-isolated environments, comparing actual behavior against documented claims per `_runtime-evaluation.md`. Worktree isolation ensures state-modifying skills execute safely — branch isolation, push blocking, and automatic cleanup.
 
-The skill executor's role is mechanical: extract exercisable argument combinations from the skill's Route section, dispatch all agents concurrently, then classify returned findings as Defects (auto-applied) or Observations (surfaced to user). The skill executor does not evaluate skill content. No agent sees the triage criteria — separation of evaluation from classification is load-bearing.
+The skill executor's role is mechanical: trace the skill's execution paths to identify distinct exercisable branches, dispatch all agents concurrently, then classify returned findings as Defects (auto-applied) or Observations (surfaced to user). The skill executor does not evaluate skill content. No agent sees the triage criteria — separation of evaluation from classification is load-bearing.
 
 ## Scope
 
@@ -52,16 +52,18 @@ User runs `/evaluate-skill`
 
 ### Setup
 
-> Gather inputs for agent dispatch — triage criteria, file scope, and exercisable argument combinations.
+> Gather inputs for agent dispatch — triage criteria, file scope, and exercisable execution paths.
 
 1. Read `.claude/conventions/ocd/evaluation-triage.md`
 2. Discover scope — scope_analyze: paths=[{skill-path}]
 3. {scope} = scope_analyze result
-4. Read {skill-path} Route section to extract exercisable argument combinations
-    1. For each branch in Route, determine the arguments that would reach it
-    2. Skip branches that only exit to user with static messages — no runtime verification value
-    3. For each remaining branch, note preconditions it requires (e.g., uncommitted changes, specific file state)
-5. {arg-combinations} = extracted list; may be empty if all routes are no-ops
+4. Read {skill-path} to trace exercisable execution paths
+    1. Invoking with no arguments is always the first path — every skill has at least this entry point
+    2. If a Route section exists, trace its branches to identify distinct argument combinations that reach different paths
+    3. Trace Workflow steps for embedded branches (conditionals, user choices) that produce distinct outcomes
+    4. For each path, note the arguments needed and preconditions it requires (e.g., uncommitted changes, specific file state)
+    5. Skip paths that only exit to user with static messages — no runtime verification value
+5. {exercisable-paths} = traced list; always contains at least one entry
 
 ### Dispatch
 
@@ -77,14 +79,14 @@ User runs `/evaluate-skill`
             3. Evaluate {file} per the evaluation workflow against its matched governance and all target files already in context
         3. Return:
             - Findings in the evaluation workflow's prescribed format
-    2. For each {combo} in {arg-combinations}:
-        1. async Spawn agent with runtime evaluation({combo}, {skill-path}) and isolation: "worktree":
+    2. For each {path} in {exercisable-paths}:
+        1. async Spawn agent with runtime evaluation({path}, {skill-path}) and isolation: "worktree":
             1. Read `${CLAUDE_PLUGIN_ROOT}/skills/evaluate-skill/_runtime-evaluation.md`
-            2. Exercise skill with {combo} arguments per the runtime evaluation workflow
+            2. Exercise skill with {path} arguments per the runtime evaluation workflow
             3. Return:
                 - Runtime findings in the runtime evaluation's prescribed format
 8. {static-findings} = static agent return
-9. {runtime-findings} = collected runtime agent returns; empty if {arg-combinations} was empty
+9. {runtime-findings} = collected runtime agent returns
 10. Unblock git push — bash: `git config --unset remote.origin.pushurl`
 
 ### Triage
@@ -95,11 +97,9 @@ User runs `/evaluate-skill`
 12. Classify each finding in {findings} as Defect or Observation per `evaluation-triage.md`
 13. For each Defect: apply its proposed fix directly to disk
 14. {applied-defects} = list of applied defects
-15. If any Observations exist in {findings}:
-    1. Present applied Defects grouped by file
-    2. Present each Observation as-is from the agent's finding — file path, location, what is wrong, why, and proposed fix
-    3. Exit to user — "Observations need user judgment. Apply or reject each, then re-invoke `/evaluate-skill` to verify."
-16. Present Report
+15. Present Report
+16. If any Observations exist in {findings}:
+    1. Exit to user — "Observations need user judgment. Apply or reject each, then re-invoke `/evaluate-skill` to verify."
 
 ### Report
 
@@ -107,9 +107,9 @@ Review all agent findings and present unified recommendations to the user. Cover
 
 ## Rules
 
-- Do not evaluate skill content — extract argument combinations mechanically, dispatch agents, and triage returned findings
+- Do not evaluate skill content — trace execution paths mechanically, dispatch agents, and triage returned findings
 - scope_analyze provides the full file set with governance — no separate governance discovery step needed
-- Single sequential static agent — conformity findings inform efficacy evaluation (shared context matters)
+- Single static agent reads files sequentially — conformity findings inform efficacy evaluation (shared context matters)
 - Block push before agents spawn and unblock after all return
 - Present observations with the agent's proposed fix verbatim — do not summarize or omit
 - `/commit` precondition gives each evaluation a clean diff for auditing
