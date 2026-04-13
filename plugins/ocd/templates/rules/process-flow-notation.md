@@ -27,6 +27,7 @@ PFN constructs map to familiar programming concepts:
 | Agent resume | `Continue {agent-ref} with:` | Message to a running coroutine |
 | Return to caller | `Return` / `Return:` | `return` / `return value` |
 | Concurrency | `async` prefix | `asyncio.TaskGroup` |
+| Isolation | `isolation: "worktree"` | Subprocess in temp directory |
 | Jump | `Go to step N. Label` | — |
 | Subroutine | Subprocess heading | `def` |
 | Invocation type | `skill:`, `bash:`, `{tool}:` | decorator / annotation |
@@ -75,6 +76,17 @@ Within skills, intelligent work delegation uses `Spawn agent with:` exclusively.
             - Observations
     - async agent per target file
 2. Review all results
+```
+
+`isolation: "worktree"` modifier on `Spawn agent with:` runs the agent in a git worktree — an isolated copy of the repository where file changes, commits, and skill invocations stay contained without affecting the main working tree. Worktree creation and cleanup are handled by the system. Composes with `async` for concurrent isolated agents.
+
+```
+1. Spawn agent with migration({target}) and isolation: "worktree":
+    1. Modify files
+    2. Verify changes
+    3. Return:
+        - Changes applied
+2. Review results
 ```
 
 `Continue {agent-ref} with:` resumes a previously-spawned agent for another cycle of work, retaining the agent's full accumulated context from prior cycles. The agent reference is captured as a variable from the `Spawn agent with:` step and referenced by name in subsequent `Continue` calls. Indented children are the instructions for the current cycle; the agent's `Return` at the end of each cycle hands control back to the caller, which may then `Continue` the same agent again or let the agent be garbage-collected.
@@ -181,7 +193,7 @@ When a step delegates to a specific execution mechanism, an invocation type pref
 |--------|-----------|---------|
 | `skill:` | Skill tool | `skill: /commit` |
 | `bash:` | Bash tool | `bash: \`claude plugins marketplace update\`` |
-| `{tool}:` | Dedicated tool (Read, Grep, Glob, etc.) | `Read: \`settings.json\`` |
+| `{tool}:` | Dedicated tool (Read, Grep, Glob, MCP tools, etc.) | `Read: \`settings.json\``, `scope_analyze: paths=[{skill-path}]` |
 
 The prefix can appear after an em dash (`1. Commit — skill: /commit`) or standalone (`- bash: \`command\``). Invocation types are optional — omit when the mechanism is unambiguous from context. Use when a workflow mixes mechanisms and the agent needs to distinguish between them. Steps without an invocation type are executed by agent judgment.
 

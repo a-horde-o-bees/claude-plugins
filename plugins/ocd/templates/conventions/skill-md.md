@@ -175,7 +175,7 @@ Workflow section is self-contained — everything agent needs to execute belongs
 
 The Workflow section and the component files it references form a complete execution surface — the skill executor follows the Workflow, and spawned agents read the component files they are directed to. Agent-facing constraints live in those component files, not in the SKILL.md Rules section.
 
-CLI references in workflows and reference files must be full executable commands — never shorthand. An agent should be able to copy a command verbatim and run it. Include interpreter, launcher path, module, subcommand, and all required flags (e.g., `--db`). Shorthand forces agents to discover invocation patterns, which wastes tokens and risks incorrect construction.
+CLI references in workflows and reference files must be full executable commands — never shorthand. An agent should be able to copy a command verbatim and run it. Include interpreter, launcher path, module, subcommand, and all required flags (e.g., `--db`). Shorthand forces agents to discover invocation patterns, which wastes tokens and risks incorrect construction. MCP tool invocations are a separate mechanism from CLI — use the `{tool}:` invocation type prefix defined in PFN (e.g., `scope_analyze: paths=[{skill-path}]`).
 
 ### Multi-Path Workflows
 
