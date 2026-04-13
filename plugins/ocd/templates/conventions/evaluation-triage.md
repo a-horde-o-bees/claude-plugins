@@ -2,7 +2,7 @@
 includes: "*/evaluate-*/SKILL.md"
 governed_by:
   - .claude/conventions/ocd/evaluation-skill-md.md
-  - .claude/conventions/ocd/markdown.md
+  - .claude/rules/ocd/markdown.md
   - .claude/rules/ocd/design-principles.md
 ---
 

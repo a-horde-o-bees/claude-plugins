@@ -3,7 +3,7 @@ includes: "CLAUDE.md"
 governed_by:
   - .claude/rules/ocd/design-principles.md
   - .claude/rules/ocd/system-documentation.md
-  - .claude/conventions/ocd/markdown.md
+  - .claude/rules/ocd/markdown.md
 ---
 
 # CLAUDE.md Conventions

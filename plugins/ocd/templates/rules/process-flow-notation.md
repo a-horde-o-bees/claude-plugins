@@ -1,277 +1,380 @@
 ---
-includes: "*"
+includes: "*.md"
 governed_by:
   - .claude/rules/ocd/design-principles.md
+  - .claude/rules/ocd/markdown.md
 ---
 
 # Process Flow Notation
 
 Structured programming for agent workflows. Indentation scopes blocks. Required in always-on context — agents must parse and follow this notation during execution, not only when authoring.
 
-## Execution Model
+## Steps
 
-PFN constructs map to familiar programming concepts:
+Numbered steps are ordered execution. Each step is an action or construct.
 
-| Concept | PFN Syntax | Python Analogy |
-|---------|------------|----------------|
-| Sequential | Numbered steps | Lines of code |
-| Scope | 4-space indentation | 4-space indentation |
-| Conditional | `If/Else if/Else:` | `if/elif/else:` |
-| Iteration | `For each:`, `While:` | `for:`, `while:` |
-| Event trigger | `When:` | Signal handler |
-| Assignment | `{name} = value` | `name = value` |
-| Skip iteration | `Continue next {item}` | `continue` |
-| Exit loop | `Break loop` | `break` |
-| Exit to user | `Exit to user` | `sys.exit()` |
-| Agent call | `Spawn agent with:` | `async def` + `await` |
-| Agent resume | `Continue {agent-ref} with:` | Message to a running coroutine |
-| Return to caller | `Return` / `Return:` | `return` / `return value` |
-| Concurrency | `async` prefix | `asyncio.TaskGroup` |
-| Isolation | `isolation: "worktree"` | Subprocess in temp directory |
-| Jump | `Go to step N. Label` | — |
-| Subroutine | Subprocess heading | `def` |
-| Invocation type | `skill:`, `bash:`, `{tool}:` | decorator / annotation |
+```
+1. Read configuration
+2. Validate inputs
+3. Process data
+4. Report results
+```
+
+Bullets (`-`) are unordered sub-items within a step.
+
+```
+1. Collect results:
+    - Changes applied
+    - Observations found
+    - Errors encountered
+```
 
 ## Scoping
 
-Indentation is the scope mechanism — 4 spaces per level, no depth limit. All `{prefix}:` constructs open a block. Single-action blocks may inline after the colon. Multi-action blocks place actions as indented children — never mix an inline action with indented children on the same block. Return to parent indentation signals the end of a block.
+Indentation is the scope mechanism — 4 spaces per level, no depth limit. All constructs ending with `:` open a block. Single-action blocks may inline after the colon. Multi-action blocks place actions as indented children — never mix an inline action with indented children on the same block. Return to parent indentation signals the end of a block.
 
-Flow control keywords are scope-relative — indentation determines which scope they exit:
+## Comments
 
-| Keyword | Exits | Content |
-|---------|-------|---------|
-| `Continue next {item}` | Current iteration — skip to next | Self-describing via loop variable |
-| `Break loop` | Current loop — exit entirely | Reason after em dash |
-| `Exit to user` | Current process — halt workflow | Reason after em dash |
-| `Return` / `Return:` | Agent block — hand back to caller | Optional (`Return:` + children, or bare `Return`) |
+Two forms of non-executable annotation at different positions.
 
-`Go to step N. Label` jumps forward or backward to a numbered step — always includes both step number and label to survive renumbering.
-
-## Agent Spawning
-
-`Spawn agent with:` delegates work to a spawned agent. Indented children are the agent instructions. Return to parent indentation signals control back to the caller. `Return` / `Return:` defines what the agent hands back.
+**`—`** — inline annotation on a step line. Elaborates context, purpose, or constraints — never an imperative action that could be executed independently. Include only when the label or children are not self-evident. Semicolons add qualifications inline.
 
 ```
-1. Spawn agent with conflict detection:
-    1. Read all files at current level
-    2. If no conflicts found: Return
-    3. Identify semantic conflicts
-    4. Return:
-        - Horizontal conflicts with citations
-        - Vertical conflicts with citations
-2. Present results to user
+1. Read file — only the first 100 lines; skip binary files
+2. Process results
 ```
 
-Within skills, intelligent work delegation uses `Spawn agent with:` exclusively. Tool calls (CLI scripts, bash commands) are not agent spawns and remain unrestricted. The skill executor applies user-directed corrections inline — no agent spawn needed for directed fixes.
-
-`async` composes with `Spawn agent with:` for concurrent agents:
+**`>`** — standalone annotation between steps. Provides rationale, purpose, or design notes for surrounding steps. Sits between steps without breaking numbering and is never acted on.
 
 ```
-1. For each {file} in {target-files}:
-    1. Spawn agent with conformity check:
-        1. Read instructions
-        2. Apply to {file}
-        3. Return:
-            - Changes applied
-            - Observations
-    - async agent per target file
-2. Review all results
+3. Classify each finding
+
+> Defects are safe to auto-apply. Observations require user judgment.
+
+4. Apply defects
 ```
 
-`isolation: "worktree"` modifier on `Spawn agent with:` runs the agent in a git worktree — an isolated copy of the repository where file changes, commits, and skill invocations stay contained without affecting the main working tree. Worktree creation and cleanup are handled by the system. Composes with `async` for concurrent isolated agents.
+Grouping headings organize contiguous steps within a single process. Steps continue numbering across headings — a heading is a label, not a numbering reset. Every grouping heading is followed by a blockquote explaining why these steps form a distinct group.
 
 ```
-1. Spawn agent with migration({target}) and isolation: "worktree":
-    1. Modify files
-    2. Verify changes
-    3. Return:
-        - Changes applied
-2. Review results
+### Setup
+
+> Gather inputs before dispatch.
+
+1. Read configuration
+2. Discover scope
+
+### Dispatch
+
+> All agents launch concurrently.
+
+3. Block push
+4. Spawn agents
+5. Unblock push
 ```
 
-`Continue {agent-ref} with:` resumes a previously-spawned agent for another cycle of work, retaining the agent's full accumulated context from prior cycles. The agent reference is captured as a variable from the `Spawn agent with:` step and referenced by name in subsequent `Continue` calls. Indented children are the instructions for the current cycle; the agent's `Return` at the end of each cycle hands control back to the caller, which may then `Continue` the same agent again or let the agent be garbage-collected.
+## Assignment
 
-Use `Continue` when a long-running workflow needs skill executor checkpoints between cycles and each cycle must build on prior reads or decisions. Use a fresh `Spawn agent with:` when no prior context is needed — fresh spawns start from cold and cost less when the work is independent.
+**`{name} = value`** — sets a named variable for downstream steps. Variable names use curly braces and dashes. Variables use shared scope — assignment makes the variable available to all subsequent steps at any depth. Variables must be assigned before use — unassigned references are authoring errors.
 
 ```
-1. Spawn agent with level evaluation({first-level-files}):
-    1. Read evaluation criteria
-    2. For each {file} in level files: Read and evaluate
-    3. Return:
-        - Findings for this level
-2. {agent-ref} = the spawned agent
-3. Process returned findings, decide whether to proceed
-4. If continue:
-    1. Continue {agent-ref} with next level({next-level-files}):
-        1. For each {file} in the new level files: Read and evaluate against already-loaded context from prior cycles
-        2. Return:
-            - Findings for this level
-5. Process the new return the same way
+1. {target-path} = resolved SKILL.md path
+2. If condition:
+    1. {mode} = evaluation
+3. Process {target-path}
 ```
+
+Curly-brace notation is reserved for values assigned once and referenced later. When a step describes the shape of returned data — the fields a Return: hands back, the structure of a tool's output — use plain prose, not `{name}`. Decoration without downstream reference adds no execution meaning.
 
 ## Conditionals
 
-`If X:`/`Else if X:`/`Else:` prefix. `If/Else if` is mutually exclusive — stop at first match. Chain may end with `Else if` or `Else`. `Else` is the universal fallback when all prior conditions fail. Repeated `If/If` at the same level is independent evaluation — multiple conditions may fire. Standalone `If` with no `Else` is valid — the alternative is "proceed to next step." Never mix the two forms in the same chain.
+**`If X:`** — evaluates condition, executes block if true
+
+**`Else if X:`** — mutually exclusive alternative in an If chain, stop at first match
+
+**`Else:`** — universal fallback when all prior conditions fail
+
+Two distinct forms: If/Else if/Else is mutually exclusive — only one branch fires. Consecutive If/If at the same level is independent evaluation — multiple conditions may fire. A new If at the same level implicitly ends the previous chain. Standalone If with no Else is valid — the alternative is "proceed to next step."
 
 ```
-1. If condition: single action
-2. Else if condition:
-    1. Action A
-    2. Action B
-3. Else: fallback action
+> Mutually exclusive — only one branch fires
+
+1. If condition A: action A
+2. Else if condition B: action B
+3. Else: fallback
+
+> Independent — both are evaluated separately
+
+4. If condition C: action C
+5. If condition D: action D
 ```
 
-## Iteration and Events
+When an agent encounters If, If, Else at the same level, the Else belongs to the second If — the first If ended when the second If began. If the enclosed steps suggest the author intended a mutually exclusive chain, the pattern is malformed — correct it or surface to the user.
 
-`For each {item} in {collection}:` iterates over a collection — names both the loop variable and source. `While X:` repeats while the condition holds. `When X:` is event-triggered — reactive to a state change rather than evaluated at a fixed point in the sequence.
+```
+> Correct — verbose mode is independent of target existence
+
+4. If verbose mode: enable logging
+5. If target exists: process target
+6. Else: report target not found
+
+> Malformed — file/directory/unknown is mutually exclusive, should be If/Else if/Else
+
+4. If target is file: process file
+5. If target is directory: process directory
+6. Else: report unknown target type
+```
+
+## Loops
+
+**`For each {item} in {collection}:`** — iterates over a collection, names both loop variable and source
+
+**`While X:`** — repeats while condition holds
+
+**`When X:`** — event-triggered, reactive to a state change rather than evaluated at a fixed point in the sequence
+
+**`Continue next`** — exits current iteration and skips to next `For each:` element
+
+**`Break loop`** — exits current `For each:` or `While:` loop
+
+**`Go to step N. Label`** — jumps to a different step; includes both step number and label to survive renumbering
 
 ```
 1. For each {file} in {target-files}:
     1. If {file} invalid: Continue next {file}
     2. Process {file}
-    3. If threshold reached: Break loop — all targets processed
+    3. If threshold reached: Break loop
 2. When event occurs:
     1. Handle event
 ```
 
-## Assignment
+## Invocations
 
-`{name} = value` sets a named variable for downstream steps. Variable names use curly braces and dashes. Variables use shared scope — assignment makes the variable available to all subsequent steps at any depth, including inside `Spawn agent with:` blocks. This matches natural language reading where context carries forward sequentially. Variables must be assigned before use — unassigned references are authoring errors.
-
-```
-1. {target-directory} = parent of resolved SKILL.md path
-2. If condition:
-    1. {selected-workflow} = Self-Evaluation
-3. Pass {target-directory} to target CLI
-```
-
-Curly-brace notation is reserved for values assigned once and referenced later. When a step describes the shape of returned data — the fields a `Return:` hands back, the structure of a tool's output, the format of a report — use plain prose, not `{name}`. Decoration without downstream reference adds no execution meaning and clutters the text. A return value that gets assigned to a variable for later use is a downstream reference and warrants `{name}`.
-
-## Concurrency
-
-`async` prefix marks concurrent execution. Return to parent indentation signals the await point.
-
-```
-1. Dispatch operations
-    - async Operation A
-    - async Operation B
-2. Action (awaits concurrent operations)
-```
-
-## Presentation Format
-
-Numbers are ordered execution or evaluation. Bullets (`-`) are unordered sub-items.
-
-Em dash (`—`) separates step label from optional description. Label is an action verb or short imperative; description elaborates context, purpose, or constraints — never an imperative action that could be executed independently. Include em dash descriptions only when they add value; omit when the label or children are self-evident. Semicolons add qualifications or constraints inline.
-
-```
-1. Label — description of action; supporting context; constraint or exception
-```
-
-Subprocesses are extracted under their own heading with their own steps, referenced by name in the parent flow. Heading depth is one level below the parent heading.
-
-Grouping headings organize contiguous steps within a single process. Steps continue numbering across headings — a heading is a label, not a numbering reset. Every grouping heading is followed by a blockquote explaining why these steps form a distinct group — the heading names the group, the blockquote conveys its purpose.
-
-Blockquotes (`>`) are non-executable context — rationale, purpose, or design notes for surrounding steps. They sit between steps without breaking numbering and are never acted on as part of the flow. Blockquotes appear standalone between steps or after grouping headings — grouping headings require them, standalone use does not require a heading.
-
-```
-3. Classify each finding as Defect or Observation
-
-> Defects are safe to auto-apply — deterministic and intent-preserving by definition. Observations may change what governance prescribes, so the skill executor exits to user before continuing.
-
-4. For each Defect: apply its proposed fix directly to disk
-5. If any Observations exist:
-    1. Present to user
-    2. Exit to user
-```
-
-## Invocation Types
-
-When a step delegates to a specific execution mechanism, an invocation type prefixes the command: `{mechanism}: {command}`. This disambiguates how the agent executes the step — which tool or interface to use.
+All delegations follow the same structural pattern — mechanism: followed by what that mechanism needs.
 
 | Prefix | Mechanism | Example |
 |--------|-----------|---------|
-| `skill:` | Skill tool | `skill: /commit` |
-| `bash:` | Bash tool | `bash: \`claude plugins marketplace update\`` |
-| `{tool}:` | Dedicated tool (Read, Grep, Glob, MCP tools, etc.) | `Read: \`settings.json\``, `scope_analyze: paths=[{skill-path}]` |
-
-The prefix can appear after an em dash (`1. Commit — skill: /commit`) or standalone (`- bash: \`command\``). Invocation types are optional — omit when the mechanism is unambiguous from context. Use when a workflow mixes mechanisms and the agent needs to distinguish between them. Steps without an invocation type are executed by agent judgment.
+| skill: | Skill tool | skill: /commit |
+| bash: | Bash tool | bash: `git status --porcelain` |
+| tool name: | Dedicated tool (Read, Grep, Glob, MCP tools) | Read: `settings.json`, scope_analyze: paths=[{skill-path}] |
+| Call: | Read and follow a file or section | Call: `_protocol.md` |
+| Spawn: | Delegate to a new agent | Spawn: Call: `_workflow.md` |
 
 ```
-1. Commit — skill: `/commit`
-2. Push — skill: `/push --branch main`
-3. Marketplace refresh — bash: `claude plugins marketplace update`
-4. Update plugins:
-    - bash: `claude plugins update ocd@marketplace`
-    - bash: `claude plugins update blueprint@marketplace`
-5. If rules changed:
-    1. Suggest session restart
+1. skill: /commit
+2. bash: `git status --porcelain`
+3. Read: `settings.json`
+4. scope_analyze: paths=[{skill-path}]
 ```
 
-## Argument Notation
+Invocation types are optional — omit when the mechanism is unambiguous from context. Use when a workflow mixes mechanisms and the agent needs to distinguish. Steps without an invocation type are executed by agent judgment. The prefix can appear after an em dash — `1. Commit — skill: /commit`.
 
-PFN content declares arguments in CLI-style format and references them in workflow steps using `--flag` (presence checks and iteration) and `{flag}` (value resolution). Used wherever PFN content needs parameterized inputs — skill `argument-hint` frontmatter is the primary current consumer, but the notation applies equally to referenced markdown sections with parameters, parameterized workflow invocations, and any PFN content declaring required inputs.
+## Arguments
 
-### Declaration Format
+PFN content declares arguments in CLI-style format and references them in workflow steps using `--flag` (presence checks) and `{flag}` (value resolution). The primary consumer is skill `argument-hint` frontmatter.
 
-Arguments are declared using CLI-style format. The declaration appears wherever the PFN content is defined — in SKILL.md frontmatter this is the `argument-hint` field; in a referenced markdown section this may be a designated header or preamble. Agents read the declaration to understand what arguments the content accepts, which are required, and what values they expect.
+### Declaration
 
-Format elements:
+Arguments are declared in CLI-style format — in SKILL.md frontmatter this is the `argument-hint` field.
 
 | Required | Optional | Description |
 |----------|----------|-------------|
 | `<value>` | `[value]` | Value placeholder |
 | `<x \| y>` | `[x \| y]` | Choice — one of the listed alternatives |
 | N/A | `[--flag]` | Boolean flag — presence means true, absence means false |
-| `--flag <value>` | `[--flag <value>]` | Flag with value — flag consumes the following value |
-| N/A | `[--flag <value> ...]` | Repeatable — flag may appear multiple times, each with its own value |
+| `--flag <value>` | `[--flag <value>]` | Flag with value |
+| N/A | `[--flag <value> ...]` | Repeatable — flag may appear multiple times |
 
-Angle brackets `<>` denote required values. Square brackets `[]` denote optional elements and drop inner angle brackets. Boolean and repeatable flags are always optional.
-
-Examples:
+Angle brackets `<>` denote required values. Square brackets `[]` denote optional elements.
 
 ```
---target <path | /skill-name | project | self | natural language goal> [--pattern <glob> ...] [--all] [--delegate]
+--target <path | /skill-name> [--pattern <glob> ...] [--all]
 ```
 
-```
---target </skill-name | natural language scenario> [--delegate]
-```
+### Reference
 
-### Reference Syntax
+**`--flag`** — refers to the flag itself, existence and iteration.
 
-PFN content references its declared arguments using two forms — `--flag` for flag existence and `{flag}` for flag value. This separates presence checks from value resolution, making data flow explicit.
-
-`--flag` refers to the flag itself — existence, iteration over instances:
-
-- Conditions check presence — `If --flag:` or `If not --flag:`
-- Iteration over repeatable instances — `For each --flag:`
-
-`{flag}` always resolves to the value associated with the flag:
-
-- For value flags — `{flag}` resolves to the text value passed with the flag
-- For repeatable flags — `{flag}` inside `For each --flag:` resolves to the current item's value
-- Boolean flags have no value — use `--flag` only, never `{flag}`
-
-Reference patterns in workflow steps:
-
-```
-1. If {target} starts with `/`:
-    1. Resolve skill path from {target}
-2. Else if {target} is `project`:
-    1. Set target directory to project root
-```
+**`{flag}`** — resolves to the value.
 
 ```
 1. If --pattern:
     1. For each --pattern:
-        1. Pass {pattern} to target CLI as filter
+        1. Pass {pattern} to target CLI
+
+2. If {target} starts with `/`:
+    1. Resolve skill path from {target}
+3. Else if {target} is `project`:
+    1. Set target directory to project root
 ```
 
+## Call
+
+**`Call:`** — reads and follows a file or section as instructions in the current execution context
+
+**`Return`** — exits the current `Call:` block, handing control back to the caller
+
+Distinct from Read: which loads content into context without executing it.
+
 ```
-1. If --delegate:
-    1. Spawn background agent
-2. Else:
-    1. Execute inline
+1. Call: `_protocol.md`
+2. Call: `_protocol.md` ({target} = resolved path)
+3. Call: `_protocol.md`
+    - {target} = resolved path
+    - {scope} = scope result
 ```
 
+Arguments passed in parentheses or as indented assignments become variables available within the called content. Called files declare expected variables in a `### Variables` section:
+
+```
+# Protocol Workflow
+
+### Variables
+
+- {target} — the resolved target path
+- {scope} — scope_analyze result with governance metadata
+
+### Process
+
+1. For each {file} in {scope} files:
+    1. Evaluate {file} against {target}
+```
+
+`Call:` to a section heading invokes an inline subprocess within the same document:
+
+```
+1. Call: Validation ({input} = collected data)
+
+## Validation
+
+1. Check {input} against schema
+2. Return validation result
+```
+
+## Spawn
+
+**`Spawn:`** — delegates work to a new agent in its own execution context
+
+**`Return`** — exits the current `Spawn:` block, handing results back to the caller
+
+Within skills, intelligent work delegation uses Spawn: exclusively. Tool calls (CLI scripts, bash commands) are not agent spawns and remain unrestricted. The skill executor applies user-directed corrections inline — no agent spawn needed for directed fixes.
+
+```
+1. Spawn: Call: `_workflow.md`
+2. Spawn: Call: `_workflow.md` ({target} = resolved path)
+3. Spawn:
+    1. Call: `_evaluation-workflow.md` ({scope} = scope result)
+    2. Return:
+        - Findings
+```
+
+### async
+
+**`async`** — prefix on `Spawn:` that runs the agent concurrently. Return to parent indentation signals the await point.
+
+```
+1. For each {file} in {target-files}:
+    1. async Spawn:
+        1. Call: `_conformity-check.md` ({file} = {file})
+        2. Return:
+            - Findings
+2. Review all results
+```
+
+### isolation: "worktree"
+
+**`isolation: "worktree"`** — parenthetical modifier on `Spawn:` that runs the agent in a git worktree, an isolated copy of the repository where file changes, commits, and skill invocations stay contained. Worktree creation and cleanup are handled by the system. Composes with `async`:
+
+```
+1. async Spawn (isolation: "worktree"):
+    1. Call: `_migration.md` ({target} = migration target)
+    2. Return:
+        - Changes applied
+2. Review results
+```
+
+### Continue
+
+**`Continue {agent-ref}:`** — resumes a previously-spawned agent, retaining its full accumulated context from prior cycles. The agent reference is captured as a variable from the `Spawn:` step.
+
+Use `Continue` when a long-running workflow needs checkpoints between cycles and each cycle must build on prior context. Use a fresh `Spawn:` when no prior context is needed.
+
+```
+1. Spawn:
+    1. Call: `_level-evaluation.md` ({files} = {first-level-files})
+    2. Return:
+        - Findings for this level
+2. {agent-ref} = the spawned agent
+3. Process returned findings, decide whether to proceed
+4. If continue:
+    1. Continue {agent-ref}:
+        1. Call: `_level-evaluation.md` ({files} = {next-level-files})
+        2. Return:
+            - Findings for this level
+5. Process the new return the same way
+```
+
+## Error Handling
+
+**`Error Handling:`** — catches failures from all sibling steps above it and their descendants within the same parent block
+
+**`Exit to caller`** — exits the current process; intentional exits in normal flow do not trigger Error Handling, only unhandled failures do
+
+Always the last step in a block that needs error recovery.
+
+```
+1. Block push
+2. Spawn agents:
+    1. Call: `_workflow.md`
+    2. Return:
+        - Findings
+3. Unblock push
+4. Error Handling:
+    1. Unblock push — bash: `git config --unset remote.origin.pushurl`
+    2. Exit to caller — dispatch failed
+```
+
+> Error Handling at step 4 catches failures from steps 1-3 and all their descendants. It does not catch failures from steps outside its parent block.
+
+Error Handling can be nested at different depths for different scopes:
+
+```
+1. Outer operation
+2. Inner block:
+    1. Risky step A
+    2. Risky step B
+    3. Error Handling:
+        1. Clean up inner resources
+        2. Exit to caller — inner block failed
+3. Continue with outer
+4. Error Handling:
+    1. Clean up outer resources
+    2. Exit to caller — outer operation failed
+```
+
+## Reference
+
+PFN constructs and their programming analogues:
+
+| Concept | PFN Syntax | Python Analogy |
+|---------|------------|----------------|
+| Sequential | Numbered steps | Lines of code |
+| Unordered | Bullets (-) | List items |
+| Scope | 4-space indentation | 4-space indentation |
+| Inline comment | — (em dash) | `# end-of-line comment` |
+| Block comment | > (blockquote) | `# standalone comment` |
+| Assignment | {name} = value | `name = value` |
+| Conditional | If/Else if/Else: | `if/elif/else:` |
+| Iteration | For each:, While: | `for:`, `while:` |
+| Event | When: | Signal handler |
+| Loop control | Continue next, Break loop | `continue`, `break` |
+| Jump | Go to step N. Label | — |
+| Invocation | mechanism: content | Uniform calling convention |
+| Call | Call: | `function()` |
+| Spawn | Spawn: | `asyncio.create_task()` |
+| Resume | Continue {agent-ref}: | Message to running coroutine |
+| Return | Return / Return: | `return` / `return value` |
+| Concurrency | async Spawn: | `asyncio.TaskGroup` |
+| Isolation | Spawn (isolation: "worktree"): | Subprocess in temp directory |
+| Error handling | Error Handling: | `except:` |
+| Exit | Exit to caller | `sys.exit()` |

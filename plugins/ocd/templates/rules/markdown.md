@@ -4,7 +4,7 @@ governed_by:
   - .claude/rules/ocd/design-principles.md
 ---
 
-# Markdown Conventions
+# Markdown
 
 Base content standards for all markdown files.
 
