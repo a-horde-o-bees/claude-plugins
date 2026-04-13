@@ -8,7 +8,7 @@ governed_by:
 
 # Evaluation Triage Criteria
 
-Classification standard for evaluation skills. Every evaluate-* skill orchestrator classifies reported findings against this file before deciding what to auto-apply versus what to surface to the user. The spawned evaluation agent never reads this file — classification is an orchestrator concern, enforced by separation of duties.
+Classification standard for evaluation skills. The skill executor classifies reported findings against this file before deciding what to auto-apply versus what to surface to the user. Evaluation agents never read this file — separation is enforced by file compartmentalization; this file is referenced only in the skill executor's workflow, not in agent component files.
 
 ## Classifications
 
@@ -27,4 +27,4 @@ Reclassify a Defect as Observation when any of the following hold:
 
 ## Cross-Concern Interactions
 
-When two findings against the same file conflict — one finding's fix would undo or interfere with another's — both findings are reported as Observations and neither is auto-applied. The orchestrator surfaces both with their proposed fixes so the user can choose which to accept.
+When two findings against the same file conflict — one finding's fix would undo or interfere with another's — both findings are reported as Observations and neither is auto-applied. The skill executor surfaces both with their proposed fixes so the user can choose which to accept.

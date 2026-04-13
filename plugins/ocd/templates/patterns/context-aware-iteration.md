@@ -53,10 +53,10 @@ Context budget depends on the agent's model and the overhead of instructions + t
 
 ## Checkpoint Persistence
 
-For workflows where the orchestrator is also context-limited:
+For workflows where the skill executor is also context-limited:
 
 - Persist checkpoint to a file or database after each agent completes
-- On orchestrator restart, read checkpoint and continue
+- On skill executor restart, read checkpoint and continue
 - Example: `blueprint/data/history.md` entries with "resume from entity e14" or database stage markers where `stage = 'researched'` implicitly marks completion
 
 ## When to Use

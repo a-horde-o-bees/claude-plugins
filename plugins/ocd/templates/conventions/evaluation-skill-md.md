@@ -9,11 +9,11 @@ governed_by:
 
 Specialized SKILL.md conventions for domain-specific evaluation skills. Applies to skills with the `evaluate-` directory prefix. Supplements the general skill-md convention — evaluation skills follow both.
 
-Evaluation skills produce structured findings on a target set through a single holistic pass by a spawned agent. The orchestrator handles triage and application; the spawned agent is report-only. One invocation produces one walk of the target set and one set of findings for the orchestrator to act on.
+Evaluation skills produce structured findings on a target set through a single holistic pass by a spawned agent. Triage and application stay in the skill executor's workflow; evaluation agents receive only evaluation instructions through compartmentalized component files. One invocation produces one walk of the target set and one set of findings for the skill executor to act on.
 
 ## Naming
 
-Directory: `evaluate-<domain>/`. Skill name: `evaluate-<domain>`. Domain names the target type.
+Directory: `evaluate-<domain>/`. Domain names the target type.
 
 ## Holistic Reading, Not Lenses
 
@@ -27,13 +27,13 @@ Scope is domain-specific. Skill evaluation scopes to files and their references.
 
 Scope also declares accepted arguments beyond `--target`. When unrecognized arguments are provided, the skill responds with its description and argument-hint (same as calling without arguments). Document accepted arguments and their effect on scope.
 
-## Report-Only Agent
+## Evaluation-Triage Separation
 
-The spawned agent does not classify findings, apply fixes, or reason about triage. It reads, evaluates, and reports. The orchestrator owns triage (via `evaluation-triage.md`) and application. This separation is load-bearing:
+Evaluation agents evaluate and report. The skill executor triages and applies. This separation is enforced by file compartmentalization — evaluation workflow files contain evaluation instructions, triage criteria stay in the skill executor's workflow, and the two never cross. The separation is load-bearing:
 
-- Decoupling evaluation from classification lets the orchestrator apply uniform triage across all domains without requiring each agent to re-implement it
-- Keeping the agent report-only means its returns can be audited against a small, stable format
-- The orchestrator can interrupt between cycles without the agent holding stale classification state
+- Decoupling evaluation from classification lets the skill executor apply uniform triage across all domains without requiring each agent to re-implement it
+- Report-only agents return findings in a stable, auditable format
+- The skill executor can interrupt between cycles without agents holding stale classification state
 
 ## Evaluation Workflow File
 
@@ -57,7 +57,7 @@ Evaluation skills follow the standard SKILL.md section ordering. This convention
 3. Trigger
 4. Route
 5. Workflow — sole executable section; use PFN blockquotes for inline rationale (e.g., why defects are safe to auto-apply, why observations exit to user). Includes `### Report` per the Report template below
-6. Rules — must include the report-only agent invariant; <other load-bearing invariants specific to the domain>
+6. Rules — <load-bearing invariants for the skill executor specific to the domain>
 
 Process Model covers the conceptual design at an appropriate level of abstraction. Detailed rationale lives in Workflow as blockquote context adjacent to the steps it explains, not in a separate Protocol section.
 

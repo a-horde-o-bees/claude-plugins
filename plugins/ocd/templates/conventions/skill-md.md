@@ -56,7 +56,7 @@ Sections fall into three categories:
 | `## Trigger` | Prescribed | When user invokes this skill |
 | `## Route` | Prescribed | Resolve arguments, validate inputs, select Workflow, dispatch; omit for argument-free skills that dispatch directly to Workflow |
 | `## Workflow` | Prescribed | Numbered steps using Process Flow Notation; encapsulates everything agent needs to execute |
-| `## Rules` | Common | Constraints and guardrails that apply broadly across the skill or govern multiple steps; omit when all constraints are step-specific and inlined |
+| `## Rules` | Common | Constraints for the skill executor that apply broadly or govern multiple steps; agent-facing constraints belong in component files; omit when all constraints are step-specific and inlined |
 | `## Error Handling` | Prescribed | How the skill responds to failures; minimum: report failure with available details. Skills with domain-specific error recovery replace the default with appropriate handling |
 | `## Process Model` | Common | Conceptual model of how skill operates and why — for skills where workflow correctness depends on mechanics not self-evident from steps themselves |
 | `## Components` | Common | Reusable content blocks shared across multiple workflows; prefer extracted `_{name}.md` files over inline sections |
@@ -66,11 +66,11 @@ Child conventions (e.g., evaluation-skill-md.md) may prescribe additional sectio
 
 ### Orchestration vs Execution Boundary
 
-Sections before Workflow are orchestration — main conversation agent resolves arguments, selects route, and packages inputs. Workflow sections are execution — self-contained blocks that may run directly or by spawned agents. Workflows never re-resolve arguments or re-route — they assume orchestration is complete.
+Sections before Workflow are orchestration — the skill executor resolves arguments, selects route, and packages inputs. The Workflow section is what the skill executor follows. When the Workflow spawns agents, those agents read component files — they are not given assembled sections or pre-composed instructions.
 
-When dispatching to agents, agent receives resolved inputs and execution instructions without exposure to alternative workflows, routing logic, or argument parsing. Workflow agent may spawn additional agents internally which it coordinates. System-managed variables (`$ARGUMENTS`, `${CLAUDE_SESSION_ID}`) and environment variables (`${CLAUDE_PLUGIN_ROOT}`) are resolved mechanically by Claude Code and shell respectively.
+Agent spawn instructions contain file paths, not file contents. The agent reads each file at execution time in its own context. The skill executor never reads component files to inline their content — it references them by path in spawn instructions and the agent opens them. System-managed variables (`$ARGUMENTS`, `${CLAUDE_SESSION_ID}`) and environment variables (`${CLAUDE_PLUGIN_ROOT}`) are resolved mechanically by Claude Code and shell respectively.
 
-Orchestrator does not pre-read component files to inline content. Workflow steps dictate when component files are read and by whom — each executor reads what it needs at execution time.
+Constraints follow the same boundary. Rules in SKILL.md apply to the skill executor. Agent-facing constraints — behavioral guardrails, format requirements, scope restrictions — belong in the component files that agents read. Each execution context receives exactly its own instructions through file compartmentalization.
 
 String substitution variables available in body:
 
@@ -85,14 +85,12 @@ Common argument patterns with established infrastructure. These are not exhausti
 | Argument | Role | Description |
 |----------|------|-------------|
 | `--target` | Gate + subject | Required flag carrying target value; presence triggers execution, value identifies what to operate on; without it, skill responds with description and usage hint |
-| `[--auto]` | Dispatch wrapper | Wraps selected workflow in convergence loop; spawns fresh agent per iteration, checks git diff for convergence; requires fix-producing workflow and clean working tree; see --auto section |
-| `[--delegate]` | Dispatch modifier | Workflow agent spawns in background; see --delegate section for requirements |
 | `[--pattern <glob> ...]` | Filter | Passthrough to navigator CLI for file enumeration; repeatable for OR-combined matching; ignored when target is single file |
 | `[--all]` | Boundary override | Includes `.claude/` files in target enumeration; without it, `.claude/` excluded by default |
 
 ### Target Resolution
 
-{target} is evaluated against deterministic matches first. Unmatched values fall through to natural language interpretation where orchestrator derives adjustments and confirms with user before proceeding.
+{target} is evaluated against deterministic matches first. Unmatched values fall through to natural language interpretation where skill executor derives adjustments and confirms with user before proceeding.
 
 Route pattern for {target} evaluation:
 
@@ -142,64 +140,13 @@ Route evaluates {target} and selects Workflow.
     4. Else:
         1. Interpret {target} as natural language goal — derive adjustments, assign variables, present for confirmation
 3. Prepare inputs for selected Workflow
-4. Dispatch {selected-workflow}
-    - If --auto: Wrap in convergence loop (see --auto section)
-    - If --delegate: Agent spawn runs in background
+4. Dispatch Workflow
 ```
-
-### --auto
-
-Skills that declare `--auto` in argument-hint wrap dispatch in a convergence loop. Route selects inner workflow as usual; `--auto` iterates it with fresh agents until stable. Git mechanics are handled by a deterministic tool; the agent manages only workflow dispatch.
-
-Convergence loop:
-
-```
-1. Check precondition — bash: `python3 ${CLAUDE_PLUGIN_ROOT}/run.py tools.auto_convergence precondition`
-    1. If exit code 1: Exit to user — commit pending changes before running --auto
-    2. {baseline} = output (commit hash)
-2. {iteration} = 0
-3. {prev-diff} = none
-4. While {iteration} < 5:
-    1. Spawn agent with {selected-workflow}:
-        1. Execute workflow
-        2. Return:
-            - Changes applied
-    2. {iteration} = {iteration} + 1
-    3. Check convergence — bash: `python3 ${CLAUDE_PLUGIN_ROOT}/run.py tools.auto_convergence check --baseline {baseline} [--prev-diff {prev-diff}]`
-    4. {status} = first line of output
-    5. {prev-diff} = second line of output (diff file path)
-    6. If {status} is `converged`:
-        1. Break loop — converged
-5. Report convergence metadata: iterations completed, converged status, cumulative diff summary
-```
-
-Requirements:
-
-- Workflow must be fix-producing — report-only and interactive workflows reject `--auto` in Route
-- Fresh agent per iteration — no accumulated context; agent reads current file state from disk
-- Convergence detection is deterministic — the `auto_convergence check` tool compares git diffs between iterations
-- Iteration limit (5) is safeguard, not target
-
-### --delegate
-
-`--delegate` backgrounds workflow agent spawn. Without `--delegate`, spawn runs in foreground.
-
-Requirements:
-
-- Workflow must be fully autonomous — no interactive checkpoints
-- Skills with interactive workflows must reject `--delegate` in Route
-- Spawned agent receives Workflow and Rules; reads component files at execution time
-
-### Agent Spawn Requirement
-
-Skills declaring `--auto` or `--delegate` must spawn agents for Workflow execution. `--auto` spawns fresh agents per iteration; `--delegate` controls foreground vs background. Skills declaring neither have no agent-spawn requirement and may execute workflows directly.
-
-`--auto` and `--delegate` compose — `--delegate` backgrounds the entire convergence loop.
 
 ### Constraints
 
-- Natural language {target} evaluation occurs in Route as fallback after deterministic matches — orchestrator interprets goal, derives adjustments, assigns variables, and presents for user confirmation before proceeding
-- When natural language adjustments conflict with other provided flags, orchestrator surfaces conflict and works with user to resolve — no implicit precedence
+- Natural language {target} evaluation occurs in Route as fallback after deterministic matches — skill executor interprets goal, derives adjustments, assigns variables, and presents for user confirmation before proceeding
+- When natural language adjustments conflict with other provided flags, skill executor surfaces conflict and works with user to resolve — no implicit precedence
 - Deterministic {target} values execute without interpretation or confirmation
 - --pattern is only meaningful for directory targets — Route ignores it when target resolves to single file
 
@@ -226,39 +173,32 @@ Workflow section is self-contained — everything agent needs to execute belongs
 - Explicit file read steps for extracted components (`Read _component.md`)
 - Supporting subsections (e.g., file roles, interpreting results)
 
-An agent given the Workflow section and Rules section can execute without referencing other parts of SKILL.md. Component files are read at execution time by the agent running the workflow, not pre-loaded by the orchestrator.
+The Workflow section and the component files it references form a complete execution surface — the skill executor follows the Workflow, and spawned agents read the component files they are directed to. Agent-facing constraints live in those component files, not in the SKILL.md Rules section.
 
 CLI references in workflows and reference files must be full executable commands — never shorthand. An agent should be able to copy a command verbatim and run it. Include interpreter, launcher path, module, subcommand, and all required flags (e.g., `--db`). Shorthand forces agents to discover invocation patterns, which wastes tokens and risks incorrect construction.
 
 ### Multi-Path Workflows
 
-Skills with distinct execution paths use separate Workflow sections instead of conditional branching within one Workflow. Each path is self-contained with its own steps, report format, and any supporting subsections.
+Skills with distinct execution paths extract each path into a component file rather than using conditional branching within one Workflow. Route selects the path; the Workflow dispatches to the selected component file. Each path is self-contained in its own file with its own steps, constraints, and report format — the executor reads one file and follows it without filtering irrelevant branches.
 
 ```
-## Workflow: Default
-1. Step
-2. Step
-### Report
-- Output format for default path
-
-## Workflow: Alternate Mode
-1. Step
-2. Step
-### Report
-- Output format for alternate path
+skill-name/
+├── SKILL.md
+├── _workflow-default.md
+└── _workflow-alternate.md
 ```
 
-Routing logic (which path to execute) belongs in `## Route` section — not inside Workflow sections. Agent receives one complete Workflow without needing to filter irrelevant branches.
+Routing logic (which path to execute) belongs in `## Route`. The `## Workflow` section dispatches to the selected component. Duplication across component files is acceptable — compartmentalized workflows are safer for agent adherence than shared abstractions that require cross-file reasoning.
 
-Single-path skills use `## Workflow` without suffix.
+Single-path skills keep steps inline in `## Workflow`.
 
 ### Components
 
-Components are extracted `_{name}.md` files alongside SKILL.md. They carry content that the orchestrator does not need in its own context — agent workflows, evaluation criteria, reference material, prompt templates. Components serve workflows and are never executed independently.
+Components are extracted `_{name}.md` files alongside SKILL.md. They carry content that the skill executor does not need in its own context — agent workflows, evaluation criteria, reference material, prompt templates, and agent-facing constraints. Components serve workflows and are never executed independently.
 
 Two reasons to extract a component:
 
-- **Context scoping** — the orchestrator dispatches an agent with a focused file rather than carrying all agent-level detail in SKILL.md. A component file can contain a self-contained agent workflow (PFN steps the agent executes), evaluation criteria, or any instructions the agent needs that the orchestrator does not. Extract even for a single workflow when the motivation is keeping the orchestrator's context lean and the agent's context focused.
+- **Context scoping** — the spawn instruction directs the agent to read a focused component file rather than carrying all agent-level detail in SKILL.md. A component file can contain a self-contained agent workflow (PFN steps the agent executes), evaluation criteria, or any instructions the agent needs that the skill executor does not. Extract even for a single workflow when the motivation is keeping the skill executor's context lean and the agent's context focused.
 - **Reuse** — content shared across multiple workflows lives in a component rather than duplicated inline.
 
 Prefer extracted files over inline `## Components` sections. Underscore prefix signals internal (consistent with `_{purpose}.py` pattern for internal modules).
@@ -273,29 +213,12 @@ skill-name/
 Workflows include explicit read steps for extracted components:
 
 ```
-## Workflow: Mode A
+## Workflow
 1. Spawn agent with evaluation({target}):
-    1. Read `_criteria.md`
-    2. Follow criteria against {target}
+    1. Read `_evaluation-workflow.md`
+    2. Follow workflow against {target}
     3. Return:
         - Results
-### Report
-- Mode A specific format
-
-## Workflow: Mode B
-1. Spawn agent with coordination({targets}):
-    1. For each {target} in {targets}:
-        1. Spawn agent with evaluation({target}):
-            1. Read `_criteria.md`
-            2. Follow criteria against {target}
-            3. Return:
-                - Results
-        - async agent per target
-    2. Collect agent reports
-    3. Return:
-        - Consolidated report
-### Report
-- Mode B specific format
 ```
 
 ## File Enumeration
@@ -312,22 +235,20 @@ Skills should:
 
 ## User Interaction Boundary
 
-User interaction (AskUserQuestion, clarification, confirmation) only works in orchestrator context — Route and main conversation. Workflow agents run autonomously and cannot prompt user mid-execution.
+User interaction (AskUserQuestion, clarification, confirmation) works in SKILL.md because the skill executor runs in the main conversation. Spawned agents receive their own component files and run autonomously — they cannot prompt the user mid-execution.
 
-The orchestrator handles all user-facing decisions before dispatching the Workflow agent. Workflow agents collect findings and report back — the user decides next steps after reviewing the report.
-
-When interactive decisions span multiple Workflow executions, structure them as orchestrator steps between agent calls. Each agent call is autonomous; orchestrator mediates between calls in main conversation.
+When interactive decisions span multiple agent dispatches, structure them as skill executor steps between spawn calls. Each spawned agent is autonomous; the skill executor mediates between calls in main conversation.
 
 ## User Choices and Confirmations
 
-When orchestrator steps present choices or request confirmation, use `AskUserQuestion` tool with `options` parameter — not freeform text with numbered lists. Structured options give user selectable choices instead of requiring typed responses.
+When skill executor steps present choices or request confirmation, use `AskUserQuestion` tool with `options` parameter — not freeform text with numbered lists. Structured options give user selectable choices instead of requiring typed responses.
 
-Does not apply to open-ended questions requiring freeform input or subagent contexts (AskUserQuestion only works in main conversation).
+Does not apply to open-ended questions requiring freeform input or spawned agent contexts (AskUserQuestion only works in main conversation).
 
 Else handling for unexpected responses:
 
-- Orchestrator context — Else may jump forward or backward to appropriate step; do not prescribe specific outcomes
-- Steps processable by either orchestrator or spawned agent — Else defaults to Exit to user; spawned agents cannot prompt user for alternative input
+- Skill executor context — Else may jump forward or backward to appropriate step; do not prescribe specific outcomes
+- Steps processable by either skill executor or spawned agent — Else defaults to Exit to user; spawned agents cannot prompt user for alternative input
 
 ## Discovery and Loading
 

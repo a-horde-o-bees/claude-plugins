@@ -73,7 +73,7 @@ Skills with `Exit to user` or `AskUserQuestion` path gates represent branching r
 
 ### Push Blocking
 
-The orchestrator blocks push globally before spawning worktree agents and unblocks after all agents return. This is orchestrator-controlled — the worktree agent does not need to do anything.
+The skill executor blocks push globally before spawning worktree agents and unblocks after all agents return. This is skill-executor-controlled — the worktree agent does not need to do anything.
 
 ```
 1. Block git push — bash: `git config remote.origin.pushurl "file:///dev/null"`
@@ -83,11 +83,11 @@ The orchestrator blocks push globally before spawning worktree agents and unbloc
 
 Any `git push` attempt while blocked fails loudly with `fatal: '/dev/null' does not appear to be a git repository` — expected safety behavior, not an error. The worktree agent should expect push failures and record them as "push blocked by worktree isolation" rather than investigating or working around them.
 
-Push is blocked globally (main repo and all worktrees) for the duration of the evaluation. Since the orchestrator waits for all agents before unblocking, this does not interfere with normal workflow.
+Push is blocked globally (main repo and all worktrees) for the duration of the evaluation. Since the skill executor waits for all agents before unblocking, this does not interfere with normal workflow.
 
 One edge case: the agent could add a new remote and push to it. Low risk since skills reference `origin`, but workflows that add remotes would bypass the block.
 
-Why orchestrator-controlled: `git config --worktree` resolves scope from the current working directory. Worktree agents' Bash tools may not always run from the linked worktree path, causing `--worktree` to write to the main worktree's config instead of the linked worktree's. Orchestrator-controlled global blocking avoids this CWD sensitivity entirely.
+Why skill-executor-controlled: `git config --worktree` resolves scope from the current working directory. Worktree agents' Bash tools may not always run from the linked worktree path, causing `--worktree` to write to the main worktree's config instead of the linked worktree's. Skill-executor-controlled global blocking avoids this CWD sensitivity entirely.
 
 ### Loop and Infinite Recursion
 

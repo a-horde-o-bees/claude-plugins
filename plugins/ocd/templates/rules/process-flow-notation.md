@@ -61,7 +61,7 @@ Flow control keywords are scope-relative — indentation determines which scope 
 2. Present results to user
 ```
 
-Within skills, intelligent work delegation uses `Spawn agent with:` exclusively. Tool calls (CLI scripts, bash commands) are not agent spawns and remain unrestricted. The orchestrator applies user-directed corrections inline — no agent spawn needed for directed fixes.
+Within skills, intelligent work delegation uses `Spawn agent with:` exclusively. Tool calls (CLI scripts, bash commands) are not agent spawns and remain unrestricted. The skill executor applies user-directed corrections inline — no agent spawn needed for directed fixes.
 
 `async` composes with `Spawn agent with:` for concurrent agents:
 
@@ -79,7 +79,7 @@ Within skills, intelligent work delegation uses `Spawn agent with:` exclusively.
 
 `Continue {agent-ref} with:` resumes a previously-spawned agent for another cycle of work, retaining the agent's full accumulated context from prior cycles. The agent reference is captured as a variable from the `Spawn agent with:` step and referenced by name in subsequent `Continue` calls. Indented children are the instructions for the current cycle; the agent's `Return` at the end of each cycle hands control back to the caller, which may then `Continue` the same agent again or let the agent be garbage-collected.
 
-Use `Continue` when a long-running workflow needs orchestrator checkpoints between cycles and each cycle must build on prior reads or decisions. Use a fresh `Spawn agent with:` when no prior context is needed — fresh spawns start from cold and cost less when the work is independent.
+Use `Continue` when a long-running workflow needs skill executor checkpoints between cycles and each cycle must build on prior reads or decisions. Use a fresh `Spawn agent with:` when no prior context is needed — fresh spawns start from cold and cost less when the work is independent.
 
 ```
 1. Spawn agent with level evaluation({first-level-files}):
@@ -165,7 +165,7 @@ Blockquotes (`>`) are non-executable context — rationale, purpose, or design n
 ```
 3. Classify each finding as Defect or Observation
 
-> Defects are safe to auto-apply — deterministic and intent-preserving by definition. Observations may change what governance prescribes, so the orchestrator exits to user before continuing.
+> Defects are safe to auto-apply — deterministic and intent-preserving by definition. Observations may change what governance prescribes, so the skill executor exits to user before continuing.
 
 4. For each Defect: apply its proposed fix directly to disk
 5. If any Observations exist:
