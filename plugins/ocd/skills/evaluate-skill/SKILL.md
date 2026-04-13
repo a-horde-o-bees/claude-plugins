@@ -14,13 +14,13 @@ Evaluate a skill through static analysis of its files against governance and run
 
 ## Process Model
 
-Two complementary phases — static analysis followed by runtime verification — feed the same finding list before triage.
+Two complementary phases — static analysis and runtime verification — run concurrently, feeding the same finding list before triage.
 
 **Static.** A single agent reads the skill's file set holding four concerns simultaneously — conformity against matched governance, execution correctness from cold, structural quality against domain best practices, and alignment with established patterns. All feed the same finding list per `_evaluation-workflow.md`. Splitting into independent passes creates convergence loops where each pass's fixes invalidate the next; the holistic reading eliminates that spiral.
 
-**Runtime.** The orchestrator traces the skill's routes to identify exercisable pathways — routes with verifiable outcomes (CLI commands, file modifications, observable output). For each exercisable route, a worktree-isolated agent invokes the skill with the arguments for that path and compares actual behavior against documented claims per `_runtime-evaluation.md`. Worktree isolation ensures state-modifying skills execute safely — branch isolation, push blocking, and automatic cleanup.
+**Runtime.** Per-route agents invoke the skill with specific argument combinations in worktree-isolated environments, comparing actual behavior against documented claims per `_runtime-evaluation.md`. Worktree isolation ensures state-modifying skills execute safely — branch isolation, push blocking, and automatic cleanup.
 
-The orchestrator reads triage criteria once, dispatches both phases, then classifies all returned findings as Defects (auto-applied) or Observations (surfaced to user). No agent sees the triage criteria — separation of evaluation from classification is load-bearing.
+The skill executor's role is mechanical: extract exercisable argument combinations from the skill's Route section, dispatch all agents concurrently, then classify returned findings as Defects (auto-applied) or Observations (surfaced to user). The skill executor does not evaluate skill content. No agent sees the triage criteria — separation of evaluation from classification is load-bearing.
 
 ## Scope
 
@@ -37,12 +37,12 @@ User runs `/evaluate-skill`
 ## Route
 
 1. If not --target: Exit to user — respond with skill description and argument-hint
-2. If {target} starts with `/` and contains no spaces:
+2. If {target} is a path ending with `/SKILL.md`:
+    1. {skill-path} = {target}
+3. Else if {target} starts with `/` and contains no spaces:
     1. Resolve skill path — skills_resolve: name={target} (strip leading `/`)
     2. If result contains error: Exit to user — report skill not found
     3. {skill-path} = resolved path
-3. Else if {target} is a path ending with `/SKILL.md`:
-    1. {skill-path} = {target}
 4. Else: Exit to user — respond with skill description and argument-hint
 5. Verify working tree is clean — bash: `git status --porcelain`
     1. If output is non-empty: Exit to user — working tree must be clean before evaluation; run `/commit` first so applied changes have a clean diff
@@ -50,64 +50,62 @@ User runs `/evaluate-skill`
 
 ## Workflow
 
-### Static Phase
+### Setup
 
-> Catches governance conformity, PFN correctness, structural quality, and prior art alignment through file reading alone — cheap and comprehensive for text-level issues.
+> Gather inputs for agent dispatch — triage criteria, file scope, and exercisable argument combinations.
 
 1. Read `.claude/conventions/ocd/evaluation-triage.md`
 2. Discover scope — scope_analyze: paths=[{skill-path}]
 3. {scope} = scope_analyze result
-4. Spawn agent with skill evaluation({skill-path}, {scope}):
-    1. Read `${CLAUDE_PLUGIN_ROOT}/skills/evaluate-skill/_evaluation-workflow.md`
-    2. For each {file} in {scope}.files (starting with {skill-path}):
-        1. If {file} has governance entries in {scope}: read each governance file not already in context
-        2. Read {file}
-        3. Evaluate {file} per `_evaluation-workflow.md` against everything already in context
-    3. Return:
-        - Findings in the evaluation criteria's format
-5. {static-findings} = returned findings
+4. Read {skill-path} Route section to extract exercisable argument combinations
+    1. For each branch in Route, determine the arguments that would reach it
+    2. Skip branches that only exit to user with static messages — no runtime verification value
+    3. For each remaining branch, note preconditions it requires (e.g., uncommitted changes, specific file state)
+5. {arg-combinations} = extracted list; may be empty if all routes are no-ops
 
-### Runtime Phase
+### Dispatch
 
-> Exercises actual skill pathways in isolated worktrees — catches gaps between what documentation claims and what actually happens at runtime.
+> Static and runtime agents launch concurrently. Push blocking wraps all agents as a safety boundary for worktree-isolated runtime agents.
 
-6. Read {skill-path} to trace the skill's Route and Workflow sections
-7. Identify exercisable routes — routes with CLI commands, file modifications, or verifiable output
-    1. For each route, determine the arguments needed to trigger that path
-    2. Determine preconditions each route requires (e.g., uncommitted changes, specific file state)
-    3. Skip routes that only exit to user with static messages — no runtime verification value
-    4. If no exercisable routes: skip to step 13
-8. Block git push — bash: `git config remote.origin.pushurl "file:///dev/null"`
-9. For each {route} in exercisable routes:
-    1. Spawn agent with runtime evaluation({route}, {skill-path}) and isolation: "worktree":
-        1. Read `${CLAUDE_PLUGIN_ROOT}/skills/evaluate-skill/_runtime-evaluation.md`
-        2. Exercise skill {route}.name with arguments {route}.arguments against {skill-path} per the runtime evaluation workflow
+6. Block git push — bash: `git config remote.origin.pushurl "file:///dev/null"`
+7. Dispatch agents:
+    1. async Spawn agent with static evaluation({skill-path}, {scope}):
+        1. Read `${CLAUDE_PLUGIN_ROOT}/skills/evaluate-skill/_evaluation-workflow.md`
+        2. For each {file} in {scope} files (starting with {skill-path}):
+            1. If {file} has governance entries in {scope}: read each governance file not already in context
+            2. Read {file}
+            3. Evaluate {file} per the evaluation workflow against its matched governance and all target files already in context
         3. Return:
-            - Runtime findings
-    - async agent per route
-10. Collect runtime findings from all route agents
-11. Unblock git push — bash: `git config --unset remote.origin.pushurl`
-12. {runtime-findings} = collected findings
+            - Findings in the evaluation workflow's prescribed format
+    2. For each {combo} in {arg-combinations}:
+        1. async Spawn agent with runtime evaluation({combo}, {skill-path}) and isolation: "worktree":
+            1. Read `${CLAUDE_PLUGIN_ROOT}/skills/evaluate-skill/_runtime-evaluation.md`
+            2. Exercise skill with {combo} arguments per the runtime evaluation workflow
+            3. Return:
+                - Runtime findings in the runtime evaluation's prescribed format
+8. {static-findings} = static agent return
+9. {runtime-findings} = collected runtime agent returns; empty if {arg-combinations} was empty
+10. Unblock git push — bash: `git config --unset remote.origin.pushurl`
 
 ### Triage
 
 > Defects are deterministic and intent-preserving — safe to auto-apply without changing what the skill communicates or how it controls execution. Observations require user judgment before proceeding.
 
-13. {findings} = {static-findings} + {runtime-findings}
-14. Classify each finding in {findings} as Defect or Observation per `evaluation-triage.md`
-15. For each Defect: apply its proposed fix directly to disk
-16. {applied-defects} = list of applied defects
-17. If any Observations exist in {findings}:
+11. {findings} = {static-findings} + {runtime-findings}
+12. Classify each finding in {findings} as Defect or Observation per `evaluation-triage.md`
+13. For each Defect: apply its proposed fix directly to disk
+14. {applied-defects} = list of applied defects
+15. If any Observations exist in {findings}:
     1. Present applied Defects grouped by file
     2. Present each Observation as-is from the agent's finding — file path, location, what is wrong, why, and proposed fix
     3. Exit to user — "Observations need user judgment. Apply or reject each, then re-invoke `/evaluate-skill` to verify."
-18. Present Report
+16. Present Report
 
 ### Report
 
 1. **Scope** — files evaluated (static) and routes exercised (runtime)
 2. **Applied Defects** — grouped by file; each entry shows location, the fix applied, and the source finding
-3. **Observations** — presented as-is from agent findings when present; surfaced interactively before this report (see step 15)
+3. **Observations** — presented as-is from agent findings (file path, location, what is wrong, why, and proposed fix) when present; surfaced interactively before this report (see step 15)
 4. **Status** — one of:
     - `clean` — all files processed, all exercisable routes verified, no findings
     - `defects applied` — all files processed, Defects applied, no Observations outstanding
@@ -115,18 +113,14 @@ User runs `/evaluate-skill`
 
 ## Rules
 
-- All spawned agents are report-only — they do not triage findings, classify them, or apply fixes
-- The orchestrator reads `evaluation-triage.md` at the start of Workflow; no spawned agent reads the triage file
-- scope_analyze provides the full file set with governance — the static agent does not need separate governance discovery
-- Conformity evaluates each file against its dynamically matched governance, not hardcoded convention names
-- Efficacy traces execution flow; does not actually execute steps or spawn subagents
+- Do not evaluate skill content — extract argument combinations mechanically, dispatch agents, and triage returned findings
+- scope_analyze provides the full file set with governance — no separate governance discovery step needed
 - Single sequential static agent — conformity findings inform efficacy evaluation (shared context matters)
-- Runtime agents invoke the skill via the Skill tool — not by manually executing workflow steps
-- Orchestrator blocks git push before spawning runtime agents and unblocks after all agents return; push failures inside worktree agents are expected safety behavior
-- Runtime agents execute `Spawn agent with:` steps themselves — Agent tool is unavailable in worktrees
-- Observations presented to the user include the agent's proposed fix verbatim — the proposed fix is the actionable recommendation the user evaluates; do not summarize or omit it
-- `/commit` precondition gives each evaluation a clean diff so the user can audit exactly what was changed
+- Block push before agents spawn and unblock after all return
+- Present observations with the agent's proposed fix verbatim — do not summarize or omit
+- `/commit` precondition gives each evaluation a clean diff for auditing
 
 ## Error Handling
 
-- If push unblock (step 11) fails: warn user that `remote.origin.pushurl` may still be set and provide corrective command `git config --unset remote.origin.pushurl`
+- If workflow errors between push block (step 6) and unblock (step 10): run `git config --unset remote.origin.pushurl` before surfacing the error
+- If the unblock command itself fails: warn user that `remote.origin.pushurl` may still be set and provide the corrective command `git config --unset remote.origin.pushurl`
