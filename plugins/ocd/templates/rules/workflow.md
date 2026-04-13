@@ -16,7 +16,7 @@ Working directory must remain project root for the entire session. Use absolute 
 
 ## Agents
 
-Minimize agent count — each sub-agent independently loads context and rediscovers the project, multiplying token cost. Default to a single agent processing tasks sequentially within one context.
+Minimize agent count for ad-hoc work — each sub-agent independently loads context and rediscovers the project, multiplying token cost. Default to a single agent processing tasks sequentially within one context. Skills that prescribe agent spawning have already made the cost decision at design time — follow the prescription without second-guessing the count.
 
 ## Test Durability
 

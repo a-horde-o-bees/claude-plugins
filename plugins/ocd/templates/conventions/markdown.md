@@ -10,7 +10,7 @@ Base content standards for all markdown files.
 
 ## Heading and Purpose Statement
 
-Every file opens with a level-1 heading (`#`) that identifies the file's subject, followed by a purpose statement as defined by the Progressive Disclosure principle. The heading matches the file's name or subject. The purpose statement conveys scope and role — a reader encountering the file decides whether to read further based on these two lines alone.
+Every file opens with a level-1 heading (`#`) that identifies the file's subject, followed by a purpose statement per Purpose Statement guidance. The heading matches the file's name or subject. The purpose statement conveys scope and role — a reader encountering the file decides whether to read further based on these two lines alone.
 
 ## Blank Line Separation
 
