@@ -103,13 +103,7 @@ User runs `/evaluate-skill`
 
 ### Report
 
-1. **Scope** — files evaluated (static) and routes exercised (runtime)
-2. **Applied Defects** — grouped by file; each entry shows location, the fix applied, and the source finding
-3. **Observations** — presented as-is from agent findings (file path, location, what is wrong, why, and proposed fix) when present; surfaced interactively before this report (see step 15)
-4. **Status** — one of:
-    - `clean` — all files processed, all exercisable routes verified, no findings
-    - `defects applied` — all files processed, Defects applied, no Observations outstanding
-    - `observations outstanding` — evaluation exited pending user judgment (report is surfaced mid-workflow, not in this final block)
+Review all agent findings and present unified recommendations to the user. Cover what scope was evaluated (files and routes), what defects were applied, what observations need user judgment, and overall status. Preserve finding detail — the user needs specifics to act — but present as actionable recommendations, not a reformatted dump of agent output.
 
 ## Rules
 

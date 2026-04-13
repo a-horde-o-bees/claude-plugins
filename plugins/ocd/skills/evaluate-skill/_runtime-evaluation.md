@@ -24,7 +24,7 @@ Git push is blocked by the orchestrator before you were spawned. Any `git push` 
     - If the skill contains `Spawn agent with:` steps: execute those steps yourself
     - If the skill exits to user: record what would have been presented and note the exit point
     - If the skill attempts git push: the push will fail with the expected safety error — record "push blocked by worktree isolation" and continue
-    - If the skill enters a convergence loop or recursive pattern: bail after 3 iterations or when you recognize repeated state
+    - If the skill enters a convergence loop or recursive pattern: bail when you recognize repeated state — runtime evaluation aims to observe behavior, not exhaust iterations
 6. After the skill completes (or exits), compare what happened against the documented claims from step 2:
     - CLI output accuracy — does actual output match what the Report section claims?
     - Workflow step correctness — did each step execute as described?

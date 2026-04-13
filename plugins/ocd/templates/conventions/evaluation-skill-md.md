@@ -63,9 +63,6 @@ Process Model covers the conceptual design at an appropriate level of abstractio
 
 ## Report
 
-Every evaluation skill includes a `### Report` subheading in Workflow. The skeleton below is prescribed; items marked with `<...>` are customized to the domain.
+Every evaluation skill includes a `### Report` subheading in Workflow. The report communicates what was evaluated, what was found, and what the user should do next. The skill executor reviews all agent findings and presents unified recommendations — not a reformatted dump of agent output.
 
-1. **Scope** — <what was evaluated: files, levels, groups, or other domain-appropriate unit>
-2. **Applied Defects** — grouped by file; each entry shows location, the fix applied, and the source finding
-3. **Observations** — presented as-is from agent findings (file path, location, what is wrong, why, and proposed fix). Do not summarize or strip content — the user needs the full finding to make a judgment call. Observations are surfaced interactively (exit to user) before the final report because they require user judgment before the skill can proceed
-4. **Status** — terminal outcome of the invocation. Common values include `clean`, `defects applied`, `observations outstanding`; <domain-specific statuses as needed, e.g., `restarted after anomaly` for governance>
+Sub-agent return formats are structured to help the skill executor parse and understand findings. The report to the user is the skill executor's own synthesis: what scope was covered, what defects were applied, what observations need user judgment, and the overall status. Preserve the detail of each finding — the user needs specifics to make judgment calls — but present it as actionable recommendations rather than a rigid template.
