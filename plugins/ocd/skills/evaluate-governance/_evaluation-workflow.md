@@ -1,24 +1,41 @@
 # Governance Evaluation Workflow
 
-Agent workflow for evaluating governance files in root-first dependency order. You may receive the chain one level at a time or all at once; each file joins your context in the order given, and the experience of reading each file is itself the check for whether a future agent could follow it.
+Agent workflow for evaluating governance files in root-first dependency order. Each call receives one level's files; accumulated context from prior calls stays in scope so later levels can be checked against concepts established earlier.
+
+### Variables
+
+- {level-files} — paths of governance files in the current level to evaluate
+
+## Process
+
+1. For each {file} in {level-files}:
+    1. Read: {file}
+    2. Evaluate {file} holding both stances at once — see Evaluation Stances:
+        - Active conformance check against governors already in context
+        - Cold-reader friction encountered while reading
+    3. Scan {file} against Patterns to Scan — the list widens attention, it does not filter; record friction that matches nothing in the list the same as any other finding
+    4. For each finding: record per Finding Format
+2. Return the findings recorded during this call
 
 ## Reading Disposition
 
-You start with no prior context beyond this file. Each governance file joins your context in the order given — foundations first, dependents after. You never look ahead. If you find yourself needing to know what a later file says, that itself is worth recording.
+You start with no prior context beyond this file and the files handed to you. Each governance file joins your context in the order given — foundations first, dependents after. You never look ahead. Needing to know what a later file says is itself worth recording.
 
-Your reading experience is the evaluation. A file that fails to make sense because it leans on an unestablished concept is a real problem, not a gap in your attention. Trust the friction.
+Your reading experience is the evaluation. A file that fails to make sense because it leans on an unestablished concept is a real finding, not a gap in your attention. Trust the friction.
 
-## What to Surface
+You are report-only — no triage, no classification, no fixes. Classification and application happen after you return. A violation with plausible intentional rationale still gets recorded, with `needs judgment` as the proposed fix. Do not suppress findings on your own read of author intent.
 
-Hold two complementary stances at once as you read each file:
+## Evaluation Stances
 
-**Active conformance check.** Deliberately map the current file's content against the principles, content standards, and patterns established by the rules and the file's declared governors. Don't wait for friction to surface a violation — go looking for one. Walk through the governing entries already in your context and ask whether the current file actually follows what they prescribe. Where it falls short, that's a finding regardless of whether it tripped you up as a reader.
+Both stances run in parallel against every file and feed the same finding list. Neither is sufficient alone — active checking catches violations of named requirements; friction catches problems a future reader would also hit.
 
-**Cold-reader friction.** Notice what trips you up as you read. A file that fails to make sense, references something you don't have context for, or uses terms inconsistently is friction worth recording even if no governor explicitly prescribes against it. Your own confusion is data.
+**Active conformance check** — deliberately map the file's content against the principles, content standards, and patterns prescribed by the rules and by the file's declared governors. Walk through each governing entry already in your context and ask whether the current file follows what it prescribes. Shortfalls are findings regardless of whether they tripped you up as a reader.
 
-Both modes feed the same finding list. Active checking catches violations of named requirements. Friction catches problems a future reader would also hit. Hold both — neither is sufficient alone.
+**Cold-reader friction** — notice what trips you up as you read. A file that fails to make sense, references something you don't have context for, or uses terms inconsistently is friction worth recording even if no governor explicitly prescribes against it. Your own confusion is data.
 
-Below is a non-exhaustive list of patterns worth noticing. It is a partial inventory, not a checklist — the goal is to widen what you scan against, not to filter out things that don't fit a category. If a piece of friction doesn't match anything below, surface it anyway.
+## Patterns to Scan
+
+Non-exhaustive inventory of patterns worth noticing. Partial inventory, not a checklist — the goal is to widen what you scan against, not filter out things that don't fit a category.
 
 - Cross-references that don't resolve — pointers to files, tools, sections, anchors, or names that don't exist at the target
 - References that resolve to the wrong thing — the target exists but doesn't say or do what the reference claims
@@ -38,23 +55,16 @@ Below is a non-exhaustive list of patterns worth noticing. It is a partial inven
 - Same concept stated twice — duplication that could be consolidated without losing any contextually appropriate specificity
 - Forward references that hide load-bearing context — a critical detail placed downstream of where it would be more effectively integrated for understanding
 - Negative-form prescriptions where positive form would work — "don't do X" without naming the positive alternative the reader should use instead
+- Dependency-mapping misalignments — a file using concepts no prior file introduced, a declared governor never referenced by the file's content, a cross-reference pointing to a later level; correction requires intent decisions, so record with `needs judgment` as the proposed fix
 
-Don't filter findings into named categories or worry about which item in the list a finding belongs to. One file may surface several different problems at once; record each as you encounter it.
+## Finding Format
 
-Dependency-mapping misalignments are findings too — a file using concepts no prior file introduced, a declared governor never referenced by the file's content, a cross-reference pointing to a later level. These surface as findings with `needs judgment` as the proposed fix since correcting them requires intent decisions the user must make. The skill executor's triage classifies them as observations and exits to caller, letting the user fix the frontmatter before re-invoking.
+Findings are a flat list — each stands on its own description. Present in whatever grouping is most useful for the return (by level, by file, flat); grouping is a presentation choice, not a classification.
 
-## Accumulation and Return
+Each entry names:
 
-You are report-only. Do not triage findings, do not classify them, do not apply any fixes. Classification and application happen after you return — your job is to evaluate and report.
-
-A violation with plausible intentional rationale still gets recorded. If a file contradicts one of its governors and the contradiction looks deliberate, record it with `needs judgment` as the proposed fix. Do not suppress findings on your own judgment of author intent.
-
-Findings are structurally a flat list — each one is independent and stands on its own description. Present them in whatever grouping is most useful (by level, by file, flat) — grouping is a presentation choice, not a classification. Each entry names:
-
-- File path
-- Location (section, bullet, or line if helpful)
-- What is wrong
-- Why — cite the governor rule contradicted, the concept that should have been consistent, or the friction a cold reader would hit
-- Proposed fix — a concrete deterministic edit if you can describe one that preserves intent, or the literal string `needs judgment` if the right fix requires choosing between alternatives, changing semantic meaning, or reasoning the original author would need to confirm
-
-Return the list when you have exhausted the files given to you, or when you are told no further levels will come.
+- **File path**
+- **Location** — section, bullet, or line if helpful
+- **What is wrong**
+- **Why** — cite the governor rule contradicted, the concept that should have been consistent, or the friction a cold reader would hit
+- **Proposed fix** — a concrete deterministic edit when one preserves intent, or the literal string `needs judgment` when the right fix requires choosing between alternatives, changing semantic meaning, or reasoning the original author would need to confirm
