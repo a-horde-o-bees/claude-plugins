@@ -33,7 +33,7 @@ Sections fall into three categories:
 | `### Report` | Common | Output format subheading within Workflow |
 | `## Error Handling` | Prescribed | How the skill responds to failures; minimum: report failure with available details |
 
-Child conventions (e.g., evaluation-skill-md.md) may prescribe additional sections, promote Common sections to Prescribed for their domain, or define domain-specific subsections within Workflow.
+Child conventions (e.g., audit-skill-md.md) may prescribe additional sections, promote Common sections to Prescribed for their domain, or define domain-specific subsections within Workflow.
 
 ## YAML Frontmatter
 
@@ -125,7 +125,7 @@ Components are `_{name}.md` files alongside SKILL.md — agent workflows, evalua
 ```
 ## Workflow
 1. Spawn:
-    1. Call: `_evaluation-workflow.md` ({target} = resolved target)
+    1. Call: `_audit-workflow.md` ({target} = resolved target)
     2. Return:
         - Results
 ```

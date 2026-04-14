@@ -265,7 +265,7 @@ Within skills, intelligent work delegation uses Spawn: exclusively. Tool calls (
 1. Spawn: Call: `_workflow.md`
 2. Spawn: Call: `_workflow.md` ({target} = resolved path)
 3. Spawn:
-    1. Call: `_evaluation-workflow.md` ({scope} = scope result)
+    1. Call: `_audit-workflow.md` ({scope} = scope result)
     2. Return:
         - Findings
 ```

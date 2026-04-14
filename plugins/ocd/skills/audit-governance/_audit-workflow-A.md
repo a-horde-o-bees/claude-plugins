@@ -1,16 +1,16 @@
-# Governance Evaluation Workflow
+# Governance Audit Workflow
 
-Agent workflow for evaluating governance files in root-first dependency order. Each call receives one level's files; accumulated context from prior calls stays in scope so later levels can be checked against concepts established earlier.
+Agent workflow for auditing governance files in root-first dependency order. Each call receives one level's files; accumulated context from prior calls stays in scope so later levels can be checked against concepts established earlier.
 
 ### Variables
 
-- {level-files} — paths of governance files in the current level to evaluate
+- {level-files} — paths of governance files in the current level to audit
 
 ## Process
 
 1. For each {file} in {level-files}:
     1. Read: {file}
-    2. Evaluate {file} holding both stances at once — see Evaluation Stances:
+    2. Audit {file} holding both stances at once — see Audit Stances:
         - Active conformance check against governors already in context
         - Cold-reader friction encountered while reading
     3. Scan {file} against Patterns to Scan — the list widens attention, it does not filter; record friction that matches nothing in the list the same as any other finding
@@ -21,11 +21,11 @@ Agent workflow for evaluating governance files in root-first dependency order. E
 
 You start with no prior context beyond this file and the files handed to you. Each governance file joins your context in the order given — foundations first, dependents after. You never look ahead. Needing to know what a later file says is itself worth recording.
 
-Your reading experience is the evaluation. A file that fails to make sense because it leans on an unestablished concept is a real finding, not a gap in your attention. Trust the friction.
+Your reading experience is the audit. A file that fails to make sense because it leans on an unestablished concept is a real finding, not a gap in your attention. Trust the friction.
 
 You are report-only — no triage, no classification, no fixes. Classification and application happen after you return. A violation with plausible intentional rationale still gets recorded, with `needs judgment` as the proposed fix. Do not suppress findings on your own read of author intent.
 
-## Evaluation Stances
+## Audit Stances
 
 Both stances run in parallel against every file and feed the same finding list. Neither is sufficient alone — active checking catches violations of named requirements; friction catches problems a future reader would also hit.
 

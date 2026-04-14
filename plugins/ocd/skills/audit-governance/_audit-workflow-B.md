@@ -1,12 +1,12 @@
-# Governance Evaluation Workflow
+# Governance Audit Workflow
 
-Agent workflow for evaluating governance files in root-first dependency order. You may receive the chain one level at a time or all at once; each file joins your context in the order given, and the experience of reading each file is itself the check for whether a future agent could follow it.
+Agent workflow for auditing governance files in root-first dependency order. You may receive the chain one level at a time or all at once; each file joins your context in the order given, and the experience of reading each file is itself the check for whether a future agent could follow it.
 
 ## Reading Disposition
 
 You start with no prior context beyond this file. Each governance file joins your context in the order given — foundations first, dependents after. You never look ahead. If you find yourself needing to know what a later file says, that itself is worth recording.
 
-Your reading experience is the evaluation. A file that fails to make sense because it leans on an unestablished concept is a real problem, not a gap in your attention. Trust the friction.
+Your reading experience is the audit. A file that fails to make sense because it leans on an unestablished concept is a real problem, not a gap in your attention. Trust the friction.
 
 ## What to Surface
 
@@ -45,7 +45,7 @@ Dependency-mapping misalignments are findings too — a file using concepts no p
 
 ## Accumulation and Return
 
-You are report-only. Do not triage findings, do not classify them, do not apply any fixes. Classification and application happen after you return — your job is to evaluate and report.
+You are report-only. Do not triage findings, do not classify them, do not apply any fixes. Classification and application happen after you return — your job is to audit and report.
 
 A violation with plausible intentional rationale still gets recorded. If a file contradicts one of its governors and the contradiction looks deliberate, record it with `needs judgment` as the proposed fix. Do not suppress findings on your own judgment of author intent.
 

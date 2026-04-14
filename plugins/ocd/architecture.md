@@ -131,9 +131,8 @@ Workflow-only skills with no Python infrastructure (SKILL.md only):
 | `status` | Report plugin version, rules state, skill status |
 | `log` | Capture decisions, friction, problems, ideas as log entries |
 | `pdf` | Export markdown to PDF with GitHub-style CSS |
-| `evaluate-governance` | Evaluate governance chain conformity, followability, coherence |
-| `evaluate-skill` | Evaluate a skill across conformity, efficacy, quality |
-| `evaluate-documentation` | Evaluate README.md and architecture.md across systems |
+| `audit-governance` | Audit governance chain conformity, followability, coherence |
+| `audit-static` | Audit any path against governance, best practices, and prior art |
 
 ## MCP Servers
 
@@ -150,7 +149,7 @@ Python packages consumed as imports. Each has a facade in `__init__.py` and an o
 
 | Library | Package | Role |
 |---------|---------|------|
-| `governance` | `lib/governance/` | Convention and rule governance: matching files to applicable governance entries, listing entries, and computing the level-grouped dependency order. Reads directly from disk on every call — no database, no caching. Consumed by the convention gate hook, navigator's `scope_analyze`, the governance CLI, and evaluation skills. |
+| `governance` | `lib/governance/` | Convention and rule governance: matching files to applicable governance entries, listing entries, and computing the level-grouped dependency order. Reads directly from disk on every call — no database, no caching. Consumed by the convention gate hook, navigator's `scope_analyze`, the governance CLI, and audit skills. |
 | `navigator` | `lib/navigator/` | Project structure index over SQLite: path indexing, filesystem scan, descriptions, governance composition, reference mapping, skill resolution. Consumed by the `/ocd:navigator` skill CLI, the navigator MCP server, and other libraries that need scope analysis. |
 
 Server modules are thin presentation layers: tool handlers validate, delegate to a domain module, and serialize the result.
@@ -220,9 +219,8 @@ plugins/ocd/
 │   ├── status/                  — plugin status reporting
 │   ├── log/                     — log entry capture
 │   ├── pdf/                     — markdown-to-PDF export
-│   ├── evaluate-governance/     — governance chain evaluation
-│   ├── evaluate-skill/          — skill quality evaluation
-│   └── evaluate-documentation/  — system documentation evaluation
+│   ├── audit-governance/        — governance chain audit
+│   └── audit-static/            — static analysis audit (any path)
 ├── plugin/                      — generic plugin framework (8 modules, shared across plugins)
 ├── run.py                       — module launcher with package context
 └── tests/                       — hook and invocation tests

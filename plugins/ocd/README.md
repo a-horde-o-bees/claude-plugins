@@ -85,9 +85,8 @@ Agent-facing entry point at `skills/navigator/__main__.py`. Agents call `--help`
 | `/ocd:status` | Report plugin version, rules state, skill status |
 | `/ocd:log` | Capture decisions, friction, problems, ideas as log entries |
 | `/ocd:md-to-pdf` | Export markdown to PDF with GitHub-style CSS |
-| `/ocd:evaluate-governance` | Evaluate governance chain conformity, followability, coherence |
-| `/ocd:evaluate-skill` | Evaluate a skill across conformity, efficacy, quality |
-| `/ocd:evaluate-documentation` | Evaluate README.md and architecture.md across systems |
+| `/ocd:audit-governance` | Audit governance chain conformity, followability, coherence |
+| `/ocd:audit-static` | Audit any path against governance, best practices, and prior art |
 
 ### MCP Servers
 

@@ -9,13 +9,13 @@ This evaluation is in service of cutting a stable v1 of the ocd plugin and makin
 **In scope (must be re-justified through live invention before v1 ships):**
 
 - Design principles
-- ocd rule files: design-principles, workflow, system-documentation, process-flow-notation, log-routing
+- ocd rule files: design-principles, workflow, system-documentation, process-flow-notation, log-routing, markdown
 - ocd conventions
 - ocd patterns
-- ocd servers: navigator (MCP server + CLI)
-- ocd libraries: governance (disk-only, no MCP)
+- ocd servers: navigator (thin MCP adapter under `servers/navigator.py`)
+- ocd libraries: navigator (under `lib/navigator/`), governance (disk-only)
 - ocd log templates and deployed entries (file-based, no MCP)
-- ocd skills: init, status, navigator, log, evaluate-skill, evaluate-governance, evaluate-documentation, commit, push, pdf
+- ocd skills: init, status, navigator, log, audit-static, audit-governance, commit, push, md-to-pdf, update-system-docs
 - Plugin infrastructure: plugin framework, hooks, `run.py` launcher, sync-templates
 - Project-level infrastructure: pytest configs, `scripts/test.sh`, fixtures, plugin manifest
 
@@ -26,64 +26,25 @@ This evaluation is in service of cutting a stable v1 of the ocd plugin and makin
 
 **Re-add filter:** components that exist in v1 but cannot make the unmet pointer in v2 are not added to v2. They are removed from the project. The model is the audit; the rebuild has teeth.
 
-## Governance Lockdown (2026-04-13)
-
-Systematic walkthrough of the governance chain supporting evaluate-skill and evaluate-governance. All foundational rules and conventions locked down through direct walkthrough, then both evaluation skills aligned against them.
-
-**Rules locked down:**
-
-- design-principles.md
-- process-flow-notation.md (major rewrite: Call/Spawn/Error Handling, reorder, keyword formatting)
-- markdown.md (promoted from convention to rule; added Special Characters)
-- log-routing.md
-- system-documentation.md (Documentation Currency moved to evaluate-documentation skill responsibility)
-- workflow.md
-
-**Conventions locked down:**
-
-- skill-md.md (major simplification; Body Structure at top; String Substitution → Environment Variables)
-- evaluation-skill-md.md (restructured to Executor Rules + Agent Rules with compartmentalization framing)
-- evaluation-triage.md
-- architecture-md.md, claude-md.md, readme-md.md
-- governance-md.md
-
-**Skills aligned:**
-
-- evaluate-skill SKILL.md (Call/Spawn syntax, Exit to caller, path-tracing for exercisable routes)
-- evaluate-governance SKILL.md (aligned with new conventions, graph anomaly artifact removed — misalignments now flow as ordinary findings)
-- Component files (_evaluation-workflow.md for both skills) aligned
-
 ## V1 Readiness Backlog
 
-All outstanding work before the marketplace goes public. Phased by dependency order. Each phase's items run in parallel internally; phases depend on the prior phase's completion. Check items as completed. Log entries under `.claude/logs/` carry the detail for each item where applicable.
+Phased by dependency order. Each phase's items run in parallel internally; phases depend on prior phase completion. Detail for completed phases lives in git history and in `.claude/logs/` entries; this file holds only the resumable work.
 
-### Phase 0 — Low-hanging fruit
+### Phase 0 — Low-hanging fruit — ✓ done
 
-Quick audits and fixes with no dependencies.
+Skill-name qualification ruleset: `name:` frontmatter required; every agent-emitted plugin-skill reference uses `/plugin:skill`. Rule lives in `design-principles.md` Agent-First Interfaces.
 
-- [x] **Cross-skill reference refactor + skill-md convention correction** — A/B probe between `/ocd:status` (folder-derived) and `/ocd:status-alt` (frontmatter `name:`) established: folder-derived names resolve via Skill tool only when qualified; frontmatter-declared names resolve both qualified and unqualified. Concrete failure was `/checkpoint` calling `skill: /commit` and Skill tool returning "Unknown skill". Resolution: (1) convention rewritten — `name:` is now required on every skill, with the rationale embedded in the field description; (2) new Cross-Skill References section in `skill-md.md` mandates `/plugin:skill` form for plugin skill targets; (3) `name:` added to every SKILL.md across ocd, blueprint, and project-local; (4) every `skill:` invocation in Workflow blocks converted to qualified form; (5) PFN rule examples updated to show qualified form. Ocd 0.0.236, blueprint 0.0.64.
+### Phase 1 — Foundation cleanups — ✓ done
 
-### Phase 1 — Foundation cleanups
+lib/servers architectural split (domain libraries under `lib/`, thin MCP adapters under `servers/`). Logging convention dropped. Dead logger declarations removed.
 
-Must land before code-building phases. These two cleanups correct existing convention violations that would compound if built on.
+### Phase 2 — Python-related convention lockdowns — ✓ done
 
-- [x] **lib/servers architectural refactor (supersedes the cli.py cleanup)** — original log entry framed navigator's `cli.py` as "accidental"; in fact the MCP-server convention sanctioned it. Took the opportunity to rewrite the convention instead: domain libraries live under `lib/` (facade + CLI via `__main__.py`); `servers/<name>.py` is a thin MCP adapter. Navigator moved `servers/navigator/` → `lib/navigator/` (CLI now `__main__.py`) with a new `servers/navigator.py` MCP wrapper. Governance's `cli.py` → `__main__.py`. All 132 tests pass. Governance test-coverage disparity logged at `.claude/logs/problem/Governance test coverage is thin compared to navigator.md` for future work.
-- [x] **Logging convention drop + dead declarations** — dropped `### Logging` subsection from `python.md`; removed 3 unused logger declarations from `lib/navigator/__init__.py`, `_scanner.py`, `_db.py`; corrected misleading `__all__` comment in `lib/navigator/__main__.py` to describe the underscore-prefix convention. Print() guidance review remains open (see log entry). 132 tests pass.
-
-### Phase 2 — Python-related convention lockdowns
-
-Walk each convention against its current consumers and mark locked down. Navigator's completed MCP refactor is the concrete example informing `mcp-server.md` and `python.md`.
-
-- [x] `python.md` — atomicity pass split 6 compound paragraphs; Init/Status Contract sub-section embedded (subsumes former skill-init-py.md so the contract loads whenever any Python file is being authored, not only when editing an existing `_init.py`)
-- [x] `testing.md` — Git Worktree Isolation Mechanism/Fixture split
-- [x] `mcp-server.md` — atomicity pass split 3 compound sections; lib/servers structure documented
-- [x] `skill-init-py.md` — merged into python.md Init/Status Contract and deleted; the separate convention only fired on existing `_init.py` files, missing the authoring-from-scratch case
-- [x] **Qualified-reference rule promoted to design-principles** — Agent-First Interfaces now requires `/plugin:skill` form in every agent-emitted context. Consumer audit landed: removed all 10 trivial Trigger sections (skill-md convention dropped Trigger from Common); qualified all references in README.md, architecture.md, plugin/_permissions.py, servers/navigator.py, lib/navigator/__main__.py, lib/navigator/_init.py, plugin/_formatting.py, plus push/evaluate-* SKILL.md cross-refs. Test asserting `/navigator` substring updated to `/ocd:navigator`.
-- [x] **Broader consumer audit against atomicity splits** — three parallel agents walked test conventions, MCP tool design, and skill-init-py state machine. Fixed: `skills_resolve` error guidance + `action` field; `_ok(result: Any)` type annotation; python.md test-import exception for private helpers. Rule rewrite: Error Handling anchored in purpose — CLI catches only to add agent-actionable context, not cosmetic catch-and-reprint. Tool refactor: `paths_remove` collapsed from two booleans (`recursive`/`all_entries`) to single `mode` parameter (`single`/`recursive`/`all`) per Make Invalid States Unrepresentable; MCP + CLI + tests updated; CLI uses mutually-exclusive argparse group for flag UX. Logged as problem: `test_convention_agent.py` lacks git worktree isolation (theoretical escape risk; fix deferred post-lockdown). 132 tests pass throughout.
+Atomicity pass across `python.md`, `testing.md`, `mcp-server.md`. `skill-init-py.md` merged into `python.md` *Init/Status Contract*. Trigger section removed from skill-md convention and all 10 consumer skills. Consumer audit: qualified-reference sweep; `paths_remove` refactored to `mode` parameter; Error Handling rule rewritten with purpose embedded.
 
 ### Phase 3 — Remaining skill lockdowns
 
-Each skill walked against the locked-down rules and conventions.
+Each skill audited via `/ocd:audit-static` against the locked-down rules and conventions.
 
 - [ ] `commit`
 - [ ] `init`
@@ -92,12 +53,14 @@ Each skill walked against the locked-down rules and conventions.
 - [ ] `navigator`
 - [ ] `push`
 - [ ] `status`
+- [ ] `audit-governance`
+- [ ] `audit-static` (self-audit after rewrite)
 - [ ] `checkpoint` (project-local)
 - [ ] `sync-templates` (project-local)
 
 ### Phase 4 — `update-system-docs` implementation
 
-Scaffold committed in 986ddd2. Implementation work picks up from the scaffold. See `.claude/logs/idea/Replace evaluate-documentation with reality-first update-system-docs.md` for full design and follow-up list.
+Scaffold committed in 986ddd2. Implementation work picks up from the scaffold. See `.claude/logs/idea/Replace evaluate-documentation with reality-first update-system-docs.md` for full design and follow-up list. (evaluate-documentation skill itself was deleted alongside the audit-* family rename.)
 
 - [ ] Discovery CLI — `plugins/ocd/skills/update-system-docs/__main__.py` + `_discovery.py`
 - [ ] Fact-bundle builder — Python module under skill dir; ast-based; called by per-system agents
@@ -115,11 +78,10 @@ Run `update-system-docs` against the full project to create / regenerate all can
 - [ ] First full-project run
 - [ ] Review generated docs against intent; tune prompts for observed gaps
 - [ ] Re-run until output converges
-- [ ] Delete old `evaluate-documentation` skill (replaced by `update-system-docs`)
 
 ### Phase 6 — Pre-public release checks
 
-- [ ] Run `evaluate-governance` on full chain — confirms locked-down chain is self-consistent
+- [ ] Run `audit-governance` on full chain — confirms locked-down chain is self-consistent
 - [ ] Verify every system has required docs per `system-documentation.md`
 - [ ] Marketplace manifest sanity check (`.claude-plugin/marketplace.json` accurate; versions aligned)
 - [ ] Update root-level `README.md` and `architecture.md` for external consumers
@@ -127,11 +89,13 @@ Run `update-system-docs` against the full project to create / regenerate all can
 
 ## Open Items (deferred)
 
-These survive but are not v1 blockers:
+Non-v1-blocking:
 
-- **Convention loading on read** — conventions fire when files are read, not just modified. Governance reads from disk on every call (no database), so this is purely about hook behavior.
-- **`purpose-map/skill-migration.md`** — archival planning document for migrating the purpose-map evaluation workflow to a skill. References a stale component id (`c14 (Pit of Success)`) and the now-removed Pit of Success principle. Decide whether to action the migration or delete the document as abandoned planning.
-- **Purpose-map stale components removed, needs orphaned** — c41 (friction server), c42 (decisions server), c43 (stash server) removed from DB. Needs n59 (friction signals) and n68 (ideas/observations) are now gaps. These needs remain valid but need rewiring to new file-based log system components once those are evaluated and rebuilt.
+- **Convention loading on read** — conventions fire when files are read, not just modified. Governance reads from disk on every call, so this is purely about hook behavior.
+- **`purpose-map/skill-migration.md`** — archival planning doc referencing a now-removed principle. Decide whether to action the migration or delete as abandoned planning.
+- **Purpose-map stale components removed, needs orphaned** — c41 (friction server), c42 (decisions server), c43 (stash server) removed. Needs n59 (friction signals) and n68 (ideas/observations) are now gaps. Remain valid; rewire to new file-based log system components when those are evaluated and rebuilt.
+- **Logged problems awaiting action** — governance test-coverage thin vs navigator; `test_convention_agent.py` lacks git worktree isolation. See `.claude/logs/problem/`.
+- **Print() usage review** — deferred from Phase 1 logging drop. See the logging log entry.
 
 ## v1 Reference
 
