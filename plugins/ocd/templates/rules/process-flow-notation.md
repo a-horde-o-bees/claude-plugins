@@ -257,6 +257,8 @@ Arguments passed in parentheses or as indented assignments become variables avai
 
 **`Return`** — exits the current `Spawn:` block, handing results back to the caller
 
+Extracting agent instructions into a file and using `Spawn: Call:` keeps the caller's context clean while giving the agent exactly what it needs — the caller never reads the file, and the agent reads only its own instructions. Inline spawn instructions work for short sequences but load the caller's context with content only the agent uses.
+
 Within skills, intelligent work delegation uses Spawn: exclusively. Tool calls (CLI scripts, bash commands) are not agent spawns and remain unrestricted. The skill executor applies user-directed corrections inline — no agent spawn needed for directed fixes.
 
 ```

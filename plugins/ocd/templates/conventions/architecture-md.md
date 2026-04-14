@@ -37,8 +37,8 @@ A parent architecture.md answers "how do these pieces fit together?" Each subsys
 
 No fixed section template — structure follows the system's actual architecture. Common patterns:
 
-- Purpose → Layers → Components → Schema → Constraints (for database-backed systems)
-- Purpose → Layers → Modules → Entry Points → File Organization (for plugin/library systems)
+- Purpose → Components → Layers → Schema → Constraints (for database-backed systems)
+- Purpose → Modules → Entry Points → Layers → File Organization (for plugin/library systems)
 - Purpose → Components → Interfaces → Data Flow (for service systems)
 
 Section depth follows component depth. Flat systems have flat documents.

@@ -6,9 +6,7 @@ governed_by:
 
 # Log Routing
 
-When the agent encounters information worth preserving for a future session, capture it as a log entry in `.claude/logs/`. Log at the moment of encounter — context degrades when deferred.
-
-## Routing
+Captures information worth preserving for a future session. Log at the moment of encounter — context degrades when deferred.
 
 ## Log vs Memory
 
@@ -29,10 +27,6 @@ First decide whether to log at all:
 ## Entry Format
 
 Each entry is a file in `.claude/logs/{type}/{Title}.md`. Title is the entry's subject, used as both the filename and the level-1 heading — short enough to scan in a directory listing, detailed enough to distinguish from siblings. Read the type's `_template.md` for entry structure specific to that type.
-
-## Lifecycle
-
-Logs are a queue, not an archive. Delete entries when resolved, acted on, or moved to an external tracker.
 
 ## Custom Types
 

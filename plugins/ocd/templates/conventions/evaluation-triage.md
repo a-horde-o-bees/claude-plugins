@@ -19,7 +19,7 @@ Classification standard for evaluation skills. The skill executor classifies rep
 
 Reclassify a Defect as Observation when any of the following hold:
 
-- Fix would change control flow in loops, break conditions, or exit-to-user paths
+- Fix would change control flow in loops, break conditions, or exit-to-caller paths
 - Fix would change variable scope across loop boundaries
 - Fix would alter what a rule or convention prescribes — any semantic change to governance
 - Fix requires choosing between multiple valid alternatives

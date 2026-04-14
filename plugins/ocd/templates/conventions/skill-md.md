@@ -10,6 +10,32 @@ governed_by:
 
 SKILL.md defines slash command behavior. Claude Code parses frontmatter for metadata and loads markdown body when skill is invoked. Skills are user-triggered interactive workflows.
 
+## Body Structure
+
+Sections are ordered for progressive consumption — identity and concept first, then constraints, then execution, then error handling.
+
+Sections fall into three categories:
+
+- **Prescribed** — every skill includes these
+- **Common** — established patterns; include when relevant to the skill's domain
+- **Domain-specific** — child conventions define additional sections for their domain; this list is not exhaustive
+
+| Section | Category | Description |
+|---------|----------|-------------|
+| YAML Frontmatter | Prescribed | Metadata block parsed by Claude Code before the markdown body |
+| `# /skill-name` | Prescribed | Title matching slash command; unqualified name |
+| Description paragraph | Prescribed | Purpose statement per Purpose Statement guidance |
+| `## Process Model` | Common | How the skill operates and why — when mechanics are not self-evident from steps |
+| `## Scope` | Common | What the skill operates on and how arguments modify the target set |
+| `## Trigger` | Common | When/how the skill is invoked — include when trigger conditions are non-obvious |
+| `## Rules` | Common | Constraints for the skill executor; agent-facing constraints belong in component files |
+| `## Route` | Common | Resolve arguments, validate inputs, dispatch to Workflow |
+| `## Workflow` | Prescribed | Numbered steps using Process Flow Notation |
+| `### Report` | Common | Output format subheading within Workflow |
+| `## Error Handling` | Prescribed | How the skill responds to failures; minimum: report failure with available details |
+
+Child conventions (e.g., evaluation-skill-md.md) may prescribe additional sections, promote Common sections to Prescribed for their domain, or define domain-specific subsections within Workflow.
+
 ## YAML Frontmatter
 
 Frontmatter is optional but recommended. Claude Code falls back to directory name for `name` and first markdown paragraph for `description` when omitted.
@@ -27,7 +53,7 @@ Fields:
 |-------|---------|-------------|
 | `name` | Directory name | Slash command name. Lowercase letters, numbers, hyphens only (max 64 characters). Do not prefix with the plugin name — Claude Code namespaces plugin slash commands automatically (`/<plugin>:<command>` on collision, `/<command>` when unique), so a redundant prefix double-namespaces. |
 | `description` | First markdown paragraph | Canonical purpose statement — same text as the body description paragraph. Loaded at metadata level for skill discovery; Claude uses this to decide when skill is relevant. |
-| `argument-hint` | None | Autocomplete hint shown after `/command`. Format follows Skill Argument Notation in Process Flow Notation rules. |
+| `argument-hint` | None | Autocomplete hint shown after `/command`. Format follows Argument Declaration in Process Flow Notation. |
 | `disable-model-invocation` | `false` | Prevents Claude from auto-loading skill |
 | `user-invocable` | `true` | Set `false` to hide from `/` menu |
 | `allowed-tools` | None | Tools allowed without permission prompts. Supports wildcards (e.g., `Bash(git *)`) |
@@ -39,68 +65,35 @@ Scalar fields (description, name, argument-hint, etc.) are single lines — no a
 
 List fields (`allowed-tools`, etc.) — use YAML block-style lists, one item per line with `- ` prefix. Not flow-style arrays (`[a, b]`).
 
-## Body Structure
-
-Markdown body follows skill after frontmatter. Claude loads full body only when skill is invoked. Sections are ordered for progressive consumption — identity and concept first, then constraints, then execution, then error handling.
-
-Sections fall into three categories:
-
-- **Prescribed** — every skill includes these
-- **Common** — established patterns; include when relevant to the skill's domain
-- **Domain-specific** — child conventions define additional sections for their domain; this list is not exhaustive
-
-| Section | Category | Description |
-|---------|----------|-------------|
-| `# /skill-name` | Prescribed | Title matching slash command; unqualified name |
-| Description paragraph | Prescribed | Purpose statement per Purpose Statement guidance |
-| `## Process Model` | Common | How the skill operates and why — when mechanics are not self-evident from steps |
-| `## Scope` | Common | What the skill operates on and accepted arguments beyond `--target` |
-| `## Trigger` | Common | When/how the skill is invoked — include when trigger conditions are non-obvious |
-| `## Rules` | Common | Constraints for the skill executor; agent-facing constraints belong in component files |
-| `## Route` | Common | Resolve arguments, validate inputs, dispatch to Workflow |
-| `## Workflow` | Prescribed | Numbered steps using Process Flow Notation |
-| `### Report` | Common | Output format subheading within Workflow |
-| `## Error Handling` | Prescribed | How the skill responds to failures; minimum: report failure with available details |
-
-Child conventions (e.g., evaluation-skill-md.md) may prescribe additional sections, promote Common sections to Prescribed for their domain, or define domain-specific subsections within Workflow.
-
-### Orchestration vs Execution Boundary
-
-Sections before Workflow are orchestration — the skill executor resolves arguments, selects route, and packages inputs. The Workflow section is what the skill executor follows. When the Workflow spawns agents, those agents read component files — they are not given assembled sections or pre-composed instructions.
-
-Agent spawn instructions contain file paths, not file contents. The agent reads each file at execution time in its own context. The skill executor never reads component files to inline their content — it references them by path in spawn instructions and the agent opens them. System-managed variables (`$ARGUMENTS`, `${CLAUDE_SESSION_ID}`) and environment variables (`${CLAUDE_PLUGIN_ROOT}`) are resolved mechanically by Claude Code and shell respectively.
-
-Constraints follow the same boundary. Rules in SKILL.md apply to the skill executor. Agent-facing constraints — behavioral guardrails, format requirements, scope restrictions — belong in the component files that agents read. Each execution context receives exactly its own instructions through file compartmentalization.
-
-String substitution variables available in body:
-
-- `$ARGUMENTS` — All arguments passed when invoking skill
-- `$ARGUMENTS[N]` or `$N` — Specific argument by 0-based index
-- `${CLAUDE_SESSION_ID}` — Current session ID
-
 ## Standard Arguments
 
-Common argument patterns with established infrastructure. These are not exhaustive — skills define their own arguments for their domain. Include standard arguments when their infrastructure is relevant; define domain-specific arguments as needed. Arguments follow Skill Argument Notation defined in Process Flow Notation rules.
+Common argument patterns with established infrastructure. These are not exhaustive — skills define their own arguments for their domain. Include standard arguments when their infrastructure is relevant; define domain-specific arguments as needed. Arguments follow Argument Declaration defined in Process Flow Notation.
 
 | Argument | Role | Description |
 |----------|------|-------------|
 | `--target` | Gate + subject | Required flag carrying target value; presence triggers execution, value identifies what to operate on; without it, skill responds with description and usage hint |
-| `[--pattern <glob> ...]` | Filter | Passthrough to navigator CLI for file enumeration; repeatable for OR-combined matching; ignored when target is single file |
+| `[--pattern <glob> ...]` | Filter | Passthrough to navigator for file enumeration; repeatable for OR-combined matching; ignored when target is single file |
 | `[--all]` | Boundary override | Includes `.claude/` files in target enumeration; without it, `.claude/` excluded by default |
 
 ### Target Resolution
 
-{target} is evaluated against deterministic matches first. Unmatched values fall through to natural language interpretation where skill executor derives adjustments and confirms with user before proceeding.
+`{target}` is evaluated against deterministic matches first. Unmatched values fall through to natural language interpretation where skill executor derives adjustments and confirms with user before proceeding.
 
-Route pattern for {target} evaluation:
+Route pattern for `{target}` evaluation:
 
 ```
-1. If not --target: Exit to user — respond with skill description and argument-hint
+1. If not --target: Exit to caller — respond with skill description and argument-hint
+
+> Check if target is a skill — slash-name or direct SKILL.md path
+
 2. If ({target} starts with `/` and contains no spaces) or ({target} is a path ending with `/SKILL.md`):
     1. If {target} starts with `/`:
-        1. Resolve skill path — run navigator CLI `resolve-skill` (strip leading `/` from {target})
-        2. If exit code 1: Exit to user — report skill not found
+        1. bash: `python3 ${CLAUDE_PLUGIN_ROOT}/run.py servers.navigator.cli resolve-skill {target}`
+        2. If exit code 1: Exit to caller — report skill not found
     2. {target-directory} = parent of resolved SKILL.md path
+
+> Not a skill — add domain-specific deterministic branches here (e.g., `project`, `self`)
+
 3. Else if {target} is file path:
     1. {target-file} = {target}
 4. Else if {target} is directory path:
@@ -109,46 +102,10 @@ Route pattern for {target} evaluation:
     1. Interpret {target} as natural language goal — derive adjustments, assign variables, present for user confirmation
 ```
 
-Skills define their own deterministic {target} values (e.g., `project`, `self`) as additional branches before the natural language fallback.
-
-Navigator CLI resolves skill names across all discovery locations in priority order:
-
-```
-python3 ${CLAUDE_PLUGIN_ROOT}/run.py servers.navigator.cli resolve-skill <name>
-```
-
-Exits with code 1 if skill not found. Skills should Exit to user with error when resolution fails.
-
-### Route Dispatch Pattern
-
-Route evaluates {target} and selects Workflow.
-
-```
-## Route
-
-1. If not --target: Exit to user — respond with skill description and argument-hint
-2. Evaluate {target} against deterministic matches
-    1. If ({target} starts with `/` and contains no spaces) or ({target} is a path ending with `/SKILL.md`):
-        1. If {target} starts with `/`:
-            1. Resolve skill path via navigator `resolve-skill` (strip leading `/` from {target})
-            2. If exit code 1: Exit to user — report skill not found
-        2. {target-directory} = parent of resolved SKILL.md path
-    2. Else if {target} is file path:
-        1. {target-file} = {target}
-    3. Else if {target} is directory path:
-        1. {target-directory} = {target}
-    4. Else:
-        1. Interpret {target} as natural language goal — derive adjustments, assign variables, present for confirmation
-3. Prepare inputs for selected Workflow
-4. Dispatch Workflow
-```
-
 ### Constraints
 
-- Natural language {target} evaluation occurs in Route as fallback after deterministic matches — skill executor interprets goal, derives adjustments, assigns variables, and presents for user confirmation before proceeding
-- When natural language adjustments conflict with other provided flags, skill executor surfaces conflict and works with user to resolve — no implicit precedence
-- Deterministic {target} values execute without interpretation or confirmation
-- --pattern is only meaningful for directory targets — Route ignores it when target resolves to single file
+- When natural language adjustments conflict with other provided flags, skill executor surfaces the conflict and works with user to resolve — no implicit precedence
+- `--pattern` is only meaningful for directory targets — Route ignores it when target resolves to single file
 
 ## Directory Structure
 
@@ -162,88 +119,36 @@ skill-name/
 └── tests/                 # Test suites (optional)
 ```
 
-Keep SKILL.md under 500 lines. Move detailed reference material to separate files. Extract components to `_{name}.md` files alongside SKILL.md to reduce SKILL.md size and scope agent context.
+## Components
 
-## Workflow Encapsulation
-
-Workflow section is self-contained — everything agent needs to execute belongs inside it or is referenced by it. This includes:
-
-- Numbered steps using Process Flow Notation
-- `### Report` subheading when the skill produces structured output
-- Explicit file read steps for extracted components (`Read _component.md`)
-- Supporting subsections (e.g., file roles, interpreting results)
-
-The Workflow section and the component files it references form a complete execution surface — the skill executor follows the Workflow, and spawned agents read the component files they are directed to. Agent-facing constraints live in those component files, not in the SKILL.md Rules section.
-
-CLI references in workflows and reference files must be full executable commands — never shorthand. An agent should be able to copy a command verbatim and run it. Include interpreter, launcher path, module, subcommand, and all required flags (e.g., `--db`). Shorthand forces agents to discover invocation patterns, which wastes tokens and risks incorrect construction. MCP tool invocations are a separate mechanism from CLI — use the `{tool}:` invocation type prefix defined in PFN (e.g., `scope_analyze: paths=[{skill-path}]`).
-
-### Multi-Path Workflows
-
-Skills with distinct execution paths extract each path into a component file rather than using conditional branching within one Workflow. Route selects the path; the Workflow dispatches to the selected component file. Each path is self-contained in its own file with its own steps, constraints, and report format — the executor reads one file and follows it without filtering irrelevant branches.
-
-```
-skill-name/
-├── SKILL.md
-├── _workflow-default.md
-└── _workflow-alternate.md
-```
-
-Routing logic (which path to execute) belongs in `## Route`. The `## Workflow` section dispatches to the selected component. Duplication across component files is acceptable — compartmentalized workflows are safer for agent adherence than shared abstractions that require cross-file reasoning.
-
-Single-path skills keep steps inline in `## Workflow`.
-
-### Components
-
-Components are `_{name}.md` files alongside SKILL.md. They carry content that the skill executor does not need in its own context — agent workflows, evaluation criteria, reference material, prompt templates, and agent-facing constraints. Components serve workflows and are never executed independently. Underscore prefix signals internal (consistent with `_{purpose}.py` pattern for internal modules).
-
-Components are always extracted files, not inline sections. File compartmentalization ensures each execution context receives exactly its own instructions — the skill executor reads SKILL.md, spawned agents read their component files. This holds even when no agents are spawned; consistent extraction keeps the pattern simple and the skill directory self-documenting.
-
-```
-skill-name/
-├── SKILL.md
-├── _agent-workflow.md
-└── _criteria.md
-```
-
-Workflows include explicit read steps for components:
+Components are `_{name}.md` files alongside SKILL.md — agent workflows, evaluation criteria, reference material, and agent-facing constraints are common examples. Underscore prefix signals internal. PFN's `Spawn:` + `Call:` pattern handles invocation:
 
 ```
 ## Workflow
-1. Spawn agent with evaluation({target}):
-    1. Read `_evaluation-workflow.md`
-    2. Follow workflow against {target}
-    3. Return:
+1. Spawn:
+    1. Call: `_evaluation-workflow.md` ({target} = resolved target)
+    2. Return:
         - Results
 ```
 
 ## File Enumeration
 
-Skills that accept path argument and can operate on directories must use the `paths_list` MCP tool for file enumeration — never invent ad-hoc file listing (glob, `git ls-files`, agent judgment).
+Skills that operate on directories must use the `paths_list` MCP tool for file enumeration — never invent ad-hoc file listing (glob, `git ls-files`, agent judgment). Navigator applies project-wide exclude rules and traversal limits deterministically.
 
-Navigator applies project-wide exclude rules (`.git`, `.venv`, `__pycache__`, etc.) and traversal limits deterministically. The `patterns` parameter filters by basename glob and accepts arrays for OR-combined matching.
+## User Interaction
 
-Skills should:
+User interaction works in SKILL.md because the skill executor runs in the main conversation. Spawned agents run autonomously and cannot prompt the user. When presenting choices, use `AskUserQuestion` with `options` parameter for structured selection instead of freeform text with numbered lists.
 
-- Accept `--pattern` as passthrough argument when user wants to scope to specific file types
-- Ignore `--pattern` when target is single file (nothing to filter)
-- Document `--pattern` in `argument-hint` frontmatter when supported
+## Environment Variables
 
-## User Interaction Boundary
+Claude Code automatically populates these variables in skill context:
 
-User interaction (AskUserQuestion, clarification, confirmation) works in SKILL.md because the skill executor runs in the main conversation. Spawned agents receive their own component files and run autonomously — they cannot prompt the user mid-execution.
+- `$ARGUMENTS` — all arguments passed when invoking skill
+- `$ARGUMENTS[N]` or `$N` — specific argument by 0-based index
+- `${CLAUDE_SESSION_ID}` — current session ID
+- `${CLAUDE_PLUGIN_ROOT}` — plugin installation directory
 
-When interactive decisions span multiple agent dispatches, structure them as skill executor steps between spawn calls. Each spawned agent is autonomous; the skill executor mediates between calls in main conversation.
-
-## User Choices and Confirmations
-
-When skill executor steps present choices or request confirmation, use `AskUserQuestion` tool with `options` parameter — not freeform text with numbered lists. Structured options give user selectable choices instead of requiring typed responses.
-
-Does not apply to open-ended questions requiring freeform input or spawned agent contexts (AskUserQuestion only works in main conversation).
-
-Else handling for unexpected responses:
-
-- Skill executor context — Else may jump forward or backward to appropriate step; do not prescribe specific outcomes
-- Steps processable by either skill executor or spawned agent — Else defaults to Exit to user; spawned agents cannot prompt user for alternative input
+`${CLAUDE_SESSION_ID}` and `${CLAUDE_PLUGIN_ROOT}` are also available in hook and MCP server contexts.
 
 ## Discovery and Loading
 

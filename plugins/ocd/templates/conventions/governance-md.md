@@ -81,5 +81,3 @@ A governance file groups content that shares its governance contract — the `in
 ## Body Structure
 
 Rules define behavioral triggers with gate conditions — when to do what. Conventions define content standards with concrete requirements — what a conforming file contains.
-
-Both follow the markdown convention for heading, purpose statement, and blank line separation.

@@ -29,7 +29,7 @@ Verification of new code belongs in the test structure. Not in ad-hoc bash comma
 
 ## Push Blocking
 
-Git push can be temporarily blocked for safe non-destructive testing or worktree-isolated evaluation. The block sets an invalid pushurl on `origin` — any push attempt fails loudly with `fatal: '/dev/null' does not appear to be a git repository`.
+Git push can be temporarily blocked for safe ad-hoc testing, integration checks, or worktree-isolated evaluation. The block sets an invalid pushurl on `origin` — any push attempt fails loudly with `fatal: '/dev/null' does not appear to be a git repository`. Separate concern from Test Durability: that rule governs verification of new code (write a test); Push Blocking is a safety envelope for any execution that might push.
 
 - Block: `git config remote.origin.pushurl "file:///dev/null"`
 - Unblock: `git config --unset remote.origin.pushurl`

@@ -34,3 +34,7 @@ YAML frontmatter (between `---` delimiters) is not a markdown formatting element
 Paragraphs are single lines in source. No manual line breaks within a paragraph — renderers handle visual wrapping based on viewport. Manual wrapping fragments paragraphs into a fixed visual layout, complicates diffs (any edit that shifts a word ripples through subsequent lines), and forces every editor to re-flow on every change.
 
 This rule applies to paragraph content only. Lists keep one item per line. Code blocks preserve their internal formatting. Tables follow markdown table syntax. Blank line separation between formatting elements is unchanged.
+
+## Special Characters
+
+Characters that markdown renderers may interpret — `{}`, `<>`, `*`, `_` — must appear within backtick-delimited inline code or fenced code blocks when used literally. Without protection, renderers strip `<>` as HTML tags, template engines consume `{}` as variables, and `*`/`_` trigger emphasis formatting. This applies anywhere these characters appear in prose, table cells, or list items outside code blocks.
