@@ -7,10 +7,6 @@ description: Sync plugin governance files from source templates to deployed copi
 
 Sync plugin governance files from source templates to deployed copies for testing without committing.
 
-## Trigger
-
-User runs `/sync-templates`
-
 ## Workflow
 
 1. Sync templates to deployed copies — bash: `python3 scripts/sync-templates.py`

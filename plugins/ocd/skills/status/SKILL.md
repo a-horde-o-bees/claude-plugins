@@ -9,10 +9,6 @@ allowed-tools:
 
 Report plugin infrastructure state.
 
-## Trigger
-
-User runs `/status`
-
 ## Workflow
 
 1. Run status — bash: `python3 ${CLAUDE_PLUGIN_ROOT}/run.py plugin status`

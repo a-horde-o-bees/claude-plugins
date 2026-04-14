@@ -107,13 +107,17 @@ def _dispatch_set(args: argparse.Namespace) -> None:
 
 
 def _dispatch_remove(args: argparse.Namespace) -> None:
-    all_entries = getattr(args, "all", False)
     path = getattr(args, "path", None)
+    if getattr(args, "all", False):
+        mode = "all"
+    elif args.recursive:
+        mode = "recursive"
+    else:
+        mode = "single"
     result = paths_remove(
         args.db,
         entry_path=path or "",
-        recursive=args.recursive,
-        all_entries=all_entries,
+        mode=mode,
     )
     if result["action"] == "removed_all":
         print(f"Removed all {result['count']} entries (rules preserved)")
@@ -197,7 +201,7 @@ def build_parser() -> argparse.ArgumentParser:
             "  list .                       — all non-excluded files\n"
             "  list . --pattern '*.py'      — only Python files\n"
             "\n"
-            "Maintenance sequence (via /navigator skill):\n"
+            "Maintenance sequence (via /ocd:navigator skill):\n"
             "  1. scan .                    — sync filesystem to database\n"
             "  2. get-undescribed           — find entries needing descriptions\n"
             "  3. set <path> --description  — write description for entry\n"
@@ -392,8 +396,9 @@ def build_parser() -> argparse.ArgumentParser:
         parents=[db_parent],
     )
     remove_p.add_argument("path", nargs="?", default=None, help="File or directory path to remove")
-    remove_p.add_argument("--recursive", action="store_true", default=False, help="Remove directory and all children")
-    remove_p.add_argument("--all", action="store_true", default=False, help="Remove all concrete entries (patterns table unaffected)")
+    remove_mode = remove_p.add_mutually_exclusive_group()
+    remove_mode.add_argument("--recursive", action="store_true", default=False, help="Remove directory and all children")
+    remove_mode.add_argument("--all", action="store_true", default=False, help="Remove all concrete entries (patterns table unaffected)")
     remove_p.set_defaults(_dispatch=_dispatch_remove)
 
     # search

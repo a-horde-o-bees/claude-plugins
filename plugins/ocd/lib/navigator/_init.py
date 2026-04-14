@@ -41,7 +41,7 @@ def _status_extra() -> list[dict]:
     if not db_path.exists():
         return [
             {"label": "overall status", "value": "not initialized"},
-            {"label": "action needed", "value": "/init"},
+            {"label": "action needed", "value": "/ocd:init"},
         ]
 
     try:
@@ -58,7 +58,7 @@ def _status_extra() -> list[dict]:
             conn.close()
             return [
                 {"label": "overall status", "value": "error \u2014 divergent schema"},
-                {"label": "action needed", "value": "/init --force"},
+                {"label": "action needed", "value": "/ocd:init --force"},
             ]
 
         total = conn.execute(
@@ -83,13 +83,13 @@ def _status_extra() -> list[dict]:
                     f"{undescribed} undescribed, {stale} stale"
                 ),
             },
-            {"label": "action needed", "value": "/navigator"},
+            {"label": "action needed", "value": "/ocd:navigator"},
         ]
 
     except sqlite3.Error as e:
         return [
             {"label": "overall status", "value": f"error \u2014 {e}"},
-            {"label": "action needed", "value": "/init --force"},
+            {"label": "action needed", "value": "/ocd:init --force"},
         ]
 
 

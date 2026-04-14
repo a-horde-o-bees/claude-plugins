@@ -11,10 +11,6 @@ allowed-tools:
 
 Deploy rules, conventions, and skill infrastructure to the current project. Safe by default — only deploys absent files, skips files the user has edited.
 
-## Trigger
-
-User runs `/init`
-
 ## Route
 
 1. If --force: bash: `python3 ${CLAUDE_PLUGIN_ROOT}/run.py plugin init --force`

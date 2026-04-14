@@ -69,7 +69,7 @@ Rules and conventions share a governance infrastructure implemented in `lib/gove
 
 ## Rules
 
-Template files in `templates/rules/` deploy to `.claude/rules/` via `/init`. Users own the deployed copies — they can inspect, edit, or delete them.
+Template files in `templates/rules/` deploy to `.claude/rules/` via `/ocd:init`. Users own the deployed copies — they can inspect, edit, or delete them.
 
 | Rule | Scope |
 |------|-------|
@@ -151,7 +151,7 @@ Python packages consumed as imports. Each has a facade in `__init__.py` and an o
 | Library | Package | Role |
 |---------|---------|------|
 | `governance` | `lib/governance/` | Convention and rule governance: matching files to applicable governance entries, listing entries, and computing the level-grouped dependency order. Reads directly from disk on every call — no database, no caching. Consumed by the convention gate hook, navigator's `scope_analyze`, the governance CLI, and evaluation skills. |
-| `navigator` | `lib/navigator/` | Project structure index over SQLite: path indexing, filesystem scan, descriptions, governance composition, reference mapping, skill resolution. Consumed by the `/navigator` skill CLI, the navigator MCP server, and other libraries that need scope analysis. |
+| `navigator` | `lib/navigator/` | Project structure index over SQLite: path indexing, filesystem scan, descriptions, governance composition, reference mapping, skill resolution. Consumed by the `/ocd:navigator` skill CLI, the navigator MCP server, and other libraries that need scope analysis. |
 
 Server modules are thin presentation layers: tool handlers validate, delegate to a domain module, and serialize the result.
 

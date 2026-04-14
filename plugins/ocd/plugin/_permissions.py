@@ -72,11 +72,11 @@ def _show_permissions_status(plugin_root: Path) -> None:
 
     if redundant:
         print(f"  redundancy: {len(redundant)} patterns present in both scopes")
-        print(f"  action needed: /init --permissions — consolidate to one scope")
+        print(f"  action needed: /ocd:init --permissions — consolidate to one scope")
     elif not proj_rec and not user_rec:
-        print(f"  action needed: /init --permissions — setup recommended patterns")
+        print(f"  action needed: /ocd:init --permissions — setup recommended patterns")
     elif len(proj_rec) < len(recommended) and len(user_rec) < len(recommended):
-        print(f"  action needed: /init --permissions — incomplete at both scopes")
+        print(f"  action needed: /ocd:init --permissions — incomplete at both scopes")
 
 
 def _merge_permissions(plugin_root: Path, scope: str) -> None:

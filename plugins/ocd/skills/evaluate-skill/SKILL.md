@@ -29,11 +29,7 @@ Target is a single skill — its SKILL.md plus all files it references (componen
 
 Accepted arguments:
 
-- `--target` — required; skill name (`/navigator`) or path to SKILL.md
-
-## Trigger
-
-User runs `/evaluate-skill`
+- `--target` — required; skill name (`/ocd:navigator`) or path to SKILL.md
 
 ## Route
 
@@ -98,7 +94,7 @@ User runs `/evaluate-skill`
 14. {applied-defects} = list of applied defects
 15. Present Report
 16. If any Observations exist in {findings}:
-    1. Exit to user — "Observations need user judgment. Apply or reject each, then re-invoke `/evaluate-skill` to verify."
+    1. Exit to user — "Observations need user judgment. Apply or reject each, then re-invoke `/ocd:evaluate-skill` to verify."
 
 ### Report
 

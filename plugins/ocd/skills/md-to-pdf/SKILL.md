@@ -13,10 +13,6 @@ allowed-tools:
 
 Export markdown files to PDF using md-to-pdf with GitHub-standardized CSS styling.
 
-## Trigger
-
-User runs `/md-to-pdf`.
-
 ## Route
 
 1. If not --src: Exit to user — respond with skill description and argument-hint

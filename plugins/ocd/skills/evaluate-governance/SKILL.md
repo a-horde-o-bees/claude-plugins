@@ -64,7 +64,7 @@ Accepted arguments:
 7. For each Defect: apply its proposed fix directly to disk
 8. Present Report
 9. If any Observations exist:
-    1. Exit to caller — "Observations at level {current-level} need user judgment. Apply or reject each, then re-invoke `/evaluate-governance` and choose the level to resume from."
+    1. Exit to caller — "Observations at level {current-level} need user judgment. Apply or reject each, then re-invoke `/ocd:evaluate-governance` and choose the level to resume from."
 10. {current-level} = {current-level} + 1
 11. If {current-level} >= count of {levels}: Break loop — all levels complete
 12. Continue {agent-ref}:

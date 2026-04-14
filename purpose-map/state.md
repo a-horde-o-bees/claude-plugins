@@ -74,10 +74,12 @@ Must land before code-building phases. These two cleanups correct existing conve
 
 Walk each convention against its current consumers and mark locked down. Navigator's completed MCP refactor is the concrete example informing `mcp-server.md` and `python.md`.
 
-- [ ] `python.md` (will incorporate Phase 1 logging drop and `__future__` annotation clarification already committed)
-- [ ] `testing.md`
-- [ ] `mcp-server.md`
-- [ ] `skill-init-py.md`
+- [x] `python.md` — atomicity pass split 6 compound paragraphs; Init/Status Contract sub-section embedded (subsumes former skill-init-py.md so the contract loads whenever any Python file is being authored, not only when editing an existing `_init.py`)
+- [x] `testing.md` — Git Worktree Isolation Mechanism/Fixture split
+- [x] `mcp-server.md` — atomicity pass split 3 compound sections; lib/servers structure documented
+- [x] `skill-init-py.md` — merged into python.md Init/Status Contract and deleted; the separate convention only fired on existing `_init.py` files, missing the authoring-from-scratch case
+- [x] **Qualified-reference rule promoted to design-principles** — Agent-First Interfaces now requires `/plugin:skill` form in every agent-emitted context. Consumer audit landed: removed all 10 trivial Trigger sections (skill-md convention dropped Trigger from Common); qualified all references in README.md, architecture.md, plugin/_permissions.py, servers/navigator.py, lib/navigator/__main__.py, lib/navigator/_init.py, plugin/_formatting.py, plus push/evaluate-* SKILL.md cross-refs. Test asserting `/navigator` substring updated to `/ocd:navigator`.
+- [x] **Broader consumer audit against atomicity splits** — three parallel agents walked test conventions, MCP tool design, and skill-init-py state machine. Fixed: `skills_resolve` error guidance + `action` field; `_ok(result: Any)` type annotation; python.md test-import exception for private helpers. Rule rewrite: Error Handling anchored in purpose — CLI catches only to add agent-actionable context, not cosmetic catch-and-reprint. Tool refactor: `paths_remove` collapsed from two booleans (`recursive`/`all_entries`) to single `mode` parameter (`single`/`recursive`/`all`) per Make Invalid States Unrepresentable; MCP + CLI + tests updated; CLI uses mutually-exclusive argparse group for flag UX. Logged as problem: `test_convention_agent.py` lacks git worktree isolation (theoretical escape risk; fix deferred post-lockdown). 132 tests pass throughout.
 
 ### Phase 3 — Remaining skill lockdowns
 

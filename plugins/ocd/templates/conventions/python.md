@@ -73,7 +73,7 @@ One documented exception: MCP server subprocesses launched by Claude Code bootst
 ### Error Handling
 
 - **Validation raises exceptions.** Non-CLI code signals invalid state by raising — never by calling `print()` + `sys.exit()`. Library and facade code throws; the caller decides what to do with the exception.
-- **CLI dispatch catches and exits.** The CLI layer (`__main__.py` or equivalent entry) wraps facade calls in try/except, prints a user-facing error message, and exits with a non-zero code. This is the only layer that converts exceptions to exit codes.
+- **CLI catches only to add agent-actionable context.** Per design-principles *Agent-First Interfaces*, error output includes corrective guidance. The CLI layer wraps facade calls where it can add value — a corrective next-step command, domain-specific context, or translation from a generic error into domain terms. Where the raised message is already actionable, let the exception propagate — Python tracebacks are diagnostic and should not be suppressed for cosmetic reasons.
 
 ## Module Decomposition
 
@@ -84,7 +84,7 @@ Extract internal modules when a file contains distinct functional domains — gr
 ### Internal Module Pattern
 
 - **Underscore prefix signals not standalone.** A file named `_{purpose}.py` is internal to its package — not imported by external consumers, not exposed as a separate entry point. The prefix is load-bearing, not a stylistic choice.
-- **Consumers import from the package, not from internals.** External code reaches for `from pkg import get_connection` or `from pkg import *`, never `from pkg._db import get_connection`. The package's `__init__.py` facade re-exports internal names.
+- **Consumers import from the package, not from internals.** External code reaches for `from pkg import get_connection` or `from pkg import *`, never `from pkg._db import get_connection`. The package's `__init__.py` facade re-exports internal names. Exception: unit tests that exercise underscore-prefixed helpers (`_compute_hash`, `_parse_frontmatter`) import directly from the defining internal module — the facade does not re-export private names, so there is no other path to them. Public names used in tests still come through the facade.
 - **Same-package files use relative imports.** Within a package, sibling modules use `from . import _db` or `from ._db import get_connection`. Absolute imports from sibling modules break when the package is relocated or the import graph is rearranged.
 
 ```
@@ -100,8 +100,69 @@ skill-name/
 
 - `_constants.py` — shared configuration values (thresholds, ordering lists, magic numbers) used across module files; create when constants are shared between parent module and CLI or between multiple internal modules
 - `_helpers.py` — pure utility functions with no dependency on module state; functions take data in and return data out; create when utility functions are shared across multiple files in the package
-- `_init.py` — initialization and status logic; contains `init()` for infrastructure setup and `status()` for health checks; CLI exposes these as `init` and `status` subcommands; standard for any skill that requires infrastructure (database, deployed files, configuration). See `skill-init-py.md` for the full interface contract (return shapes, standard status labels, database state machine)
+- `_init.py` — initialization and status logic; contains `init()` for infrastructure setup and `status()` for health checks; CLI exposes these as `init` and `status` subcommands; standard for any package that requires infrastructure (database, deployed files, configuration). Full interface contract below in *Init/Status Contract*
 - `_{domain}.py` — focused on single functional domain; named for what it does (`_parser.py`, `_storage.py`, `_formatter.py`); create when a functional domain within a module has clear boundaries and its functions are primarily called by each other or by the parent facade
+
+### Init/Status Contract
+
+Packages that declare infrastructure (database, deployed files, configuration) implement `init()` and `status()` in a `_init.py` internal module. The functions follow a deterministic contract so the plugin framework can aggregate outputs across every init/status-capable package in the plugin.
+
+**Interface.**
+
+Both functions return `{"files": [...], "extra": [...]}`:
+
+- `init(force=False)` — deploy infrastructure; `force=True` rebuilds from scratch
+- `status()` — report infrastructure state
+
+Entry points take only their own domain-specific arguments. Project and plugin paths are resolved internally via the plugin framework helpers (`plugin.get_project_dir()`, `plugin.get_plugin_root()`, `plugin.get_plugin_data_dir()`) — see *Project, Plugin, and Data Directory Resolution*. Never accept those paths as parameters.
+
+`files` entries: `{"path": str, "before": str, "after": str}` — relative deployed path with state transitions (`absent`, `current`, `divergent`).
+
+`extra` entries: `{"label": str, "value": str}` — additional status lines rendered as aligned columns.
+
+**Status labels.**
+
+Two standard labels cover every state:
+
+- `overall status` — single line summarizing infrastructure state
+- `action needed` — copy-pastable slash command for next step
+
+**Database status pattern.**
+
+Packages with SQLite databases report through a deterministic state machine:
+
+| State | `overall status` | `action needed` |
+|-------|-----------------|-----------------|
+| DB file absent | `not initialized` | `/{plugin}:init` |
+| DB file present, schema divergent | `error — divergent schema` | `/{plugin}:init --force` |
+| DB file present, schema valid | `operational — {metric summary}` | `/{plugin}:{skill-command}` |
+| DB file present, SQL error | `error — {error message}` | `/{plugin}:init --force` |
+
+Schema validation uses subset check — expected tables must all be present; additional tables are not an error:
+
+```python
+expected_tables = {"records", "record_details", "record_tags"}
+actual_tables = {row[0] for row in conn.execute(
+    "SELECT name FROM sqlite_master WHERE type='table'",
+).fetchall()}
+if not expected_tables.issubset(actual_tables):
+    # divergent schema
+```
+
+**Metric summary.**
+
+Operational status includes a metric summary with counts relevant to the domain. Format: `operational — {count} {noun}, {count} {noun}, ...`
+
+- **Noun choice is domain-specific.** Use the domain's natural unit — entities, entries, notes, events, records — rather than generic "items" or "rows"
+- **Metric count balances signal against noise.** Include enough metrics for the user to understand infrastructure health at a glance without querying. Stop short of enumerating every table's row count — pick the counts that answer "is this healthy and actively in use?"
+
+**Action needed format.**
+
+- **Always present in status output.** Every state returns an `action needed` line, including the operational state — the value tells the user what the natural next step is, not whether there is a problem
+- **Value is a copy-pastable slash command.** No prose, no "Run" prefix, no parenthetical explanations. The user pastes the value directly
+- Not initialized → `/{plugin}:init`
+- Error states → `/{plugin}:init --force`
+- Operational → `/{plugin}:{skill-command}` (primary skill for this infrastructure)
 
 ### Facade Role
 

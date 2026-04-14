@@ -295,28 +295,36 @@ def paths_upsert(
 def paths_remove(
     db_path: str,
     entry_path: str,
-    recursive: bool = False,
-    all_entries: bool = False,
+    mode: str = "single",
 ) -> dict:
-    """Remove entries. Returns status dict."""
+    """Remove entries. Returns status dict.
+
+    Modes:
+        single    — remove one entry by path (default)
+        recursive — remove directory and all children
+        all       — remove every concrete entry (patterns table untouched)
+    """
+    if mode not in ("single", "recursive", "all"):
+        raise ValueError(
+            f"paths_remove: mode must be one of 'single', 'recursive', 'all'; got {mode!r}"
+        )
+
     _ensure_scanned(db_path)
     conn = get_connection(db_path)
     try:
-        if all_entries:
-            result = conn.execute(
-                "DELETE FROM entries"
-            )
+        if mode == "all":
+            result = conn.execute("DELETE FROM entries")
             conn.commit()
             return {"action": "removed_all", "count": result.rowcount}
 
         entry_path = entry_path.rstrip("/")
 
-        if recursive:
+        if mode == "recursive":
             existing = conn.execute(
                 "SELECT entry_type FROM entries WHERE path = ?", (entry_path,)
             ).fetchone()
             if existing and existing["entry_type"] == "file":
-                return {"action": "error", "message": "--recursive not valid for file entries"}
+                return {"action": "error", "message": "recursive mode not valid for file entries"}
             result = conn.execute(
                 "DELETE FROM entries WHERE path = ? OR path LIKE ?",
                 (entry_path, entry_path + "/%"),
@@ -325,14 +333,15 @@ def paths_remove(
             if result.rowcount == 0:
                 return {"action": "not_found", "path": entry_path}
             return {"action": "removed_recursive", "path": entry_path, "count": result.rowcount}
-        else:
-            result = conn.execute(
-                "DELETE FROM entries WHERE path = ?", (entry_path,)
-            )
-            conn.commit()
-            if result.rowcount == 0:
-                return {"action": "not_found", "path": entry_path}
-            return {"action": "removed", "path": entry_path}
+
+        # mode == "single"
+        result = conn.execute(
+            "DELETE FROM entries WHERE path = ?", (entry_path,)
+        )
+        conn.commit()
+        if result.rowcount == 0:
+            return {"action": "not_found", "path": entry_path}
+        return {"action": "removed", "path": entry_path}
     finally:
         conn.close()
 

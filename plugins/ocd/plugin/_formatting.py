@@ -37,11 +37,10 @@ def format_section(header: str, items: list[dict], extra: list[dict] | None = No
 
 
 def format_bare_skill(plugin_name: str, skill_name: str) -> str:
-    """Render a skill header with no infrastructure.
+    """Render a skill header in qualified `/plugin:skill` form.
 
-    Claude Code namespaces plugin slash commands automatically
-    (`/<plugin>:<command>` on collision, `/<command>` when unique),
-    so the skill name is used verbatim without a plugin prefix.
+    Per design-principles Agent-First Interfaces, every agent-emitted
+    skill reference uses the qualified form to stay unambiguous across
+    contexts and installed plugins.
     """
-    del plugin_name  # retained for signature compatibility with init-skill branch
-    return f"/{skill_name}"
+    return f"/{plugin_name}:{skill_name}"

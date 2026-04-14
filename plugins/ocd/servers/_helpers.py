@@ -21,12 +21,13 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+from typing import Any
 
 if "CLAUDE_PROJECT_DIR" not in os.environ:
     os.environ["CLAUDE_PROJECT_DIR"] = str(Path.cwd().resolve())
 
 
-def _ok(result) -> str:
+def _ok(result: Any) -> str:
     """Serialize a successful result as a JSON string."""
     return json.dumps(result, default=str)
 

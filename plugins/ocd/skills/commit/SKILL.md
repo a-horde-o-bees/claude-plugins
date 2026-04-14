@@ -15,10 +15,6 @@ Commit working tree changes grouped by topic for readable git history. Each comm
 
 Fully automated — analyzes changes, groups by topic, drafts messages, executes commits. No user confirmation needed for grouping or messages. When grouping is ambiguous, keep changes together rather than splitting incorrectly.
 
-## Trigger
-
-User runs `/commit`
-
 ## Workflow
 
 1. Analyze working tree

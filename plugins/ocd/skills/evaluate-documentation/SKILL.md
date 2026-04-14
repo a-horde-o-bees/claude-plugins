@@ -31,10 +31,6 @@ Target determines which documentation files to evaluate:
 Accepted arguments:
 - `--target` — required; one of `project`, `architecture`, `readme`
 
-## Trigger
-
-User runs `/evaluate-documentation`
-
 ## Route
 
 1. If not --target: Exit to user — respond with skill description and argument-hint

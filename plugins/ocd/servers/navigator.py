@@ -46,7 +46,7 @@ Use Navigator first for orientation, then Grep/Glob for specific code searches o
 
 _NO_DB_MSG = json.dumps({
     "error": "Navigator database not initialized.",
-    "action": "Run /init or /navigator to create the database first.",
+    "action": "Run /ocd:init or /ocd:navigator to create the database first.",
 })
 
 
@@ -139,7 +139,7 @@ def paths_undescribed() -> str:
 
     Returns {done: true} when no work remains. Otherwise returns
     {done: false, remaining, directories, target, listing}.
-    Call repeatedly during /navigator workflow until done is true.
+    Call repeatedly during /ocd:navigator workflow until done is true.
     """
     if err := _check_db(): return err
     try:
@@ -151,17 +151,19 @@ def paths_undescribed() -> str:
 @mcp.tool()
 def paths_remove(
     entry_path: str,
-    recursive: bool = False,
-    all_entries: bool = False,
+    mode: str = "single",
 ) -> str:
     """Remove entries from database. Rarely needed — scan handles cleanup automatically.
+
+    Args:
+        entry_path: File or directory path. Ignored when mode="all".
+        mode: "single" (default) removes one entry; "recursive" removes a directory and all children; "all" removes every concrete entry (patterns table unaffected).
 
     Returns {action: "removed"|"removed_recursive"|"removed_all"|"not_found"|"error", ...}.
     """
     if err := _check_db(): return err
     try:
-        return _ok(_nav.paths_remove(DB_PATH, entry_path, recursive=recursive,
-                                    all_entries=all_entries))
+        return _ok(_nav.paths_remove(DB_PATH, entry_path, mode=mode))
     except Exception as e:
         return _err(e)
 
@@ -175,13 +177,16 @@ def paths_remove(
 def skills_resolve(name: str) -> str:
     """Resolve skill name to SKILL.md path. Searches personal, project, plugin-dir, marketplace.
 
-    Returns {path} on success, {error} if not found.
+    Returns {path} on success, {error, action} if not found.
     """
     try:
         result = _nav.skills_resolve(name)
         if result:
             return _ok({"path": str(result)})
-        return json.dumps({"error": f"Skill not found: {name}"})
+        return json.dumps({
+            "error": f"Skill not found: {name}",
+            "action": "Call skills_list to see all discoverable skills, or verify the skill name spelling.",
+        })
     except Exception as e:
         return _err(e)
 

@@ -10,10 +10,6 @@ allowed-tools:
 
 Bundle the full development checkpoint cycle — commit, push, marketplace refresh, plugin update, restart recommendation. Ensures every step runs and reports the result.
 
-## Trigger
-
-User runs `/checkpoint`
-
 ## Route
 
 1. Dispatch Workflow

@@ -5,7 +5,7 @@ allowed-tools:
   - Bash(git *)
 description: >
   Push commits to remote. Requires explicit --branch to name the push target.
-  Runs /commit first if uncommitted changes exist, previews unpushed commits,
+  Runs /ocd:commit first if uncommitted changes exist, previews unpushed commits,
   then pushes.
 argument-hint: "--branch <branch-name>"
 ---
@@ -13,10 +13,6 @@ argument-hint: "--branch <branch-name>"
 # /push
 
 Push local commits to remote. Requires explicit branch name — no default target. Ensures working tree is committed first, previews unpushed commits, then pushes.
-
-## Trigger
-
-User runs `/push`
 
 ## Route
 
@@ -53,4 +49,4 @@ User runs `/push`
 - Explicit --branch is required — no default push target; naming the branch is the confirmation
 - Branch mismatch exits with explanation — no prompt, no default action; user re-invokes with correct intent or asks for help
 - If upstream is not set, use the provided --branch to set it with `git push -u origin {branch}`
-- Commit step is fully automated via /commit — no double-confirmation on commit content
+- Commit step is fully automated via /ocd:commit — no double-confirmation on commit content

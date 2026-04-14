@@ -54,7 +54,7 @@ class TestPluginCLI:
 
     def test_status_shows_skills(self) -> None:
         result = run("plugin", "status")
-        assert "/navigator" in result.stdout
+        assert "/ocd:navigator" in result.stdout
 
     def test_init_exits_zero(self, tmp_path: Path) -> None:
         result = run("plugin", "init", env={"CLAUDE_PROJECT_DIR": str(tmp_path)})

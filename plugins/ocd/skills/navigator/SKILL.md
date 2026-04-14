@@ -31,10 +31,6 @@ Navigator maintains SQLite index of project files and directories with human-wri
 
 Depth-first ordering is structural, not preference — parent directory descriptions are derived from their children's descriptions, so children must be finalized first. Each `paths_undescribed` call returns only leaf-level work within returned directory; child directories with their own undescribed entries appear in earlier iterations.
 
-## Trigger
-
-User runs `/navigator`
-
 ## Route
 
 1. Strip `--delegate` from `$ARGUMENTS` if present

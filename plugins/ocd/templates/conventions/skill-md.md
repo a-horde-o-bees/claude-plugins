@@ -27,8 +27,7 @@ Sections fall into three categories:
 | Description paragraph | Prescribed | Purpose statement per Purpose Statement guidance |
 | `## Process Model` | Common | How the skill operates and why — when mechanics are not self-evident from steps |
 | `## Scope` | Common | What the skill operates on and how arguments modify the target set |
-| `## Trigger` | Common | When/how the skill is invoked — include when trigger conditions are non-obvious |
-| `## Rules` | Common | Constraints for the skill executor; agent-facing constraints belong in component files |
+| `## Rules` | Common | Constraints for the skill executor; spawned-agent-facing constraints belong in component files |
 | `## Route` | Common | Resolve arguments, validate inputs, dispatch to Workflow |
 | `## Workflow` | Prescribed | Numbered steps using Process Flow Notation |
 | `### Report` | Common | Output format subheading within Workflow |

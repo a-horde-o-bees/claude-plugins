@@ -14,7 +14,7 @@ class TestRemoveEntry:
         assert result["action"] == "not_found"
 
     def test_remove_recursive(self, populated_db):
-        result = paths_remove(populated_db, "src/lib", recursive=True)
+        result = paths_remove(populated_db, "src/lib", mode="recursive")
         assert result["action"] == "removed_recursive"
         conn = get_connection(populated_db)
         rows = conn.execute(
@@ -24,7 +24,7 @@ class TestRemoveEntry:
         conn.close()
 
     def test_remove_recursive_file_error(self, populated_db):
-        result = paths_remove(populated_db, "src/main.py", recursive=True)
+        result = paths_remove(populated_db, "src/main.py", mode="recursive")
         assert result["action"] == "error"
 
     def test_remove_all(self, populated_db):
@@ -36,7 +36,7 @@ class TestRemoveEntry:
         conn.commit()
         conn.close()
 
-        result = paths_remove(populated_db, "", all_entries=True)
+        result = paths_remove(populated_db, "", mode="all")
         assert result["action"] == "removed_all"
 
         conn = get_connection(populated_db)
