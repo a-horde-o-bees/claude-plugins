@@ -238,13 +238,14 @@ Apply to the design:
 
 - **Prompt reliability** at claim-extraction and verification stages — no amount of design review substitutes for running against real doc content and measuring false-positive / false-negative rates. Early-iteration runs will need manual review.
 - **Token usage at scale** — for a large project, whole-run could consume >500k tokens. Need to budget for this and consider smaller `--target` granularity in v2.
-- **Cross-plugin references** in project-root docs — if project README mentions blueprint but blueprint wasn't in scope, it shows up as no-evidence. Handling deferred to v2.
 - **Interactive user decisions** during run — e.g., "this surgical edit is ambiguous; approve?" — the current design is fully automated. May need user-interrupt point for ambiguous edits.
+
+Cross-plugin references — a plugin's docs claiming content about a sibling plugin — are invalid by construction. Per-plugin docs describe only their own plugin; project-root docs describe all plugins from project-root scope. The skill rejects cross-plugin claims as a valid category and treats any appearance as a defect to fix.
 
 ## Verdict
 
 The design holds up in the walkthrough. The seven findings are refinements, not blockers. The core loop (discovery → wave dispatch → per-system fact bundle → claim extraction → verification → surgical edit → bubble-up summary) is sound and implementable.
 
-v1 scope: whole-project, Python-only, canonical docs + module docstrings + CLI help + MCP tool descriptions + frontmatter descriptions. Function docstrings, multi-language, cross-plugin resolution, interactive ambiguity resolution — all v2.
+v1 scope: whole-project, Python-only, canonical docs + module docstrings + CLI help + MCP tool descriptions + frontmatter descriptions. Function docstrings, multi-language, and interactive ambiguity resolution — all v2.
 
 Ready to commit design + skeleton skill files for user review.

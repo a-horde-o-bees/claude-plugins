@@ -57,6 +57,12 @@ Systematic walkthrough of the governance chain supporting evaluate-skill and eva
 
 All outstanding work before the marketplace goes public. Phased by dependency order. Each phase's items run in parallel internally; phases depend on the prior phase's completion. Check items as completed. Log entries under `.claude/logs/` carry the detail for each item where applicable.
 
+### Phase 0 — Low-hanging fruit
+
+Quick audits and fixes with no dependencies.
+
+- [ ] **Audit skill-to-skill slash-command references for unqualified form** — `skill-md.md` convention prohibits plugin-prefix on cross-skill references (Claude Code namespaces automatically). Scan skill files and commit messages for any `/plugin:command` patterns that should be `/command`.
+
 ### Phase 1 — Foundation cleanups
 
 Must land before code-building phases. These two cleanups correct existing convention violations that would compound if built on.
@@ -95,6 +101,8 @@ Scaffold committed in 986ddd2. Implementation work picks up from the scaffold. S
 - [ ] Fact-bundle builder — Python module under skill dir; ast-based; called by per-system agents
 - [ ] Navigator schema extension for `doc_verified_at` hash markers
 - [ ] `mark-verified` CLI subcommand for post-verification hash updates
+- [ ] **`ast.parse` reliability probe** — worktree prototype that ast-parses every `.py` file in the project and reports failures. Confirms the fact-bundle builder's foundation before relying on it.
+- [ ] **Idempotence verification** — run the skill twice on unchanged reality; assert second run produces zero diff. Core design promise; must be validated before v1.
 - [ ] End-to-end test on `lib/governance`; calibrate prompts based on observed false-positives / false-negatives
 - [ ] Iterate until stable
 
