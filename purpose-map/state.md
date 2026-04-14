@@ -53,41 +53,71 @@ Systematic walkthrough of the governance chain supporting evaluate-skill and eva
 - evaluate-governance SKILL.md (aligned with new conventions, graph anomaly artifact removed — misalignments now flow as ordinary findings)
 - Component files (_evaluation-workflow.md for both skills) aligned
 
-## Unevaluated Against Locked-Down Governance
+## V1 Readiness Backlog
 
-Skills and Python-related conventions that exist but have not been walked through against the new rules and conventions. Mark each as locked down after refactor verification.
+All outstanding work before the marketplace goes public. Phased by dependency order. Each phase's items run in parallel internally; phases depend on the prior phase's completion. Check items as completed. Log entries under `.claude/logs/` carry the detail for each item where applicable.
 
-**Skills** (ocd plugin unless noted):
+### Phase 1 — Foundation cleanups
 
-- [ ] commit
-- [ ] init
-- [ ] log
-- [ ] md-to-pdf
-- [ ] navigator
-- [ ] push
-- [ ] status
-- [ ] checkpoint (project-local)
-- [ ] sync-templates (project-local)
-- [ ] evaluate-documentation (tracked separately under Next Steps; redesign, not just align)
+Must land before code-building phases. These two cleanups correct existing convention violations that would compound if built on.
 
-**Python-related conventions:**
+- [ ] **`cli.py` → `__main__.py` convention cleanup** — see `.claude/logs/problem/cli.py overrides __main__.py convention.md`. Affects `lib/governance/cli.py`, `servers/navigator/cli.py`. Rename and update callers.
+- [ ] **Logging convention drop + dead declarations** — see `.claude/logs/problem/Logging convention drop and dead logger declarations.md`. Drop Logging subsection from `python.md`; remove 3 unused logger declarations in navigator files; clean misleading `__all__` comment.
 
-- [ ] python.md
-- [ ] testing.md
-- [ ] mcp-server.md
-- [ ] skill-init-py.md
+### Phase 2 — Python-related convention lockdowns
 
-The navigator MCP refactor is complete, so the navigator skill and mcp-server.md / python.md can use that as the concrete example informing the updated conventions.
+Walk each convention against its current consumers and mark locked down. Navigator's completed MCP refactor is the concrete example informing `mcp-server.md` and `python.md`.
 
-## Next Steps
+- [ ] `python.md` (will incorporate Phase 1 logging drop and `__future__` annotation clarification already committed)
+- [ ] `testing.md`
+- [ ] `mcp-server.md`
+- [ ] `skill-init-py.md`
 
-1. **Run evaluate-governance** against the locked-down chain to validate the governance graph topologically.
-2. **Redesign evaluate-documentation** using the same approach as evaluate-skill. Incorporate the leaves-first traversal insight (parent docs describe subsystems generally; each subsystem's docs carry the detail) and the observation that documentation lives in non-obvious surfaces — CLI help text, module docstrings, MCP tool descriptions, frontmatter `description:` fields, header purpose statements — not just the canonical README/architecture/CLAUDE.md/SKILL.md files. The skill now also owns Documentation Currency enforcement (formerly in system-documentation.md).
-3. **Check all validated system docs conform to the three-document model** — driven by the rebuilt evaluate-documentation skill, not by hand. This is the mass audit step; it runs skill-driven so drift in non-obvious surfaces is caught the same way drift in canonical documents is caught.
+### Phase 3 — Remaining skill lockdowns
 
-**Rationale for the ordering:** governance validation first to confirm the locked-down chain is self-consistent; then documentation work after evaluate-documentation is rebuilt, so the mass audit (step 3) runs against the new skill rather than being re-walked by hand.
+Each skill walked against the locked-down rules and conventions.
 
-## Open Items
+- [ ] `commit`
+- [ ] `init`
+- [ ] `log`
+- [ ] `md-to-pdf`
+- [ ] `navigator`
+- [ ] `push`
+- [ ] `status`
+- [ ] `checkpoint` (project-local)
+- [ ] `sync-templates` (project-local)
+
+### Phase 4 — `update-system-docs` implementation
+
+Scaffold committed in 986ddd2. Implementation work picks up from the scaffold. See `.claude/logs/idea/Replace evaluate-documentation with reality-first update-system-docs.md` for full design and follow-up list.
+
+- [ ] Discovery CLI — `plugins/ocd/skills/update-system-docs/__main__.py` + `_discovery.py`
+- [ ] Fact-bundle builder — Python module under skill dir; ast-based; called by per-system agents
+- [ ] Navigator schema extension for `doc_verified_at` hash markers
+- [ ] `mark-verified` CLI subcommand for post-verification hash updates
+- [ ] End-to-end test on `lib/governance`; calibrate prompts based on observed false-positives / false-negatives
+- [ ] Iterate until stable
+
+### Phase 5 — Mass documentation audit
+
+Run `update-system-docs` against the full project to create / regenerate all canonical docs and verify non-obvious surfaces. Review, iterate, repeat until stable.
+
+- [ ] First full-project run
+- [ ] Review generated docs against intent; tune prompts for observed gaps
+- [ ] Re-run until output converges
+- [ ] Delete old `evaluate-documentation` skill (replaced by `update-system-docs`)
+
+### Phase 6 — Pre-public release checks
+
+- [ ] Run `evaluate-governance` on full chain — confirms locked-down chain is self-consistent
+- [ ] Verify every system has required docs per `system-documentation.md`
+- [ ] Marketplace manifest sanity check (`.claude-plugin/marketplace.json` accurate; versions aligned)
+- [ ] Update root-level `README.md` and `architecture.md` for external consumers
+- [ ] Cut v1.0.0 on plugins; tag release
+
+## Open Items (deferred)
+
+These survive but are not v1 blockers:
 
 - **Convention loading on read** — conventions fire when files are read, not just modified. Governance reads from disk on every call (no database), so this is purely about hook behavior.
 - **`purpose-map/skill-migration.md`** — archival planning document for migrating the purpose-map evaluation workflow to a skill. References a stale component id (`c14 (Pit of Success)`) and the now-removed Pit of Success principle. Decide whether to action the migration or delete the document as abandoned planning.
