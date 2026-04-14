@@ -1,4 +1,5 @@
 ---
+name: init
 description: Initialize ocd conventions and skill infrastructure in current project
 argument-hint: "[--force] [--permissions]"
 allowed-tools:

@@ -1,4 +1,5 @@
 ---
+name: research
 description: |
   Structured solution research and implementation planning. Studies existing tools, proven approaches, and established patterns through iterative cycles: initialization, expand/consolidate/present cycles, directions, and implementation blueprint. Uses emergent schema with unified entity model and SQLite database.
 argument-hint: "[scope description]"

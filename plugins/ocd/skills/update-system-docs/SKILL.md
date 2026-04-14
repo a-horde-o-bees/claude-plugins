@@ -1,4 +1,5 @@
 ---
+name: update-system-docs
 description: Maintain project documentation by deriving it from code reality. Canonical docs (README, architecture, CLAUDE, SKILL) are regenerated from a deterministic fact bundle with unverifiable prose ported over from the prior version; non-obvious surfaces (module and function docstrings, CLI help text, MCP tool descriptions, frontmatter descriptions, section purpose statements) use surgical edits. Whole-project scope, bottom-up traversal; git diff is the review gate, unresolved questions bubble up for user judgment.
 argument-hint: "--target project"
 allowed-tools:

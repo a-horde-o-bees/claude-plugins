@@ -1,4 +1,5 @@
 ---
+name: status
 description: Report plugin infrastructure state
 allowed-tools:
   - Bash(python3 *)

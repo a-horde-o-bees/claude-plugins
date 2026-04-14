@@ -1,4 +1,5 @@
 ---
+name: init
 description: Initialize blueprint research infrastructure in current project
 argument-hint: "[--force]"
 allowed-tools:

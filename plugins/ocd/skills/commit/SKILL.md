@@ -1,4 +1,5 @@
 ---
+name: commit
 allowed-tools:
   - Bash(git *)
   - Bash(python3 scripts/sync-templates.py)

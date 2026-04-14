@@ -154,20 +154,22 @@ All delegations follow the same structural pattern — mechanism: followed by wh
 
 | Prefix | Mechanism | Example |
 |--------|-----------|---------|
-| skill: | Skill tool | skill: /commit |
+| skill: | Skill tool | skill: /ocd:commit |
 | bash: | Bash tool | bash: `git status --porcelain` |
 | tool name: | Dedicated tool (Read, Grep, Glob, MCP tools) | Read: `settings.json`, scope_analyze: paths=[{skill-path}] |
 | Call: | Read and follow a file or section | Call: `_protocol.md` |
 | Spawn: | Delegate to a new agent | Spawn: Call: `_workflow.md` |
 
 ```
-1. skill: /commit
+1. skill: /ocd:commit
 2. bash: `git status --porcelain`
 3. Read: `settings.json`
 4. scope_analyze: paths=[{skill-path}]
 ```
 
-Invocation types are optional — omit when the mechanism is unambiguous from context. Use when a workflow mixes mechanisms and the agent needs to distinguish. Steps without an invocation type are executed by agent judgment. The prefix can appear after an em dash — `1. Commit — skill: /commit`.
+Invocation types are optional — omit when the mechanism is unambiguous from context. Use when a workflow mixes mechanisms and the agent needs to distinguish. Steps without an invocation type are executed by agent judgment. The prefix can appear after an em dash — `1. Commit — skill: /ocd:commit`.
+
+Target format for `skill:` follows `/plugin:skill` when invoking a plugin skill, or `/skill` only when invoking a project-local skill. See `skill-md.md` Cross-Skill References for rationale.
 
 ## Arguments
 

@@ -1,4 +1,5 @@
 ---
+name: research-and-design
 description: Research an open question and produce a validated design, driving convergence via a persistent question list rather than fixed-wave dispatch. Spawns focused research agents with skeptical briefs, validates assumptions in worktree-isolated prototypes, and surfaces architectural decisions as discrete user acknowledgments. Delivers a design document with open questions explicitly tracked for follow-up.
 argument-hint: "<research-prompt>"
 allowed-tools:

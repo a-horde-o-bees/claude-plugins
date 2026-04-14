@@ -1,4 +1,5 @@
 ---
+name: md-to-pdf
 description: Export markdown files to professionally formatted PDF using GitHub-standardized CSS styling.
 argument-hint: "--src <file> [--src <file> ...] --dest <dir>"
 allowed-tools:

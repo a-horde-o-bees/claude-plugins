@@ -1,4 +1,5 @@
 ---
+name: push
 allowed-tools:
   - Skill
   - Bash(git *)
@@ -32,7 +33,7 @@ User runs `/push`
 1. Check for uncommitted changes
     1. Run `git status --short`
     2. If changes exist:
-        1. Run `/commit`
+        1. skill: `/ocd:commit`
         2. If commit fails or produces no commits: Exit to user — report failure
 2. Check for unpushed commits
     1. Run `git log --oneline @{upstream}..HEAD`

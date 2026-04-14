@@ -61,7 +61,7 @@ All outstanding work before the marketplace goes public. Phased by dependency or
 
 Quick audits and fixes with no dependencies.
 
-- [x] **Strip plugin-prefix from blueprint skill names to match convention** — blueprint's `init`, `status`, `reimagine`, `research` skills carried `name: blueprint-*` frontmatter in violation of `skill-md.md:54`. Stripped the prefixes, updated titles, call sites, docs, and bumped blueprint to 0.0.63. MCP server name `blueprint-research` retained (distinct concept). Deferred any further friction-surfacing until a concrete collision case surfaces in use.
+- [x] **Cross-skill reference refactor + skill-md convention correction** — A/B probe between `/ocd:status` (folder-derived) and `/ocd:status-alt` (frontmatter `name:`) established: folder-derived names resolve via Skill tool only when qualified; frontmatter-declared names resolve both qualified and unqualified. Concrete failure was `/checkpoint` calling `skill: /commit` and Skill tool returning "Unknown skill". Resolution: (1) convention rewritten — `name:` is now required on every skill, with the rationale embedded in the field description; (2) new Cross-Skill References section in `skill-md.md` mandates `/plugin:skill` form for plugin skill targets; (3) `name:` added to every SKILL.md across ocd, blueprint, and project-local; (4) every `skill:` invocation in Workflow blocks converted to qualified form; (5) PFN rule examples updated to show qualified form. Ocd 0.0.236, blueprint 0.0.64.
 
 ### Phase 1 — Foundation cleanups
 

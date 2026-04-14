@@ -1,4 +1,5 @@
 ---
+name: evaluate-skill
 description: Evaluate a skill through static analysis of its files against governance and runtime exercise of its pathways in isolated worktrees. Produces findings classified as auto-applicable defects or observations requiring user judgment.
 argument-hint: "--target </skill-name | path/to/SKILL.md>"
 allowed-tools:

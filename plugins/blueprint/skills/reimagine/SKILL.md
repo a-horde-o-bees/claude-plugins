@@ -1,4 +1,5 @@
 ---
+name: reimagine
 description: |
   Abstract an existing capability into a generalized problem description for unbiased solution research. Reads target, extracts what problem it solves without implementation bias, and captures system constraints.
 argument-hint: "--target <path | natural language description>"
@@ -53,13 +54,13 @@ User runs `/reimagine`
 4. User refines or approves scope via AskUserQuestion:
     1. If user approves: proceed
     2. Else: incorporate refinements, re-present scope; repeat until approved
-5. Exit to user — present approved scope statement for user to provide as `/research` target
+5. Exit to user — present approved scope statement for user to provide as `/blueprint:research` target
 
 ### Report
 
 - Generalized scope statement (approved version)
 - System constraints
-- Next step: `/research [scope]`
+- Next step: `/blueprint:research [scope]`
 
 ## Rules
 

@@ -38,7 +38,7 @@ Child conventions (e.g., evaluation-skill-md.md) may prescribe additional sectio
 
 ## YAML Frontmatter
 
-Frontmatter is optional but recommended. Claude Code falls back to directory name for `name` and first markdown paragraph for `description` when omitted.
+Frontmatter declares skill metadata for Claude Code. The `name` field is required on every skill; other fields are optional.
 
 ```yaml
 ---
@@ -51,7 +51,7 @@ Fields:
 
 | Field | Default | Description |
 |-------|---------|-------------|
-| `name` | Directory name | Slash command name. Lowercase letters, numbers, hyphens only (max 64 characters). Do not prefix with the plugin name — Claude Code namespaces plugin slash commands automatically (`/<plugin>:<command>` on collision, `/<command>` when unique), so a redundant prefix double-namespaces. |
+| `name` | Required | Slash command name. Matches the directory name exactly. Lowercase letters, numbers, hyphens only (max 64 characters). Must be declared explicitly — folder-derived names do not resolve unqualified via the Skill tool (it returns "Unknown skill" or "not a prompt-based skill"), which breaks cross-skill `skill:` invocations. Do not prefix with the plugin name — Claude Code namespaces plugin slash commands automatically via `/<plugin>:<command>`. |
 | `description` | First markdown paragraph | Canonical purpose statement — same text as the body description paragraph. Loaded at metadata level for skill discovery; Claude uses this to decide when skill is relevant. |
 | `argument-hint` | None | Autocomplete hint shown after `/command`. Format follows Argument Declaration in Process Flow Notation. |
 | `disable-model-invocation` | `false` | Prevents Claude from auto-loading skill |
@@ -106,6 +106,17 @@ Route pattern for `{target}` evaluation:
 
 - When natural language adjustments conflict with other provided flags, skill executor surfaces the conflict and works with user to resolve — no implicit precedence
 - `--pattern` is only meaningful for directory targets — Route ignores it when target resolves to single file
+
+## Cross-Skill References
+
+When a skill's Workflow invokes another skill via `skill:`, use the qualified form `/plugin:skill` whenever the target is a plugin skill. The Skill tool requires qualification for plugin skills — unqualified forms fail with "Unknown skill" even when the name is unique, because the tool does not apply the CLI router's automatic namespacing fallback.
+
+Examples:
+
+- From any skill (plugin or project-local) targeting a plugin skill: `skill: /ocd:commit`, `skill: /blueprint:research`
+- From a project-local skill targeting another project-local skill: `skill: /checkpoint` — unqualified resolves because there is no plugin namespace to disambiguate
+
+This rule governs PFN `skill:` invocations only. User-typed slash commands at the CLI prompt use a different resolver and accept unqualified names when unique.
 
 ## Directory Structure
 

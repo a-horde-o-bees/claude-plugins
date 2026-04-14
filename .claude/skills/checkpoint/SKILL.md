@@ -20,8 +20,8 @@ User runs `/checkpoint`
 
 ## Workflow
 
-1. Commit — skill: `/commit`
-2. Push — skill: `/push --branch main`
+1. Commit — skill: `/ocd:commit`
+2. Push — skill: `/ocd:push --branch main`
 3. Marketplace refresh — bash: `claude plugins marketplace update a-horde-o-bees`
 4. Update plugins:
 

@@ -1,4 +1,5 @@
 ---
+name: sync-templates
 description: Sync plugin governance files from source templates to deployed copies for testing without committing
 ---
 

@@ -1,4 +1,5 @@
 ---
+name: evaluate-governance
 description: Evaluate the rules and conventions governance chain foundations-first, one level at a time. A spawned agent evaluates each level; the skill executor classifies findings, applies defects, and exits to caller when observations need judgment. User selects which level to start at on each invocation; convergence is user-driven.
 argument-hint: "--target project"
 allowed-tools:
