@@ -41,20 +41,7 @@ Below is a non-exhaustive list of patterns worth noticing. It is a partial inven
 
 Don't filter findings into named categories or worry about which item in the list a finding belongs to. One file may surface several different problems at once; record each as you encounter it.
 
-## Graph Anomalies
-
-A graph anomaly is different from a finding. A finding is something wrong with the content. A graph anomaly says the dependency mapping you are walking isn't trustworthy — the listed `governed_by` relationships do not reflect how the files actually relate, and the ordering invariant the evaluation depends on is broken.
-
-Anything that appears to invalidate the current dependency mapping is an anomaly. For example: a file uses concepts no prior file in this pass introduced, a declared governor is never actually referenced by the file's content, a cross-reference points at a file scheduled for a later level. These are illustrations, not an exhaustive list — trust the general test.
-
-Note the boundary: a stale tool reference inside a file that otherwise respects its declared governors is a finding, not an anomaly. The anomaly test is about whether dependency ordering is trustworthy, not about whether a downstream file has individual content errors.
-
-When you find an anomaly, **stop traversal immediately**. Return:
-
-- A description of the anomaly — which file, what you observed, what the frontmatter would need to say to match reality
-- Every finding accumulated so far
-
-Partial findings are trustworthy: everything before the bail point was evaluated against context that had no ordering problem. Do not route around an anomaly and keep reading.
+Dependency-mapping misalignments are findings too — a file using concepts no prior file introduced, a declared governor never referenced by the file's content, a cross-reference pointing to a later level. These surface as findings with `needs judgment` as the proposed fix since correcting them requires intent decisions the user must make. The skill executor's triage classifies them as observations and exits to caller, letting the user fix the frontmatter before re-invoking.
 
 ## Accumulation and Return
 
@@ -70,4 +57,4 @@ Findings are structurally a flat list — each one is independent and stands on 
 - Why — cite the governor rule contradicted, the concept that should have been consistent, or the friction a cold reader would hit
 - Proposed fix — a concrete deterministic edit if you can describe one that preserves intent, or the literal string `needs judgment` if the right fix requires choosing between alternatives, changing semantic meaning, or reasoning the original author would need to confirm
 
-Return the list when you have exhausted the files given to you, or when you are told no further levels will come. If a graph anomaly forces an early return, include the anomaly description alongside findings accumulated so far.
+Return the list when you have exhausted the files given to you, or when you are told no further levels will come.
