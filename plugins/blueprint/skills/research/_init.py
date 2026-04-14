@@ -31,7 +31,7 @@ def _status_extra() -> list[dict]:
     if not path.exists():
         return [
             {"label": "overall status", "value": "not initialized"},
-            {"label": "action needed", "value": "/blueprint-init"},
+            {"label": "action needed", "value": "/init"},
         ]
 
     try:
@@ -45,7 +45,7 @@ def _status_extra() -> list[dict]:
             conn.close()
             return [
                 {"label": "overall status", "value": "error \u2014 divergent schema"},
-                {"label": "action needed", "value": "/blueprint-init --force"},
+                {"label": "action needed", "value": "/init --force"},
             ]
 
         total = conn.execute("SELECT COUNT(*) as c FROM entities").fetchone()["c"]
@@ -61,14 +61,14 @@ def _status_extra() -> list[dict]:
 
         extra = [{"label": "overall status", "value": f"operational \u2014 {total} entities, {researched} researched, {new} new, {notes} notes"}]
 
-        extra.append({"label": "action needed", "value": "/blueprint-research"})
+        extra.append({"label": "action needed", "value": "/research"})
 
         return extra
 
     except sqlite3.Error as e:
         return [
             {"label": "overall status", "value": f"error \u2014 {e}"},
-            {"label": "action needed", "value": "/blueprint-init --force"},
+            {"label": "action needed", "value": "/init --force"},
         ]
 
 

@@ -1,17 +1,16 @@
 ---
-name: blueprint-status
 description: Show blueprint plugin version, rule states, research database status, and actionable next steps
 allowed-tools:
   - Bash(python3 *)
 ---
 
-# /blueprint-status
+# /status
 
 Report blueprint plugin infrastructure state.
 
 ## Trigger
 
-User runs `/blueprint-status`
+User runs `/status`
 
 ## Workflow
 

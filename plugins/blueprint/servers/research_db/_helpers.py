@@ -15,7 +15,7 @@ DB_PATH = os.environ.get("DB_PATH", "blueprint/data/research.db")
 
 _NO_DB_MSG = json.dumps({
     "error": "Database not initialized.",
-    "action": "Run /blueprint-init or /blueprint-research to create the database first.",
+    "action": "Run /init or /research to create the database first.",
 })
 
 

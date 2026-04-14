@@ -4,7 +4,7 @@ MCP server providing deterministic operations for agent-facing instructions wher
 
 ## Purpose
 
-The research database supports the `/blueprint-research` skill across its cycle-based workflow: initialization, repeating expand/consolidate/present cycles, directions, and implementation blueprint. It stores entities (tools, projects, sources being studied), their notes (atomic facts), assessment criteria, coverage domains, goals, and analysis outputs. Every write operation enforces business rules (URL dedup, stage validation, criteria constraints) so agent instructions focus on research decisions, not data manipulation.
+The research database supports the `/research` skill across its cycle-based workflow: initialization, repeating expand/consolidate/present cycles, directions, and implementation blueprint. It stores entities (tools, projects, sources being studied), their notes (atomic facts), assessment criteria, coverage domains, goals, and analysis outputs. Every write operation enforces business rules (URL dedup, stage validation, criteria constraints) so agent instructions focus on research decisions, not data manipulation.
 
 ## Layers
 

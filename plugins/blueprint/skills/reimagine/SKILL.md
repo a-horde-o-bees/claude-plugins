@@ -1,5 +1,4 @@
 ---
-name: blueprint-reimagine
 description: |
   Abstract an existing capability into a generalized problem description for unbiased solution research. Reads target, extracts what problem it solves without implementation bias, and captures system constraints.
 argument-hint: "--target <path | natural language description>"
@@ -9,7 +8,7 @@ allowed-tools:
   - AskUserQuestion
 ---
 
-# /blueprint-reimagine
+# /reimagine
 
 Abstract an existing capability into a generalized problem description for unbiased solution research. Separates what a capability does (the problem it solves) from how it currently works (implementation details). System constraints (platform, runtime, invocation model) are preserved as research filters — they narrow results without shaping the search.
 
@@ -17,7 +16,7 @@ Produces an unbiased starting point so that research finds existing tools, prove
 
 ## Trigger
 
-User runs `/blueprint-reimagine`
+User runs `/reimagine`
 
 ## Route
 
@@ -54,13 +53,13 @@ User runs `/blueprint-reimagine`
 4. User refines or approves scope via AskUserQuestion:
     1. If user approves: proceed
     2. Else: incorporate refinements, re-present scope; repeat until approved
-5. Exit to user — present approved scope statement for user to provide as `/blueprint-research` target
+5. Exit to user — present approved scope statement for user to provide as `/research` target
 
 ### Report
 
 - Generalized scope statement (approved version)
 - System constraints
-- Next step: `/blueprint-research [scope]`
+- Next step: `/research [scope]`
 
 ## Rules
 

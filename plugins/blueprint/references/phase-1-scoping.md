@@ -10,7 +10,7 @@ When database contains entities at Phase 1 start (from initialization arguments,
 
 ### Input
 
-1. Parse user input into parent concept; available as `$ARGUMENTS` if passed with `/blueprint-research`, or discussed interactively
+1. Parse user input into parent concept; available as `$ARGUMENTS` if passed with `/research`, or discussed interactively
 2. Surface-level research — fetch examples, check what exists, identify landscape
     - Web searches to gauge breadth of space
     - Note meta-sources encountered (directories, associations, aggregators)

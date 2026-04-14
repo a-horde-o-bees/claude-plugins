@@ -1,5 +1,4 @@
 ---
-name: blueprint-research
 description: |
   Structured solution research and implementation planning. Studies existing tools, proven approaches, and established patterns through iterative cycles: initialization, expand/consolidate/present cycles, directions, and implementation blueprint. Uses emergent schema with unified entity model and SQLite database.
 argument-hint: "[scope description]"
@@ -16,7 +15,7 @@ allowed-tools:
   - mcp__plugin_blueprint_blueprint-research__*
 ---
 
-# /blueprint-research
+# /research
 
 Structured solution research and implementation planning. Studies existing tools, proven approaches, and established patterns to fulfill a defined purpose: defines scope with integrated entity assessment, iterates expand/consolidate/present cycles to build and refine the research landscape, synthesizes cross-entity patterns, and produces actionable implementation blueprint.
 
@@ -82,7 +81,7 @@ Domain knowledge guard: `6-domain-knowledge.md` documents what exists (platforms
 
 ## Trigger
 
-User runs `/blueprint-research`. Optional `$ARGUMENTS` passed as initial scope input for Initialization.
+User runs `/research`. Optional `$ARGUMENTS` passed as initial scope input for Initialization.
 
 ## Route
 

@@ -61,7 +61,7 @@ All outstanding work before the marketplace goes public. Phased by dependency or
 
 Quick audits and fixes with no dependencies.
 
-- [ ] **Audit skill-to-skill slash-command references for unqualified form** — `skill-md.md` convention prohibits plugin-prefix on cross-skill references (Claude Code namespaces automatically). Scan skill files and commit messages for any `/plugin:command` patterns that should be `/command`.
+- [x] **Strip plugin-prefix from blueprint skill names to match convention** — blueprint's `init`, `status`, `reimagine`, `research` skills carried `name: blueprint-*` frontmatter in violation of `skill-md.md:54`. Stripped the prefixes, updated titles, call sites, docs, and bumped blueprint to 0.0.63. MCP server name `blueprint-research` retained (distinct concept). Deferred any further friction-surfacing until a concrete collision case surfaces in use.
 
 ### Phase 1 — Foundation cleanups
 

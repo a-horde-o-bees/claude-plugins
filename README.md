@@ -36,8 +36,8 @@ To track a specific branch (e.g., for pre-release testing):
 Restart Claude session so hooks and commands load, then initialize in target project:
 
 ```
-/init
-/blueprint-init
+/ocd:init
+/blueprint:init
 ```
 
 Restart Claude session again so deployed rules auto-load into context.
@@ -52,15 +52,15 @@ Update plugins after upstream changes:
 After updating, check if deployed rules and conventions need updating:
 
 ```
-/status
-/blueprint-status
+/ocd:status
+/blueprint:status
 ```
 
 If any files show `divergent`, force-update and restart:
 
 ```
-/init --force
-/blueprint-init --force
+/ocd:init --force
+/blueprint:init --force
 /exit
 claude --continue
 ```
@@ -78,7 +78,7 @@ Remove a plugin or the marketplace:
 
 For contributors working on plugin source.
 
-**After cloning, run `/init` and `/blueprint-init` in the cloned project to deploy local rules, conventions, and databases.** These files are gitignored — every clone initializes its own. Skipping init leaves the working agent without the rules that govern development here, and the plugin databases will be missing.
+**After cloning, run `/ocd:init` and `/blueprint:init` in the cloned project to deploy local rules, conventions, and databases.** These files are gitignored — every clone initializes its own. Skipping init leaves the working agent without the rules that govern development here, and the plugin databases will be missing.
 
 Two approaches:
 
@@ -121,15 +121,15 @@ claude --continue
 Check if deployed rules and conventions need updating:
 
 ```
-/status
-/blueprint-status
+/ocd:status
+/blueprint:status
 ```
 
 If any files show `divergent`, force-update and restart:
 
 ```
-/init --force
-/blueprint-init --force
+/ocd:init --force
+/blueprint:init --force
 /exit
 claude --continue
 ```
