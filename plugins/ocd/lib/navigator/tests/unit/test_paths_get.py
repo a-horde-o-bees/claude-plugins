@@ -1,7 +1,7 @@
 """Unit tests for paths_get (describe_path)."""
 
-from servers.navigator._db import get_connection
-from servers.navigator import paths_get
+from lib.navigator._db import get_connection
+from lib.navigator import paths_get
 
 
 class TestDescribePath:

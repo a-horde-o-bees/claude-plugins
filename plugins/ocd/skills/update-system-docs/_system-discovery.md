@@ -16,7 +16,7 @@ Directory containing `.claude-plugin/plugin.json`.
 
 ### 3. MCP Server
 
-Directory under `*/servers/*/` with package structure (`__init__.py` + `__main__.py`) and FastMCP usage in `__main__.py` (either `from mcp.server.fastmcp import FastMCP` import or `FastMCP(` construction).
+Single module under `*/servers/` (`*/servers/<name>.py`, not underscore-prefixed) with FastMCP usage (either `from mcp.server.fastmcp import FastMCP` import or `FastMCP(` construction). The module is a thin adapter over a domain library under `lib/`.
 
 ### 4. Hook System
 
@@ -50,7 +50,8 @@ DAG for this project:
 ```
 / (project root)
 └── plugins/ocd/ (plugin)
-    ├── plugins/ocd/servers/navigator/ (mcp-server)
+    ├── plugins/ocd/servers/navigator.py (mcp-server)
+    ├── plugins/ocd/lib/navigator/ (library)
     ├── plugins/ocd/lib/governance/ (library)
     ├── plugins/ocd/hooks/auto_approval/ (hook-system)
     ├── plugins/ocd/plugin/ (framework)
@@ -87,15 +88,7 @@ Per `system-documentation.md` Document Separation and Nesting Discipline:
 
 ## CLI Entry Point Resolution
 
-The skill extracts CLI commands for the fact bundle. Standard location is `__main__.py` per Python package convention. Some existing subsystems use `cli.py` as an accidental override of the convention. The skill gracefully handles both:
-
-```
-1. Check for __main__.py in system root — primary
-2. If absent, check for cli.py — fallback
-3. Extract argparse setup or click decorators from whichever exists
-```
-
-Existing cli.py usage is noted as separate cleanup work; not a blocker for this skill.
+The skill extracts CLI commands for the fact bundle from `__main__.py` in the system root — the single source of truth per Python package convention. MCP server modules (`servers/<name>.py`) have no CLI surface; their CLI lives in the paired library under `lib/<name>/__main__.py`.
 
 ## Implementation
 
@@ -104,12 +97,13 @@ Discovery is a CLI subcommand at `${CLAUDE_PLUGIN_ROOT}/run.py update_system_doc
 ```json
 {
   "systems": [
-    {"path": "plugins/ocd/servers/navigator", "kind": "mcp-server", "parent": "plugins/ocd"},
+    {"path": "plugins/ocd/servers/navigator.py", "kind": "mcp-server", "parent": "plugins/ocd"},
+    {"path": "plugins/ocd/lib/navigator", "kind": "library", "parent": "plugins/ocd"},
     {"path": "plugins/ocd/lib/governance", "kind": "library", "parent": "plugins/ocd"},
     ...
   ],
   "waves": [
-    ["plugins/ocd/servers/navigator", "plugins/ocd/lib/governance", ...],
+    ["plugins/ocd/servers/navigator.py", "plugins/ocd/lib/navigator", "plugins/ocd/lib/governance", ...],
     ["plugins/ocd"],
     ["."]
   ]

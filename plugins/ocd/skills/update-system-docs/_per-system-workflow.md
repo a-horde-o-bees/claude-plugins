@@ -17,7 +17,7 @@ Workflow for one per-system agent spawned by the skill executor. Processes a sin
     - Per .py file: module docstring, public + private symbols with signatures + docstrings, imports
     - Manifests (plugin.json, pyproject.toml, requirements.txt)
     - MCP tool definitions from `@mcp.tool` decorator walks
-    - CLI commands from `__main__.py` argparse/click walks; graceful fallback to cli.py
+    - CLI commands from `__main__.py` argparse/click walks
     - Frontmatter from governed markdown files
     - Pattern signals
     - Child summaries merged into bundle

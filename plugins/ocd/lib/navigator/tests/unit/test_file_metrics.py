@@ -2,9 +2,9 @@
 
 from pathlib import Path
 
-from servers.navigator._db import get_connection
-from servers.navigator._scanner import _compute_file_metrics, _compute_git_hash
-from servers.navigator import paths_upsert
+from lib.navigator._db import get_connection
+from lib.navigator._scanner import _compute_file_metrics, _compute_git_hash
+from lib.navigator import paths_upsert
 
 
 class TestComputeFileMetrics:

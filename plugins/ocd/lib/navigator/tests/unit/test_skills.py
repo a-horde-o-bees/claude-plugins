@@ -9,8 +9,8 @@ from pathlib import Path
 
 import pytest
 
-from servers.navigator import _skills
-from servers.navigator._skills import (
+from lib.navigator import _skills
+from lib.navigator._skills import (
     _parse_frontmatter_name,
     _skill_name,
     _search_skills_dir,

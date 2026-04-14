@@ -35,7 +35,7 @@ Accepted arguments:
 
 1. If not --target: Exit to caller — respond with skill description and argument-hint
 2. If {target} is not `project`: Exit to caller — target must be `project`
-3. Discover governance levels — bash: `CLAUDE_PROJECT_DIR=$(pwd) python3 ${CLAUDE_PLUGIN_ROOT}/run.py lib.governance.cli order --json`
+3. Discover governance levels — bash: `CLAUDE_PROJECT_DIR=$(pwd) python3 ${CLAUDE_PLUGIN_ROOT}/run.py lib.governance order --json`
 4. If result has dangling references:
     1. Present dangling references to user — which file declares each missing governor
     2. Exit to caller — fix offending `governed_by` frontmatter and re-invoke

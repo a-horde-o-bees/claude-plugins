@@ -2,8 +2,8 @@
 
 import pytest
 
-from servers.navigator._db import get_connection
-from servers.navigator import paths_upsert
+from lib.navigator._db import get_connection
+from lib.navigator import paths_upsert
 
 
 class TestSetEntry:

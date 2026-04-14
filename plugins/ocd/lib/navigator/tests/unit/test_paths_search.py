@@ -1,6 +1,6 @@
 """Unit tests for paths_search (search_entries)."""
 
-from servers.navigator import paths_search
+from lib.navigator import paths_search
 
 
 class TestSearchEntries:

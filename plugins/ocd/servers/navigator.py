@@ -2,7 +2,7 @@
 
 Agent-facing tools for project structure navigation, governance discovery,
 reference mapping, and scope analysis. Business logic lives in
-servers.navigator; this server is a thin presentation layer.
+lib.navigator; this module is a thin presentation layer.
 
 Tools follow object_action naming: paths_*, governance_*, skills_*,
 references_*, scope_*. All return structured JSON.
@@ -18,9 +18,9 @@ from pathlib import Path
 
 from mcp.server.fastmcp import FastMCP
 
-import servers.navigator as _nav
+import lib.navigator as _nav
 
-from .._helpers import _err, _ok
+from ._helpers import _err, _ok
 
 # --- Configuration ---
 

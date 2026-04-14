@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from servers.navigator._references import (
+from lib.navigator._references import (
     _parse_skill_refs,
     _parse_governance_refs,
     _classify_and_parse,
@@ -42,7 +42,7 @@ class TestParseSkillRefs:
         skill_md = tmp_path / "SKILL.md"
         skill_md.write_text(
             "---\nname: test\n---\n\n"
-            "1. Run `${CLAUDE_PLUGIN_ROOT}/run.py servers.navigator scan`\n"
+            "1. Run `${CLAUDE_PLUGIN_ROOT}/run.py lib.navigator scan`\n"
         )
         refs = _parse_skill_refs(str(skill_md))
         assert refs == []
@@ -137,7 +137,7 @@ class TestParseSkillRefs:
         skill_md = tmp_path / "SKILL.md"
         skill_md.write_text(
             "---\nname: test\n---\n\n"
-            "1. Run `${CLAUDE_PLUGIN_ROOT}/run.py servers.navigator scan`\n"
+            "1. Run `${CLAUDE_PLUGIN_ROOT}/run.py lib.navigator scan`\n"
         )
         refs = _parse_skill_refs(str(skill_md))
         assert refs == []

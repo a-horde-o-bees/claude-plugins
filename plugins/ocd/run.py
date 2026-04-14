@@ -6,7 +6,7 @@ relative imports within packages.
 
 Usage:
     python3 run.py plugin init
-    python3 run.py servers.navigator.cli describe .
+    python3 run.py lib.navigator describe .
 """
 
 import sys

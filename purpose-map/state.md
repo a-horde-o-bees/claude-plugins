@@ -67,7 +67,7 @@ Quick audits and fixes with no dependencies.
 
 Must land before code-building phases. These two cleanups correct existing convention violations that would compound if built on.
 
-- [ ] **`cli.py` → `__main__.py` convention cleanup** — see `.claude/logs/problem/cli.py overrides __main__.py convention.md`. Affects `lib/governance/cli.py`, `servers/navigator/cli.py`. Rename and update callers.
+- [x] **lib/servers architectural refactor (supersedes the cli.py cleanup)** — original log entry framed navigator's `cli.py` as "accidental"; in fact the MCP-server convention sanctioned it. Took the opportunity to rewrite the convention instead: domain libraries live under `lib/` (facade + CLI via `__main__.py`); `servers/<name>.py` is a thin MCP adapter. Navigator moved `servers/navigator/` → `lib/navigator/` (CLI now `__main__.py`) with a new `servers/navigator.py` MCP wrapper. Governance's `cli.py` → `__main__.py`. All 132 tests pass. Governance test-coverage disparity logged at `.claude/logs/problem/Governance test coverage is thin compared to navigator.md` for future work.
 - [ ] **Logging convention drop + dead declarations** — see `.claude/logs/problem/Logging convention drop and dead logger declarations.md`. Drop Logging subsection from `python.md`; remove 3 unused logger declarations in navigator files; clean misleading `__all__` comment.
 
 ### Phase 2 — Python-related convention lockdowns
@@ -151,7 +151,8 @@ python3 -c "import sqlite3; db = sqlite3.connect('purpose-map/purpose-map-v1.db'
 - `plugins/ocd/templates/patterns/*.md` — pattern templates (deployed to `.claude/patterns/ocd/`)
 - `plugins/ocd/templates/logs/` — log type templates (deployed to `.claude/logs/`)
 - `plugins/ocd/skills/*/SKILL.md` — skills
-- `plugins/ocd/servers/navigator/` — navigator MCP server package
+- `plugins/ocd/servers/navigator.py` — navigator MCP adapter (thin wrapper over `lib/navigator/`)
+- `plugins/ocd/lib/navigator/` — navigator domain library (facade + CLI + internals)
 - `plugins/ocd/lib/governance/` — governance library (disk-only)
 - `plugins/ocd/plugin/` — plugin framework (propagated to all plugins)
 - `plugins/ocd/hooks/` — auto-approval and convention gate hooks

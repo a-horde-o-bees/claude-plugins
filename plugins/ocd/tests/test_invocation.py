@@ -273,19 +273,19 @@ class TestSkillCLI:
     """Verify skill packages invoke through run.py."""
 
     def test_navigator_help(self) -> None:
-        result = run("servers.navigator.cli", "--help")
+        result = run("lib.navigator", "--help")
         assert result.returncode == 0
         assert "describe" in result.stdout
         assert "scan" in result.stdout
 
     def test_governance_help(self) -> None:
-        result = run("lib.governance.cli", "--help")
+        result = run("lib.governance", "--help")
         assert result.returncode == 0
         assert "load" in result.stdout
         assert "order" in result.stdout
 
     def test_governance_for_help(self) -> None:
-        result = run("lib.governance.cli", "for", "--help")
+        result = run("lib.governance", "for", "--help")
         assert result.returncode == 0
         assert "files" in result.stdout
 

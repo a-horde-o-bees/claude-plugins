@@ -1,7 +1,7 @@
 """Unit tests for _mark_parents_stale."""
 
-from servers.navigator._db import get_connection
-from servers.navigator._scanner import _mark_parents_stale
+from lib.navigator._db import get_connection
+from lib.navigator._scanner import _mark_parents_stale
 
 
 class TestMarkParentsStale:

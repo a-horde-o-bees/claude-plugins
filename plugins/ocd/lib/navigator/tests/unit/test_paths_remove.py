@@ -1,7 +1,7 @@
 """Unit tests for paths_remove (remove_entry)."""
 
-from servers.navigator._db import get_connection
-from servers.navigator import paths_remove
+from lib.navigator._db import get_connection
+from lib.navigator import paths_remove
 
 
 class TestRemoveEntry:

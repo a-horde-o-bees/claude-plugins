@@ -52,7 +52,7 @@ User runs `/navigator`
 ## Workflow
 
 1. Read `${CLAUDE_PLUGIN_ROOT}/skills/navigator/references/description-guidelines.md` for Description Guidelines
-2. Run `python3 ${CLAUDE_PLUGIN_ROOT}/run.py servers.navigator.cli scan <target>` — syncs filesystem to database, reports added/removed/changed counts
+2. Run `python3 ${CLAUDE_PLUGIN_ROOT}/run.py lib.navigator scan <target>` — syncs filesystem to database, reports added/removed/changed counts
 3. While not done:
     1. {work} = paths_undescribed:
     2. If {work}.done: Break loop

@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from servers.navigator._scanner import _compute_git_hash
+from lib.navigator._scanner import _compute_git_hash
 
 
 class TestComputeGitHash:

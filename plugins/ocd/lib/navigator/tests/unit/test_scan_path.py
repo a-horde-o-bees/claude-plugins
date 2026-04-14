@@ -2,9 +2,9 @@
 
 import pytest
 
-from servers.navigator._db import get_connection, SCHEMA
-from servers.navigator._scanner import scan_path
-from servers.navigator import paths_upsert
+from lib.navigator._db import get_connection, SCHEMA
+from lib.navigator._scanner import scan_path
+from lib.navigator import paths_upsert
 
 
 class TestScanPath:

@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from servers.navigator._db import get_connection, SCHEMA
+from lib.navigator._db import get_connection, SCHEMA
 
 
 @pytest.fixture(autouse=True)

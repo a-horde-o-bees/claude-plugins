@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from servers.navigator._db import get_connection, init_db
+from lib.navigator._db import get_connection, init_db
 
 
 class TestInitDb:
@@ -36,7 +36,7 @@ class TestInitDb:
             "**/tests,directory,0,0,Test suites\n"
         )
         db = str(tmp_path / "seeded.db")
-        from servers.navigator import _db as db_ctx
+        from lib.navigator import _db as db_ctx
         original = db_ctx.SEED_PATH
         try:
             db_ctx.SEED_PATH = csv_path
@@ -59,7 +59,7 @@ class TestInitDb:
             "**/tests,directory,0,0,Test suites\n"
         )
         db = str(tmp_path / "upsert.db")
-        from servers.navigator import _db as db_ctx
+        from lib.navigator import _db as db_ctx
         original = db_ctx.SEED_PATH
         try:
             db_ctx.SEED_PATH = csv_path
@@ -87,7 +87,7 @@ class TestInitDb:
             "**/tests,directory,0,0,Test suites\n"
         )
         db = str(tmp_path / "add.db")
-        from servers.navigator import _db as db_ctx
+        from lib.navigator import _db as db_ctx
         original = db_ctx.SEED_PATH
         try:
             db_ctx.SEED_PATH = csv_path

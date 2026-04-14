@@ -15,9 +15,9 @@ PLUGIN_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 if str(PLUGIN_ROOT) not in sys.path:
     sys.path.insert(0, str(PLUGIN_ROOT))
 
-from servers.navigator._db import get_connection, SCHEMA
-import servers.navigator as nav_skill
-import servers.navigator.__main__ as nav_server
+from lib.navigator._db import get_connection, SCHEMA
+import lib.navigator as nav_lib
+import servers.navigator as nav_server
 
 
 @pytest.fixture
@@ -52,7 +52,7 @@ def db(tmp_path, monkeypatch):
 
     with (
         patch.object(nav_server, "DB_PATH", db_path),
-        patch.object(nav_skill, "_ensure_scanned", return_value=None),
+        patch.object(nav_lib, "_ensure_scanned", return_value=None),
         patch.object(nav_server, "_check_db", return_value=None),
     ):
         yield db_path

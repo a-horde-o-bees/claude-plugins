@@ -1,5 +1,5 @@
 ---
-includes: "**/servers/*/__main__.py"
+includes: "**/servers/[a-z]*.py"
 governed_by:
   - .claude/rules/ocd/design-principles.md
   - .claude/conventions/ocd/python.md
@@ -7,7 +7,7 @@ governed_by:
 
 # MCP Server Conventions
 
-Tool design, server architecture, and data conventions for MCP servers exposed as plugin tools via FastMCP. Each server is a Python package under `servers/`; its MCP entry point is `__main__.py`. Library code and data-layer modules (`__init__.py`, `_db.py`, `_helpers.py`, etc.) in the same package are governed by general Python conventions, not this one.
+Tool design, server architecture, and data conventions for MCP servers exposed as plugin tools via FastMCP. Each server is a single module under `servers/` that imports a domain library from `lib/` and exposes its functions as MCP tools. Library code (facades, internal modules, CLIs) under `lib/` is governed by general Python conventions, not this one.
 
 ## Tool Naming
 
@@ -128,40 +128,46 @@ Cross-tool positioning that publishes "when to reach for this server" belongs in
 
 ## Server Architecture
 
-- Business logic separated from server presentation — the server file dispatches to domain modules; tool handlers are thin wrappers that validate, delegate, and format
-- The server is a presentation layer — the same functions are callable from CLI, tests, or other code paths
+Domain libraries live under `lib/`; MCP servers live under `servers/` as thin adapter modules that import from `lib/` and expose functions as MCP tools. One library can be consumed by its own CLI, by test suites, by other packages, and by an MCP server — the server is one presentation among several, not the home of the domain logic.
+
+- Library owns business logic; server module dispatches tool wrappers to library functions
+- Server module is a presentation layer — no business logic, no database schema, no file I/O beyond what tool serialization requires
 - Database paths and configuration via environment variables, not hardcoded paths
 - Server module docstring states the server's domain scope and transport
 
-## Server Package Structure
+## Server and Library Layout
 
-Each MCP server is a Python package under `servers/`. The package owns both the domain logic and the MCP exposure as separate modules within the same package.
+Each MCP server is a single Python module under `servers/`. The domain library it exposes is a separate package under `lib/`.
 
 Standard structure:
 
 ```
 plugins/<plugin>/
+├── lib/
+│   └── <name>/                  ← Domain library as a Python package
+│       ├── __init__.py          ← Facade — public functions (business logic)
+│       ├── __main__.py          ← Operational CLI
+│       ├── _db.py               ← Internal modules per python.md decomposition
+│       └── (other internals, tests)
 └── servers/
-    └── <name>/                  ← Server as a Python package
-        ├── __init__.py          ← Facade — public functions (business logic)
-        ├── __main__.py          ← MCP entry point: FastMCP setup + tool decorators
-        ├── _db.py               ← Internal modules per python.md decomposition
-        ├── cli.py               ← Optional standalone CLI for debugging
-        └── (other internals)
+    ├── __init__.py
+    ├── _helpers.py              ← Shared MCP response helpers
+    └── <name>.py                ← Thin MCP adapter — FastMCP setup + tool decorators
 ```
 
-The MCP entry point (`__main__.py`):
+The MCP adapter module (`servers/<name>.py`):
 
-- Imports the package as a namespace: `import servers.<name> as _<short>` — the underscore prefix signals a private reference to the same package, and the namespace avoids name collisions between tool wrapper functions and facade functions (both share names because FastMCP derives the tool name from the function name)
+- Imports the library as a namespace: `import lib.<name> as _<short>` — the underscore-prefixed alias signals a private reference and avoids name collisions between tool wrapper functions and library functions (both share names because FastMCP derives the tool name from the function name)
+- Imports shared helpers: `from ._helpers import _ok, _err`
 - Defines `mcp = FastMCP("<name>", instructions="...")` with cross-tool positioning
-- Decorates thin wrappers with `@mcp.tool()` — each wrapper validates, delegates to a facade function, and serializes the result
-- Handles JSON in/out and error wrapping via shared helpers (see *Shared Server Helpers* below)
+- Decorates thin wrappers with `@mcp.tool()` — each wrapper validates, delegates to a library function, and serializes the result
+- Ends with `if __name__ == "__main__": mcp.run()` so the module is launchable
 
-The facade (`__init__.py`) owns all business logic — database operations, parsing, file I/O, decision logic. The MCP entry point is a thin presentation layer. The same functions are callable from CLI, tests, or other code paths.
+The library (`lib/<name>/__init__.py`) owns all business logic — database operations, parsing, file I/O, decision logic. The MCP adapter is a thin presentation layer. The same functions are callable from the library's CLI (`lib/<name>/__main__.py`), tests, or any other code path.
 
 ## Server Launching
 
-Server files are launched via the plugin's `run.py` module launcher, which establishes proper `__package__` context via `runpy.run_module()`. The launcher handles sys.path bootstrap once, in one place — server files do not manipulate `sys.path` themselves.
+Server modules are launched via the plugin's `run.py` module launcher, which establishes proper `__package__` context via `runpy.run_module()`. The launcher handles sys.path bootstrap once, in one place — server modules do not manipulate `sys.path` themselves.
 
 `.mcp.json` invocation pattern:
 
@@ -175,19 +181,19 @@ Server files are launched via the plugin's `run.py` module launcher, which estab
 For this to work:
 
 - `servers/` must be a proper Python package (contain `__init__.py`)
-- Server packages use clean imports: `from . import _db`, `from .._helpers import _ok, _err`
-- No `sys.path` manipulation in individual server files (per `python.md`)
+- Server modules use clean imports: `import lib.<name> as _<short>`, `from ._helpers import _ok, _err`
+- No `sys.path` manipulation in individual server modules (per `python.md`)
 
 The launcher pattern is documented in `python.md` Import Pattern section; this convention specifies its application to MCP servers.
 
 ## Shared Server Helpers
 
-Shared utility functions used by multiple server files in the same plugin live in `servers/_helpers.py` per `python.md`'s `_helpers.py` standard internal module type. Standard helpers:
+Shared utility functions used by multiple server modules in the same plugin live in `servers/_helpers.py` per `python.md`'s `_helpers.py` standard internal module type. Standard helpers:
 
 - `_ok(result)` — serialize a successful result as a JSON string
 - `_err(e)` — wrap an exception as a JSON error response
 
-Server files import these via the package: `from . import _helpers` or `from ._helpers import _ok, _err`.
+Server modules import these from the servers package: `from ._helpers import _ok, _err`.
 
 Project, plugin, and plugin-data paths resolve through the plugin framework helpers (`plugin.get_project_dir()`, `plugin.get_plugin_root()`, `plugin.get_plugin_data_dir()`) — see `python.md` *Project, Plugin, and Data Directory Resolution*. Servers do not define their own project-root helpers.
 

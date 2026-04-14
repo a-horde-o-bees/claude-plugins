@@ -141,16 +141,17 @@ Agent-facing tools exposed over the Model Context Protocol. Each server lives as
 
 | Server | Entry point | Role |
 |--------|-------------|------|
-| `navigator` | `servers/navigator/__main__.py` | Project structure index, governance discovery, reference mapping. Delegates to `servers/navigator` package for business logic. |
+| `navigator` | `servers/navigator.py` | Project structure index, governance discovery, reference mapping. Thin MCP adapter over `lib/navigator/`. |
 | `log` | `servers/log/__main__.py` | Unified project log across multiple types (decision, friction, problem, idea) with per-type tag management. |
 
 ## Libraries
 
-Python packages consumed as imports — no MCP server, no subprocess. Located in `lib/`.
+Python packages consumed as imports. Each has a facade in `__init__.py` and an operational CLI in `__main__.py`. Located in `lib/`.
 
 | Library | Package | Role |
 |---------|---------|------|
 | `governance` | `lib/governance/` | Convention and rule governance: matching files to applicable governance entries, listing entries, and computing the level-grouped dependency order. Reads directly from disk on every call — no database, no caching. Consumed by the convention gate hook, navigator's `scope_analyze`, the governance CLI, and evaluation skills. |
+| `navigator` | `lib/navigator/` | Project structure index over SQLite: path indexing, filesystem scan, descriptions, governance composition, reference mapping, skill resolution. Consumed by the `/navigator` skill CLI, the navigator MCP server, and other libraries that need scope analysis. |
 
 Server modules are thin presentation layers: tool handlers validate, delegate to a domain module, and serialize the result.
 
@@ -182,7 +183,7 @@ python3 run.py hooks.auto_approval          # Hook invocation
 python3 run.py hooks.convention_gate        # Hook invocation
 python3 run.py plugin init [--force]        # Init orchestration
 python3 run.py plugin status                # Status reporting
-python3 run.py servers.navigator.cli scan .     # Navigator CLI (operational)
+python3 run.py lib.navigator scan .             # Navigator CLI (operational)
 ```
 
 Hooks are invoked by Claude Code via `hooks.json` configuration. Navigator agent-facing operations are exposed via MCP server (`servers/navigator.py`); CLI retained for operational commands (init, scan, governance-load). No shebangs or execute permissions — all scripts run via `python3` interpreter prefix.

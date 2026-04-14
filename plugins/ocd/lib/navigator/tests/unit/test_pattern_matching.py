@@ -1,6 +1,6 @@
 """Unit tests for _matches_pattern_any pattern matching."""
 
-from servers.navigator._scanner import _matches_pattern_any
+from lib.navigator._scanner import _matches_pattern_any
 
 
 class TestMatchesAnyPattern:

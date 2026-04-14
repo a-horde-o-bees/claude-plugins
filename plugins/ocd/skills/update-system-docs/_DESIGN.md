@@ -122,17 +122,13 @@ Every per-system agent accumulates an `unresolved` list:
 
 Parent agents inspect child `unresolved` entries and resolve any they have scope for (e.g., a child's cross-system reference to a sibling resolves at their common parent). Residual unresolved entries propagate up. The project-root agent's final `unresolved` list lands in the skill's Report for user judgment.
 
-## cli.py → __main__.py
-
-Discovery and CLI-surface extraction assume `__main__.py` per Python package convention. Existing `cli.py` files in the codebase (e.g., `plugins/ocd/servers/navigator/cli.py`, `plugins/ocd/lib/governance/cli.py`) are an inconsistency with the project's own Python conventions — they were accidental overrides of the package pattern. The skill gracefully handles both: extracts CLI commands from whichever file is the package entry. Separately noted for cleanup.
-
 ## Component Files
 
 - `SKILL.md` — entry point
 - `_per-system-workflow.md` — what each per-system agent does
 - `_provability.md` / `_verification.md` — verifiability classification + verification
 - `_summary-schema.md` — bubble-up summary shape; includes unresolved-questions field
-- `_system-discovery.md` — heuristics for system boundaries; skills included; __main__.py/cli.py handling
+- `_system-discovery.md` — heuristics for system boundaries; skills included; `__main__.py` handling
 - `_surfaces.md` — non-obvious surface catalog; function docstrings + section purposes added
 - `_claim-extraction.md` — prompt template for extracting claims
 - `_conservative-edit.md` — prompt template for surgical edits
@@ -156,11 +152,11 @@ See `SKILL.md` for PFN-formatted workflow. Shape:
 
 ## Residual Work Items
 
-1. Implement discovery CLI (`plugins/ocd/skills/update-system-docs/cli.py` + `_discovery.py`) — deterministic Python; not agent work.
+1. Implement discovery CLI (`plugins/ocd/skills/update-system-docs/__main__.py` + `_discovery.py`) — deterministic Python; not agent work.
 2. Implement fact-bundle builder as a Python module (ast-based) — called by per-system agents via bash.
 3. Navigator schema extension for `doc_verified_at` hash markers — separate navigator-side change; v1 can ship without it, pay the token cost per run.
 4. Section purpose extraction utility — part of fact-bundle builder; needed for Contents table regeneration.
-5. cli.py → __main__.py cleanup across existing code — parallel refactor; skill is graceful in the meantime.
+5. cli.py → __main__.py cleanup across existing code — completed.
 
 ## Open Decisions Remaining
 

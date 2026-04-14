@@ -1,7 +1,7 @@
 """Unit tests for paths_undescribed (get_undescribed)."""
 
-from servers.navigator._db import get_connection
-from servers.navigator import paths_undescribed
+from lib.navigator._db import get_connection
+from lib.navigator import paths_undescribed
 
 
 class TestGetUndescribed:

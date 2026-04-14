@@ -31,7 +31,7 @@ Descriptions set via `argparse.ArgumentParser(description=...)`, `argparse.add_a
 
 Verification: argparse/click declarations ARE the ground truth for these. Help text that contradicts the argument's actual name or behavior is drift.
 
-Extracted from `__main__.py` primarily; `cli.py` as graceful fallback for systems that haven't migrated.
+Extracted from `__main__.py` per Python package convention.
 
 ### 4. MCP Tool Descriptions
 
