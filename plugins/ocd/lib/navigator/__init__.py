@@ -10,7 +10,6 @@ CLI display belongs in __main__.py. Presentation lives in __main__.py.
 """
 
 import fnmatch
-import logging
 from pathlib import Path
 
 import plugin
@@ -24,8 +23,6 @@ from ._skills import *  # noqa: F401,F403
 # Cross-package: scope_analyze composites governance matching into its result,
 # so the facade imports governance_match from the governance library.
 from lib.governance import governance_match
-
-logger = logging.getLogger(__name__)
 
 
 def _ensure_scanned(db_path: str) -> None:

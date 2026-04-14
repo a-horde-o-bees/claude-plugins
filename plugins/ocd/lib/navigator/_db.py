@@ -4,11 +4,8 @@ Schema, migrations, connection factory, and initialization with seed patterns.
 """
 
 import csv
-import logging
 import sqlite3
 from pathlib import Path
-
-logger = logging.getLogger(__name__)
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS entries (

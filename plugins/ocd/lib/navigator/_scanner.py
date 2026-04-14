@@ -8,7 +8,6 @@ the entries table are always project-relative.
 
 import fnmatch
 import hashlib
-import logging
 import os
 import sqlite3
 from pathlib import Path
@@ -16,8 +15,6 @@ from pathlib import Path
 import plugin
 
 from ._db import get_connection
-
-logger = logging.getLogger(__name__)
 
 
 def _matches_pattern_any(path: str, patterns: list[sqlite3.Row]) -> sqlite3.Row | None:

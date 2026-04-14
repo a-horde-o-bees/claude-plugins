@@ -37,19 +37,6 @@ Type aliases — define aliases when same union type appears across multiple fun
 
 Use `@dataclass` for value objects that group related fields. Prefer over plain dicts when shape is known and reused.
 
-### Logging
-
-Every module that does I/O, makes network calls, or has decision points worth tracing uses module-level logger:
-
-```python
-import logging
-logger = logging.getLogger(__name__)
-```
-
-- Use `logger.info/warning/debug/error` — never `logging.info` (root logger) or `print()` for operational output
-- Only CLI/presentation layers use `print()` and `input()` for user-facing output
-- No `logging.basicConfig()` in libraries or modules — only entry point configures logging
-
 ### Path Handling
 
 Use `pathlib.Path` throughout:

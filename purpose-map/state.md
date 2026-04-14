@@ -68,7 +68,7 @@ Quick audits and fixes with no dependencies.
 Must land before code-building phases. These two cleanups correct existing convention violations that would compound if built on.
 
 - [x] **lib/servers architectural refactor (supersedes the cli.py cleanup)** — original log entry framed navigator's `cli.py` as "accidental"; in fact the MCP-server convention sanctioned it. Took the opportunity to rewrite the convention instead: domain libraries live under `lib/` (facade + CLI via `__main__.py`); `servers/<name>.py` is a thin MCP adapter. Navigator moved `servers/navigator/` → `lib/navigator/` (CLI now `__main__.py`) with a new `servers/navigator.py` MCP wrapper. Governance's `cli.py` → `__main__.py`. All 132 tests pass. Governance test-coverage disparity logged at `.claude/logs/problem/Governance test coverage is thin compared to navigator.md` for future work.
-- [ ] **Logging convention drop + dead declarations** — see `.claude/logs/problem/Logging convention drop and dead logger declarations.md`. Drop Logging subsection from `python.md`; remove 3 unused logger declarations in navigator files; clean misleading `__all__` comment.
+- [x] **Logging convention drop + dead declarations** — dropped `### Logging` subsection from `python.md`; removed 3 unused logger declarations from `lib/navigator/__init__.py`, `_scanner.py`, `_db.py`; corrected misleading `__all__` comment in `lib/navigator/__main__.py` to describe the underscore-prefix convention. Print() guidance review remains open (see log entry). 132 tests pass.
 
 ### Phase 2 — Python-related convention lockdowns
 

@@ -9,7 +9,7 @@ dispatch does not pre-scan.
 import argparse
 import sys
 
-from . import *  # noqa: F403 — __all__ defines the public API
+from . import *  # noqa: F403 — underscore-prefixed names are internal; bare names are public
 
 
 DEFAULT_DB = ".claude/ocd/navigator/navigator.db"
