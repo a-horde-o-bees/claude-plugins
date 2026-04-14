@@ -26,19 +26,72 @@ This evaluation is in service of cutting a stable v1 of the ocd plugin and makin
 
 **Re-add filter:** components that exist in v1 but cannot make the unmet pointer in v2 are not added to v2. They are removed from the project. The model is the audit; the rebuild has teeth.
 
+## Governance Lockdown (2026-04-13)
+
+Systematic walkthrough of the governance chain supporting evaluate-skill and evaluate-governance. All foundational rules and conventions locked down through direct walkthrough, then both evaluation skills aligned against them.
+
+**Rules locked down:**
+
+- design-principles.md
+- process-flow-notation.md (major rewrite: Call/Spawn/Error Handling, reorder, keyword formatting)
+- markdown.md (promoted from convention to rule; added Special Characters)
+- log-routing.md
+- system-documentation.md (Documentation Currency moved to evaluate-documentation skill responsibility)
+- workflow.md
+
+**Conventions locked down:**
+
+- skill-md.md (major simplification; Body Structure at top; String Substitution → Environment Variables)
+- evaluation-skill-md.md (restructured to Executor Rules + Agent Rules with compartmentalization framing)
+- evaluation-triage.md
+- architecture-md.md, claude-md.md, readme-md.md
+- governance-md.md
+
+**Skills aligned:**
+
+- evaluate-skill SKILL.md (Call/Spawn syntax, Exit to caller, path-tracing for exercisable routes)
+- evaluate-governance SKILL.md (aligned with new conventions, graph anomaly artifact removed — misalignments now flow as ordinary findings)
+- Component files (_evaluation-workflow.md for both skills) aligned
+
+## Unevaluated Against Locked-Down Governance
+
+Skills and Python-related conventions that exist but have not been walked through against the new rules and conventions. Mark each as locked down after refactor verification.
+
+**Skills** (ocd plugin unless noted):
+
+- [ ] commit
+- [ ] init
+- [ ] log
+- [ ] md-to-pdf
+- [ ] navigator
+- [ ] push
+- [ ] status
+- [ ] checkpoint (project-local)
+- [ ] sync-templates (project-local)
+- [ ] evaluate-documentation (tracked separately under Next Steps; redesign, not just align)
+
+**Python-related conventions:**
+
+- [ ] python.md
+- [ ] testing.md
+- [ ] mcp-server.md
+- [ ] skill-init-py.md
+
+The navigator MCP refactor is complete, so the navigator skill and mcp-server.md / python.md can use that as the concrete example informing the updated conventions.
+
 ## Next Steps
 
-1. **Redesign evaluate-documentation** using the same approach as evaluate-skill. Incorporate the leaves-first traversal insight (parent docs describe subsystems generally; each subsystem's docs carry the detail) and the observation that documentation lives in non-obvious surfaces — CLI help text, module docstrings, MCP tool descriptions, frontmatter `description:` fields, header purpose statements — not just the canonical README/architecture/CLAUDE.md/SKILL.md files.
-2. **Check all validated system docs conform to the three-document model** — driven by the rebuilt evaluate-documentation skill, not by hand. This is the mass audit step; it runs skill-driven so drift in non-obvious surfaces is caught the same way drift in canonical documents is caught.
+1. **Run evaluate-governance** against the locked-down chain to validate the governance graph topologically.
+2. **Redesign evaluate-documentation** using the same approach as evaluate-skill. Incorporate the leaves-first traversal insight (parent docs describe subsystems generally; each subsystem's docs carry the detail) and the observation that documentation lives in non-obvious surfaces — CLI help text, module docstrings, MCP tool descriptions, frontmatter `description:` fields, header purpose statements — not just the canonical README/architecture/CLAUDE.md/SKILL.md files. The skill now also owns Documentation Currency enforcement (formerly in system-documentation.md).
+3. **Check all validated system docs conform to the three-document model** — driven by the rebuilt evaluate-documentation skill, not by hand. This is the mass audit step; it runs skill-driven so drift in non-obvious surfaces is caught the same way drift in canonical documents is caught.
 
-**Rationale for the ordering:** documentation work backloaded until the evaluate-documentation skill is rebuilt, so the mass audit (step 2) does not have to be re-walked when the skill lands.
+**Rationale for the ordering:** governance validation first to confirm the locked-down chain is self-consistent; then documentation work after evaluate-documentation is rebuilt, so the mass audit (step 3) runs against the new skill rather than being re-walked by hand.
 
 ## Open Items
 
 - **Convention loading on read** — conventions fire when files are read, not just modified. Governance reads from disk on every call (no database), so this is purely about hook behavior.
 - **`purpose-map/skill-migration.md`** — archival planning document for migrating the purpose-map evaluation workflow to a skill. References a stale component id (`c14 (Pit of Success)`) and the now-removed Pit of Success principle. Decide whether to action the migration or delete the document as abandoned planning.
 - **Purpose-map stale components removed, needs orphaned** — c41 (friction server), c42 (decisions server), c43 (stash server) removed from DB. Needs n59 (friction signals) and n68 (ideas/observations) are now gaps. These needs remain valid but need rewiring to new file-based log system components once those are evaluated and rebuilt.
-- **Governance evaluation paused at Level 1** — Level 0 clean, Level 1 observations applied but not verified. Conventions are stale from refactoring — consider redesigning evaluate-documentation or evaluate-skill before continuing governance evaluation so conventions can be updated systematically first.
 
 ## v1 Reference
 
