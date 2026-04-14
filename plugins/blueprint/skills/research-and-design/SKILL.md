@@ -6,7 +6,10 @@ allowed-tools:
   - Edit
   - Write
   - Bash
-  - mcp__plugin_ocd_navigator__*
+  - Glob
+  - Grep
+  - WebSearch
+  - WebFetch
 ---
 
 # /research-and-design
