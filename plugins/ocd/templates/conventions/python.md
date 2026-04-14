@@ -18,7 +18,7 @@ All function signatures include type hints for parameters and return values. Use
 def find_record(name: str, include_deleted: bool = False) -> dict | None:
 ```
 
-Forward references and cross-module types — use `from __future__ import annotations` with `TYPE_CHECKING` guard. Makes all annotations lazy strings, avoiding circular imports and forward reference issues. Never use quoted string annotations (`-> "ClassName"`) — `__future__` import handles this uniformly.
+Use `from __future__ import annotations` only when forward references or circular imports require it — otherwise annotations resolve at import time and no future import is needed. When the import is present, pair it with a `TYPE_CHECKING` guard for type-only imports. Never use quoted string annotations (`-> "ClassName"`) — when lazy annotations are needed, `__future__` import handles this uniformly.
 
 ```python
 from __future__ import annotations
