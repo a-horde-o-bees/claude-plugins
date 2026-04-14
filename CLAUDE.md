@@ -6,6 +6,10 @@ Operational procedures for agents working in the claude-plugins marketplace repo
 
 When user asks to "checkpoint" progress: skill: `/checkpoint`
 
+## Evaluation Skill Invocation
+
+Before invoking `/evaluate-*`, check whether `/checkpoint` is needed so the skill reads current content. These skills read deployed governance files (`.claude/rules/`, `.claude/conventions/`) and cached plugin files (target skill's SKILL.md and components). If template edits have not synced to deployed copies, if the target skill has uncommitted changes, or if the plugin cache is out of date relative to recent work, prompt the user to confirm running `/checkpoint` before proceeding. Uncommitted unrelated work is fine — only changes that affect what the skill reads matter.
+
 ## Skill Testing Modes
 
 Two ways to exercise a skill during development:

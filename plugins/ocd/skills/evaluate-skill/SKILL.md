@@ -44,9 +44,7 @@ User runs `/evaluate-skill`
     2. If result contains error: Exit to user — report skill not found
     3. {skill-path} = resolved path
 4. Else: Exit to user — respond with skill description and argument-hint
-5. Verify working tree is clean — bash: `git status --porcelain`
-    1. If output is non-empty: Exit to user — working tree must be clean before evaluation; run `/commit` first so applied changes have a clean diff
-6. Dispatch Workflow
+5. Dispatch Workflow
 
 ## Workflow
 
@@ -112,7 +110,6 @@ Review all agent findings and present unified recommendations to the user. Cover
 - Single static agent reads files sequentially — conformity findings inform efficacy evaluation (shared context matters)
 - Block push before agents spawn and unblock after all return
 - Present observations with the agent's proposed fix verbatim — do not summarize or omit
-- `/commit` precondition gives each evaluation a clean diff for auditing
 
 ## Error Handling
 

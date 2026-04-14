@@ -1,5 +1,5 @@
 ---
-description: Evaluate the rules and conventions governance chain foundations-first, one level at a time. A spawned agent evaluates each level; the skill executor classifies findings, applies defects, and exits to caller when observations need judgment. Convergence across waves is user-driven.
+description: Evaluate the rules and conventions governance chain foundations-first, one level at a time. A spawned agent evaluates each level; the skill executor classifies findings, applies defects, and exits to caller when observations need judgment. User selects which level to start at on each invocation; convergence is user-driven.
 argument-hint: "--target project"
 allowed-tools:
   - Read
@@ -10,11 +10,13 @@ allowed-tools:
 
 # /evaluate-governance
 
-Evaluate the governance dependency chain foundations-first, one level at a time. A spawned agent evaluates each level; the skill executor classifies findings per the triage criteria, applies defects, and exits to caller when observations need judgment. Convergence across waves is user-driven.
+Evaluate the governance dependency chain foundations-first, one level at a time. A spawned agent evaluates each level; the skill executor classifies findings per the triage criteria, applies defects, and exits to caller when observations need judgment. User selects which level to start at on each invocation; convergence is user-driven.
 
 ## Process Model
 
-The skill walks the governance chain in dependency order, one level at a time. Per-level gating stabilizes each level's fixes before deeper levels build on them. The agent's context accumulates across levels via `Continue:` so coherence checks can reference prior levels.
+The skill walks the governance chain in dependency order starting from a level the user selects (default 0). Per-level gating stabilizes each level's fixes before deeper levels build on them. The agent's context accumulates across levels via `Continue:` so coherence checks can reference prior levels.
+
+Observations at a level pause the run: the skill exits with the agent's findings so the user can apply or reject each. To resume, the user re-invokes the skill and selects the level to restart from — typically the lowest level they modified. Convergence is reached when a pass produces no further observations.
 
 ## Scope
 
@@ -26,27 +28,26 @@ Accepted arguments:
 
 ## Rules
 
-- `/commit` precondition gives each wave a clean before/after diff for auditing
-- Convergence across waves is user-driven — the skill is invoked in fresh sessions until a pass produces no governance-file changes
+- Convergence is user-driven — re-invoke after applying or rejecting observations and select the level to resume from; a pass is clean when no further observations surface
 
 ## Route
 
 1. If not --target: Exit to caller — respond with skill description and argument-hint
 2. If {target} is not `project`: Exit to caller — target must be `project`
-3. Verify working tree is clean — bash: `git status --porcelain`
-    1. If output is non-empty: Exit to caller — run `/commit` first so each wave has a clean before/after diff
-4. Discover governance levels — bash: `CLAUDE_PROJECT_DIR=$(pwd) python3 ${CLAUDE_PLUGIN_ROOT}/run.py lib.governance.cli order --json`
-5. If result has dangling references:
+3. Discover governance levels — bash: `CLAUDE_PROJECT_DIR=$(pwd) python3 ${CLAUDE_PLUGIN_ROOT}/run.py lib.governance.cli order --json`
+4. If result has dangling references:
     1. Present dangling references to user — which file declares each missing governor
     2. Exit to caller — fix offending `governed_by` frontmatter and re-invoke
-6. {levels} = levels array from the result
-7. Present the plan — levels count, files per level — confirm with user
-8. Dispatch Workflow
+5. {levels} = levels array from the result
+6. Present levels to user — for each level, show the level number (0..N-1), the file count, and the full list of file paths at that level
+7. Ask user which level to start at — AskUserQuestion with options 0..N-1; first option (level 0) is the default
+8. {start-level} = user's selection
+9. Dispatch Workflow
 
 ## Workflow
 
 1. Read `.claude/conventions/ocd/evaluation-triage.md`
-2. {current-level} = 0
+2. {current-level} = {start-level}
 3. Spawn:
     1. Call: `${CLAUDE_PLUGIN_ROOT}/skills/evaluate-governance/_evaluation-workflow.md` ({level-files} = {levels}[{current-level}])
     2. Return:
@@ -55,14 +56,14 @@ Accepted arguments:
 
 ### Process Level Response
 
-> Defects are intent-preserving — the agent's cached context from prior levels remains valid after defect application. Observations may change what governance prescribes, so a fresh session is required before re-evaluation.
+> Defects are intent-preserving — the agent's cached context from prior levels remains valid after defect application. Observations may change what governance prescribes, so the run exits and a re-invocation spawns a fresh agent that reads the updated content.
 
 5. {response} = latest return from {agent-ref}
 6. Classify each finding in {response} per `evaluation-triage.md`
 7. For each Defect: apply its proposed fix directly to disk
 8. Present Report
 9. If any Observations exist:
-    1. Exit to caller — "Observations at level {current-level} need user judgment. Apply or reject each, then re-invoke `/evaluate-governance` in a fresh session."
+    1. Exit to caller — "Observations at level {current-level} need user judgment. Apply or reject each, then re-invoke `/evaluate-governance` and choose the level to resume from."
 10. {current-level} = {current-level} + 1
 11. If {current-level} >= count of {levels}: Break loop — all levels complete
 12. Continue {agent-ref}:
@@ -76,7 +77,7 @@ Accepted arguments:
 - **Scope** — levels traversed with file counts per level
 - **Defects applied** — grouped by file; each showing location, fix applied, and source finding
 - **Observations** — each agent's proposed fix intact when present
-- **Status** — `clean`, `defects applied`, `observations outstanding at level N`, or `restarted after anomaly`
+- **Status** — `clean`, `defects applied`, or `observations outstanding at level N`
 
 ## Error Handling
 
