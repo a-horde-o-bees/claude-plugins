@@ -169,8 +169,6 @@ All delegations follow the same structural pattern — mechanism: followed by wh
 
 Invocation types are optional — omit when the mechanism is unambiguous from context. Use when a workflow mixes mechanisms and the agent needs to distinguish. Steps without an invocation type are executed by agent judgment. The prefix can appear after an em dash — `1. Commit — skill: /ocd:commit`.
 
-Target format for `skill:` follows `/plugin:skill` when invoking a plugin skill, or `/skill` only when invoking a project-local skill. See `skill-md.md` Cross-Skill References for rationale.
-
 ## Arguments
 
 PFN content declares arguments in CLI-style format and references them in workflow steps using `--flag` (presence checks) and `{flag}` (value resolution). The primary consumer is skill `argument-hint` frontmatter.

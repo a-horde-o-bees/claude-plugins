@@ -107,17 +107,6 @@ Route pattern for `{target}` evaluation:
 - When natural language adjustments conflict with other provided flags, skill executor surfaces the conflict and works with user to resolve — no implicit precedence
 - `--pattern` is only meaningful for directory targets — Route ignores it when target resolves to single file
 
-## Cross-Skill References
-
-When a skill's Workflow invokes another skill via `skill:`, use the qualified form `/plugin:skill` whenever the target is a plugin skill. The Skill tool requires qualification for plugin skills — unqualified forms fail with "Unknown skill" even when the name is unique, because the tool does not apply the CLI router's automatic namespacing fallback.
-
-Examples:
-
-- From any skill (plugin or project-local) targeting a plugin skill: `skill: /ocd:commit`, `skill: /blueprint:research`
-- From a project-local skill targeting another project-local skill: `skill: /checkpoint` — unqualified resolves because there is no plugin namespace to disambiguate
-
-This rule governs PFN `skill:` invocations only. User-typed slash commands at the CLI prompt use a different resolver and accept unqualified names when unique.
-
 ## Directory Structure
 
 ```

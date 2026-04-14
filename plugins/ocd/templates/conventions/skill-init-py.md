@@ -37,10 +37,10 @@ Skills with SQLite databases report status through a standard state machine. Sta
 
 | State | `overall status` | `action needed` |
 |-------|-----------------|-----------------|
-| DB file absent | `not initialized` | `/{plugin}-init` |
-| DB file present, schema divergent | `error — divergent schema` | `/{plugin}-init --force` |
-| DB file present, schema valid | `operational — {metric summary}` | `/{skill-command}` |
-| DB file present, SQL error | `error — {error message}` | `/{plugin}-init --force` |
+| DB file absent | `not initialized` | `/{plugin}:init` |
+| DB file present, schema divergent | `error — divergent schema` | `/{plugin}:init --force` |
+| DB file present, schema valid | `operational — {metric summary}` | `/{plugin}:{skill-command}` |
+| DB file present, SQL error | `error — {error message}` | `/{plugin}:init --force` |
 
 ### Schema Validation
 
@@ -59,12 +59,16 @@ if not expected_tables.issubset(actual_tables):
 
 Operational status includes a metric summary with counts relevant to the skill domain. Format: `operational — {count} {noun}, {count} {noun}, ...`
 
-Counts use skill-specific nouns (entities, entries, notes). Include enough metrics for user to understand health at a glance without querying.
+**Noun choice is skill-specific.** Use the domain's natural unit — entities, entries, notes, events, records — rather than generic "items" or "rows".
+
+**Metric count balances signal against noise.** Include enough metrics for the user to understand infrastructure health at a glance without querying. Stop short of enumerating every table's row count — pick the counts that answer "is this healthy and actively in use?"
 
 ### Action Needed
 
-Always present. The value is a copy-pastable slash command — no prose, no "Run" prefix, no parenthetical explanations.
+**Always present in status output.** Every state returns an `action needed` line, including the operational state — the value tells the user what the natural next step is, not whether there is a problem.
 
-- Not initialized → `/{plugin}-init`
-- Error states → `/{plugin}-init --force`
-- Operational → `/{skill-command}` (primary skill for this infrastructure)
+**Value is a copy-pastable slash command.** No prose, no "Run" prefix, no parenthetical explanations. The user pastes the value directly.
+
+- Not initialized → `/{plugin}:init`
+- Error states → `/{plugin}:init --force`
+- Operational → `/{plugin}:{skill-command}` (primary skill for this infrastructure)

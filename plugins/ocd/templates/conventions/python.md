@@ -18,7 +18,11 @@ All function signatures include type hints for parameters and return values. Use
 def find_record(name: str, include_deleted: bool = False) -> dict | None:
 ```
 
-Use `from __future__ import annotations` only when forward references or circular imports require it — otherwise annotations resolve at import time and no future import is needed. When the import is present, pair it with a `TYPE_CHECKING` guard for type-only imports. Never use quoted string annotations (`-> "ClassName"`) — when lazy annotations are needed, `__future__` import handles this uniformly.
+Annotations resolve at import time by default. Three disciplines apply when the default does not fit:
+
+- **Conditional `__future__` import.** Add `from __future__ import annotations` only when forward references or circular imports require it. Files with no forward refs or cross-module type dependencies carry no future import — it is not a default.
+- **`TYPE_CHECKING` pairing.** When the file has `from __future__ import annotations` and needs to import a module solely for annotations, put that import under `if TYPE_CHECKING:`. Keeps type-only imports out of the runtime import graph.
+- **No quoted annotations.** Never use `-> "ClassName"` string form. When a forward reference needs lazy resolution, `from __future__ import annotations` handles it uniformly; the conditional rule above still applies.
 
 ```python
 from __future__ import annotations
@@ -33,7 +37,7 @@ def process_data(client: ModuleAPI, source: str) -> None:
 
 Boolean parameters default to `False`. A `True` default requires callers to include the parameter only to turn it off — name the parameter so the opt-in meaning reads naturally when set to `True` (e.g. `keep_orphans=False` not `clear_orphans=True`).
 
-Type aliases — define aliases when same union type appears across multiple function signatures in module. Keep aliases in module that uses them, not centralized.
+**Type aliases — defined locally.** Define an alias when the same union type appears across multiple function signatures in the same module. Do not centralize aliases in a shared types module — keep them in the module that uses them, so consumers of one module do not pull in type definitions from another.
 
 Use `@dataclass` for value objects that group related fields. Prefer over plain dicts when shape is known and reused.
 
@@ -68,7 +72,8 @@ One documented exception: MCP server subprocesses launched by Claude Code bootst
 
 ### Error Handling
 
-Validation logic raises exceptions — no `print()` + `sys.exit()` in non-CLI code. CLI dispatch layer catches errors and exits cleanly with error message.
+- **Validation raises exceptions.** Non-CLI code signals invalid state by raising — never by calling `print()` + `sys.exit()`. Library and facade code throws; the caller decides what to do with the exception.
+- **CLI dispatch catches and exits.** The CLI layer (`__main__.py` or equivalent entry) wraps facade calls in try/except, prints a user-facing error message, and exits with a non-zero code. This is the only layer that converts exceptions to exit codes.
 
 ## Module Decomposition
 
@@ -78,7 +83,9 @@ Extract internal modules when a file contains distinct functional domains — gr
 
 ### Internal Module Pattern
 
-`_{purpose}.py` — underscore prefix signals not standalone. Consumers import from the package (`from . import *`) or specific names (`from . import get_connection`), not directly from underscored modules. Same-package files use relative imports (`from . import _db`, `from ._db import get_connection`).
+- **Underscore prefix signals not standalone.** A file named `_{purpose}.py` is internal to its package — not imported by external consumers, not exposed as a separate entry point. The prefix is load-bearing, not a stylistic choice.
+- **Consumers import from the package, not from internals.** External code reaches for `from pkg import get_connection` or `from pkg import *`, never `from pkg._db import get_connection`. The package's `__init__.py` facade re-exports internal names.
+- **Same-package files use relative imports.** Within a package, sibling modules use `from . import _db` or `from ._db import get_connection`. Absolute imports from sibling modules break when the package is relocated or the import graph is rearranged.
 
 ```
 skill-name/
@@ -93,12 +100,15 @@ skill-name/
 
 - `_constants.py` — shared configuration values (thresholds, ordering lists, magic numbers) used across module files; create when constants are shared between parent module and CLI or between multiple internal modules
 - `_helpers.py` — pure utility functions with no dependency on module state; functions take data in and return data out; create when utility functions are shared across multiple files in the package
-- `_init.py` — initialization and status logic; contains `init()` for infrastructure setup and `status()` for health checks; CLI exposes these as `init` and `status` subcommands; standard for any skill that requires infrastructure (database, deployed files, configuration)
+- `_init.py` — initialization and status logic; contains `init()` for infrastructure setup and `status()` for health checks; CLI exposes these as `init` and `status` subcommands; standard for any skill that requires infrastructure (database, deployed files, configuration). See `skill-init-py.md` for the full interface contract (return shapes, standard status labels, database state machine)
 - `_{domain}.py` — focused on single functional domain; named for what it does (`_parser.py`, `_storage.py`, `_formatter.py`); create when a functional domain within a module has clear boundaries and its functions are primarily called by each other or by the parent facade
 
 ### Facade Role
 
-Package `__init__.py` stays as public interface after decomposition. Imports from internal modules via star imports and re-exports or delegates. The `_` prefix convention on private functions controls what star imports export — no `__all__` needed. CLI (`__main__.py`) imports from the package via `from . import *` — internal module structure is invisible to callers.
+- **`__init__.py` is the public interface.** After a package is decomposed into internal modules, `__init__.py` remains the sole entry point external code imports from. Decomposition is an implementation detail — the facade shape does not change.
+- **Facade assembles via star imports.** `__init__.py` uses `from ._internal import *` to fold each internal module's public names into the package namespace. Moving a function between internal modules does not require caller updates.
+- **Underscore prefix controls what star imports export.** Functions starting with `_` do not cross star imports; public functions do. This replaces `__all__` — the underscore convention is the single source of truth for public/private.
+- **CLI imports from the package, not from internals.** `__main__.py` uses `from . import *` to consume the facade. CLI code never imports from `_internal.py` modules — internal structure is invisible to CLI just as it is to external callers.
 
 ```python
 # __init__.py — facade after decomposition
@@ -124,7 +134,9 @@ Use `_{purpose}.py` (internal) when functions exist to support the package and h
 
 ### CLI Boundary
 
-Decomposition of `__init__.py` is invisible to `__main__.py`. CLI always imports from the package (`from . import *`), never from internal `_{purpose}.py` modules. Separate modules with their own CLI subcommands are imported directly by the CLI alongside the facade.
+- **Decomposition is invisible to CLI.** `__main__.py` sees `__init__.py` as the package interface. Internal decomposition under the facade (`_db.py`, `_parser.py`, etc.) does not change how CLI code imports or calls facade functions.
+- **CLI imports the facade via star import.** Use `from . import *` to pull in all public names in one line. Never import from internal `_{purpose}.py` modules — the underscore prefix is the boundary, and CLI is an external consumer.
+- **Separate modules imported directly.** A separate module (`{name}.py`, no underscore) that contributes its own CLI subcommands is imported directly by the CLI alongside the facade, because its public surface is independent of the facade's.
 
 ### Import Pattern
 
@@ -153,11 +165,15 @@ import plugin
 
 Test files use `test_` prefix: `test_module.py`, `test_client.py`. Pytest discovers `test_*.py` by default. Do not use `*_test.py` suffix convention.
 
-Test directories contain `__init__.py` for proper package structure. Shared fixtures live in `conftest.py` at appropriate directory level.
+Test directories contain `__init__.py` so pytest discovers them as packages — discovery relies on importability.
+
+Shared fixtures live in `conftest.py` at the appropriate directory level — the closest directory containing all tests that use the fixture. Fixtures declared too high leak into unrelated tests; declared too low duplicate across test directories.
 
 ### Test Structure
 
-Group related tests by class when testing a single function or module boundary. Use descriptive test method names that state what is being verified: `test_prefix_attack_blocked`, `test_cycle_detection_raises`.
+**Group related tests by class.** When a set of tests exercises a single function or module boundary, wrap them in a `TestX` class. Shared fixtures, setup, and naming context apply uniformly across the class.
+
+**Test method names state what is verified.** Use descriptive names like `test_prefix_attack_blocked`, `test_cycle_detection_raises`, `test_empty_input_returns_zero`. The reader of a failure output should understand what broke from the test name alone.
 
 Fixtures provide isolated test state (temp directories, databases, environment variables). Prefer `tmp_path` and `monkeypatch` builtins over manual setup/teardown.
 

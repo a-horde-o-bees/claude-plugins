@@ -69,7 +69,8 @@ Descriptions do not repeat the schema (agents see both) or document internal beh
 
 - Typed JSON Schema with explicit `required` and `properties` — schema enforces validity, not runtime checks
 - Accept structured input (arrays, objects) for batch operations — avoid multiple round-trips for data the caller already has
-- Optional parameters have meaningful defaults; implicit behavior that changes output shape requires documentation in the description
+- Optional parameters carry meaningful defaults — callers should be able to invoke without the parameter and get sensible behavior
+- When an optional parameter changes output shape or behavior, document the change in the tool description — agents cannot infer shape-shifting defaults from the schema alone
 
 ## Output Design
 
@@ -199,9 +200,13 @@ Project, plugin, and plugin-data paths resolve through the plugin framework help
 
 ### MCP Subprocess Environment Bootstrap
 
-Claude Code launches MCP servers with cwd set to the project root but does not propagate `CLAUDE_PROJECT_DIR` to the subprocess environment. Variable references inside `.mcp.json` env block values are not expanded — the literal string `${CLAUDE_PROJECT_DIR}` passes through unchanged, which corrupts path resolution silently (writes land in a directory literally named `${CLAUDE_PROJECT_DIR}` under cwd).
+**Problem.** Claude Code launches MCP servers with cwd set to the project root but does not propagate `CLAUDE_PROJECT_DIR` to the subprocess environment. Variable references inside `.mcp.json` env block values are not expanded — the literal string `${CLAUDE_PROJECT_DIR}` passes through unchanged, which corrupts path resolution silently (writes land in a directory literally named `${CLAUDE_PROJECT_DIR}` under cwd).
 
-The servers package bootstraps `CLAUDE_PROJECT_DIR` from `Path.cwd().resolve()` at import time (in `servers/_helpers.py`) when the variable is missing. This is the only place in the codebase permitted to derive the project directory from cwd — the exception is safe because the MCP-server cwd is a Claude Code launch-time contract, not a user-influenced working directory. Code running outside the MCP subprocess (hooks, CLI, tests) must continue to set `CLAUDE_PROJECT_DIR` explicitly.
+**Bootstrap location.** The servers package bootstraps `CLAUDE_PROJECT_DIR` from `Path.cwd().resolve()` at import time in `servers/_helpers.py` when the variable is missing. Every server module imports `_helpers` (for `_ok`/`_err`), so the bootstrap fires at process start.
+
+**Cwd-derived fallback is MCP-subprocess-only.** `servers/_helpers.py` is the only place in the codebase permitted to derive the project directory from cwd. The exception is safe because MCP-server cwd is a Claude Code launch-time contract, not a user-influenced working directory.
+
+**Non-MCP contexts set `CLAUDE_PROJECT_DIR` explicitly.** Hooks, CLI invocations, and tests must set the variable through their own entry points (e.g., test fixtures, hook wrapper scripts, shell environment). No cwd fallback applies outside the MCP subprocess.
 
 ## Relational Data Storage
 
@@ -244,6 +249,10 @@ def get_connection(db_path: str) -> sqlite3.Connection:
 
 ### Aggregate-Aware Tools
 
-Tools operate within aggregate boundaries. A tool that modifies a satellite record understands its relationship to the root — validation and consistency checks are tool responsibilities, not caller responsibilities. Cascade on delete is a schema responsibility, not a tool responsibility; tools should not walk aggregates manually to delete children.
+**Scope — tools operate within aggregate boundaries.** A tool that modifies a satellite record knows which aggregate it belongs to; cross-aggregate operations are distinct tools, not parameters.
 
-Registration and mutation tools accept arrays for batch processing. The tool handles per-item dedup, validation, and error collection internally — the caller provides the batch, the tool returns per-item results.
+**Validation is a tool responsibility.** A tool that writes a satellite record checks relationship constraints (foreign key exists, values pass CHECK constraints, aggregate invariants hold) before the write. Callers provide data; they do not pre-validate.
+
+**Cascade-delete is a schema responsibility.** Tools do not walk aggregates to delete children — `ON DELETE CASCADE` in the schema owns that. A delete tool issues `DELETE FROM root WHERE id = ?` and lets SQLite remove reachable children.
+
+**Batch-aware tool surface.** Registration and mutation tools accept arrays for batch processing. The tool handles per-item dedup, validation, and error collection internally — the caller provides the batch, the tool returns per-item results.

@@ -131,7 +131,9 @@ Integration tests that create, modify, or stage files within the project reposit
 
 Without isolation, tests that use `git checkout --`, `git restore`, or `git reset` to clean up after themselves silently destroy uncommitted changes in the main working tree.
 
-Mechanism: create a detached worktree from HEAD via `git worktree add <path> HEAD --detach`; teardown removes it via `git worktree remove --force`. Tests receive the worktree path and reference all project files relative to it. Language-specific fixture patterns belong in the language convention (e.g., Python conventions for pytest fixture implementation).
+**Mechanism.** Create a detached worktree from HEAD via `git worktree add <path> HEAD --detach`; tear it down with `git worktree remove --force`. Tests receive the worktree path and reference all project files relative to it.
+
+**Fixture patterns live in the language convention.** Worktree isolation is language-agnostic — the fixture machinery that implements it (pytest session-scoped fixtures, Jest setup hooks, etc.) is language-specific and documented alongside the language's other testing patterns, not here.
 
 When worktree isolation is required:
 
