@@ -1,6 +1,6 @@
 # Marketplace Architecture
 
-Claude Code plugin marketplace packaging two plugins with shared development infrastructure. Each plugin is an independent system with its own architecture; this document covers how they are packaged, developed, and delivered.
+Claude Code plugin marketplace packaging one released plugin and one in-development plugin with shared development infrastructure. Each plugin is an independent system with its own architecture; this document covers how they are packaged, developed, and delivered.
 
 ## Layers
 
@@ -16,12 +16,12 @@ Plugin internals (see per-plugin architecture.md)
 
 ## Plugins
 
-| Plugin | Purpose | Architecture |
-|--------|---------|-------------|
-| [ocd](plugins/ocd/) | Deterministic enforcement of permissions, rules, and structural conventions with agent-facing project navigation | [architecture.md](plugins/ocd/architecture.md) |
-| [blueprint](plugins/blueprint/) | Structured solution research and implementation planning through entity-based analysis | [architecture.md](plugins/blueprint/architecture.md) |
+| Plugin | Status | Purpose | Architecture |
+|--------|--------|---------|-------------|
+| [ocd](plugins/ocd/) | Active (v0.1.0 released) | Deterministic enforcement of permissions, rules, and structural conventions with agent-facing project navigation | [architecture.md](plugins/ocd/architecture.md) |
+| [blueprint](plugins/blueprint/) | In development | Structured solution research and implementation planning through entity-based analysis | [architecture.md](plugins/blueprint/architecture.md) |
 
-Plugins are independent systems — each has its own manifest, hooks, skills, rules, and tests. Blueprint depends on ocd at the skill level (uses ocd's navigator and conventions infrastructure) but operates independently at the plugin level.
+Plugins are independent systems — each has its own manifest, hooks, skills, rules, and tests. Blueprint depends on ocd at the skill level (uses ocd's navigator and conventions infrastructure) but operates independently at the plugin level. The released version of ocd lives on the `v0.1.0` release branch; blueprint is still under main-branch development and not yet released.
 
 Each plugin may register Claude Code hooks (PreToolUse, PostToolUse, SessionStart), MCP servers for persistent tooling (SQLite-backed, launched as subprocesses with per-server data directories under `.claude/<plugin>/`), and skills (discoverable by Claude Code at configured skill paths). The specific hooks, servers, and skills each plugin provides are documented in that plugin's own `architecture.md`.
 
@@ -61,7 +61,7 @@ Rules govern how the agent behaves. Conventions govern what a file contains. Ope
 
 ### Template-Deployed Model
 
-Templates live in plugin source (`plugins/<plugin>/rules/`, `plugins/<plugin>/conventions/`). Init deploys copies to the user's project (`.claude/rules/`, `.claude/conventions/`). Users edit deployed copies; `scripts/sync-templates.py` syncs deployed content back to templates before commits. Governance metadata (`matches`, `excludes`, `governed_by`) lives in each file's YAML frontmatter; the navigator reconciles rules and conventions against disk state on every governance query, so entries stay current without an explicit registration step.
+Templates live in plugin source (`plugins/<plugin>/templates/rules/`, `plugins/<plugin>/templates/conventions/`, `plugins/<plugin>/templates/patterns/`, `plugins/<plugin>/templates/logs/`). Init deploys copies to the consumer's project (`.claude/rules/`, `.claude/conventions/`, `.claude/patterns/`, `.claude/logs/`). Users edit deployed copies; `scripts/sync-templates.py` syncs deployed content back to templates before commits (main branch only — release branches don't carry the sync script). Governance metadata (`includes`, `excludes`, `governed_by`) lives in each file's YAML frontmatter; the governance library reconciles rules and conventions against disk state on every query, so entries stay current without an explicit registration step.
 
 ### Development Scripts
 
@@ -70,30 +70,34 @@ Templates live in plugin source (`plugins/<plugin>/rules/`, `plugins/<plugin>/co
 | `scripts/sync-templates.py` | Sync deployed copies back to template files; called by pre-commit hook |
 | `scripts/run-plugin.sh` | Run plugin CLI with correct environment variables for local development |
 | `scripts/test.sh` | Run full test suite across project and all plugins |
-| `scripts/pyextract.py` | Utility for extracting Python code blocks |
+| `scripts/pyextract.py` | Utility for extracting Python code blocks from markdown |
+
+These are dev-only — stripped from release branches.
 
 ### Testing
 
-Project-level tests in `tests/`, per-plugin tests isolated by `pytest.ini` with independent `pythonpath` settings. Each plugin's tests run in isolation matching production import paths. `scripts/test.sh` runs all suites sequentially.
+Project-level tests in `tests/`, per-plugin tests isolated by `pytest.ini` with independent `pythonpath` settings. Each plugin's tests run in isolation matching production import paths. `scripts/test.sh` runs all suites sequentially. Tests are dev-only and stripped from release branches.
 
 ## File Organization
 
 ```
 claude-plugins/
 ├── .claude-plugin/
-│   └── marketplace.json         — marketplace manifest registering both plugins
+│   └── marketplace.json         — marketplace manifest registering plugins
 ├── .claude/
-│   ├── rules/                   — deployed rule files (edited here, synced to templates)
-│   ├── conventions/             — deployed convention files (edited here, synced to templates)
+│   ├── rules/                   — deployed rule files (gitignored; regenerated by /ocd:init)
+│   ├── conventions/             — deployed convention files (gitignored; regenerated by /ocd:init)
+│   ├── patterns/                — deployed pattern files (gitignored)
+│   ├── logs/                    — dev-only log entries (decisions, friction, problems, ideas)
+│   ├── skills/                  — project-local dev skills (checkpoint, sync-templates)
+│   ├── hooks/                   — project-level pre-commit guards
 │   ├── ocd/                     — ocd plugin project data (navigator db)
 │   ├── blueprint/               — blueprint plugin project data (research db)
-│   ├── hooks/                   — project-level git hooks
 │   └── settings.json            — project-level permission patterns
 ├── plugins/
 │   ├── ocd/                     — ocd plugin (own system, see plugins/ocd/architecture.md)
 │   └── blueprint/               — blueprint plugin (own system, see plugins/blueprint/architecture.md)
-├── decisions/                   — architectural decision records
-├── scripts/                     — shared development scripts
-├── tests/                       — project-level integration tests
-└── research/                    — reference materials from research activities
+├── scripts/                     — shared development scripts (dev-only)
+├── tests/                       — project-level integration tests (dev-only)
+└── purpose-map/                 — methodology tooling for live-invention audits (dev-only)
 ```

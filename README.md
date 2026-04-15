@@ -8,12 +8,18 @@ This is a personal development project. It is experimental, actively evolving, a
 
 Use at your own discretion. If something breaks, the LICENSE applies.
 
+## Releases
+
+**Latest stable release:** [`v0.1.0`](https://github.com/a-horde-o-bees/claude-plugins/tree/v0.1.0) — consumer install instructions and stable documentation live there.
+
+This branch (`main`) is active development. It contains work in progress that may be incomplete or breaking. For production use, install from a release branch.
+
 ## Plugins
 
 | Plugin | Status | Description |
 |--------|--------|-------------|
-| [ocd](plugins/ocd/) | Active | Deterministic enforcement of permissions, rules, and structural conventions with agent-facing project navigation |
-| [blueprint](plugins/blueprint/) | Active | Structured solution research and implementation planning through entity-based analysis |
+| [ocd](plugins/ocd/) | Active (v0.1.0) | Deterministic enforcement of permissions, rules, and structural conventions with agent-facing project navigation |
+| [blueprint](plugins/blueprint/) | In development | Structured solution research and implementation planning through entity-based analysis |
 
 ## Installation
 
@@ -25,12 +31,6 @@ Add the marketplace and install plugins:
 /plugin marketplace add https://github.com/a-horde-o-bees/claude-plugins.git
 /plugin install ocd@a-horde-o-bees
 /plugin install blueprint@a-horde-o-bees
-```
-
-To track a specific branch (e.g., for pre-release testing):
-
-```
-/plugin marketplace add https://github.com/a-horde-o-bees/claude-plugins.git#dev
 ```
 
 Restart Claude session so hooks and commands load, then initialize in target project:
@@ -152,11 +152,10 @@ See [architecture.md](architecture.md) for marketplace structure, shared infrast
 
 ## Versioning
 
-Plugin versions follow `x.y.z` format:
+Plugin versions follow `x.y.z` format. Main and release branches live in disjoint version spaces — no `(x,y,z)` tuple ever points at more than one commit.
 
-- `x` — major version; starts at `0` until a change breaks previous setups
-- `y` — increments on public release (cohesive, ready for consumers); resets `z` to `0`
-- `z` — increments on every development commit; required for local plugin reload to detect changes
+- **Main** tracks `0.0.z` permanently. `z` is a monotonic dev build counter bumped on every commit to catch local reload detection. Main is never released from directly.
+- **Release branches** own real semver. A new release is cut at `x.y.0` on a dedicated branch; patches on that branch bump `z`. Release branches are the install target for consumers; main is for development only.
 
 ## License
 
