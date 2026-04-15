@@ -10,14 +10,14 @@ Process a queue of variable-size items within an agent's context budget. Self-re
 3. For each {item} in {queue} starting from {checkpoint}:
     1. Estimate item size (read metadata or first pass)
     2. If consumed context + estimated size exceeds budget AND at least one item processed:
-        1. Return:
+        1. Return to caller:
             - Completed items and their results
             - Next item ID as resumption checkpoint
             - "incomplete" status
     3. Process {item} fully
     4. Record result
     5. Update {checkpoint} to next item
-4. Return:
+4. Return to caller:
     - All completed items and their results
     - "complete" status
 ```

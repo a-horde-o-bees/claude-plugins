@@ -31,7 +31,7 @@ Bullets (`-`) are unordered sub-items within a step.
 
 ## Scoping
 
-Indentation is the scope mechanism — 4 spaces per level, no depth limit. All constructs ending with `:` open a block. Single-action blocks may inline after the colon. Multi-action blocks place actions as indented children — never mix an inline action with indented children on the same block. Return to parent indentation signals the end of a block.
+Indentation is the scope mechanism — 4 spaces per level, no depth limit. All constructs ending with `:` open a block. Single-action blocks may inline after the colon. Multi-action blocks place actions as indented children — never mix an inline action with indented children on the same block. Outdenting to the parent indentation signals the end of a block.
 
 ## Comments
 
@@ -84,7 +84,7 @@ Grouping headings organize contiguous steps within a single process. Steps conti
 3. Process {target-path}
 ```
 
-Curly-brace notation is reserved for values assigned once and referenced later. When a step describes the shape of returned data — the fields a Return: hands back, the structure of a tool's output — use plain prose, not `{name}`. Decoration without downstream reference adds no execution meaning.
+Curly-brace notation is reserved for values assigned once and referenced later. When a step describes the shape of returned data — the fields a `Return to caller:` hands back, the structure of a tool's output — use plain prose, not `{name}`. Decoration without downstream reference adds no execution meaning.
 
 ## Conditionals
 
@@ -154,28 +154,28 @@ All delegations follow the same structural pattern — mechanism: followed by wh
 
 | Prefix | Mechanism | Example |
 |--------|-----------|---------|
-| skill: | Skill tool | skill: /ocd:commit |
-| bash: | Bash tool | bash: `git status --porcelain` |
-| tool name: | Dedicated tool (Read, Grep, Glob, MCP tools) | Read: `settings.json`, scope_analyze: paths=[{skill-path}] |
-| Call: | Read and follow a file or section | Call: `_protocol.md` |
-| Spawn: | Delegate to a new agent | Spawn: Call: `_workflow.md` |
+| skill: | Skill tool | skill: /&lt;plugin&gt;:&lt;skill-name&gt; |
+| bash: | Bash tool | bash: `command` |
+| tool name: | Dedicated tool (Read, Grep, Glob, MCP tools) | tool-name: arg=value |
+| Call: | Read and follow a file or section | Call: `_component-name.md` |
+| Spawn: | Delegate to a new agent | Spawn: Call: `_component-name.md` |
 
 ```
-1. skill: /ocd:commit
-2. bash: `git status --porcelain`
-3. Read: `settings.json`
-4. scope_analyze: paths=[{skill-path}]
+1. skill: /<plugin>:<skill-name>
+2. bash: `command`
+3. Read: `file-path`
+4. tool-name: arg=value
 ```
 
-Invocation types are optional — omit when the mechanism is unambiguous from context. Use when a workflow mixes mechanisms and the agent needs to distinguish. Steps without an invocation type are executed by agent judgment. The prefix can appear after an em dash — `1. Commit — skill: /ocd:commit`.
+Invocation types are optional — omit when the mechanism is unambiguous from context. Use when a workflow mixes mechanisms and the agent needs to distinguish. Steps without an invocation type are executed by agent judgment. The prefix can appear after an em dash — `1. Action — skill: /<plugin>:<skill-name>`.
 
 ## Arguments
 
-PFN content declares arguments in CLI-style format and references them in workflow steps using `--flag` (presence checks) and `{flag}` (value resolution). The primary consumer is skill `argument-hint` frontmatter.
+PFN content declares arguments in CLI-style format and references them in workflow steps using `--flag` (presence checks) and `{flag}` (value resolution). Consumer conventions that embed PFN workflows (skills, tool interfaces) declare their argument surface in this form.
 
 ### Declaration
 
-Arguments are declared in CLI-style format — in SKILL.md frontmatter this is the `argument-hint` field.
+Arguments are declared in CLI-style format.
 
 | Required | Optional | Description |
 |----------|----------|-------------|
@@ -188,7 +188,7 @@ Arguments are declared in CLI-style format — in SKILL.md frontmatter this is t
 Angle brackets `<>` denote required values. Square brackets `[]` denote optional elements.
 
 ```
---target <path | /skill-name> [--pattern <glob> ...] [--all]
+--required-flag <value> [--optional-flag <value> ...] [--boolean-flag]
 ```
 
 ### Reference
@@ -198,101 +198,101 @@ Angle brackets `<>` denote required values. Square brackets `[]` denote optional
 **`{flag}`** — resolves to the value.
 
 ```
-1. If --pattern:
-    1. For each --pattern:
-        1. Pass {pattern} to target CLI
+1. If --flag:
+    1. For each --flag:
+        1. Action using {flag}
 
-2. If {target} starts with `/`:
-    1. Resolve skill path from {target}
-3. Else if {target} is `project`:
-    1. Set target directory to project root
+2. If {variable-name} matches condition:
+    1. Action
+3. Else if {variable-name} matches other condition:
+    1. Action
 ```
 
 ## Call
 
 **`Call:`** — reads and follows a file or section as instructions in the current execution context
 
-**`Return`** — exits the current `Call:` block, handing control back to the caller
+**`Return to caller`** — exits the current `Call:` block, handing control back to the invoking subflow
 
 Distinct from Read: which loads content into context without executing it.
 
+**Component file.** An `_*.md` file containing steps extracted for reuse via `Call:` or `Spawn: Call:`. The underscore prefix marks it internal to the enclosing flow's directory. Consumer conventions define when extraction is warranted; PFN defines the invocation mechanics.
+
 ```
-1. Call: `_protocol.md`
-2. Call: `_protocol.md` ({target} = resolved path)
-3. Call: `_protocol.md`
-    - {target} = resolved path
-    - {scope} = scope result
+1. Call: `_component-name.md`
+2. Call: `_component-name.md` ({variable-name} = Content)
+3. Call: `_component-name.md`
+    - {variable-name} = Content
+    - {variable-name} = Content
 ```
 
 Arguments passed in parentheses or as indented assignments become variables available within the called content. Called files declare expected variables in a `### Variables` section:
 
 ```
-# Protocol Workflow
+# Component Flow
 
 ### Variables
 
-- {target} — the resolved target path
-- {scope} — scope_analyze result with governance metadata
+- {variable-name} — Annotation
+- {variable-name} — Annotation
 
 ### Process
 
-1. For each {file} in {scope} files:
-    1. Evaluate {file} against {target}
+1. For each {item} in {collection}:
+    1. Action
 ```
 
 `Call:` to a section heading invokes an inline subprocess within the same document:
 
 ```
-1. Call: Validation ({input} = collected data)
+1. Call: Section-Name ({variable-name} = Content)
 
-## Validation
+## Section-Name
 
-1. Check {input} against schema
-2. Return validation result
+1. Action
+2. Return to caller: Content
 ```
 
 ## Spawn
 
 **`Spawn:`** — delegates work to a new agent in its own execution context
 
-**`Return`** — exits the current `Spawn:` block, handing results back to the caller
+**`Return to caller`** — exits the current `Spawn:` block, handing the result back to the invoking subflow
 
-Extracting agent instructions into a file and using `Spawn: Call:` keeps the caller's context clean while giving the agent exactly what it needs — the caller never reads the file, and the agent reads only its own instructions. Inline spawn instructions work for short sequences but load the caller's context with content only the agent uses.
-
-Within skills, intelligent work delegation uses Spawn: exclusively. Tool calls (CLI scripts, bash commands) are not agent spawns and remain unrestricted. The skill executor applies user-directed corrections inline — no agent spawn needed for directed fixes.
+Extracting agent instructions into a component file and using `Spawn: Call:` keeps the caller's context clean while giving the agent exactly what it needs — the caller never reads the file, and the agent reads only its own instructions. Inline spawn instructions work for short sequences but load the caller's context with content only the agent uses.
 
 ```
-1. Spawn: Call: `_workflow.md`
-2. Spawn: Call: `_workflow.md` ({target} = resolved path)
+1. Spawn: Call: `_component-name.md`
+2. Spawn: Call: `_component-name.md` ({variable-name} = Content)
 3. Spawn:
-    1. Call: `_audit-workflow.md` ({scope} = scope result)
-    2. Return:
-        - Findings
+    1. Call: `_component-name.md` ({variable-name} = Content)
+    2. Return to caller:
+        - Content
 ```
 
 ### async
 
-**`async`** — prefix on `Spawn:` that runs the agent concurrently. Return to parent indentation signals the await point.
+**`async`** — prefix on `Spawn:` that runs the agent concurrently. Outdenting to the parent indentation signals the await point.
 
 ```
-1. For each {file} in {target-files}:
+1. For each {item} in {collection}:
     1. async Spawn:
-        1. Call: `_conformity-check.md` ({file} = {file})
-        2. Return:
-            - Findings
-2. Review all results
+        1. Call: `_component-name.md` ({variable-name} = {item})
+        2. Return to caller:
+            - Content
+2. Action
 ```
 
 ### isolation: "worktree"
 
-**`isolation: "worktree"`** — parenthetical modifier on `Spawn:` that runs the agent in a git worktree, an isolated copy of the repository where file changes, commits, and skill invocations stay contained. Worktree creation and cleanup are handled by the system. Composes with `async`:
+**`isolation: "worktree"`** — parenthetical modifier on `Spawn:` that runs the agent in a git worktree, an isolated copy of the repository where file changes, commits, and tool invocations stay contained. Worktree creation and cleanup are handled by the system. Composes with `async`:
 
 ```
 1. async Spawn (isolation: "worktree"):
-    1. Call: `_migration.md` ({target} = migration target)
-    2. Return:
-        - Changes applied
-2. Review results
+    1. Call: `_component-name.md` ({variable-name} = Content)
+    2. Return to caller:
+        - Content
+2. Action
 ```
 
 ### Continue
@@ -303,55 +303,69 @@ Use `Continue` when a long-running workflow needs checkpoints between cycles and
 
 ```
 1. Spawn:
-    1. Call: `_level-evaluation.md` ({files} = {first-level-files})
-    2. Return:
-        - Findings for this level
+    1. Call: `_component-name.md` ({variable-name} = Content)
+    2. Return to caller:
+        - Content
 2. {agent-ref} = the spawned agent
-3. Process returned findings, decide whether to proceed
-4. If continue:
+3. Action
+4. If {variable-name} matches condition:
     1. Continue {agent-ref}:
-        1. Call: `_level-evaluation.md` ({files} = {next-level-files})
-        2. Return:
-            - Findings for this level
-5. Process the new return the same way
+        1. Call: `_component-name.md` ({variable-name} = Content)
+        2. Return to caller:
+            - Content
+5. Action
 ```
+
+## Exit
+
+**`Exit to user`** — exits the entire process flow back to the human at the top of the chain, regardless of how deeply nested the current block is. Used for both normal-flow exits (precondition failures, early completion) and error-path exits within `Error Handling:` blocks. Intentional exits in normal flow do not trigger Error Handling; only unhandled failures do.
+
+**`Exit to user:`** — exits while emitting content, symmetric with `Return to caller:` but jumps to the top instead of one level up. Inline form for a single emission; block form when multiple items exit together.
+
+```
+1. If precondition fails: Exit to user: Content
+2. If recoverable error: Exit to user: Content — Annotation
+3. If multi-item exit: Exit to user:
+    - Content
+    - Content
+```
+
+Em-dash on an `Exit to user:` line annotates *why* the exit fires (context for the reader); content after `:` is *what* gets emitted to the user. Never use em-dash to carry emission content.
 
 ## Error Handling
 
 **`Error Handling:`** — catches failures from all sibling steps above it and their descendants within the same parent block
 
-**`Exit to caller`** — exits the current process; intentional exits in normal flow do not trigger Error Handling, only unhandled failures do
-
 Always the last step in a block that needs error recovery.
 
 ```
-1. Block push
-2. Spawn agents:
-    1. Call: `_workflow.md`
-    2. Return:
-        - Findings
-3. Unblock push
+1. Action
+2. Spawn:
+    1. Call: `_component-name.md`
+    2. Return to caller:
+        - Content
+3. Action
 4. Error Handling:
-    1. Unblock push — bash: `git config --unset remote.origin.pushurl`
-    2. Exit to caller — dispatch failed
+    1. Action
+    2. Exit to user: Content — Annotation
 ```
 
-> Error Handling at step 4 catches failures from steps 1-3 and all their descendants. It does not catch failures from steps outside its parent block.
+> Comment — Error Handling at step 4 catches failures from steps 1-3 and all their descendants. It does not catch failures from steps outside its parent block.
 
 Error Handling can be nested at different depths for different scopes:
 
 ```
-1. Outer operation
+1. Action
 2. Inner block:
-    1. Risky step A
-    2. Risky step B
+    1. Action
+    2. Action
     3. Error Handling:
-        1. Clean up inner resources
-        2. Exit to caller — inner block failed
-3. Continue with outer
+        1. Action
+        2. Exit to user: Content — Annotation
+3. Action
 4. Error Handling:
-    1. Clean up outer resources
-    2. Exit to caller — outer operation failed
+    1. Action
+    2. Exit to user: Content — Annotation
 ```
 
 ## Reference
@@ -375,8 +389,8 @@ PFN constructs and their programming analogues:
 | Call | Call: | `function()` |
 | Spawn | Spawn: | `asyncio.create_task()` |
 | Resume | Continue {agent-ref}: | Message to running coroutine |
-| Return | Return / Return: | `return` / `return value` |
+| Return | Return to caller / Return to caller: | `return` / `return value` |
 | Concurrency | async Spawn: | `asyncio.TaskGroup` |
 | Isolation | Spawn (isolation: "worktree"): | Subprocess in temp directory |
 | Error handling | Error Handling: | `except:` |
-| Exit | Exit to caller | `sys.exit()` |
+| Exit | Exit to user / Exit to user: | `sys.exit()` / `sys.exit(value)` |

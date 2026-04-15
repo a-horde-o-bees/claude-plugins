@@ -9,7 +9,7 @@ Spawn an agent into a disposable git worktree for safe execution of state-modify
 2. Spawn agent with isolation: "worktree":
     1. Execute operations in worktree
     2. Observe results
-    3. Return:
+    3. Return to caller:
         - Findings, output, or observations
 3. Unblock git push — bash: `git config --unset remote.origin.pushurl`
 4. Process returned results

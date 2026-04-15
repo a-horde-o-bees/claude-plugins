@@ -54,7 +54,7 @@ Rules that belong in SKILL.md's Rules section. Prescribed across all audit skill
 - Classify findings as Defect or Observation per triage criteria
 - Apply defects directly to disk
 - Present observations with the agent's proposed fix intact — do not summarize or omit
-- Exit to caller when observations need user judgment
+- Exit to user when observations need user judgment
 
 ## Agent Rules
 

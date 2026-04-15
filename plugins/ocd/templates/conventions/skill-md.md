@@ -68,7 +68,7 @@ Common argument patterns with established infrastructure. These are not exhausti
 
 | Argument | Role | Description |
 |----------|------|-------------|
-| `--target` | Gate + subject | Required flag carrying target value; presence triggers execution, value identifies what to operate on; without it, skill responds with description and usage hint |
+| `--target` | Gate + subject | Required flag carrying target value; presence triggers execution, value identifies what to operate on; without it, skill emits its description and argument-hint to the user |
 | `[--pattern <glob> ...]` | Filter | Passthrough to navigator for file enumeration; repeatable for OR-combined matching; ignored when target is single file |
 | `[--all]` | Boundary override | Includes `.claude/` files in target enumeration; without it, `.claude/` excluded by default |
 
@@ -79,14 +79,14 @@ Common argument patterns with established infrastructure. These are not exhausti
 Place these argument-resolution steps at the top of Workflow:
 
 ```
-1. If not --target: Exit to caller — respond with skill description and argument-hint
+1. If not --target: Exit to user: skill description and argument-hint
 
 > Check if target is a skill — slash-name or direct SKILL.md path
 
 2. If ({target} starts with `/` and contains no spaces) or ({target} is a path ending with `/SKILL.md`):
     1. If {target} starts with `/`:
         1. bash: `python3 ${CLAUDE_PLUGIN_ROOT}/run.py lib.navigator resolve-skill {target}`
-        2. If exit code 1: Exit to caller — report skill not found
+        2. If exit code 1: Exit to user: skill not found
     2. {target-directory} = parent of resolved SKILL.md path
 
 > Not a skill — add domain-specific deterministic branches here (e.g., `project`, `self`)
@@ -118,7 +118,7 @@ skill-name/
 
 ## Components
 
-Components are `_{name}.md` files alongside SKILL.md — extracted sub-flows, agent workflows, evaluation criteria, reference material. Underscore prefix signals internal. PFN's `Spawn:` + `Call:` pattern handles invocation.
+Component files (see Process Flow Notation) live alongside SKILL.md. Typical contents: extracted sub-flows, agent workflows, evaluation criteria, reference material.
 
 ### When to extract
 
@@ -129,15 +129,9 @@ Extract a sub-flow into a component file when either holds:
 
 Mandatory sub-flows that run on every invocation stay inline regardless of size. If the caller always reads them anyway, extraction saves no context.
 
-### Invocation
+## Delegation
 
-```
-## Workflow
-1. Spawn:
-    1. Call: `_audit-workflow.md` ({target} = resolved target)
-    2. Return:
-        - Results
-```
+Within skills, intelligent work delegation uses `Spawn:` exclusively. Tool calls (CLI scripts, bash commands) are not agent spawns and remain unrestricted. The skill executor applies user-directed corrections inline — no agent spawn needed for directed fixes.
 
 ## File Enumeration
 
