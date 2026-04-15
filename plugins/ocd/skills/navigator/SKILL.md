@@ -17,7 +17,7 @@ Sync the navigator database with the filesystem, then work through entries that 
 Navigator maintains a SQLite index of project files and directories, each with a human-written description agents use to decide whether to open the file. Two concerns are separated:
 
 - **Structural sync** — deterministic. The `scan` CLI walks the filesystem, adds new paths with NULL description, removes deleted paths, flags changed files as stale, and cascades staleness to parent directories (parent descriptions summarize children, so a child change invalidates the parent). Files matching seed-rule glob patterns receive prescribed descriptions automatically.
-- **Description writing** — agent judgment. The `paths_undescribed` tool returns the deepest directory with undescribed or stale entries, one at a time. Children are finalized before parents — parent descriptions are derived from their children's.
+- **Description writing** — agent judgment. The `paths_undescribed` tool returns the deepest directory with undescribed or stale entries, one at a time (alphabetical among peers of equal depth). Children are finalized before parents — parent descriptions are derived from their children's.
 
 The loop terminates when `paths_undescribed` returns `done=true`.
 
