@@ -77,6 +77,8 @@ Agent-facing entry point at `skills/navigator/__main__.py`. Agents call `--help`
 
 ### Other Skills
 
+Released skills (stable, available via `/ocd:` slash commands):
+
 | Skill | Purpose |
 |-------|---------|
 | `/ocd:commit` | Topic-grouped commits with end-state descriptions |
@@ -85,8 +87,14 @@ Agent-facing entry point at `skills/navigator/__main__.py`. Agents call `--help`
 | `/ocd:status` | Report plugin version, rules state, skill status |
 | `/ocd:log` | Capture decisions, friction, problems, ideas as log entries |
 | `/ocd:md-to-pdf` | Export markdown to PDF with GitHub-style CSS |
+
+In-development skills (present on `main` for dev work, not yet included in the released `v0.1.0` branch):
+
+| Skill | Purpose |
+|-------|---------|
 | `/ocd:audit-governance` | Audit governance chain conformity, followability, coherence |
 | `/ocd:audit-static` | Audit any path against governance, best practices, and prior art |
+| `/ocd:update-system-docs` | Maintain project documentation by deriving it from code reality (design only; implementation pending) |
 
 ### MCP Servers
 
@@ -94,16 +102,16 @@ Agent-facing tools exposed over the Model Context Protocol. Registered in `.mcp.
 
 | Server | Tools | Purpose |
 |--------|-------|---------|
-| `navigator` | `paths_*`, `skills_*`, `references_*`, `scope_*` | Project structure index, reference mapping, scope analysis |
-| `log` | `log_*`, `type_*`, `tag_*` | Unified project log across types (decision, friction, problem, idea) with per-type tag management |
+| `navigator` | `paths_*`, `skills_*`, `references_*`, `scope_*` | Project structure index, reference mapping, governance matching, scope analysis |
 
 ## Libraries
 
-Python packages consumed as imports — no MCP server, no subprocess.
+Python packages consumed as imports. Each has its own README and architecture.
 
 | Library | Package | Purpose |
 |---------|---------|---------|
-| `governance` | `lib/governance/` | Convention and rule governance: matching files to applicable entries, listing entries, dependency ordering. Disk-only. |
+| `governance` | [`lib/governance/`](lib/governance/) | Convention and rule governance: match files to applicable entries, list entries, compute dependency ordering. Disk-only. |
+| `navigator` | [`lib/navigator/`](lib/navigator/) | Project structure index backed by SQLite: path indexing, filesystem scan, descriptions, reference mapping, skill resolution. |
 
 ## License
 
