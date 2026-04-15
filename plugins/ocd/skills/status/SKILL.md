@@ -19,10 +19,6 @@ Report plugin infrastructure state.
 - Plugin version
 - Rules, conventions, and patterns deployment status (per-file current/absent/stale)
 - Log template status
-- Navigator operational status and entry counts
+- MCP Servers — per-server deployment and operational status
 - Skills list
 - Permissions coverage (project and user pattern counts)
-
-## Error Handling
-
-- If script fails: report the failure with exit code and any error output

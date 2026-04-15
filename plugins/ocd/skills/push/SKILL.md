@@ -1,20 +1,24 @@
 ---
 name: push
+description: Push local commits to a named branch on the remote.
+argument-hint: "--branch <branch-name>"
 allowed-tools:
   - Skill
   - Bash(git *)
-description: >
-  Push commits to remote. Requires explicit --branch to name the push target.
-  Runs /ocd:commit first if uncommitted changes exist, previews unpushed commits,
-  then pushes.
-argument-hint: "--branch <branch-name>"
 ---
 
 # /push
 
 Push local commits to remote. Requires explicit branch name — no default target. Ensures working tree is committed first, previews unpushed commits, then pushes.
 
-## Route
+## Rules
+
+- Never force push
+- Explicit --branch is required — no default push target; naming the branch is the confirmation
+- Branch mismatch exits with explanation — no prompt, no default action; user re-invokes with correct intent or asks for help
+- Commit step is fully automated via /ocd:commit — no double-confirmation on commit content
+
+## Workflow
 
 1. If not --branch: Exit to user — respond with skill description and argument-hint
 2. {current-branch} = current git branch
@@ -22,31 +26,22 @@ Push local commits to remote. Requires explicit branch name — no default targe
     1. Exit to user — report mismatch, explain options:
         - To push the current branch: re-invoke with `--branch {current-branch}`
         - To move commits to {branch} first: ask for help with rebase/merge
-4. Push target is `origin/{branch}`
-
-## Workflow
-
-1. Check for uncommitted changes
+4. Check for uncommitted changes
     1. Run `git status --short`
     2. If changes exist:
         1. skill: `/ocd:commit`
         2. If commit fails or produces no commits: Exit to user — report failure
-2. Check for unpushed commits
+5. {upstream-set} = bash: `git rev-parse --abbrev-ref @{upstream}` exits 0
+6. If {upstream-set}:
     1. Run `git log --oneline @{upstream}..HEAD`
     2. If no unpushed commits: Exit to user — report "Nothing to push — local and remote are in sync"
-3. Present push preview — branch name, remote, commit count and list (oneline format)
-4. Push to remote: `git push origin {branch}`
-5. Report result
+7. Present push preview — branch name, remote, commit count and list (oneline format)
+8. Push to remote:
+    1. If {upstream-set}: bash: `git push origin {branch}`
+    2. Else: bash: `git push -u origin {branch}` — first push, set upstream
+9. Report result
 
 ### Report
 
 - Commits pushed: count and branch
 - Remote URL and status
-
-## Rules
-
-- Never force push
-- Explicit --branch is required — no default push target; naming the branch is the confirmation
-- Branch mismatch exits with explanation — no prompt, no default action; user re-invokes with correct intent or asks for help
-- If upstream is not set, use the provided --branch to set it with `git push -u origin {branch}`
-- Commit step is fully automated via /ocd:commit — no double-confirmation on commit content
