@@ -23,10 +23,8 @@ Audit skills follow skill-md.md Body Structure, promoting sections to Prescribed
 | `## Process Model` | Prescribed | Holistic reading rationale and dispatch/triage design for this audit |
 | `## Scope` | Prescribed | Accepted arguments and how target discovery works for this audit |
 | `## Rules` | Prescribed | |
-| `## Route` | Prescribed | |
 | `## Workflow` | Prescribed | |
 | `### Report` | Prescribed | Per the Report section below |
-| `## Error Handling` | Prescribed | |
 
 ## Naming
 

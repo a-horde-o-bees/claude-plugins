@@ -12,7 +12,7 @@ SKILL.md defines slash command behavior. Claude Code parses frontmatter for meta
 
 ## Body Structure
 
-Sections are ordered for progressive consumption — identity and concept first, then constraints, then execution, then error handling.
+Sections are ordered for progressive consumption — identity and concept first, then constraints, then execution.
 
 Sections fall into three categories:
 
@@ -28,10 +28,8 @@ Sections fall into three categories:
 | `## Process Model` | Common | How the skill operates and why — when mechanics are not self-evident from steps |
 | `## Scope` | Common | What the skill operates on and how arguments modify the target set |
 | `## Rules` | Common | Constraints for the skill executor; spawned-agent-facing constraints belong in component files |
-| `## Route` | Common | Resolve arguments, validate inputs, dispatch to Workflow |
-| `## Workflow` | Prescribed | Numbered steps using Process Flow Notation |
+| `## Workflow` | Prescribed | Full process flow in Process Flow Notation — argument resolution, validation, execution, output |
 | `### Report` | Common | Output format subheading within Workflow |
-| `## Error Handling` | Prescribed | How the skill responds to failures; minimum: report failure with available details |
 
 Child conventions (e.g., audit-skill-md.md) may prescribe additional sections, promote Common sections to Prescribed for their domain, or define domain-specific subsections within Workflow.
 
@@ -78,7 +76,7 @@ Common argument patterns with established infrastructure. These are not exhausti
 
 `{target}` is evaluated against deterministic matches first. Unmatched values fall through to natural language interpretation where skill executor derives adjustments and confirms with user before proceeding.
 
-Route pattern for `{target}` evaluation:
+Place these argument-resolution steps at the top of Workflow:
 
 ```
 1. If not --target: Exit to caller — respond with skill description and argument-hint
@@ -104,7 +102,7 @@ Route pattern for `{target}` evaluation:
 ### Constraints
 
 - When natural language adjustments conflict with other provided flags, skill executor surfaces the conflict and works with user to resolve — no implicit precedence
-- `--pattern` is only meaningful for directory targets — Route ignores it when target resolves to single file
+- `--pattern` is only meaningful for directory targets — ignore it when target resolves to single file
 
 ## Directory Structure
 
@@ -120,7 +118,18 @@ skill-name/
 
 ## Components
 
-Components are `_{name}.md` files alongside SKILL.md — agent workflows, evaluation criteria, reference material, and agent-facing constraints are common examples. Underscore prefix signals internal. PFN's `Spawn:` + `Call:` pattern handles invocation:
+Components are `_{name}.md` files alongside SKILL.md — extracted sub-flows, agent workflows, evaluation criteria, reference material. Underscore prefix signals internal. PFN's `Spawn:` + `Call:` pattern handles invocation.
+
+### When to extract
+
+Extract a sub-flow into a component file when either holds:
+
+- The sub-flow is dispatched via `Spawn:` to an isolated agent — the agent reads only its own instructions, keeping the caller's context clean
+- The sub-flow is optional — conditional on arguments or runtime state, not traversed by every invocation — so the caller avoids loading instructions that won't execute on the paths that skip it
+
+Mandatory sub-flows that run on every invocation stay inline regardless of size. If the caller always reads them anyway, extraction saves no context.
+
+### Invocation
 
 ```
 ## Workflow
