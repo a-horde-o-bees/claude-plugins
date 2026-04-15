@@ -22,9 +22,21 @@ Every system maintains a consumer-facing entry point and a developer-facing desi
 | `README.md` | User | How do I use this? |
 | `architecture.md` | Developer | How does this work inside? |
 
-- `README.md` — what it does, how to install, configure, use. Required for every system
-- `architecture.md` — layers, components, relationships, design patterns, key implementation details. Required for every system
+- `README.md` — what it does, how to install, configure, use. Required for systems with substantial internal structure
+- `architecture.md` — layers, components, relationships, design patterns, key implementation details. Required for systems with substantial internal structure
 - `CLAUDE.md` / `SKILL.md` — operational procedures, workflow rules, tool invocation patterns. Present only when the system has agent-facing procedures. Skills use `SKILL.md`; other systems use `CLAUDE.md`
+
+## Subsystem Doc Consolidation
+
+A subsystem earns its own `README.md` and `architecture.md` when it has substantial internal structure — multiple components, its own schema, its own public interface beyond a single entry point. Libraries, plugins, and substantive services fit this category.
+
+Thin subsystems — a skill whose `SKILL.md` is its complete operational reference, a thin MCP server adapter over a domain library, a single-file script — do not require their own `README.md` and `architecture.md`. Their purpose is owned at their natural doc location (SKILL.md frontmatter description, module-level docstring, file header) and propagated to the parent's overview.
+
+Purpose statement propagation: every subsystem — whether it has its own docs or consolidates into the parent — owns its purpose statement at one canonical location. Parent documentation quotes from the canonical location rather than independently describing the subsystem, keeping the parent in sync when the subsystem evolves. The canonical locations:
+
+- Library or plugin subsystem with full docs — `README.md`'s opening purpose statement
+- Skill — `SKILL.md`'s frontmatter `description` field
+- Thin MCP server or other single-file subsystem — module-level docstring of its entry point
 
 ## Document Separation
 

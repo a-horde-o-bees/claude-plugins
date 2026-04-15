@@ -21,11 +21,15 @@ Ad-hoc validates instruction content; real invocation validates orchestration. B
 
 ## Versioning
 
-`x.y.z` in each plugin's `.claude-plugin/plugin.json`:
+`x.y.z` in each plugin's `.claude-plugin/plugin.json`. Main and release branches live in disjoint version spaces — `(x,y,z)` never points at more than one commit across branches.
 
-- `x` — major; starts at `0` until a change breaks previous setups
-- `y` — public release; cohesive set of changes ready for consumers; resets `z`
-- `z` — every commit; required for plugin reload to detect changes
+**Main** tracks `0.0.z` permanently. `z` is a monotonic dev build counter, bumped on every commit to catch Claude Code's reload detection. Main is never released from directly.
+
+**Release branches** own real semver:
+
+- When cutting a new release `x.y.0`: branch from main, bump `plugin.json` to `x.y.0`, run release prep (content curation, doc regeneration). All prep commits hold `plugin.json` at `x.y.0`. Tag at the final commit.
+- Patch releases on a release branch: bump `plugin.json` to `x.y.(z+1)` on the patch commit and tag.
+- Main continues z-incrementing in `0.0.z` space, unaffected by the release cut.
 
 ## Plugin Reference
 
