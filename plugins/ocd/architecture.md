@@ -87,68 +87,38 @@ Template files in `templates/rules/` deploy to `.claude/rules/ocd/` via `/ocd:in
 
 ## Skills
 
-Skill packages live under `skills/`. Each contains at minimum a `SKILL.md` describing the workflow. Some include extracted component files (`_*.md`) for subflows, or references subdirectories for detailed reference material.
+Skill packages live under `skills/`. Each contains at minimum a `SKILL.md` describing the workflow. Some include extracted component files (`_*.md`) for subflows that only run on optional execution paths. Per the Subsystem Doc Consolidation rule in `system-documentation.md`, skills' operational reference IS `SKILL.md` — no separate README or architecture is required; purpose statements below are propagated from each skill's frontmatter `description` field.
 
-| Skill | Purpose |
-|-------|---------|
-| `init` | Deploy rules, conventions, patterns, log templates, and navigator database |
-| `status` | Report plugin version, deployment state, navigator status, skills, permissions |
-| `navigator` | Maintain navigator database — scan filesystem and write descriptions |
-| `commit` | Topic-grouped commits with end-state messages and per-commit version bumps |
-| `push` | Push local commits to a named branch; commits first if needed, handles first-push upstream setup |
+| Skill | Purpose (from SKILL.md frontmatter) |
+|-------|-------------------------------------|
+| `init` | Initialize ocd conventions and skill infrastructure in current project |
+| `status` | Report plugin infrastructure state |
+| `navigator` | Sync navigator database with filesystem and describe entries that need descriptions |
+| `commit` | Commit working tree changes grouped by topic for readable git history |
+| `push` | Push local commits to a named branch on the remote |
 | `log` | Capture or manage project log entries — decisions, friction, problems, ideas |
-| `md-to-pdf` | Export markdown files to PDF with GitHub-flavored CSS styling |
+| `md-to-pdf` | Export markdown files to PDF styled with GitHub-flavored CSS |
 
 ## MCP Servers
 
-Agent-facing tools exposed over the Model Context Protocol. The plugin registers servers in `.mcp.json`; Claude Code starts them on session connect and routes tool calls by name.
+Agent-facing tools exposed over the Model Context Protocol. The plugin registers servers in `.mcp.json`; Claude Code starts them on session connect and routes tool calls by name. Per the Subsystem Doc Consolidation rule, thin MCP adapters that delegate business logic to a domain library do not require their own README or architecture — their purpose statement lives in the server module's docstring.
 
-| Server | Entry point | Role |
-|--------|-------------|------|
-| `navigator` | `servers/navigator.py` | Project structure index, governance discovery, reference mapping. Thin MCP adapter over `lib/navigator/`. |
+| Server | Entry point | Purpose (from module docstring) |
+|--------|-------------|----------------------------------|
+| `navigator` | `servers/navigator.py` | Agent-facing tools for project structure navigation, governance discovery, reference mapping, and scope analysis. Thin presentation layer over `lib/navigator/`. |
 
 `servers/_helpers.py` bootstraps `CLAUDE_PROJECT_DIR` from `Path.cwd().resolve()` at import time when the variable is missing. Claude Code launches MCP subprocesses with cwd set to the project root but does not propagate the env var and does not expand variable references inside `.mcp.json` env block values. The server module imports `_helpers` for `_ok`/`_err` response envelopes, so the bootstrap fires at process start. This is the only cwd-derived project-directory source in the plugin; hooks and CLI must set `CLAUDE_PROJECT_DIR` explicitly.
 
 ## Libraries
 
-Python packages consumed as imports. Each has a facade in `__init__.py` and an operational CLI in `__main__.py`.
+Python packages consumed as imports. Each is a subsystem with its own README.md and architecture.md; this section is the plugin-level overview.
 
-| Library | Package | Role |
-|---------|---------|------|
-| `governance` | `lib/governance/` | Convention and rule governance: matching files to applicable governance entries, listing entries, and computing the level-grouped dependency order. Reads directly from disk on every call — no database, no caching. Consumed by the convention gate hook, navigator's `scope_analyze`, and the governance CLI. |
-| `navigator` | `lib/navigator/` | Project structure index over SQLite: path indexing, filesystem scan, descriptions, governance composition, reference mapping, skill resolution. Consumed by the `/ocd:navigator` skill CLI, the navigator MCP server, and any library that needs scope analysis. |
+| Library | Package | Purpose | Docs |
+|---------|---------|---------|------|
+| `governance` | `lib/governance/` | Convention and rule governance library: match files to applicable governance entries, list entries by kind, and compute the dependency-ordered level grouping. Reads directly from disk on every call — no database, no caching. | [README](lib/governance/README.md) · [architecture.md](lib/governance/architecture.md) |
+| `navigator` | `lib/navigator/` | Project structure index backed by SQLite. Maintains a queryable directory of project files and directories with human-written descriptions agents use to decide whether to open a file. | [README](lib/navigator/README.md) · [architecture.md](lib/navigator/architecture.md) |
 
-### Navigator Internals
-
-| Module | Responsibility |
-|--------|---------------|
-| `__init__.py` | Facade — re-exports public API from all internal modules |
-| `__main__.py` | CLI entry point for operational commands (scan, describe, list, search, set, remove, resolve-skill, list-skills, get-undescribed) |
-| `_db.py` | Schema, migrations, connection factory, seed rules from CSV |
-| `_scanner.py` | Filesystem walking with rule-based pruning, git hash change detection |
-| `_references.py` | File reference mapping — builds dependency DAG from skill, governance, and component references |
-| `_skills.py` | Resolves skill names to SKILL.md paths across discovery locations; accepts bare, slash-prefixed, plugin-qualified, or fully-qualified names |
-| `_init.py` | Initialize navigator database; report deployment states (called by plugin orchestration during init/status) |
-
-**Database schema:**
-
-```
-entries
-├── path TEXT PK              — relative path from project root
-├── parent_path TEXT          — parent directory path (indexed)
-├── entry_type TEXT           — CHECK: file, directory
-├── exclude INTEGER           — 1 = omit from scans and listings
-├── traverse INTEGER          — 0 = list but don't descend (shallow)
-├── description TEXT          — human-written purpose description
-├── git_hash TEXT             — SHA-1 blob hash for change detection
-└── stale INTEGER             — 1 = content changed since description written
-```
-
-**Rule-based pruning:** Pattern entries (paths containing `*`) control scanning behavior. Exclude patterns omit matching paths entirely. Shallow patterns (traverse=0) list directories without descending. Seed rules from `navigator_seed.csv` provide defaults for common excludes (`.git`, `node_modules`, `__pycache__`).
-
-**Change detection:** Scanner computes git-compatible blob hashes (`blob {size}\0{content}`) and compares against stored hashes. Changed files are marked stale; stale propagates up to parent directories. Seed rules with prescribed descriptions auto-apply descriptions to matching new files.
-
-**Skill resolver** searches four discovery locations in Claude Code priority order: personal (`~/.claude/skills/`), project (`.claude/skills/`), plugin-dir (`$CLAUDE_PLUGIN_ROOT/skills/`), marketplace (from `installed_plugins.json`). First match by frontmatter `name` field wins. Input is normalized — leading `/` and any `plugin:` prefix are stripped before matching.
+Consumers within this plugin: the `convention_gate` hook imports `lib.governance`; the navigator MCP server imports `lib.navigator`; plugin orchestration (`run_init` / `run_status`) imports `lib/*/_init.py` for per-library bootstrap and reporting.
 
 ## Plugin Framework
 
