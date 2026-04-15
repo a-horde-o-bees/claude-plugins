@@ -94,6 +94,8 @@ Accepted arguments:
 
 ## Error Handling
 
+> To be rolled into the natural Workflow process during proper implementation — these behaviors belong inline (as PFN Error Handling blocks within the steps they guard) rather than in a dedicated section, per the current skill-md convention.
+
 1. If discovery CLI fails: surface error and command to user for manual debugging; do not proceed
 2. If a per-system agent fails within a wave:
     1. Preserve scratch dir `${CLAUDE_PLUGIN_DATA}/update-system-docs/{run-id}/` for inspection
@@ -101,3 +103,4 @@ Accepted arguments:
     3. Continue other subtrees
     4. Report partial failure in final Report
 3. If user interrupts mid-run: scratch dir is preserved; next run with same session id can resume by detecting existing pointers (future enhancement)
+

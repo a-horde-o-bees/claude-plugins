@@ -8,7 +8,7 @@ Agent workflow for auditing a target's file set in a single holistic pass.
 
 ## Reading Disposition
 
-You start with no prior context beyond this file and the {scope}. Read each file in {scope}.files in the order given. For each file, also read its matched governance files (named in the file's `governance` list) before reading the file itself, so you have the standards in context when you read.
+You start with no prior context beyond this file and the {scope}. Read each file in {scope}.files in the order given. For each file, also read its matched governance files (named in the file's `governance` list) before reading the file itself, so you have the standards in context when you read — skip governance files you have already loaded for an earlier file.
 
 Your reading experience is the audit. Hold four concerns simultaneously as you read — not as separate passes, but as complementary stances that feed the same finding list:
 

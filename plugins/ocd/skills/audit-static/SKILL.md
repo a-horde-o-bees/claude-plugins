@@ -58,26 +58,27 @@ Accepted arguments:
 1. Read `.claude/conventions/ocd/audit-triage.md`
 2. Discover scope — scope_analyze: paths={audit-paths}
 3. {scope} = scope_analyze result; structure: `{files: [{path, governance: [convention paths], references: [paths], referenced_by: [paths]}], governance_index: {convention path: [files governed]}, total_files}`
+4. If {scope}.total_files is 0: Exit to caller — {target} resolved but produced an empty file set; the path or skill may not exist or contain auditable content
 
 ### Dispatch
 
 > A single agent holds all four concerns in one read pass.
 
-4. Spawn:
+5. Spawn:
     1. Call: `${CLAUDE_PLUGIN_ROOT}/skills/audit-static/_audit-workflow.md` ({scope} = {scope})
     2. Return:
         - Findings in the audit workflow's prescribed format
-5. {findings} = returned findings
+6. {findings} = returned findings
 
 ### Triage
 
 > Defects are deterministic and intent-preserving — safe to auto-apply without changing what the target communicates or how it controls execution. Observations require user judgment before proceeding.
 
-6. Classify each finding in {findings} as Defect or Observation per `audit-triage.md`
-7. For each Defect: apply its proposed fix directly to disk
-8. {applied-defects} = list of applied defects
-9. Present Report
-10. If any Observations exist in {findings}:
+7. Classify each finding in {findings} as Defect or Observation per `audit-triage.md`
+8. For each Defect: apply its proposed fix directly to disk
+9. {applied-defects} = list of applied defects
+10. Present Report
+11. If any Observations exist in {findings}:
     1. Exit to caller — "Observations need user judgment. Apply or reject each, then re-invoke `/ocd:audit-static` to verify."
 
 ### Report
@@ -86,7 +87,3 @@ Accepted arguments:
 - **Defects applied** — fixes the skill executor applied directly, preserving enough detail to audit
 - **Observations** — findings needing user judgment, with the agent's proposed fix intact
 - **Status** — terminal outcome (clean, defects applied, or observations outstanding)
-
-## Error Handling
-
-- If scope_analyze returns no files: Exit to caller — target resolved but produced an empty file set; the path or skill may not exist or contain auditable content

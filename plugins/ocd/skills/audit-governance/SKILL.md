@@ -86,7 +86,3 @@ Accepted arguments:
 - **Defects applied** — grouped by file; each showing location, fix applied, and source finding
 - **Observations** — each agent's proposed fix intact when present
 - **Status** — `clean`, `defects applied`, or `observations outstanding at level N`
-
-## Error Handling
-
-- If governance order command fails: surface the error and the command to the user for manual debugging
