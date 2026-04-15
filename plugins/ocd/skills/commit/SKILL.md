@@ -3,7 +3,6 @@ name: commit
 description: Commit working tree changes grouped by topic for readable git history.
 allowed-tools:
   - Bash(git *)
-  - Bash(python3 scripts/sync-templates.py)
 ---
 
 # /commit

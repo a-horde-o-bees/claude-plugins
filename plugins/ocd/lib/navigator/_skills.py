@@ -89,9 +89,9 @@ def _get_marketplace_skill_dirs() -> list[Path]:
 def skills_resolve(name: str) -> Path | None:
     """Resolve skill name to SKILL.md path.
 
-    Accepts bare name (`audit-static`), slash-prefixed (`/audit-static`),
-    plugin-qualified (`ocd:audit-static`), or fully qualified
-    (`/ocd:audit-static`) — a leading slash and any `plugin:` prefix are
+    Accepts bare name (`navigator`), slash-prefixed (`/navigator`),
+    plugin-qualified (`ocd:navigator`), or fully qualified
+    (`/ocd:navigator`) — a leading slash and any `plugin:` prefix are
     stripped before matching against the frontmatter name field.
 
     Searches in Claude Code priority order (highest wins):

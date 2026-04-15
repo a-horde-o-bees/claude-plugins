@@ -43,8 +43,7 @@ def get_project_dir() -> Path:
         return Path(result.stdout.strip()).resolve()
     raise RuntimeError(
         "CLAUDE_PROJECT_DIR is not set and git root is not discoverable. "
-        "Run under Claude Code, via scripts/run-plugin.sh, or set the "
-        "variable explicitly."
+        "Run under Claude Code or set the variable explicitly."
     )
 
 
