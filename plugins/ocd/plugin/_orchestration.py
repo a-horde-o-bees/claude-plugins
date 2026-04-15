@@ -77,13 +77,15 @@ def run_init(force: bool = False, system: str | None = None) -> None:
                 print(line)
             print()
 
-    # Server subsystems
+    # MCP servers
     target_systems = [system] if system is not None else systems
-    for system_name in target_systems:
-        mod = importlib.import_module(f"servers.{system_name}._init")
-        result = mod.init(force=force)
-        for line in format_section(system_name, result["files"], result.get("extra")):
-            print(line)
+    if target_systems:
+        print("MCP Servers")
+        for system_name in target_systems:
+            mod = importlib.import_module(f"lib.{system_name}._init")
+            result = mod.init(force=force)
+            for line in format_section(system_name.capitalize(), result["files"], result.get("extra")):
+                print(f"  {line}")
         print()
 
     # Workflow skills (only when not scoped)
@@ -154,13 +156,15 @@ def run_status(system: str | None = None) -> None:
                 print(line)
             print()
 
-    # Server subsystems
+    # MCP servers
     target_systems = [system] if system is not None else systems
-    for system_name in target_systems:
-        mod = importlib.import_module(f"servers.{system_name}._init")
-        result = mod.status()
-        for line in format_section(system_name, result["files"], result.get("extra")):
-            print(line)
+    if target_systems:
+        print("MCP Servers")
+        for system_name in target_systems:
+            mod = importlib.import_module(f"lib.{system_name}._init")
+            result = mod.status()
+            for line in format_section(system_name.capitalize(), result["files"], result.get("extra")):
+                print(f"  {line}")
         print()
 
     # Workflow skills and permissions (only when not scoped)

@@ -8,20 +8,20 @@ from pathlib import Path
 
 
 def _discover_systems(plugin_root: Path) -> list[str]:
-    """Discover server subsystems with init infrastructure.
+    """Discover library subsystems with init infrastructure.
 
-    Returns sorted list of server package names whose package contains
+    Returns sorted list of lib package names whose package contains
     an _init.py module (conforming to the init/status contract).
-    Server subsystems own state — database files, deployed conventions,
+    Library subsystems own state — database files, deployed conventions,
     configuration — and their init routines bootstrap or refresh that state.
     """
-    servers_dir = plugin_root / "servers"
-    if not servers_dir.is_dir():
+    lib_dir = plugin_root / "lib"
+    if not lib_dir.is_dir():
         return []
 
     return sorted(
         init_path.parent.name
-        for init_path in servers_dir.glob("*/_init.py")
+        for init_path in lib_dir.glob("*/_init.py")
     )
 
 

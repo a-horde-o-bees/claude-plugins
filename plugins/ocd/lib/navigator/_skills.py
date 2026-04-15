@@ -89,6 +89,11 @@ def _get_marketplace_skill_dirs() -> list[Path]:
 def skills_resolve(name: str) -> Path | None:
     """Resolve skill name to SKILL.md path.
 
+    Accepts bare name (`audit-static`), slash-prefixed (`/audit-static`),
+    plugin-qualified (`ocd:audit-static`), or fully qualified
+    (`/ocd:audit-static`) — a leading slash and any `plugin:` prefix are
+    stripped before matching against the frontmatter name field.
+
     Searches in Claude Code priority order (highest wins):
     1. Personal: ~/.claude/skills/
     2. Project: $CLAUDE_PROJECT_DIR/.claude/skills/
@@ -97,6 +102,11 @@ def skills_resolve(name: str) -> Path | None:
 
     Returns absolute Path to SKILL.md or None if not found.
     """
+    if name.startswith("/"):
+        name = name[1:]
+    if ":" in name:
+        name = name.split(":", 1)[1]
+
     project_dir = plugin.get_project_dir()
     plugin_root = plugin.get_plugin_root()
 

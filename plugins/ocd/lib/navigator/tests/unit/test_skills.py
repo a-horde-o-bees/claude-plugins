@@ -217,6 +217,21 @@ class TestResolveSkill:
     def test_not_found(self, tmp_env: dict[str, Path]) -> None:
         assert skills_resolve("nonexistent") is None
 
+    def test_accepts_slash_prefix(self, tmp_env: dict[str, Path]) -> None:
+        _write_skill(tmp_env["plugin"] / "skills", "my-skill", "my-skill")
+        result = skills_resolve("/my-skill")
+        assert result is not None
+
+    def test_accepts_plugin_prefix(self, tmp_env: dict[str, Path]) -> None:
+        _write_skill(tmp_env["plugin"] / "skills", "my-skill", "my-skill")
+        result = skills_resolve("ocd:my-skill")
+        assert result is not None
+
+    def test_accepts_full_qualified_form(self, tmp_env: dict[str, Path]) -> None:
+        _write_skill(tmp_env["plugin"] / "skills", "my-skill", "my-skill")
+        result = skills_resolve("/ocd:my-skill")
+        assert result is not None
+
 
 # =========================================================================
 # List skills
