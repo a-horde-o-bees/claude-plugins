@@ -11,7 +11,7 @@ Report plugin infrastructure state.
 
 ## Workflow
 
-1. Run status — bash: `python3 ${CLAUDE_PLUGIN_ROOT}/run.py plugin status`
+1. Collect plugin state — bash: `python3 ${CLAUDE_PLUGIN_ROOT}/run.py plugin status`
 2. Present output to user — no summarization or reformatting
 
 ### Report
