@@ -9,9 +9,9 @@ Deterministic enforcement of permissions, rules, and structural conventions for 
 /ocd:init
 ```
 
-Restart Claude session after init to load rules. Run `/ocd:status` to verify plugin version, init state, and update availability.
+Restart the Claude session after init so rules auto-load. Run `/ocd:status` to verify plugin version, deployment state, and update availability.
 
-`/ocd:init` deploys rules to `.claude/rules/`, convention templates, and initializes skill infrastructure. Use `--force` to overwrite existing files with plugin defaults.
+`/ocd:init` deploys rules, conventions, patterns, and log templates into `.claude/` and initializes the navigator database. Use `--force` to overwrite existing files with plugin defaults.
 
 ## Capabilities
 
@@ -26,6 +26,7 @@ Always-on agent behavior guidance deployed to `.claude/rules/ocd/` via `/ocd:ini
 | `system-documentation.md` | README and architecture.md requirements per system |
 | `process-flow-notation.md` | Structured programming notation for agent workflows |
 | `log-routing.md` | When and how to capture decisions, friction, problems, and ideas as log entries |
+| `markdown.md` | Base content standards for markdown files |
 
 ### Conventions
 
@@ -37,7 +38,7 @@ Each convention has YAML frontmatter declaring which files it applies to:
 ---
 includes: "*.py"
 governed_by:
-  - .claude/conventions/ocd/python.md
+  - .claude/rules/ocd/design-principles.md
 ---
 ```
 
@@ -52,41 +53,25 @@ Rules govern agent behavior (always loaded, universal). Conventions govern file 
 PreToolUse hook on Bash, Edit, and Write tools. Two evaluation layers:
 
 1. **Hardcoded blocks** — structural constraints that do not stick as prose instructions. Blocks directory changes (`cd`, `pushd`, `popd`), compound commands (`&&`, `||`, `;`), and pipes (`|`). Returns inline guidance so the agent self-corrects without user intervention.
-
 2. **Dynamic settings enforcement** — reads and merges global (`~/.claude/settings.json`) and project (`.claude/settings.json`) allow/deny lists. Approves operations matching allow patterns, respects deny rules with precedence, validates file paths against allowed directories.
 
 ### Skill: Navigator
 
-`/ocd:navigator` — maintenance workflow for the project navigation database. Scans filesystem, detects changes, and guides description writing for project files and directories.
+`/ocd:navigator` — maintenance workflow for the project navigation database. Scans filesystem, detects changes, and drives description writing for project files and directories.
 
-The navigator database (`.claude/ocd/navigator/navigator.db`) indexes project structure with human-written descriptions so agents can find files by purpose without reading every file. Agents use the CLI tool inline during tasks; the skill is for maintenance only.
+The navigator database (`.claude/ocd/navigator/navigator.db`) indexes project structure with human-written descriptions so agents can find files by purpose without reading every file. Agents use the navigator MCP server or CLI inline during tasks; the skill is for maintenance only.
 
-#### Navigator CLI
-
-Agent-facing entry point at `skills/navigator/__main__.py`. Agents call `--help` to learn usage.
-
-| Command | Purpose |
-|---------|---------|
-| `describe <path>` | Navigate structure; directories list children with descriptions |
-| `list [path] [--pattern "*.py"] [--exclude ".claude/*"]` | Enumerate non-excluded file paths for tool consumption |
-| `search --pattern <term>` | Find files by purpose across project |
-| `scan [path]` | Sync filesystem to database after changes |
-| `get-undescribed` | Find entries needing descriptions (used by /ocd:navigator skill) |
-| `set <path> --description` | Write description for entry (used by /ocd:navigator skill) |
-| `init --db <path>` | Create database with schema and seed rules |
-
-### Other Skills
+### Skills
 
 | Skill | Purpose |
 |-------|---------|
-| `/ocd:commit` | Topic-grouped commits with end-state descriptions |
-| `/ocd:push` | Push to remote with pre-push commit check |
-| `/ocd:init` | Deploy rules, conventions, and skill infrastructure |
-| `/ocd:status` | Report plugin version, rules state, skill status |
-| `/ocd:log` | Capture decisions, friction, problems, ideas as log entries |
-| `/ocd:md-to-pdf` | Export markdown to PDF with GitHub-style CSS |
-| `/ocd:audit-governance` | Audit governance chain conformity, followability, coherence |
-| `/ocd:audit-static` | Audit any path against governance, best practices, and prior art |
+| `/ocd:init` | Deploy rules, conventions, patterns, log templates, and navigator database |
+| `/ocd:status` | Report plugin version, deployment state, navigator status, skills, permissions |
+| `/ocd:navigator` | Maintain navigator database — scan filesystem and write descriptions |
+| `/ocd:commit` | Topic-grouped commits with end-state messages and per-commit version bumps |
+| `/ocd:push` | Push local commits to a named branch on the remote; commits first if needed |
+| `/ocd:log` | Capture or manage project log entries — decisions, friction, problems, ideas |
+| `/ocd:md-to-pdf` | Export markdown files to PDF styled with GitHub-flavored CSS |
 
 ### MCP Servers
 
@@ -94,16 +79,7 @@ Agent-facing tools exposed over the Model Context Protocol. Registered in `.mcp.
 
 | Server | Tools | Purpose |
 |--------|-------|---------|
-| `navigator` | `paths_*`, `skills_*`, `references_*`, `scope_*` | Project structure index, reference mapping, scope analysis |
-| `log` | `log_*`, `type_*`, `tag_*` | Unified project log across types (decision, friction, problem, idea) with per-type tag management |
-
-## Libraries
-
-Python packages consumed as imports — no MCP server, no subprocess.
-
-| Library | Package | Purpose |
-|---------|---------|---------|
-| `governance` | `lib/governance/` | Convention and rule governance: matching files to applicable entries, listing entries, dependency ordering. Disk-only. |
+| `navigator` | `paths_*`, `skills_*`, `references_*`, `scope_*` | Project structure index, reference mapping, governance matching, scope analysis |
 
 ## License
 

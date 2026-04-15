@@ -4,159 +4,82 @@ Claude Code plugin marketplace for agent discipline, workflow conventions, and p
 
 ## Disclaimer
 
-This is a personal development project. It is experimental, actively evolving, and provided as-is with no stability guarantees, support commitments, or backwards compatibility promises. Plugins may be added, removed, renamed, or fundamentally restructured at any time.
+This is a personal development project. It is experimental, actively evolving, and provided as-is with no stability guarantees, support commitments, or backwards compatibility promises. Plugins may be added, removed, renamed, or fundamentally restructured between versions.
 
 Use at your own discretion. If something breaks, the LICENSE applies.
 
+## Release Branches
+
+This branch (`v0.1.0`) is the first public release snapshot. Development happens on `main`; consumer installs should target a release branch or tag so the content is stable. Future releases will get their own `v0.x.y` branches.
+
 ## Plugins
 
-| Plugin | Status | Description |
-|--------|--------|-------------|
-| [ocd](plugins/ocd/) | Active | Deterministic enforcement of permissions, rules, and structural conventions with agent-facing project navigation |
-| [blueprint](plugins/blueprint/) | Active | Structured solution research and implementation planning through entity-based analysis |
+| Plugin | Description |
+|--------|-------------|
+| [ocd](plugins/ocd/) | Deterministic enforcement of permissions, rules, and structural conventions with agent-facing project navigation |
 
 ## Installation
 
-### From GitHub
-
-Add the marketplace and install plugins:
+Add the marketplace (pinned to this release) and install the plugin:
 
 ```
-/plugin marketplace add https://github.com/a-horde-o-bees/claude-plugins.git
+/plugin marketplace add https://github.com/a-horde-o-bees/claude-plugins.git#v0.1.0
 /plugin install ocd@a-horde-o-bees
-/plugin install blueprint@a-horde-o-bees
 ```
 
-To track a specific branch (e.g., for pre-release testing):
-
-```
-/plugin marketplace add https://github.com/a-horde-o-bees/claude-plugins.git#dev
-```
-
-Restart Claude session so hooks and commands load, then initialize in target project:
+Restart the Claude session so hooks and commands load, then initialize the plugin in your target project:
 
 ```
 /ocd:init
-/blueprint:init
 ```
 
-Restart Claude session again so deployed rules auto-load into context.
+Restart the session once more so deployed rules auto-load into context.
 
-Update plugins after upstream changes:
+### Updating
+
+When a new release lands, refresh the marketplace cache and reload:
 
 ```
 /plugin marketplace update a-horde-o-bees
 /reload-plugins
 ```
 
-After updating, check if deployed rules and conventions need updating:
+Check whether deployed rules and conventions need refreshing:
 
 ```
 /ocd:status
-/blueprint:status
 ```
 
 If any files show `divergent`, force-update and restart:
 
 ```
 /ocd:init --force
-/blueprint:init --force
 /exit
 claude --continue
 ```
 
-Restart after init is only needed when rule files change. Convention-only updates take effect immediately.
+Restarting after `init` is only needed when rule files change. Convention-only updates take effect immediately.
 
-Remove a plugin or the marketplace:
+### Removing
 
 ```
 /plugin uninstall ocd
 /plugin marketplace remove a-horde-o-bees
 ```
 
-### Local development
-
-For contributors working on plugin source.
-
-**After cloning, run `/ocd:init` and `/blueprint:init` in the cloned project to deploy local rules, conventions, and databases.** These files are gitignored — every clone initializes its own. Skipping init leaves the working agent without the rules that govern development here, and the plugin databases will be missing.
-
-Two approaches:
-
-#### Marketplace-based (recommended)
-
-Develop within a clone that is also the marketplace source. Plugins load via the installed marketplace, so changes flow through git:
-
-```
-/push
-```
-
-Commits and pushes all changes. Then refresh the marketplace cache and reload:
-
-```
-/plugin marketplace update a-horde-o-bees
-/reload-plugins
-```
-
-Restart (`/exit` then `claude --continue`) only required when `.claude/rules/` files changed. Skill and convention changes take effect after reload.
-
-#### Plugin-dir (session-only)
-
-Load plugins directly from a local clone without marketplace:
-
-```
-git clone https://github.com/a-horde-o-bees/claude-plugins.git
-claude --plugin-dir ./claude-plugins/plugins/ocd --plugin-dir ./claude-plugins/plugins/blueprint
-```
-
-After making source changes, reload and restart:
-
-```
-/reload-plugins
-/exit
-claude --continue
-```
-
-`/reload-plugins` picks up script changes. Restart is required for skill content (SKILL.md) to take effect. `--continue` resumes the conversation with fresh context.
-
-Check if deployed rules and conventions need updating:
-
-```
-/ocd:status
-/blueprint:status
-```
-
-If any files show `divergent`, force-update and restart:
-
-```
-/ocd:init --force
-/blueprint:init --force
-/exit
-claude --continue
-```
-
-Restart after init is only needed when rule files change. Convention-only updates take effect immediately.
-
-Notes:
-
-- `--plugin-dir` is session-only; no persistent setting exists
-- When a `--plugin-dir` plugin shares a name with an installed marketplace plugin, the local copy takes precedence for that session
-- `--debug` flag shows plugin loading diagnostics
-- `claude plugin validate {PATH_TO_PLUGIN}` validates manifest without a session
-
 ## Architecture
 
-See [architecture.md](architecture.md) for marketplace structure, shared infrastructure, and how plugins relate. Each plugin documents its own internals:
+See [architecture.md](architecture.md) for marketplace structure and how plugins are packaged. Each plugin documents its own internals:
 
-- [ocd architecture](plugins/ocd/architecture.md) — hooks, rules, navigator, conventions engine
-- [blueprint architecture](plugins/blueprint/architecture.md) — MCP server, research database, entity lifecycle
+- [ocd architecture](plugins/ocd/architecture.md) — hooks, rules, navigator, conventions engine, skill catalog
 
 ## Versioning
 
-Plugin versions follow `x.y.z` format:
+Plugin versions follow `x.y.z`:
 
-- `x` — major version; starts at `0` until a change breaks previous setups
-- `y` — increments on public release (cohesive, ready for consumers); resets `z` to `0`
-- `z` — increments on every development commit; required for local plugin reload to detect changes
+- `x` — major; starts at `0` until a change breaks previous setups
+- `y` — public release; cohesive set of changes ready for consumers; resets `z` to `0`
+- `z` — every development commit; required for local plugin reload to detect changes
 
 ## License
 
