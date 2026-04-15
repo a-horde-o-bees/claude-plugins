@@ -7,6 +7,7 @@ templates between plugin source directories and project targets.
 from pathlib import Path
 
 from ._deployment import compare_deployed, deploy_files
+from ._metadata import get_plugin_name
 
 
 # --- Rules ---
@@ -22,7 +23,7 @@ def deploy_rules(plugin_root: Path, project_dir: Path, force: bool = False) -> l
     cross-plugin collision avoidance. Framework documentation (README.md,
     architecture.md) is plugin-source-only and excluded from deployment.
     """
-    plugin_name = plugin_root.name
+    plugin_name = get_plugin_name(plugin_root)
     deployed_rel = f".claude/rules/{plugin_name}"
     results = deploy_files(
         src_dir=plugin_root / "templates" / "rules",
@@ -42,7 +43,7 @@ def get_rules_states(plugin_root: Path, project_dir: Path) -> list[dict]:
     if not src_dir.is_dir():
         return []
 
-    plugin_name = plugin_root.name
+    plugin_name = get_plugin_name(plugin_root)
     deployed_rel = f".claude/rules/{plugin_name}"
     results = []
     for src in sorted(src_dir.glob("*.md")):
@@ -72,7 +73,7 @@ def deploy_conventions(plugin_root: Path, project_dir: Path, force: bool = False
     Conventions deploy to .claude/conventions/{plugin_name}/ per-plugin subfolder.
     Framework documentation is plugin-source-only and excluded from deployment.
     """
-    plugin_name = plugin_root.name
+    plugin_name = get_plugin_name(plugin_root)
     deployed_rel = f".claude/conventions/{plugin_name}"
     results = deploy_files(
         src_dir=plugin_root / "templates" / "conventions",
@@ -92,7 +93,7 @@ def get_conventions_states(plugin_root: Path, project_dir: Path) -> list[dict]:
     if not src_dir.is_dir():
         return []
 
-    plugin_name = plugin_root.name
+    plugin_name = get_plugin_name(plugin_root)
     deployed_rel = f".claude/conventions/{plugin_name}"
     results = []
     for src in sorted(src_dir.glob("*.md")):
@@ -122,7 +123,7 @@ def deploy_patterns(plugin_root: Path, project_dir: Path, force: bool = False) -
     Patterns deploy to .claude/patterns/{plugin_name}/ per-plugin subfolder.
     Framework documentation is plugin-source-only and excluded from deployment.
     """
-    plugin_name = plugin_root.name
+    plugin_name = get_plugin_name(plugin_root)
     deployed_rel = f".claude/patterns/{plugin_name}"
     results = deploy_files(
         src_dir=plugin_root / "templates" / "patterns",
@@ -142,7 +143,7 @@ def get_patterns_states(plugin_root: Path, project_dir: Path) -> list[dict]:
     if not src_dir.is_dir():
         return []
 
-    plugin_name = plugin_root.name
+    plugin_name = get_plugin_name(plugin_root)
     deployed_rel = f".claude/patterns/{plugin_name}"
     results = []
     for src in sorted(src_dir.glob("*.md")):
