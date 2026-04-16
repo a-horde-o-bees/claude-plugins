@@ -1,22 +1,11 @@
 """Template deployment primitives.
 
 Core operations for deploying template files to project directories:
-stamping, comparison, and batch file deployment with force/orphan control.
+comparison and batch file deployment with force/orphan control.
 """
 
 import shutil
 from pathlib import Path
-
-
-def stamp_deployed(path: Path) -> None:
-    """Replace type: template with type: deployed in frontmatter only."""
-    content = path.read_text()
-    if not content.startswith("---\n"):
-        return
-    end = content.index("\n---\n", 4)
-    frontmatter = content[: end + 5]
-    stamped = frontmatter.replace("type: template", "type: deployed")
-    path.write_text(stamped + content[end + 5 :])
 
 
 def compare_deployed(src: Path, dst: Path) -> str:
@@ -24,13 +13,12 @@ def compare_deployed(src: Path, dst: Path) -> str:
 
     Returns:
     - "absent": dst does not exist
-    - "current": dst matches src (with template->deployed stamp applied)
+    - "current": dst matches src exactly
     - "divergent": dst exists but content differs from src
     """
     if not dst.exists():
         return "absent"
-    src_deployed = src.read_bytes().replace(b"type: template", b"type: deployed", 1)
-    if src_deployed == dst.read_bytes():
+    if src.read_bytes() == dst.read_bytes():
         return "current"
     return "divergent"
 
@@ -77,11 +65,9 @@ def deploy_files(
 
         if before == "absent":
             shutil.copy2(src, dst)
-            stamp_deployed(dst)
             after = "current"
         elif before == "divergent" and force:
             shutil.copy2(src, dst)
-            stamp_deployed(dst)
             after = "current"
         else:
             after = before

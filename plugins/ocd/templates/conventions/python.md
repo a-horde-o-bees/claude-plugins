@@ -160,11 +160,12 @@ Operational status includes a metric summary with counts relevant to the domain.
 
 **Action needed format.**
 
-- **Always present in status output.** Every state returns an `action needed` line, including the operational state — the value tells the agent what the natural next step is, not whether there is a problem
+- **Present when actionable, omitted otherwise.** Emit an `action needed` line when there is a concrete next step the agent can take — not initialized, error state, pending work (e.g., undescribed entries). Omit when the subsystem is operational and has nothing outstanding — the absence itself signals healthy
 - **Value is a copy-pastable slash command.** No prose, no "Run" prefix, no parenthetical explanations. The agent pastes the value directly
 - Not initialized → `/{plugin}:plugin install`
 - Error states → `/{plugin}:plugin install --force`
-- Operational → `/{plugin}:{skill-command}` (primary skill for this infrastructure)
+- Pending work → `/{plugin}:{skill-command}` (primary skill for this infrastructure)
+- Operational and healthy → omit the line
 
 ### Facade Role
 
