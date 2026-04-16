@@ -3,7 +3,6 @@ name: commit
 description: Commit working tree changes grouped by topic for readable git history.
 allowed-tools:
   - Bash(git *)
-  - Bash(python3 scripts/sync-templates.py)
 ---
 
 # /commit
@@ -23,9 +22,7 @@ Fully automated — analyzes changes, groups by topic, drafts messages, executes
 - Never amend previous commits unless user explicitly requests it
 - Never force push or run destructive git operations
 - Stage specific files by name — never use `git add -A` or `git add .`
-- Co-author trailer required: `Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>`
 - Commit order matters — if group B depends on changes in group A (e.g., convention before skill that uses it), commit A first
-- Templates in `plugins/` are the committed source of truth — deployed copies in `.claude/` are gitignored and synced by the git pre-commit hook
 
 ## Workflow
 
@@ -39,11 +36,9 @@ Fully automated — analyzes changes, groups by topic, drafts messages, executes
         1. Surface exceptions to user before committing — they may belong to group or need exclusion
 3. {commit-groups} = Group changes by topic — goal is readable history where each commit is focused window into related changes
     1. Evaluate changed files for coherent topics — consider:
-        - Skill directory — files in same skill are likely same topic
-        - Template with convention or skill it affects
-        - Convention and consumers — convention file with skills it affects
         - Tests with code — test files group with code they test
-        - Plugin infrastructure — hooks, init scripts
+        - Configuration with implementation — config changes group with the code that uses them
+        - Related directories — files in the same directory are likely the same topic
     2. If all changes are single topic or grouping is ambiguous: single commit — consequences of grouping related changes are negligible compared to splitting incorrectly
     3. Else:
         1. Multiple commits — one per topic
@@ -51,10 +46,12 @@ Fully automated — analyzes changes, groups by topic, drafts messages, executes
 4. Draft commit messages — one per group
     1. Describe end-state results, not change journey
     2. Follow project's recent commit message style
-5. For each {group} in {commit-groups}:
+5. {co-author} = bash: `git config --get user.claude-coauthor`
+6. For each {group} in {commit-groups}:
     1. Stage files — `git add` specific files for this group
-    2. Commit with drafted message; append co-author trailer
-6. Verify — run `git status`; report remaining changes or clean tree
+    2. If {co-author} is `true`: append `Co-Authored-By:` trailer with current model name and `<noreply@anthropic.com>`
+    3. Commit with drafted message
+7. Verify — run `git status`; report remaining changes or clean tree
 
 ### Report
 
