@@ -6,6 +6,7 @@ and permissions into coherent CLI operations.
 """
 
 import importlib
+import subprocess
 
 from ._content import (
     deploy_conventions,
@@ -24,7 +25,7 @@ from ._metadata import find_marketplace_source, format_header, get_installed_ver
 from ._permissions import _show_permissions_status
 
 
-_META_SKILLS = {"init", "status"}
+_META_SKILLS = {"plugin"}
 
 
 def run_init(force: bool = False, system: str | None = None) -> None:
@@ -76,6 +77,22 @@ def run_init(force: bool = False, system: str | None = None) -> None:
             for line in format_section("Logs", logs):
                 print(line)
             print()
+
+    # Git hookspath (project-wide; skipped when scoped to a single subsystem)
+    if system is None:
+        githooks_dir = project_dir / ".githooks"
+        if githooks_dir.is_dir():
+            current = subprocess.run(
+                ["git", "-C", str(project_dir), "config", "--get", "core.hookspath"],
+                capture_output=True, text=True,
+            )
+            if current.returncode != 0 or current.stdout.strip() != ".githooks":
+                subprocess.run(
+                    ["git", "-C", str(project_dir), "config", "core.hookspath", ".githooks"],
+                    capture_output=True,
+                )
+                print("Git hookspath set to .githooks")
+                print()
 
     # MCP servers
     target_systems = [system] if system is not None else systems
