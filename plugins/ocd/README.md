@@ -6,18 +6,18 @@ Deterministic enforcement of permissions, rules, and structural conventions for 
 
 ```
 /plugin install ocd
-/ocd:init
+/ocd:plugin install
 ```
 
-Restart Claude session after init to load rules. Run `/ocd:status` to verify plugin version, init state, and update availability.
+Restart Claude session after install to load rules. Run `/ocd:plugin list` to verify plugin version, deployment state, and update availability.
 
-`/ocd:init` deploys rules to `.claude/rules/`, convention templates, and initializes skill infrastructure. Use `--force` to overwrite existing files with plugin defaults.
+`/ocd:plugin install` deploys rules to `.claude/rules/`, convention templates, and initializes skill infrastructure. Use `--force` to overwrite existing files with plugin defaults.
 
 ## Capabilities
 
 ### Rules
 
-Always-on agent behavior guidance deployed to `.claude/rules/ocd/` via `/ocd:init`. Auto-loaded every session. Users own the deployed files.
+Always-on agent behavior guidance deployed to `.claude/rules/ocd/` via `/ocd:plugin install`. Auto-loaded every session. Users own the deployed files.
 
 | Rule | Purpose |
 |------|---------|
@@ -29,7 +29,7 @@ Always-on agent behavior guidance deployed to `.claude/rules/ocd/` via `/ocd:ini
 
 ### Conventions
 
-File-type-specific content standards deployed to `.claude/conventions/ocd/` via `/ocd:init`. Loaded on demand — a convention gate hook surfaces applicable conventions when the agent touches a matching file.
+File-type-specific content standards deployed to `.claude/conventions/ocd/` via `/ocd:plugin install`. Loaded on demand — a convention gate hook surfaces applicable conventions when the agent touches a matching file.
 
 Each convention has YAML frontmatter declaring which files it applies to:
 
@@ -83,8 +83,8 @@ Released skills (stable, available via `/ocd:` slash commands):
 |-------|---------|
 | `/ocd:commit` | Topic-grouped commits with end-state descriptions |
 | `/ocd:push` | Push to remote with pre-push commit check |
-| `/ocd:init` | Deploy rules, conventions, and skill infrastructure |
-| `/ocd:status` | Report plugin version, rules state, skill status |
+| `/ocd:plugin install` | Deploy rules, conventions, and skill infrastructure |
+| `/ocd:plugin list` | Report plugin version, deployment state, skill status |
 | `/ocd:log` | Capture decisions, friction, problems, ideas as log entries |
 | `/ocd:md-to-pdf` | Export markdown to PDF with GitHub-style CSS |
 

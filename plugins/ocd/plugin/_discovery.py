@@ -11,7 +11,7 @@ def _discover_systems(plugin_root: Path) -> list[str]:
     """Discover library subsystems with init infrastructure.
 
     Returns sorted list of lib package names whose package contains
-    an _init.py module (conforming to the init/status contract).
+    an _init.py module (conforming to the Init/Status Contract).
     Library subsystems own state — database files, deployed conventions,
     configuration — and their init routines bootstrap or refresh that state.
     """
@@ -30,7 +30,7 @@ def _discover_workflow_skills(plugin_root: Path) -> list[str]:
 
     Workflow skills are pure slash command workflows without persistent state —
     each has a SKILL.md in plugins/<plugin>/skills/<name>/ and is invoked as
-    `/<name>`. They are listed in init/status output so the user sees what
+    `/<name>`. They are listed in plugin status output so the user sees what
     commands the plugin ships, but the plugin does not deploy or track them.
     """
     skills_dir = plugin_root / "skills"

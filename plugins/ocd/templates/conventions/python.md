@@ -127,16 +127,18 @@ Two standard labels cover every state:
 - `overall status` — single line summarizing infrastructure state
 - `action needed` — copy-pastable slash command for next step
 
+Each package owns its corrective guidance — the package is closest to its own state and knows best what to recommend. Skills that present status output pass it through without re-interpreting.
+
 **Database status pattern.**
 
 Packages with SQLite databases report through a deterministic state machine:
 
 | State | `overall status` | `action needed` |
 |-------|-----------------|-----------------|
-| DB file absent | `not initialized` | `/{plugin}:init` |
-| DB file present, schema divergent | `error — divergent schema` | `/{plugin}:init --force` |
+| DB file absent | `not initialized` | `/{plugin}:plugin install` |
+| DB file present, schema divergent | `error — divergent schema` | `/{plugin}:plugin install --force` |
 | DB file present, schema valid | `operational — {metric summary}` | `/{plugin}:{skill-command}` |
-| DB file present, SQL error | `error — {error message}` | `/{plugin}:init --force` |
+| DB file present, SQL error | `error — {error message}` | `/{plugin}:plugin install --force` |
 
 Schema validation uses subset check — expected tables must all be present; additional tables are not an error:
 
@@ -158,10 +160,10 @@ Operational status includes a metric summary with counts relevant to the domain.
 
 **Action needed format.**
 
-- **Always present in status output.** Every state returns an `action needed` line, including the operational state — the value tells the user what the natural next step is, not whether there is a problem
-- **Value is a copy-pastable slash command.** No prose, no "Run" prefix, no parenthetical explanations. The user pastes the value directly
-- Not initialized → `/{plugin}:init`
-- Error states → `/{plugin}:init --force`
+- **Always present in status output.** Every state returns an `action needed` line, including the operational state — the value tells the agent what the natural next step is, not whether there is a problem
+- **Value is a copy-pastable slash command.** No prose, no "Run" prefix, no parenthetical explanations. The agent pastes the value directly
+- Not initialized → `/{plugin}:plugin install`
+- Error states → `/{plugin}:plugin install --force`
 - Operational → `/{plugin}:{skill-command}` (primary skill for this infrastructure)
 
 ### Facade Role

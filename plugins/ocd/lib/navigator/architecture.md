@@ -39,7 +39,7 @@ Facade (above)
 | `_scanner.py` | Filesystem walking with rule-based pruning, git-hash change detection, stale-cascade to parent directories |
 | `_references.py` | File reference mapping — builds a dependency DAG from parseable file references (SKILL.md component calls, governance `governed_by`, etc.) |
 | `_skills.py` | Resolves skill names to SKILL.md paths across discovery locations. Accepts bare, slash-prefixed, plugin-qualified, or fully-qualified forms |
-| `_init.py` | Initialize database and report status; called by plugin orchestration during `/ocd:init` and `/ocd:status` |
+| `_init.py` | Initialize database and report status; called by plugin orchestration during `/ocd:plugin install` and `/ocd:plugin list` |
 
 ## Database Schema
 
