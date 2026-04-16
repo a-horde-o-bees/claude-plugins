@@ -23,7 +23,7 @@ Ad-hoc validates instruction content; real invocation validates orchestration. B
 
 `x.y.z` in each plugin's `.claude-plugin/plugin.json`. Main and release branches live in disjoint version spaces — `(x,y,z)` never points at more than one commit across branches.
 
-**Main** tracks `0.0.z` permanently. `z` is a monotonic dev build counter, bumped on every commit to catch Claude Code's reload detection. Main is never released from directly.
+**Main** tracks `0.0.z` permanently. `z` is a monotonic dev build counter, bumped automatically by the git pre-commit hook on every commit to catch Claude Code's reload detection. Main is never released from directly.
 
 **Release branches** own real semver:
 
