@@ -1,48 +1,48 @@
 """Plugin CLI.
 
-Agent-facing entry point for init, status, and permissions operations.
+Agent-facing entry point for install, list, and permissions operations.
 Business logic lives in __init__.py.
 """
 
 import argparse
 
 from . import (
-    run_init,
+    run_install,
+    run_list,
     run_permissions_analyze,
     run_permissions_clean,
     run_permissions_deploy,
     run_permissions_report,
-    run_status,
 )
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(
         prog="plugin",
-        description="Plugin infrastructure: init, status, and permissions operations.",
+        description="Plugin infrastructure: install, list, and permissions operations.",
     )
     commands = parser.add_subparsers(dest="command", required=True)
 
-    init_p = commands.add_parser(
-        "init",
-        help="Deploy rules and initialize server subsystem infrastructure",
+    install_p = commands.add_parser(
+        "install",
+        help="Deploy every lib subsystem — rules, conventions, patterns, logs, navigator",
     )
-    init_p.add_argument(
+    install_p.add_argument(
         "--force", action="store_true",
         help="Overwrite existing state with plugin defaults; destructive",
     )
-    init_p.add_argument(
+    install_p.add_argument(
         "--system", default=None,
-        help="Scope init to one server subsystem (governance, navigator, log, ...)",
+        help="Scope install to one lib subsystem (rules, conventions, navigator, ...)",
     )
 
-    status_p = commands.add_parser(
-        "status",
-        help="Report plugin version, rules state, and server subsystem status",
+    list_p = commands.add_parser(
+        "list",
+        help="Report plugin version and state of every lib subsystem",
     )
-    status_p.add_argument(
+    list_p.add_argument(
         "--system", default=None,
-        help="Scope status to one server subsystem (governance, navigator, log, ...)",
+        help="Scope list to one lib subsystem (rules, conventions, navigator, ...)",
     )
 
     perm_p = commands.add_parser(
@@ -81,10 +81,10 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    if args.command == "init":
-        run_init(force=args.force, system=args.system)
-    elif args.command == "status":
-        run_status(system=args.system)
+    if args.command == "install":
+        run_install(force=args.force, system=args.system)
+    elif args.command == "list":
+        run_list(system=args.system)
     elif args.command == "permissions":
         if args.perm_command == "report":
             run_permissions_report()

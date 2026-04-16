@@ -14,10 +14,13 @@
 #   plugin/_metadata.py                    — plugin metadata discovery (to plugin/)
 #   plugin/_deployment.py                  — template deployment primitives (to plugin/)
 #   plugin/_formatting.py                  — output formatting (to plugin/)
-#   plugin/_content.py                     — content deployment and state (to plugin/)
 #   plugin/_discovery.py                   — system and skill discovery (to plugin/)
 #   plugin/_permissions.py                 — permissions analysis (to plugin/)
 #   plugin/_orchestration.py               — init and status orchestration (to plugin/)
+#   lib/rules/_init.py                     — rules subsystem (to lib/rules/)
+#   lib/conventions/_init.py               — conventions subsystem (to lib/conventions/)
+#   lib/patterns/_init.py                  — patterns subsystem (to lib/patterns/)
+#   lib/logs/_init.py                      — logs subsystem (to lib/logs/)
 
 set -euo pipefail
 
@@ -61,10 +64,13 @@ SHARED_FILES=(
     "plugins/ocd/plugin/_metadata.py:plugin"
     "plugins/ocd/plugin/_deployment.py:plugin"
     "plugins/ocd/plugin/_formatting.py:plugin"
-    "plugins/ocd/plugin/_content.py:plugin"
     "plugins/ocd/plugin/_discovery.py:plugin"
     "plugins/ocd/plugin/_permissions.py:plugin"
     "plugins/ocd/plugin/_orchestration.py:plugin"
+    "plugins/ocd/lib/rules/_init.py:lib/rules"
+    "plugins/ocd/lib/conventions/_init.py:lib/conventions"
+    "plugins/ocd/lib/patterns/_init.py:lib/patterns"
+    "plugins/ocd/lib/logs/_init.py:lib/logs"
 )
 
 staged=$(git diff --cached --name-only)
@@ -80,13 +86,13 @@ for entry in "${SHARED_FILES[@]}"; do
 
     filename="$(basename "$canonical")"
 
-    # Copy to all non-ocd plugins that have the target subdirectory
+    # Copy to all non-ocd plugins; create target subdirectory if missing
     for plugin_dir in plugins/*/; do
         plugin_name="$(basename "$plugin_dir")"
         [ "$plugin_name" = "ocd" ] && continue
 
         dest_dir="${plugin_dir}${target_subdir}"
-        [ -d "$dest_dir" ] || continue
+        mkdir -p "$dest_dir"
 
         git show ":${canonical}" > "${dest_dir}/${filename}"
         git add "${dest_dir}/${filename}"
