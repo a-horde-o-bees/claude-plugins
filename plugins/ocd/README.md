@@ -13,6 +13,34 @@ Restart Claude session after install to load rules. Run `/ocd:plugin list` to ve
 
 `/ocd:plugin install` deploys rules to `.claude/rules/`, convention templates, and initializes skill infrastructure. Use `--force` to overwrite existing files with plugin defaults.
 
+## Automated Behavior
+
+The following runs without user action once the plugin is installed. Each entry names the trigger, what happens, and why.
+
+### Session start: dependency installation
+
+Installs Python packages from the plugin's `requirements.txt` into an isolated virtual environment using `uv`. Required for MCP servers and hook scripts to function. Skips if dependencies haven't changed since last install. Prerequisite: `uv` must be installed on the user's system.
+
+### Session start: rules auto-loading
+
+Claude Code loads all markdown files from `.claude/rules/` into agent context at session start. The plugin deploys rule files to `.claude/rules/ocd/` during install — once deployed, they shape agent behavior every session without further action. Users own the deployed files and can edit or delete them.
+
+### Session start: MCP server activation
+
+The navigator MCP server starts automatically on session connect, making project structure tools (`paths_*`, `skills_*`, `references_*`, `scope_*`) available to the agent. Requires the navigator database to be initialized (happens during install).
+
+### PreToolUse: permission enforcement
+
+Fires before every Bash, Edit, and Write operation. Two layers: hardcoded blocks (directory changes, compound commands) that return corrective guidance, and dynamic settings enforcement that reads merged allow/deny patterns from project and user `settings.json`. Approved operations proceed without user prompt. See the Hook: Permission enforcement section under Capabilities for details.
+
+### PreToolUse: convention gate
+
+Fires before every Read, Edit, and Write operation. Non-blocking — always allows the tool call. Injects applicable conventions from `.claude/conventions/` into the agent's context based on the target file's path and the convention's `includes` pattern. On Read: conventions are surfaced for awareness. On Edit/Write: the agent is directed to conform and refactor if non-conformant.
+
+### Install: git hookspath wiring
+
+During `/ocd:plugin install`, if the project contains a `.githooks/` directory, the plugin sets `core.hookspath=.githooks` in the local git config. This connects version-controlled git hooks (pre-commit, etc.) maintained by the project. Does nothing if `.githooks/` does not exist. The plugin does not create or modify hook files — it only wires the directory if one is already present.
+
 ## Capabilities
 
 ### Rules
@@ -29,7 +57,7 @@ Always-on agent behavior guidance deployed to `.claude/rules/ocd/` via `/ocd:plu
 
 ### Conventions
 
-File-type-specific content standards deployed to `.claude/conventions/ocd/` via `/ocd:plugin install`. Loaded on demand — a convention gate hook surfaces applicable conventions when the agent touches a matching file.
+File-type-specific content standards deployed to `.claude/conventions/ocd/` via `/ocd:plugin install`. Surfaced automatically by the convention gate hook (see Automated Behavior) when the agent touches a matching file.
 
 Each convention has YAML frontmatter declaring which files it applies to:
 
@@ -49,7 +77,7 @@ Rules govern agent behavior (always loaded, universal). Conventions govern file 
 
 ### Hook: Permission enforcement
 
-PreToolUse hook on Bash, Edit, and Write tools. Two evaluation layers:
+PreToolUse hook on Bash, Edit, and Write tools (see Automated Behavior for trigger details). Two evaluation layers:
 
 1. **Hardcoded blocks** — structural constraints that do not stick as prose instructions. Blocks directory changes (`cd`, `pushd`, `popd`), compound commands (`&&`, `||`, `;`), and pipes (`|`). Returns inline guidance so the agent self-corrects without user intervention.
 
