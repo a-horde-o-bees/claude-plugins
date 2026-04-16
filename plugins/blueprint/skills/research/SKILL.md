@@ -88,7 +88,7 @@ User runs `/research`. Optional `$ARGUMENTS` passed as initial scope input for I
 
 1. If `blueprint/data/state.md` does not exist:
     1. If `blueprint/` directory exists:
-        1. Exit to user -- report existing blueprint folder; skill initializes this directory and cannot run over existing content
+        1. Exit to user: existing blueprint folder — skill initializes this directory and cannot run over existing content
     2. Create `blueprint/data/` directory and copy `${CLAUDE_PLUGIN_ROOT}/templates/blueprint.md` to `blueprint/data/state.md`
     3. Mark Initialization as `[-]`; use `$ARGUMENTS` as initial scope input if provided
     4. Go to step 3. Determine active stage

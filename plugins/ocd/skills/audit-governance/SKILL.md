@@ -1,6 +1,6 @@
 ---
 name: audit-governance
-description: Audit the rules and conventions governance chain foundations-first, one level at a time. A spawned agent audits each level; the skill executor classifies findings, applies defects, and exits to caller when observations need judgment. User selects which level to start at on each invocation; convergence is user-driven.
+description: Audit the rules and conventions governance chain foundations-first, one level at a time. A spawned agent audits each level; the skill executor classifies findings, applies defects, and exits to user when observations need judgment. User selects which level to start at on each invocation; convergence is user-driven.
 argument-hint: "--target project"
 allowed-tools:
   - Read
@@ -11,7 +11,7 @@ allowed-tools:
 
 # /audit-governance
 
-Audit the governance dependency chain foundations-first, one level at a time. A spawned agent audits each level; the skill executor classifies findings per the triage criteria, applies defects, and exits to caller when observations need judgment. User selects which level to start at on each invocation; convergence is user-driven.
+Audit the governance dependency chain foundations-first, one level at a time. A spawned agent audits each level; the skill executor classifies findings per the triage criteria, applies defects, and exits to user when observations need judgment. User selects which level to start at on each invocation; convergence is user-driven.
 
 ## Process Model
 
@@ -36,16 +36,16 @@ Accepted arguments:
 - Classify findings as Defect or Observation per triage criteria
 - Apply defects directly to disk
 - Present observations with the agent's proposed fix intact — do not summarize or omit
-- Exit to caller when observations need user judgment
+- Exit to user when observations need user judgment
 
 ## Route
 
-1. If not --target: Exit to caller — respond with skill description and argument-hint
-2. If {target} is not `project`: Exit to caller — target must be `project`
+1. If not --target: Exit to user: skill description and argument-hint
+2. If {target} is not `project`: Exit to user: target must be `project`
 3. Discover governance levels — bash: `CLAUDE_PROJECT_DIR=$(pwd) python3 ${CLAUDE_PLUGIN_ROOT}/run.py lib.governance order --json`
 4. If result has dangling references:
     1. Present dangling references to user — which file declares each missing governor
-    2. Exit to caller — fix offending `governed_by` frontmatter and re-invoke
+    2. Exit to user: fix offending `governed_by` frontmatter and re-invoke
 5. {levels} = levels array from the result
 6. Present levels to user — for each level, show the level number (0..N-1), the file count, and the full list of file paths at that level
 7. Ask user which level to start at — AskUserQuestion with options 0..N-1; first option (level 0) is the default
@@ -58,7 +58,7 @@ Accepted arguments:
 2. {current-level} = {start-level}
 3. Spawn:
     1. Call: `${CLAUDE_PLUGIN_ROOT}/skills/audit-governance/_audit-workflow-A.md` ({level-files} = {levels}[{current-level}])
-    2. Return:
+    2. Return to caller:
         - Findings for this level
 4. {agent-ref} = the spawned agent
 
@@ -71,12 +71,12 @@ Accepted arguments:
 7. For each Defect: apply its proposed fix directly to disk
 8. Present Report
 9. If any Observations exist:
-    1. Exit to caller — "Observations at level {current-level} need user judgment. Apply or reject each, then re-invoke `/ocd:audit-governance` and choose the level to resume from."
+    1. Exit to user: Observations at level {current-level} need user judgment. Apply or reject each, then re-invoke `/ocd:audit-governance` and choose the level to resume from.
 10. {current-level} = {current-level} + 1
 11. If {current-level} >= count of {levels}: Break loop — all levels complete
 12. Continue {agent-ref}:
     1. Call: `${CLAUDE_PLUGIN_ROOT}/skills/audit-governance/_audit-workflow-A.md` ({level-files} = {levels}[{current-level}])
-    2. Return:
+    2. Return to caller:
         - Findings for this level
 13. Go to step 5. Process Level Response
 

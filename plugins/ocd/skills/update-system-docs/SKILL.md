@@ -20,4 +20,4 @@ The prior component files (prompt templates, per-system workflow, summary schema
 
 ## Workflow
 
-1. Exit to caller — this skill is a design-only placeholder; implementation is pending. Read `_DESIGN.md` for the full design.
+1. Exit to user: this skill is a design-only placeholder; implementation is pending. Read `_DESIGN.md` for the full design.

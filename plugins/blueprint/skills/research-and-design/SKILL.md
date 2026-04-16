@@ -49,7 +49,7 @@ Accepted arguments:
 
 ## Route
 
-1. If no research prompt: Exit to caller — respond with skill description and argument-hint
+1. If no research prompt: Exit to user: skill description and argument-hint
 2. {session-id} = `${CLAUDE_SESSION_ID}-$(date +%s)`
 3. Create scratch dir: bash: `mkdir -p ${CLAUDE_PLUGIN_DATA}/research-and-design/{session-id}`
 4. {state-path} = `${CLAUDE_PLUGIN_DATA}/research-and-design/{session-id}/state.md`
@@ -75,7 +75,7 @@ Accepted arguments:
 5. Present wave plan to user — what questions will be asked, what agents will be spawned, expected token cost — confirm
 6. For each {brief} in wave:
     1. async Spawn: Call: `_agent-brief.md` ({brief} = {brief}, {session-id} = {session-id})
-    2. Return: findings-pointer + short status
+    2. Return to caller: findings-pointer + short status
 7. Collect wave results
 8. For each {finding} in collected results:
     1. Mark originating question(s) as answered or partial per the finding

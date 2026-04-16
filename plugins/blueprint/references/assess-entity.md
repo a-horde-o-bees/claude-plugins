@@ -27,7 +27,7 @@ Orchestrator provides:
 
 4. For each {entity} in {queue}:
     1. Check context budget — if approaching limit AND at least one entity processed:
-        1. Return:
+        1. Return to caller:
             - Completed entity IDs and changes
             - Next entity ID as resumption checkpoint
             - "incomplete" status

@@ -35,18 +35,18 @@ Accepted arguments:
 - Classify findings as Defect or Observation per triage criteria
 - Apply defects directly to disk
 - Present observations with the agent's proposed fix intact — do not summarize or omit
-- Exit to caller when observations need user judgment
+- Exit to user when observations need user judgment
 
 ## Route
 
-1. If not --target: Exit to caller — respond with skill description and argument-hint
+1. If not --target: Exit to user: skill description and argument-hint
 2. If {target} starts with `/`:
     1. {resolved} = bash: `python3 ${CLAUDE_PLUGIN_ROOT}/run.py lib.navigator resolve-skill {target}`
-    2. If exit code 1: Exit to caller — report skill not found
+    2. If exit code 1: Exit to user: skill not found
     3. {audit-paths} = [{resolved}]
 3. Else if {target} is an existing file or directory path:
     1. {audit-paths} = [{target}]
-4. Else: Exit to caller — {target} not recognized as a skill reference or filesystem path
+4. Else: Exit to user: {target} not recognized as a skill reference or filesystem path
 5. Dispatch Workflow
 
 ## Workflow
@@ -58,7 +58,7 @@ Accepted arguments:
 1. Read `.claude/conventions/ocd/audit-triage.md`
 2. Discover scope — scope_analyze: paths={audit-paths}
 3. {scope} = scope_analyze result; structure: `{files: [{path, governance: [convention paths], references: [paths], referenced_by: [paths]}], governance_index: {convention path: [files governed]}, total_files}`
-4. If {scope}.total_files is 0: Exit to caller — {target} resolved but produced an empty file set; the path or skill may not exist or contain auditable content
+4. If {scope}.total_files is 0: Exit to user: {target} resolved but produced an empty file set; the path or skill may not exist or contain auditable content
 
 ### Dispatch
 
@@ -66,7 +66,7 @@ Accepted arguments:
 
 5. Spawn:
     1. Call: `${CLAUDE_PLUGIN_ROOT}/skills/audit-static/_audit-workflow.md` ({scope} = {scope})
-    2. Return:
+    2. Return to caller:
         - Findings in the audit workflow's prescribed format
 6. {findings} = returned findings
 
@@ -79,7 +79,7 @@ Accepted arguments:
 9. {applied-defects} = list of applied defects
 10. Present Report
 11. If any Observations exist in {findings}:
-    1. Exit to caller — "Observations need user judgment. Apply or reject each, then re-invoke `/ocd:audit-static` to verify."
+    1. Exit to user: Observations need user judgment. Apply or reject each, then re-invoke `/ocd:audit-static` to verify.
 
 ### Report
 

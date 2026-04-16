@@ -21,10 +21,10 @@ Export markdown files to PDF styled with GitHub-flavored CSS. Uses the globally-
 
 ## Workflow
 
-1. If not --src: Exit to user — respond with skill description and argument-hint
-2. If not --dest: Exit to user — `--dest` is required; specify output directory
+1. If not --src: Exit to user: skill description and argument-hint
+2. If not --dest: Exit to user: `--dest` is required; specify output directory
 3. Verify `md-to-pdf` installed — bash: `command -v md-to-pdf`
-    1. If not found: Exit to user — install with `npm i -g md-to-pdf`
+    1. If not found: Exit to user: install with `npm i -g md-to-pdf`
 4. Ensure destination directory exists — bash: `mkdir -p {dest}`
 5. For each --src:
     1. Verify {src} exists

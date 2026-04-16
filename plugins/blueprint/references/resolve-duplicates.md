@@ -15,7 +15,7 @@ Process all duplicate groups sequentially. For each group, fetch context, make m
 
 1. Run `find_duplicates()`
 2. Parse output into groups — each group lists entity IDs and detection evidence (URL overlap, source-data key match)
-3. If no duplicates found: Exit to user — report "No duplicates detected"
+3. If no duplicates found: Exit to user: No duplicates detected
 4. For each {group} in {duplicate-groups}: dispatch Evaluate Group through Report Group
 
 ### Evaluate Group

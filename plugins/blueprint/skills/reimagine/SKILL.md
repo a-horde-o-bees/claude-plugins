@@ -21,7 +21,7 @@ User runs `/reimagine`
 
 ## Route
 
-1. If not --target: Exit to user — respond with skill description and argument-hint
+1. If not --target: Exit to user: skill description and argument-hint
 2. If {target} is a file path:
     1. {target-path} = {target}
     2. {target-type} = file
@@ -47,14 +47,14 @@ User runs `/reimagine`
 2. Spawn agent with abstraction:
     1. Read `_abstraction-instructions.md`
     2. Analyze target content
-    3. Return:
+    3. Return to caller:
         - Generalized scope statement
         - System constraints list
 3. Present scope — display generalized scope statement and system constraints; if {target-type} is `description`, present {target-description} as scope with empty constraints
 4. User refines or approves scope via AskUserQuestion:
     1. If user approves: proceed
     2. Else: incorporate refinements, re-present scope; repeat until approved
-5. Exit to user — present approved scope statement for user to provide as `/blueprint:research` target
+5. Exit to user: approved scope statement to provide as `/blueprint:research` target
 
 ### Report
 

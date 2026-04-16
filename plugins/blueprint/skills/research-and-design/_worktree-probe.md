@@ -19,7 +19,7 @@ Pattern for validating a research assumption empirically — run a minimal proto
         1. Write the probe script under `/tmp/` in the worktree
         2. Execute the script against selected project artifacts
         3. Capture stdout, stderr, exit code, and any side effects
-        4. Return:
+        4. Return to caller:
             - Pass/fail verdict per criterion
             - Raw output excerpts
             - Unexpected observations worth reporting

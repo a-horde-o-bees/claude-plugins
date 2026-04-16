@@ -32,7 +32,7 @@ Fully automated — analyzes changes, groups by topic, drafts messages, executes
 
 1. Analyze working tree
     1. Run `git status` — collect modified, deleted, untracked files
-    2. If no changes: Exit to user — report clean working tree
+    2. If no changes: Exit to user: clean working tree
     3. Run `git diff --stat` — understand scope of changes
     4. Run `git log --oneline -5` — capture recent commit message style
 2. Include untracked files — group with related changes using same topic logic as modified files
