@@ -15,12 +15,14 @@
 #   plugin/_deployment.py                  — template deployment primitives (to plugin/)
 #   plugin/_formatting.py                  — output formatting (to plugin/)
 #   plugin/_discovery.py                   — system and skill discovery (to plugin/)
-#   plugin/_permissions.py                 — permissions analysis (to plugin/)
-#   plugin/_orchestration.py               — init and status orchestration (to plugin/)
+#   plugin/_orchestration.py               — install and list orchestration (to plugin/)
 #   lib/rules/_init.py                     — rules subsystem (to lib/rules/)
 #   lib/conventions/_init.py               — conventions subsystem (to lib/conventions/)
 #   lib/patterns/_init.py                  — patterns subsystem (to lib/patterns/)
 #   lib/logs/_init.py                      — logs subsystem (to lib/logs/)
+#   lib/permissions/__init__.py            — permissions facade (to lib/permissions/)
+#   lib/permissions/_init.py               — permissions subsystem (to lib/permissions/)
+#   lib/permissions/_operations.py         — permissions operations (to lib/permissions/)
 
 set -euo pipefail
 
@@ -65,12 +67,14 @@ SHARED_FILES=(
     "plugins/ocd/plugin/_deployment.py:plugin"
     "plugins/ocd/plugin/_formatting.py:plugin"
     "plugins/ocd/plugin/_discovery.py:plugin"
-    "plugins/ocd/plugin/_permissions.py:plugin"
     "plugins/ocd/plugin/_orchestration.py:plugin"
     "plugins/ocd/lib/rules/_init.py:lib/rules"
     "plugins/ocd/lib/conventions/_init.py:lib/conventions"
     "plugins/ocd/lib/patterns/_init.py:lib/patterns"
     "plugins/ocd/lib/logs/_init.py:lib/logs"
+    "plugins/ocd/lib/permissions/__init__.py:lib/permissions"
+    "plugins/ocd/lib/permissions/_init.py:lib/permissions"
+    "plugins/ocd/lib/permissions/_operations.py:lib/permissions"
 )
 
 staged=$(git diff --cached --name-only)

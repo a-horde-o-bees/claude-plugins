@@ -1,22 +1,22 @@
-"""Permissions analysis and deployment.
+"""Permissions operations.
 
-Auto-approve pattern management across project and user scopes:
-reporting, deploying recommended patterns, cross-scope health
-analysis, and redundancy cleanup.
+Auto-approve pattern analysis and deployment across project and user
+scopes. Helpers and CLI entry points for listing coverage, installing
+recommended patterns, analyzing cross-scope health, and cleaning
+redundant entries.
 """
 
 import json
 from pathlib import Path
 
-from ._environment import get_claude_home, get_plugin_root, get_project_dir
-from ._metadata import read_json
+import plugin
 
 
 def _settings_path(scope: str) -> Path:
     """Resolve settings.json path for a scope."""
     if scope == "project":
-        return get_project_dir() / ".claude" / "settings.json"
-    return get_claude_home() / "settings.json"
+        return plugin.get_project_dir() / ".claude" / "settings.json"
+    return plugin.get_claude_home() / "settings.json"
 
 
 def _get_both_settings() -> dict:
@@ -27,7 +27,7 @@ def _get_both_settings() -> dict:
     result = {}
     for scope in ("project", "user"):
         path = _settings_path(scope)
-        settings = read_json(path)
+        settings = plugin.read_json(path)
         perms = settings.get("permissions", {})
         result[scope] = {
             "path": str(path),
@@ -37,68 +37,90 @@ def _get_both_settings() -> dict:
     return result
 
 
-def _get_recommended_patterns(plugin_root: Path) -> set[str]:
-    """Flat set of all template patterns across categories."""
-    ref = read_json(plugin_root / "templates" / "settings.json")
+def _recommended_settings_path() -> Path:
+    """Path to the permissions subsystem's recommended-patterns config."""
+    return plugin.get_plugin_root() / "lib" / "permissions" / "settings.json"
+
+
+def _get_recommended_patterns() -> set[str]:
+    """Flat set of all recommended patterns across categories."""
+    ref = plugin.read_json(_recommended_settings_path())
     patterns = set()
     for cat in ref.get("categories", {}).values():
         patterns.update(cat.get("patterns", []))
     return patterns
 
 
-def _get_recommended_by_category(plugin_root: Path) -> dict:
-    """Template patterns grouped by category with descriptions."""
-    ref = read_json(plugin_root / "templates" / "settings.json")
+def _get_recommended_by_category() -> dict:
+    """Recommended patterns grouped by category with descriptions."""
+    ref = plugin.read_json(_recommended_settings_path())
     return ref.get("categories", {})
 
 
-def _show_permissions_status(plugin_root: Path) -> None:
-    """Print permissions coverage for status display."""
-    recommended = _get_recommended_patterns(plugin_root)
+def status_extra() -> list[dict]:
+    """Build the subsystem status extra lines for permissions coverage.
+
+    Returns an empty list when no recommendations are declared. Always
+    emits per-scope coverage counts; emits `action needed` only when
+    coverage is incomplete, absent, or redundant across scopes.
+    """
+    recommended = _get_recommended_patterns()
     if not recommended:
-        return
+        return []
 
     both = _get_both_settings()
-    print("Permissions")
+    extra: list[dict] = []
 
     for scope in ("project", "user"):
         present = recommended & both[scope]["allow"]
-        print(f"  {scope}: {len(present)}/{len(recommended)} recommended patterns")
+        extra.append({
+            "label": f"{scope}",
+            "value": f"{len(present)}/{len(recommended)} recommended patterns",
+        })
 
-    # Check for redundancy or gaps
     proj_rec = recommended & both["project"]["allow"]
     user_rec = recommended & both["user"]["allow"]
     redundant = proj_rec & user_rec
 
     if redundant:
-        print(f"  redundancy: {len(redundant)} patterns present in both scopes")
-        print(f"  action needed: /ocd:plugin guided — consolidate to one scope")
+        extra.append({
+            "label": "redundancy",
+            "value": f"{len(redundant)} patterns present in both scopes",
+        })
+        extra.append({
+            "label": "action needed",
+            "value": "/ocd:plugin guided",
+        })
     elif not proj_rec and not user_rec:
-        print(f"  action needed: /ocd:plugin guided — setup recommended patterns")
+        extra.append({
+            "label": "action needed",
+            "value": "/ocd:plugin guided",
+        })
     elif len(proj_rec) < len(recommended) and len(user_rec) < len(recommended):
-        print(f"  action needed: /ocd:plugin guided — incomplete at both scopes")
+        extra.append({
+            "label": "action needed",
+            "value": "/ocd:plugin guided",
+        })
+
+    return extra
 
 
-def _merge_permissions(plugin_root: Path, scope: str) -> None:
+def _merge_permissions(scope: str) -> None:
     """Merge recommended auto-approve patterns into settings.json.
 
     Additive only — adds patterns not already present, never removes.
     scope: 'project' or 'user'
     """
-    ref_path = plugin_root / "templates" / "settings.json"
+    ref_path = _recommended_settings_path()
     if not ref_path.exists():
         print("  recommended-permissions.json not found")
         return
 
-    ref = read_json(ref_path)
+    ref = plugin.read_json(ref_path)
     categories = ref.get("categories", {})
 
-    if scope == "project":
-        settings_path = get_project_dir() / ".claude" / "settings.json"
-    else:
-        settings_path = get_claude_home() / "settings.json"
-
-    settings = read_json(settings_path)
+    settings_path = _settings_path(scope)
+    settings = plugin.read_json(settings_path)
     existing = set(settings.get("permissions", {}).get("allow", []))
 
     added = []
@@ -115,7 +137,6 @@ def _merge_permissions(plugin_root: Path, scope: str) -> None:
         print(f"  {scope} settings — all recommended patterns already present")
         return
 
-    # Merge
     if "permissions" not in settings:
         settings["permissions"] = {}
     if "allow" not in settings["permissions"]:
@@ -136,11 +157,10 @@ def _merge_permissions(plugin_root: Path, scope: str) -> None:
         print(f"    {desc}: {len(patterns)} patterns")
 
 
-def run_permissions_report() -> None:
+def run_permissions_list() -> None:
     """Structured report of both scopes' permission state."""
-    plugin_root = get_plugin_root()
-    categories = _get_recommended_by_category(plugin_root)
-    recommended = _get_recommended_patterns(plugin_root)
+    categories = _get_recommended_by_category()
+    recommended = _get_recommended_patterns()
     both = _get_both_settings()
 
     print("Permissions Report")
@@ -168,7 +188,6 @@ def run_permissions_report() -> None:
             print(f"  non-recommended: {len(non_rec)} patterns")
         print()
 
-    # Cross-scope analysis
     proj_rec = recommended & both["project"]["allow"]
     user_rec = recommended & both["user"]["allow"]
     redundant = proj_rec & user_rec
@@ -178,20 +197,17 @@ def run_permissions_report() -> None:
         print("cross-scope: no redundancy")
 
 
-def run_permissions_deploy(scope: str) -> None:
+def run_permissions_install(scope: str) -> None:
     """Deploy recommended patterns to exactly one scope."""
-    plugin_root = get_plugin_root()
-
-    print("Permissions Deploy")
+    print("Permissions Install")
     print()
     print(f"scope: {scope}")
-    _merge_permissions(plugin_root, scope)
+    _merge_permissions(scope)
 
 
 def run_permissions_analyze() -> None:
     """Cross-scope health analysis."""
-    plugin_root = get_plugin_root()
-    recommended = _get_recommended_patterns(plugin_root)
+    recommended = _get_recommended_patterns()
     both = _get_both_settings()
 
     print("Permissions Analysis")
@@ -199,11 +215,10 @@ def run_permissions_analyze() -> None:
 
     needs_attention = False
 
-    # Redundancy
     proj_rec = recommended & both["project"]["allow"]
     user_rec = recommended & both["user"]["allow"]
     redundant = sorted(proj_rec & user_rec)
-    print(f"redundancy:")
+    print("redundancy:")
     print(f"  count: {len(redundant)}")
     if redundant:
         needs_attention = True
@@ -211,16 +226,13 @@ def run_permissions_analyze() -> None:
             print(f"    - {p}")
     print()
 
-    # Broad patterns (non-recommended with wide wildcards)
     broad = []
     for scope in ("project", "user"):
         non_rec = both[scope]["allow"] - recommended
         for p in sorted(non_rec):
-            if p in ("*", "Bash(*)") or p.endswith(":*)") and p.count(":") == 1 and len(p.split("(")[0]) <= 4:
-                pass  # These are fine — short tool prefixes
             if p in ("*", "Bash(*)"):
                 broad.append((p, scope))
-    print(f"broad-patterns:")
+    print("broad-patterns:")
     print(f"  count: {len(broad)}")
     if broad:
         needs_attention = True
@@ -228,13 +240,12 @@ def run_permissions_analyze() -> None:
             print(f"    - {p} (scope: {s})")
     print()
 
-    # Contradictions
     contradictions = []
     for scope_a, scope_b in [("project", "user"), ("user", "project")]:
         conflicts = both[scope_a]["allow"] & both[scope_b]["deny"]
         for p in sorted(conflicts):
             contradictions.append((p, f"allow in {scope_a}", f"deny in {scope_b}"))
-    print(f"contradictions:")
+    print("contradictions:")
     print(f"  count: {len(contradictions)}")
     if contradictions:
         needs_attention = True
@@ -251,12 +262,10 @@ def run_permissions_clean(scope: str) -> None:
     Only removes patterns that exist in both the template AND the other
     scope's allow list. Never touches non-recommended or deny patterns.
     """
-    plugin_root = get_plugin_root()
-    recommended = _get_recommended_patterns(plugin_root)
+    recommended = _get_recommended_patterns()
     both = _get_both_settings()
     other_scope = "user" if scope == "project" else "project"
 
-    # Find recommended patterns in target scope that also exist at other scope
     target_rec = recommended & both[scope]["allow"]
     other_rec = recommended & both[other_scope]["allow"]
     to_remove = sorted(target_rec & other_rec)
@@ -266,12 +275,11 @@ def run_permissions_clean(scope: str) -> None:
     print(f"scope: {scope}")
 
     if not to_remove:
-        print(f"  nothing to clean — no redundant recommended patterns")
+        print("  nothing to clean — no redundant recommended patterns")
         return
 
-    # Read and modify settings
     path = _settings_path(scope)
-    settings = read_json(path)
+    settings = plugin.read_json(path)
     allow = settings.get("permissions", {}).get("allow", [])
 
     remove_set = set(to_remove)

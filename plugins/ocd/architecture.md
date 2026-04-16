@@ -96,7 +96,7 @@ Skill packages live under `skills/`. Each contains at minimum a `SKILL.md` descr
 | `commit` | Commit working tree changes grouped by topic for readable git history |
 | `push` | Push local commits to a named branch on the remote |
 | `log` | Capture or manage project log entries — decisions, friction, problems, ideas |
-| `md-to-pdf` | Export markdown files to PDF styled with GitHub-flavored CSS |
+| `pdf` | Export markdown files to PDF using WeasyPrint |
 
 **In-development skills** (present on main, not yet released):
 
@@ -122,14 +122,19 @@ Python packages consumed as imports. Each is a subsystem with its own README.md 
 
 | Library | Package | Purpose | Docs |
 |---------|---------|---------|------|
+| `rules` | `lib/rules/` | Rules subsystem — deploys markdown rule templates to `.claude/rules/<plugin>/` as always-on agent context. | [README](lib/rules/README.md) |
+| `conventions` | `lib/conventions/` | Conventions subsystem — deploys convention templates to `.claude/conventions/<plugin>/` for file-governance via `governed_by` frontmatter. | [README](lib/conventions/README.md) |
+| `patterns` | `lib/patterns/` | Patterns subsystem — deploys reusable workflow pattern templates to `.claude/patterns/<plugin>/`; referenced by skills, not auto-loaded. | [README](lib/patterns/README.md) |
+| `logs` | `lib/logs/` | Logs subsystem — deploys per-type templates to the shared `.claude/logs/<type>/` pool (unnamespaced; contributes to project-level log types). | [README](lib/logs/README.md) |
+| `permissions` | `lib/permissions/` | Permissions subsystem — reports auto-approve coverage; specialized CLI ops (`list`, `install`, `analyze`, `clean`) manage recommended patterns across project and user scopes. | [README](lib/permissions/README.md) |
 | `governance` | `lib/governance/` | Convention and rule governance library: match files to applicable governance entries, list entries by kind, and compute the dependency-ordered level grouping. Reads directly from disk on every call — no database, no caching. | [README](lib/governance/README.md) · [architecture.md](lib/governance/architecture.md) |
 | `navigator` | `lib/navigator/` | Project structure index backed by SQLite. Maintains a queryable directory of project files and directories with human-written descriptions agents use to decide whether to open a file. | [README](lib/navigator/README.md) · [architecture.md](lib/navigator/architecture.md) |
 
-Consumers within this plugin: the `convention_gate` hook imports `lib.governance`; the navigator MCP server imports `lib.navigator`; plugin orchestration (`run_install` / `run_list`) imports `lib/*/_init.py` for per-subsystem bootstrap and reporting.
+Consumers within this plugin: the `convention_gate` hook imports `lib.governance`; the navigator MCP server imports `lib.navigator`; plugin orchestration (`run_install` / `run_list`) discovers and calls every `lib/*/_init.py` uniformly for per-subsystem deployment and reporting.
 
 ## Plugin Framework
 
-`plugin/` — generic deployment, formatting, skill discovery, and orchestration shared across plugins. Propagated identically to every plugin via pre-commit hook. Decomposed into 7 internal modules:
+`plugin/` — generic deployment, formatting, skill discovery, and orchestration shared across plugins. Propagated identically to every plugin via pre-commit hook. Decomposed into 6 internal modules:
 
 | Module | Responsibility |
 |--------|---------------|
@@ -138,7 +143,6 @@ Consumers within this plugin: the `convention_gate` hook imports `lib.governance
 | `_deployment.py` | Template file deployment primitives (copy, compare, orphan clearing) |
 | `_formatting.py` | Output column alignment and section rendering |
 | `_discovery.py` | System and workflow skill discovery |
-| `_permissions.py` | Auto-approve pattern analysis, deployment, and cleanup |
 | `_orchestration.py` | `run_install` and `run_list` entry points — discover every `lib/` subsystem and dispatch uniformly |
 
 ## Entry Points
@@ -189,7 +193,7 @@ plugins/ocd/
 │   ├── commit/                  — topic-grouped commits
 │   ├── push/                    — push with pre-push checks and first-push upstream setup
 │   ├── log/                     — log entry capture (add/list/remove as component subflows)
-│   ├── md-to-pdf/               — markdown-to-PDF export (uses global `md-to-pdf` CLI)
+│   ├── pdf/                     — markdown-to-PDF export via WeasyPrint
 │   ├── audit-governance/        — governance chain audit (in development)
 │   ├── audit-static/            — static analysis audit for any path (in development)
 │   └── update-system-docs/      — documentation maintenance (design-only placeholder)
