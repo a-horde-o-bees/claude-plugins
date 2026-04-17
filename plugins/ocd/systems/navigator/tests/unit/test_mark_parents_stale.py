@@ -21,7 +21,11 @@ class TestMarkParentsStale:
         assert row["stale"] == 1
         conn.close()
 
-    def test_skips_already_null(self, populated_db):
+    def test_marks_null_purpose_parent_stale(self, populated_db):
+        """stale signals `needs purpose description` regardless of whether
+        the parent already has a purpose. Null-purpose parents still
+        cascade stale so they surface as needing attention after a
+        child changed."""
         conn = get_connection(populated_db)
         conn.execute("UPDATE paths SET purpose = NULL WHERE path = 'src/lib'")
         conn.commit()
@@ -29,8 +33,10 @@ class TestMarkParentsStale:
         result = _mark_parents_stale(conn, "src/lib/utils.py")
         conn.commit()
 
-        assert "src/lib" not in result
+        assert "src/lib" in result
         assert "src" in result
+        row = conn.execute("SELECT stale FROM paths WHERE path = 'src/lib'").fetchone()
+        assert row["stale"] == 1
         conn.close()
 
     def test_skips_already_stale(self, populated_db):

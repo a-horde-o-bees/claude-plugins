@@ -70,7 +70,16 @@ def _compute_git_hash(file_path: Path) -> str | None:
 
 
 def _mark_parents_stale(conn: sqlite3.Connection, entry_path: str) -> list[str]:
-    """Mark all parent directories as stale up the path. Returns staled paths."""
+    """Mark all non-rule-matched parent directories as stale up the path.
+
+    `stale` is the single signal that a path needs purpose description —
+    set to 1 on both user-described parents (purpose may be wrong) and
+    undescribed parents (purpose never written). Rule-matched parents
+    skip cascade because their purpose is deterministic and they're
+    maintained stale=0 in the main scan loop.
+
+    Returns staled paths.
+    """
     staled = []
     current = entry_path
     while True:
@@ -81,9 +90,9 @@ def _mark_parents_stale(conn: sqlite3.Connection, entry_path: str) -> list[str]:
             break
         current = parent
         row = conn.execute(
-            "SELECT purpose, stale FROM paths WHERE path = ?", (current,)
+            "SELECT stale FROM paths WHERE path = ?", (current,)
         ).fetchone()
-        if row and row["purpose"] is not None and not row["stale"]:
+        if row and not row["stale"]:
             conn.execute(
                 "UPDATE paths SET stale = 1 WHERE path = ?",
                 (current,),
@@ -290,12 +299,16 @@ def scan_path(db_path: str, target_subpath: str = "") -> str:
             rule = _matches_pattern_any(path, prescribed_patterns)
 
             if path not in db_paths:
-                # New path — insert with rule purpose if matched
+                # New path — insert with rule purpose if matched, otherwise
+                # mark stale since it needs a user-authored purpose. Rule-
+                # matched new paths are immediately complete (stale=0) and
+                # do not cascade to parents.
                 parent_path = str(Path(path).parent) if path else None
                 if parent_path == ".":
                     parent_path = ""
 
                 purpose = rule["purpose"] if rule else None
+                stale = 0 if rule else 1
                 if entry_type == "file":
                     metrics = _compute_file_metrics(project_dir / path)
                 else:
@@ -303,13 +316,13 @@ def scan_path(db_path: str, target_subpath: str = "") -> str:
 
                 conn.execute(
                     "INSERT OR IGNORE INTO paths "
-                    "(path, parent_path, entry_type, purpose, git_hash, line_count, char_count) "
-                    "VALUES (?, ?, ?, ?, ?, ?, ?)",
-                    (path, parent_path, entry_type, purpose, metrics["git_hash"], metrics["line_count"], metrics["char_count"]),
+                    "(path, parent_path, entry_type, purpose, stale, git_hash, line_count, char_count) "
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                    (path, parent_path, entry_type, purpose, stale,
+                     metrics["git_hash"], metrics["line_count"], metrics["char_count"]),
                 )
                 display = path + "/" if entry_type == "directory" else path
                 added.append(f"- {display}")
-                # Rule-matched new paths have deterministic purposes — no parent cascade
                 if not rule:
                     for p in _mark_parents_stale(conn, path):
                         staled_parents.add(p)
@@ -351,12 +364,12 @@ def scan_path(db_path: str, target_subpath: str = "") -> str:
                             (rule["purpose"], current_hash, metrics["line_count"], metrics["char_count"], path),
                         )
                 elif stored_hash is not None and current_hash != stored_hash:
-                    # Non-rule-matched content change — mark stale if had
-                    # a user-authored purpose, and always cascade. Parent
-                    # summaries may need re-examination regardless of whether
-                    # this specific path has its own purpose yet.
+                    # Non-rule-matched content change — mark stale unconditionally
+                    # and cascade. stale is the single signal for "needs purpose
+                    # description"; whether the path already had a user-authored
+                    # purpose or never had one, it now needs review.
                     conn.execute(
-                        "UPDATE paths SET stale = CASE WHEN purpose IS NOT NULL THEN 1 ELSE 0 END, "
+                        "UPDATE paths SET stale = 1, "
                         "git_hash = ?, line_count = ?, char_count = ? "
                         "WHERE path = ?",
                         (current_hash, metrics["line_count"], metrics["char_count"], path),
