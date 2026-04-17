@@ -22,7 +22,7 @@ Ordered by dependency, not priority. None of this blocks the existing v0.1.0 —
 
 Both skills exist on main but aren't locked down. Manual convention audit during v0.1.0 prep surfaced residual issues. To finish:
 
-- [ ] audit-static: verify --target resolution for every input form (slash-qualified, filesystem path, skill path); exercise on representative targets and triage observations
+- [ ] audit-static: verify positional argument resolution for every input form (slash-qualified skill, filesystem path, SKILL.md path); exercise on representative targets and triage observations
 - [ ] audit-governance: exercise on the full governance chain end-to-end; triage observations; decide whether the `_audit-workflow-A.md` vs `_audit-workflow-B.md` A/B is still live or can collapse to one
 - [ ] Self-audit both skills via audit-static once they're stable
 
@@ -32,17 +32,28 @@ Both skills exist on main but aren't locked down. Manual convention audit during
 
 Implementation work (from _DESIGN.md Residual Work Items):
 
-- [ ] Discovery CLI (`plugins/ocd/skills/update-system-docs/__main__.py` + `_discovery.py`)
+- [ ] Discovery CLI (`plugins/ocd/systems/update-system-docs/__main__.py` + `_discovery.py`)
 - [ ] Fact-bundle builder (ast-based Python module)
 - [ ] Navigator schema extension for `doc_verified_at` hash markers (separate sub-task)
 - [ ] `ast.parse` reliability probe in a worktree (confirms fact-bundle foundation)
 - [ ] Idempotence verification — run twice on unchanged reality; assert zero diff
-- [ ] End-to-end on `lib/governance`; calibrate prompts
+- [ ] End-to-end on `systems/governance`; calibrate prompts
 - [ ] Iterate until stable
+- [ ] Normalize argument-hint to post-refactor conventions (`--target project` pre-dates verb-flag pairing + positional preference; revisit when implementation lands)
 
 ### Mass documentation audit (depends on update-system-docs)
 
 Once update-system-docs is stable, run it whole-project to regenerate canonical docs and surgical-edit non-obvious surfaces. Tune prompts based on observed gaps. Run until output converges.
+
+### Blueprint plugin parity
+
+The ocd plugin consolidated into `systems/` with the `bin/ocd-run` wrapper and `ocd-run <name>` auto-promotion pattern during v0.2.0 development. Blueprint hasn't been updated yet. Work:
+
+- [ ] Mirror the `systems/` layout (flatten any remaining `lib/` / `servers/` / `skills/` splits)
+- [ ] Add `bin/blueprint-run` wrapper following the `<plugin>-run` convention
+- [ ] Update `run.py` auto-promotion (copy from ocd's)
+- [ ] Sweep SKILL.md / README invocations to `blueprint-run <name>` form
+- [ ] Rename any command-colliding skills (same pattern as `/ocd:plugin` → `/ocd:setup` and `/ocd:commit`+`/ocd:push` → `/ocd:git`)
 
 ### Cut v0.2.0
 
@@ -69,6 +80,9 @@ Outstanding methodology items:
 
 - **Convention loading on read** — conventions currently surface on Read/Edit/Write via the convention_gate hook. Governance reads from disk on every call, so behavior is already correct; the note is kept in case future cache introduction reopens the question.
 - **Print() usage review** — deferred during the earlier logging convention drop. Pick up next time CLI output surface gets substantial edits.
+- **`<plugin>-run` binary naming convention not codified** — established in practice for ocd (`bin/ocd-run` with suffix-style, object_action shape), and reasoned in commit `f31e0b5`. Not yet written into a convention doc. When blueprint gets its wrapper, promote the pattern into a `plugin-layout.md` convention (or extend `skill-md.md`) so future plugins follow uniformly.
+- **`install_deps.sh` plugin-binary collision check** — currently no guard for cases where `bin/<plugin>-run` collides with a command already on PATH. Low risk since `<plugin>-run` is inherently unique-ish, but a simple `command -v` probe during install_deps could warn the author proactively.
+- **`test_deploy_exits_zero` permissions test fixture** — pre-existing failure in `tests/test_invocation.py`. The test invokes `plugin permissions deploy --scope project` in a tmp dir, but `recommended-permissions.json` isn't on the expected path so deploy reports "not found" instead of "added". Needs fixture rework to place the template where the deploy code looks for it.
 - **Logged problems awaiting action** — see `.claude/logs/problem/` for currently open items (governance test coverage thin vs navigator, convention-agent test missing worktree isolation, principle-proposal entries for autonomous execution and capability-gap flagging, worktree isolation leak, plugin name resolution repeat-path risk).
 
 ## v1 Reference Database
@@ -84,11 +98,13 @@ python3 -c "import sqlite3; db = sqlite3.connect('purpose-map/purpose-map-v1.db'
 - `purpose-map/CLAUDE.md` — methodology operational reference; read first on entry
 - `purpose-map/purpose_map.py` — tool implementation
 - `purpose-map/purpose-map.db` — live v2 database
-- `plugins/ocd/templates/{rules,conventions,patterns,logs}/*` — governance templates
-- `plugins/ocd/skills/*/SKILL.md` — skills (released set on v0.1.0 branch; full set on main)
-- `plugins/ocd/lib/navigator/` — navigator library (own README + architecture)
-- `plugins/ocd/lib/governance/` — governance library (own README + architecture)
-- `plugins/ocd/servers/navigator.py` — navigator MCP server (thin adapter)
-- `plugins/ocd/plugin/` — plugin framework (generic, shared across plugins)
-- `plugins/ocd/hooks/` — auto-approval and convention_gate hooks
+- `plugins/ocd/systems/{rules,conventions,patterns,log,permissions}/templates/*` — governance and content templates (colocated with each system's deployer)
+- `plugins/ocd/systems/*/SKILL.md` — skills (released set on v0.1.0 branch; full set on main)
+- `plugins/ocd/systems/navigator/` — navigator system (SKILL + CLI + MCP server + tests, colocated)
+- `plugins/ocd/systems/governance/` — governance library (own README + architecture)
+- `plugins/ocd/systems/navigator/server.py` — navigator MCP server (thin adapter)
+- `plugins/ocd/bin/ocd-run` — PATH-accessible Python dispatcher (resolves plugin venv, execs run.py)
+- `plugins/ocd/run.py` — module launcher; auto-promotes bare names to `systems.<name>` when present
+- `plugins/ocd/plugin/` — plugin framework (generic, shared across plugins; kept top-level since it's the framework, not a system)
+- `plugins/ocd/hooks/` — auto-approval, convention_gate, and install_deps hooks
 - `scripts/sync-templates.py` — template → deployed copy sync (dev-only)
