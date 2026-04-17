@@ -2,7 +2,7 @@
   "mcpServers": {
     "navigator": {
       "command": "${CLAUDE_PLUGIN_DATA}/venv/bin/python3",
-      "args": ["${CLAUDE_PLUGIN_ROOT}/run.py", "servers.navigator"],
+      "args": ["${CLAUDE_PLUGIN_ROOT}/run.py", "subsystems.navigator.server"],
       "env": {
         "DB_PATH": ".claude/ocd/navigator/navigator.db"
       }

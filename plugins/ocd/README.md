@@ -91,7 +91,7 @@ The navigator database (`.claude/ocd/navigator/navigator.db`) indexes project st
 
 #### Navigator CLI
 
-Agent-facing entry point at `skills/navigator/__main__.py`. Agents call `--help` to learn usage.
+Agent-facing entry point at `subsystems/navigator/__main__.py`. Agents call `--help` to learn usage.
 
 | Command | Purpose |
 |---------|---------|
@@ -138,8 +138,8 @@ Python packages consumed as imports. Each has its own README and architecture.
 
 | Library | Package | Purpose |
 |---------|---------|---------|
-| `governance` | [`lib/governance/`](lib/governance/) | Convention and rule governance: match files to applicable entries, list entries, compute dependency ordering. Disk-only. |
-| `navigator` | [`lib/navigator/`](lib/navigator/) | Project structure index backed by SQLite: path indexing, filesystem scan, descriptions, reference mapping, skill resolution. |
+| `governance` | [`subsystems/governance/`](subsystems/governance/) | Convention and rule governance: match files to applicable entries, list entries, compute dependency ordering. Disk-only. |
+| `navigator` | [`subsystems/navigator/`](subsystems/navigator/) | Project structure index backed by SQLite: path indexing, filesystem scan, descriptions, reference mapping, skill resolution. |
 
 ## License
 

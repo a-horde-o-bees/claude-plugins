@@ -1,43 +1,46 @@
 """System and skill discovery.
 
-Discovers server subsystems with init infrastructure and workflow
-skills (slash commands) within a plugin directory tree.
+Discovers subsystems with init infrastructure and workflow skills (slash
+commands) within a plugin directory tree. All subsystems live under
+subsystems/; a subsystem may own state (has _init.py), expose a workflow
+(has SKILL.md), or both.
 """
 
 from pathlib import Path
 
 
 def _discover_systems(plugin_root: Path) -> list[str]:
-    """Discover library subsystems with init infrastructure.
+    """Discover subsystems with init infrastructure.
 
-    Returns sorted list of lib package names whose package contains
-    an _init.py module (conforming to the Init/Status Contract).
-    Library subsystems own state — database files, deployed conventions,
-    configuration — and their init routines bootstrap or refresh that state.
+    Returns sorted list of subsystem names whose package contains an
+    _init.py module (conforming to the Init/Status Contract). These
+    subsystems own state — database files, deployed conventions,
+    configuration — and their init routines bootstrap or refresh it.
     """
-    lib_dir = plugin_root / "lib"
-    if not lib_dir.is_dir():
+    subsystems_dir = plugin_root / "subsystems"
+    if not subsystems_dir.is_dir():
         return []
 
     return sorted(
         init_path.parent.name
-        for init_path in lib_dir.glob("*/_init.py")
+        for init_path in subsystems_dir.glob("*/_init.py")
     )
 
 
 def _discover_workflow_skills(plugin_root: Path) -> list[str]:
     """Discover workflow skills. Returns sorted list of skill names.
 
-    Workflow skills are pure slash command workflows without persistent state —
-    each has a SKILL.md in plugins/<plugin>/skills/<name>/ and is invoked as
-    `/<name>`. They are listed in plugin status output so the user sees what
-    commands the plugin ships, but the plugin does not deploy or track them.
+    Workflow skills are subsystems that expose a SKILL.md — each is
+    invoked as `/<plugin>:<name>`. A subsystem may carry both an _init.py
+    and a SKILL.md; it shows up in both discoveries. They are listed in
+    plugin status output so the user sees what commands the plugin ships,
+    but the plugin does not deploy or track the skill files themselves.
     """
-    skills_dir = plugin_root / "skills"
-    if not skills_dir.is_dir():
+    subsystems_dir = plugin_root / "subsystems"
+    if not subsystems_dir.is_dir():
         return []
 
     return sorted(
         skill_md.parent.name
-        for skill_md in skills_dir.glob("*/SKILL.md")
+        for skill_md in subsystems_dir.glob("*/SKILL.md")
     )

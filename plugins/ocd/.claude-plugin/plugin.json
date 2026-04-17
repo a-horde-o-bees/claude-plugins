@@ -1,11 +1,14 @@
 {
   "name": "ocd",
-  "version": "0.0.274",
+  "version": "0.0.275",
   "description": "Deterministic enforcement of permissions, rules, and structural conventions with agent-facing project navigation",
   "author": {
     "name": "a-horde-o-bees"
   },
   "homepage": "https://github.com/a-horde-o-bees/claude-plugins",
   "repository": "https://github.com/a-horde-o-bees/claude-plugins",
-  "license": "MIT"
+  "license": "MIT",
+  "skills": [
+    "./subsystems/"
+  ]
 }

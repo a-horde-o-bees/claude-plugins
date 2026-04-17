@@ -38,7 +38,7 @@ def run(module: str, *args: str, stdin: str | None = None, env: dict | None = No
 class TestPluginCLI:
     """Verify plugin init/status invoke through run.py and exercise
     the full import chain: run.py → plugin/__main__.py → plugin/__init__.py
-    → importlib.import_module(servers.X._init) → import plugin."""
+    → importlib.import_module(subsystems.X._init) → import plugin."""
 
     def test_status_exits_zero(self) -> None:
         result = run("plugin", "status")
@@ -273,19 +273,19 @@ class TestSkillCLI:
     """Verify skill packages invoke through run.py."""
 
     def test_navigator_help(self) -> None:
-        result = run("lib.navigator", "--help")
+        result = run("subsystems.navigator", "--help")
         assert result.returncode == 0
         assert "describe" in result.stdout
         assert "scan" in result.stdout
 
     def test_governance_help(self) -> None:
-        result = run("lib.governance", "--help")
+        result = run("subsystems.governance", "--help")
         assert result.returncode == 0
         assert "load" in result.stdout
         assert "order" in result.stdout
 
     def test_governance_for_help(self) -> None:
-        result = run("lib.governance", "for", "--help")
+        result = run("subsystems.governance", "for", "--help")
         assert result.returncode == 0
         assert "files" in result.stdout
 
@@ -322,7 +322,7 @@ class TestServerInvocation:
     """
 
     def test_navigator_loads(self) -> None:
-        result = _run_server_briefly("servers.navigator")
+        result = _run_server_briefly("subsystems.navigator.server")
         assert result.returncode == 0, result.stderr
 
 

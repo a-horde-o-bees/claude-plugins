@@ -1,7 +1,7 @@
 """Install and list orchestration.
 
 Top-level run_install and run_list entry points that discover every
-lib/ subsystem and dispatch uniformly to each subsystem's _init.py.
+subsystems/ entry and dispatch uniformly to each subsystem's _init.py.
 Content domains (rules, conventions, patterns, logs) and operational
 subsystems (navigator, permissions) follow the same contract.
 """
@@ -41,7 +41,7 @@ def _set_hookspath(project_dir: Path) -> bool:
 
 
 def run_install(force: bool = False, system: str | None = None) -> None:
-    """Install: discover and init every lib subsystem.
+    """Install: discover and init every subsystem.
 
     system: when provided, scopes init to one subsystem. Unknown names
     print an error listing available subsystems.
@@ -66,7 +66,7 @@ def run_install(force: bool = False, system: str | None = None) -> None:
     rules_changed = False
 
     for system_name in target_systems:
-        mod = importlib.import_module(f"lib.{system_name}._init")
+        mod = importlib.import_module(f"subsystems.{system_name}._init")
         result = mod.init(force=force)
         for line in format_section(system_name.capitalize(), result["files"], result.get("extra")):
             print(line)
@@ -97,7 +97,7 @@ def run_install(force: bool = False, system: str | None = None) -> None:
 
 
 def run_list(system: str | None = None) -> None:
-    """List: discover and report state for every lib subsystem.
+    """List: discover and report state for every subsystem.
 
     system: when provided, scopes output to one subsystem. Unknown names
     print an error listing available subsystems.
@@ -124,7 +124,7 @@ def run_list(system: str | None = None) -> None:
     target_systems = [system] if system is not None else systems
 
     for system_name in target_systems:
-        mod = importlib.import_module(f"lib.{system_name}._init")
+        mod = importlib.import_module(f"subsystems.{system_name}._init")
         result = mod.status()
         for line in format_section(system_name.capitalize(), result["files"], result.get("extra")):
             print(line)
