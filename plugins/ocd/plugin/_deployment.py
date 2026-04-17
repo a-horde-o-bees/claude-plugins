@@ -1,11 +1,14 @@
 """Template deployment primitives.
 
 Core operations for deploying template files to project directories:
-comparison and batch file deployment with force/orphan control.
+comparison, batch file deployment with force/orphan control, and
+systems' paths.csv declaration deployment with placeholder substitution.
 """
 
 import shutil
 from pathlib import Path
+
+from ._metadata import get_plugin_name
 
 
 def compare_deployed(src: Path, dst: Path) -> str:
@@ -75,3 +78,48 @@ def deploy_files(
         results.append({"name": src.name, "before": before, "after": after})
 
     return results
+
+
+def deploy_paths_csv(
+    plugin_root: Path,
+    project_dir: Path,
+    system_name: str,
+    force: bool = False,
+) -> dict | None:
+    """Deploy a system's paths.csv declaration to the project.
+
+    Reads systems/<system_name>/paths.csv from the plugin source,
+    substitutes `{plugin}` with the plugin's name, and writes the
+    resolved copy to .claude/<plugin>/<system_name>/paths.csv. Navigator
+    aggregates all such deployed files into its path_patterns table at
+    scan time, so deploying paths.csv is how a system registers its
+    owned artifacts for navigator auto-description.
+
+    Returns {path, before, after} for the system's init() result, or
+    None when the system has no source paths.csv to deploy.
+    """
+    source = plugin_root / "systems" / system_name / "paths.csv"
+    if not source.is_file():
+        return None
+
+    plugin_name = get_plugin_name(plugin_root)
+    dst = project_dir / ".claude" / plugin_name / system_name / "paths.csv"
+    deployed_rel = f".claude/{plugin_name}/{system_name}/paths.csv"
+
+    resolved = source.read_text().replace("{plugin}", plugin_name)
+
+    if not dst.exists():
+        before = "absent"
+    elif dst.read_text() == resolved:
+        before = "current"
+    else:
+        before = "divergent"
+
+    if before == "absent" or (before == "divergent" and force):
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        dst.write_text(resolved)
+        after = "current"
+    else:
+        after = before
+
+    return {"path": deployed_rel, "before": before, "after": after}

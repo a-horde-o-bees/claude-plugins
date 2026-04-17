@@ -32,11 +32,11 @@ class TestListFiles:
         conn = get_connection(db)
         conn.executescript(SCHEMA)
         conn.execute(
-            "INSERT INTO patterns (pattern, entry_type, exclude) "
+            "INSERT INTO path_patterns (pattern, entry_type, exclude) "
             "VALUES ('**/__pycache__', NULL, 1)"
         )
         conn.execute(
-            "INSERT INTO patterns (pattern, entry_type, exclude, traverse, description) "
+            "INSERT INTO path_patterns (pattern, entry_type, exclude, traverse, purpose) "
             "VALUES ('**/tests', NULL, 0, 0, 'Test suites')"
         )
         conn.commit()

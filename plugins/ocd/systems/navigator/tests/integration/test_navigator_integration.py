@@ -43,7 +43,7 @@ def db(tmp_path, monkeypatch):
     ]
     for path, parent, etype, excl, trav, desc in entries:
         conn.execute(
-            "INSERT INTO entries (path, parent_path, entry_type, exclude, traverse, description) "
+            "INSERT INTO paths (path, parent_path, entry_type, exclude, traverse, purpose) "
             "VALUES (?, ?, ?, ?, ?, ?)",
             (path, parent, etype, excl, trav, desc),
         )
@@ -68,7 +68,7 @@ class TestPathsGet:
     def test_single_file(self, db):
         result = _parse(nav_server.paths_get("src/main.py"))
         assert result["path"] == "src/main.py"
-        assert result["description"] == "Application entry point"
+        assert result["purpose"] == "Application entry point"
         assert result["type"] == "file"
 
     def test_single_directory_has_children(self, db):
@@ -80,41 +80,41 @@ class TestPathsGet:
         assert "src/main.py" in child_paths
         assert "src/utils.py" in child_paths
 
-    def test_multi_path_returns_entries_list(self, db):
+    def test_multi_path_returns_paths_list(self, db):
         result = _parse(nav_server.paths_get(["src/main.py", "docs/README.md"]))
-        assert "entries" in result
-        assert len(result["entries"]) == 2
-        paths = {e["path"] for e in result["entries"]}
+        assert "paths" in result
+        assert len(result["paths"]) == 2
+        paths = {e["path"] for e in result["paths"]}
         assert paths == {"src/main.py", "docs/README.md"}
 
     def test_not_found(self, db):
         result = _parse(nav_server.paths_get("nonexistent.py"))
-        assert "not_found" in result or result.get("description") is None
+        assert "not_found" in result or result.get("purpose") is None
 
     def test_list_input_single_element(self, db):
         result = _parse(nav_server.paths_get(["src/main.py"]))
-        assert "entries" in result
-        assert len(result["entries"]) == 1
+        assert "paths" in result
+        assert len(result["paths"]) == 1
 
 
 class TestPathsUpsert:
     """paths_upsert — renamed from paths_set, create-or-update semantics."""
 
     def test_update_existing_description(self, db):
-        result = _parse(nav_server.paths_upsert("src/main.py", description="CLI entry point"))
+        result = _parse(nav_server.paths_upsert("src/main.py", purpose="CLI entry point"))
         assert result["action"] == "updated"
         assert result["path"] == "src/main.py"
 
         # Verify via get
         entry = _parse(nav_server.paths_get("src/main.py"))
-        assert entry["description"] == "CLI entry point"
+        assert entry["purpose"] == "CLI entry point"
 
     def test_describe_previously_null(self, db):
-        result = _parse(nav_server.paths_upsert("src/config.py", description="Runtime configuration"))
+        result = _parse(nav_server.paths_upsert("src/config.py", purpose="Runtime configuration"))
         assert result["action"] == "updated"
 
         entry = _parse(nav_server.paths_get("src/config.py"))
-        assert entry["description"] == "Runtime configuration"
+        assert entry["purpose"] == "Runtime configuration"
 
     def test_no_changes(self, db):
         result = _parse(nav_server.paths_upsert("src/main.py"))

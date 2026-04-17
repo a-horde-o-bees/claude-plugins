@@ -46,7 +46,7 @@ def gov_env(tmp_path, monkeypatch):
 
     Conventions:
     - python.md: matches *.py
-    - mcp-server.md: matches servers/*.py, excludes __init__.py and _helpers.py
+    - mcp-server.md: matches systems/*/server.py
     - skill-md.md: matches SKILL.md
     - markdown.md: matches *.md
 
@@ -66,8 +66,7 @@ def gov_env(tmp_path, monkeypatch):
         governed_by=[".claude/rules/design-principles.md"],
     )
     _write_gov_file(
-        tmp_path / ".claude/conventions/ocd/mcp-server.md", "servers/*.py",
-        excludes=["__init__.py", "_helpers.py"],
+        tmp_path / ".claude/conventions/ocd/mcp-server.md", "systems/*/server.py",
         governed_by=[".claude/rules/design-principles.md", ".claude/conventions/ocd/python.md"],
     )
     _write_gov_file(
@@ -152,8 +151,8 @@ class TestServerFileConventions:
         assert ".claude/conventions/ocd/mcp-server.md" in conventions
         assert len(conventions) == 2
 
-    def test_server_init_excluded_from_mcp_convention(self, gov_env):
-        result = governance_match(["servers/__init__.py"])
+    def test_system_init_excluded_from_mcp_convention(self, gov_env):
+        result = governance_match(["systems/navigator/__init__.py"])
         conventions = set(result["conventions"])
         assert ".claude/conventions/ocd/python.md" in conventions
         assert ".claude/conventions/ocd/mcp-server.md" not in conventions
@@ -165,7 +164,7 @@ class TestServerFileConventions:
         assert ".claude/conventions/ocd/mcp-server.md" not in conventions
 
     def test_multiple_server_files_deduplicated(self, gov_env):
-        files = ["servers/friction.py", "servers/decisions.py", "systems/navigator/server.py"]
+        files = ["systems/friction/server.py", "systems/decisions/server.py", "systems/navigator/server.py"]
         result = governance_match(files)
         conventions = set(result["conventions"])
         assert conventions == {".claude/conventions/ocd/python.md", ".claude/conventions/ocd/mcp-server.md"}

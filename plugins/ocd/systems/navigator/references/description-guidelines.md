@@ -1,14 +1,14 @@
 # Description Guidelines
 
-Navigator-specific guidance for path tree entry descriptions during `/navigator` scan/describe workflows. What to include and exclude in a description follows the Purpose Statement section of the design principles — scope and role, not internal mechanics, content listing, or history.
+Navigator-specific guidance for populating path purposes during `/navigator` scan/describe workflows. What to include and exclude in a purpose follows the Purpose Statement section of the design principles — scope and role, not internal mechanics, content listing, or history.
 
-## Description Semantics
+## Purpose Semantics
 
-- NULL description — entry not yet reviewed; shows as `[?]`
-- Empty string description — self-explanatory name, marks as reviewed
-- Non-empty description — entry reviewed, description provided
+- NULL purpose — path not yet reviewed; shows as `[?]`
+- Empty string purpose — self-explanatory name, marks as reviewed
+- Non-empty purpose — path reviewed, purpose populated per the Purpose Statement principle
 
 ## Markers
 
-- `[?]` — new entry, needs description written from scratch
-- `[~]` — stale entry, file contents changed since description was written; re-evaluate against current file scope
+- `[?]` — new path, needs purpose populated from scratch
+- `[~]` — stale path, file contents changed since purpose was written; re-evaluate against current scope

@@ -11,7 +11,7 @@ class TestGetUndescribed:
         assert result["target"] == "src/lib"
         # core.py in listing has null description
         core = next(c for c in result["listing"]["children"] if "core.py" in c["path"])
-        assert core["description"] is None
+        assert core["purpose"] is None
 
     def test_shows_progress_count(self, populated_db):
         result = paths_undescribed(populated_db)
@@ -22,7 +22,7 @@ class TestGetUndescribed:
         (project_dir / "a.py").write_text("")
         conn = get_connection(db_path)
         conn.execute(
-            "INSERT INTO entries (path, entry_type, description) VALUES ('a.py', 'file', 'Described')"
+            "INSERT INTO paths (path, entry_type, purpose) VALUES ('a.py', 'file', 'Described')"
         )
         conn.commit()
         conn.close()
@@ -32,11 +32,11 @@ class TestGetUndescribed:
     def test_empty_string_not_undescribed(self, db_path):
         conn = get_connection(db_path)
         conn.execute(
-            "INSERT INTO entries (path, parent_path, entry_type, description) "
+            "INSERT INTO paths (path, parent_path, entry_type, purpose) "
             "VALUES ('dir', '', 'directory', 'A dir')"
         )
         conn.execute(
-            "INSERT INTO entries (path, parent_path, entry_type, description) "
+            "INSERT INTO paths (path, parent_path, entry_type, purpose) "
             "VALUES ('dir/file.py', 'dir', 'file', '')"
         )
         conn.commit()
@@ -49,15 +49,15 @@ class TestGetUndescribed:
         (project_dir / "dir" / "file.py").write_text("")
         conn = get_connection(db_path)
         conn.execute(
-            "INSERT INTO entries (path, parent_path, entry_type, description) "
+            "INSERT INTO paths (path, parent_path, entry_type, purpose) "
             "VALUES ('dir', '', 'directory', NULL)"
         )
         conn.execute(
-            "INSERT INTO entries (path, parent_path, entry_type, description) "
+            "INSERT INTO paths (path, parent_path, entry_type, purpose) "
             "VALUES ('dir/file.py', 'dir', 'file', 'Described')"
         )
         conn.commit()
         conn.close()
         result = paths_undescribed(db_path)
         assert not result["done"]
-        assert result["listing"]["description"] is None
+        assert result["listing"]["purpose"] is None

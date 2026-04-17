@@ -8,22 +8,22 @@ class TestDescribePath:
     def test_file_with_description(self, populated_db):
         result = paths_get(populated_db, "src/main.py")
         assert result["path"] == "src/main.py"
-        assert result["description"] == "Application entry point"
+        assert result["purpose"] == "Application entry point"
         assert result["type"] == "file"
 
     def test_file_null_description(self, populated_db):
         result = paths_get(populated_db, "src/lib/core.py")
-        assert result["description"] is None
+        assert result["purpose"] is None
 
     def test_file_empty_description(self, populated_db):
         result = paths_get(populated_db, "src/config.py")
         assert result["path"] == "src/config.py"
-        assert result["description"] == ""
+        assert result["purpose"] == ""
 
     def test_directory_lists_children(self, populated_db):
         result = paths_get(populated_db, "src/lib")
         assert result["path"] == "src/lib/"
-        assert result["description"] == "Library modules"
+        assert result["purpose"] == "Library modules"
         child_paths = [c["path"] for c in result["children"]]
         assert "src/lib/utils.py" in child_paths
         assert "src/lib/core.py" in child_paths
@@ -31,13 +31,13 @@ class TestDescribePath:
     def test_directory_null_description(self, db_path):
         conn = get_connection(db_path)
         conn.execute(
-            "INSERT INTO entries (path, parent_path, entry_type, description) "
+            "INSERT INTO paths (path, parent_path, entry_type, purpose) "
             "VALUES ('mydir', '', 'directory', NULL)"
         )
         conn.commit()
         conn.close()
         result = paths_get(db_path, "mydir")
-        assert result["description"] is None
+        assert result["purpose"] is None
 
     def test_directory_children_sorted_dirs_first(self, populated_db):
         result = paths_get(populated_db, "src")
@@ -50,12 +50,12 @@ class TestDescribePath:
     def test_children_null_show_question_mark(self, populated_db):
         result = paths_get(populated_db, "src/lib")
         core = next(c for c in result["children"] if "core.py" in c["path"])
-        assert core["description"] is None
+        assert core["purpose"] is None
 
     def test_children_empty_no_marker(self, populated_db):
         result = paths_get(populated_db, "src")
         config = next(c for c in result["children"] if "config.py" in c["path"])
-        assert config["description"] == ""
+        assert config["purpose"] == ""
 
     def test_excludes_excluded_children(self, db_path, project_dir):
         (project_dir / "dir").mkdir()
@@ -64,15 +64,15 @@ class TestDescribePath:
 
         conn = get_connection(db_path)
         conn.execute(
-            "INSERT INTO entries (path, parent_path, entry_type, description) "
+            "INSERT INTO paths (path, parent_path, entry_type, purpose) "
             "VALUES ('dir', '', 'directory', 'A directory')"
         )
         conn.execute(
-            "INSERT INTO entries (path, parent_path, entry_type, exclude) "
+            "INSERT INTO paths (path, parent_path, entry_type, exclude) "
             "VALUES ('dir/hidden', 'dir', 'file', 1)"
         )
         conn.execute(
-            "INSERT INTO entries (path, parent_path, entry_type, description) "
+            "INSERT INTO paths (path, parent_path, entry_type, purpose) "
             "VALUES ('dir/visible', 'dir', 'file', 'Visible file')"
         )
         conn.commit()

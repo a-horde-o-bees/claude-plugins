@@ -18,7 +18,7 @@ class TestRemoveEntry:
         assert result["action"] == "removed_recursive"
         conn = get_connection(populated_db)
         rows = conn.execute(
-            "SELECT path FROM entries WHERE path = 'src/lib' OR path LIKE 'src/lib/%'"
+            "SELECT path FROM paths WHERE path = 'src/lib' OR path LIKE 'src/lib/%'"
         ).fetchall()
         assert len(rows) == 0
         conn.close()
@@ -31,7 +31,7 @@ class TestRemoveEntry:
         # Add a pattern rule
         conn = get_connection(populated_db)
         conn.execute(
-            "INSERT INTO patterns (pattern, entry_type, exclude) VALUES ('**/*.log', NULL, 1)"
+            "INSERT INTO path_patterns (pattern, entry_type, exclude) VALUES ('**/*.log', NULL, 1)"
         )
         conn.commit()
         conn.close()
@@ -40,8 +40,8 @@ class TestRemoveEntry:
         assert result["action"] == "removed_all"
 
         conn = get_connection(populated_db)
-        entries_count = conn.execute("SELECT COUNT(*) FROM entries").fetchone()[0]
-        patterns_count = conn.execute("SELECT COUNT(*) FROM patterns").fetchone()[0]
+        entries_count = conn.execute("SELECT COUNT(*) FROM paths").fetchone()[0]
+        patterns_count = conn.execute("SELECT COUNT(*) FROM path_patterns").fetchone()[0]
         assert entries_count == 0
         assert patterns_count == 1
         conn.close()

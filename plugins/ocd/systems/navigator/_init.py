@@ -1,8 +1,9 @@
 """Navigator skill infrastructure.
 
-Initialize the navigator database (entries and pattern tables) and
-report DB health. Governance (rules, conventions, dependency graph)
-is owned by the separate governance skill and initialized there.
+Initialize the navigator database (paths, path_patterns, and
+path_pattern_sources tables) and report DB health. Governance (rules,
+conventions, dependency graph) is owned by the separate governance
+skill and initialized there.
 
 Interface contract: init() and status() return
 {"files": [...], "extra": [...]}.
@@ -44,7 +45,7 @@ def _status_extra() -> list[dict]:
     try:
         conn = _db.get_connection(str(db_path))
 
-        expected_tables = {"entries", "patterns", "config"}
+        expected_tables = {"paths", "path_patterns", "path_pattern_sources", "config"}
         actual_tables = {
             row[0]
             for row in conn.execute(
@@ -56,15 +57,15 @@ def _status_extra() -> list[dict]:
             return [{"label": "overall status", "value": "error \u2014 divergent schema"}]
 
         total = conn.execute(
-            "SELECT COUNT(*) as c FROM entries",
+            "SELECT COUNT(*) as c FROM paths",
         ).fetchone()["c"]
 
         undescribed = conn.execute(
-            "SELECT COUNT(*) as c FROM entries WHERE description IS NULL",
+            "SELECT COUNT(*) as c FROM paths WHERE purpose IS NULL",
         ).fetchone()["c"]
 
         stale = conn.execute(
-            "SELECT COUNT(*) as c FROM entries WHERE stale = 1",
+            "SELECT COUNT(*) as c FROM paths WHERE stale = 1",
         ).fetchone()["c"]
 
         conn.close()
@@ -73,7 +74,7 @@ def _status_extra() -> list[dict]:
             {
                 "label": "overall status",
                 "value": (
-                    f"operational \u2014 {total} entries, "
+                    f"operational \u2014 {total} paths, "
                     f"{undescribed} undescribed, {stale} stale"
                 ),
             },
@@ -84,12 +85,14 @@ def _status_extra() -> list[dict]:
 
 
 def init(force: bool = False) -> dict:
-    """Initialize the navigator database.
+    """Initialize the navigator database and deploy paths.csv.
 
     Captures the DB's state before any mutation so the reported transition
     reflects what the user saw, not the intermediate wipe state. A
     force-rebuild of an existing DB emits `current → reinstalled`; a
-    fresh install emits `absent → current`.
+    fresh install emits `absent → current`. paths.csv deploys alongside
+    the DB so the navigator scan can aggregate navigator's own declared
+    artifacts into path_patterns on first walk.
     """
     db = _db_path()
     rel_path = _db_rel_path()
@@ -105,8 +108,17 @@ def init(force: bool = False) -> dict:
     after = "reinstalled" if existed_before and force else "current"
 
     files = [{"path": rel_path, "before": before, "after": after}]
-    extra = _status_extra()
 
+    paths_entry = plugin.deploy_paths_csv(
+        plugin.get_plugin_root(),
+        plugin.get_project_dir(),
+        "navigator",
+        force=force,
+    )
+    if paths_entry is not None:
+        files.append(paths_entry)
+
+    extra = _status_extra()
     return {"files": files, "extra": extra}
 
 

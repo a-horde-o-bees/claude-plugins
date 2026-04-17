@@ -5,9 +5,9 @@ from systems.navigator._scanner import _matches_pattern_any
 
 class TestMatchesAnyPattern:
     def _make_patterns(self, items):
-        """Create mock pattern rows from (glob, description) pairs."""
+        """Create mock pattern rows from (glob, purpose) pairs."""
         return [
-            {"pattern": pat, "exclude": 0, "traverse": 1, "description": desc}
+            {"pattern": pat, "exclude": 0, "traverse": 1, "purpose": desc}
             for pat, desc in items
         ]
 
@@ -15,7 +15,7 @@ class TestMatchesAnyPattern:
         pats = self._make_patterns([("**/__init__.py", "Package marker")])
         result = _matches_pattern_any("src/lib/__init__.py", pats)
         assert result is not None
-        assert result["description"] == "Package marker"
+        assert result["purpose"] == "Package marker"
 
     def test_double_star_matches_top_level(self):
         pats = self._make_patterns([("**/tests", "Test suites")])

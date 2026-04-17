@@ -1,34 +1,42 @@
 """Navigator database infrastructure.
 
-Schema, migrations, connection factory, and initialization with seed patterns.
+Schema, connection factory, and initialization. Pattern data loads at
+scan time from deployed paths.csv files (via _scanner); init_db only
+creates tables and seeds baseline config.
 """
 
-import csv
 import sqlite3
 from pathlib import Path
 
+
 SCHEMA = """
-CREATE TABLE IF NOT EXISTS entries (
+CREATE TABLE IF NOT EXISTS paths (
     path TEXT PRIMARY KEY,
     parent_path TEXT,
     entry_type TEXT CHECK (entry_type IN ('file', 'directory')),
     exclude INTEGER NOT NULL DEFAULT 0,
     traverse INTEGER NOT NULL DEFAULT 1,
-    description TEXT,
+    purpose TEXT,
     git_hash TEXT,
     stale INTEGER NOT NULL DEFAULT 0,
     line_count INTEGER,
     char_count INTEGER
 );
 
-CREATE INDEX IF NOT EXISTS idx_entries_parent ON entries(parent_path);
+CREATE INDEX IF NOT EXISTS idx_paths_parent ON paths(parent_path);
 
-CREATE TABLE IF NOT EXISTS patterns (
+CREATE TABLE IF NOT EXISTS path_patterns (
     pattern TEXT PRIMARY KEY,
     entry_type TEXT CHECK (entry_type IN ('file', 'directory')),
     exclude INTEGER NOT NULL DEFAULT 0,
     traverse INTEGER NOT NULL DEFAULT 1,
-    description TEXT
+    purpose TEXT
+);
+
+CREATE TABLE IF NOT EXISTS path_pattern_sources (
+    source_path TEXT PRIMARY KEY,
+    content_hash TEXT NOT NULL,
+    loaded_at TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS config (
@@ -36,8 +44,6 @@ CREATE TABLE IF NOT EXISTS config (
     value TEXT NOT NULL
 );
 """
-
-SEED_PATH = Path(__file__).parent / "navigator_seed.csv"
 
 
 def get_connection(db_path: str) -> sqlite3.Connection:
@@ -51,11 +57,11 @@ def get_connection(db_path: str) -> sqlite3.Connection:
 
 
 def init_db(db_path: str) -> str:
-    """Create database with schema, upsert seed patterns from CSV.
+    """Create database with schema and baseline config.
 
-    Idempotent — safe to rerun. Creates schema if missing, migrates
-    legacy pattern rows from entries to patterns table, then upserts
-    seed patterns. Non-seed entries are untouched.
+    Idempotent — safe to rerun. Schema creation uses IF NOT EXISTS; config
+    seeding uses INSERT OR IGNORE. Path pattern data is not loaded here —
+    _scanner consolidates from deployed paths.csv files at scan time.
     """
     path = Path(db_path)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -63,48 +69,6 @@ def init_db(db_path: str) -> str:
     try:
         conn.executescript(SCHEMA)
 
-        if not SEED_PATH.exists():
-            return f"Initialized: {path} (no seed file)"
-
-        added = 0
-        updated = 0
-        with open(SEED_PATH, newline="") as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                desc_raw = row.get("description", "")
-                description = desc_raw if desc_raw else None
-                exclude = int(row.get("exclude", 0))
-                traverse = int(row.get("traverse", 1))
-                entry_type = row.get("entry_type") or None
-
-                existing = conn.execute(
-                    "SELECT exclude, traverse, description, entry_type "
-                    "FROM patterns WHERE pattern = ?",
-                    (row["path"],),
-                ).fetchone()
-
-                if existing is None:
-                    conn.execute(
-                        "INSERT INTO patterns "
-                        "(pattern, entry_type, exclude, traverse, description) "
-                        "VALUES (?, ?, ?, ?, ?)",
-                        (row["path"], entry_type, exclude, traverse, description),
-                    )
-                    added += 1
-                elif (
-                    existing[0] != exclude
-                    or existing[1] != traverse
-                    or existing[2] != description
-                    or existing[3] != entry_type
-                ):
-                    conn.execute(
-                        "UPDATE patterns SET exclude = ?, traverse = ?, "
-                        "description = ?, entry_type = ? WHERE pattern = ?",
-                        (exclude, traverse, description, entry_type, row["path"]),
-                    )
-                    updated += 1
-
-        # Seed default config values (won't overwrite existing)
         for key, value in [
             ("lines_warn_threshold", "500"),
             ("lines_fail_threshold", "2000"),
@@ -115,13 +79,6 @@ def init_db(db_path: str) -> str:
             )
 
         conn.commit()
-        parts = []
-        if added:
-            parts.append(f"{added} added")
-        if updated:
-            parts.append(f"{updated} updated")
-        if not parts:
-            parts.append("all current")
-        return f"Initialized: {path} (seed patterns: {', '.join(parts)})"
+        return f"Initialized: {path}"
     finally:
         conn.close()

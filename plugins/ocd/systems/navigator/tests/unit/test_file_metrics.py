@@ -62,10 +62,10 @@ class TestSetEntryMetrics:
     def test_stores_metrics_on_describe(self, db_path, tmp_path):
         f = tmp_path / "test.py"
         f.write_text("a = 1\nb = 2\n")
-        paths_upsert(db_path, str(f), description="Test file")
+        paths_upsert(db_path, str(f), purpose="Test file")
         conn = get_connection(db_path)
         row = conn.execute(
-            "SELECT line_count, char_count FROM entries WHERE path = ?",
+            "SELECT line_count, char_count FROM paths WHERE path = ?",
             (str(f),),
         ).fetchone()
         assert row["line_count"] == 2
@@ -75,12 +75,12 @@ class TestSetEntryMetrics:
     def test_updates_metrics_on_redescribe(self, db_path, tmp_path):
         f = tmp_path / "test.py"
         f.write_text("a = 1\n")
-        paths_upsert(db_path, str(f), description="v1")
+        paths_upsert(db_path, str(f), purpose="v1")
         f.write_text("a = 1\nb = 2\nc = 3\n")
-        paths_upsert(db_path, str(f), description="v2")
+        paths_upsert(db_path, str(f), purpose="v2")
         conn = get_connection(db_path)
         row = conn.execute(
-            "SELECT line_count FROM entries WHERE path = ?",
+            "SELECT line_count FROM paths WHERE path = ?",
             (str(f),),
         ).fetchone()
         assert row["line_count"] == 3

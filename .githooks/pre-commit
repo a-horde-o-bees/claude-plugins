@@ -90,13 +90,15 @@ for entry in "${SHARED_FILES[@]}"; do
 
     filename="$(basename "$canonical")"
 
-    # Copy to all non-ocd plugins; create target subdirectory if missing
+    # Copy to every non-ocd plugin that already has the target subdirectory.
+    # Opt-in model: a plugin only receives a propagated file once its
+    # maintainer has created the subsystem directory that holds it.
     for plugin_dir in plugins/*/; do
         plugin_name="$(basename "$plugin_dir")"
         [ "$plugin_name" = "ocd" ] && continue
 
         dest_dir="${plugin_dir}${target_subdir}"
-        mkdir -p "$dest_dir"
+        [ -d "$dest_dir" ] || continue
 
         git show ":${canonical}" > "${dest_dir}/${filename}"
         git add "${dest_dir}/${filename}"

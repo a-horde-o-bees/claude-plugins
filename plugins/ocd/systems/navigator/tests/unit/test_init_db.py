@@ -12,97 +12,37 @@ class TestInitDb:
         assert "Initialized" in result
         assert Path(path).exists()
 
+    def test_creates_expected_tables(self, tmp_path):
+        path = str(tmp_path / "new.db")
+        init_db(path)
+        conn = get_connection(path)
+        tables = {
+            row[0]
+            for row in conn.execute(
+                "SELECT name FROM sqlite_master WHERE type='table'"
+            ).fetchall()
+        }
+        conn.close()
+        assert {"paths", "path_patterns", "path_pattern_sources", "config"}.issubset(tables)
+
     def test_idempotent(self, tmp_path):
         path = str(tmp_path / "new.db")
         init_db(path)
-        # Manually add a non-seed entry
         conn = get_connection(path)
-        conn.execute("INSERT INTO entries (path, entry_type) VALUES ('test', 'file')")
+        conn.execute("INSERT INTO paths (path, entry_type) VALUES ('test', 'file')")
         conn.commit()
         conn.close()
-        result = init_db(path)
-        assert "all current" in result
-        # Non-seed entry preserved
+        init_db(path)  # second run — should not error
         conn = get_connection(path)
-        row = conn.execute("SELECT * FROM entries WHERE path = 'test'").fetchone()
+        row = conn.execute("SELECT * FROM paths WHERE path = 'test'").fetchone()
         assert row is not None
         conn.close()
 
-    def test_seeds_from_csv(self, tmp_path):
-        csv_path = tmp_path / "seed.csv"
-        csv_path.write_text(
-            "path,entry_type,exclude,traverse,description\n"
-            "**/__pycache__,directory,1,0,\n"
-            "**/tests,directory,0,0,Test suites\n"
-        )
-        db = str(tmp_path / "seeded.db")
-        from systems.navigator import _db as db_ctx
-        original = db_ctx.SEED_PATH
-        try:
-            db_ctx.SEED_PATH = csv_path
-            result = init_db(db)
-            assert "2 added" in result
-            conn = get_connection(db)
-            rows = conn.execute("SELECT * FROM patterns").fetchall()
-            assert len(rows) == 2
-            # Entries table should be empty — patterns don't leak in
-            entry_rows = conn.execute("SELECT * FROM entries").fetchall()
-            assert len(entry_rows) == 0
-            conn.close()
-        finally:
-            db_ctx.SEED_PATH = original
-
-    def test_upserts_changed_seed_patterns(self, tmp_path):
-        csv_path = tmp_path / "seed.csv"
-        csv_path.write_text(
-            "path,entry_type,exclude,traverse,description\n"
-            "**/tests,directory,0,0,Test suites\n"
-        )
-        db = str(tmp_path / "upsert.db")
-        from systems.navigator import _db as db_ctx
-        original = db_ctx.SEED_PATH
-        try:
-            db_ctx.SEED_PATH = csv_path
-            init_db(db)
-            # Change the seed pattern
-            csv_path.write_text(
-                "path,entry_type,exclude,traverse,description\n"
-                "**/tests,directory,0,0,Updated description\n"
-            )
-            result = init_db(db)
-            assert "1 updated" in result
-            conn = get_connection(db)
-            row = conn.execute(
-                "SELECT description FROM patterns WHERE pattern = '**/tests'"
-            ).fetchone()
-            assert row[0] == "Updated description"
-            conn.close()
-        finally:
-            db_ctx.SEED_PATH = original
-
-    def test_adds_new_seed_patterns(self, tmp_path):
-        csv_path = tmp_path / "seed.csv"
-        csv_path.write_text(
-            "path,entry_type,exclude,traverse,description\n"
-            "**/tests,directory,0,0,Test suites\n"
-        )
-        db = str(tmp_path / "add.db")
-        from systems.navigator import _db as db_ctx
-        original = db_ctx.SEED_PATH
-        try:
-            db_ctx.SEED_PATH = csv_path
-            init_db(db)
-            # Add a new seed pattern
-            csv_path.write_text(
-                "path,entry_type,exclude,traverse,description\n"
-                "**/tests,directory,0,0,Test suites\n"
-                "**/.vscode,directory,1,0,\n"
-            )
-            result = init_db(db)
-            assert "1 added" in result
-            conn = get_connection(db)
-            rows = conn.execute("SELECT * FROM patterns").fetchall()
-            assert len(rows) == 2
-            conn.close()
-        finally:
-            db_ctx.SEED_PATH = original
+    def test_seeds_config_defaults(self, tmp_path):
+        path = str(tmp_path / "new.db")
+        init_db(path)
+        conn = get_connection(path)
+        rows = dict(conn.execute("SELECT key, value FROM config").fetchall())
+        conn.close()
+        assert rows["lines_warn_threshold"] == "500"
+        assert rows["lines_fail_threshold"] == "2000"

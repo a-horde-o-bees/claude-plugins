@@ -1,15 +1,22 @@
 """Navigator filesystem scanning.
 
 Walks filesystem with rule-based pruning, computes git-compatible hashes,
-detects changes, and syncs database state. All walking is anchored on
-the project root resolved via plugin.get_project_dir(); paths stored in
-the entries table are always project-relative.
+detects changes, and syncs database state. Before walking, consolidates
+path-pattern rules from every deployed `.claude/*/*/paths.csv` into the
+path_patterns table so per-system declarations flow into navigator's
+pattern matching.
+
+All walking is anchored on the project root resolved via
+plugin.get_project_dir(); paths stored in the paths table are always
+project-relative.
 """
 
+import csv
 import fnmatch
 import hashlib
 import os
 import sqlite3
+from datetime import datetime, timezone
 from pathlib import Path
 
 import plugin
@@ -74,17 +81,91 @@ def _mark_parents_stale(conn: sqlite3.Connection, entry_path: str) -> list[str]:
             break
         current = parent
         row = conn.execute(
-            "SELECT description, stale FROM entries WHERE path = ?", (current,)
+            "SELECT purpose, stale FROM paths WHERE path = ?", (current,)
         ).fetchone()
-        if row and row["description"] is not None and not row["stale"]:
+        if row and row["purpose"] is not None and not row["stale"]:
             conn.execute(
-                "UPDATE entries SET stale = 1 WHERE path = ?",
+                "UPDATE paths SET stale = 1 WHERE path = ?",
                 (current,),
             )
             staled.append(current)
         if not current:
             break
     return staled
+
+
+def _discover_deployed_paths_csv() -> list[Path]:
+    """Return absolute paths of every deployed paths.csv under .claude/*/*/."""
+    project_dir = plugin.get_project_dir()
+    claude_dir = project_dir / ".claude"
+    deployed = []
+    if not claude_dir.is_dir():
+        return deployed
+    for plugin_dir in sorted(claude_dir.iterdir()):
+        if not plugin_dir.is_dir():
+            continue
+        for system_dir in sorted(plugin_dir.iterdir()):
+            if not system_dir.is_dir():
+                continue
+            paths_csv = system_dir / "paths.csv"
+            if paths_csv.is_file():
+                deployed.append(paths_csv)
+    return deployed
+
+
+def _consolidate_path_patterns(conn: sqlite3.Connection) -> None:
+    """Refresh path_patterns from deployed paths.csv files when any changed.
+
+    Walks `.claude/*/*/paths.csv`, hashes each, compares to the
+    path_pattern_sources table. If the set of sources or any content
+    hash differs, rebuilds path_patterns from scratch and updates
+    path_pattern_sources. No-op when sources are current.
+    """
+    project_dir = plugin.get_project_dir()
+    deployed = _discover_deployed_paths_csv()
+
+    current_sources: dict[str, str] = {}
+    for f in deployed:
+        source_path = str(f.relative_to(project_dir))
+        content_hash = hashlib.sha1(f.read_bytes()).hexdigest()
+        current_sources[source_path] = content_hash
+
+    known = {
+        row["source_path"]: row["content_hash"]
+        for row in conn.execute(
+            "SELECT source_path, content_hash FROM path_pattern_sources"
+        ).fetchall()
+    }
+
+    if current_sources == known:
+        return
+
+    conn.execute("DELETE FROM path_patterns")
+    conn.execute("DELETE FROM path_pattern_sources")
+
+    now = datetime.now(timezone.utc).isoformat()
+    for source_path, content_hash in current_sources.items():
+        abs_source = project_dir / source_path
+        with open(abs_source, newline="") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                pattern = row["path"]
+                purpose_raw = row.get("purpose", "") or ""
+                purpose = purpose_raw if purpose_raw else None
+                exclude = int(row.get("exclude", 0))
+                traverse = int(row.get("traverse", 1))
+                entry_type = row.get("entry_type") or None
+                conn.execute(
+                    "INSERT OR REPLACE INTO path_patterns "
+                    "(pattern, entry_type, exclude, traverse, purpose) "
+                    "VALUES (?, ?, ?, ?, ?)",
+                    (pattern, entry_type, exclude, traverse, purpose),
+                )
+        conn.execute(
+            "INSERT INTO path_pattern_sources (source_path, content_hash, loaded_at) "
+            "VALUES (?, ?, ?)",
+            (source_path, content_hash, now),
+        )
 
 
 def _walk_filesystem(
@@ -103,7 +184,7 @@ def _walk_filesystem(
     Returns dict mapping path to entry type ("file" or "directory").
     """
     pattern_rows = conn.execute(
-        "SELECT pattern, exclude, traverse, description FROM patterns"
+        "SELECT pattern, exclude, traverse, purpose FROM path_patterns"
     ).fetchall()
 
     exclude_patterns = [r for r in pattern_rows if r["exclude"]]
@@ -112,7 +193,7 @@ def _walk_filesystem(
     project_dir = plugin.get_project_dir()
     scan_root = project_dir / target_subpath if target_subpath else project_dir
 
-    disk_entries: dict[str, str] = {}
+    disk_paths: dict[str, str] = {}
 
     for dirpath, dirnames, filenames in os.walk(scan_root):
         abs_dir = Path(dirpath)
@@ -128,7 +209,7 @@ def _walk_filesystem(
             if _matches_pattern_any(d_path, exclude_patterns):
                 continue
             concrete = conn.execute(
-                "SELECT traverse FROM entries "
+                "SELECT traverse FROM paths "
                 "WHERE path = ? AND traverse = 0",
                 (d_path,),
             ).fetchone()
@@ -141,21 +222,21 @@ def _walk_filesystem(
 
         for d in shallow_dirs:
             d_path = f"{rel_dir}/{d}" if rel_dir else d
-            disk_entries[d_path] = "directory"
+            disk_paths[d_path] = "directory"
 
         if rel_dir and rel_dir != target_subpath:
-            disk_entries[rel_dir] = "directory"
+            disk_paths[rel_dir] = "directory"
 
         for filename in filenames:
             file_path = f"{rel_dir}/{filename}" if rel_dir else filename
             if not _matches_pattern_any(file_path, exclude_patterns):
-                disk_entries[file_path] = "file"
+                disk_paths[file_path] = "file"
 
         for dirname in dirnames:
             dir_path = f"{rel_dir}/{dirname}" if rel_dir else dirname
-            disk_entries[dir_path] = "directory"
+            disk_paths[dir_path] = "directory"
 
-    return disk_entries
+    return disk_paths
 
 
 def scan_path(db_path: str, target_subpath: str = "") -> str:
@@ -163,7 +244,7 @@ def scan_path(db_path: str, target_subpath: str = "") -> str:
 
     target_subpath is relative to the project root (empty means whole
     project). Walking is always anchored on plugin.get_project_dir(),
-    independent of working directory. Paths stored in the entries table
+    independent of working directory. Paths stored in the paths table
     are project-relative.
 
     Returns formatted report.
@@ -176,101 +257,130 @@ def scan_path(db_path: str, target_subpath: str = "") -> str:
 
     conn = get_connection(db_path)
     try:
-        disk_entries = _walk_filesystem(conn, target_subpath)
+        _consolidate_path_patterns(conn)
 
-        # Load prescribed patterns for auto-descriptions
+        disk_paths = _walk_filesystem(conn, target_subpath)
+
         pattern_rows = conn.execute(
-            "SELECT pattern, exclude, traverse, description FROM patterns"
+            "SELECT pattern, exclude, traverse, purpose FROM path_patterns"
         ).fetchall()
-        prescribed_patterns = [r for r in pattern_rows if not r["exclude"] and r["description"]]
+        prescribed_patterns = [r for r in pattern_rows if not r["exclude"] and r["purpose"]]
 
-        # Load concrete entries from database
-        db_entries = {}
+        db_paths = {}
         if target_subpath:
             rows = conn.execute(
-                "SELECT path, git_hash FROM entries "
+                "SELECT path, git_hash FROM paths "
                 "WHERE path = ? OR path LIKE ?",
                 (target_subpath, target_subpath + "/%"),
             ).fetchall()
         else:
             rows = conn.execute(
-                "SELECT path, git_hash FROM entries"
+                "SELECT path, git_hash FROM paths"
             ).fetchall()
 
         for row in rows:
-            db_entries[row["path"]] = row["git_hash"]
+            db_paths[row["path"]] = row["git_hash"]
 
-        # Auto-add missing entries
         added = []
+        changed = []
         staled_parents = set()
-        for path in sorted(disk_entries):
-            if path not in db_entries:
-                entry_type = disk_entries[path]
+
+        for path in sorted(disk_paths):
+            entry_type = disk_paths[path]
+            rule = _matches_pattern_any(path, prescribed_patterns)
+
+            if path not in db_paths:
+                # New path — insert with rule purpose if matched
                 parent_path = str(Path(path).parent) if path else None
                 if parent_path == ".":
                     parent_path = ""
 
-                rule = _matches_pattern_any(path, prescribed_patterns)
-                description = rule["description"] if rule else None
+                purpose = rule["purpose"] if rule else None
                 if entry_type == "file":
                     metrics = _compute_file_metrics(project_dir / path)
                 else:
                     metrics = {"git_hash": None, "line_count": None, "char_count": None}
 
                 conn.execute(
-                    "INSERT OR IGNORE INTO entries "
-                    "(path, parent_path, entry_type, description, git_hash, line_count, char_count) "
+                    "INSERT OR IGNORE INTO paths "
+                    "(path, parent_path, entry_type, purpose, git_hash, line_count, char_count) "
                     "VALUES (?, ?, ?, ?, ?, ?, ?)",
-                    (path, parent_path, entry_type, description, metrics["git_hash"], metrics["line_count"], metrics["char_count"]),
+                    (path, parent_path, entry_type, purpose, metrics["git_hash"], metrics["line_count"], metrics["char_count"]),
                 )
                 display = path + "/" if entry_type == "directory" else path
                 added.append(f"- {display}")
-                for p in _mark_parents_stale(conn, path):
-                    staled_parents.add(p)
+                # Rule-matched new paths have deterministic purposes — no parent cascade
+                if not rule:
+                    for p in _mark_parents_stale(conn, path):
+                        staled_parents.add(p)
 
-        # Detect changed files — hash differs from stored, mark stale + parents
-        changed = []
-        for path in sorted(disk_entries):
-            if path in db_entries and disk_entries[path] == "file":
+            elif rule and entry_type == "directory":
+                # Rule-matched directory: re-apply purpose, ensure stale=0.
+                # No hash to track on directories. No cascade — rule-derived
+                # purposes are deterministic and don't invalidate parents.
+                existing = conn.execute(
+                    "SELECT purpose, stale FROM paths WHERE path = ?", (path,)
+                ).fetchone()
+                if existing["purpose"] != rule["purpose"] or existing["stale"]:
+                    conn.execute(
+                        "UPDATE paths SET purpose = ?, stale = 0 WHERE path = ?",
+                        (rule["purpose"], path),
+                    )
+
+            elif entry_type == "file":
                 metrics = _compute_file_metrics(project_dir / path)
                 current_hash = metrics["git_hash"]
-                stored_hash = db_entries[path]
-                if stored_hash is not None and current_hash != stored_hash:
-                    rule = _matches_pattern_any(path, prescribed_patterns)
-                    if rule:
+                stored_hash = db_paths[path]
+
+                if rule:
+                    # Rule-matched: always re-apply purpose + ensure stale=0.
+                    # Handles both content changes and newly-added rules that
+                    # match previously unmatched (or stale) paths. No cascade
+                    # — rule-derived purposes are deterministic and don't
+                    # invalidate parent summaries.
+                    existing = conn.execute(
+                        "SELECT purpose, stale FROM paths WHERE path = ?", (path,)
+                    ).fetchone()
+                    if (existing["purpose"] != rule["purpose"]
+                            or existing["stale"]
+                            or current_hash != stored_hash):
                         conn.execute(
-                            "UPDATE entries SET description = ?, stale = 0, git_hash = ?, line_count = ?, char_count = ? "
-                            "WHERE path = ?",
-                            (rule["description"], current_hash, metrics["line_count"], metrics["char_count"], path),
-                        )
-                    else:
-                        conn.execute(
-                            "UPDATE entries SET stale = CASE WHEN description IS NOT NULL THEN 1 ELSE 0 END, "
+                            "UPDATE paths SET purpose = ?, stale = 0, "
                             "git_hash = ?, line_count = ?, char_count = ? "
                             "WHERE path = ?",
-                            (current_hash, metrics["line_count"], metrics["char_count"], path),
+                            (rule["purpose"], current_hash, metrics["line_count"], metrics["char_count"], path),
                         )
+                elif stored_hash is not None and current_hash != stored_hash:
+                    # Non-rule-matched content change — mark stale if had
+                    # a user-authored purpose, and always cascade. Parent
+                    # summaries may need re-examination regardless of whether
+                    # this specific path has its own purpose yet.
+                    conn.execute(
+                        "UPDATE paths SET stale = CASE WHEN purpose IS NOT NULL THEN 1 ELSE 0 END, "
+                        "git_hash = ?, line_count = ?, char_count = ? "
+                        "WHERE path = ?",
+                        (current_hash, metrics["line_count"], metrics["char_count"], path),
+                    )
                     changed.append(f"- {path}")
                     for p in _mark_parents_stale(conn, path):
                         staled_parents.add(p)
                 elif stored_hash is None and current_hash is not None:
                     conn.execute(
-                        "UPDATE entries SET git_hash = ?, line_count = ?, char_count = ? WHERE path = ?",
+                        "UPDATE paths SET git_hash = ?, line_count = ?, char_count = ? WHERE path = ?",
                         (current_hash, metrics["line_count"], metrics["char_count"], path),
                     )
 
-        # Auto-remove stale entries
+        # Auto-remove entries that no longer exist on disk
         removed = []
-        for path in sorted(db_entries):
-            if path not in disk_entries and path != target_subpath:
-                conn.execute("DELETE FROM entries WHERE path = ?", (path,))
+        for path in sorted(db_paths):
+            if path not in disk_paths and path != target_subpath:
+                conn.execute("DELETE FROM paths WHERE path = ?", (path,))
                 removed.append(f"- {path}")
                 for p in _mark_parents_stale(conn, path):
                     staled_parents.add(p)
 
         conn.commit()
 
-        # Format report
         display_target = target_subpath + "/" if target_subpath else "./"
         lines = [f"Scan: {display_target}"]
         summary_parts = [f"Added {len(added)}", f"removed {len(removed)}"]

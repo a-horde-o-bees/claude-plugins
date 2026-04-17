@@ -1,5 +1,5 @@
 ---
-includes: "**/servers/[a-z]*.py"
+includes: "systems/*/server.py"
 governed_by:
   - .claude/rules/ocd/design-principles.md
   - .claude/conventions/ocd/python.md

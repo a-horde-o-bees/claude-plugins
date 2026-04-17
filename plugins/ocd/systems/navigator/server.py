@@ -64,10 +64,10 @@ def _check_db() -> str | None:
 
 @mcp.tool()
 def paths_get(paths: str | list[str]) -> str:
-    """Retrieve entry details for one or more paths. Files return type, description, stale flag. Directories return entry info plus children.
+    """Retrieve path details for one or more paths. Files return type, purpose, stale flag. Directories return entry info plus children.
 
-    Single path returns one entry dict. Multiple paths return {entries: [dict, ...]}.
-    Start with '.' for top-level overview. Children with description=null need descriptions.
+    Single path returns one dict. Multiple paths return {paths: [dict, ...]}.
+    Start with '.' for top-level overview. Children with purpose=null need purpose description.
     """
     if err := _check_db(): return err
     try:
@@ -101,11 +101,11 @@ def paths_list(
 
 @mcp.tool()
 def paths_search(pattern: str) -> str:
-    """Search file descriptions by keyword. Find files by what they do, not by what they contain or how they're named.
+    """Search path purposes by keyword. Find files by what they do, not by what they contain or how they're named.
 
-    Use this when you know what a file does but not where it lives — Grep searches content (slower for purpose queries), paths_search searches indexed descriptions.
+    Use this when you know what a file does but not where it lives — Grep searches content (slower for purpose queries), paths_search searches indexed purposes.
 
-    Returns {pattern, results: [{path, type, description}]}.
+    Returns {pattern, results: [{path, type, purpose}]}.
     """
     if err := _check_db(): return err
     try:
@@ -117,17 +117,17 @@ def paths_search(pattern: str) -> str:
 @mcp.tool()
 def paths_upsert(
     entry_path: str,
-    description: str | None = None,
+    purpose: str | None = None,
     exclude: int | None = None,
     traverse: int | None = None,
 ) -> str:
-    """Create or update entry description, exclusion, or traversal flags.
+    """Create or update a path's purpose, exclusion, or traversal flags.
 
     Returns {action: "added"|"updated"|"none", path, ...}.
     """
     if err := _check_db(): return err
     try:
-        return _ok(_nav.paths_upsert(DB_PATH, entry_path, description=description,
+        return _ok(_nav.paths_upsert(DB_PATH, entry_path, purpose=purpose,
                                     exclude=exclude, traverse=traverse))
     except Exception as e:
         return _err(e)
@@ -135,7 +135,7 @@ def paths_upsert(
 
 @mcp.tool()
 def paths_undescribed() -> str:
-    """Return deepest directory with undescribed or stale entries.
+    """Return deepest directory with paths needing purpose description.
 
     Returns {done: true} when no work remains. Otherwise returns
     {done: false, remaining, directories, target, listing}.
@@ -153,11 +153,11 @@ def paths_remove(
     entry_path: str,
     mode: str = "single",
 ) -> str:
-    """Remove entries from database. Rarely needed — scan handles cleanup automatically.
+    """Remove paths from database. Rarely needed — scan handles cleanup automatically.
 
     Args:
         entry_path: File or directory path. Ignored when mode="all".
-        mode: "single" (default) removes one entry; "recursive" removes a directory and all children; "all" removes every concrete entry (patterns table unaffected).
+        mode: "single" (default) removes one path; "recursive" removes a directory and all children; "all" removes every concrete path (path_patterns table unaffected).
 
     Returns {action: "removed"|"removed_recursive"|"removed_all"|"not_found"|"error", ...}.
     """

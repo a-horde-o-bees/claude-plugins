@@ -28,7 +28,7 @@ def db_path(tmp_path):
     """Create a temporary database with schema at tmp_path root.
 
     Lives outside the per-test CLAUDE_PROJECT_DIR (tmp_path/project) so
-    the scanner doesn't index the database file as a project entry.
+    the scanner doesn't index the database file as a project path.
     """
     path = str(tmp_path / "test.db")
     conn = get_connection(path)
@@ -39,7 +39,7 @@ def db_path(tmp_path):
 
 @pytest.fixture
 def populated_db(db_path, project_dir):
-    """Database with sample entries and real files on disk matching them.
+    """Database with sample paths and real files on disk matching them.
 
     Files are created under the project_dir so the scanner's reconciliation
     leaves the fixture entries in place instead of deleting them.
@@ -56,7 +56,7 @@ def populated_db(db_path, project_dir):
         target.write_text(content)
 
     conn = get_connection(db_path)
-    entries = [
+    rows = [
         ("src", None, "directory", 0, 1, "Source code", None),
         ("src/lib", "src", "directory", 0, 1, "Library modules", None),
         ("src/lib/utils.py", "src/lib", "file", 0, 1, "Utility functions", None),
@@ -64,10 +64,10 @@ def populated_db(db_path, project_dir):
         ("src/main.py", "src", "file", 0, 1, "Application entry point", None),
         ("src/config.py", "src", "file", 0, 1, "", None),
     ]
-    for e in entries:
+    for r in rows:
         conn.execute(
-            "INSERT INTO entries (path, parent_path, entry_type, exclude, traverse, description, git_hash) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?)", e,
+            "INSERT INTO paths (path, parent_path, entry_type, exclude, traverse, purpose, git_hash) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)", r,
         )
     conn.commit()
     conn.close()
@@ -76,7 +76,7 @@ def populated_db(db_path, project_dir):
 
 @pytest.fixture
 def db_with_patterns(db_path):
-    """Database with glob patterns in the patterns table."""
+    """Database with glob path-patterns in the path_patterns table."""
     conn = get_connection(db_path)
     pats = [
         ("**/__pycache__", None, 1, 0, None),
@@ -85,7 +85,7 @@ def db_with_patterns(db_path):
     ]
     for p in pats:
         conn.execute(
-            "INSERT INTO patterns (pattern, entry_type, exclude, traverse, description) "
+            "INSERT INTO path_patterns (pattern, entry_type, exclude, traverse, purpose) "
             "VALUES (?, ?, ?, ?, ?)", p,
         )
     conn.commit()

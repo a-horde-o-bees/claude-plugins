@@ -16,43 +16,43 @@ DEFAULT_DB = ".claude/ocd/navigator/navigator.db"
 
 
 def _format_describe(result: dict) -> str:
-    """Format paths_describe result for CLI display."""
+    """Format paths_get result for CLI display."""
     if result["type"] == "file":
         lines = [result["path"]]
-        if result["description"] is None:
+        if result["purpose"] is None:
             lines.append("[?]")
         elif result["stale"]:
-            lines.append(f"[~] {result['description']}")
-        elif result["description"]:
-            lines.append(result["description"])
+            lines.append(f"[~] {result['purpose']}")
+        elif result["purpose"]:
+            lines.append(result["purpose"])
         return "\n".join(lines)
 
     # Directory
     lines = [result["path"]]
-    if result["description"] is None:
+    if result["purpose"] is None:
         lines.append("[?]")
-    elif result["stale"] and result["description"]:
-        lines.append(f"[~] {result['description']}")
-    elif result["description"]:
-        lines.append(result["description"])
+    elif result["stale"] and result["purpose"]:
+        lines.append(f"[~] {result['purpose']}")
+    elif result["purpose"]:
+        lines.append(result["purpose"])
 
     children = result.get("children")
     if children is None:
-        lines.append("(no entries)")
+        lines.append("(no paths)")
     elif children:
-        if result["description"]:
+        if result["purpose"]:
             lines.append("")
         for child in children:
             display = child["path"]
             if child["type"] == "directory":
                 display += "/"
-            desc = child["description"]
-            if desc is None:
+            purpose = child["purpose"]
+            if purpose is None:
                 lines.append(f"- {display} [?]")
-            elif child["stale"] and desc:
-                lines.append(f"- {display} [~] {desc}")
-            elif desc:
-                lines.append(f"- {display} - {desc}")
+            elif child["stale"] and purpose:
+                lines.append(f"- {display} [~] {purpose}")
+            elif purpose:
+                lines.append(f"- {display} - {purpose}")
             else:
                 lines.append(f"- {display}")
 
@@ -94,7 +94,7 @@ def _dispatch_set(args: argparse.Namespace) -> None:
     result = paths_upsert(
         args.db,
         args.path,
-        description=args.description,
+        purpose=args.purpose,
         exclude=exclude,
         traverse=traverse,
     )
@@ -120,13 +120,13 @@ def _dispatch_remove(args: argparse.Namespace) -> None:
         mode=mode,
     )
     if result["action"] == "removed_all":
-        print(f"Removed all {result['count']} entries (rules preserved)")
+        print(f"Removed all {result['count']} paths (rules preserved)")
     elif result["action"] == "error":
         print(f"Error: {result['message']}")
     elif result["action"] == "not_found":
         print(f"Not found: {result['path']}")
     elif result["action"] == "removed_recursive":
-        print(f"Removed {result['count']} entries under {result['path']}/")
+        print(f"Removed {result['count']} paths under {result['path']}/")
     elif result["action"] == "removed":
         print(f"Removed: {result['path']}")
 
@@ -134,7 +134,7 @@ def _dispatch_remove(args: argparse.Namespace) -> None:
 def _dispatch_search(args: argparse.Namespace) -> None:
     result = paths_search(args.db, args.pattern)
     if not result["results"]:
-        print(f'No entries matching "{result["pattern"]}"')
+        print(f'No paths matching "{result["pattern"]}"')
         return
     print(f'Search: "{result["pattern"]}" ({len(result["results"])} results)')
     print()
@@ -142,7 +142,7 @@ def _dispatch_search(args: argparse.Namespace) -> None:
         display = entry["path"]
         if entry["type"] == "directory":
             display += "/"
-        print(f"- {display} - {entry['description']}")
+        print(f"- {display} - {entry['purpose']}")
 
 
 def _dispatch_resolve_skill(args: argparse.Namespace) -> None:
@@ -175,22 +175,22 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="navigator",
         description=(
-            "Index of project files and directories with descriptions that\n"
-            "answer: should I read this file? Each entry conveys scope and\n"
-            "role so agents can route to right file without opening it.\n"
-            "Complements Grep/Glob which search file contents — navigator\n"
-            "search finds files by what they do.\n"
+            "Index of project paths and purposes that answer: should I\n"
+            "read this file? Each path carries scope and role so agents\n"
+            "can route to the right file without opening it. Complements\n"
+            "Grep/Glob which search file contents — navigator search finds\n"
+            "files by what they do.\n"
             "\n"
             "All commands except scan auto-scan before execution\n"
             "to ensure fresh data.\n"
             "\n"
-            "Workflow: describe navigates tree with descriptions,\n"
+            "Workflow: describe navigates tree with purposes,\n"
             "list enumerates file paths for tool consumption,\n"
-            "search finds entries by description, set writes descriptions.\n"
+            "search finds paths by purpose, set writes purposes.\n"
             "\n"
             "Output markers:\n"
-            "  [?]  Entry not yet described — needs description\n"
-            "  [~]  Entry stale — file changed since description was written\n"
+            "  [?]  Path not yet described — needs purpose description\n"
+            "  [~]  Path stale — file changed since purpose was written\n"
             "\n"
             "Typical exploration sequence:\n"
             "  1. describe .               — see top-level structure\n"
@@ -203,8 +203,8 @@ def build_parser() -> argparse.ArgumentParser:
             "\n"
             "Maintenance sequence (via /ocd:navigator skill):\n"
             "  1. scan .                    — sync filesystem to database\n"
-            "  2. get-undescribed           — find entries needing descriptions\n"
-            "  3. set <path> --description  — write description for entry\n"
+            "  2. get-undescribed           — find paths needing purpose description\n"
+            "  3. set <path> --purpose      — write purpose for path\n"
             "  4. repeat 2-3 until 'No work remaining.'"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -212,20 +212,19 @@ def build_parser() -> argparse.ArgumentParser:
 
     commands = parser.add_subparsers(dest="command", required=True)
 
-    # describe
     describe_p = commands.add_parser(
         "describe",
-        help="Show entry at path with descriptions and markers",
+        help="Show path at location with purposes and markers",
         description=(
             "Navigate project structure by path. Start with `describe .`\n"
             "to see top-level directories and files, then drill into areas\n"
             "of interest. Auto-scans before execution.\n"
             "\n"
             "Output format:\n"
-            "  Directories list children with descriptions.\n"
-            "  Files show their description.\n"
-            "  [?] markers indicate entries needing descriptions.\n"
-            "  [~] markers indicate stale entries needing re-evaluation.\n"
+            "  Directories list children with purposes.\n"
+            "  Files show their purpose.\n"
+            "  [?] markers indicate paths needing purpose description.\n"
+            "  [~] markers indicate stale paths needing re-evaluation.\n"
             "\n"
             "Use when exploring unfamiliar area of codebase.\n"
             "Follow up with Grep/Glob once you know where to look."
@@ -236,13 +235,12 @@ def build_parser() -> argparse.ArgumentParser:
     describe_p.add_argument("path", help="File or directory path")
     describe_p.set_defaults(_dispatch=_dispatch_describe)
 
-    # list
     list_p = commands.add_parser(
         "list",
-        help="List file paths under path; no descriptions, supports --pattern filtering",
+        help="List file paths under path; no purposes, supports --pattern filtering",
         description=(
             "Enumerate non-excluded file paths under directory. Returns\n"
-            "one path per line, sorted, no descriptions or markers.\n"
+            "one path per line, sorted, no purposes or markers.\n"
             "Auto-scans before execution.\n"
             "\n"
             "Designed for tool consumption — other CLIs call this to get\n"
@@ -285,19 +283,19 @@ def build_parser() -> argparse.ArgumentParser:
     )
     list_p.set_defaults(_dispatch=_dispatch_list)
 
-    # scan
     scan_p = commands.add_parser(
         "scan",
         help="Sync filesystem to database; auto-adds, auto-removes, detects changes",
         description=(
             "Walk filesystem and sync to database. New files and directories\n"
-            "are added (with NULL description), deleted paths are removed, and\n"
-            "changed files are flagged. Respects seed rules for exclusions and\n"
-            "traversal limits.\n"
+            "are added (with NULL purpose), deleted paths are removed, and\n"
+            "changed files are flagged. Respects path_patterns rules for\n"
+            "exclusions and traversal limits; rules aggregate from every\n"
+            "deployed .claude/*/*/paths.csv at scan time.\n"
             "\n"
             "Traverses git submodules owned by this project. Excluded\n"
-            "directories (.git, __pycache__, .venv, etc.) are defined by\n"
-            "seed rules — run `init` to apply latest seed rules.\n"
+            "directories (.git, __pycache__, .venv, etc.) are declared via\n"
+            "the path_patterns rules.\n"
             "\n"
             "Output format:\n"
             "  Scan: <target>/\n"
@@ -315,15 +313,14 @@ def build_parser() -> argparse.ArgumentParser:
     )
     scan_p.set_defaults(_dispatch=_dispatch_scan)
 
-    # get-undescribed
     gu_p = commands.add_parser(
         "get-undescribed",
-        help="Return deepest directory with undescribed entries; call repeatedly until done",
+        help="Return deepest directory with paths needing purpose description; call repeatedly until done",
         description=(
-            "Returns one directory per call — deepest with undescribed\n"
-            "entries. Output is directory listing with [?] markers on entries\n"
-            "needing descriptions. Described siblings provide context.\n"
-            "Auto-scans before execution.\n"
+            "Returns one directory per call — deepest with paths needing\n"
+            "purpose description. Output is directory listing with [?]\n"
+            "markers on paths needing purpose description. Described\n"
+            "siblings provide context. Auto-scans before execution.\n"
             "\n"
             "Call repeatedly until output is 'No work remaining.' — this is\n"
             "stop condition. Depth-first order ensures children are\n"
@@ -334,7 +331,7 @@ def build_parser() -> argparse.ArgumentParser:
             "  <directory listing with [?] and [~] markers>\n"
             "\n"
             "Directories with traverse=0 (e.g., tests/) are listed but their\n"
-            "children never appear — describe directory itself only.\n"
+            "children never appear — describe the directory itself only.\n"
             "\n"
             "Output paths match format expected by `set` — use directly."
         ),
@@ -343,31 +340,30 @@ def build_parser() -> argparse.ArgumentParser:
     )
     gu_p.set_defaults(_dispatch=_dispatch_get_undescribed)
 
-    # set
     set_p = commands.add_parser(
         "set",
-        help="Create or update entry description, exclusion, or traversal flags",
+        help="Create or update a path's purpose, exclusion, or traversal flags",
         description=(
-            "Write description for file or directory, or update its scan\n"
-            "behavior flags. Primary tool for resolving [?] entries after scan.\n"
+            "Write purpose for file or directory, or update its scan\n"
+            "behavior flags. Primary tool for resolving [?] paths after scan.\n"
             "Auto-scans before execution.\n"
             "\n"
-            "Description semantics:\n"
-            "  NULL (default)  Entry not yet reviewed; shows as [?]\n"
+            "Purpose semantics:\n"
+            "  NULL (default)  Path not yet reviewed; shows as [?]\n"
             '  Empty string    Self-explanatory name; marks as reviewed (use "")\n'
-            "  Non-empty       Description of file's purpose\n"
+            "  Non-empty       Populate the purpose using the Purpose Statement principle\n"
             "\n"
-            "Setting description also clears stale marker and updates\n"
-            "stored hash — marks entry as reviewed against current contents.\n"
+            "Setting purpose also clears stale marker and updates\n"
+            "stored hash — marks path as reviewed against current contents.\n"
             "\n"
-            "Descriptions answer: should I read this file? Convey scope and role,\n"
+            "Purposes answer: should I read this file? Convey scope and role,\n"
             "not internals or content listings."
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
         parents=[db_parent],
     )
     set_p.add_argument("path", help="File, directory, or glob pattern")
-    set_p.add_argument("--description", default=None, help="Entry description")
+    set_p.add_argument("--purpose", default=None, help="Path purpose")
     set_p.add_argument(
         "--exclude", default=None, choices=["0", "1"],
         help="Exclude from scan (1) or include (0)",
@@ -378,19 +374,18 @@ def build_parser() -> argparse.ArgumentParser:
     )
     set_p.set_defaults(_dispatch=_dispatch_set)
 
-    # remove
     remove_p = commands.add_parser(
         "remove",
-        help="Remove entries from database",
+        help="Remove paths from database",
         description=(
-            "Remove entries from database. Rarely needed — scan handles\n"
+            "Remove paths from database. Rarely needed — scan handles\n"
             "cleanup of deleted files automatically. Use for manual corrections\n"
             "when database state diverges from filesystem.\n"
             "Auto-scans before execution.\n"
             "\n"
-            "  path              Remove single entry\n"
+            "  path              Remove single path\n"
             "  path --recursive  Remove directory and all children\n"
-            "  --all             Remove all concrete entries (patterns table unaffected)"
+            "  --all             Remove all concrete paths (path_patterns table unaffected)"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
         parents=[db_parent],
@@ -398,23 +393,22 @@ def build_parser() -> argparse.ArgumentParser:
     remove_p.add_argument("path", nargs="?", default=None, help="File or directory path to remove")
     remove_mode = remove_p.add_mutually_exclusive_group()
     remove_mode.add_argument("--recursive", action="store_true", default=False, help="Remove directory and all children")
-    remove_mode.add_argument("--all", action="store_true", default=False, help="Remove all concrete entries (patterns table unaffected)")
+    remove_mode.add_argument("--all", action="store_true", default=False, help="Remove all concrete paths (path_patterns table unaffected)")
     remove_p.set_defaults(_dispatch=_dispatch_remove)
 
-    # search
     search_p = commands.add_parser(
         "search",
-        help="Search entry descriptions by keyword",
+        help="Search path purposes by keyword",
         description=(
             "Find files and directories by what they do, not what they're named.\n"
-            "Searches descriptions written by humans, so queries like 'CLI',\n"
-            "'business logic', or 'authentication' find relevant entries even\n"
+            "Searches purposes written by humans, so queries like 'CLI',\n"
+            "'business logic', or 'authentication' find relevant paths even\n"
             "when file names don't contain those words.\n"
             "Auto-scans before execution.\n"
             "\n"
             "Output format:\n"
             '  Search: "<pattern>" (N results)\n'
-            "  - <path> - <description>\n"
+            "  - <path> - <purpose>\n"
             "\n"
             "Complements Grep/Glob which search file contents and names.\n"
             "Use search when you know purpose but not path."
@@ -428,7 +422,6 @@ def build_parser() -> argparse.ArgumentParser:
     )
     search_p.set_defaults(_dispatch=_dispatch_search)
 
-    # resolve-skill
     rs_p = commands.add_parser(
         "resolve-skill",
         help="Resolve skill name to SKILL.md path; searches all discovery locations in priority order",
@@ -450,7 +443,6 @@ def build_parser() -> argparse.ArgumentParser:
     rs_p.add_argument("name", help="Skill name to resolve (e.g., ocd-conventions)")
     rs_p.set_defaults(_dispatch=_dispatch_resolve_skill)
 
-    # list-skills
     ls_p = commands.add_parser(
         "list-skills",
         help="List all discoverable skills with source and path",

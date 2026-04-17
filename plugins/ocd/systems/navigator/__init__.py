@@ -1,9 +1,8 @@
 """Navigator operations.
 
 Facade module — public interface for navigator functionality. Domain
-modules: _db (database), _scanner (filesystem), _frontmatter (parsing),
-_governance (governance operations), _skills (skill resolution),
-_references (file reference mapping).
+modules: _db (database), _scanner (filesystem), _references (file
+reference mapping), _skills (skill resolution).
 
 All functions return structured data (dicts/lists). Formatting for
 CLI display belongs in __main__.py. Presentation lives in __main__.py.
@@ -26,65 +25,62 @@ from systems.governance import governance_match
 
 
 def _ensure_scanned(db_path: str) -> None:
-    """Populate the entries table from disk before a read or write.
+    """Populate the paths table from disk before a read or write.
 
-    Every facade function that touches the entries table calls this
-    first — navigator owns its own population, callers never have to
-    scan before invoking a navigator function.
+    Every facade function that touches the paths table calls this first —
+    navigator owns its own population, callers never have to scan before
+    invoking a navigator function.
     """
     scan_path(db_path)
 
 
 def paths_get(db_path: str, paths: str | list[str]) -> dict:
-    """Retrieve entry details for one or more paths.
+    """Retrieve path details for one or more paths.
 
-    Files return type, description, stale flag. Directories return entry
+    Files return type, purpose, stale flag. Directories return entry
     info plus children. Single path returns one dict; multiple paths
-    return {"entries": [dict, ...]}.
+    return {"paths": [dict, ...]}.
     """
     _ensure_scanned(db_path)
     if isinstance(paths, str):
         return _paths_get_single(db_path, paths)
 
-    entries = [_paths_get_single(db_path, p) for p in paths]
-    return {"entries": entries}
+    return {"paths": [_paths_get_single(db_path, p) for p in paths]}
 
 
 def _paths_get_single(db_path: str, target_path: str) -> dict:
-    """Retrieve entry details for a single path."""
+    """Retrieve path details for a single path."""
     target_path = target_path.rstrip("/")
     if target_path == ".":
         target_path = ""
 
     conn = get_connection(db_path)
     try:
-        entry = conn.execute(
-            "SELECT * FROM entries WHERE path = ?", (target_path,)
+        row = conn.execute(
+            "SELECT * FROM paths WHERE path = ?", (target_path,)
         ).fetchone()
 
-        def _entry_dict(row) -> dict:
+        def _row_dict(r) -> dict:
             return {
-                "path": row["path"] or ".",
-                "type": row["entry_type"],
-                "description": row["description"],
-                "stale": bool(row["stale"]),
+                "path": r["path"] or ".",
+                "type": r["entry_type"],
+                "purpose": r["purpose"],
+                "stale": bool(r["stale"]),
             }
 
-        # File entry
-        if entry and entry["entry_type"] == "file":
-            return _entry_dict(entry)
+        if row and row["entry_type"] == "file":
+            return _row_dict(row)
 
-        # Directory entry
         result = {
             "path": (target_path + "/") if target_path else "./",
             "type": "directory",
-            "description": entry["description"] if entry else None,
-            "stale": bool(entry["stale"]) if entry else False,
+            "purpose": row["purpose"] if row else None,
+            "stale": bool(row["stale"]) if row else False,
             "children": [],
         }
 
         children = conn.execute(
-            "SELECT * FROM entries WHERE parent_path = ? "
+            "SELECT * FROM paths WHERE parent_path = ? "
             "AND exclude = 0 "
             "ORDER BY "
             "CASE entry_type WHEN 'directory' THEN 0 ELSE 1 END, path",
@@ -92,10 +88,10 @@ def _paths_get_single(db_path: str, target_path: str) -> dict:
         ).fetchall()
 
         for child in children:
-            result["children"].append(_entry_dict(child))
+            result["children"].append(_row_dict(child))
 
-        if not entry and not children:
-            result["children"] = None  # signals "no entries"
+        if not row and not children:
+            result["children"] = None  # signals "no paths"
 
         return result
     finally:
@@ -121,9 +117,9 @@ def paths_list(
 
     conn = get_connection(db_path)
     try:
-        disk_entries = _walk_filesystem(conn, target_path)
+        disk_paths = _walk_filesystem(conn, target_path)
 
-        files = sorted(p for p, t in disk_entries.items() if t == "file")
+        files = sorted(p for p, t in disk_paths.items() if t == "file")
 
         if patterns:
             files = [
@@ -143,7 +139,7 @@ def paths_list(
         result = []
         for f in files:
             row = conn.execute(
-                "SELECT line_count, char_count FROM entries WHERE path = ?",
+                "SELECT line_count, char_count FROM paths WHERE path = ?",
                 (f,),
             ).fetchone()
             entry = {"path": f}
@@ -157,7 +153,7 @@ def paths_list(
 
 
 def paths_undescribed(db_path: str) -> dict:
-    """Return deepest directory with undescribed or stale entries.
+    """Return deepest directory with paths needing purpose description.
 
     Returns progress info and directory listing. When no work remains,
     returns {"done": True}.
@@ -165,16 +161,16 @@ def paths_undescribed(db_path: str) -> dict:
     _ensure_scanned(db_path)
     conn = get_connection(db_path)
     try:
-        work_entries = conn.execute(
-            "SELECT path, parent_path, entry_type FROM entries "
-            "WHERE description IS NULL OR stale = 1"
+        work_rows = conn.execute(
+            "SELECT path, parent_path, entry_type FROM paths "
+            "WHERE purpose IS NULL OR stale = 1"
         ).fetchall()
 
-        if not work_entries:
+        if not work_rows:
             return {"done": True}
 
         work_dirs = set()
-        for row in work_entries:
+        for row in work_rows:
             if row["entry_type"] == "directory":
                 work_dirs.add(row["path"] if row["path"] is not None else "")
             else:
@@ -184,7 +180,7 @@ def paths_undescribed(db_path: str) -> dict:
 
         return {
             "done": False,
-            "remaining": len(work_entries),
+            "remaining": len(work_rows),
             "directories": len(work_dirs),
             "target": deepest,
             "listing": paths_get(db_path, deepest),
@@ -196,14 +192,15 @@ def paths_undescribed(db_path: str) -> dict:
 def paths_upsert(
     db_path: str,
     entry_path: str,
-    description: str | None = None,
+    purpose: str | None = None,
     exclude: int | None = None,
     traverse: int | None = None,
 ) -> dict:
-    """Create or update entry. Returns status dict.
+    """Create or update a path. Returns status dict.
 
-    Only accepts concrete paths (files and directories), not glob patterns.
-    Patterns belong in the patterns table and are managed via seed CSV.
+    Only accepts concrete paths (files and directories), not glob
+    patterns. Patterns are declared in per-system paths.csv files and
+    aggregated into path_patterns by navigator on scan.
     """
     _ensure_scanned(db_path)
     entry_path = entry_path.rstrip("/")
@@ -213,7 +210,7 @@ def paths_upsert(
     if "*" in entry_path:
         raise ValueError(
             f"paths_upsert does not accept glob patterns: {entry_path!r}. "
-            "Patterns are managed via navigator_seed.csv."
+            "Patterns are declared in per-system paths.csv files."
         )
 
     absolute_entry = plugin.get_project_dir() / entry_path if entry_path else plugin.get_project_dir()
@@ -231,11 +228,11 @@ def paths_upsert(
     conn = get_connection(db_path)
     try:
         existing = conn.execute(
-            "SELECT * FROM entries WHERE path = ?", (entry_path,)
+            "SELECT * FROM paths WHERE path = ?", (entry_path,)
         ).fetchone()
 
         metrics = {"git_hash": None, "line_count": None, "char_count": None}
-        if description is not None and entry_type == "file":
+        if purpose is not None and entry_type == "file":
             metrics = _compute_file_metrics(plugin.get_project_dir() / entry_path)
 
         display = entry_path if entry_path else "."
@@ -243,9 +240,9 @@ def paths_upsert(
         if existing:
             updates = []
             params: list = []
-            if description is not None:
-                updates.append("description = ?")
-                params.append(description)
+            if purpose is not None:
+                updates.append("purpose = ?")
+                params.append(purpose)
                 updates.append("stale = 0")
             if exclude is not None:
                 updates.append("exclude = ?")
@@ -264,15 +261,15 @@ def paths_upsert(
                 return {"action": "none", "path": display}
             params.append(entry_path)
             conn.execute(
-                f"UPDATE entries SET {', '.join(updates)} WHERE path = ?",
+                f"UPDATE paths SET {', '.join(updates)} WHERE path = ?",
                 params,
             )
             conn.commit()
             return {"action": "updated", "path": display}
         else:
             conn.execute(
-                "INSERT INTO entries "
-                "(path, parent_path, entry_type, exclude, traverse, description, git_hash, line_count, char_count) "
+                "INSERT INTO paths "
+                "(path, parent_path, entry_type, exclude, traverse, purpose, git_hash, line_count, char_count) "
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (
                     entry_path,
@@ -280,7 +277,7 @@ def paths_upsert(
                     entry_type,
                     exclude if exclude is not None else 0,
                     traverse if traverse is not None else 1,
-                    description,
+                    purpose,
                     metrics["git_hash"],
                     metrics["line_count"],
                     metrics["char_count"],
@@ -297,12 +294,12 @@ def paths_remove(
     entry_path: str,
     mode: str = "single",
 ) -> dict:
-    """Remove entries. Returns status dict.
+    """Remove paths. Returns status dict.
 
     Modes:
-        single    — remove one entry by path (default)
+        single    — remove one path by path (default)
         recursive — remove directory and all children
-        all       — remove every concrete entry (patterns table untouched)
+        all       — remove every concrete path (path_patterns table untouched)
     """
     if mode not in ("single", "recursive", "all"):
         raise ValueError(
@@ -313,7 +310,7 @@ def paths_remove(
     conn = get_connection(db_path)
     try:
         if mode == "all":
-            result = conn.execute("DELETE FROM entries")
+            result = conn.execute("DELETE FROM paths")
             conn.commit()
             return {"action": "removed_all", "count": result.rowcount}
 
@@ -321,12 +318,12 @@ def paths_remove(
 
         if mode == "recursive":
             existing = conn.execute(
-                "SELECT entry_type FROM entries WHERE path = ?", (entry_path,)
+                "SELECT entry_type FROM paths WHERE path = ?", (entry_path,)
             ).fetchone()
             if existing and existing["entry_type"] == "file":
-                return {"action": "error", "message": "recursive mode not valid for file entries"}
+                return {"action": "error", "message": "recursive mode not valid for file paths"}
             result = conn.execute(
-                "DELETE FROM entries WHERE path = ? OR path LIKE ?",
+                "DELETE FROM paths WHERE path = ? OR path LIKE ?",
                 (entry_path, entry_path + "/%"),
             )
             conn.commit()
@@ -336,7 +333,7 @@ def paths_remove(
 
         # mode == "single"
         result = conn.execute(
-            "DELETE FROM entries WHERE path = ?", (entry_path,)
+            "DELETE FROM paths WHERE path = ?", (entry_path,)
         )
         conn.commit()
         if result.rowcount == 0:
@@ -347,13 +344,13 @@ def paths_remove(
 
 
 def paths_search(db_path: str, pattern: str) -> dict:
-    """Search descriptions by pattern."""
+    """Search path purposes by pattern."""
     _ensure_scanned(db_path)
     conn = get_connection(db_path)
     try:
         rows = conn.execute(
-            "SELECT path, entry_type, description FROM entries "
-            "WHERE description LIKE ? "
+            "SELECT path, entry_type, purpose FROM paths "
+            "WHERE purpose LIKE ? "
             "ORDER BY path",
             (f"%{pattern}%",),
         ).fetchall()
@@ -364,7 +361,7 @@ def paths_search(db_path: str, pattern: str) -> dict:
                 {
                     "path": row["path"] if row["path"] else ".",
                     "type": row["entry_type"],
-                    "description": row["description"],
+                    "purpose": row["purpose"],
                 }
                 for row in rows
             ],
@@ -389,7 +386,7 @@ def scope_analyze(db_path: str, paths: list[str]) -> dict:
     try:
         for file_path in all_paths:
             row = conn.execute(
-                "SELECT line_count, char_count FROM entries WHERE path = ?",
+                "SELECT line_count, char_count FROM paths WHERE path = ?",
                 (file_path,),
             ).fetchone()
             if row:

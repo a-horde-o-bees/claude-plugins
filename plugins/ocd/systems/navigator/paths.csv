@@ -1,4 +1,4 @@
-path,entry_type,exclude,traverse,description
+path,entry_type,exclude,traverse,purpose
 **/__pycache__,directory,1,0,
 **/.git,directory,1,0,
 **/.venv,directory,1,0,
@@ -15,3 +15,8 @@ path,entry_type,exclude,traverse,description
 **/__main__.py,file,0,1,Module invocation shortcut
 **/SKILL.md,file,0,1,Skill definition and workflow
 **/conftest.py,file,0,1,Pytest fixtures and configuration
+.claude/*/*/paths.csv,file,0,0,System declaration of deployed paths and purposes
+.claude/{plugin}/navigator,directory,0,1,Navigator system deployed artifacts
+.claude/{plugin}/navigator/navigator.db,file,0,0,Navigator SQLite index of project paths and purposes
+.claude/{plugin}/navigator/navigator.db-shm,file,1,0,
+.claude/{plugin}/navigator/navigator.db-wal,file,1,0,
