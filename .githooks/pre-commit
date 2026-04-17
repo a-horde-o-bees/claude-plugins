@@ -23,6 +23,7 @@
 #   lib/permissions/__init__.py            — permissions facade (to lib/permissions/)
 #   lib/permissions/_init.py               — permissions subsystem (to lib/permissions/)
 #   lib/permissions/_operations.py         — permissions operations (to lib/permissions/)
+#   hooks/install_deps.sh                  — SessionStart venv install (to hooks/)
 
 set -euo pipefail
 
@@ -75,6 +76,7 @@ SHARED_FILES=(
     "plugins/ocd/lib/permissions/__init__.py:lib/permissions"
     "plugins/ocd/lib/permissions/_init.py:lib/permissions"
     "plugins/ocd/lib/permissions/_operations.py:lib/permissions"
+    "plugins/ocd/hooks/install_deps.sh:hooks"
 )
 
 staged=$(git diff --cached --name-only)

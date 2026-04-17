@@ -1,34 +1,31 @@
 #!/bin/bash
 # Install Python dependencies into plugin venv.
-# Runs on SessionStart; skips when requirements.txt unchanged.
+# Runs on SessionStart; idempotent — always verifies venv and deps.
+#
+# Canonical copy lives under plugins/ocd/hooks/ and is propagated to
+# every plugin's hooks/install_deps.sh via the pre-commit hook.
 
 set -euo pipefail
 
+plugin_name=$(python3 -c "import json; print(json.load(open('$CLAUDE_PLUGIN_ROOT/.claude-plugin/plugin.json'))['name'])")
 requirements="$CLAUDE_PLUGIN_ROOT/requirements.txt"
-cached="$CLAUDE_PLUGIN_DATA/requirements.txt"
 venv_dir="$CLAUDE_PLUGIN_DATA/venv"
-
-# Skip if requirements unchanged since last install
-if diff -q "$requirements" "$cached" >/dev/null 2>&1; then
-    exit 0
-fi
 
 # Check for uv
 if ! command -v uv >/dev/null 2>&1; then
-    echo "ocd plugin: uv is required to install Python dependencies." >&2
+    echo "$plugin_name plugin: uv is required to install Python dependencies." >&2
     echo "Install uv: curl -LsSf https://astral.sh/uv/install.sh | sh" >&2
     echo "MCP server will not be available until uv is installed." >&2
     exit 1
 fi
 
-# Create venv and install
-if uv venv --seed "$venv_dir" --quiet \
-    && "$venv_dir/bin/pip" install -q -r "$requirements"; then
-    cp "$requirements" "$cached"
-    # Persist venv python path so the bin/ocd wrapper can find it without
-    # relying on CLAUDE_PLUGIN_DATA (which isn't exposed in agent shells).
+# Ensure venv exists and install/update dependencies — both are idempotent
+uv venv --seed "$venv_dir" --quiet --allow-existing
+"$venv_dir/bin/pip" install -q -r "$requirements"
+
+# If the plugin ships bash wrappers in bin/, persist the venv python path
+# so they can find it without relying on CLAUDE_PLUGIN_DATA (which isn't
+# exposed in agent shells).
+if [ -d "$CLAUDE_PLUGIN_ROOT/bin" ]; then
     echo "$venv_dir/bin/python3" > "$CLAUDE_PLUGIN_ROOT/.venv-python"
-else
-    rm -f "$cached"
-    exit 1
 fi
