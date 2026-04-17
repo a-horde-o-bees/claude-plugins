@@ -33,7 +33,7 @@ def _discover_workflow_skills(plugin_root: Path) -> list[str]:
     Workflow skills are subsystems that expose a SKILL.md — each is
     invoked as `/<plugin>:<name>`. A subsystem may carry both an _init.py
     and a SKILL.md; it shows up in both discoveries. They are listed in
-    plugin status output so the user sees what commands the plugin ships,
+    setup status output so the user sees what commands the plugin ships,
     but the plugin does not deploy or track the skill files themselves.
     """
     subsystems_dir = plugin_root / "subsystems"

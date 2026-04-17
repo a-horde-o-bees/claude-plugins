@@ -10,7 +10,7 @@ Imported by the ocd plugin. Not a user-facing library; consumed by:
 - The navigator MCP server's `scope_analyze` tool — attaches governance metadata to scanned files
 - The governance CLI (`ocd subsystems.governance ...`) — operational queries
 
-No installation step beyond `/ocd:plugin install` in the consuming project.
+No installation step beyond `/ocd:setup init` in the consuming project.
 
 ## Usage
 

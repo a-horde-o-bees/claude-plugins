@@ -2,7 +2,7 @@
 
 Reports auto-approve pattern coverage at project and user scopes.
 Install is a no-op at this layer because deploying recommended
-patterns requires an interactive scope choice — the /ocd:plugin
+patterns requires an interactive scope choice — the /ocd:setup
 guided flow drives that via run_permissions_install() directly.
 
 Interface contract: init() and status() return
@@ -16,8 +16,8 @@ def init(force: bool = False) -> dict:
     """Report permissions coverage.
 
     Deployment is interactive and lives in the guided skill flow, not
-    the standard subsystem install loop. This entry satisfies the
-    contract so the subsystem participates in `plugin install` output
+    the standard subsystem init loop. This entry satisfies the
+    contract so the subsystem participates in `setup init` output
     alongside its siblings. `force` has no effect — retained for
     contract conformance.
     """

@@ -72,22 +72,22 @@ class TestPluginCLI:
 class TestPermissionsCLI:
     """Verify permissions subcommands invoke through run.py."""
 
-    def test_report_exits_zero(self) -> None:
-        result = run("plugin", "permissions", "report")
+    def test_status_exits_zero(self) -> None:
+        result = run("plugin", "permissions", "status")
         assert result.returncode == 0, result.stderr
 
-    def test_report_shows_both_scopes(self) -> None:
-        result = run("plugin", "permissions", "report")
+    def test_status_shows_both_scopes(self) -> None:
+        result = run("plugin", "permissions", "status")
         assert "project" in result.stdout
         assert "user" in result.stdout
 
-    def test_deploy_requires_scope(self) -> None:
-        result = run("plugin", "permissions", "deploy")
+    def test_install_requires_scope(self) -> None:
+        result = run("plugin", "permissions", "install")
         assert result.returncode != 0
 
-    def test_deploy_exits_zero(self, tmp_path: Path) -> None:
+    def test_install_exits_zero(self, tmp_path: Path) -> None:
         result = run(
-            "plugin", "permissions", "deploy", "--scope", "project",
+            "plugin", "permissions", "install", "--scope", "project",
             env={"CLAUDE_PROJECT_DIR": str(tmp_path)},
         )
         assert result.returncode == 0, result.stderr

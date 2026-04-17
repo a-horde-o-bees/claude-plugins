@@ -13,10 +13,10 @@ Auto-approve pattern management across Claude Code's project and user scopes. Re
 Invoked via the plugin CLI:
 
 ```
-plugin permissions list                 # report both scopes' permission state
-plugin permissions install --scope <x>  # deploy recommended patterns to <x>
-plugin permissions analyze              # cross-scope health check
-plugin permissions clean --scope <x>    # remove recommendations redundant with other scope
+ocd subsystems.setup permissions status               # report both scopes' permission state
+ocd subsystems.setup permissions install --scope <x>  # deploy recommended patterns to <x>
+ocd subsystems.setup permissions analyze              # cross-scope health check
+ocd subsystems.setup permissions clean --scope <x>    # remove recommendations redundant with other scope
 ```
 
-`install` requires an explicit scope choice — the `/ocd:plugin guided` skill drives the interactive flow that picks scope, deploys, and offers cross-scope cleanup.
+`install` requires an explicit scope choice — the `/ocd:setup guided` skill drives the interactive flow that picks scope, deploys, and offers cross-scope cleanup.

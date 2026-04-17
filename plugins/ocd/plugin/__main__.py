@@ -1,42 +1,42 @@
 """Plugin CLI.
 
-Agent-facing entry point for install, list, and permissions operations.
+Agent-facing entry point for init, status, and permissions operations.
 Business logic lives in __init__.py.
 """
 
 import argparse
 import importlib
 
-from . import run_install, run_list
+from . import run_init, run_status
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(
         prog="plugin",
-        description="Plugin infrastructure: install, list, and permissions operations.",
+        description="Plugin infrastructure: init, status, and permissions operations.",
     )
     commands = parser.add_subparsers(dest="command", required=True)
 
-    install_p = commands.add_parser(
-        "install",
+    init_p = commands.add_parser(
+        "init",
         help="Deploy every subsystem — rules, conventions, patterns, logs, navigator",
     )
-    install_p.add_argument(
+    init_p.add_argument(
         "--force", action="store_true",
         help="Overwrite existing state with plugin defaults; destructive",
     )
-    install_p.add_argument(
+    init_p.add_argument(
         "--system", default=None,
-        help="Scope install to one subsystem (rules, conventions, navigator, ...)",
+        help="Scope init to one subsystem (rules, conventions, navigator, ...)",
     )
 
-    list_p = commands.add_parser(
-        "list",
+    status_p = commands.add_parser(
+        "status",
         help="Report plugin version and state of every subsystem",
     )
-    list_p.add_argument(
+    status_p.add_argument(
         "--system", default=None,
-        help="Scope list to one subsystem (rules, conventions, navigator, ...)",
+        help="Scope status to one subsystem (rules, conventions, navigator, ...)",
     )
 
     perm_p = commands.add_parser(
@@ -46,7 +46,7 @@ def main() -> None:
     perm_commands = perm_p.add_subparsers(dest="perm_command", required=True)
 
     perm_commands.add_parser(
-        "list",
+        "status",
         help="Structured report of both scopes' permission state",
     )
 
@@ -75,17 +75,17 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    if args.command == "install":
-        run_install(force=args.force, system=args.system)
-    elif args.command == "list":
-        run_list(system=args.system)
+    if args.command == "init":
+        run_init(force=args.force, system=args.system)
+    elif args.command == "status":
+        run_status(system=args.system)
     elif args.command == "permissions":
         # Runtime import — permissions lives in subsystems/, discovered via
         # sys.path established by run.py. importlib keeps this consistent with
         # how orchestration dispatches to subsystems/<subsystem>/_init.py.
         perm = importlib.import_module("subsystems.permissions")
-        if args.perm_command == "list":
-            perm.run_permissions_list()
+        if args.perm_command == "status":
+            perm.run_permissions_status()
         elif args.perm_command == "install":
             perm.run_permissions_install(scope=args.scope)
         elif args.perm_command == "analyze":

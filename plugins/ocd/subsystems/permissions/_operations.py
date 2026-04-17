@@ -63,7 +63,7 @@ def status_extra() -> list[dict]:
     Returns an empty list when no recommendations are declared. Emits
     per-scope coverage counts and a redundancy count when patterns
     overlap across scopes. Next-step guidance is driven by the
-    /ocd:plugin guided skill reading this status; this subsystem only
+    /ocd:setup guided skill reading this status; this subsystem only
     describes, it does not prescribe.
     """
     recommended = _get_recommended_patterns()
@@ -145,7 +145,7 @@ def _merge_permissions(scope: str) -> None:
         print(f"    {desc}: {len(patterns)} patterns")
 
 
-def run_permissions_list() -> None:
+def run_permissions_status() -> None:
     """Structured report of both scopes' permission state."""
     categories = _get_recommended_by_category()
     recommended = _get_recommended_patterns()

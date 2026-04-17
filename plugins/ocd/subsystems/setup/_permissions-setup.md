@@ -1,10 +1,10 @@
-# Plugin: Permissions Setup
+# Setup: Permissions
 
-Optional subflow invoked from `/ocd:plugin guided` when the user opts into permissions configuration. Deploys plugin-recommended permission patterns to the chosen scope, then optionally cleans redundant patterns from the opposite scope.
+Optional subflow invoked from `/ocd:setup guided` when the user opts into permissions configuration. Deploys plugin-recommended permission patterns to the chosen scope, then optionally cleans redundant patterns from the opposite scope.
 
 ## Process
 
-1. List — bash: `ocd plugin permissions list`
+1. Status — bash: `ocd subsystems.setup permissions status`
 2. Present report with scope education:
 
     - **Project scope** (`.claude/settings.json`) — applies to this project only; version controlled; shared with collaborators
@@ -13,13 +13,13 @@ Optional subflow invoked from `/ocd:plugin guided` when the user opts into permi
 3. Ask scope — AskUserQuestion with options: `["Project scope", "User scope"]`
 4. If user chose "Project scope": {scope} = project
 5. Else: {scope} = user
-6. Install — bash: `ocd plugin permissions install --scope {scope}`
+6. Install — bash: `ocd subsystems.setup permissions install --scope {scope}`
 7. Present install results
-8. Analyze — bash: `ocd plugin permissions analyze`
+8. Analyze — bash: `ocd subsystems.setup permissions analyze`
 9. If redundancy count > 0:
     1. {other-scope} = opposite of {scope}
     2. If {other-scope} is `user`: Present warning — removing from user scope affects all projects on this machine
     3. Ask cleanup — AskUserQuestion with options: `["Clean {other-scope} scope", "Keep both"]`
     4. If cleanup chosen:
-        1. Clean — bash: `ocd plugin permissions clean --scope {other-scope}`
+        1. Clean — bash: `ocd subsystems.setup permissions clean --scope {other-scope}`
         2. Present clean results

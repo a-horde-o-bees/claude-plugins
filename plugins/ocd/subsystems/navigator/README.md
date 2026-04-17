@@ -4,7 +4,7 @@ Project structure index backed by SQLite. Maintains a queryable directory of pro
 
 ## Setup
 
-Deployed as part of the ocd plugin. The navigator database lives at `.claude/ocd/navigator/navigator.db` in the consuming project and is created by `/ocd:plugin install`. No separate install step.
+Deployed as part of the ocd plugin. The navigator database lives at `.claude/ocd/navigator/navigator.db` in the consuming project and is created by `/ocd:setup init`. No separate install step.
 
 ## Usage
 

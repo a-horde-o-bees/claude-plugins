@@ -1,6 +1,6 @@
 """Install and list orchestration.
 
-Top-level run_install and run_list entry points that discover every
+Top-level run_init and run_status entry points that discover every
 subsystems/ entry and dispatch uniformly to each subsystem's _init.py.
 Content domains (rules, conventions, patterns, logs) and operational
 subsystems (navigator, permissions) follow the same contract.
@@ -16,7 +16,7 @@ from ._formatting import format_bare_skill, format_section
 from ._metadata import find_marketplace_source, format_header, get_installed_version, get_plugin_name
 
 
-_META_SKILLS = {"plugin"}
+_META_SKILLS = {"setup"}
 
 
 def _set_hookspath(project_dir: Path) -> bool:
@@ -40,7 +40,7 @@ def _set_hookspath(project_dir: Path) -> bool:
     return True
 
 
-def run_install(force: bool = False, system: str | None = None) -> None:
+def run_init(force: bool = False, system: str | None = None) -> None:
     """Install: discover and init every subsystem.
 
     system: when provided, scopes init to one subsystem. Unknown names
@@ -96,7 +96,7 @@ def run_install(force: bool = False, system: str | None = None) -> None:
         print("Done.")
 
 
-def run_list(system: str | None = None) -> None:
+def run_status(system: str | None = None) -> None:
     """List: discover and report state for every subsystem.
 
     system: when provided, scopes output to one subsystem. Unknown names

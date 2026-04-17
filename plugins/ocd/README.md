@@ -6,12 +6,12 @@ Deterministic enforcement of permissions, rules, and structural conventions for 
 
 ```
 /plugin install ocd
-/ocd:plugin install
+/ocd:setup init
 ```
 
-Restart Claude session after install to load rules. Run `/ocd:plugin list` to verify plugin version, deployment state, and update availability.
+Restart Claude session after install to load rules. Run `/ocd:setup status` to verify plugin version, deployment state, and update availability.
 
-`/ocd:plugin install` deploys rules to `.claude/rules/`, convention templates, and initializes skill infrastructure. Use `--force` to overwrite existing files with plugin defaults.
+`/ocd:setup init` deploys rules to `.claude/rules/`, convention templates, and initializes skill infrastructure. Use `--force` to overwrite existing files with plugin defaults.
 
 ## Automated Behavior
 
@@ -39,13 +39,13 @@ Fires before every Read, Edit, and Write operation. Non-blocking — always allo
 
 ### Install: git hookspath wiring
 
-During `/ocd:plugin install`, if the project contains a `.githooks/` directory, the plugin sets `core.hookspath=.githooks` in the local git config. This connects version-controlled git hooks (pre-commit, etc.) maintained by the project. Does nothing if `.githooks/` does not exist. The plugin does not create or modify hook files — it only wires the directory if one is already present.
+During `/ocd:setup init`, if the project contains a `.githooks/` directory, the plugin sets `core.hookspath=.githooks` in the local git config. This connects version-controlled git hooks (pre-commit, etc.) maintained by the project. Does nothing if `.githooks/` does not exist. The plugin does not create or modify hook files — it only wires the directory if one is already present.
 
 ## Capabilities
 
 ### Rules
 
-Always-on agent behavior guidance deployed to `.claude/rules/ocd/` via `/ocd:plugin install`. Auto-loaded every session. Users own the deployed files.
+Always-on agent behavior guidance deployed to `.claude/rules/ocd/` via `/ocd:setup init`. Auto-loaded every session. Users own the deployed files.
 
 | Rule | Purpose |
 |------|---------|
@@ -57,7 +57,7 @@ Always-on agent behavior guidance deployed to `.claude/rules/ocd/` via `/ocd:plu
 
 ### Conventions
 
-File-type-specific content standards deployed to `.claude/conventions/ocd/` via `/ocd:plugin install`. Surfaced automatically by the convention gate hook (see Automated Behavior) when the agent touches a matching file.
+File-type-specific content standards deployed to `.claude/conventions/ocd/` via `/ocd:setup init`. Surfaced automatically by the convention gate hook (see Automated Behavior) when the agent touches a matching file.
 
 Each convention has YAML frontmatter declaring which files it applies to:
 
@@ -111,8 +111,8 @@ Released skills (stable, available via `/ocd:` slash commands):
 |-------|---------|
 | `/ocd:commit` | Topic-grouped commits with end-state descriptions |
 | `/ocd:push` | Push to remote with pre-push commit check |
-| `/ocd:plugin install` | Deploy rules, conventions, and skill infrastructure |
-| `/ocd:plugin list` | Report plugin version, deployment state, skill status |
+| `/ocd:setup init` | Deploy rules, conventions, and skill infrastructure |
+| `/ocd:setup status` | Report plugin version, deployment state, skill status |
 | `/ocd:log` | Capture decisions, friction, problems, ideas as log entries |
 | `/ocd:pdf` | Export markdown to PDF via WeasyPrint with configurable CSS |
 

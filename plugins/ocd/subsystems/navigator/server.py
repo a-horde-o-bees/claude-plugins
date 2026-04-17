@@ -46,7 +46,7 @@ Use Navigator first for orientation, then Grep/Glob for specific code searches o
 
 _NO_DB_MSG = json.dumps({
     "error": "Navigator database not initialized.",
-    "action": "Database not initialized. Run /ocd:plugin install to deploy infrastructure.",
+    "action": "Database not initialized. Run /ocd:setup init to deploy infrastructure.",
 })
 
 
