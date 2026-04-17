@@ -7,7 +7,7 @@ allowed-tools:
   - Bash(rm *)
   - Bash(cp *)
   - Bash(ls *)
-  - Bash(ocd *)
+  - Bash(ocd-run *)
 ---
 
 # /pdf
@@ -84,7 +84,7 @@ uv pip install weasyprint markdown
     2. {src-base} = source filename with `.md` replaced by `.pdf`
     3. If --dest: {out} = {dest}/{src-base}
     4. Else: {out} = source directory/{src-base}
-    5. Convert — bash: `ocd subsystems.pdf --src {src} --css {stylesheet} --dest {out}`
+    5. Convert — bash: `ocd-run subsystems.pdf --src {src} --css {stylesheet} --dest {out}`
     6. Report result
 
 ### Report

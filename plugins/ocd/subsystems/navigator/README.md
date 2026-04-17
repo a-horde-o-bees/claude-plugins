@@ -24,15 +24,15 @@ Functions return structured data (dicts, lists). Formatting for display is the c
 ### As a CLI
 
 ```
-ocd subsystems.navigator describe <path>
-ocd subsystems.navigator list [<path>] [--pattern <glob> ...]
-ocd subsystems.navigator search --pattern <term>
-ocd subsystems.navigator scan [<path>]
-ocd subsystems.navigator get-undescribed
-ocd subsystems.navigator set <path> --description "..."
-ocd subsystems.navigator resolve-skill <name>
-ocd subsystems.navigator list-skills
-ocd subsystems.navigator init [--db <path>]
+ocd-run subsystems.navigator describe <path>
+ocd-run subsystems.navigator list [<path>] [--pattern <glob> ...]
+ocd-run subsystems.navigator search --pattern <term>
+ocd-run subsystems.navigator scan [<path>]
+ocd-run subsystems.navigator get-undescribed
+ocd-run subsystems.navigator set <path> --description "..."
+ocd-run subsystems.navigator resolve-skill <name>
+ocd-run subsystems.navigator list-skills
+ocd-run subsystems.navigator init [--db <path>]
 ```
 
 All commands except `init` auto-scan before execution to ensure fresh data. `--help` on any subcommand shows arguments and output format.

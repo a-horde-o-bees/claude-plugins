@@ -42,7 +42,7 @@ Accepted arguments:
 
 1. If not --target: Exit to user: skill description and argument-hint
 2. If {target} is not `project`: Exit to user: target must be `project`
-3. Discover governance levels — bash: `CLAUDE_PROJECT_DIR=$(pwd) ocd subsystems.governance order --json`
+3. Discover governance levels — bash: `CLAUDE_PROJECT_DIR=$(pwd) ocd-run subsystems.governance order --json`
 4. If result has dangling references:
     1. Present dangling references to user — which file declares each missing governor
     2. Exit to user: fix offending `governed_by` frontmatter and re-invoke

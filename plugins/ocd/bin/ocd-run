@@ -1,16 +1,23 @@
 #!/bin/bash
-# ocd — PATH-accessible entry to the plugin's Python dispatcher.
+# ocd-run — PATH-accessible entry to the plugin's Python dispatcher.
 #
 # Claude Code adds each installed plugin's bin/ directory to PATH, so this
-# script becomes `ocd` in any shell Claude Code runs. It resolves the
+# script becomes `ocd-run` in any shell Claude Code runs. It resolves the
 # plugin venv's python3 (which has weasyprint, mcp, etc. installed) and
 # execs run.py with whatever arguments were passed. Agents can call:
 #
-#     ocd subsystems.navigator scan .
-#     ocd subsystems.pdf generate --src foo.md
+#     ocd-run subsystems.navigator scan .
+#     ocd-run subsystems.pdf --src foo.md
 #
 # without needing to know CLAUDE_PLUGIN_ROOT, CLAUDE_PLUGIN_DATA, or where
 # the venv actually lives.
+#
+# Naming convention: every plugin ships a `<plugin>-run` binary in its
+# bin/ directory. The object_action shape (ocd + run) matches the
+# project's MCP tool convention (paths_get, governance_match, ...) and
+# follows CLI precedent like gitlab-runner and docker-compose. The
+# suffix also makes the name collision-resistant — `which ocd-run` is
+# almost certainly unique.
 #
 # Venv discovery order:
 #   1. $CLAUDE_PLUGIN_DATA/venv/bin/python3 (running inside a hook/MCP context)

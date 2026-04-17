@@ -4,7 +4,7 @@ description: Manage ocd plugin infrastructure — deploy governance files and su
 argument-hint: "<status | init | guided> [--force]"
 allowed-tools:
   - AskUserQuestion
-  - Bash(ocd *)
+  - Bash(ocd-run *)
 ---
 
 # /setup
@@ -36,7 +36,7 @@ Manage ocd plugin infrastructure — deploy governance files and subsystems, rep
 
 > Report current infrastructure state without changing anything.
 
-1. bash: `ocd subsystems.setup status`
+1. bash: `ocd-run subsystems.setup status`
 2. Present output to user — no summarization or reformatting
 3. Return to caller
 
@@ -50,8 +50,8 @@ Manage ocd plugin infrastructure — deploy governance files and subsystems, rep
 
 > Deploy every subsystem — rules, conventions, patterns, logs, navigator. Safe by default — only deploys absent files, skips divergent. `--force` overwrites divergent files with plugin defaults.
 
-1. If --force: bash: `ocd subsystems.setup init --force`
-2. Else: bash: `ocd subsystems.setup init`
+1. If --force: bash: `ocd-run subsystems.setup init --force`
+2. Else: bash: `ocd-run subsystems.setup init`
 3. Present init output to user
 4. Return to caller
 
@@ -59,7 +59,7 @@ Manage ocd plugin infrastructure — deploy governance files and subsystems, rep
 
 > Interactive walkthrough — show current state, explain what init will do, confirm with user, then deploy. Offers permissions setup as an optional final step.
 
-1. bash: `ocd subsystems.setup status`
+1. bash: `ocd-run subsystems.setup status`
 2. Present current state to user — explain what each section means and what actions are available
 3. If any files show `absent` or `stale`: explain that init will deploy or update them
 4. If any files show `divergent`:

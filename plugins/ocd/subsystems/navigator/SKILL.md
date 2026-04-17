@@ -33,7 +33,7 @@ The loop terminates when `paths_undescribed` returns `done=true`.
 
 1. {target} = $ARGUMENTS if provided, else project root
 2. Read `${CLAUDE_PLUGIN_ROOT}/subsystems/navigator/references/description-guidelines.md`
-3. Sync structure — bash: `ocd subsystems.navigator scan {target}`
+3. Sync structure — bash: `ocd-run subsystems.navigator scan {target}`
 4. While work remains:
     1. {work} = paths_undescribed
     2. If {work}.done: Break loop

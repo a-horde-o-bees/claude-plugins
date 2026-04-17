@@ -8,7 +8,7 @@ Imported by the ocd plugin. Not a user-facing library; consumed by:
 
 - The `convention_gate` PreToolUse hook — surfaces matching conventions on Read/Edit/Write
 - The navigator MCP server's `scope_analyze` tool — attaches governance metadata to scanned files
-- The governance CLI (`ocd subsystems.governance ...`) — operational queries
+- The governance CLI (`ocd-run subsystems.governance ...`) — operational queries
 
 No installation step beyond `/ocd:setup init` in the consuming project.
 
@@ -29,9 +29,9 @@ Functions return structured data (dicts, lists). Formatting for display is the c
 ### As a CLI
 
 ```
-ocd subsystems.governance match <path> [<path> ...]
-ocd subsystems.governance list [--kind rules|conventions]
-ocd subsystems.governance order [--json]
+ocd-run subsystems.governance match <path> [<path> ...]
+ocd-run subsystems.governance list [--kind rules|conventions]
+ocd-run subsystems.governance order [--json]
 ```
 
 `match` returns applicable conventions for the given paths. `list` enumerates rules and/or conventions with their include/exclude/governed_by fields. `order` computes dependency-level grouping from `governed_by` declarations using Tarjan's SCC algorithm.

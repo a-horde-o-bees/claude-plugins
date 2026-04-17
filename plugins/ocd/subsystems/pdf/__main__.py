@@ -4,7 +4,7 @@ Presentation layer: argument parsing and dispatch. Business logic
 lives in _generate.py and is exposed via the package facade.
 
 Usage:
-    ocd subsystems.pdf --src file.md [--css style.css] [--dest output.pdf]
+    ocd-run subsystems.pdf --src file.md [--css style.css] [--dest output.pdf]
 """
 
 import argparse
