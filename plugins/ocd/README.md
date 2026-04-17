@@ -109,8 +109,8 @@ Released skills (stable, available via `/ocd:` slash commands):
 
 | Skill | Purpose |
 |-------|---------|
-| `/ocd:commit` | Topic-grouped commits with end-state descriptions |
-| `/ocd:push` | Push to remote with pre-push commit check |
+| `/ocd:git commit` | Topic-grouped commits with end-state descriptions |
+| `/ocd:git push` | Push to remote with pre-push commit check |
 | `/ocd:setup init` | Deploy rules, conventions, and skill infrastructure |
 | `/ocd:setup status` | Report plugin version, deployment state, skill status |
 | `/ocd:log` | Capture decisions, friction, problems, ideas as log entries |

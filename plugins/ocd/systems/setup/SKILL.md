@@ -1,7 +1,7 @@
 ---
 name: setup
 description: Manage ocd plugin infrastructure — deploy governance files and systems, report current state, or walk through guided setup.
-argument-hint: "<status | init | guided> [--force]"
+argument-hint: "<status | init [--force] | guided>"
 allowed-tools:
   - AskUserQuestion
   - Bash(ocd-run *)

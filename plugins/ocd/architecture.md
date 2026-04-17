@@ -93,8 +93,7 @@ Skill packages live under `systems/` (declared via `plugin.json`'s `skills` fiel
 | `init` | Initialize ocd conventions and skill infrastructure in current project |
 | `status` | Report plugin infrastructure state |
 | `navigator` | Sync navigator database with filesystem and describe entries that need descriptions |
-| `commit` | Commit working tree changes grouped by topic for readable git history |
-| `push` | Push local commits to a named branch on the remote |
+| `git` | Local git operations — topic-grouped commits (`git commit`) and branch pushes (`git push`) |
 | `log` | Capture or manage project log entries — decisions, friction, problems, ideas |
 | `pdf` | Export markdown files to PDF using WeasyPrint |
 
@@ -183,8 +182,7 @@ plugins/ocd/
 │   ├── logs/                    — deployable log type templates
 │   ├── permissions/             — permission pattern management (settings.json asset + _init)
 │   ├── pdf/                     — markdown-to-PDF via WeasyPrint
-│   ├── commit/                  — topic-grouped commits
-│   ├── push/                    — push with pre-push checks and first-push upstream setup
+│   ├── git/                     — git operations skill (/ocd:git commit/push)
 │   ├── log/                     — log entry capture (add/list/remove as component subflows)
 │   ├── setup/                   — plugin infrastructure skill (/ocd:setup init/status/permissions)
 │   ├── audit-governance/        — governance chain audit (in development)
