@@ -1,4 +1,4 @@
-# Evaluate-testing skill for test infrastructure quality
+# Audit-testing skill for test infrastructure quality
 
 ## Purpose
 

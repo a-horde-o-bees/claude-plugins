@@ -1,4 +1,4 @@
-# Evaluate-governance inversion technique from purpose-map
+# Audit-governance inversion technique from purpose-map
 
 ## Purpose
 
