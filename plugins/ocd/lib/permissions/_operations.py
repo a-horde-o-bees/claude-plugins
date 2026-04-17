@@ -60,9 +60,11 @@ def _get_recommended_by_category() -> dict:
 def status_extra() -> list[dict]:
     """Build the subsystem status extra lines for permissions coverage.
 
-    Returns an empty list when no recommendations are declared. Always
-    emits per-scope coverage counts; emits `action needed` only when
-    coverage is incomplete, absent, or redundant across scopes.
+    Returns an empty list when no recommendations are declared. Emits
+    per-scope coverage counts and a redundancy count when patterns
+    overlap across scopes. Next-step guidance is driven by the
+    /ocd:plugin guided skill reading this status; this subsystem only
+    describes, it does not prescribe.
     """
     recommended = _get_recommended_patterns()
     if not recommended:
@@ -86,20 +88,6 @@ def status_extra() -> list[dict]:
         extra.append({
             "label": "redundancy",
             "value": f"{len(redundant)} patterns present in both scopes",
-        })
-        extra.append({
-            "label": "action needed",
-            "value": "/ocd:plugin guided",
-        })
-    elif not proj_rec and not user_rec:
-        extra.append({
-            "label": "action needed",
-            "value": "/ocd:plugin guided",
-        })
-    elif len(proj_rec) < len(recommended) and len(user_rec) < len(recommended):
-        extra.append({
-            "label": "action needed",
-            "value": "/ocd:plugin guided",
         })
 
     return extra

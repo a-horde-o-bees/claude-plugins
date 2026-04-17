@@ -35,14 +35,11 @@ def _db_rel_path() -> str:
 
 
 def _status_extra() -> list[dict]:
-    """Check DB health and return extra lines."""
+    """Check DB health and return the overall status line."""
     db_path = _db_path()
 
     if not db_path.exists():
-        return [
-            {"label": "overall status", "value": "not initialized"},
-            {"label": "action needed", "value": "/ocd:plugin install"},
-        ]
+        return [{"label": "overall status", "value": "not initialized"}]
 
     try:
         conn = _db.get_connection(str(db_path))
@@ -56,10 +53,7 @@ def _status_extra() -> list[dict]:
         }
         if not expected_tables.issubset(actual_tables):
             conn.close()
-            return [
-                {"label": "overall status", "value": "error \u2014 divergent schema"},
-                {"label": "action needed", "value": "/ocd:plugin install --force"},
-            ]
+            return [{"label": "overall status", "value": "error \u2014 divergent schema"}]
 
         total = conn.execute(
             "SELECT COUNT(*) as c FROM entries",
@@ -83,45 +77,35 @@ def _status_extra() -> list[dict]:
                     f"{undescribed} undescribed, {stale} stale"
                 ),
             },
-            {"label": "action needed", "value": "/ocd:navigator"},
         ]
 
     except sqlite3.Error as e:
-        return [
-            {"label": "overall status", "value": f"error \u2014 {e}"},
-            {"label": "action needed", "value": "/ocd:plugin install --force"},
-        ]
+        return [{"label": "overall status", "value": f"error \u2014 {e}"}]
 
 
 def init(force: bool = False) -> dict:
-    """Initialize the navigator database."""
+    """Initialize the navigator database.
+
+    Captures the DB's state before any mutation so the reported transition
+    reflects what the user saw, not the intermediate wipe state. A
+    force-rebuild of an existing DB emits `current → reinstalled`; a
+    fresh install emits `absent → current`.
+    """
     db = _db_path()
     rel_path = _db_rel_path()
 
-    before = "current" if db.exists() else "absent"
+    existed_before = db.exists()
+    before = "current" if existed_before else "absent"
 
-    if force and db.exists():
+    if force and existed_before:
         db.unlink()
-        before = "absent"
 
-    result_msg = _db.init_db(str(db))
+    _db.init_db(str(db))
 
-    summary = ""
-    if "(seed rules:" in result_msg:
-        seed_part = result_msg.split("(seed rules: ")[1].rstrip(")")
-        summary = f"initialized \u2014 seed rules: {seed_part}"
-    elif "(no seed file)" in result_msg:
-        summary = "initialized \u2014 no seed file"
-    else:
-        summary = "initialized"
+    after = "reinstalled" if existed_before and force else "current"
 
-    files = [{"path": rel_path, "before": before, "after": "current"}]
-    extra = [{"label": "overall status", "value": summary}]
-
-    status_extra = _status_extra()
-    for item in status_extra:
-        if item["label"] == "action needed":
-            extra.append(item)
+    files = [{"path": rel_path, "before": before, "after": after}]
+    extra = _status_extra()
 
     return {"files": files, "extra": extra}
 

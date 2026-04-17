@@ -116,29 +116,34 @@ Both functions return `{"files": [...], "extra": [...]}`:
 
 Entry points take only their own domain-specific arguments. Project and plugin paths are resolved internally via the plugin framework helpers (`plugin.get_project_dir()`, `plugin.get_plugin_root()`, `plugin.get_plugin_data_dir()`) — see *Project, Plugin, and Data Directory Resolution*. Never accept those paths as parameters.
 
-`files` entries: `{"path": str, "before": str, "after": str}` — relative deployed path with state transitions (`absent`, `current`, `divergent`).
+`files` entries: `{"path": str, "before": str, "after": str}` — relative deployed path with state transitions.
+
+| Transition | Meaning |
+|------------|---------|
+| `absent → current` | First install |
+| `current → current` | Already current, no-op |
+| `divergent → current` | Overwritten by `--force` |
+| `current → reinstalled` | Force rebuilt an existing, non-divergent artifact (e.g. database wipe-and-recreate) |
 
 `extra` entries: `{"label": str, "value": str}` — additional status lines rendered as aligned columns.
 
 **Status labels.**
 
-Two standard labels cover every state:
+Subsystems describe their current state through `extra` entries. Skills prescribe next steps by reading status output and interpreting it — subsystems do not embed corrective commands.
 
-- `overall status` — single line summarizing infrastructure state
-- `action needed` — copy-pastable slash command for next step
-
-Each package owns its corrective guidance — the package is closest to its own state and knows best what to recommend. Skills that present status output pass it through without re-interpreting.
+- `overall status` — single line summarizing infrastructure state (standard label across subsystems)
+- domain-specific labels — counts, coverage metrics, or other state dimensions as relevant to the subsystem
 
 **Database status pattern.**
 
 Packages with SQLite databases report through a deterministic state machine:
 
-| State | `overall status` | `action needed` |
-|-------|-----------------|-----------------|
-| DB file absent | `not initialized` | `/{plugin}:plugin install` |
-| DB file present, schema divergent | `error — divergent schema` | `/{plugin}:plugin install --force` |
-| DB file present, schema valid | `operational — {metric summary}` | `/{plugin}:{skill-command}` |
-| DB file present, SQL error | `error — {error message}` | `/{plugin}:plugin install --force` |
+| State | `overall status` |
+|-------|-----------------|
+| DB file absent | `not initialized` |
+| DB file present, schema divergent | `error — divergent schema` |
+| DB file present, schema valid | `operational — {metric summary}` |
+| DB file present, SQL error | `error — {error message}` |
 
 Schema validation uses subset check — expected tables must all be present; additional tables are not an error:
 
@@ -157,15 +162,6 @@ Operational status includes a metric summary with counts relevant to the domain.
 
 - **Noun choice is domain-specific.** Use the domain's natural unit — entities, entries, notes, events, records — rather than generic "items" or "rows"
 - **Metric count balances signal against noise.** Include enough metrics for the user to understand infrastructure health at a glance without querying. Stop short of enumerating every table's row count — pick the counts that answer "is this healthy and actively in use?"
-
-**Action needed format.**
-
-- **Present when actionable, omitted otherwise.** Emit an `action needed` line when there is a concrete next step the agent can take — not initialized, error state, pending work (e.g., undescribed entries). Omit when the subsystem is operational and has nothing outstanding — the absence itself signals healthy
-- **Value is a copy-pastable slash command.** No prose, no "Run" prefix, no parenthetical explanations. The agent pastes the value directly
-- Not initialized → `/{plugin}:plugin install`
-- Error states → `/{plugin}:plugin install --force`
-- Pending work → `/{plugin}:{skill-command}` (primary skill for this infrastructure)
-- Operational and healthy → omit the line
 
 ### Facade Role
 
