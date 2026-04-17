@@ -1,7 +1,7 @@
 ---
 name: sandbox
-description: Exercise changes in an isolated test environment — a sibling project for fresh-install scenarios, or a git worktree for in-repo change isolation. Presents a test plan, confirms, executes, and offers cleanup.
-argument-hint: "<project | worktree | cleanup> [description]"
+description: Exercise changes in an isolated test environment — a sibling project for fresh-install scenarios, a git worktree for interactive validation, or a combined test that routes concerns to both. Presents a test plan, confirms, executes, compiles results, and offers cleanup.
+argument-hint: "<project | worktree | test | cleanup> [description]"
 allowed-tools:
   - AskUserQuestion
   - Bash(git *)
@@ -15,7 +15,7 @@ allowed-tools:
 
 # /sandbox
 
-Exercise changes in an isolated test environment — a sibling project for fresh-install scenarios, or a git worktree for in-repo change isolation. Presents a test plan, confirms, executes, and offers cleanup.
+Exercise changes in an isolated test environment — a sibling project for fresh-install scenarios, a git worktree for interactive validation, or a combined `test` verb that classifies concerns and routes them to both substrates. Presents a test plan, confirms, executes, compiles results, and offers cleanup.
 
 ## Process Model
 
@@ -28,7 +28,7 @@ The skill executor reasons about what the user is testing (from their natural-la
 
 ## Route Selection
 
-The two verbs pick different execution mechanisms, each with distinct testing capabilities. Choose based on what the test needs to exercise, not on which substrate feels simpler.
+The verbs pick different execution mechanisms. Each concern under test routes to `project` or `worktree` based on interactive characteristics — the test verb orchestrates both buckets automatically; the direct verbs route one bucket at a time.
 
 | Capability | `project` (external) | `worktree` (internal) |
 |---|---|---|
@@ -38,45 +38,68 @@ The two verbs pick different execution mechanisms, each with distinct testing ca
 | Permission prompts | Auto-decline — no back-channel to parent | Route through parent session to the user |
 | Sensitive-file gate (`.claude/**`) | Blocks even under `--dangerously-skip-permissions` | User approves interactively |
 | `AskUserQuestion` | Exits immediately | Works normally |
+| `Exit to user:` follow-ups | No user available — skill ends without the follow-up happening | User acts on the exit message interactively |
 
-**Pick `project` when testing:**
+### Interactivity criterion
 
-- Fresh-install behavior — install_deps.sh, plugin initialization, navigator DB creation, paths.csv aggregation
+A concern routes to `worktree` if any of the following are true — otherwise it routes to `project`:
+
+1. The skill under test invokes `AskUserQuestion` during its workflow
+2. The skill writes to Claude Code's sensitive-file tree (`.claude/**`, `~/.claude/**`, `~/.ssh/**`)
+3. The skill emits `Exit to user:` expecting a human follow-up action (observations that need judgment, scope confirmations, re-invocations)
+4. The skill interprets natural-language input that needs user confirmation before execution
+5. The test requires multi-turn back-and-forth where the parent session steers decisions
+
+If none apply, the concern routes to `project` — pure deterministic execution, MCP tool calls, bash, structured output, fresh-install semantics.
+
+### Pick `project` directly when testing
+
+- Fresh-install behavior — `install_deps.sh`, plugin initialization, navigator DB creation, paths.csv aggregation
 - Dependency self-installation — `requirements.txt` changes pulled into the venv on SessionStart
 - Cross-session behavior — anything that depends on a clean session start rather than an in-flight session
 - CLI output and exit codes — `<plugin>-run`, shell invocations, deterministic skill outputs
 - PATH resolution — plugin wrapper scripts against the marketplace cache layout
+- Non-interactive skills: `<plugin>:navigator` (scan + MCP tools), `<plugin>:git commit` on clean files, `<plugin>:pdf`/`<plugin>:md-to-pdf`
 
-**Pick `worktree` when testing:**
+### Pick `worktree` directly when testing
 
-- Skills that require user permission prompts or `AskUserQuestion`
-- Writes to `.claude/**` (log entries, deployed conventions, settings) that hit Claude Code's sensitive-file gate
-- Multi-turn interactions where the parent session steers the test through decisions
+- Skills that use `AskUserQuestion` — `<plugin>:setup guided`, permissions subflow
+- Skills that write to `.claude/**` — `<plugin>:log`, defect auto-application in audit skills
+- Skills that `Exit to user:` expecting follow-up — `<plugin>:audit-governance`, `<plugin>:audit-static`, observations-pending flows
+- Multi-turn interactions where the parent session approves / steers
 - Changes to repository state that shouldn't affect the main working tree — destructive refactors, commit-graph experiments
 
-Neither route is a replacement for the other. Fresh-install tests cannot pause for user input; interactive tests cannot exercise SessionStart cold-start behavior. Pick the route that matches the capability under test.
+### Pick `test` when
+
+- Validating a change end-to-end and either don't know or don't care which substrate each concern fits
+- A single change touches both fresh-install and interactive surface area — `test` classifies concerns automatically and runs both buckets in sequence
+
+Neither direct route is a replacement for the other. Fresh-install tests cannot pause for user input; interactive tests cannot exercise SessionStart cold-start behavior. `test` is the union — not a shortcut to skip classification, but a wrapper that keeps both halves visible.
 
 ## Rules
 
 - Never create, modify, or delete outside the sandbox substrate — the invoking project is never touched
 - Never proceed with creation until user has confirmed the plan — presenting the plan is not authorization to execute
-- Cleanup operates on the parent project's namespace only — matches `<parent>-test-*` siblings and worktrees under `.claude/worktrees/`; never touches unrelated directories
-- `project` verb testing requires `/checkpoint` first — the spawned `claude -p` subprocess inherits PATH from the harness, and PATH resolves `<plugin>-run` binaries against the marketplace-cached install, not `--plugin-dir`. Reliable plugin-behavior tests need the marketplace version to reflect current commits; `--plugin-dir` alone is insufficient because PATH lookup shadows it with older cached versions
-- Empty description is a valid invocation for `project` and `worktree` — skill asks what to test instead of guessing
+- Cleanup scans only the parent project's namespace — siblings matching `<parent>-test-*` and all non-main worktrees reported by `git worktree list`; never touches unrelated directories
+- `project` verb and the project bucket of `test` require `/checkpoint` first — the spawned `claude -p` subprocess inherits PATH from the harness, and PATH resolves `<plugin>-run` binaries against the marketplace-cached install, not `--plugin-dir`. Reliable plugin-behavior tests need the marketplace version to reflect current commits; `--plugin-dir` alone is insufficient because PATH lookup shadows it with older cached versions
+- Empty description is a valid invocation for `project`, `worktree`, and `test` — skill asks what to test instead of guessing
+- `test` classifies concerns strictly by the Interactivity criterion — if a concern could plausibly fit either bucket, surface the ambiguity to the user before proceeding rather than routing silently
 
 ## Workflow
 
 1. If not $ARGUMENTS: Exit to user: skill description and argument-hint
 
-> Verb dispatch — project creates a sibling, worktree creates a branch checkout, cleanup removes either.
+> Verb dispatch — project creates a sibling, worktree creates a branch checkout, test routes concerns to both substrates, cleanup removes what remains.
 
 2. If {verb} is `project`:
     1. Call: Project
 3. Else if {verb} is `worktree`:
     1. Call: Worktree
-4. Else if {verb} is `cleanup`:
+4. Else if {verb} is `test`:
+    1. Call: Test
+5. Else if {verb} is `cleanup`:
     1. Call: Cleanup
-5. Else: Exit to user: unrecognized verb {verb} — expected project, worktree, or cleanup
+6. Else: Exit to user: unrecognized verb {verb} — expected project, worktree, test, or cleanup
 
 ## Project
 
@@ -145,6 +168,58 @@ Neither route is a replacement for the other. Fresh-install tests cannot pause f
 14. Error Handling:
     1. Unblock push — bash: `git config --unset remote.origin.pushurl`
     2. Exit to user: worktree sandbox failed — check output for details
+
+## Test
+
+> Classify a comprehensive test description into project-bucket and worktree-bucket concerns per the Interactivity criterion, present a combined plan, execute both substrates, and compile a unified report. Use when validating an end-to-end change that touches both fresh-install and interactive surface area.
+
+1. {description} = remaining arguments after the verb
+2. If {description} is empty: ask user what they want to test end-to-end — AskUserQuestion or free-text prompt
+3. Verify working tree is clean and main is pushed — bash: `git status --short`
+    1. If uncommitted changes exist: Exit to user: `test` routes to the `project` bucket which requires `/checkpoint` first; run `/checkpoint` then re-invoke
+4. Classify the description into concerns. For each concern, evaluate the Interactivity criterion (see Route Selection):
+    1. {project-bucket} = concerns that route to `project` — deterministic, fresh-install, no user prompts, no `.claude/**` writes, no `Exit to user:` follow-ups
+    2. {worktree-bucket} = concerns that route to `worktree` — anything matching any of the five criterion questions
+5. Draft the combined plan:
+    1. {project-plan} = project-bucket setup-steps, invocation for `claude -p`, and verification — following the Project workflow shape
+    2. {worktree-plan} = worktree-bucket changes (if any), agent instructions, and verification — following the Worktree workflow shape
+6. Present the combined plan — show {description}, the per-concern classification, {project-plan}, {worktree-plan}. Highlight any concern that's ambiguous and ask the user which bucket it belongs in before proceeding.
+7. AskUserQuestion with options: `["Proceed", "Adjust", "Cancel"]`
+8. If cancel: Exit to user: test cancelled
+9. If adjust: take user's refinements, update plan, Go to step 6. Present the combined plan
+10. Execute project bucket (if {project-bucket} is non-empty):
+    1. {parent-project} = basename of current project directory
+    2. {parent-dir} = parent directory of current project
+    3. {topic} = concise kebab-case slug derived from {description}
+    4. {sandbox-path} = `{parent-dir}/{parent-project}-test-{topic}`
+    5. bash: `mkdir -p {sandbox-path}`
+    6. bash: `git -C {sandbox-path} init`
+    7. Apply {project-plan}.setup-steps — create or copy fixture files
+    8. bash: `env -C {sandbox-path} claude -p "{project-plan}.invocation"`
+    9. {project-output} = captured stdout
+11. Execute worktree bucket (if {worktree-bucket} is non-empty):
+    1. Block push — bash: `git config remote.origin.pushurl "file:///dev/null"`
+    2. Spawn (isolation: "worktree"):
+        1. If {worktree-plan}.changes: apply the described changes to files in the worktree
+        2. Follow {worktree-plan}.instructions — invoke skills, exercise the target workflow
+        3. Return to caller:
+            - Test output
+            - Verification outcome against {worktree-plan}.verification — pass, fail, inconclusive
+            - Worktree path and branch (if changes were committed and the worktree persists)
+    3. {worktree-output} = returned content
+    4. Unblock push — bash: `git config --unset remote.origin.pushurl`
+12. Compile results:
+    - Summary table: Bucket | Concern | Outcome | Evidence
+    - Per-bucket digest: {project-output} summarized with filesystem and DB evidence preserved; {worktree-output} summarized with filesystem and interaction evidence preserved
+    - Cross-cutting observations: anything that spans both buckets (naming mismatches, doc drift, unexpected behavior not tied to a single concern)
+13. Present the compiled report to the user
+14. Ask about cleanup — AskUserQuestion with options: `["Remove sandbox project now", "Keep for inspection"]` (worktree auto-cleans if no agent commits; persisted worktrees appear in the next `cleanup` invocation)
+15. If remove and project bucket ran: bash: `rm -rf {sandbox-path}`
+16. Return to caller
+
+17. Error Handling:
+    1. Unblock push — bash: `git config --unset remote.origin.pushurl`
+    2. Exit to user: test sandbox failed — check output for which bucket failed and the cause
 
 ## Cleanup
 
