@@ -21,7 +21,7 @@ def _plugin_name() -> str:
 
 
 def _templates_dir() -> Path:
-    return plugin.get_plugin_root() / "lib" / CATEGORY / "templates"
+    return plugin.get_plugin_root() / "systems" / CATEGORY / "templates"
 
 
 def _target_dir() -> Path:

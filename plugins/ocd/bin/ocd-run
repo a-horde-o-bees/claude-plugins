@@ -22,9 +22,10 @@
 # Venv discovery order:
 #   1. $CLAUDE_PLUGIN_DATA/venv/bin/python3 (running inside a hook/MCP context)
 #   2. Persisted path at $plugin_root/.venv-python (written by install_deps.sh)
-#   3. Derived from Claude Code's cache/data naming (installed mode)
-#   4. $plugin_root/venv/bin/python3 (inline/dev mode)
-#   5. System python3 (fallback; works for stdlib-only systems)
+#   3. Derived from Claude Code's cache/data naming (marketplace install)
+#   4. Derived from <plugin>-inline data dir (--plugin-dir dev mode)
+#   5. $plugin_root/venv/bin/python3 (self-contained dev checkout)
+#   6. System python3 (fallback; works for stdlib-only systems)
 
 set -euo pipefail
 
@@ -63,12 +64,24 @@ if [[ -z "$_venv_python" && "$plugin_root" == */plugins/cache/*/* ]]; then
     fi
 fi
 
-# 4. Inline/dev mode: venv inside plugin root
+# 4. --plugin-dir mode: Claude Code writes into <plugin>-inline data dir
+#    when a plugin is loaded via --plugin-dir rather than marketplace.
+#    CLAUDE_PLUGIN_DATA is set for hooks/MCP but not for agent Bash tool
+#    subprocesses, so the wrapper reconstructs the path from HOME.
+if [[ -z "$_venv_python" ]]; then
+    plugin_name="$(basename "$plugin_root")"
+    candidate="$HOME/.claude/plugins/data/${plugin_name}-inline/venv/bin/python3"
+    if [[ -x "$candidate" ]]; then
+        _venv_python="$candidate"
+    fi
+fi
+
+# 5. Self-contained dev checkout: venv inside plugin root
 if [[ -z "$_venv_python" && -x "$plugin_root/venv/bin/python3" ]]; then
     _venv_python="$plugin_root/venv/bin/python3"
 fi
 
-# 5. System fallback
+# 6. System fallback
 if [[ -z "$_venv_python" ]]; then
     _venv_python="$(command -v python3 || true)"
 fi

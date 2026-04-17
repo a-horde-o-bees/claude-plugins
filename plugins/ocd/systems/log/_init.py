@@ -15,19 +15,16 @@ from pathlib import Path
 import plugin
 
 
-CATEGORY = "logs"
-
-
 def _templates_dir() -> Path:
-    return plugin.get_plugin_root() / "lib" / CATEGORY / "templates"
+    return plugin.get_plugin_root() / "systems" / "log" / "templates"
 
 
 def _target_dir() -> Path:
-    return plugin.get_project_dir() / ".claude" / CATEGORY
+    return plugin.get_project_dir() / ".claude" / "logs"
 
 
 def _deployed_rel() -> str:
-    return f".claude/{CATEGORY}"
+    return ".claude/logs"
 
 
 def init(force: bool = False) -> dict:

@@ -39,7 +39,7 @@ def _get_both_settings() -> dict:
 
 def _recommended_settings_path() -> Path:
     """Path to the permissions subsystem's recommended-patterns config."""
-    return plugin.get_plugin_root() / "lib" / "permissions" / "settings.json"
+    return plugin.get_plugin_root() / "systems" / "permissions" / "settings.json"
 
 
 def _get_recommended_patterns() -> set[str]:
