@@ -150,11 +150,11 @@ Consumers within this plugin: the `convention_gate` hook imports `subsystems.gov
 All execution flows through `run.py`, which adds the plugin root to `sys.path` and runs the target module via `runpy.run_module`:
 
 ```
-python3 run.py hooks.auto_approval          # Hook invocation
-python3 run.py hooks.convention_gate        # Hook invocation
-python3 run.py plugin init [--force]        # Init orchestration
-python3 run.py plugin status                # Status reporting
-python3 run.py subsystems.navigator scan .             # Navigator CLI (operational)
+ocd hooks.auto_approval          # Hook invocation
+ocd hooks.convention_gate        # Hook invocation
+ocd plugin init [--force]        # Init orchestration
+ocd plugin status                # Status reporting
+ocd subsystems.navigator scan .             # Navigator CLI (operational)
 ```
 
 Hooks are invoked by Claude Code via `hooks.json` configuration. Navigator agent-facing operations are exposed via MCP server (`subsystems/navigator/server.py`); CLI retained for operational commands (init, scan, governance-load). No shebangs or execute permissions — all scripts run via `python3` interpreter prefix.

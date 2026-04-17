@@ -41,7 +41,7 @@ Accepted arguments:
 
 1. If not --target: Exit to user: skill description and argument-hint
 2. If {target} starts with `/`:
-    1. {resolved} = bash: `python3 ${CLAUDE_PLUGIN_ROOT}/run.py subsystems.navigator resolve-skill {target}`
+    1. {resolved} = bash: `ocd subsystems.navigator resolve-skill {target}`
     2. If exit code 1: Exit to user: skill not found
     3. {audit-paths} = [{resolved}]
 3. Else if {target} is an existing file or directory path:

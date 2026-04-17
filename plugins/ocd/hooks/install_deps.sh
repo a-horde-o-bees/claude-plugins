@@ -25,6 +25,9 @@ fi
 if uv venv --seed "$venv_dir" --quiet \
     && "$venv_dir/bin/pip" install -q -r "$requirements"; then
     cp "$requirements" "$cached"
+    # Persist venv python path so the bin/ocd wrapper can find it without
+    # relying on CLAUDE_PLUGIN_DATA (which isn't exposed in agent shells).
+    echo "$venv_dir/bin/python3" > "$CLAUDE_PLUGIN_ROOT/.venv-python"
 else
     rm -f "$cached"
     exit 1

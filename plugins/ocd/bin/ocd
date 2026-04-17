@@ -1,0 +1,74 @@
+#!/bin/bash
+# ocd — PATH-accessible entry to the plugin's Python dispatcher.
+#
+# Claude Code adds each installed plugin's bin/ directory to PATH, so this
+# script becomes `ocd` in any shell Claude Code runs. It resolves the
+# plugin venv's python3 (which has weasyprint, mcp, etc. installed) and
+# execs run.py with whatever arguments were passed. Agents can call:
+#
+#     ocd subsystems.navigator scan .
+#     ocd subsystems.pdf generate --src foo.md
+#
+# without needing to know CLAUDE_PLUGIN_ROOT, CLAUDE_PLUGIN_DATA, or where
+# the venv actually lives.
+#
+# Venv discovery order:
+#   1. $CLAUDE_PLUGIN_DATA/venv/bin/python3 (running inside a hook/MCP context)
+#   2. Persisted path at $plugin_root/.venv-python (written by install_deps.sh)
+#   3. Derived from Claude Code's cache/data naming (installed mode)
+#   4. $plugin_root/venv/bin/python3 (inline/dev mode)
+#   5. System python3 (fallback; works for stdlib-only subsystems)
+
+set -euo pipefail
+
+script_real="$(readlink -f "$0")"
+plugin_root="$(dirname "$(dirname "$script_real")")"
+
+_venv_python=""
+
+# 1. Env var set by Claude Code during hook/MCP invocation
+if [[ -n "${CLAUDE_PLUGIN_DATA:-}" && -x "$CLAUDE_PLUGIN_DATA/venv/bin/python3" ]]; then
+    _venv_python="$CLAUDE_PLUGIN_DATA/venv/bin/python3"
+fi
+
+# 2. Persisted path written by install_deps.sh
+if [[ -z "$_venv_python" && -f "$plugin_root/.venv-python" ]]; then
+    candidate="$(cat "$plugin_root/.venv-python")"
+    if [[ -x "$candidate" ]]; then
+        _venv_python="$candidate"
+    fi
+fi
+
+# 3. Derive from Claude Code's installed layout
+#    cache path: ~/.claude/plugins/cache/<author>/<plugin>/<version>/
+#    data path:  ~/.claude/plugins/data/<plugin>-<author>/venv/
+if [[ -z "$_venv_python" && "$plugin_root" == */plugins/cache/*/* ]]; then
+    version_dir="$plugin_root"
+    plugin_dir="$(dirname "$version_dir")"
+    author_dir="$(dirname "$plugin_dir")"
+    cache_dir="$(dirname "$author_dir")"
+    plugins_dir="$(dirname "$cache_dir")"
+    plugin_name="$(basename "$plugin_dir")"
+    author_name="$(basename "$author_dir")"
+    candidate="$plugins_dir/data/${plugin_name}-${author_name}/venv/bin/python3"
+    if [[ -x "$candidate" ]]; then
+        _venv_python="$candidate"
+    fi
+fi
+
+# 4. Inline/dev mode: venv inside plugin root
+if [[ -z "$_venv_python" && -x "$plugin_root/venv/bin/python3" ]]; then
+    _venv_python="$plugin_root/venv/bin/python3"
+fi
+
+# 5. System fallback
+if [[ -z "$_venv_python" ]]; then
+    _venv_python="$(command -v python3 || true)"
+fi
+
+if [[ -z "$_venv_python" ]]; then
+    echo "ocd: no python3 found" >&2
+    exit 127
+fi
+
+exec "$_venv_python" "$plugin_root/run.py" "$@"

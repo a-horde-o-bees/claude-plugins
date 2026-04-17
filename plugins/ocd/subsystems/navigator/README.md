@@ -24,15 +24,15 @@ Functions return structured data (dicts, lists). Formatting for display is the c
 ### As a CLI
 
 ```
-python3 ${CLAUDE_PLUGIN_ROOT}/run.py subsystems.navigator describe <path>
-python3 ${CLAUDE_PLUGIN_ROOT}/run.py subsystems.navigator list [<path>] [--pattern <glob> ...]
-python3 ${CLAUDE_PLUGIN_ROOT}/run.py subsystems.navigator search --pattern <term>
-python3 ${CLAUDE_PLUGIN_ROOT}/run.py subsystems.navigator scan [<path>]
-python3 ${CLAUDE_PLUGIN_ROOT}/run.py subsystems.navigator get-undescribed
-python3 ${CLAUDE_PLUGIN_ROOT}/run.py subsystems.navigator set <path> --description "..."
-python3 ${CLAUDE_PLUGIN_ROOT}/run.py subsystems.navigator resolve-skill <name>
-python3 ${CLAUDE_PLUGIN_ROOT}/run.py subsystems.navigator list-skills
-python3 ${CLAUDE_PLUGIN_ROOT}/run.py subsystems.navigator init [--db <path>]
+ocd subsystems.navigator describe <path>
+ocd subsystems.navigator list [<path>] [--pattern <glob> ...]
+ocd subsystems.navigator search --pattern <term>
+ocd subsystems.navigator scan [<path>]
+ocd subsystems.navigator get-undescribed
+ocd subsystems.navigator set <path> --description "..."
+ocd subsystems.navigator resolve-skill <name>
+ocd subsystems.navigator list-skills
+ocd subsystems.navigator init [--db <path>]
 ```
 
 All commands except `init` auto-scan before execution to ensure fresh data. `--help` on any subcommand shows arguments and output format.

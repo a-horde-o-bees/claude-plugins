@@ -85,7 +85,7 @@ Place these argument-resolution steps at the top of Workflow:
 
 2. If ({target} starts with `/` and contains no spaces) or ({target} is a path ending with `/SKILL.md`):
     1. If {target} starts with `/`:
-        1. bash: `python3 ${CLAUDE_PLUGIN_ROOT}/run.py subsystems.navigator resolve-skill {target}`
+        1. bash: `ocd subsystems.navigator resolve-skill {target}`
         2. If exit code 1: Exit to user: skill not found
     2. {target-directory} = parent of resolved SKILL.md path
 
