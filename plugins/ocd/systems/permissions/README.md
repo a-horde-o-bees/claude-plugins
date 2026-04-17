@@ -14,7 +14,7 @@ Invoked via the plugin CLI:
 
 ```
 ocd-run setup permissions status               # report both scopes' permission state
-ocd-run setup permissions install --scope <x>  # deploy recommended patterns to <x>
+ocd-run setup permissions deploy --scope <x>  # deploy recommended patterns to <x>
 ocd-run setup permissions analyze              # cross-scope health check
 ocd-run setup permissions clean --scope <x>    # remove recommendations redundant with other scope
 ```

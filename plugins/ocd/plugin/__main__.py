@@ -19,7 +19,7 @@ def main() -> None:
 
     init_p = commands.add_parser(
         "init",
-        help="Deploy every subsystem — rules, conventions, patterns, logs, navigator",
+        help="Deploy every subsystem — rules, conventions, patterns, log, navigator",
     )
     init_p.add_argument(
         "--force", action="store_true",
@@ -50,11 +50,11 @@ def main() -> None:
         help="Structured report of both scopes' permission state",
     )
 
-    install_perm_p = perm_commands.add_parser(
-        "install",
+    deploy_perm_p = perm_commands.add_parser(
+        "deploy",
         help="Deploy recommended patterns to one scope",
     )
-    install_perm_p.add_argument(
+    deploy_perm_p.add_argument(
         "--scope", required=True, choices=["user", "project"],
         help="Target scope for deployment",
     )
@@ -86,8 +86,8 @@ def main() -> None:
         perm = importlib.import_module("systems.permissions")
         if args.perm_command == "status":
             perm.run_permissions_status()
-        elif args.perm_command == "install":
-            perm.run_permissions_install(scope=args.scope)
+        elif args.perm_command == "deploy":
+            perm.run_permissions_deploy(scope=args.scope)
         elif args.perm_command == "analyze":
             perm.run_permissions_analyze()
         elif args.perm_command == "clean":

@@ -2,7 +2,7 @@
 
 Top-level run_init and run_status entry points that discover every
 systems/ entry and dispatch uniformly to each subsystem's _init.py.
-Content domains (rules, conventions, patterns, logs) and operational
+Content domains (rules, conventions, patterns, log) and operational
 systems (navigator, permissions) follow the same contract.
 """
 

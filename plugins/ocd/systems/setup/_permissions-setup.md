@@ -13,7 +13,7 @@ Optional subflow invoked from `/ocd:setup guided` when the user opts into permis
 3. Ask scope — AskUserQuestion with options: `["Project scope", "User scope"]`
 4. If user chose "Project scope": {scope} = project
 5. Else: {scope} = user
-6. Install — bash: `ocd-run setup permissions install --scope {scope}`
+6. Install — bash: `ocd-run setup permissions deploy --scope {scope}`
 7. Present install results
 8. Analyze — bash: `ocd-run setup permissions analyze`
 9. If redundancy count > 0:

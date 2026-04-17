@@ -43,12 +43,12 @@ Manage ocd plugin infrastructure — deploy governance files and systems, report
 ### Report
 
 - Plugin version
-- Per-subsystem deployment and operational status (rules, conventions, patterns, logs, navigator, permissions)
+- Per-subsystem deployment and operational status (rules, conventions, patterns, log, navigator, permissions)
 - Skills list
 
 ## Init
 
-> Deploy every subsystem — rules, conventions, patterns, logs, navigator. Safe by default — only deploys absent files, skips divergent. `--force` overwrites divergent files with plugin defaults.
+> Deploy every subsystem — rules, conventions, patterns, log, navigator. Safe by default — only deploys absent files, skips divergent. `--force` overwrites divergent files with plugin defaults.
 
 1. If --force: bash: `ocd-run setup init --force`
 2. Else: bash: `ocd-run setup init`

@@ -1,6 +1,6 @@
 """Logs subsystem.
 
-Deploy log-type templates from systems/logs/templates/<type>/ into
+Deploy log-type templates from systems/log/templates/<type>/ into
 .claude/logs/<type>/ — unnamespaced by plugin. Each plugin contributes
 log types to a shared project-level pool; the user authors log entries
 alongside the templates, so deployment uses keep_orphans to preserve

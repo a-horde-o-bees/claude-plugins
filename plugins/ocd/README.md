@@ -51,7 +51,7 @@ Always-on agent behavior guidance deployed to `.claude/rules/ocd/` via `/ocd:set
 |------|---------|
 | `design-principles.md` | Foundational principles governing all artifacts and agent behavior |
 | `workflow.md` | Execution discipline: working directory, agents, testing |
-| `system-documentation.md` | README and architecture.md requirements per system |
+| `system-docs.md` | README and architecture.md requirements per system |
 | `process-flow-notation.md` | Structured programming notation for agent workflows |
 | `log-routing.md` | When and how to capture decisions, friction, problems, and ideas as log entries |
 

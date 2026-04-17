@@ -69,7 +69,7 @@ If a section lacks a well-formed purpose statement (not a single paragraph conve
 
 ## Systems Include Skills
 
-Skills are systems. They use SKILL.md as their agent-facing procedure doc (instead of CLAUDE.md). The split rules from `system-documentation.md` apply uniformly — a skill grows an architecture.md sibling only when its content starts containing architectural detail that shouldn't be in SKILL.md. No arbitrary complexity trigger.
+Skills are systems. They use SKILL.md as their agent-facing procedure doc (instead of CLAUDE.md). The split rules from `system-docs.md` apply uniformly — a skill grows an architecture.md sibling only when its content starts containing architectural detail that shouldn't be in SKILL.md. No arbitrary complexity trigger.
 
 Required docs per system kind:
 

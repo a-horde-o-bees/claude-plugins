@@ -185,9 +185,9 @@ def run_permissions_status() -> None:
         print("cross-scope: no redundancy")
 
 
-def run_permissions_install(scope: str) -> None:
+def run_permissions_deploy(scope: str) -> None:
     """Deploy recommended patterns to exactly one scope."""
-    print("Permissions Install")
+    print("Permissions Deploy")
     print()
     print(f"scope: {scope}")
     _merge_permissions(scope)

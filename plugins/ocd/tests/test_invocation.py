@@ -81,13 +81,13 @@ class TestPermissionsCLI:
         assert "project" in result.stdout
         assert "user" in result.stdout
 
-    def test_install_requires_scope(self) -> None:
-        result = run("plugin", "permissions", "install")
+    def test_deploy_requires_scope(self) -> None:
+        result = run("plugin", "permissions", "deploy")
         assert result.returncode != 0
 
-    def test_install_exits_zero(self, tmp_path: Path) -> None:
+    def test_deploy_exits_zero(self, tmp_path: Path) -> None:
         result = run(
-            "plugin", "permissions", "install", "--scope", "project",
+            "plugin", "permissions", "deploy", "--scope", "project",
             env={"CLAUDE_PROJECT_DIR": str(tmp_path)},
         )
         assert result.returncode == 0, result.stderr

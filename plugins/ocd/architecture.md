@@ -75,7 +75,7 @@ Template files in `systems/rules/templates/` deploy to `.claude/rules/` via `/oc
 |------|-------|
 | `design-principles.md` | Foundational principles governing all artifacts and agent behavior |
 | `workflow.md` | Working directory, agents, testing — execution discipline for working in this project |
-| `system-documentation.md` | README and architecture.md requirements per system, including the Subsystem Doc Consolidation rule and purpose-statement propagation |
+| `system-docs.md` | README and architecture.md requirements per system, including the Subsystem Doc Consolidation rule and purpose-statement propagation |
 | `process-flow-notation.md` | Structured programming notation for skill workflows |
 | `log-routing.md` | When and how to capture decisions, friction, problems, and ideas as log entries |
 | `markdown.md` | Base content standards for markdown files |
@@ -84,7 +84,7 @@ Rules use the template-deployed model: templates in `systems/rules/templates/` a
 
 ## Skills
 
-Skill packages live under `systems/` (declared via `plugin.json`'s `skills` field). Each contains at minimum a `SKILL.md` describing the workflow. Some include extracted component files (`_*.md`) for subflows that only run on optional execution paths. Per the Subsystem Doc Consolidation rule in `system-documentation.md`, skills' operational reference IS `SKILL.md` — no separate README or architecture is required; purpose statements below are propagated from each skill's frontmatter `description` field.
+Skill packages live under `systems/` (declared via `plugin.json`'s `skills` field). Each contains at minimum a `SKILL.md` describing the workflow. Some include extracted component files (`_*.md`) for subflows that only run on optional execution paths. Per the Subsystem Doc Consolidation rule in `system-docs.md`, skills' operational reference IS `SKILL.md` — no separate README or architecture is required; purpose statements below are propagated from each skill's frontmatter `description` field.
 
 **Released skills** (stable, shipped in v0.1.0):
 
@@ -125,7 +125,7 @@ Python packages consumed as imports. Each is a subsystem with its own README.md 
 | `rules` | `systems/rules/` | Rules subsystem — deploys markdown rule templates to `.claude/rules/<plugin>/` as always-on agent context. | [README](systems/rules/README.md) |
 | `conventions` | `systems/conventions/` | Conventions subsystem — deploys convention templates to `.claude/conventions/<plugin>/` for file-governance via `governed_by` frontmatter. | [README](systems/conventions/README.md) |
 | `patterns` | `systems/patterns/` | Patterns subsystem — deploys reusable workflow pattern templates to `.claude/patterns/<plugin>/`; referenced by skills, not auto-loaded. | [README](systems/patterns/README.md) |
-| `logs` | `systems/logs/` | Logs subsystem — deploys per-type templates to the shared `.claude/logs/<type>/` pool (unnamespaced; contributes to project-level log types). | [README](systems/logs/README.md) |
+| `logs` | `systems/log/` | Logs subsystem — deploys per-type templates to the shared `.claude/logs/<type>/` pool (unnamespaced; contributes to project-level log types). | [README](systems/log/README.md) |
 | `permissions` | `systems/permissions/` | Permissions subsystem — reports auto-approve coverage; specialized CLI ops (`status`, `install`, `analyze`, `clean`) manage recommended patterns across project and user scopes. | [README](systems/permissions/README.md) |
 | `governance` | `systems/governance/` | Convention and rule governance library: match files to applicable governance entries, list entries by kind, and compute the dependency-ordered level grouping. Reads directly from disk on every call — no database, no caching. | [README](systems/governance/README.md) · [architecture.md](systems/governance/architecture.md) |
 | `navigator` | `systems/navigator/` | Project structure index backed by SQLite. Maintains a queryable directory of project files and directories with human-written descriptions agents use to decide whether to open a file. | [README](systems/navigator/README.md) · [architecture.md](systems/navigator/architecture.md) |
