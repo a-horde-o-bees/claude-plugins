@@ -68,22 +68,25 @@ Common argument patterns with established infrastructure. These are not exhausti
 
 | Argument | Role | Description |
 |----------|------|-------------|
-| `--target` | Gate + subject | Required flag carrying target value; presence triggers execution, value identifies what to operate on; without it, skill emits its description and argument-hint to the user |
+| `<target>` (positional) | Subject | The thing the skill operates on — a path, a skill reference, a project name, etc. Preferred over `--target` when the skill has a single required subject; the skill name establishes context, the positional carries the value. |
 | `[--pattern <glob> ...]` | Filter | Passthrough to navigator for file enumeration; repeatable for OR-combined matching; ignored when target is single file |
 | `[--all]` | Boundary override | Includes `.claude/` files in target enumeration; without it, `.claude/` excluded by default |
 
+Choosing between positional and flag: prefer positional for a single required subject; use `--target` only when the flag's presence is a deliberate confirmation gate or when the skill accepts multiple named inputs that need disambiguation. See Positional vs Flag in `process-flow-notation.md`.
+
 ### Target Resolution
 
-`{target}` is evaluated against deterministic matches first. Unmatched values fall through to natural language interpretation where skill executor derives adjustments and confirms with user before proceeding.
+`{target}` is evaluated against deterministic matches first. Unmatched values fall through to natural language interpretation where the skill executor derives adjustments and confirms with the user before proceeding.
 
 Place these argument-resolution steps at the top of Workflow:
 
 ```
-1. If not --target: Exit to user: skill description and argument-hint
+1. If not $ARGUMENTS: Exit to user: skill description and argument-hint
+2. {target} = $ARGUMENTS
 
 > Check if target is a skill — slash-name or direct SKILL.md path
 
-2. If ({target} starts with `/` and contains no spaces) or ({target} is a path ending with `/SKILL.md`):
+3. If ({target} starts with `/` and contains no spaces) or ({target} is a path ending with `/SKILL.md`):
     1. If {target} starts with `/`:
         1. bash: `ocd-run navigator resolve-skill {target}`
         2. If exit code 1: Exit to user: skill not found
@@ -91,11 +94,11 @@ Place these argument-resolution steps at the top of Workflow:
 
 > Not a skill — add domain-specific deterministic branches here (e.g., `project`, `self`)
 
-3. Else if {target} is file path:
+4. Else if {target} is file path:
     1. {target-file} = {target}
-4. Else if {target} is directory path:
+5. Else if {target} is directory path:
     1. {target-directory} = {target}
-5. Else:
+6. Else:
     1. Interpret {target} as natural language goal — derive adjustments, assign variables, present for user confirmation
 ```
 

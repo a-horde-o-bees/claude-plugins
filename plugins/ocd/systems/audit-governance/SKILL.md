@@ -1,7 +1,7 @@
 ---
 name: audit-governance
 description: Audit the rules and conventions governance chain foundations-first, one level at a time. A spawned agent audits each level; the skill executor classifies findings, applies defects, and exits to user when observations need judgment. User selects which level to start at on each invocation; convergence is user-driven.
-argument-hint: "--target project"
+argument-hint: ""
 allowed-tools:
   - Read
   - Edit
@@ -25,9 +25,7 @@ The skill directory carries two audit workflow variants — `_audit-workflow-A.m
 
 Full governance chain discovered via navigator's order command. Rules and conventions form a closed set with declared `governed_by` dependencies that navigator topologically sorts into levels.
 
-Accepted arguments:
-
-- `--target` — required; must be `project`
+Accepted arguments: none — the skill operates on the current project.
 
 ## Rules
 
@@ -40,17 +38,15 @@ Accepted arguments:
 
 ## Route
 
-1. If not --target: Exit to user: skill description and argument-hint
-2. If {target} is not `project`: Exit to user: target must be `project`
-3. Discover governance levels — bash: `CLAUDE_PROJECT_DIR=$(pwd) ocd-run governance order --json`
-4. If result has dangling references:
+1. Discover governance levels — bash: `CLAUDE_PROJECT_DIR=$(pwd) ocd-run governance order --json`
+2. If result has dangling references:
     1. Present dangling references to user — which file declares each missing governor
     2. Exit to user: fix offending `governed_by` frontmatter and re-invoke
-5. {levels} = levels array from the result
-6. Present levels to user — for each level, show the level number (0..N-1), the file count, and the full list of file paths at that level
-7. Ask user which level to start at — AskUserQuestion with options 0..N-1; first option (level 0) is the default
-8. {start-level} = user's selection
-9. Dispatch Workflow
+3. {levels} = levels array from the result
+4. Present levels to user — for each level, show the level number (0..N-1), the file count, and the full list of file paths at that level
+5. Ask user which level to start at — AskUserQuestion with options 0..N-1; first option (level 0) is the default
+6. {start-level} = user's selection
+7. Dispatch Workflow
 
 ## Workflow
 

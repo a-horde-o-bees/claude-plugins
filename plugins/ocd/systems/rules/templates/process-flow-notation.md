@@ -191,6 +191,22 @@ Angle brackets `<>` denote required values. Square brackets `[]` denote optional
 --required-flag <value> [--optional-flag <value> ...] [--boolean-flag]
 ```
 
+### Verb-Flag Pairing
+
+When flags apply to specific verbs, pair them inline inside the choice rather than listing them at the top level. The top-level form loses the association — readers can't tell which verb a flag belongs to or whether it's required for that verb.
+
+| Shape | Example |
+|-------|---------|
+| Flag required for one verb only | `<verb1 \| verb2 --flag <value>>` |
+| Flag optional on one verb only | `<verb1 \| verb2 [--flag <value>]>` |
+| Flag applies to all verbs | `<verb1 \| verb2> --flag <value>` |
+
+Inline pairing communicates at a glance which verb owns the flag and whether it's required for that verb. Flat listing at the top level implies the flag is universal when it isn't.
+
+### Positional vs Flag
+
+Prefer positional values over flags when the input is a single required subject. `<path>` reads cleaner than `--target <path>` — the skill name already establishes what's being operated on; the flag adds ceremony without semantic value. Use a flag when the skill accepts multiple named inputs that need disambiguation, when the input is genuinely optional and a flag is a natural default gate, or when convention ties the name to established ecosystem meaning (e.g., `--branch`, `--scope`).
+
 ### Reference
 
 **`--flag`** — refers to the flag itself, existence and iteration.

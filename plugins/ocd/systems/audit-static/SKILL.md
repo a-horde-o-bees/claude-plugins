@@ -1,7 +1,7 @@
 ---
 name: audit-static
 description: Audit any path against its governance, best practices, and prior art through holistic static analysis. Produces findings classified as auto-applicable defects or observations requiring user judgment.
-argument-hint: "--target <path | /plugin:skill>"
+argument-hint: "<path | /plugin:skill>"
 allowed-tools:
   - Read
   - Edit
@@ -25,7 +25,7 @@ Target is a single path — a file, a directory, or a skill reference (slash-for
 
 Accepted arguments:
 
-- `--target` — required; path to a file or directory, or a skill reference
+- `{target}` — required positional; path to a file or directory, or a skill reference (slash-form like `/ocd:navigator`)
 
 ## Rules
 
@@ -39,15 +39,16 @@ Accepted arguments:
 
 ## Route
 
-1. If not --target: Exit to user: skill description and argument-hint
-2. If {target} starts with `/`:
+1. If not $ARGUMENTS: Exit to user: skill description and argument-hint
+2. {target} = $ARGUMENTS
+3. If {target} starts with `/`:
     1. {resolved} = bash: `ocd-run navigator resolve-skill {target}`
     2. If exit code 1: Exit to user: skill not found
     3. {audit-paths} = [{resolved}]
-3. Else if {target} is an existing file or directory path:
+4. Else if {target} is an existing file or directory path:
     1. {audit-paths} = [{target}]
-4. Else: Exit to user: {target} not recognized as a skill reference or filesystem path
-5. Dispatch Workflow
+5. Else: Exit to user: {target} not recognized as a skill reference or filesystem path
+6. Dispatch Workflow
 
 ## Workflow
 
