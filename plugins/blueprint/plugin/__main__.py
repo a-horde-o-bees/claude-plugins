@@ -80,10 +80,10 @@ def main() -> None:
     elif args.command == "status":
         run_status(system=args.system)
     elif args.command == "permissions":
-        # Runtime import — permissions lives in subsystems/, discovered via
+        # Runtime import — permissions lives in systems/, discovered via
         # sys.path established by run.py. importlib keeps this consistent with
-        # how orchestration dispatches to subsystems/<subsystem>/_init.py.
-        perm = importlib.import_module("subsystems.permissions")
+        # how orchestration dispatches to systems/<subsystem>/_init.py.
+        perm = importlib.import_module("systems.permissions")
         if args.perm_command == "status":
             perm.run_permissions_status()
         elif args.perm_command == "install":

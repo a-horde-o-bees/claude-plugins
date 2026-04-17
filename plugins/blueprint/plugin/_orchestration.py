@@ -1,9 +1,9 @@
 """Install and list orchestration.
 
 Top-level run_init and run_status entry points that discover every
-subsystems/ entry and dispatch uniformly to each subsystem's _init.py.
+systems/ entry and dispatch uniformly to each subsystem's _init.py.
 Content domains (rules, conventions, patterns, logs) and operational
-subsystems (navigator, permissions) follow the same contract.
+systems (navigator, permissions) follow the same contract.
 """
 
 import importlib
@@ -44,7 +44,7 @@ def run_init(force: bool = False, system: str | None = None) -> None:
     """Install: discover and init every subsystem.
 
     system: when provided, scopes init to one subsystem. Unknown names
-    print an error listing available subsystems.
+    print an error listing available systems.
 
     force: passed through to each subsystem's init(). Destructive semantics
     are defined per-subsystem (typically rebuilds state from scratch).
@@ -66,7 +66,7 @@ def run_init(force: bool = False, system: str | None = None) -> None:
     rules_changed = False
 
     for system_name in target_systems:
-        mod = importlib.import_module(f"subsystems.{system_name}._init")
+        mod = importlib.import_module(f"systems.{system_name}._init")
         result = mod.init(force=force)
         for line in format_section(system_name.capitalize(), result["files"], result.get("extra")):
             print(line)
@@ -100,7 +100,7 @@ def run_status(system: str | None = None) -> None:
     """List: discover and report state for every subsystem.
 
     system: when provided, scopes output to one subsystem. Unknown names
-    print an error listing available subsystems.
+    print an error listing available systems.
     """
     plugin_root = get_plugin_root()
     claude_home = get_claude_home()
@@ -124,7 +124,7 @@ def run_status(system: str | None = None) -> None:
     target_systems = [system] if system is not None else systems
 
     for system_name in target_systems:
-        mod = importlib.import_module(f"subsystems.{system_name}._init")
+        mod = importlib.import_module(f"systems.{system_name}._init")
         result = mod.status()
         for line in format_section(system_name.capitalize(), result["files"], result.get("extra")):
             print(line)

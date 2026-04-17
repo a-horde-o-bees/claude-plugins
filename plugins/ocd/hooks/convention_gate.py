@@ -48,7 +48,7 @@ def main() -> None:
         return
 
     try:
-        from subsystems.governance import governance_match
+        from systems.governance import governance_match
 
         result = governance_match([file_path])
     except Exception:

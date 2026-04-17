@@ -6,8 +6,8 @@
 # plugin venv's python3 (which has weasyprint, mcp, etc. installed) and
 # execs run.py with whatever arguments were passed. Agents can call:
 #
-#     ocd-run subsystems.navigator scan .
-#     ocd-run subsystems.pdf --src foo.md
+#     ocd-run systems.navigator scan .
+#     ocd-run systems.pdf --src foo.md
 #
 # without needing to know CLAUDE_PLUGIN_ROOT, CLAUDE_PLUGIN_DATA, or where
 # the venv actually lives.
@@ -24,7 +24,7 @@
 #   2. Persisted path at $plugin_root/.venv-python (written by install_deps.sh)
 #   3. Derived from Claude Code's cache/data naming (installed mode)
 #   4. $plugin_root/venv/bin/python3 (inline/dev mode)
-#   5. System python3 (fallback; works for stdlib-only subsystems)
+#   5. System python3 (fallback; works for stdlib-only systems)
 
 set -euo pipefail
 
