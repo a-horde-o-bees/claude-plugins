@@ -2,8 +2,8 @@
 
 Reports auto-approve pattern coverage at project and user scopes.
 Install is a no-op at this layer because deploying recommended
-patterns requires an interactive scope choice — the /ocd:plugin
-guided flow drives that via run_permissions_install() directly.
+patterns requires an interactive scope choice — the /ocd:setup
+guided flow drives that via run_permissions_deploy() directly.
 
 Interface contract: init() and status() return
 {"files": [...], "extra": [...]}.

@@ -36,7 +36,7 @@ Add the marketplace and install plugins:
 Restart Claude session so hooks and commands load, then initialize in target project:
 
 ```
-/ocd:plugin install
+/ocd:setup init
 /blueprint:init
 ```
 
@@ -52,14 +52,14 @@ Update plugins after upstream changes:
 After updating, check if deployed rules and conventions need updating:
 
 ```
-/ocd:plugin list
+/ocd:setup status
 /blueprint:status
 ```
 
 If any files show `divergent`, force-update and restart:
 
 ```
-/ocd:plugin install --force
+/ocd:setup init --force
 /blueprint:init --force
 /exit
 claude --continue
@@ -78,7 +78,7 @@ Remove a plugin or the marketplace:
 
 For contributors working on plugin source.
 
-**After cloning, run `/ocd:plugin install` and `/blueprint:init` in the cloned project to deploy local rules, conventions, and databases.** These files are gitignored — every clone initializes its own. Skipping install leaves the working agent without the rules that govern development here, and the plugin databases will be missing.
+**After cloning, run `/ocd:setup init` and `/blueprint:init` in the cloned project to deploy local rules, conventions, and databases.** These files are gitignored — every clone initializes its own. Skipping install leaves the working agent without the rules that govern development here, and the plugin databases will be missing.
 
 Two approaches:
 
@@ -121,14 +121,14 @@ claude --continue
 Check if deployed rules and conventions need updating:
 
 ```
-/ocd:plugin list
+/ocd:setup status
 /blueprint:status
 ```
 
 If any files show `divergent`, force-update and restart:
 
 ```
-/ocd:plugin install --force
+/ocd:setup init --force
 /blueprint:init --force
 /exit
 claude --continue

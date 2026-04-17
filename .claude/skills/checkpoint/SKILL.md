@@ -16,8 +16,8 @@ Bundle the full development checkpoint cycle — commit, push, marketplace refre
 
 ## Workflow
 
-1. Commit — skill: `/ocd:commit`
-2. Push — skill: `/ocd:push --branch main`
+1. Commit — skill: `/ocd:git commit`
+2. Push — skill: `/ocd:git push --branch main`
 3. Marketplace refresh — bash: `claude plugins marketplace update a-horde-o-bees`
 4. Update plugins:
 

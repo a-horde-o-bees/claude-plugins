@@ -12,11 +12,11 @@ Structured competitive research and implementation planning. Bootstraps new proj
 ```
 /plugin install ocd
 /plugin install blueprint
-/ocd:plugin install
+/ocd:setup init
 /blueprint:init
 ```
 
-Restart Claude session after install to load rules. On first session with the plugin enabled, a `SessionStart` hook automatically creates a Python virtual environment and installs required packages. Run `/ocd:plugin list` and `/blueprint:status` to verify both plugins.
+Restart Claude session after install to load rules. On first session with the plugin enabled, a `SessionStart` hook automatically creates a Python virtual environment and installs required packages. Run `/ocd:setup status` and `/blueprint:status` to verify both plugins.
 
 `/blueprint:init` deploys rules and initializes the research database at `blueprint/data/research.db`.
 
