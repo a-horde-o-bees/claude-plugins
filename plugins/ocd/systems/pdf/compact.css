@@ -1218,8 +1218,13 @@ body, .markdown-body {
 }
 
 .markdown-body p {
-  margin-top: 0.6em;
-  margin-bottom: 0.6em;
+  margin-top: 0.75em;
+  margin-bottom: 0.75em;
+}
+
+.markdown-body b,
+.markdown-body strong {
+  font-weight: 500;
 }
 
 .markdown-body ul,
