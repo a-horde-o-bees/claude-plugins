@@ -114,7 +114,7 @@ Released skills (stable, available via `/ocd:` slash commands):
 | `/ocd:plugin install` | Deploy rules, conventions, and skill infrastructure |
 | `/ocd:plugin list` | Report plugin version, deployment state, skill status |
 | `/ocd:log` | Capture decisions, friction, problems, ideas as log entries |
-| `/ocd:md-to-pdf` | Export markdown to PDF with GitHub-style CSS |
+| `/ocd:pdf` | Export markdown to PDF via WeasyPrint with configurable CSS |
 
 In-development skills (present on `main` for dev work, not yet included in the released `v0.1.0` branch):
 
