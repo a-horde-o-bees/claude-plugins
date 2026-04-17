@@ -31,7 +31,7 @@ The skill executor reasons about what the user is testing (from their natural-la
 - Never create, modify, or delete outside the sandbox substrate — the invoking project is never touched
 - Never proceed with creation until user has confirmed the plan — presenting the plan is not authorization to execute
 - Cleanup operates on the parent project's namespace only — matches `<parent>-test-*` siblings and worktrees under `.claude/worktrees/`; never touches unrelated directories
-- Test invocations for plugin work use `claude --plugin-dir <plugin-path>` to load the development copy directly; bypasses marketplace cache
+- `project` verb testing requires `/checkpoint` first — the spawned `claude -p` subprocess inherits PATH from the harness, and PATH resolves `<plugin>-run` binaries against the marketplace-cached install, not `--plugin-dir`. Reliable plugin-behavior tests need the marketplace version to reflect current commits; `--plugin-dir` alone is insufficient because PATH lookup shadows it with older cached versions
 - Empty description is a valid invocation for `project` and `worktree` — skill asks what to test instead of guessing
 
 ## Workflow
@@ -50,36 +50,38 @@ The skill executor reasons about what the user is testing (from their natural-la
 
 ## Project
 
-> Create a sibling project, propose a setup plan for what the user is testing, confirm, execute, report, offer cleanup.
+> Create a sibling project, propose a setup plan for what the user is testing, confirm, execute, report, offer cleanup. Plugin-behavior tests require the marketplace install to reflect current commits — prompt for `/checkpoint` first if the user's last push is ahead of the latest uncommitted work.
 
 1. {description} = remaining arguments after the verb
 2. If {description} is empty: ask user what they want to test — AskUserQuestion or free-text prompt
-3. {parent-project} = basename of current project directory
-4. {parent-dir} = parent directory of current project
-5. {topic} = concise kebab-case slug derived from {description}
-6. {sandbox-path} = `{parent-dir}/{parent-project}-test-{topic}`
-7. Draft test plan:
+3. If the test exercises plugin behavior (install, skills, MCP tools, hooks):
+    1. Verify the working tree is clean and main is pushed — bash: `git status --short`
+    2. If uncommitted changes exist: Exit to user: plugin-behavior sandbox tests require `/checkpoint` first so the marketplace-installed plugin reflects current code; run `/checkpoint` then re-invoke
+4. {parent-project} = basename of current project directory
+5. {parent-dir} = parent directory of current project
+6. {topic} = concise kebab-case slug derived from {description}
+7. {sandbox-path} = `{parent-dir}/{parent-project}-test-{topic}`
+8. Draft test plan:
     1. {setup-steps} = files to create, fixtures to copy from current project, any pre-existing state the test needs
-    2. {claude-flags} = `--plugin-dir <current plugin path>` if testing plugin behavior, else empty — bypasses marketplace cache for fast iteration
-    3. {invocation} = exact `claude -p` prompt to run in {sandbox-path}
-    4. {verification} = what output or filesystem state confirms the test passed
-8. Present plan to user — show {sandbox-path}, {setup-steps}, {invocation}, {claude-flags}, {verification}
-9. AskUserQuestion with options: `["Proceed", "Adjust", "Cancel"]`
-10. If cancel: Exit to user: test cancelled
-11. If adjust: take user's refinements, update plan, Go to step 8. Present plan to user
-12. Execute plan:
+    2. {invocation} = exact `claude -p` prompt to run in {sandbox-path}
+    3. {verification} = what output or filesystem state confirms the test passed
+9. Present plan to user — show {sandbox-path}, {setup-steps}, {invocation}, {verification}
+10. AskUserQuestion with options: `["Proceed", "Adjust", "Cancel"]`
+11. If cancel: Exit to user: test cancelled
+12. If adjust: take user's refinements, update plan, Go to step 9. Present plan to user
+13. Execute plan:
     1. bash: `mkdir -p {sandbox-path}`
     2. bash: `git -C {sandbox-path} init`
     3. Apply {setup-steps} — create or copy fixture files
-    4. bash: `env -C {sandbox-path} claude -p "{invocation}" {claude-flags}`
+    4. bash: `env -C {sandbox-path} claude -p "{invocation}"`
     5. {output} = captured stdout
-13. Present results:
+14. Present results:
     - {output}
     - Filesystem state if relevant (list key files created/modified)
     - Verification outcome against {verification} — pass, fail, or inconclusive
-14. Ask user about cleanup — AskUserQuestion with options: `["Remove sandbox now", "Keep for inspection"]`
-15. If remove: bash: `rm -rf {sandbox-path}`
-16. Return to caller
+15. Ask user about cleanup — AskUserQuestion with options: `["Remove sandbox now", "Keep for inspection"]`
+16. If remove: bash: `rm -rf {sandbox-path}`
+17. Return to caller
 
 ## Worktree
 
