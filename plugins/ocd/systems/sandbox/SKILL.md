@@ -21,8 +21,8 @@ Exercise changes in an isolated test environment — a sibling project for fresh
 
 Testing in isolation uses one of two substrates depending on what's being exercised:
 
-- **Sibling project** (`project` verb) — a brand new directory created at `<parent-project>-test-<topic>/`, separate filesystem, fresh git repo, fresh plugin cache. Tests "from nothing" scenarios: fresh install, bootstrapping, first-time-user behavior.
-- **Git worktree** (`worktree` verb) — a disposable branch checked out at `.claude/worktrees/<topic>/`, shares plugin cache with current session, isolated from main working tree. Tests changes against existing project state without risking the main tree.
+- **Sibling project** (`project` verb) — a brand new directory created at `<parent-project>-test-<topic>/`, separate filesystem, fresh git repo, fresh plugin cache. Tests "from nothing" scenarios: fresh install, bootstrapping, first-time-user behavior. Executed as a `claude -p` subprocess.
+- **Git worktree** (`worktree` verb) — a disposable branch checked out at `.claude/worktrees/<topic>/`, shares plugin cache with current session, isolated from the main working tree. Tests changes against existing project state without risking main. **Executor-driven**: the invoking session drives the test steps directly (using `env -C` for bash calls and explicit worktree paths for file ops) so `AskUserQuestion`, the Agent tool, Skill invocation, and the parent's permission context all remain available. The worktree itself provides filesystem isolation and push blocking, not execution isolation.
 
 The skill executor reasons about what the user is testing (from their natural-language description) and proposes a concrete plan. User confirms or adjusts before any filesystem changes happen. After execution, results are presented; cleanup is offered immediately or deferred until the next `cleanup` invocation.
 
@@ -32,13 +32,15 @@ The verbs pick different execution mechanisms. Each concern under test routes to
 
 | Capability | `project` (external) | `worktree` (internal) |
 |---|---|---|
-| Mechanism | Fresh `claude -p` subprocess | In-session agent via `Spawn (isolation: "worktree"):` |
-| Plugin load | Fresh session — SessionStart fires, venv deps install, MCP servers initialize | Inherits parent session's plugin state |
+| Mechanism | Fresh `claude -p` subprocess | Executor-driven; invoking session operates inside `.claude/worktrees/<topic>/` via `env -C` |
+| Plugin load | Fresh session — SessionStart fires, venv deps install, MCP servers initialize | Parent session's plugin state |
 | Cache / PATH | Assembled at subprocess start (requires `/checkpoint` first) | Parent session's existing cache and PATH |
-| Permission prompts | Auto-decline — no back-channel to parent | Route through parent session to the user |
-| Sensitive-file gate (`.claude/**`) | Blocks even under `--dangerously-skip-permissions` | User approves interactively |
-| `AskUserQuestion` | Exits immediately | Works normally |
+| Permission prompts | Auto-decline — no back-channel to parent | Route through parent session to the user (executor is the parent session) |
+| Sensitive-file gate (`.claude/**`) | Blocks even under `--dangerously-skip-permissions` | Applies under parent's permission context; prompts route to user |
+| `AskUserQuestion` | Exits immediately | Works normally — parent session tool |
 | `Exit to user:` follow-ups | No user available — skill ends without the follow-up happening | User acts on the exit message interactively |
+| MCP tool context | Sandbox's own MCP servers bind to the sandbox project dir | Parent's MCP servers remain bound to parent `CLAUDE_PROJECT_DIR` — MCP-tool calls see main project's state, not the worktree's |
+| Nested `Spawn:` inside skills | Skill's own subagents inherit the fresh subprocess context | Nested subagents hit tool-surface limits (no `AskUserQuestion`, no further agent-spawn); executor should drive those skills' workflows manually rather than invoking them as black boxes |
 
 ### Interactivity criterion
 
@@ -68,6 +70,11 @@ If none apply, the concern routes to `project` — pure deterministic execution,
 - Skills that `Exit to user:` expecting follow-up — `<plugin>:audit-governance`, `<plugin>:audit-static`, observations-pending flows
 - Multi-turn interactions where the parent session approves / steers
 - Changes to repository state that shouldn't affect the main working tree — destructive refactors, commit-graph experiments
+
+Worktree residuals to keep in mind:
+
+- **MCP-backed state testing is limited.** MCP servers bound at parent-session start continue to see the main project's `CLAUDE_PROJECT_DIR`. Tools like `paths_upsert` / `paths_get` query main's navigator DB, not the worktree's. Use `project` for tests where MCP tool state must reflect the sandbox rather than main.
+- **Nested `Spawn:` inside skills still hits the subagent tool-surface limit.** Skills whose workflows invoke their own subagents (e.g. `audit-governance`, `audit-static`) cannot be run as black boxes in the worktree — the nested subagent lacks `AskUserQuestion` and further agent-spawn capability. The executor drives those skills' workflows manually, step-by-step, using the parent session's tools.
 
 ### Pick `test` when
 
@@ -138,36 +145,39 @@ Neither direct route is a replacement for the other. Fresh-install tests cannot 
 
 ## Worktree
 
-> Spawn an agent inside a disposable git worktree via the Agent tool's `isolation: "worktree"` modifier. Permission prompts route through the parent session so interactive skills work; the worktree system handles creation and cleans up automatically when the agent makes no changes. Agent changes that stick return a path and branch in the result for later cleanup.
+> Create a disposable git worktree on a new branch; the invoking session drives tests directly inside it. `AskUserQuestion`, the Agent tool, Skill invocation, and parent permission context all remain available because the executor is the parent session, not a subagent. The worktree provides filesystem isolation (main tree untouched) and push blocking (`/dev/null` pushurl) for the duration.
 
 1. {description} = remaining arguments after the verb
 2. If {description} is empty: ask user what they want to test
 3. {topic} = concise kebab-case slug derived from {description}
-4. Draft test plan:
-    1. {changes} = file changes the agent should apply inside the worktree, or none
-    2. {instructions} = what the agent should do — which skill(s) to invoke, what to verify, what to return
+4. {worktree-path} = `.claude/worktrees/{topic}`
+5. {branch} = `sandbox/{topic}`
+6. Draft test plan:
+    1. {changes} = file changes to apply inside the worktree, or none
+    2. {instructions} = test steps the executor will run — skill invocations, per-step reality checks, verifications against both the worktree and main
     3. {verification} = what output or filesystem state confirms the test passed
-5. Present plan to user — show {topic}, {changes}, {instructions}, {verification}
-6. AskUserQuestion with options: `["Proceed", "Adjust", "Cancel"]`
-7. If cancel: Exit to user: test cancelled
-8. If adjust: take refinements, update plan, Go to step 5. Present plan to user
-9. Block push — bash: `git config remote.origin.pushurl "file:///dev/null"`
-10. Execute plan:
-    1. Spawn (isolation: "worktree"):
-        1. If {changes}: apply the described changes to files in the worktree
-        2. Follow {instructions} — invoke skills, exercise the target workflow
-        3. Return to caller:
-            - Test output
-            - Verification outcome against {verification} — pass, fail, inconclusive
-            - Worktree path and branch (if changes were committed and the worktree persists)
-    2. {output} = returned content
-11. Unblock push — bash: `git config --unset remote.origin.pushurl`
-12. Present results — {output}
-13. Return to caller
+7. Present plan to user — show {worktree-path}, {branch}, {changes}, {instructions}, {verification}
+8. AskUserQuestion with options: `["Proceed", "Adjust", "Cancel"]`
+9. If cancel: Exit to user: test cancelled
+10. If adjust: take refinements, update plan, Go to step 7. Present plan to user
+11. Block push — bash: `git config remote.origin.pushurl "file:///dev/null"`
+12. Create worktree — bash: `git worktree add -b {branch} {worktree-path}`
+13. Apply {changes} — Write/Edit with explicit paths under {worktree-path}
+14. Execute {instructions} — bash calls use `env -C {worktree-path}`; skill invocations via the Skill tool route prompts to the user; for skills whose own workflow invokes `Spawn:` subagents, drive the steps manually. After each instruction, cross-check both {worktree-path} and the main project — main must remain unchanged.
+15. {output} = per-instruction results and reality-check outcomes
+16. Unblock push — bash: `git config --unset remote.origin.pushurl`
+17. Present results — {output}, verification outcome against {verification}
+18. Ask user about cleanup — AskUserQuestion with options: `["Remove worktree now", "Keep for inspection"]`
+19. If remove:
+    1. bash: `git worktree remove {worktree-path} --force`
+    2. bash: `git branch -D {branch}`
+20. Return to caller
 
-14. Error Handling:
+21. Error Handling:
     1. Unblock push — bash: `git config --unset remote.origin.pushurl`
-    2. Exit to user: worktree sandbox failed — check output for details
+    2. bash: `git worktree remove {worktree-path} --force`
+    3. bash: `git branch -D {branch}`
+    4. Exit to user: worktree sandbox failed — check output for details
 
 ## Test
 
@@ -198,32 +208,37 @@ Neither direct route is a replacement for the other. Fresh-install tests cannot 
     8. bash: `env -C {sandbox-path} claude -p "{project-plan}.invocation"`
     9. {project-output} = captured stdout
 11. Execute worktree bucket (if {worktree-bucket} is non-empty):
-    1. Block push — bash: `git config remote.origin.pushurl "file:///dev/null"`
-    2. Spawn (isolation: "worktree"):
-        1. If {worktree-plan}.changes: apply the described changes to files in the worktree
-        2. Follow {worktree-plan}.instructions — invoke skills, exercise the target workflow
-        3. Return to caller:
-            - Test output
-            - Verification outcome against {worktree-plan}.verification — pass, fail, inconclusive
-            - Worktree path and branch (if changes were committed and the worktree persists)
-    3. {worktree-output} = returned content
-    4. Unblock push — bash: `git config --unset remote.origin.pushurl`
+    1. {worktree-path} = `.claude/worktrees/{topic}`
+    2. {worktree-branch} = `sandbox/{topic}`
+    3. Block push — bash: `git config remote.origin.pushurl "file:///dev/null"`
+    4. Create worktree — bash: `git worktree add -b {worktree-branch} {worktree-path}`
+    5. Apply {worktree-plan}.changes — Write/Edit with explicit paths under {worktree-path}
+    6. Execute {worktree-plan}.instructions — bash calls use `env -C {worktree-path}`; skill invocations via the Skill tool route prompts to the user; for skills whose own workflow invokes `Spawn:` subagents, drive the steps manually. After each instruction, cross-check both {worktree-path} and the main project — main must remain unchanged.
+    7. {worktree-output} = per-instruction results and reality-check outcomes
+    8. Unblock push — bash: `git config --unset remote.origin.pushurl`
 12. Compile results:
     - Summary table: Bucket | Concern | Outcome | Evidence
     - Per-bucket digest: {project-output} summarized with filesystem and DB evidence preserved; {worktree-output} summarized with filesystem and interaction evidence preserved
     - Cross-cutting observations: anything that spans both buckets (naming mismatches, doc drift, unexpected behavior not tied to a single concern)
 13. Present the compiled report to the user
-14. Ask about cleanup — AskUserQuestion with options: `["Remove sandbox project now", "Keep for inspection"]` (worktree auto-cleans if no agent commits; persisted worktrees appear in the next `cleanup` invocation)
-15. If remove and project bucket ran: bash: `rm -rf {sandbox-path}`
+14. Ask about cleanup — AskUserQuestion with options: `["Remove both now", "Keep for inspection"]`
+15. If remove:
+    1. If project bucket ran: bash: `rm -rf {sandbox-path}`
+    2. If worktree bucket ran:
+        1. bash: `git worktree remove {worktree-path} --force`
+        2. bash: `git branch -D {worktree-branch}`
 16. Return to caller
 
 17. Error Handling:
     1. Unblock push — bash: `git config --unset remote.origin.pushurl`
-    2. Exit to user: test sandbox failed — check output for which bucket failed and the cause
+    2. If worktree bucket partial state exists:
+        1. bash: `git worktree remove {worktree-path} --force`
+        2. bash: `git branch -D {worktree-branch}`
+    3. Exit to user: test sandbox failed — check output for which bucket failed and the cause
 
 ## Cleanup
 
-> Find and remove sandbox projects and leftover git worktrees. Sibling projects match the parent-project prefix convention; worktrees are everything `git worktree list` reports except the main checkout — Agent-tool-managed worktrees that persisted across runs (because the agent committed changes) land here alongside any legacy paths. Always confirms before deletion.
+> Find and remove sandbox projects and leftover git worktrees. Sibling projects match the parent-project prefix convention. Worktrees match `.claude/worktrees/*` — the path the `worktree` and `test` verbs create under. Any additional non-main worktrees reported by `git worktree list` (leftover from earlier runs, manual creations, other tools) are also surfaced so nothing disposable is missed. Always confirms before deletion.
 
 1. {parent-project} = basename of current project directory
 2. {parent-dir} = parent directory of current project

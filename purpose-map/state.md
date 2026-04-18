@@ -55,6 +55,29 @@ The ocd plugin consolidated into `systems/` with the `bin/ocd-run` wrapper and `
 - [ ] Sweep SKILL.md / README invocations to `blueprint-run <name>` form
 - [ ] Rename any command-colliding skills (same pattern as `/ocd:plugin` → `/ocd:setup` and `/ocd:commit`+`/ocd:push` → `/ocd:git`)
 
+### Sandbox full-exercise test findings
+
+Surfaced by `/ocd:sandbox test` run against commit `1cb3f4e` (v0.0.292 ocd plugin). Each item is independent; take them one at a time. Ordered critical → cosmetic.
+
+**Critical — sandbox skill itself:**
+
+- [x] **Worktree subagent missing `AskUserQuestion` and agent-spawn tools.** *Resolved.* Worktree verb now drops `Spawn (isolation: "worktree"):` in favor of an executor-driven model: the invoking session creates an explicit git worktree at `.claude/worktrees/<topic>/`, drives test steps directly (bash via `env -C`, skills via Skill tool, prompts via `AskUserQuestion`), and cleans up at the end. Route Selection documents two residuals honestly: MCP tools bound at parent session start still see main's `CLAUDE_PROJECT_DIR`, and nested `Spawn:` inside invoked skills still hits the subagent tool-surface limit (executor drives those manually).
+- [ ] **Sensitive-file gate behavior in worktree — unverified under new model.** Prior test showed writes to `.claude/logs/idea/*.md` completing without prompting inside the spawned subagent. Under the new executor-driven worktree the write should route through the parent session's permission context, where the gate's actual behavior applies. Re-validate by re-running the worktree portion of the full-exercise test after the skill rewrite lands.
+
+**Skill surface issues:**
+
+- [ ] **`/ocd:audit-governance` silently accepts undefined `--target`.** SKILL.md argument surface is "none — operates on current project," but passing `--target project` did not reject or warn. Tighten argument validation or document the accepted form explicitly.
+- [ ] **`/ocd:audit-static` cannot resolve bare subsystem paths.** `--target systems/navigator/server.py` hit the path-invalid exit because the correct path from repo root is `plugins/ocd/systems/navigator/server.py`. Either add subsystem-path resolution to the skill, or document the full-path requirement.
+- [ ] **`/ocd:log <bogus-type>` dispatches without validating the type.** Skill routes to `_add.md` without pre-checking whether the type exists under `.claude/logs/`. Add a pre-dispatch validation that lists valid types.
+- [ ] **`/ocd:pdf` setup requires `.claude/ocd/pdf/css/` mkdir that the sensitive-file gate blocks.** Skill's Workflow has no documented escape hatch. Either document the `--css <preset>` bypass, move the gated mkdir behind a lazy initializer invoked only when the user has explicitly opted into custom CSS, or provide a flag that skips the directory creation and uses the plugin-cache preset directly.
+
+**Polish:**
+
+- [ ] **Scan output omits `staled N parent(s)` phrase when a single parent cascades.** DB state is correct (parent row's `stale` flips to 1), but the user-visible summary only emits "Added N, removed N, changed N" without the staled-parent count in the single-parent case.
+- [ ] **`setup init` (no `--force`) on a current install still prints all subsystem sections and "Done."** Cosmetic — the output doesn't convey "nothing to do" when deploy was a no-op.
+- [ ] **`setup badverb` error comes from argparse, not the SKILL.md unrecognized-verb branch.** Either the SKILL.md fallback is dead code (remove), or argparse should not shadow it (reshape so skill-level handling runs first).
+- [ ] **`paths_upsert` returns `action: "updated"` for the first-ever purpose on a scan-inserted row.** Semantics track row existence, not purpose transitions — the scan inserts a null-purpose row before the user's first upsert, which then "updates." Document or change so `"added"` covers the first meaningful purpose assignment.
+
 ### Cut v0.2.0
 
 Once audit-* skills are locked down (and optionally update-system-docs has landed), branch v0.2.0 from main using the same release-branch process: strip dev-only content, regenerate consumer-facing docs for release scope, tag.
