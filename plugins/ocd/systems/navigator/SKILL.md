@@ -4,7 +4,7 @@ description: Sync navigator database with filesystem and populate purposes for p
 argument-hint: "[directory-path]"
 allowed-tools:
   - Read
-  - Bash(python3 *)
+  - Bash(ocd-run *)
   - mcp__plugin_ocd_navigator__*
 ---
 
