@@ -8,6 +8,7 @@ dispatch does not pre-scan.
 
 import argparse
 import sys
+from pathlib import Path
 
 from . import *  # noqa: F403 — underscore-prefixed names are internal; bare names are public
 
@@ -151,6 +152,11 @@ def _dispatch_resolve_skill(args: argparse.Namespace) -> None:
         print(result)
     else:
         print(f"Skill not found: {args.name}", file=sys.stderr)
+        sys.exit(1)
+
+
+def _dispatch_ready(args: argparse.Namespace) -> None:
+    if not db_ready(Path(args.db)):
         sys.exit(1)
 
 
@@ -442,6 +448,25 @@ def build_parser() -> argparse.ArgumentParser:
     )
     rs_p.add_argument("name", help="Skill name to resolve (e.g., ocd-conventions)")
     rs_p.set_defaults(_dispatch=_dispatch_resolve_skill)
+
+    ready_p = commands.add_parser(
+        "ready",
+        help="Check whether navigator DB is initialized and schema is current; exit 0 if ready, 1 otherwise",
+        description=(
+            "Readiness probe for skill Route checks and other dormancy-gated\n"
+            "callers. Validates that the database file exists and contains\n"
+            "every expected table. No output; exit status is the result.\n"
+            "\n"
+            "Exit codes:\n"
+            "  0  DB present with full schema — navigator is operational\n"
+            "  1  DB absent, corrupt, or schema divergent — not operational\n"
+            "\n"
+            "Corrective action on exit 1: run /ocd:setup init."
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        parents=[db_parent],
+    )
+    ready_p.set_defaults(_dispatch=_dispatch_ready)
 
     ls_p = commands.add_parser(
         "list-skills",

@@ -1,9 +1,9 @@
 """Navigator skill infrastructure.
 
 Initialize the navigator database (paths, path_patterns, and
-path_pattern_sources tables) and report DB health. Governance (rules,
-conventions, dependency graph) is owned by the separate governance
-skill and initialized there.
+path_pattern_sources tables), deploy navigator-owned rule files, and
+report DB health. Governance (rules, conventions, dependency graph) is
+owned by the separate governance skill and initialized there.
 
 Interface contract: init() and status() return
 {"files": [...], "extra": [...]}.
@@ -15,6 +15,9 @@ from pathlib import Path
 import plugin
 
 from . import _db
+
+
+EXPECTED_TABLES = {"paths", "path_patterns", "path_pattern_sources", "config"}
 
 
 def _plugin_name() -> str:
@@ -35,6 +38,48 @@ def _db_rel_path() -> str:
     return f".claude/{_plugin_name()}/navigator/navigator.db"
 
 
+def _rules_src_dir() -> Path:
+    return plugin.get_plugin_root() / "systems" / "navigator" / "rules"
+
+
+def _rules_dst_dir() -> Path:
+    return (
+        plugin.get_project_dir()
+        / ".claude"
+        / "rules"
+        / _plugin_name()
+        / "navigator"
+    )
+
+
+def _rules_rel_prefix() -> str:
+    return f".claude/rules/{_plugin_name()}/navigator"
+
+
+def db_ready(db_path: Path | None = None) -> bool:
+    """Return True when the navigator database exists and has all expected tables.
+
+    Callers in readiness-gated paths (MCP server startup, skill Route checks)
+    use this in place of file-existence probes — a present DB with divergent
+    schema is not operational.
+    """
+    target = db_path if db_path is not None else _db_path()
+    if not target.exists():
+        return False
+    try:
+        conn = _db.get_connection(str(target))
+        actual_tables = {
+            row[0]
+            for row in conn.execute(
+                "SELECT name FROM sqlite_master WHERE type='table'",
+            ).fetchall()
+        }
+        conn.close()
+        return EXPECTED_TABLES.issubset(actual_tables)
+    except sqlite3.Error:
+        return False
+
+
 def _status_extra() -> list[dict]:
     """Check DB health and return the overall status line."""
     db_path = _db_path()
@@ -45,14 +90,13 @@ def _status_extra() -> list[dict]:
     try:
         conn = _db.get_connection(str(db_path))
 
-        expected_tables = {"paths", "path_patterns", "path_pattern_sources", "config"}
         actual_tables = {
             row[0]
             for row in conn.execute(
                 "SELECT name FROM sqlite_master WHERE type='table'",
             ).fetchall()
         }
-        if not expected_tables.issubset(actual_tables):
+        if not EXPECTED_TABLES.issubset(actual_tables):
             conn.close()
             return [{"label": "overall status", "value": "error \u2014 divergent schema"}]
 
@@ -84,15 +128,55 @@ def _status_extra() -> list[dict]:
         return [{"label": "overall status", "value": f"error \u2014 {e}"}]
 
 
+def _deploy_rules(force: bool) -> list[dict]:
+    """Deploy navigator-owned rule files to the plugin's rule corpus.
+
+    Navigator's rule lives with navigator's init rather than the plugin-wide
+    rules pool so the prescription only reaches the agent once navigator is
+    actually deployed — see System Dormancy in the project architecture.
+    """
+    rel = _rules_rel_prefix()
+    results = plugin.deploy_files(
+        src_dir=_rules_src_dir(),
+        dst_dir=_rules_dst_dir(),
+        pattern="*.md",
+        force=force,
+    )
+    return [{"path": f"{rel}/{r.pop('name')}", **r} for r in results]
+
+
+def _rule_status_entries() -> list[dict]:
+    """Report current state of each navigator-owned rule file."""
+    src_dir = _rules_src_dir()
+    if not src_dir.is_dir():
+        return []
+
+    rel = _rules_rel_prefix()
+    dst_dir = _rules_dst_dir()
+    entries = []
+    for src in sorted(src_dir.glob("*.md")):
+        if not src.is_file():
+            continue
+        state = plugin.compare_deployed(src, dst_dir / src.name)
+        entries.append({
+            "path": f"{rel}/{src.name}",
+            "before": state,
+            "after": state,
+        })
+    return entries
+
+
 def init(force: bool = False) -> dict:
-    """Initialize the navigator database and deploy paths.csv.
+    """Initialize the navigator database, deploy paths.csv, and deploy rules.
 
     Captures the DB's state before any mutation so the reported transition
     reflects what the user saw, not the intermediate wipe state. A
     force-rebuild of an existing DB emits `current → reinstalled`; a
     fresh install emits `absent → current`. paths.csv deploys alongside
     the DB so the navigator scan can aggregate navigator's own declared
-    artifacts into path_patterns on first walk.
+    artifacts into path_patterns on first walk. Rule files deploy to the
+    plugin's rule corpus so navigator-specific guidance is only present
+    when navigator is operational.
     """
     db = _db_path()
     rel_path = _db_rel_path()
@@ -118,17 +202,20 @@ def init(force: bool = False) -> dict:
     if paths_entry is not None:
         files.append(paths_entry)
 
+    files.extend(_deploy_rules(force))
+
     extra = _status_extra()
     return {"files": files, "extra": extra}
 
 
 def status() -> dict:
-    """Check navigator DB state."""
+    """Check navigator DB and rule deployment state."""
     db = _db_path()
     rel_path = _db_rel_path()
 
     state = "current" if db.exists() else "absent"
     files = [{"path": rel_path, "before": state, "after": state}]
+    files.extend(_rule_status_entries())
 
     extra = _status_extra()
     return {"files": files, "extra": extra}

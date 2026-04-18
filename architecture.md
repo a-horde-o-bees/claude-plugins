@@ -53,6 +53,21 @@ The project delivers three kinds of agent guidance, each loaded through a mechan
 
 Rules govern how the agent behaves. Conventions govern what a file contains. Operational documents govern how operations are performed. Guidance that applies regardless of which file is touched belongs in a rule; guidance that applies only to a specific file type belongs in a convention; step-by-step procedures for a named operation belong in an operational document.
 
+## System Dormancy
+
+An uninitialized system must not influence agent behavior. A system whose infrastructure has not been deployed is dormant: its tools must be absent or non-functional, its rule contributions must not load, its hooks must stay silent, and its skills must route to setup rather than acting on missing state. Dormancy is the complement of Governance Delivery — the same surfaces that carry guidance when a system is ready must go quiet when it is not, so agents are never prescribed toward tools or procedures that cannot work.
+
+Each agent-facing surface a system exposes has its own dormancy mechanism, matched to how that surface reaches the agent:
+
+| Surface | Dormancy mechanism |
+|---------|-------------------|
+| Hook | Hook short-circuits to empty `additionalContext` when its data corpus is absent; the tool call proceeds without guidance rather than erroring |
+| MCP server | Server starts but registers zero tools and emits a one-line instruction naming the setup skill; tool registration is gated on a startup readiness check |
+| Skill | `SKILL.md` Route includes an explicit readiness check per dependency; routes to the setup skill on failure before any tool invocation |
+| Rule contribution | Rule files that prescribe interaction with a specific system ship with that system's `_init.py`, not at plugin root; absent init means the rule is absent from the deployed corpus |
+
+The discipline is consistent across plugins: a system can only influence agent behavior through surfaces that it has affirmatively deployed. Plugin-wide rules (those governing agent behavior regardless of which system is active) remain in the plugin's central rules folder; system-specific rules (those prescribing use of one system) belong with that system. A plugin adding a new system is responsible for routing each surface it exposes through the matching dormancy mechanism.
+
 ## Shared Infrastructure
 
 ### Plugin Framework

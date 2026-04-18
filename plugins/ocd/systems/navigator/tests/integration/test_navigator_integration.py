@@ -53,7 +53,6 @@ def db(tmp_path, monkeypatch):
     with (
         patch.object(nav_server, "DB_PATH", db_path),
         patch.object(nav_lib, "_ensure_scanned", return_value=None),
-        patch.object(nav_server, "_check_db", return_value=None),
     ):
         yield db_path
 
@@ -168,10 +167,30 @@ class TestPathsRemove:
 
 
 class TestErrorWrapping:
-    """Server wraps exceptions in JSON error responses."""
+    """Server wraps facade exceptions in JSON error responses."""
 
-    def test_db_missing(self, db):
-        """When _check_db returns error, tool functions return it."""
-        with patch.object(nav_server, "_check_db", return_value='{"error": "no db"}'):
-            result = _parse(nav_server.paths_get("src"))
-            assert result["error"] == "no db"
+    def test_facade_raises_is_wrapped(self, db):
+        result = _parse(nav_server.paths_remove("anything", mode="badmode"))
+        assert "error" in result
+        assert "mode must be one of" in result["error"]
+
+
+class TestDbReady:
+    """db_ready is the dormancy predicate — file presence plus schema subset check."""
+
+    def test_absent_db_returns_false(self, tmp_path):
+        assert nav_lib.db_ready(tmp_path / "missing.db") is False
+
+    def test_valid_schema_returns_true(self, tmp_path):
+        db_path = tmp_path / "valid.db"
+        conn = get_connection(str(db_path))
+        conn.executescript(SCHEMA)
+        conn.close()
+        assert nav_lib.db_ready(db_path) is True
+
+    def test_divergent_schema_returns_false(self, tmp_path):
+        db_path = tmp_path / "divergent.db"
+        conn = get_connection(str(db_path))
+        conn.executescript("CREATE TABLE unrelated (x INTEGER)")
+        conn.close()
+        assert nav_lib.db_ready(db_path) is False

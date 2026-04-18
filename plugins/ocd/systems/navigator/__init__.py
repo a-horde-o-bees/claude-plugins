@@ -18,6 +18,7 @@ from ._scanner import *  # noqa: F401,F403
 from ._scanner import _walk_filesystem, _compute_file_metrics  # used by facade
 from ._references import *  # noqa: F401,F403
 from ._skills import *  # noqa: F401,F403
+from ._init import db_ready  # noqa: F401
 
 # Cross-package: scope_analyze composites governance matching into its result,
 # so the facade imports governance_match from the governance library.

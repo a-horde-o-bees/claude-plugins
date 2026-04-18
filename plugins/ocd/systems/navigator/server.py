@@ -8,6 +8,13 @@ Tools follow object_action naming: paths_*, governance_*, skills_*,
 references_*, scope_*. All return structured JSON.
 
 Runs via stdio transport. Database path from DB_PATH env var.
+
+When the navigator database is absent or its schema is divergent, the
+server starts in dormant mode — it registers zero tools and its
+instructions reduce to a one-line pointer at the setup skill. Dormancy
+implements the System Dormancy discipline from the project architecture:
+an uninitialized system must not influence agent behavior. Re-registering
+tools after init requires a Claude Code restart.
 """
 
 from __future__ import annotations
@@ -26,9 +33,9 @@ from ._server_helpers import _err, _ok
 
 DB_PATH = os.environ.get("DB_PATH", ".claude/ocd/navigator/navigator.db")
 
-mcp = FastMCP(
-    "navigator",
-    instructions="""Project structure index. Use Navigator first when orienting in unfamiliar areas — it indexes file purposes, structure, and metrics so the agent doesn't have to read every file to find what it needs.
+_READY = _nav.db_ready(Path(DB_PATH))
+
+_FULL_INSTRUCTIONS = """Project structure index. Use Navigator first when orienting in unfamiliar areas — it indexes file purposes, structure, and metrics so the agent doesn't have to read every file to find what it needs.
 
 Prefer Navigator for purpose-based queries:
 - Find files by what they do → paths_search (vs Grep, which searches content)
@@ -37,210 +44,194 @@ Prefer Navigator for purpose-based queries:
 
 Prefer Grep for content patterns (function names, string literals, regex matching) and Glob for file name patterns (extensions, naming conventions).
 
-For rules and conventions that govern files (which conventions apply, the governance chain, dependency ordering), reach for the governance server instead.
+Use Navigator first for orientation, then Grep/Glob for specific code searches once you know where to look."""
 
-Use Navigator first for orientation, then Grep/Glob for specific code searches once you know where to look.""",
+_DORMANT_INSTRUCTIONS = "Navigator is dormant — run /ocd:setup to enable."
+
+mcp = FastMCP(
+    "navigator",
+    instructions=_FULL_INSTRUCTIONS if _READY else _DORMANT_INSTRUCTIONS,
 )
 
-# --- Helpers ---
 
-_NO_DB_MSG = json.dumps({
-    "error": "Navigator database not initialized.",
-    "action": "Database not initialized. Run /ocd:setup init to deploy infrastructure.",
-})
+if _READY:
 
+    # ============================================================
+    # paths_* — project structure navigation
+    # ============================================================
 
-def _check_db() -> str | None:
-    """Return error JSON if database doesn't exist, None if OK."""
-    if not Path(DB_PATH).exists():
-        return _NO_DB_MSG
-    return None
+    @mcp.tool()
+    def paths_get(paths: str | list[str]) -> str:
+        """Retrieve path details for one or more paths. Files return type, purpose, stale flag. Directories return entry info plus children.
 
-
-# ============================================================
-# paths_* — project structure navigation
-# ============================================================
-
-
-@mcp.tool()
-def paths_get(paths: str | list[str]) -> str:
-    """Retrieve path details for one or more paths. Files return type, purpose, stale flag. Directories return entry info plus children.
-
-    Single path returns one dict. Multiple paths return {paths: [dict, ...]}.
-    Start with '.' for top-level overview. Children with purpose=null need purpose description.
-    """
-    if err := _check_db(): return err
-    try:
-        return _ok(_nav.paths_get(DB_PATH, paths))
-    except Exception as e:
-        return _err(e)
+        Single path returns one dict. Multiple paths return {paths: [dict, ...]}.
+        Start with '.' for top-level overview. Children with purpose=null need purpose description.
+        """
+        try:
+            return _ok(_nav.paths_get(DB_PATH, paths))
+        except Exception as e:
+            return _err(e)
 
 
-@mcp.tool()
-def paths_list(
-    target_path: str = ".",
-    patterns: list[str] | None = None,
-    excludes: list[str] | None = None,
-    sizes: bool = False,
-) -> str:
-    """List non-excluded files under target_path. Returns array of {path} dicts.
+    @mcp.tool()
+    def paths_list(
+        target_path: str = ".",
+        patterns: list[str] | None = None,
+        excludes: list[str] | None = None,
+        sizes: bool = False,
+    ) -> str:
+        """List non-excluded files under target_path. Returns array of {path} dicts.
 
-    Args:
-        target_path: Directory to list. Defaults to project root.
-        patterns: Basename glob filters (e.g. ["*.md"]). Only matching files returned.
-        excludes: Path glob filters. Matching files removed from results.
-        sizes: If true, include line_count and char_count per file.
-    """
-    if err := _check_db(): return err
-    try:
-        return _ok(_nav.paths_list(DB_PATH, target_path, patterns=patterns,
-                                  excludes=excludes, sizes=sizes))
-    except Exception as e:
-        return _err(e)
-
-
-@mcp.tool()
-def paths_search(pattern: str) -> str:
-    """Search path purposes by keyword. Find files by what they do, not by what they contain or how they're named.
-
-    Use this when you know what a file does but not where it lives — Grep searches content (slower for purpose queries), paths_search searches indexed purposes.
-
-    Returns {pattern, results: [{path, type, purpose}]}.
-    """
-    if err := _check_db(): return err
-    try:
-        return _ok(_nav.paths_search(DB_PATH, pattern))
-    except Exception as e:
-        return _err(e)
+        Args:
+            target_path: Directory to list. Defaults to project root.
+            patterns: Basename glob filters (e.g. ["*.md"]). Only matching files returned.
+            excludes: Path glob filters. Matching files removed from results.
+            sizes: If true, include line_count and char_count per file.
+        """
+        try:
+            return _ok(_nav.paths_list(DB_PATH, target_path, patterns=patterns,
+                                      excludes=excludes, sizes=sizes))
+        except Exception as e:
+            return _err(e)
 
 
-@mcp.tool()
-def paths_upsert(
-    entry_path: str,
-    purpose: str | None = None,
-    exclude: int | None = None,
-    traverse: int | None = None,
-) -> str:
-    """Create or update a path's purpose, exclusion, or traversal flags.
+    @mcp.tool()
+    def paths_search(pattern: str) -> str:
+        """Search path purposes by keyword. Find files by what they do, not by what they contain or how they're named.
 
-    Returns {action: "added"|"updated"|"none", path, ...}.
-    """
-    if err := _check_db(): return err
-    try:
-        return _ok(_nav.paths_upsert(DB_PATH, entry_path, purpose=purpose,
-                                    exclude=exclude, traverse=traverse))
-    except Exception as e:
-        return _err(e)
+        Use this when you know what a file does but not where it lives — Grep searches content (slower for purpose queries), paths_search searches indexed purposes.
+
+        Returns {pattern, results: [{path, type, purpose}]}.
+        """
+        try:
+            return _ok(_nav.paths_search(DB_PATH, pattern))
+        except Exception as e:
+            return _err(e)
 
 
-@mcp.tool()
-def paths_undescribed() -> str:
-    """Return deepest directory with paths needing purpose description.
+    @mcp.tool()
+    def paths_upsert(
+        entry_path: str,
+        purpose: str | None = None,
+        exclude: int | None = None,
+        traverse: int | None = None,
+    ) -> str:
+        """Create or update a path's purpose, exclusion, or traversal flags.
 
-    Returns {done: true} when no work remains. Otherwise returns
-    {done: false, remaining, directories, target, listing}.
-    Call repeatedly during /ocd:navigator workflow until done is true.
-    """
-    if err := _check_db(): return err
-    try:
-        return _ok(_nav.paths_undescribed(DB_PATH))
-    except Exception as e:
-        return _err(e)
-
-
-@mcp.tool()
-def paths_remove(
-    entry_path: str,
-    mode: str = "single",
-) -> str:
-    """Remove paths from database. Rarely needed — scan handles cleanup automatically.
-
-    Args:
-        entry_path: File or directory path. Ignored when mode="all".
-        mode: "single" (default) removes one path; "recursive" removes a directory and all children; "all" removes every concrete path (path_patterns table unaffected).
-
-    Returns {action: "removed"|"removed_recursive"|"removed_all"|"not_found"|"error", ...}.
-    """
-    if err := _check_db(): return err
-    try:
-        return _ok(_nav.paths_remove(DB_PATH, entry_path, mode=mode))
-    except Exception as e:
-        return _err(e)
+        Returns {action: "added"|"updated"|"none", path, ...}.
+        """
+        try:
+            return _ok(_nav.paths_upsert(DB_PATH, entry_path, purpose=purpose,
+                                        exclude=exclude, traverse=traverse))
+        except Exception as e:
+            return _err(e)
 
 
-# ============================================================
-# skills_* — skill resolution
-# ============================================================
+    @mcp.tool()
+    def paths_undescribed() -> str:
+        """Return deepest directory with paths needing purpose description.
+
+        Returns {done: true} when no work remains. Otherwise returns
+        {done: false, remaining, directories, target, listing}.
+        Call repeatedly during /ocd:navigator workflow until done is true.
+        """
+        try:
+            return _ok(_nav.paths_undescribed(DB_PATH))
+        except Exception as e:
+            return _err(e)
 
 
-@mcp.tool()
-def skills_resolve(name: str) -> str:
-    """Resolve skill name to SKILL.md path. Searches personal, project, plugin-dir, marketplace.
+    @mcp.tool()
+    def paths_remove(
+        entry_path: str,
+        mode: str = "single",
+    ) -> str:
+        """Remove paths from database. Rarely needed — scan handles cleanup automatically.
 
-    Returns {path} on success, {error, action} if not found.
-    """
-    try:
-        result = _nav.skills_resolve(name)
-        if result:
-            return _ok({"path": str(result)})
-        return json.dumps({
-            "error": f"Skill not found: {name}",
-            "action": "Call skills_list to see all discoverable skills, or verify the skill name spelling.",
-        })
-    except Exception as e:
-        return _err(e)
+        Args:
+            entry_path: File or directory path. Ignored when mode="all".
+            mode: "single" (default) removes one path; "recursive" removes a directory and all children; "all" removes every concrete path (path_patterns table unaffected).
 
-
-@mcp.tool()
-def skills_list() -> str:
-    """List all discoverable skills. Returns array of {name, source, path}.
-
-    Sources: personal, project, plugin-dir, marketplace.
-    """
-    try:
-        return _ok(_nav.skills_list())
-    except Exception as e:
-        return _err(e)
+        Returns {action: "removed"|"removed_recursive"|"removed_all"|"not_found"|"error", ...}.
+        """
+        try:
+            return _ok(_nav.paths_remove(DB_PATH, entry_path, mode=mode))
+        except Exception as e:
+            return _err(e)
 
 
-# ============================================================
-# references_* — file reference traversal
-# ============================================================
+    # ============================================================
+    # skills_* — skill resolution
+    # ============================================================
 
 
-@mcp.tool()
-def references_map(paths: list[str], max_depth: int = 20) -> str:
-    """Follow file references recursively to build a dependency DAG.
+    @mcp.tool()
+    def skills_resolve(name: str) -> str:
+        """Resolve skill name to SKILL.md path. Searches personal, project, plugin-dir, marketplace.
 
-    Works with SKILL.md backtick paths, governance depends: fields, and component
-    _*.md files (leaf nodes).
-
-    Returns {files: [{path, depth, references, referenced_by}], roots, total_files}.
-    """
-    try:
-        return _ok(_nav.references_map(paths, max_depth=max_depth))
-    except Exception as e:
-        return _err(e)
-
-
-# ============================================================
-# scope_* — composite analysis
-# ============================================================
+        Returns {path} on success, {error, action} if not found.
+        """
+        try:
+            result = _nav.skills_resolve(name)
+            if result:
+                return _ok({"path": str(result)})
+            return json.dumps({
+                "error": f"Skill not found: {name}",
+                "action": "Call skills_list to see all discoverable skills, or verify the skill name spelling.",
+            })
+        except Exception as e:
+            return _err(e)
 
 
-@mcp.tool()
-def scope_analyze(paths: list[str]) -> str:
-    """Analyze scope: follow references, collect sizes, map governance.
+    @mcp.tool()
+    def skills_list() -> str:
+        """List all discoverable skills. Returns array of {name, source, path}.
 
-    Composite tool combining references_map + file sizes + governance_match.
-    Returns {files: [{path, line_count, char_count, governance, references, referenced_by}],
-    governance_index: {convention: [files]}, total_lines, total_files}.
-    """
-    if err := _check_db(): return err
-    try:
-        return _ok(_nav.scope_analyze(DB_PATH, paths))
-    except Exception as e:
-        return _err(e)
+        Sources: personal, project, plugin-dir, marketplace.
+        """
+        try:
+            return _ok(_nav.skills_list())
+        except Exception as e:
+            return _err(e)
+
+
+    # ============================================================
+    # references_* — file reference traversal
+    # ============================================================
+
+
+    @mcp.tool()
+    def references_map(paths: list[str], max_depth: int = 20) -> str:
+        """Follow file references recursively to build a dependency DAG.
+
+        Works with SKILL.md backtick paths, governance depends: fields, and component
+        _*.md files (leaf nodes).
+
+        Returns {files: [{path, depth, references, referenced_by}], roots, total_files}.
+        """
+        try:
+            return _ok(_nav.references_map(paths, max_depth=max_depth))
+        except Exception as e:
+            return _err(e)
+
+
+    # ============================================================
+    # scope_* — composite analysis
+    # ============================================================
+
+
+    @mcp.tool()
+    def scope_analyze(paths: list[str]) -> str:
+        """Analyze scope: follow references, collect sizes, map governance.
+
+        Composite tool combining references_map + file sizes + governance_match.
+        Returns {files: [{path, line_count, char_count, governance, references, referenced_by}],
+        governance_index: {convention: [files]}, total_lines, total_files}.
+        """
+        try:
+            return _ok(_nav.scope_analyze(DB_PATH, paths))
+        except Exception as e:
+            return _err(e)
 
 
 if __name__ == "__main__":
