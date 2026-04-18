@@ -1,6 +1,6 @@
 # Open
 
-Rebase a boxed system's dev branch onto main and check it out for active work.
+Rebase a boxed system's dev branch onto main and check it out for active work. Open is the integration moment: the dev branch returns to parity with current main, and any reintegration work (updating docs against current conventions, rewiring references, adjusting structure to match the ecosystem as it exists now) happens here before the eventual unbox. Unbox is mechanically dumb; if reintegration isn't done on dev, merging will either conflict or silently bring stale docs onto main.
 
 ### Variables
 

@@ -24,11 +24,24 @@ Pause work on an open system by switching back to main. The dev branch persists 
     1. bash: `git push --force-with-lease origin {current-branch}`
     2. If push fails: Exit to user: push of {current-branch} failed — origin advanced independently; resolve manually before closing
 
-6. Switch to main:
+> Integration acknowledgment — close is where the user signals whether the branch is ready for unbox. Unbox is mechanically dumb; it merges dev into main as-is without evaluating or re-integrating. All reintegration judgment must already be done on the dev branch. Spelling the expectations out at close time surfaces the contract explicitly instead of letting the user assume unbox will do the work.
+
+6. Ask user about integration state:
+    1. AskUserQuestion:
+        - question: "Closing {current-branch}. What's this branch's state? Unbox will merge as-is; no integration happens at unbox time — so 'ready' must mean the integration work is already complete on this branch."
+        - options:
+            - "Ready for unbox" — description: "Rebased against latest main, all external references reintegrated against current conventions, verified to work. A subsequent unbox will merge cleanly without further work."
+            - "Still in progress" — description: "Work or integration still pending. Branch persists for another open/close cycle; unbox would be premature."
+            - "Cancel close" — description: "Abort close; remain on the dev branch."
+    2. If user selected "Cancel close": Exit to user: close cancelled — remaining on {current-branch}
+    3. {integration-state} = "Ready for unbox" or "Still in progress" depending on user's selection
+
+7. Switch to main:
     1. bash: `git checkout main`
 
-7. Return to caller:
+8. Return to caller:
     - closed: {plugin}:{system}
+    - integration state: {integration-state}
     - {current-branch} pushed to origin
     - {current-branch} persists with its commits
     - on {plugin}:{system} again: run `/ocd:git open {plugin}:{system}`

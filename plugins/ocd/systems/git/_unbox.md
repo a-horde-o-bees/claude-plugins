@@ -1,6 +1,6 @@
 # Unbox
 
-Merge a boxed system's dev branch back into main, then delete the dev branch locally and on origin. Ends the system's in-flight status.
+Merge a dev branch that has already been reintegrated and verified back into main, then delete the branch. Mechanical — all integration judgment happens on the dev branch while open; unbox is the final no-op once the user has confirmed the branch works.
 
 ### Variables
 
@@ -8,13 +8,15 @@ Merge a boxed system's dev branch back into main, then delete the dev branch loc
 
 ### Process
 
+> Prerequisite — unbox is invoked only after the user has reintegrated the feature against current conventions and documentation on the dev branch (in open state), closed it to push, and verified the dev branch works. If that work hasn't happened, unbox is premature and the user should open the box first.
+
 1. Parse {verb-arg}:
     1. If {verb-arg} does not match `<plugin>:<system>`: Exit to user: unbox requires `<plugin>:<system>` form
     2. {plugin} = plugin part of {verb-arg}
     3. {system} = system part of {verb-arg}
 2. {dev-branch} = `dev/{plugin}/{system}`
 
-> Preconditions — unbox brings the system back to main in one merge; require clean state and confirmed dev branch existence.
+> Preconditions — require clean state and confirmed dev branch existence.
 
 3. Verify preconditions:
     1. bash: `git status --short`
@@ -34,14 +36,14 @@ Merge a boxed system's dev branch back into main, then delete the dev branch loc
     2. bash: `git pull origin main --ff-only`
     3. If pull fails: Exit to user: main cannot fast-forward — reconcile manually, then re-invoke unbox
 
-> Merge — `--no-ff` preserves the dev branch's history as a distinct topic even if main had no interleaving commits. Conflicts here reflect genuine divergence; resolution is manual.
+> Merge — `--no-ff` preserves the dev branch's history as a distinct topic even if main had no interleaving commits. Conflicts here indicate the dev branch wasn't reintegrated against latest main before unbox; resolution is manual.
 
 5. Merge dev branch:
     1. bash: `git merge --no-ff {dev-branch} -m "unbox {plugin}:{system}"`
     2. If merge fails:
         1. Exit to user:
             - merge conflict unboxing {plugin}:{system}
-            - resolve conflicts and commit; dev branch remains for retry
+            - dev branch hasn't been reintegrated against current main — open the box, rebase, resolve conflicts, close, then retry unbox
             - abort with `git merge --abort` if needed
 
 6. Push and delete:
@@ -49,28 +51,7 @@ Merge a boxed system's dev branch back into main, then delete the dev branch loc
     2. bash: `git branch -d {dev-branch}`
     3. bash: `git push origin --delete {dev-branch}`
 
-> Reintegration checklist — surface only external references cut on box. The system's own directory is excluded since the merge restored it; including it here is noise that looks alarming (e.g., "SKILL.md: 12 deletions") even though nothing was lost. Full diff (not just --stat) so the user can decide per-file without running `git show` themselves.
-
-7. Emit reintegration checklist:
-    1. {box-commit} = bash: `git log --grep="^box {plugin}:{system}$" -n 1 --format=%H`
-    2. If {box-commit} is empty: Exit to user: unboxed — box commit not found in history, no reintegration checklist
-    3. {system-path} = `plugins/{plugin}/systems/{system}`
-    4. {changed-files} = bash: `git diff-tree --no-commit-id --name-only -r {box-commit}`
-    5. {external-files} = {changed-files} with entries under {system-path} filtered out
-    6. If {external-files} is empty:
-        1. Present to user: "Unboxed {plugin}:{system}. No external references were cut on box — nothing to reintegrate."
-    7. Else:
-        1. {stat} = bash: `git show {box-commit} --stat -- {external-files}`
-        2. {patch} = bash: `git show {box-commit} --patch -- {external-files}`
-        3. Present to user:
-            - unboxed: {plugin}:{system}
-            - external references cut on box — review each and decide whether to restore in the current design:
-            - {stat}
-            - full diff:
-            - {patch}
-
-8. Return to caller:
+7. Return to caller:
     - unboxed: {plugin}:{system}
     - merged into main with `--no-ff`
     - {dev-branch} deleted local + remote
-    - external tendrils in checklist: count (0 means nothing to reintegrate)
