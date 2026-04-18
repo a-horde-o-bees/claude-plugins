@@ -148,6 +148,20 @@ When worktree isolation is unnecessary:
 - Tests that operate entirely in `tmp_path` or other external temp directories
 - Unit tests that mock git operations
 
+## Where Tests Live
+
+Test files go in one of three homes depending on what they verify:
+
+| What it tests | Home | Example |
+|---------------|------|---------|
+| Feature behavior of one skill or system | That skill or system's own `tests/` folder | Does `paths_get` return the right shape for a directory |
+| Cross-system integration within a plugin | The plugin's `tests/` at plugin root | Does setup init → navigator scan → governance match compose correctly |
+| Universal discipline conformance across every system | A centralized check system that any plugin can invoke | Does every system follow the dormancy contract |
+
+Feature tests are bounded by the skill or system they belong to and move with it. Integration tests exercise cross-system workflows and stay at plugin root because they outlive any single system. Discipline conformance tests encode rules that apply universally — they belong to a dedicated check system and are tested against synthetic fixtures, not against real systems that drift.
+
+A single behavior never belongs in two homes. If a test would fit either feature or integration, it is a feature test — the skill owns it. If a check would fit either integration or discipline conformance, it is a conformance check only when it applies to every system uniformly.
+
 ## What to Avoid
 
 ### Configuration Restating
