@@ -18,13 +18,6 @@ Main branch is active dev. Versioning rule (documented in `CLAUDE.md`): main tra
 
 Ordered by dependency, not priority. None of this blocks the existing v0.1.0 — all of it is candidate content for v0.2.0.
 
-### audit-static (in development)
-
-Exists on main but isn't locked down. Manual convention audit during v0.1.0 prep surfaced residual issues. To finish:
-
-- [ ] audit-static: verify positional argument resolution for every input form (slash-qualified skill, filesystem path, SKILL.md path); exercise on representative targets and triage observations
-- [ ] Self-audit via audit-static once stable
-
 ### Blueprint plugin parity
 
 The ocd plugin consolidated into `systems/` with the `bin/ocd-run` wrapper and `ocd-run <name>` auto-promotion pattern during v0.2.0 development. Blueprint hasn't been updated yet. Work:
@@ -46,7 +39,6 @@ Surfaced by `/ocd:sandbox test` run against commit `1cb3f4e` (v0.0.292 ocd plugi
 
 **Skill surface issues:**
 
-- [ ] **`/ocd:audit-static` cannot resolve bare subsystem paths.** `--target systems/navigator/server.py` hit the path-invalid exit because the correct path from repo root is `plugins/ocd/systems/navigator/server.py`. Either add subsystem-path resolution to the skill, or document the full-path requirement.
 - [ ] **`/ocd:log <bogus-type>` dispatches without validating the type.** Skill routes to `_add.md` without pre-checking whether the type exists under `.claude/logs/`. Add a pre-dispatch validation that lists valid types.
 - [ ] **`/ocd:pdf` setup requires `.claude/ocd/pdf/css/` mkdir that the sensitive-file gate blocks.** Skill's Workflow has no documented escape hatch. Either document the `--css <preset>` bypass, move the gated mkdir behind a lazy initializer invoked only when the user has explicitly opted into custom CSS, or provide a flag that skips the directory creation and uses the plugin-cache preset directly.
 

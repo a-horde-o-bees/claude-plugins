@@ -118,12 +118,6 @@ Released skills (stable, available via `/ocd:` slash commands):
 | `/ocd:log` | Capture decisions, friction, problems, ideas as log entries |
 | `/ocd:pdf` | Export markdown to PDF via WeasyPrint with configurable CSS |
 
-In-development skills (present on `main` for dev work, not yet included in the released `v0.1.0` branch):
-
-| Skill | Purpose |
-|-------|---------|
-| `/ocd:audit-static` | Audit any path against governance, best practices, and prior art |
-
 ### MCP Servers
 
 Agent-facing tools exposed over the Model Context Protocol. Registered in `.mcp.json`; started by Claude Code on session connect.

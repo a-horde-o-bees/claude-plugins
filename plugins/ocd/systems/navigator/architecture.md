@@ -79,7 +79,7 @@ Staleness cascades: when any child entry is marked stale, its parent directory i
 - Leading `/` is stripped
 - Any `plugin:` prefix is stripped
 
-So `audit-static`, `/audit-static`, `ocd:audit-static`, and `/ocd:audit-static` all resolve the same way. This lets callers pass the canonical qualified form (`/plugin:skill`) without a separate normalization step.
+So `status`, `/status`, `ocd:status`, and `/ocd:status` all resolve the same way. This lets callers pass the canonical qualified form (`/plugin:skill`) without a separate normalization step.
 
 ## Concurrency
 

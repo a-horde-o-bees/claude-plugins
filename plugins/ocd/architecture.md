@@ -98,12 +98,6 @@ Skill packages live under `systems/` (declared via `plugin.json`'s `skills` fiel
 | `log` | Capture or manage project log entries — decisions, friction, problems, ideas |
 | `pdf` | Export markdown files to PDF using WeasyPrint |
 
-**In-development skills** (present on main, not yet released):
-
-| Skill | Purpose (from SKILL.md frontmatter) |
-|-------|-------------------------------------|
-| `audit-static` | Audit any path against its governance, best practices, and prior art through holistic static analysis |
-
 ## MCP Servers
 
 Agent-facing tools exposed over the Model Context Protocol. The plugin registers servers in `.mcp.json`; Claude Code starts them on session connect and routes tool calls by name. Per the Subsystem Doc Consolidation rule, thin MCP adapters that delegate business logic to a domain library do not require their own README or architecture — their purpose statement lives in the server module's docstring.
