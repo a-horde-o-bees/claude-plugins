@@ -122,7 +122,6 @@ In-development skills (present on `main` for dev work, not yet included in the r
 
 | Skill | Purpose |
 |-------|---------|
-| `/ocd:audit-governance` | Audit governance chain conformity, followability, coherence |
 | `/ocd:audit-static` | Audit any path against governance, best practices, and prior art |
 
 ### MCP Servers

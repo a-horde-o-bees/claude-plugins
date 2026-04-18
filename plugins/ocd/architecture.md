@@ -102,7 +102,6 @@ Skill packages live under `systems/` (declared via `plugin.json`'s `skills` fiel
 
 | Skill | Purpose (from SKILL.md frontmatter) |
 |-------|-------------------------------------|
-| `audit-governance` | Audit the rules and conventions governance chain foundations-first, one level at a time |
 | `audit-static` | Audit any path against its governance, best practices, and prior art through holistic static analysis |
 
 ## MCP Servers

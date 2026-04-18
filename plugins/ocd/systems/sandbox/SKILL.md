@@ -74,7 +74,7 @@ If none apply, the concern routes to `project` — pure deterministic execution,
 Worktree residuals to keep in mind:
 
 - **MCP-backed state testing is limited.** MCP servers bound at parent-session start continue to see the main project's `CLAUDE_PROJECT_DIR`. Tools like `paths_upsert` / `paths_get` query main's navigator DB, not the worktree's. Use `project` for tests where MCP tool state must reflect the sandbox rather than main.
-- **Nested `Spawn:` inside skills still hits the subagent tool-surface limit.** Skills whose workflows invoke their own subagents (e.g. `audit-governance`, `audit-static`) cannot be run as black boxes in the worktree — the nested subagent lacks `AskUserQuestion` and further agent-spawn capability. The executor drives those skills' workflows manually, step-by-step, using the parent session's tools.
+- **Nested `Spawn:` inside skills still hits the subagent tool-surface limit.** Skills whose workflows invoke their own subagents cannot be run as black boxes in the worktree — the nested subagent lacks `AskUserQuestion` and further agent-spawn capability. The executor drives those skills' workflows manually, step-by-step, using the parent session's tools.
 
 ### Pick `test` when
 
