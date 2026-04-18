@@ -1,29 +1,41 @@
 ---
 name: git
-description: Manage local git operations — topic-grouped commits and branch pushes.
-argument-hint: "<commit | push --branch <branch-name>>"
+description: Manage local git operations — record commits, push branches, and shelve in-flight plugin systems onto dedicated dev branches.
+argument-hint: "<commit | push --branch <branch-name> | box <plugin:system> | open <plugin:system> | close | unbox <plugin:system> | boxes>"
 allowed-tools:
   - Bash(git *)
 ---
 
 # /git
 
-Manage local git operations. Two verbs:
+Manage local git operations. Verbs fall into two families:
 
-- `commit` — commit working tree changes grouped by topic for readable history
-- `push` — push local commits to a named branch on the remote
+- **History** — `commit` records topic-grouped changes, `push` sends a branch to the remote.
+- **In-flight systems** — `box`, `open`, `close`, `unbox`, `boxes` shelve plugin systems onto dedicated dev branches so holistic testing on main isn't contaminated by unstable in-development work.
 
 ## Workflow
 
 1. If not $ARGUMENTS: Exit to user: skill description and argument-hint
+2. {verb} = first token of $ARGUMENTS
+3. {verb-arg} = remainder of $ARGUMENTS after {verb}
 
-> Verb dispatch — commit groups and records changes, push sends a branch to remote.
+> Verb dispatch — history verbs manage commits and pushes; box-family verbs manage in-flight systems on dev branches.
 
-2. If {verb} is `commit`:
+4. If {verb} is `commit`:
     1. Call: Commit
-3. Else if {verb} is `push`:
+5. Else if {verb} is `push`:
     1. Call: Push
-4. Else: Exit to user: unrecognized verb {verb} — expected commit or push
+6. Else if {verb} is `box`:
+    1. Call: `_box.md` ({verb-arg} = {verb-arg})
+7. Else if {verb} is `open`:
+    1. Call: `_open.md` ({verb-arg} = {verb-arg})
+8. Else if {verb} is `close`:
+    1. Call: `_close.md`
+9. Else if {verb} is `unbox`:
+    1. Call: `_unbox.md` ({verb-arg} = {verb-arg})
+10. Else if {verb} is `boxes`:
+    1. Call: `_boxes.md`
+11. Else: Exit to user: unrecognized verb {verb} — expected commit, push, box, open, close, unbox, or boxes
 
 ## Commit
 
