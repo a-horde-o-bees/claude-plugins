@@ -55,11 +55,11 @@ Consumed by `worktree` and the worktree bucket of `exercise`.
 
 ### Detached worktree (read-only snapshot at a ref)
 
-Consumed by `tests`.
+Consumed by `tests` — the full lifecycle runs inside `ocd-run sandbox tests`, which the verb invokes as a single command.
 
 - **Setup** — `git worktree add --detach .claude/worktrees/test-{short-sha} {ref-sha}`. No branch, no push blocking.
 - **Teardown** — `git worktree remove --force`. No branch to delete.
-- **Execution model** — the verb invokes `env -C {worktree-path} ocd-run tests [args]`; the CLI runs pytest per suite under its resolved venv (project venv for project tests, plugin venv for plugin tests). Worktree removal happens in the verb after the CLI returns.
+- **Execution model** — `ocd-run sandbox tests` internally invokes `ocd-run tests` inside the worktree; pytest runs per suite under its resolved venv (project venv for project tests, plugin venv for plugin tests). Worktree always removed before return.
 
 ## Route Selection
 
@@ -177,17 +177,16 @@ Fast feedback without a sandbox worktree: `ocd-run tests` runs the same suites i
 11. If cancel: Exit to user: sandbox cancelled
 12. If adjust: take user's refinements, update plan, Go to step 9. Present plan to user
 13. Execute plan:
-    1. bash: `mkdir -p {sandbox-path}`
-    2. bash: `git -C {sandbox-path} init`
-    3. Apply {setup-steps} — create or copy fixture files
-    4. bash: `env -C {sandbox-path} claude -p "{invocation}"`
-    5. {output} = captured stdout
+    1. bash: `ocd-run sandbox project setup {sandbox-path}`
+    2. Apply {setup-steps} — create or copy fixture files
+    3. bash: `env -C {sandbox-path} claude -p "{invocation}"`
+    4. {output} = captured stdout
 14. Present results:
     - {output}
     - Filesystem state if relevant (list key files created/modified)
     - Verification outcome against {verification} — pass, fail, or inconclusive
 15. Ask user about cleanup — AskUserQuestion with options: `["Remove sandbox now", "Keep for inspection"]`
-16. If remove: bash: `rm -rf {sandbox-path}`
+16. If remove: bash: `ocd-run sandbox project teardown {sandbox-path}`
 17. Return to caller
 
 ## Worktree
@@ -207,24 +206,18 @@ Fast feedback without a sandbox worktree: `ocd-run tests` runs the same suites i
 8. AskUserQuestion with options: `["Proceed", "Adjust", "Cancel"]`
 9. If cancel: Exit to user: sandbox cancelled
 10. If adjust: take refinements, update plan, Go to step 7. Present plan to user
-11. Block push — bash: `git config remote.origin.pushurl "file:///dev/null"`
-12. Create worktree — bash: `git worktree add -b {branch} {worktree-path}`
-13. Apply {changes} — Write/Edit with explicit paths under {worktree-path}
-14. Execute {instructions} — bash calls use `env -C {worktree-path}`; skill invocations via the Skill tool route prompts to the user; for skills whose own workflow invokes `Spawn:` subagents, drive the steps manually. After each instruction, cross-check both {worktree-path} and the main project — main must remain unchanged.
-15. {output} = per-instruction results and reality-check outcomes
-16. Unblock push — bash: `git config --unset remote.origin.pushurl`
-17. Present results — {output}, verification outcome against {verification}
-18. Ask user about cleanup — AskUserQuestion with options: `["Remove worktree now", "Keep for inspection"]`
-19. If remove:
-    1. bash: `git worktree remove {worktree-path} --force`
-    2. bash: `git branch -D {branch}`
-20. Return to caller
+11. Set up worktree — bash: `ocd-run sandbox worktree setup {topic}` (creates branched worktree at `.claude/worktrees/{topic}`, blocks push)
+12. Apply {changes} — Write/Edit with explicit paths under {worktree-path}
+13. Execute {instructions} — bash calls use `env -C {worktree-path}`; skill invocations via the Skill tool route prompts to the user; for skills whose own workflow invokes `Spawn:` subagents, drive the steps manually. After each instruction, cross-check both {worktree-path} and the main project — main must remain unchanged.
+14. {output} = per-instruction results and reality-check outcomes
+15. Present results — {output}, verification outcome against {verification}
+16. Ask user about cleanup — AskUserQuestion with options: `["Remove worktree now", "Keep for inspection"]`
+17. If remove: bash: `ocd-run sandbox worktree teardown {topic}` (removes worktree + branch, unblocks push)
+18. Return to caller
 
-21. Error Handling:
-    1. Unblock push — bash: `git config --unset remote.origin.pushurl`
-    2. bash: `git worktree remove {worktree-path} --force`
-    3. bash: `git branch -D {branch}`
-    4. Exit to user: worktree sandbox failed — check output for details
+19. Error Handling:
+    1. bash: `ocd-run sandbox worktree teardown {topic}` — always unblocks push and removes worktree even when a crashed verb left partial state
+    2. Exit to user: worktree sandbox failed — check output for details
 
 ## Exercise
 
@@ -249,20 +242,15 @@ Fast feedback without a sandbox worktree: `ocd-run tests` runs the same suites i
     2. {parent-dir} = parent directory of current project
     3. {topic} = concise kebab-case slug derived from {description}
     4. {sandbox-path} = `{parent-dir}/{parent-project}-test-{topic}`
-    5. bash: `mkdir -p {sandbox-path}`
-    6. bash: `git -C {sandbox-path} init`
-    7. Apply {project-plan}.setup-steps — create or copy fixture files
-    8. bash: `env -C {sandbox-path} claude -p "{project-plan}.invocation"`
-    9. {project-output} = captured stdout
+    5. bash: `ocd-run sandbox project setup {sandbox-path}`
+    6. Apply {project-plan}.setup-steps — create or copy fixture files
+    7. bash: `env -C {sandbox-path} claude -p "{project-plan}.invocation"`
+    8. {project-output} = captured stdout
 11. Execute worktree bucket (if {worktree-bucket} is non-empty):
-    1. {worktree-path} = `.claude/worktrees/{topic}`
-    2. {worktree-branch} = `sandbox/{topic}`
-    3. Block push — bash: `git config remote.origin.pushurl "file:///dev/null"`
-    4. Create worktree — bash: `git worktree add -b {worktree-branch} {worktree-path}`
-    5. Apply {worktree-plan}.changes — Write/Edit with explicit paths under {worktree-path}
-    6. Execute {worktree-plan}.instructions — bash calls use `env -C {worktree-path}`; skill invocations via the Skill tool route prompts to the user; for skills whose own workflow invokes `Spawn:` subagents, drive the steps manually. After each instruction, cross-check both {worktree-path} and the main project — main must remain unchanged.
-    7. {worktree-output} = per-instruction results and reality-check outcomes
-    8. Unblock push — bash: `git config --unset remote.origin.pushurl`
+    1. bash: `ocd-run sandbox worktree setup {topic}` — captures {worktree-path}
+    2. Apply {worktree-plan}.changes — Write/Edit with explicit paths under {worktree-path}
+    3. Execute {worktree-plan}.instructions — bash calls use `env -C {worktree-path}`; skill invocations via the Skill tool route prompts to the user; for skills whose own workflow invokes `Spawn:` subagents, drive the steps manually. After each instruction, cross-check both {worktree-path} and the main project — main must remain unchanged.
+    4. {worktree-output} = per-instruction results and reality-check outcomes
 12. Compile results:
     - Summary table: Bucket | Concern | Outcome | Evidence
     - Per-bucket digest: {project-output} summarized with filesystem and DB evidence preserved; {worktree-output} summarized with filesystem and interaction evidence preserved
@@ -270,65 +258,42 @@ Fast feedback without a sandbox worktree: `ocd-run tests` runs the same suites i
 13. Present the compiled report to the user
 14. Ask about cleanup — AskUserQuestion with options: `["Remove both now", "Keep for inspection"]`
 15. If remove:
-    1. If project bucket ran: bash: `rm -rf {sandbox-path}`
-    2. If worktree bucket ran:
-        1. bash: `git worktree remove {worktree-path} --force`
-        2. bash: `git branch -D {worktree-branch}`
+    1. If project bucket ran: bash: `ocd-run sandbox project teardown {sandbox-path}`
+    2. If worktree bucket ran: bash: `ocd-run sandbox worktree teardown {topic}`
 16. Return to caller
 
 17. Error Handling:
-    1. Unblock push — bash: `git config --unset remote.origin.pushurl`
-    2. If worktree bucket partial state exists:
-        1. bash: `git worktree remove {worktree-path} --force`
-        2. bash: `git branch -D {worktree-branch}`
-    3. Exit to user: exercise failed — check output for which bucket failed and the cause
+    1. If worktree bucket partial state exists: bash: `ocd-run sandbox worktree teardown {topic}` — always unblocks push even on crash
+    2. Exit to user: exercise failed — check output for which bucket failed and the cause
 
 ## Tests
 
-> Run the project test suite against a clean ref in a worktree. Deterministic verb — no plan, no classifier, no change description. The verb creates a detached worktree at the ref, invokes `ocd-run tests` inside it, presents output, and removes the worktree. The CLI (stateless — runs pytest in cwd under resolved venvs) is also runnable directly as `ocd-run tests` for fast dev feedback without worktree isolation.
+> Run the project test suite against a clean ref in a worktree. Deterministic verb — no plan, no classifier, no change description. Delegates the full lifecycle (ref resolution, worktree creation, pytest dispatch, cleanup) to `ocd-run sandbox tests`. For fast dev feedback without worktree isolation, use `ocd-run tests` directly in the current tree.
 
-1. Parse arguments after the verb:
-    1. If `--ref <value>` present: {ref} = {value}
-    2. Else: {ref} = `main`
-    3. {cli-args} = remaining arguments (`--plugin <name>`, `--project`) that flow through to `ocd-run tests`
-2. Resolve ref to commit SHA:
-    1. bash: `git rev-parse {ref}`
-    2. If fail: Exit to user: ref {ref} could not be resolved
-    3. {ref-sha} = resolved SHA; {short-sha} = first 7 characters
-3. {worktree-path} = `.claude/worktrees/test-{short-sha}`
-4. Verify worktree path available:
-    1. If {worktree-path} already exists: Exit to user: {worktree-path} already in use — run `/ocd:sandbox cleanup` first or pick a different ref
-5. Create detached worktree — bash: `git worktree add --detach {worktree-path} {ref-sha}`
-6. Run tests — bash: `env -C {worktree-path} ocd-run tests {cli-args}`
-7. Present stdout to user verbatim — the CLI already formats a per-suite table, failing-test listing, and overall verdict
-8. Remove worktree — bash: `git worktree remove {worktree-path} --force`
-9. Return to caller — CLI exit code is the verb's exit code (0 on pass, non-zero when any suite failed or errored)
+1. Pass arguments through unchanged — `--ref <value>`, `--plugin <name>`, `--project` flow directly to `ocd-run sandbox tests`
+2. bash: `ocd-run sandbox tests {args}`
+3. Present stdout to user verbatim — the CLI formats a per-suite table, failing-test listing, and overall verdict
+4. Return to caller — CLI exit code is the verb's exit code (0 on pass, non-zero when any suite failed or errored)
 
-10. Error Handling:
-    1. If worktree was created: bash: `git worktree remove {worktree-path} --force`
-    2. Exit to user: tests run failed — check output for cause (unresolved ref, suite setup error, venv missing)
+5. Error Handling:
+    1. If `ocd-run sandbox tests` exits with an error (unresolved ref, suite setup, venv missing): Exit to user — surface stderr so the user sees the corrective action. Worktree cleanup is the CLI's responsibility.
 
 ## Cleanup
 
 > Find and remove sandbox projects and leftover git worktrees. Sibling projects match the parent-project prefix convention. Worktrees match `.claude/worktrees/*` — the path the `worktree`, `exercise`, and `tests` verbs create under. Any additional non-main worktrees reported by `git worktree list` (leftover from earlier runs, manual creations, other tools) are also surfaced so nothing disposable is missed. Always confirms before deletion.
 
-1. {parent-project} = basename of current project directory
-2. {parent-dir} = parent directory of current project
-3. {project-siblings} = directories matching `{parent-dir}/{parent-project}-test-*`
-4. {worktrees} = `git worktree list` rows whose path is not the current project directory
-5. If no siblings and no worktrees: Exit to user: nothing to clean up
-6. Present inventory:
-    - Sibling projects — path, size, last-modified time for each
-    - Worktrees — path, branch, status (clean/dirty) for each
-7. Ask user — AskUserQuestion with options: `["Remove all", "Choose which to remove", "Cancel"]`
-8. If cancel: Exit to user: cleanup cancelled
-9. If choose:
-    1. For each {item} in {project-siblings} and {worktrees}:
-        1. AskUserQuestion with options: `["Remove", "Keep"]`
-10. {to-remove} = items marked for removal
-11. For each {sibling} in {to-remove} matching {project-siblings}: bash: `rm -rf {sibling}`
-12. For each {worktree} in {to-remove} matching {worktrees}:
-    1. bash: `git worktree remove {worktree.path} --force`
-    2. If {worktree.branch} is safe to delete (not main, not current, not tracked elsewhere): bash: `git branch -D {worktree.branch}`
-13. Report what was removed
-14. Return to caller
+1. bash: `ocd-run sandbox cleanup inventory` — outputs JSON with `siblings` and `worktrees` arrays
+2. Parse JSON output
+3. If both arrays are empty: Exit to user: nothing to clean up
+4. Present inventory to user — sibling paths with sizes, worktree paths with branches
+5. Ask user — AskUserQuestion with options: `["Remove all", "Choose which to remove", "Cancel"]`
+6. If `Cancel`: Exit to user: cleanup cancelled
+7. If `Choose which to remove`:
+    1. For each {sibling} in siblings: AskUserQuestion with options: `["Remove", "Keep"]`
+    2. For each {worktree} in worktrees: AskUserQuestion with options: `["Remove", "Keep"]`
+8. {sibling-args} = `--sibling <path>` for each sibling marked Remove (or all siblings on `Remove all`)
+9. {worktree-args} = `--worktree <path>` for each worktree marked Remove (or all worktrees on `Remove all`)
+10. If both argument lists are empty: Exit to user: nothing selected for removal
+11. bash: `ocd-run sandbox cleanup remove {sibling-args} {worktree-args}`
+12. Report what was removed
+13. Return to caller
