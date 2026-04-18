@@ -175,22 +175,43 @@ class TestErrorWrapping:
         assert "mode must be one of" in result["error"]
 
 
-class TestDbReady:
-    """db_ready is the dormancy predicate — file presence plus schema subset check."""
+class TestReady:
+    """ready() is the dormancy predicate — file presence plus schema subset check."""
 
     def test_absent_db_returns_false(self, tmp_path):
-        assert nav_lib.db_ready(tmp_path / "missing.db") is False
+        assert nav_lib.ready(tmp_path / "missing.db") is False
 
     def test_valid_schema_returns_true(self, tmp_path):
         db_path = tmp_path / "valid.db"
         conn = get_connection(str(db_path))
         conn.executescript(SCHEMA)
         conn.close()
-        assert nav_lib.db_ready(db_path) is True
+        assert nav_lib.ready(db_path) is True
 
     def test_divergent_schema_returns_false(self, tmp_path):
         db_path = tmp_path / "divergent.db"
         conn = get_connection(str(db_path))
         conn.executescript("CREATE TABLE unrelated (x INTEGER)")
         conn.close()
-        assert nav_lib.db_ready(db_path) is False
+        assert nav_lib.ready(db_path) is False
+
+
+class TestEnsureReady:
+    """ensure_ready() raises NotReadyError with an actionable message when not operational."""
+
+    def test_absent_db_raises(self, tmp_path, monkeypatch):
+        import plugin
+        monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(tmp_path))
+        with pytest.raises(plugin.NotReadyError) as exc:
+            nav_lib.ensure_ready()
+        assert "dormant" in str(exc.value).lower()
+        assert "/ocd:setup" in str(exc.value)
+
+    def test_valid_schema_does_not_raise(self, tmp_path, monkeypatch):
+        monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(tmp_path))
+        db_path = tmp_path / ".claude" / "ocd" / "navigator" / "navigator.db"
+        db_path.parent.mkdir(parents=True)
+        conn = get_connection(str(db_path))
+        conn.executescript(SCHEMA)
+        conn.close()
+        nav_lib.ensure_ready()  # should not raise

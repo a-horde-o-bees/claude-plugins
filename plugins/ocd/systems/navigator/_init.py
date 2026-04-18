@@ -56,12 +56,14 @@ def _rules_rel_prefix() -> str:
     return f".claude/rules/{_plugin_name()}/navigator"
 
 
-def db_ready(db_path: Path | None = None) -> bool:
-    """Return True when the navigator database exists and has all expected tables.
+def ready(db_path: Path | None = None) -> bool:
+    """Return True when the navigator database exists and has the full schema.
 
-    Callers in readiness-gated paths (MCP server startup, skill Route checks)
-    use this in place of file-existence probes — a present DB with divergent
-    schema is not operational.
+    Zero-arg form resolves the DB location via plugin helpers
+    (CLAUDE_PROJECT_DIR). Pass an explicit path when checking a non-default
+    location — tests, MCP server startup with DB_PATH override. Validates
+    schema subset, not just file existence — a present DB with divergent
+    schema counts as not ready.
     """
     target = db_path if db_path is not None else _db_path()
     if not target.exists():
@@ -78,6 +80,14 @@ def db_ready(db_path: Path | None = None) -> bool:
         return EXPECTED_TABLES.issubset(actual_tables)
     except sqlite3.Error:
         return False
+
+
+def ensure_ready(db_path: Path | None = None) -> None:
+    """Raise NotReadyError when navigator is not operational."""
+    if not ready(db_path):
+        raise plugin.NotReadyError(
+            "Navigator is dormant — run /ocd:setup init to initialize."
+        )
 
 
 def _status_extra() -> list[dict]:

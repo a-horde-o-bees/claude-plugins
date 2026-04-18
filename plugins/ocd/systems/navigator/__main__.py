@@ -10,6 +10,8 @@ import argparse
 import sys
 from pathlib import Path
 
+import plugin
+
 from . import *  # noqa: F403 — underscore-prefixed names are internal; bare names are public
 
 
@@ -156,7 +158,7 @@ def _dispatch_resolve_skill(args: argparse.Namespace) -> None:
 
 
 def _dispatch_ready(args: argparse.Namespace) -> None:
-    if not db_ready(Path(args.db)):
+    if not ready(Path(args.db)):
         sys.exit(1)
 
 
@@ -491,7 +493,11 @@ def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
     if hasattr(args, "_dispatch"):
-        args._dispatch(args)
+        try:
+            args._dispatch(args)
+        except plugin.NotReadyError as e:
+            print(str(e), file=sys.stderr)
+            sys.exit(1)
     else:
         parser.print_help()
         sys.exit(1)

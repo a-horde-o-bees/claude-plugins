@@ -33,7 +33,7 @@ from ._server_helpers import _err, _ok
 
 DB_PATH = os.environ.get("DB_PATH", ".claude/ocd/navigator/navigator.db")
 
-_READY = _nav.db_ready(Path(DB_PATH))
+_READY = _nav.ready(Path(DB_PATH))
 
 _FULL_INSTRUCTIONS = """Project structure index. Use Navigator first when orienting in unfamiliar areas — it indexes file purposes, structure, and metrics so the agent doesn't have to read every file to find what it needs.
 

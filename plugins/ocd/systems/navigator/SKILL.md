@@ -31,12 +31,10 @@ The loop terminates when `paths_undescribed` returns `done=true`.
 
 ## Workflow
 
-1. Verify navigator ready — bash: `ocd-run navigator ready`
-    1. If non-zero exit: Exit to user: navigator is dormant — run `/ocd:setup init` to initialize
-2. {target} = $ARGUMENTS if provided, else project root
-3. Read `${CLAUDE_PLUGIN_ROOT}/systems/navigator/references/description-guidelines.md`
-4. Sync structure — bash: `ocd-run navigator scan {target}`
-5. While work remains:
+1. {target} = $ARGUMENTS if provided, else project root
+2. Read `${CLAUDE_PLUGIN_ROOT}/systems/navigator/references/description-guidelines.md`
+3. Sync structure — bash: `ocd-run navigator scan {target}`
+4. While work remains:
     1. {work} = paths_undescribed
     2. If {work}.done: Break loop
     3. If {work}.listing is not a directory structure (error, malformed): Break loop — surface to user for review

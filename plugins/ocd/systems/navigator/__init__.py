@@ -18,7 +18,7 @@ from ._scanner import *  # noqa: F401,F403
 from ._scanner import _walk_filesystem, _compute_file_metrics  # used by facade
 from ._references import *  # noqa: F401,F403
 from ._skills import *  # noqa: F401,F403
-from ._init import db_ready  # noqa: F401
+from ._init import ready, ensure_ready  # noqa: F401
 
 # Cross-package: scope_analyze composites governance matching into its result,
 # so the facade imports governance_match from the governance library.
@@ -26,12 +26,14 @@ from systems.governance import governance_match
 
 
 def _ensure_scanned(db_path: str) -> None:
-    """Populate the paths table from disk before a read or write.
+    """Verify navigator is operational, then populate paths from disk.
 
-    Every facade function that touches the paths table calls this first —
-    navigator owns its own population, callers never have to scan before
-    invoking a navigator function.
+    Dormancy gate first — raises NotReadyError when the DB is absent or its
+    schema is divergent, so operational facade functions never touch an
+    unready DB. Then scans so the table reflects current filesystem state
+    before the caller reads or writes.
     """
+    ensure_ready(Path(db_path))
     scan_path(db_path)
 
 
