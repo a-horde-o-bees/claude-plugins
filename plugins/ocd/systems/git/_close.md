@@ -18,10 +18,17 @@ Pause work on an open system by switching back to main. The dev branch persists 
     1. bash: `git status --short`
     2. If output is non-empty: Exit to user: commit changes on {current-branch} before closing
 
-5. Switch to main:
+> Push — close persists the session's work to origin so the user can walk away cleanly. Rebase during `open` rewrites history, so a plain push is rejected once the branch has been rebased. `--force-with-lease` is the safe form: it rewrites origin to match local only when origin matches the local ref of the remote-tracking branch, refusing if someone else moved origin independently.
+
+5. Push dev branch to origin:
+    1. bash: `git push --force-with-lease origin {current-branch}`
+    2. If push fails: Exit to user: push of {current-branch} failed — origin advanced independently; resolve manually before closing
+
+6. Switch to main:
     1. bash: `git checkout main`
 
-6. Return to caller:
+7. Return to caller:
     - closed: {plugin}:{system}
+    - {current-branch} pushed to origin
     - {current-branch} persists with its commits
     - on {plugin}:{system} again: run `/ocd:git open {plugin}:{system}`

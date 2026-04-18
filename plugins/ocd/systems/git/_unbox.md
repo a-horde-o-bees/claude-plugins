@@ -49,16 +49,28 @@ Merge a boxed system's dev branch back into main, then delete the dev branch loc
     2. bash: `git branch -d {dev-branch}`
     3. bash: `git push origin --delete {dev-branch}`
 
-> Reintegration checklist — surface the original box commit's deletion manifest so the user can review which external references were cut on the way in and decide what to restore now that the system is back.
+> Reintegration checklist — surface only external references cut on box. The system's own directory is excluded since the merge restored it; including it here is noise that looks alarming (e.g., "SKILL.md: 12 deletions") even though nothing was lost. Full diff (not just --stat) so the user can decide per-file without running `git show` themselves.
 
 7. Emit reintegration checklist:
     1. {box-commit} = bash: `git log --grep="^box {plugin}:{system}$" -n 1 --format=%H`
-    2. If {box-commit} is non-empty:
-        1. {manifest} = bash: `git show {box-commit} --stat`
-        2. Present {manifest} to the user with a note: "files below had references to {plugin}:{system} removed when boxed — review each and decide whether to restore in the current design"
+    2. If {box-commit} is empty: Exit to user: unboxed — box commit not found in history, no reintegration checklist
+    3. {system-path} = `plugins/{plugin}/systems/{system}`
+    4. {changed-files} = bash: `git diff-tree --no-commit-id --name-only -r {box-commit}`
+    5. {external-files} = {changed-files} with entries under {system-path} filtered out
+    6. If {external-files} is empty:
+        1. Present to user: "Unboxed {plugin}:{system}. No external references were cut on box — nothing to reintegrate."
+    7. Else:
+        1. {stat} = bash: `git show {box-commit} --stat -- {external-files}`
+        2. {patch} = bash: `git show {box-commit} --patch -- {external-files}`
+        3. Present to user:
+            - unboxed: {plugin}:{system}
+            - external references cut on box — review each and decide whether to restore in the current design:
+            - {stat}
+            - full diff:
+            - {patch}
 
 8. Return to caller:
     - unboxed: {plugin}:{system}
     - merged into main with `--no-ff`
     - {dev-branch} deleted local + remote
-    - reintegration checklist emitted (files where tendrils were deleted on box)
+    - external tendrils in checklist: count (0 means nothing to reintegrate)
