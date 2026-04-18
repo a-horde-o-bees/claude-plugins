@@ -88,6 +88,12 @@
         "Bash(.claude/*)"
       ]
     },
+    "ocd": {
+      "description": "OCD plugin CLI runner",
+      "patterns": [
+        "Bash(ocd-run:*)"
+      ]
+    },
     "system": {
       "description": "System utilities (optional — environment-specific)",
       "patterns": [

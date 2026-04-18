@@ -4,7 +4,7 @@ description: Manage ocd plugin infrastructure — deploy governance files and sy
 argument-hint: "<status | init [--force] | guided>"
 allowed-tools:
   - AskUserQuestion
-  - Bash(ocd-run *)
+  - Bash(ocd-run:*)
 ---
 
 # /setup

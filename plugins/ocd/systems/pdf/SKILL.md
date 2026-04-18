@@ -3,11 +3,11 @@ name: ocd-pdf
 description: Export markdown files to PDF using WeasyPrint.
 argument-hint: "--src <file> [--src <file> ...] [--dest <dir>] [--set-css [<preset | path>]]"
 allowed-tools:
-  - Bash(mkdir *)
-  - Bash(rm *)
-  - Bash(cp *)
-  - Bash(ls *)
-  - Bash(ocd-run *)
+  - Bash(mkdir:*)
+  - Bash(rm:*)
+  - Bash(cp:*)
+  - Bash(ls:*)
+  - Bash(ocd-run:*)
 ---
 
 # /pdf
