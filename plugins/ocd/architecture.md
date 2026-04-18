@@ -103,7 +103,6 @@ Skill packages live under `systems/` (declared via `plugin.json`'s `skills` fiel
 |-------|-------------------------------------|
 | `audit-governance` | Audit the rules and conventions governance chain foundations-first, one level at a time |
 | `audit-static` | Audit any path against its governance, best practices, and prior art through holistic static analysis |
-| `update-system-docs` | Maintain project documentation by deriving it from code reality (design-only placeholder; see `systems/update-system-docs/_DESIGN.md` for the plan) |
 
 ## MCP Servers
 
