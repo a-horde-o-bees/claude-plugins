@@ -53,7 +53,9 @@ Always-on agent behavior guidance deployed to `.claude/rules/ocd/` via `/ocd:set
 | `workflow.md` | Execution discipline: working directory, agents, testing |
 | `system-docs.md` | README and architecture.md requirements per system |
 | `process-flow-notation.md` | Structured programming notation for agent workflows |
-| `log-routing.md` | When and how to capture decisions, friction, problems, and ideas as log entries |
+| `markdown.md` | Base content standards for markdown files |
+
+System-specific rules ship with the system that prescribes them — deployed under `.claude/rules/ocd/<system>/` when that system is initialized. Examples: `navigator/navigator.md` prescribes when to reach for the navigator index; `log/log-routing.md` prescribes how to classify log entries.
 
 ### Conventions
 
