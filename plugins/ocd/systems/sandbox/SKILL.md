@@ -1,7 +1,7 @@
 ---
 name: sandbox
-description: Exercise changes in an isolated test environment — a sibling project for fresh-install scenarios, a git worktree for interactive validation, or a combined test that routes concerns to both. Presents a test plan, confirms, executes, compiles results, and offers cleanup.
-argument-hint: "<project | worktree | test | cleanup> [description]"
+description: Exercise changes or run the test suite in an isolated environment — a sibling project for fresh-install scenarios, a git worktree for interactive validation, an exercise that routes change concerns to both substrates, or a test run against a clean ref. Presents a plan, confirms, executes, reports, and offers cleanup.
+argument-hint: "<project [description] | worktree [description] | exercise [description] | test [--ref <ref>] | cleanup>"
 allowed-tools:
   - AskUserQuestion
   - Bash(git *)
@@ -15,20 +15,54 @@ allowed-tools:
 
 # /sandbox
 
-Exercise changes in an isolated test environment — a sibling project for fresh-install scenarios, a git worktree for interactive validation, or a combined `test` verb that classifies concerns and routes them to both substrates. Presents a test plan, confirms, executes, compiles results, and offers cleanup.
+Operate in an isolated environment so changes, interactive tests, or the project test suite can run without contaminating main. Five verbs:
+
+- `project` — sibling project for fresh-install scenarios (`claude -p` subprocess)
+- `worktree` — disposable git worktree for interactive/in-session validation (executor-driven)
+- `exercise` — orchestrator that classifies a change description into `project` and `worktree` concerns and runs both
+- `test` — run the project test suite against a clean ref (default main HEAD) in a worktree
+- `cleanup` — find and remove leftover sandboxes and worktrees
 
 ## Process Model
 
-Testing in isolation uses one of two substrates depending on what's being exercised:
+Testing in isolation uses one of two substrates depending on what's being validated:
 
-- **Sibling project** (`project` verb) — a brand new directory created at `<parent-project>-test-<topic>/`, separate filesystem, fresh git repo, fresh plugin cache. Tests "from nothing" scenarios: fresh install, bootstrapping, first-time-user behavior. Executed as a `claude -p` subprocess.
-- **Git worktree** (`worktree` verb) — a disposable branch checked out at `.claude/worktrees/<topic>/`, shares plugin cache with current session, isolated from the main working tree. Tests changes against existing project state without risking main. **Executor-driven**: the invoking session drives the test steps directly (using `env -C` for bash calls and explicit worktree paths for file ops) so `AskUserQuestion`, the Agent tool, Skill invocation, and the parent's permission context all remain available. The worktree itself provides filesystem isolation and push blocking, not execution isolation.
+- **Sibling project** (`project` verb, and the project bucket of `exercise`) — a brand new directory created at `<parent-project>-test-<topic>/`, separate filesystem, fresh git repo, fresh plugin cache. Tests "from nothing" scenarios: fresh install, bootstrapping, first-time-user behavior. Executed as a `claude -p` subprocess.
+- **Git worktree** (`worktree` verb, the worktree bucket of `exercise`, and the `test` verb) — a disposable checkout at `.claude/worktrees/<topic>/`, shares plugin cache with current session, isolated from the main working tree. Tests changes or runs the suite against existing project state without risking main. **Executor-driven**: the invoking session drives the steps directly (using `env -C` for bash calls and explicit worktree paths for file ops) so `AskUserQuestion`, the Agent tool, Skill invocation, and the parent's permission context all remain available. The worktree itself provides filesystem isolation and push blocking, not execution isolation.
 
-The skill executor reasons about what the user is testing (from their natural-language description) and proposes a concrete plan. User confirms or adjusts before any filesystem changes happen. After execution, results are presented; cleanup is offered immediately or deferred until the next `cleanup` invocation.
+`exercise` and `project`/`worktree` take a natural-language description; the skill executor drafts a concrete plan, the user confirms, then the plan runs. `test` takes no description — it always answers "do the tests pass on this ref?" After execution, results are presented; cleanup is offered immediately or deferred until the next `cleanup` invocation.
+
+## Substrate Primitives
+
+Three setup/teardown shapes recur across the verbs. Each verb composes one or more. Kept here as a single reference so the shapes read consistently wherever they appear in the workflow.
+
+### Project substrate (sibling + `claude -p`)
+
+Consumed by `project` and the project bucket of `exercise`.
+
+- **Setup** — create `{parent-dir}/{parent-project}-test-{topic}/`, `git init`, apply setup-step file copies/writes, invoke `env -C {sandbox-path} claude -p "<prompt>"` and capture stdout.
+- **Teardown** — `rm -rf {sandbox-path}`, either offered post-run or surfaced by `cleanup`.
+- **Prerequisite** — `/checkpoint` must have run so the marketplace-installed plugin reflects current commits; PATH resolves plugin binaries against the cache, not against `--plugin-dir`.
+
+### Branched worktree (disposable branch on parent `.git`)
+
+Consumed by `worktree` and the worktree bucket of `exercise`.
+
+- **Setup** — `git config remote.origin.pushurl "file:///dev/null"` to block push, then `git worktree add -b sandbox/{topic} .claude/worktrees/{topic}`.
+- **Teardown** — `git worktree remove --force`, `git branch -D sandbox/{topic}`, `git config --unset remote.origin.pushurl`. Error handling always unblocks push, since a crashed verb leaves the origin broken.
+- **Execution model** — the invoking session drives steps directly. Bash uses `env -C`; file ops use explicit paths under the worktree; Skill invocations and `AskUserQuestion` route through the parent session to the user.
+
+### Detached worktree (read-only snapshot at a ref)
+
+Consumed by `test`.
+
+- **Setup** — `git worktree add --detach .claude/worktrees/test-{short-sha} {ref-sha}`. No branch, no push blocking.
+- **Teardown** — `git worktree remove --force`. No branch to delete.
+- **Execution model** — same executor-driven model as branched worktree; `env -C {worktree-path} {project-venv} -m pytest ...` for suite runs.
 
 ## Route Selection
 
-The verbs pick different execution mechanisms. Each concern under test routes to `project` or `worktree` based on interactive characteristics — the test verb orchestrates both buckets automatically; the direct verbs route one bucket at a time.
+The verbs pick different execution mechanisms. The `exercise` verb classifies concerns per the Interactivity criterion and routes each to `project` or `worktree`; the direct verbs route one bucket at a time.
 
 | Capability | `project` (external) | `worktree` (internal) |
 |---|---|---|
@@ -67,7 +101,7 @@ If none apply, the concern routes to `project` — pure deterministic execution,
 
 - Skills that use `AskUserQuestion` — `<plugin>:setup guided`, permissions subflow
 - Skills that write to `.claude/**` — `<plugin>:log`, defect auto-application in audit skills
-- Skills that `Exit to user:` expecting follow-up — `<plugin>:audit-governance`, `<plugin>:audit-static`, observations-pending flows
+- Skills that `Exit to user:` expecting follow-up — observations-pending flows
 - Multi-turn interactions where the parent session approves / steers
 - Changes to repository state that shouldn't affect the main working tree — destructive refactors, commit-graph experiments
 
@@ -76,37 +110,47 @@ Worktree residuals to keep in mind:
 - **MCP-backed state testing is limited.** MCP servers bound at parent-session start continue to see the main project's `CLAUDE_PROJECT_DIR`. Tools like `paths_upsert` / `paths_get` query main's navigator DB, not the worktree's. Use `project` for tests where MCP tool state must reflect the sandbox rather than main.
 - **Nested `Spawn:` inside skills still hits the subagent tool-surface limit.** Skills whose workflows invoke their own subagents cannot be run as black boxes in the worktree — the nested subagent lacks `AskUserQuestion` and further agent-spawn capability. The executor drives those skills' workflows manually, step-by-step, using the parent session's tools.
 
-### Pick `test` when
+### Pick `exercise` when
 
 - Validating a change end-to-end and either don't know or don't care which substrate each concern fits
-- A single change touches both fresh-install and interactive surface area — `test` classifies concerns automatically and runs both buckets in sequence
+- A single change touches both fresh-install and interactive surface area — `exercise` classifies concerns automatically and runs both buckets in sequence
 
-Neither direct route is a replacement for the other. Fresh-install tests cannot pause for user input; interactive tests cannot exercise SessionStart cold-start behavior. `test` is the union — not a shortcut to skip classification, but a wrapper that keeps both halves visible.
+Neither direct substrate is a replacement for the other. Fresh-install tests cannot pause for user input; interactive tests cannot exercise SessionStart cold-start behavior. `exercise` is the union — not a shortcut to skip classification, but a wrapper that keeps both halves visible.
+
+### Pick `test` when
+
+- Need to know whether the existing test suite passes on a baseline — default main HEAD, or an explicit `--ref`
+- No change is being exercised — the question is "do the tests pass?", not "is this change safe?"
+- Before invoking `unbox` on a dev branch (verify the branch passes tests before merging into main)
+- After pulling sibling-session commits to validate nothing regressed
+- Periodic regression checks as a quality gate
 
 ## Rules
 
 - Never create, modify, or delete outside the sandbox substrate — the invoking project is never touched
-- Never proceed with creation until user has confirmed the plan — presenting the plan is not authorization to execute
+- Never proceed with creation until user has confirmed the plan — presenting the plan is not authorization to execute. `test` has no plan to confirm (deterministic verb) and runs immediately
 - Cleanup scans only the parent project's namespace — siblings matching `<parent>-test-*` and all non-main worktrees reported by `git worktree list`; never touches unrelated directories
-- `project` verb and the project bucket of `test` require `/checkpoint` first — the spawned `claude -p` subprocess inherits PATH from the harness, and PATH resolves `<plugin>-run` binaries against the marketplace-cached install, not `--plugin-dir`. Reliable plugin-behavior tests need the marketplace version to reflect current commits; `--plugin-dir` alone is insufficient because PATH lookup shadows it with older cached versions
-- Empty description is a valid invocation for `project`, `worktree`, and `test` — skill asks what to test instead of guessing
-- `test` classifies concerns strictly by the Interactivity criterion — if a concern could plausibly fit either bucket, surface the ambiguity to the user before proceeding rather than routing silently
+- `project` verb and the project bucket of `exercise` require `/checkpoint` first — the spawned `claude -p` subprocess inherits PATH from the harness, and PATH resolves `<plugin>-run` binaries against the marketplace-cached install, not `--plugin-dir`. Reliable plugin-behavior tests need the marketplace version to reflect current commits; `--plugin-dir` alone is insufficient because PATH lookup shadows it with older cached versions
+- Empty description is a valid invocation for `project`, `worktree`, and `exercise` — skill asks what to test instead of guessing. `test` and `cleanup` take no description
+- `exercise` classifies concerns strictly by the Interactivity criterion — if a concern could plausibly fit either bucket, surface the ambiguity to the user before proceeding rather than routing silently
 
 ## Workflow
 
 1. If not $ARGUMENTS: Exit to user: skill description and argument-hint
 
-> Verb dispatch — project creates a sibling, worktree creates a branch checkout, test routes concerns to both substrates, cleanup removes what remains.
+> Verb dispatch — project and worktree create substrates directly, exercise classifies a change into both, test runs the suite, cleanup removes what remains.
 
 2. If {verb} is `project`:
     1. Call: Project
 3. Else if {verb} is `worktree`:
     1. Call: Worktree
-4. Else if {verb} is `test`:
+4. Else if {verb} is `exercise`:
+    1. Call: Exercise
+5. Else if {verb} is `test`:
     1. Call: Test
-5. Else if {verb} is `cleanup`:
+6. Else if {verb} is `cleanup`:
     1. Call: Cleanup
-6. Else: Exit to user: unrecognized verb {verb} — expected project, worktree, test, or cleanup
+7. Else: Exit to user: unrecognized verb {verb} — expected project, worktree, exercise, test, or cleanup
 
 ## Project
 
@@ -127,7 +171,7 @@ Neither direct route is a replacement for the other. Fresh-install tests cannot 
     3. {verification} = what output or filesystem state confirms the test passed
 9. Present plan to user — show {sandbox-path}, {setup-steps}, {invocation}, {verification}
 10. AskUserQuestion with options: `["Proceed", "Adjust", "Cancel"]`
-11. If cancel: Exit to user: test cancelled
+11. If cancel: Exit to user: sandbox cancelled
 12. If adjust: take user's refinements, update plan, Go to step 9. Present plan to user
 13. Execute plan:
     1. bash: `mkdir -p {sandbox-path}`
@@ -158,7 +202,7 @@ Neither direct route is a replacement for the other. Fresh-install tests cannot 
     3. {verification} = what output or filesystem state confirms the test passed
 7. Present plan to user — show {worktree-path}, {branch}, {changes}, {instructions}, {verification}
 8. AskUserQuestion with options: `["Proceed", "Adjust", "Cancel"]`
-9. If cancel: Exit to user: test cancelled
+9. If cancel: Exit to user: sandbox cancelled
 10. If adjust: take refinements, update plan, Go to step 7. Present plan to user
 11. Block push — bash: `git config remote.origin.pushurl "file:///dev/null"`
 12. Create worktree — bash: `git worktree add -b {branch} {worktree-path}`
@@ -179,14 +223,14 @@ Neither direct route is a replacement for the other. Fresh-install tests cannot 
     3. bash: `git branch -D {branch}`
     4. Exit to user: worktree sandbox failed — check output for details
 
-## Test
+## Exercise
 
-> Classify a comprehensive test description into project-bucket and worktree-bucket concerns per the Interactivity criterion, present a combined plan, execute both substrates, and compile a unified report. Use when validating an end-to-end change that touches both fresh-install and interactive surface area.
+> Classify a comprehensive change description into project-bucket and worktree-bucket concerns per the Interactivity criterion, present a combined plan, execute both substrates, and compile a unified report. Use when validating an end-to-end change that touches both fresh-install and interactive surface area.
 
 1. {description} = remaining arguments after the verb
-2. If {description} is empty: ask user what they want to test end-to-end — AskUserQuestion or free-text prompt
+2. If {description} is empty: ask user what they want to exercise end-to-end — AskUserQuestion or free-text prompt
 3. Verify working tree is clean and main is pushed — bash: `git status --short`
-    1. If uncommitted changes exist: Exit to user: `test` routes to the `project` bucket which requires `/checkpoint` first; run `/checkpoint` then re-invoke
+    1. If uncommitted changes exist: Exit to user: `exercise` routes to the `project` bucket which requires `/checkpoint` first; run `/checkpoint` then re-invoke
 4. Classify the description into concerns. For each concern, evaluate the Interactivity criterion (see Route Selection):
     1. {project-bucket} = concerns that route to `project` — deterministic, fresh-install, no user prompts, no `.claude/**` writes, no `Exit to user:` follow-ups
     2. {worktree-bucket} = concerns that route to `worktree` — anything matching any of the five criterion questions
@@ -195,7 +239,7 @@ Neither direct route is a replacement for the other. Fresh-install tests cannot 
     2. {worktree-plan} = worktree-bucket changes (if any), agent instructions, and verification — following the Worktree workflow shape
 6. Present the combined plan — show {description}, the per-concern classification, {project-plan}, {worktree-plan}. Highlight any concern that's ambiguous and ask the user which bucket it belongs in before proceeding.
 7. AskUserQuestion with options: `["Proceed", "Adjust", "Cancel"]`
-8. If cancel: Exit to user: test cancelled
+8. If cancel: Exit to user: exercise cancelled
 9. If adjust: take user's refinements, update plan, Go to step 6. Present the combined plan
 10. Execute project bucket (if {project-bucket} is non-empty):
     1. {parent-project} = basename of current project directory
@@ -234,11 +278,57 @@ Neither direct route is a replacement for the other. Fresh-install tests cannot 
     2. If worktree bucket partial state exists:
         1. bash: `git worktree remove {worktree-path} --force`
         2. bash: `git branch -D {worktree-branch}`
-    3. Exit to user: test sandbox failed — check output for which bucket failed and the cause
+    3. Exit to user: exercise failed — check output for which bucket failed and the cause
+
+## Test
+
+> Run the project test suite against a clean ref in a worktree. Deterministic verb — no plan, no classifier, no change description. Answers "do the existing tests pass on this baseline?" Default ref is `main` HEAD; `--ref <commit-or-branch>` selects another. Cleans up worktree on completion regardless of pass/fail.
+
+1. Parse arguments after the verb:
+    1. If `--ref <value>` present: {ref} = {value}
+    2. Else: {ref} = `main`
+2. Resolve ref to commit SHA — bash: `git rev-parse {ref}`
+    1. If fail: Exit to user: ref {ref} could not be resolved
+    2. {ref-sha} = the resolved SHA
+    3. {short-sha} = first 7 chars of {ref-sha}
+3. {worktree-path} = `.claude/worktrees/test-{short-sha}`
+4. {branch-detached} = true — worktree is created detached (no branch)
+5. Verify worktree path available:
+    1. If {worktree-path} already exists: Exit to user: {worktree-path} already in use — run `/ocd:sandbox cleanup` first or pick a different ref
+6. Resolve test venv:
+    1. {project-venv} = parent project's `.venv/bin/python3`, absolute path
+    2. If missing: Exit to user: project `.venv/bin/python3` not found — bootstrap the project venv before running `test`
+7. Create worktree — bash: `git worktree add --detach {worktree-path} {ref-sha}`
+8. Discover test surfaces:
+    1. {project-tests} = `{worktree-path}/tests/` if present
+    2. {plugin-suites} = each `{worktree-path}/plugins/*/pytest.ini` (the plugin directory containing it is a suite)
+9. Run suites:
+    1. {results} = empty accumulator
+    2. If {project-tests} exists:
+        1. bash: `env -C {worktree-path} {project-venv} -m pytest tests/ -v`
+        2. Append {passed, failed, failures} to {results} under "project"
+    3. For each {suite} in {plugin-suites}:
+        1. {plugin-name} = basename of the plugin directory
+        2. bash: `env -C {worktree-path} {project-venv} -m pytest plugins/{plugin-name}/ -c plugins/{plugin-name}/pytest.ini -v`
+        3. Append {passed, failed, failures} to {results} under {plugin-name}
+10. Compile report:
+    - Per-suite: passed/failed counts, failure summary (first line of each failing test's output)
+    - Overall: total passed, total failed, ref + short SHA identifying the baseline
+11. Cleanup worktree:
+    1. bash: `git worktree remove {worktree-path} --force`
+12. Return to caller:
+    - ref: {ref} ({short-sha})
+    - per-suite counts and failure summaries
+    - overall pass/fail verdict
+    - worktree cleaned up
+
+13. Error Handling:
+    1. If worktree was created: bash: `git worktree remove {worktree-path} --force`
+    2. Exit to user: test run failed — check output for cause (venv missing, ref unresolvable, suite setup error)
 
 ## Cleanup
 
-> Find and remove sandbox projects and leftover git worktrees. Sibling projects match the parent-project prefix convention. Worktrees match `.claude/worktrees/*` — the path the `worktree` and `test` verbs create under. Any additional non-main worktrees reported by `git worktree list` (leftover from earlier runs, manual creations, other tools) are also surfaced so nothing disposable is missed. Always confirms before deletion.
+> Find and remove sandbox projects and leftover git worktrees. Sibling projects match the parent-project prefix convention. Worktrees match `.claude/worktrees/*` — the path the `worktree`, `exercise`, and `test` verbs create under. Any additional non-main worktrees reported by `git worktree list` (leftover from earlier runs, manual creations, other tools) are also surfaced so nothing disposable is missed. Always confirms before deletion.
 
 1. {parent-project} = basename of current project directory
 2. {parent-dir} = parent directory of current project

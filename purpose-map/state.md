@@ -30,7 +30,7 @@ The ocd plugin consolidated into `systems/` with the `bin/ocd-run` wrapper and `
 
 ### Sandbox full-exercise test findings
 
-Surfaced by `/ocd:sandbox test` run against commit `1cb3f4e` (v0.0.292 ocd plugin). Each item is independent; take them one at a time. Ordered critical → cosmetic.
+Surfaced by `/ocd:sandbox exercise` (then named `test`) run against commit `1cb3f4e` (v0.0.292 ocd plugin). Each item is independent; take them one at a time. Ordered critical → cosmetic.
 
 **Critical — sandbox skill itself:**
 

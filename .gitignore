@@ -15,3 +15,6 @@ build/
 .claude/patterns/
 .claude/ocd/
 .claude/blueprint/research/
+
+# Sandbox-skill worktrees — disposable substrate outputs
+.claude/worktrees/
