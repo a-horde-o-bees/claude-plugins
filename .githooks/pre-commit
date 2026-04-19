@@ -8,21 +8,25 @@
 # 3. Propagate shared files: copies ocd plugin framework to all non-ocd plugins.
 #
 # Propagated files:
-#   plugin/__init__.py                     — facade with star imports (to plugin/)
-#   plugin/__main__.py                     — CLI entry point (to plugin/)
-#   plugin/_environment.py                 — environment resolution (to plugin/)
-#   plugin/_metadata.py                    — plugin metadata discovery (to plugin/)
-#   plugin/_deployment.py                  — template deployment primitives (to plugin/)
-#   plugin/_formatting.py                  — output formatting (to plugin/)
-#   plugin/_discovery.py                   — system and skill discovery (to plugin/)
-#   plugin/_orchestration.py               — install and list orchestration (to plugin/)
-#   lib/rules/_init.py                     — rules subsystem (to lib/rules/)
-#   lib/conventions/_init.py               — conventions subsystem (to lib/conventions/)
-#   lib/patterns/_init.py                  — patterns subsystem (to lib/patterns/)
-#   lib/logs/_init.py                      — logs subsystem (to lib/logs/)
-#   lib/permissions/__init__.py            — permissions facade (to lib/permissions/)
-#   lib/permissions/_init.py               — permissions subsystem (to lib/permissions/)
-#   lib/permissions/_operations.py         — permissions operations (to lib/permissions/)
+#   systems/framework/__init__.py          — facade with star imports (to systems/framework/)
+#   systems/framework/__main__.py          — CLI entry point (to systems/framework/)
+#   systems/framework/_environment.py      — environment resolution (to systems/framework/)
+#   systems/framework/_metadata.py         — plugin metadata discovery (to systems/framework/)
+#   systems/framework/_deployment.py       — template deployment primitives (to systems/framework/)
+#   systems/framework/_formatting.py       — output formatting (to systems/framework/)
+#   systems/framework/_system_discovery.py — system and skill discovery (to systems/framework/)
+#   systems/framework/_orchestration.py    — install and list orchestration (to systems/framework/)
+#   systems/framework/_test_discovery.py   — test suite discovery (to systems/framework/)
+#   systems/framework/_test_runner.py      — pytest dispatch (to systems/framework/)
+#   systems/framework/_venv.py             — per-plugin venv resolution (to systems/framework/)
+#   systems/framework/_errors.py           — shared exception types (to systems/framework/)
+#   systems/rules/_init.py                 — rules subsystem (to systems/rules/)
+#   systems/conventions/_init.py           — conventions subsystem (to systems/conventions/)
+#   systems/patterns/_init.py              — patterns subsystem (to systems/patterns/)
+#   systems/log/_init.py                   — log subsystem (to systems/log/)
+#   systems/permissions/__init__.py        — permissions facade (to systems/permissions/)
+#   systems/permissions/_init.py           — permissions subsystem (to systems/permissions/)
+#   systems/permissions/_operations.py     — permissions operations (to systems/permissions/)
 #   hooks/install_deps.sh                  — SessionStart venv install (to hooks/)
 
 set -euo pipefail
@@ -61,21 +65,25 @@ done
 
 # Map of canonical paths to target subdirectories within each plugin
 SHARED_FILES=(
-    "plugins/ocd/plugin/__init__.py:plugin"
-    "plugins/ocd/plugin/__main__.py:plugin"
-    "plugins/ocd/plugin/_environment.py:plugin"
-    "plugins/ocd/plugin/_metadata.py:plugin"
-    "plugins/ocd/plugin/_deployment.py:plugin"
-    "plugins/ocd/plugin/_formatting.py:plugin"
-    "plugins/ocd/plugin/_discovery.py:plugin"
-    "plugins/ocd/plugin/_orchestration.py:plugin"
-    "plugins/ocd/lib/rules/_init.py:lib/rules"
-    "plugins/ocd/lib/conventions/_init.py:lib/conventions"
-    "plugins/ocd/lib/patterns/_init.py:lib/patterns"
-    "plugins/ocd/lib/logs/_init.py:lib/logs"
-    "plugins/ocd/lib/permissions/__init__.py:lib/permissions"
-    "plugins/ocd/lib/permissions/_init.py:lib/permissions"
-    "plugins/ocd/lib/permissions/_operations.py:lib/permissions"
+    "plugins/ocd/systems/framework/__init__.py:systems/framework"
+    "plugins/ocd/systems/framework/__main__.py:systems/framework"
+    "plugins/ocd/systems/framework/_environment.py:systems/framework"
+    "plugins/ocd/systems/framework/_metadata.py:systems/framework"
+    "plugins/ocd/systems/framework/_deployment.py:systems/framework"
+    "plugins/ocd/systems/framework/_formatting.py:systems/framework"
+    "plugins/ocd/systems/framework/_system_discovery.py:systems/framework"
+    "plugins/ocd/systems/framework/_orchestration.py:systems/framework"
+    "plugins/ocd/systems/framework/_test_discovery.py:systems/framework"
+    "plugins/ocd/systems/framework/_test_runner.py:systems/framework"
+    "plugins/ocd/systems/framework/_venv.py:systems/framework"
+    "plugins/ocd/systems/framework/_errors.py:systems/framework"
+    "plugins/ocd/systems/rules/_init.py:systems/rules"
+    "plugins/ocd/systems/conventions/_init.py:systems/conventions"
+    "plugins/ocd/systems/patterns/_init.py:systems/patterns"
+    "plugins/ocd/systems/log/_init.py:systems/log"
+    "plugins/ocd/systems/permissions/__init__.py:systems/permissions"
+    "plugins/ocd/systems/permissions/_init.py:systems/permissions"
+    "plugins/ocd/systems/permissions/_operations.py:systems/permissions"
     "plugins/ocd/hooks/install_deps.sh:hooks"
 )
 
