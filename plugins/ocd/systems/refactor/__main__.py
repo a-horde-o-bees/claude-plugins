@@ -9,7 +9,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from . import *  # noqa: F401,F403
+from ._rename_symbol import rename_symbol_in_scope
 
 
 def main() -> int:

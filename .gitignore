@@ -16,3 +16,6 @@ build/
 
 # Sandbox-skill worktrees — disposable substrate outputs
 .claude/worktrees/
+
+# Auto-init DB backups awaiting schema reconciliation — non-empty means work in flight
+.claude/pre-sync/

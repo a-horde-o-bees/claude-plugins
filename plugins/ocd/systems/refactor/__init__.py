@@ -8,6 +8,9 @@ iterative sed and surface false-positive risk.
 The tools under this system are invoked both directly (`ocd-run refactor
 <subcommand>`) and through the `/ocd:refactor` skill, which wraps them
 in the Mass Rename workflow — pre-scan, plan, apply, verify, test.
-"""
 
-from ._rename_symbol import *  # noqa: F401,F403
+The facade stays thin — codemod backends have heavy third-party deps
+(libcst, ts-morph, etc.) that shouldn't load when unrelated consumers
+import sibling modules like `_init`. Backends are imported directly by
+`__main__.py` (CLI entry) and the tests that exercise them.
+"""
