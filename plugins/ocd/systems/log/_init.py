@@ -46,12 +46,12 @@ def _rules_dst_dir() -> Path:
         / ".claude"
         / "rules"
         / _plugin_name()
-        / "log"
+        / "systems"
     )
 
 
 def _rules_rel_prefix() -> str:
-    return f".claude/rules/{_plugin_name()}/log"
+    return f".claude/rules/{_plugin_name()}/systems"
 
 
 def _deploy_rules(force: bool) -> list[dict]:
@@ -62,6 +62,7 @@ def _deploy_rules(force: bool) -> list[dict]:
         dst_dir=_rules_dst_dir(),
         pattern="*.md",
         force=force,
+        keep_orphans=True,
     )
     return [{"path": f"{rel}/{r.pop('name')}", **r} for r in results]
 
