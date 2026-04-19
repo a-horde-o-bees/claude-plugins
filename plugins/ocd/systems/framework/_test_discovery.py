@@ -14,7 +14,7 @@ from . import _venv
 @dataclass
 class Suite:
     name: str
-    """Human identifier used in the report (e.g. 'project', 'ocd', 'blueprint')."""
+    """Human identifier used in the report (e.g. 'project', 'plugin:ocd')."""
 
     rel_path: Path
     """Path relative to the worktree that pytest collects from."""
@@ -69,7 +69,7 @@ def discover_suites(
             continue
         suites.append(
             Suite(
-                name=plugin_name,
+                name=f"plugin:{plugin_name}",
                 rel_path=Path("plugins") / plugin_name,
                 pytest_ini=Path("plugins") / plugin_name / "pytest.ini",
                 venv=_venv.resolve_plugin_venv(plugin_name),

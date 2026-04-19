@@ -134,20 +134,15 @@ def _print_no_suites(plugin_filter: str | None, project_only: bool) -> None:
 
 def _print_report(results: list[SuiteResult]) -> None:
     print("\n=== Summary ===")
-    print(f"{'Suite':<16} {'Passed':>7} {'Failed':>7} {'Errors':>7} {'Skipped':>8}")
     total_passed = total_failed = total_errors = total_skipped = 0
     for r in results:
-        print(
-            f"{r.name:<16} {r.passed:>7} {r.failed:>7} {r.errors:>7} {r.skipped:>8}",
-        )
+        print(_format_counts(r.name, r.passed, r.failed, r.errors, r.skipped))
         total_passed += r.passed
         total_failed += r.failed
         total_errors += r.errors
         total_skipped += r.skipped
-    print(
-        f"{'TOTAL':<16} {total_passed:>7} {total_failed:>7} "
-        f"{total_errors:>7} {total_skipped:>8}",
-    )
+    if len(results) > 1:
+        print(_format_counts("total", total_passed, total_failed, total_errors, total_skipped))
 
     failures = [line for r in results for line in r.summary_lines]
     if failures:
@@ -157,3 +152,7 @@ def _print_report(results: list[SuiteResult]) -> None:
 
     verdict = "PASS" if total_failed == 0 and total_errors == 0 else "FAIL"
     print(f"\nVerdict: {verdict}")
+
+
+def _format_counts(name: str, passed: int, failed: int, errors: int, skipped: int) -> str:
+    return f"{name} — {passed} passed, {failed} failed, {errors} errors, {skipped} skipped"
