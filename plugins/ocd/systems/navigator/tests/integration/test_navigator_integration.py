@@ -11,7 +11,9 @@ from unittest.mock import patch
 
 import pytest
 
-PLUGIN_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+import framework
+
+PLUGIN_ROOT = framework.get_plugin_root()
 if str(PLUGIN_ROOT) not in sys.path:
     sys.path.insert(0, str(PLUGIN_ROOT))
 
@@ -200,9 +202,8 @@ class TestEnsureReady:
     """ensure_ready() raises NotReadyError with an actionable message when not operational."""
 
     def test_absent_db_raises(self, tmp_path, monkeypatch):
-        import plugin
         monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(tmp_path))
-        with pytest.raises(plugin.NotReadyError) as exc:
+        with pytest.raises(framework.NotReadyError) as exc:
             nav_lib.ensure_ready()
         assert "dormant" in str(exc.value).lower()
         assert "/ocd:setup" in str(exc.value)

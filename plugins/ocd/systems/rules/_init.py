@@ -10,22 +10,22 @@ Interface contract: init() and status() return
 
 from pathlib import Path
 
-import plugin
+import framework
 
 
 CATEGORY = "rules"
 
 
 def _plugin_name() -> str:
-    return plugin.get_plugin_name(plugin.get_plugin_root())
+    return framework.get_plugin_name(framework.get_plugin_root())
 
 
 def _templates_dir() -> Path:
-    return plugin.get_plugin_root() / "systems" / CATEGORY / "templates"
+    return framework.get_plugin_root() / "systems" / CATEGORY / "templates"
 
 
 def _target_dir() -> Path:
-    return plugin.get_project_dir() / ".claude" / CATEGORY / _plugin_name()
+    return framework.get_project_dir() / ".claude" / CATEGORY / _plugin_name()
 
 
 def _deployed_rel() -> str:
@@ -34,7 +34,7 @@ def _deployed_rel() -> str:
 
 def init(force: bool = False) -> dict:
     """Deploy rule templates."""
-    results = plugin.deploy_files(
+    results = framework.deploy_files(
         src_dir=_templates_dir(),
         dst_dir=_target_dir(),
         pattern="*.md",
@@ -58,7 +58,7 @@ def status() -> dict:
         if not src.is_file():
             continue
         dst = target / src.name
-        state = plugin.compare_deployed(src, dst)
+        state = framework.compare_deployed(src, dst)
         files.append({
             "path": f"{rel}/{src.name}",
             "before": state,

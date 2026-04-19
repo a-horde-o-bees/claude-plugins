@@ -9,14 +9,14 @@ redundant entries.
 import json
 from pathlib import Path
 
-import plugin
+import framework
 
 
 def _settings_path(scope: str) -> Path:
     """Resolve settings.json path for a scope."""
     if scope == "project":
-        return plugin.get_project_dir() / ".claude" / "settings.json"
-    return plugin.get_claude_home() / "settings.json"
+        return framework.get_project_dir() / ".claude" / "settings.json"
+    return framework.get_claude_home() / "settings.json"
 
 
 def _get_both_settings() -> dict:
@@ -27,7 +27,7 @@ def _get_both_settings() -> dict:
     result = {}
     for scope in ("project", "user"):
         path = _settings_path(scope)
-        settings = plugin.read_json(path)
+        settings = framework.read_json(path)
         perms = settings.get("permissions", {})
         result[scope] = {
             "path": str(path),
@@ -39,12 +39,12 @@ def _get_both_settings() -> dict:
 
 def _recommended_settings_path() -> Path:
     """Path to the permissions subsystem's recommended-patterns config."""
-    return plugin.get_plugin_root() / "systems" / "permissions" / "settings.json"
+    return framework.get_plugin_root() / "systems" / "permissions" / "settings.json"
 
 
 def _get_recommended_patterns() -> set[str]:
     """Flat set of all recommended patterns across categories."""
-    ref = plugin.read_json(_recommended_settings_path())
+    ref = framework.read_json(_recommended_settings_path())
     patterns = set()
     for cat in ref.get("categories", {}).values():
         patterns.update(cat.get("patterns", []))
@@ -53,7 +53,7 @@ def _get_recommended_patterns() -> set[str]:
 
 def _get_recommended_by_category() -> dict:
     """Recommended patterns grouped by category with descriptions."""
-    ref = plugin.read_json(_recommended_settings_path())
+    ref = framework.read_json(_recommended_settings_path())
     return ref.get("categories", {})
 
 
@@ -104,11 +104,11 @@ def _merge_permissions(scope: str) -> None:
         print("  recommended-permissions.json not found")
         return
 
-    ref = plugin.read_json(ref_path)
+    ref = framework.read_json(ref_path)
     categories = ref.get("categories", {})
 
     settings_path = _settings_path(scope)
-    settings = plugin.read_json(settings_path)
+    settings = framework.read_json(settings_path)
     existing = set(settings.get("permissions", {}).get("allow", []))
 
     added = []
@@ -267,7 +267,7 @@ def run_permissions_clean(scope: str) -> None:
         return
 
     path = _settings_path(scope)
-    settings = plugin.read_json(path)
+    settings = framework.read_json(path)
     allow = settings.get("permissions", {}).get("allow", [])
 
     remove_set = set(to_remove)

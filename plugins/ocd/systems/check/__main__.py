@@ -13,7 +13,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-import plugin
+import framework
 
 from . import check_dormancy, scan_system
 
@@ -50,7 +50,7 @@ def _print_result(result) -> None:
 
 
 def _dispatch_dormancy(args: argparse.Namespace) -> None:
-    plugin_root = Path(args.plugin).resolve() if args.plugin else plugin.get_plugin_root()
+    plugin_root = Path(args.plugin).resolve() if args.plugin else framework.get_plugin_root()
     if args.system:
         systems = [plugin_root / "systems" / args.system]
         if not systems[0].is_dir():

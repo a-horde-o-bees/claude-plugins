@@ -22,10 +22,12 @@ from pathlib import Path
 
 import pytest
 
+import framework
+
 pytestmark = pytest.mark.agent
 
-PLUGIN_ROOT = Path(__file__).resolve().parent.parent.parent.parent
-PROJECT_ROOT = PLUGIN_ROOT.parent.parent
+PLUGIN_ROOT = framework.get_plugin_root()
+PROJECT_ROOT = framework.get_project_dir()
 SCRATCH_DIR = PROJECT_ROOT / "_test_scratch"
 
 

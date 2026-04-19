@@ -17,19 +17,19 @@ Interface contract: init() and status() return
 
 from pathlib import Path
 
-import plugin
+import framework
 
 
 def _plugin_name() -> str:
-    return plugin.get_plugin_name(plugin.get_plugin_root())
+    return framework.get_plugin_name(framework.get_plugin_root())
 
 
 def _templates_dir() -> Path:
-    return plugin.get_plugin_root() / "systems" / "log" / "templates"
+    return framework.get_plugin_root() / "systems" / "log" / "templates"
 
 
 def _target_dir() -> Path:
-    return plugin.get_project_dir() / ".claude" / "logs"
+    return framework.get_project_dir() / ".claude" / "logs"
 
 
 def _deployed_rel() -> str:
@@ -37,12 +37,12 @@ def _deployed_rel() -> str:
 
 
 def _rules_src_dir() -> Path:
-    return plugin.get_plugin_root() / "systems" / "log" / "rules"
+    return framework.get_plugin_root() / "systems" / "log" / "rules"
 
 
 def _rules_dst_dir() -> Path:
     return (
-        plugin.get_project_dir()
+        framework.get_project_dir()
         / ".claude"
         / "rules"
         / _plugin_name()
@@ -57,7 +57,7 @@ def _rules_rel_prefix() -> str:
 def _deploy_rules(force: bool) -> list[dict]:
     """Deploy log-owned rule files to the plugin's rule corpus."""
     rel = _rules_rel_prefix()
-    results = plugin.deploy_files(
+    results = framework.deploy_files(
         src_dir=_rules_src_dir(),
         dst_dir=_rules_dst_dir(),
         pattern="*.md",
@@ -78,7 +78,7 @@ def _rule_status_entries() -> list[dict]:
     for src in sorted(src_dir.glob("*.md")):
         if not src.is_file():
             continue
-        state = plugin.compare_deployed(src, dst_dir / src.name)
+        state = framework.compare_deployed(src, dst_dir / src.name)
         entries.append({
             "path": f"{rel}/{src.name}",
             "before": state,
@@ -99,7 +99,7 @@ def init(force: bool = False) -> dict:
             if not type_dir.is_dir():
                 continue
             type_name = type_dir.name
-            results = plugin.deploy_files(
+            results = framework.deploy_files(
                 src_dir=type_dir,
                 dst_dir=target / type_name,
                 pattern="*.md",
@@ -131,7 +131,7 @@ def status() -> dict:
                 if not src.is_file():
                     continue
                 dst = target / type_name / src.name
-                state = plugin.compare_deployed(src, dst)
+                state = framework.compare_deployed(src, dst)
                 files.append({
                     "path": f"{rel}/{type_name}/{src.name}",
                     "before": state,

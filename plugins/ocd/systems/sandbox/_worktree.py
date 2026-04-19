@@ -14,7 +14,7 @@ changes via Edit/Write — stays in the invoking session.
 import subprocess
 from pathlib import Path
 
-import plugin
+import framework
 
 
 WORKTREES_DIR = Path(".claude") / "worktrees"
@@ -26,7 +26,7 @@ def worktree_setup(topic: str) -> Path:
 
     Fails loudly if the worktree path or branch already exists.
     """
-    project_root = plugin.get_project_dir()
+    project_root = framework.get_project_dir()
     worktree_path = project_root / WORKTREES_DIR / topic
     branch = f"sandbox/{topic}"
 
@@ -66,7 +66,7 @@ def worktree_teardown(topic: str) -> None:
     unblocked on exit, even if worktree removal partially failed, so a
     crashed run doesn't leave the origin in a broken state.
     """
-    project_root = plugin.get_project_dir()
+    project_root = framework.get_project_dir()
     worktree_path = project_root / WORKTREES_DIR / topic
     branch = f"sandbox/{topic}"
 

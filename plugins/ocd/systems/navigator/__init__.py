@@ -11,7 +11,7 @@ CLI display belongs in __main__.py. Presentation lives in __main__.py.
 import fnmatch
 from pathlib import Path
 
-import plugin
+import framework
 
 from ._db import *  # noqa: F401,F403
 from ._scanner import *  # noqa: F401,F403
@@ -216,7 +216,7 @@ def paths_upsert(
             "Patterns are declared in per-system paths.csv files."
         )
 
-    absolute_entry = plugin.get_project_dir() / entry_path if entry_path else plugin.get_project_dir()
+    absolute_entry = framework.get_project_dir() / entry_path if entry_path else framework.get_project_dir()
     if absolute_entry.is_dir() if entry_path else True:
         entry_type = "directory"
     elif absolute_entry.is_file():
@@ -236,7 +236,7 @@ def paths_upsert(
 
         metrics = {"git_hash": None, "line_count": None, "char_count": None}
         if purpose is not None and entry_type == "file":
-            metrics = _compute_file_metrics(plugin.get_project_dir() / entry_path)
+            metrics = _compute_file_metrics(framework.get_project_dir() / entry_path)
 
         display = entry_path if entry_path else "."
 

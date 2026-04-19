@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-import plugin
+import framework
 
 
 def load_settings_file(path: Path) -> dict:
@@ -56,4 +56,4 @@ def load_merged_settings(project_dir: Path) -> dict:
 
 
 def get_project_dir() -> Path:
-    return plugin.get_project_dir()
+    return framework.get_project_dir()

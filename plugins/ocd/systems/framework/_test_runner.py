@@ -11,13 +11,14 @@ inside it. Running `ocd-run tests` directly (without sandbox) exercises
 the current working tree — useful for fast dev feedback.
 """
 
+import argparse
 import re
 import subprocess
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from . import _discovery
+from . import _test_discovery
 
 
 @dataclass
@@ -31,7 +32,7 @@ class SuiteResult:
     summary_lines: list[str] = field(default_factory=list)
 
 
-def run(
+def tests_run(
     plugin_filter: str | None = None,
     project_only: bool = False,
 ) -> int:
@@ -41,7 +42,7 @@ def run(
     suite passes, non-zero when any suite fails or errors.
     """
     cwd = Path.cwd()
-    suites = _discovery.discover_suites(cwd, plugin_filter, project_only)
+    suites = _test_discovery.discover_suites(cwd, plugin_filter, project_only)
     if not suites:
         _print_no_suites(plugin_filter, project_only)
         return 0
@@ -51,7 +52,27 @@ def run(
     return max(r.exit_code for r in results)
 
 
-def _run_suite(suite: _discovery.Suite, cwd: Path) -> SuiteResult:
+def test_runner_main() -> int:
+    """CLI entry — parse args and dispatch to `tests_run`."""
+    parser = argparse.ArgumentParser(
+        prog="ocd-run tests",
+        description="Run project and plugin test suites in the current working directory.",
+    )
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument(
+        "--plugin",
+        help="Run only the named plugin's tests",
+    )
+    group.add_argument(
+        "--project",
+        action="store_true",
+        help="Run only the project-level tests/ suite",
+    )
+    args = parser.parse_args()
+    return tests_run(plugin_filter=args.plugin, project_only=args.project)
+
+
+def _run_suite(suite: _test_discovery.Suite, cwd: Path) -> SuiteResult:
     print(f"\n=== {suite.name} ===", flush=True)
     args = [str(suite.venv), "-m", "pytest", str(suite.rel_path), "-v"]
     if suite.pytest_ini is not None:

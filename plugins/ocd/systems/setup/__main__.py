@@ -8,7 +8,7 @@ propagated to every plugin via pre-commit hook). This module routes
 implementation stay decoupled.
 """
 
-from plugin.__main__ import main
+from framework.__main__ import main
 
 
 if __name__ == "__main__":

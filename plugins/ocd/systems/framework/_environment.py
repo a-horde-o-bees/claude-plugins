@@ -9,17 +9,26 @@ from pathlib import Path
 
 
 def get_plugin_root() -> Path:
-    """Resolve plugin root from CLAUDE_PLUGIN_ROOT with __file__ fallback.
+    """Resolve plugin root from CLAUDE_PLUGIN_ROOT with a marker-anchor fallback.
 
-    Falls back to a deterministic walk from this module's own file
-    position: plugin/_environment.py always lives at plugins/<name>/plugin/
-    relative to the plugin root, so the walk is correct across dev,
-    install cache, and any other install location.
+    Walks ancestors of this module's `__file__` upward until one contains
+    `.claude-plugin/plugin.json` — the file that exists only at the
+    plugin root. Depth-independent: any future relocation of this module
+    inside the plugin tree continues to resolve correctly without code
+    changes.
     """
     env = os.environ.get("CLAUDE_PLUGIN_ROOT")
     if env:
         return Path(env).resolve()
-    return Path(__file__).resolve().parent.parent
+    here = Path(__file__).resolve()
+    for ancestor in here.parents:
+        if (ancestor / ".claude-plugin" / "plugin.json").exists():
+            return ancestor
+    raise RuntimeError(
+        f"plugin root not found walking up from {here} — no ancestor "
+        "contains .claude-plugin/plugin.json; set CLAUDE_PLUGIN_ROOT "
+        "explicitly if running outside a plugin tree",
+    )
 
 
 def get_project_dir() -> Path:
@@ -43,7 +52,7 @@ def get_project_dir() -> Path:
         return Path(result.stdout.strip()).resolve()
     raise RuntimeError(
         "CLAUDE_PROJECT_DIR is not set and git root is not discoverable. "
-        "Run under Claude Code, via scripts/run-plugin.sh, or set the "
+        "Run under Claude Code, via scripts/run-framework.sh, or set the "
         "variable explicitly."
     )
 

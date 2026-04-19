@@ -1,6 +1,6 @@
 """Broken fixture — predicate lies and does not reflect state."""
 
-import plugin
+import framework
 
 
 def ready() -> bool:
@@ -9,7 +9,7 @@ def ready() -> bool:
 
 def ensure_ready() -> None:
     if not ready():
-        raise plugin.NotReadyError("broken_ready_always_true is dormant.")
+        raise framework.NotReadyError("broken_ready_always_true is dormant.")
 
 
 def init(force: bool = False) -> dict:

@@ -11,7 +11,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-import plugin
+import framework
 
 
 WORKTREES_DIR = Path(".claude") / "worktrees"
@@ -27,7 +27,7 @@ def tests_run(
     Returns the tests CLI's exit code (0 pass, non-zero fail). Worktree
     is always removed before return.
     """
-    project_root = plugin.get_project_dir()
+    project_root = framework.get_project_dir()
     ref_sha = _resolve_ref(project_root, ref)
     short_sha = ref_sha[:7]
     worktree = project_root / WORKTREES_DIR / f"test-{short_sha}"
@@ -111,7 +111,7 @@ def _invoke_tests(
     # the plugin venvs both, so CLAUDE_PROJECT_DIR must reference the
     # parent explicitly while pytest still discovers tests from cwd.
     env = os.environ.copy()
-    env["CLAUDE_PROJECT_DIR"] = str(plugin.get_project_dir())
+    env["CLAUDE_PROJECT_DIR"] = str(framework.get_project_dir())
 
     result = subprocess.run(
         args,
