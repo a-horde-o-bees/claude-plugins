@@ -94,9 +94,10 @@ Skill packages live under `systems/` (declared via `plugin.json`'s `skills` fiel
 | `init` | Initialize ocd conventions and skill infrastructure in current project |
 | `status` | Report plugin infrastructure state |
 | `navigator` | Sync navigator database with filesystem and describe entries that need descriptions |
-| `git` | Local git operations — topic-grouped commits (`git commit`) and branch pushes (`git push`) |
+| `git` | Manage local git history — record commits grouped by topic and push a branch to origin. Sandbox-based feature lifecycle (new, pack, open, close, unpack, list) lives under /ocd:sandbox. |
 | `log` | Capture or manage project log entries — decisions, friction, problems, ideas |
 | `pdf` | Export markdown files to PDF using WeasyPrint |
+| `sandbox` | Work on an isolated sandbox of the project — durable feature boxes (new, pack, open, close, unpack, list) for in-flight development that parallel sessions can drive without clobbering each other, and ephemeral sandboxes (exercise, tests, cleanup) for fresh-install or interactive validation against the current tree. All substrates share one sibling-path convention, one permission rule, and one cleanup sweep. |
 
 ## MCP Servers
 
