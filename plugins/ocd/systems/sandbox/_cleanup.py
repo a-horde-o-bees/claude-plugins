@@ -1,12 +1,17 @@
-"""Cleanup verb — inventory sandbox artifacts and remove selected ones.
+"""Cleanup verb — inventory ephemeral sandbox artifacts and remove selected ones.
 
 Two phases, separated because the skill needs to present the inventory
 and collect per-item user decisions via `AskUserQuestion`:
 
-- `inventory` emits machine-readable JSON listing sibling projects and
-  non-main worktrees. The skill parses, presents, collects choices.
+- `inventory` emits machine-readable JSON listing ephemeral sibling
+  projects (`<project>--tmp-*`) and disposable worktrees. The skill
+  parses, presents, collects choices.
 - `remove` accepts the filtered list (sibling paths + worktree paths)
   and actually deletes them.
+
+Durable feature boxes (siblings at `<project>--<feature>` with
+`sandbox/<feature>` branches) are excluded — only cleanup via explicit
+`unpack` on the durable verb surface removes those.
 """
 
 import json
@@ -17,6 +22,10 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 
 import framework
+
+
+EPHEMERAL_SIBLING_PREFIX = "--tmp-"
+EPHEMERAL_BRANCH_PREFIX = "sandbox/tmp/"
 
 
 @dataclass
@@ -39,7 +48,7 @@ class Inventory:
 
 
 def cleanup_inventory() -> Inventory:
-    """Gather disposable artifacts in the parent project's namespace."""
+    """Gather ephemeral sandbox artifacts in the parent project's namespace."""
     project_root = framework.get_project_dir()
     parent_dir = project_root.parent
     parent_name = project_root.name
@@ -93,7 +102,7 @@ def cleanup_remove(sibling_paths: list[Path], worktree_paths: list[Path]) -> Non
 def _find_siblings(parent_dir: Path, parent_name: str) -> list[SiblingEntry]:
     if not parent_dir.is_dir():
         return []
-    prefix = f"{parent_name}-test-"
+    prefix = f"{parent_name}{EPHEMERAL_SIBLING_PREFIX}"
     entries = []
     for candidate in sorted(parent_dir.iterdir()):
         if not candidate.is_dir():
@@ -110,6 +119,9 @@ def _find_siblings(parent_dir: Path, parent_name: str) -> list[SiblingEntry]:
 
 
 def _find_worktrees(project_root: Path) -> list[WorktreeEntry]:
+    """Find ephemeral worktrees — branches under `sandbox/tmp/` plus
+    any detached worktrees (test runs use detached refs).
+    """
     result = subprocess.run(
         ["git", "-C", str(project_root), "worktree", "list", "--porcelain"],
         capture_output=True,
@@ -124,10 +136,16 @@ def _find_worktrees(project_root: Path) -> list[WorktreeEntry]:
     detached: bool = False
 
     def flush() -> None:
-        if path is not None and path != str(project_root):
-            entries.append(
-                WorktreeEntry(path=path, branch=branch, detached=detached),
-            )
+        if path is None or path == str(project_root):
+            return
+        is_ephemeral = detached or (
+            branch is not None and branch.startswith(EPHEMERAL_BRANCH_PREFIX)
+        )
+        if not is_ephemeral:
+            return
+        entries.append(
+            WorktreeEntry(path=path, branch=branch, detached=detached),
+        )
 
     for line in result.stdout.splitlines():
         if line.startswith("worktree "):

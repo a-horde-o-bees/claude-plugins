@@ -3,6 +3,10 @@
 Single-call lifecycle: the verb is fully non-interactive so setup, execution,
 and teardown all happen in one script invocation. The worktree is always
 removed before return, including on pytest failure or subprocess error.
+
+Detached test worktrees follow the sibling convention — placed at
+`<parent>/<project>--tmp-test-<short-sha>/` so all ephemeral substrates
+share one permission glob and the main project tree stays clean.
 """
 
 import os
@@ -13,8 +17,10 @@ from pathlib import Path
 
 import framework
 
+from ._worktree import sibling_path
 
-WORKTREES_DIR = Path(".claude") / "worktrees"
+
+TEST_NAME_PREFIX = "tmp-test-"
 
 
 def tests_run(
@@ -22,7 +28,7 @@ def tests_run(
     plugin_filter: str | None = None,
     project_only: bool = False,
 ) -> int:
-    """Run the tests CLI inside a detached worktree at ref.
+    """Run the tests CLI inside a detached sibling worktree at ref.
 
     Returns the tests CLI's exit code (0 pass, non-zero fail). Worktree
     is always removed before return.
@@ -30,7 +36,7 @@ def tests_run(
     project_root = framework.get_project_dir()
     ref_sha = _resolve_ref(project_root, ref)
     short_sha = ref_sha[:7]
-    worktree = project_root / WORKTREES_DIR / f"test-{short_sha}"
+    worktree = sibling_path(f"{TEST_NAME_PREFIX}{short_sha}")
 
     if worktree.exists():
         raise RuntimeError(
