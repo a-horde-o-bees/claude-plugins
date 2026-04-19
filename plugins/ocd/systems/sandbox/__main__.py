@@ -7,12 +7,20 @@ Subcommands mirror the verb structure documented in SKILL.md:
     ocd-run sandbox project teardown <path>
     ocd-run sandbox worktree setup <topic>
     ocd-run sandbox worktree teardown <topic>
+    ocd-run sandbox worktree-add <name> --branch <branch> [--base-ref <ref>]
+                                         [--block-push]
+    ocd-run sandbox worktree-remove <name> [--delete-branch] [--unblock-push]
+    ocd-run sandbox worktree-status <name>
+    ocd-run sandbox worktree-list
+    ocd-run sandbox sibling-path <name>
     ocd-run sandbox cleanup inventory
     ocd-run sandbox cleanup remove [--sibling <path> ...] [--worktree <path> ...]
 """
 
 import argparse
+import json
 import sys
+from dataclasses import asdict
 from pathlib import Path
 
 from . import *  # noqa: F401,F403
@@ -28,6 +36,7 @@ def main() -> int:
     _add_tests_parser(verbs)
     _add_project_parser(verbs)
     _add_worktree_parser(verbs)
+    _add_durable_parsers(verbs)
     _add_cleanup_parser(verbs)
 
     args = parser.parse_args()
@@ -42,6 +51,16 @@ def main() -> int:
         return _dispatch_project(args)
     if args.verb == "worktree":
         return _dispatch_worktree(args)
+    if args.verb == "worktree-add":
+        return _dispatch_worktree_add(args)
+    if args.verb == "worktree-remove":
+        return _dispatch_worktree_remove(args)
+    if args.verb == "worktree-status":
+        return _dispatch_worktree_status(args)
+    if args.verb == "worktree-list":
+        return _dispatch_worktree_list()
+    if args.verb == "sibling-path":
+        return _dispatch_sibling_path(args)
     if args.verb == "cleanup":
         return _dispatch_cleanup(args)
     return 1
@@ -75,6 +94,58 @@ def _add_worktree_parser(verbs: argparse._SubParsersAction) -> None:
     ws.add_argument("topic", help="Kebab-case topic slug.")
     wt = phases.add_parser("teardown", help="Remove worktree, branch, pushurl block.")
     wt.add_argument("topic", help="Topic slug previously used by setup.")
+
+
+def _add_durable_parsers(verbs: argparse._SubParsersAction) -> None:
+    add = verbs.add_parser(
+        "worktree-add",
+        help="Create a sibling worktree on a branch (durable feature boxes).",
+    )
+    add.add_argument("name", help="Sibling name — used for <project>--<name>.")
+    add.add_argument("--branch", required=True, help="Branch to create or attach to.")
+    add.add_argument(
+        "--base-ref",
+        default=None,
+        help="Base ref for new branch; omit to attach to existing branch.",
+    )
+    add.add_argument(
+        "--block-push",
+        action="store_true",
+        help="Set an invalid pushurl on origin during the worktree's life.",
+    )
+
+    remove = verbs.add_parser(
+        "worktree-remove",
+        help="Remove a sibling worktree; optionally delete its branch.",
+    )
+    remove.add_argument("name", help="Sibling name to remove.")
+    remove.add_argument(
+        "--delete-branch",
+        action="store_true",
+        help="Delete the worktree's branch after removal.",
+    )
+    remove.add_argument(
+        "--unblock-push",
+        action="store_true",
+        help="Clear the invalid pushurl previously set by --block-push.",
+    )
+
+    status = verbs.add_parser(
+        "worktree-status",
+        help="Emit JSON status for a named sibling worktree.",
+    )
+    status.add_argument("name", help="Sibling name to inspect.")
+
+    verbs.add_parser(
+        "worktree-list",
+        help="Emit JSON array of every non-main worktree on the project.",
+    )
+
+    sp = verbs.add_parser(
+        "sibling-path",
+        help="Print the resolved sibling path for a name.",
+    )
+    sp.add_argument("name", help="Sibling name.")
 
 
 def _add_cleanup_parser(verbs: argparse._SubParsersAction) -> None:
@@ -118,6 +189,50 @@ def _dispatch_worktree(args: argparse.Namespace) -> int:
         sys.stdout.write(f"{resolved}\n")
     elif args.phase == "teardown":
         worktree_teardown(args.topic)
+    return 0
+
+
+def _dispatch_worktree_add(args: argparse.Namespace) -> int:
+    path = worktree_add(
+        args.name,
+        args.branch,
+        base_ref=args.base_ref,
+        block_push=args.block_push,
+    )
+    sys.stdout.write(f"{path}\n")
+    return 0
+
+
+def _dispatch_worktree_remove(args: argparse.Namespace) -> int:
+    worktree_remove(
+        args.name,
+        delete_branch=args.delete_branch,
+        unblock_push=args.unblock_push,
+    )
+    return 0
+
+
+def _dispatch_worktree_status(args: argparse.Namespace) -> int:
+    status = worktree_status(args.name)
+    payload = asdict(status)
+    payload["path"] = str(payload["path"])
+    sys.stdout.write(json.dumps(payload, indent=2))
+    sys.stdout.write("\n")
+    return 0
+
+
+def _dispatch_worktree_list() -> int:
+    entries = worktree_list()
+    payload = [asdict(e) for e in entries]
+    for entry in payload:
+        entry["path"] = str(entry["path"])
+    sys.stdout.write(json.dumps(payload, indent=2))
+    sys.stdout.write("\n")
+    return 0
+
+
+def _dispatch_sibling_path(args: argparse.Namespace) -> int:
+    sys.stdout.write(f"{sibling_path(args.name)}\n")
     return 0
 
 
