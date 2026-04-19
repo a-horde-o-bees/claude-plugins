@@ -22,7 +22,8 @@ def _settings_path(scope: str) -> Path:
 def _get_both_settings() -> dict:
     """Read settings at both scopes.
 
-    Returns {scope: {path, allow, deny}} for project and user.
+    Returns {scope: {path, allow, deny, additional_directories}} for
+    project and user.
     """
     result = {}
     for scope in ("project", "user"):
@@ -33,6 +34,7 @@ def _get_both_settings() -> dict:
             "path": str(path),
             "allow": set(perms.get("allow", [])),
             "deny": set(perms.get("deny", [])),
+            "additional_directories": list(perms.get("additionalDirectories", [])),
         }
     return result
 
@@ -57,6 +59,16 @@ def _get_recommended_by_category() -> dict:
     return ref.get("categories", {})
 
 
+def _get_recommended_additional_directories() -> dict:
+    """Recommended additionalDirectories block with description and paths."""
+    ref = framework.read_json(_recommended_settings_path())
+    block = ref.get("additionalDirectories", {})
+    return {
+        "description": block.get("description", ""),
+        "paths": list(block.get("paths", [])),
+    }
+
+
 def status_extra() -> list[dict]:
     """Build the subsystem status extra lines for permissions coverage.
 
@@ -67,7 +79,8 @@ def status_extra() -> list[dict]:
     describes, it does not prescribe.
     """
     recommended = _get_recommended_patterns()
-    if not recommended:
+    rec_dirs = set(_get_recommended_additional_directories()["paths"])
+    if not recommended and not rec_dirs:
         return []
 
     both = _get_both_settings()
@@ -75,28 +88,43 @@ def status_extra() -> list[dict]:
 
     for scope in ("project", "user"):
         present = recommended & both[scope]["allow"]
+        present_dirs = rec_dirs & set(both[scope]["additional_directories"])
+        bits = []
+        if recommended:
+            bits.append(f"{len(present)}/{len(recommended)} recommended patterns")
+        if rec_dirs:
+            bits.append(f"{len(present_dirs)}/{len(rec_dirs)} additional directories")
         extra.append({
             "label": f"{scope}",
-            "value": f"{len(present)}/{len(recommended)} recommended patterns",
+            "value": ", ".join(bits),
         })
 
     proj_rec = recommended & both["project"]["allow"]
     user_rec = recommended & both["user"]["allow"]
     redundant = proj_rec & user_rec
 
-    if redundant:
+    proj_dirs = rec_dirs & set(both["project"]["additional_directories"])
+    user_dirs = rec_dirs & set(both["user"]["additional_directories"])
+    redundant_dirs = proj_dirs & user_dirs
+
+    if redundant or redundant_dirs:
+        parts = []
+        if redundant:
+            parts.append(f"{len(redundant)} patterns")
+        if redundant_dirs:
+            parts.append(f"{len(redundant_dirs)} directories")
         extra.append({
             "label": "redundancy",
-            "value": f"{len(redundant)} patterns present in both scopes",
+            "value": f"{' + '.join(parts)} present in both scopes",
         })
 
     return extra
 
 
 def _merge_permissions(scope: str) -> None:
-    """Merge recommended auto-approve patterns into settings.json.
+    """Merge recommended auto-approve patterns and sibling directories.
 
-    Additive only — adds patterns not already present, never removes.
+    Additive only — adds entries not already present, never removes.
     scope: 'project' or 'user'
     """
     ref_path = _recommended_settings_path()
@@ -106,49 +134,63 @@ def _merge_permissions(scope: str) -> None:
 
     ref = framework.read_json(ref_path)
     categories = ref.get("categories", {})
+    rec_dirs_block = _get_recommended_additional_directories()
 
     settings_path = _settings_path(scope)
     settings = framework.read_json(settings_path)
-    existing = set(settings.get("permissions", {}).get("allow", []))
+    existing_patterns = set(settings.get("permissions", {}).get("allow", []))
+    existing_dirs = list(settings.get("permissions", {}).get("additionalDirectories", []))
 
     added = []
     for cat_name, cat in categories.items():
         desc = cat.get("description", cat_name)
-        cat_added = []
-        for pattern in cat.get("patterns", []):
-            if pattern not in existing:
-                cat_added.append(pattern)
+        cat_added = [p for p in cat.get("patterns", []) if p not in existing_patterns]
         if cat_added:
             added.append((desc, cat_added))
 
-    if not added:
-        print(f"  {scope} settings — all recommended patterns already present")
+    dirs_to_add = [d for d in rec_dirs_block["paths"] if d not in existing_dirs]
+
+    if not added and not dirs_to_add:
+        print(f"  {scope} settings — all recommended entries already present")
         return
 
     if "permissions" not in settings:
         settings["permissions"] = {}
     if "allow" not in settings["permissions"]:
         settings["permissions"]["allow"] = []
+    if dirs_to_add and "additionalDirectories" not in settings["permissions"]:
+        settings["permissions"]["additionalDirectories"] = []
 
-    total = 0
+    total_patterns = 0
     for desc, patterns in added:
         settings["permissions"]["allow"].extend(patterns)
-        total += len(patterns)
+        total_patterns += len(patterns)
+
+    if dirs_to_add:
+        settings["permissions"]["additionalDirectories"].extend(dirs_to_add)
 
     settings_path.parent.mkdir(parents=True, exist_ok=True)
     with open(settings_path, "w") as f:
         json.dump(settings, f, indent=2)
         f.write("\n")
 
-    print(f"  {scope} settings — added {total} patterns:")
-    for desc, patterns in added:
-        print(f"    {desc}: {len(patterns)} patterns")
+    if total_patterns:
+        print(f"  {scope} settings — added {total_patterns} patterns:")
+        for desc, patterns in added:
+            print(f"    {desc}: {len(patterns)} patterns")
+    if dirs_to_add:
+        print(f"  {scope} settings — added {len(dirs_to_add)} additional directories:")
+        print(f"    {rec_dirs_block['description']}")
+        for d in dirs_to_add:
+            print(f"    - {d}")
 
 
 def run_permissions_status() -> None:
     """Structured report of both scopes' permission state."""
     categories = _get_recommended_by_category()
     recommended = _get_recommended_patterns()
+    rec_dirs_block = _get_recommended_additional_directories()
+    rec_dirs = set(rec_dirs_block["paths"])
     both = _get_both_settings()
 
     print("Permissions Report")
@@ -158,9 +200,18 @@ def run_permissions_status() -> None:
         s = both[scope]
         present = recommended & s["allow"]
         non_rec = s["allow"] - recommended
+        dirs_present = rec_dirs & set(s["additional_directories"])
+        dirs_missing = sorted(rec_dirs - set(s["additional_directories"]))
 
         print(f"{scope} ({s['path']}):")
         print(f"  status: {len(present)}/{len(recommended)} recommended patterns")
+        if rec_dirs:
+            print(
+                f"  additional directories: "
+                f"{len(dirs_present)}/{len(rec_dirs)} recommended",
+            )
+            if dirs_missing:
+                print(f"    missing: {', '.join(dirs_missing)}")
 
         if len(present) < len(recommended):
             for cat_name, cat in categories.items():
@@ -179,8 +230,17 @@ def run_permissions_status() -> None:
     proj_rec = recommended & both["project"]["allow"]
     user_rec = recommended & both["user"]["allow"]
     redundant = proj_rec & user_rec
-    if redundant:
-        print(f"cross-scope: {len(redundant)} recommended patterns present in both scopes")
+    proj_dirs = rec_dirs & set(both["project"]["additional_directories"])
+    user_dirs = rec_dirs & set(both["user"]["additional_directories"])
+    redundant_dirs = proj_dirs & user_dirs
+
+    if redundant or redundant_dirs:
+        parts = []
+        if redundant:
+            parts.append(f"{len(redundant)} patterns")
+        if redundant_dirs:
+            parts.append(f"{len(redundant_dirs)} directories")
+        print(f"cross-scope: {' + '.join(parts)} present in both scopes")
     else:
         print("cross-scope: no redundancy")
 
@@ -196,6 +256,7 @@ def run_permissions_deploy(scope: str) -> None:
 def run_permissions_analyze() -> None:
     """Cross-scope health analysis."""
     recommended = _get_recommended_patterns()
+    rec_dirs = set(_get_recommended_additional_directories()["paths"])
     both = _get_both_settings()
 
     print("Permissions Analysis")
@@ -206,12 +267,20 @@ def run_permissions_analyze() -> None:
     proj_rec = recommended & both["project"]["allow"]
     user_rec = recommended & both["user"]["allow"]
     redundant = sorted(proj_rec & user_rec)
+    proj_dirs = rec_dirs & set(both["project"]["additional_directories"])
+    user_dirs = rec_dirs & set(both["user"]["additional_directories"])
+    redundant_dirs = sorted(proj_dirs & user_dirs)
     print("redundancy:")
-    print(f"  count: {len(redundant)}")
+    print(f"  patterns: {len(redundant)}")
     if redundant:
         needs_attention = True
         for p in redundant:
             print(f"    - {p}")
+    print(f"  additional directories: {len(redundant_dirs)}")
+    if redundant_dirs:
+        needs_attention = True
+        for d in redundant_dirs:
+            print(f"    - {d}")
     print()
 
     broad = []
@@ -245,43 +314,61 @@ def run_permissions_analyze() -> None:
 
 
 def run_permissions_clean(scope: str) -> None:
-    """Remove recommended patterns from scope that are redundant with the other scope.
+    """Remove recommended entries from scope that are redundant with the other scope.
 
-    Only removes patterns that exist in both the template AND the other
-    scope's allow list. Never touches non-recommended or deny patterns.
+    Only removes entries that exist in both the template AND the other
+    scope's allow list or additionalDirectories. Never touches
+    non-recommended or deny entries.
     """
     recommended = _get_recommended_patterns()
+    rec_dirs = set(_get_recommended_additional_directories()["paths"])
     both = _get_both_settings()
     other_scope = "user" if scope == "project" else "project"
 
     target_rec = recommended & both[scope]["allow"]
     other_rec = recommended & both[other_scope]["allow"]
-    to_remove = sorted(target_rec & other_rec)
+    patterns_to_remove = sorted(target_rec & other_rec)
+
+    target_dirs = rec_dirs & set(both[scope]["additional_directories"])
+    other_dirs = rec_dirs & set(both[other_scope]["additional_directories"])
+    dirs_to_remove = sorted(target_dirs & other_dirs)
 
     print("Permissions Clean")
     print()
     print(f"scope: {scope}")
 
-    if not to_remove:
-        print("  nothing to clean — no redundant recommended patterns")
+    if not patterns_to_remove and not dirs_to_remove:
+        print("  nothing to clean — no redundant recommended entries")
         return
 
     path = _settings_path(scope)
     settings = framework.read_json(path)
-    allow = settings.get("permissions", {}).get("allow", [])
+    perms = settings.setdefault("permissions", {})
 
-    remove_set = set(to_remove)
-    new_allow = [p for p in allow if p not in remove_set]
-    settings["permissions"]["allow"] = new_allow
+    if patterns_to_remove:
+        allow = perms.get("allow", [])
+        pattern_removals = set(patterns_to_remove)
+        perms["allow"] = [p for p in allow if p not in pattern_removals]
+
+    if dirs_to_remove:
+        add_dirs = perms.get("additionalDirectories", [])
+        dir_removals = set(dirs_to_remove)
+        perms["additionalDirectories"] = [d for d in add_dirs if d not in dir_removals]
 
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w") as f:
         json.dump(settings, f, indent=2)
         f.write("\n")
 
-    retained_rec = target_rec - remove_set
+    if patterns_to_remove:
+        print(f"  removed: {len(patterns_to_remove)} patterns (redundant with {other_scope})")
+    if dirs_to_remove:
+        print(
+            f"  removed: {len(dirs_to_remove)} additional directories "
+            f"(redundant with {other_scope})",
+        )
+    retained_rec = target_rec - set(patterns_to_remove)
     non_rec = both[scope]["allow"] - recommended
-    print(f"  removed: {len(to_remove)} patterns (redundant with {other_scope})")
     if retained_rec:
         print(f"  retained: {len(retained_rec)} recommended patterns (not in {other_scope})")
     if non_rec:

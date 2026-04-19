@@ -1,6 +1,6 @@
 # Setup: Permissions
 
-Optional subflow invoked from `/ocd:setup guided` when the user opts into permissions configuration. Deploys plugin-recommended permission patterns to the chosen scope, then optionally cleans redundant patterns from the opposite scope.
+Optional subflow invoked from `/ocd:setup guided` when the user opts into permissions configuration. Deploys plugin-recommended permission patterns and the `additionalDirectories` entry for sibling worktrees to the chosen scope, then optionally cleans redundant entries from the opposite scope.
 
 ## Process
 
@@ -9,6 +9,7 @@ Optional subflow invoked from `/ocd:setup guided` when the user opts into permis
 
     - **Project scope** (`.claude/settings.json`) — applies to this project only; version controlled; shared with collaborators
     - **User scope** (`~/.claude/settings.json`) — applies to all projects on this machine; personal preference; not shared
+    - **Additional directories** — the recommended entry is `..` (the project's parent). Resolves at runtime against the active project, so the entry stays portable across machines whether deployed to project scope (applies here) or user scope (applies universally). Enables main-session operations on `<parent>/<project>--<name>/` peer worktrees without per-file prompts.
 
 3. Ask scope — AskUserQuestion with options: `["Project scope", "User scope"]`
 4. If user chose "Project scope": {scope} = project

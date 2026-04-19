@@ -105,5 +105,11 @@
         "Bash(test:*)"
       ]
     }
+  },
+  "additionalDirectories": {
+    "description": "Sibling worktree directories — enables main-session operations on <parent>/<project>--<name>/ peers without prompts. Relative '..' resolves against the active project at runtime, so the rule works across project-scope and user-scope deployments.",
+    "paths": [
+      ".."
+    ]
   }
 }
