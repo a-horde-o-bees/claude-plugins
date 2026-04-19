@@ -24,7 +24,7 @@ Tested empirically (2026-04-12). Worktree agents have access to most tools with 
 |---|---|---|
 | Built-in tools | Yes | Bash, Read, Write, Edit, Glob, Grep, ScheduleWakeup |
 | ToolSearch | Yes | Can load deferred tools on demand |
-| MCP tools | Yes | Server-based; navigator, blueprint, OAuth connectors all reachable |
+| MCP tools | Yes | Server-based; navigator and OAuth connectors all reachable |
 | Skill tool | Yes | Can invoke skills natively; skill runs inside worktree context |
 | LSP, WebFetch, WebSearch | Yes | Via ToolSearch |
 | TaskCreate/Update | Yes | Via ToolSearch |

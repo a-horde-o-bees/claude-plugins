@@ -6,10 +6,9 @@
 #   ./scripts/run-plugin.sh <plugin> <command> [args...]
 #   ./scripts/run-plugin.sh ocd status
 #   ./scripts/run-plugin.sh ocd init --force
-#   ./scripts/run-plugin.sh blueprint status
 #
 # For skill CLIs, use the skill's CLI script path directly:
-#   ./scripts/run-plugin.sh blueprint skills.research init --db /tmp/test.db
+#   ./scripts/run-plugin.sh <plugin> skills.<skill> <command> [args...]
 
 set -euo pipefail
 

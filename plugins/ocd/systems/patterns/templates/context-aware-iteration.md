@@ -57,7 +57,7 @@ For workflows where the skill executor is also context-limited:
 
 - Persist checkpoint to a file or database after each agent completes
 - On skill executor restart, read checkpoint and continue
-- Example: `blueprint/data/history.md` entries with "resume from entity e14" or database stage markers where `stage = 'researched'` implicitly marks completion
+- Example: a history log with entries like "resume from entity e14", or database stage markers where `stage = 'researched'` implicitly marks completion
 
 ## When to Use
 
