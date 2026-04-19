@@ -18,16 +18,6 @@ Main branch is active dev. Versioning rule (documented in `CLAUDE.md`): main tra
 
 Ordered by dependency, not priority. None of this blocks the existing v0.1.0 — all of it is candidate content for v0.2.0.
 
-### Blueprint plugin parity
-
-The ocd plugin consolidated into `systems/` with the `bin/ocd-run` wrapper and `ocd-run <name>` auto-promotion pattern during v0.2.0 development. Blueprint hasn't been updated yet. Work:
-
-- [ ] Mirror the `systems/` layout (flatten any remaining `lib/` / `servers/` / `skills/` splits)
-- [ ] Add `bin/blueprint-run` wrapper following the `<plugin>-run` convention
-- [ ] Update `run.py` auto-promotion (copy from ocd's)
-- [ ] Sweep SKILL.md / README invocations to `blueprint-run <name>` form
-- [ ] Rename any command-colliding skills (same pattern as `/ocd:plugin` → `/ocd:setup` and `/ocd:commit`+`/ocd:push` → `/ocd:git`)
-
 ### Sandbox full-exercise test findings
 
 Surfaced by `/ocd:sandbox exercise` (then named `test`) run against commit `1cb3f4e` (v0.0.292 ocd plugin). Each item is independent; take them one at a time. Ordered critical → cosmetic.
@@ -55,7 +45,6 @@ Once audit-* skills are locked down (and optionally update-system-docs has lande
 
 ## Deferred Post-v1
 
-- **blueprint plugin** — substantial MCP-backed research workflow. Not evaluated against current governance; re-enters active development when the prerequisites (audit tooling, doc regen) settle.
 - **adhd plugin** — not yet created; noted only so the name doesn't get taken.
 
 ## Purpose-Map Methodology Status

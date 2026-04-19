@@ -1,6 +1,5 @@
 {
     "extraPaths": [
-        "plugins/ocd",
-        "plugins/blueprint"
+        "plugins/ocd"
     ]
 }

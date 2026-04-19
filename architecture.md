@@ -1,6 +1,6 @@
 # Marketplace Architecture
 
-Claude Code plugin marketplace packaging one released plugin and one in-development plugin with shared development infrastructure. Each plugin is an independent system with its own architecture; this document covers how they are packaged, developed, and delivered.
+Claude Code plugin marketplace packaging one released plugin with shared development infrastructure. Each plugin is an independent system with its own architecture; this document covers how they are packaged, developed, and delivered.
 
 ## Layers
 
@@ -9,7 +9,7 @@ Claude Code plugin runtime
     ↓ marketplace resolution
 Marketplace manifest (.claude-plugin/marketplace.json)
     ↓ plugin source paths
-Plugins (plugins/ocd/, plugins/blueprint/)
+Plugins (plugins/ocd/)
     ↓ own entry points, hooks, skills
 Plugin internals (see per-plugin architecture.md)
 ```
@@ -19,15 +19,14 @@ Plugin internals (see per-plugin architecture.md)
 | Plugin | Status | Purpose | Architecture |
 |--------|--------|---------|-------------|
 | [ocd](plugins/ocd/) | Active (v0.1.0 released) | Deterministic enforcement of permissions, rules, and structural conventions with agent-facing project navigation | [architecture.md](plugins/ocd/architecture.md) |
-| [blueprint](plugins/blueprint/) | In development | Structured solution research and implementation planning through entity-based analysis | [architecture.md](plugins/blueprint/architecture.md) |
 
-Plugins are independent systems — each has its own manifest, hooks, skills, rules, and tests. Blueprint depends on ocd at the skill level (uses ocd's navigator and conventions infrastructure) but operates independently at the plugin level. The released version of ocd lives on the `v0.1.0` release branch; blueprint is still under main-branch development and not yet released.
+Plugins are independent systems — each has its own manifest, hooks, skills, rules, and tests. The released version of ocd lives on the `v0.1.0` release branch.
 
 Each plugin may register Claude Code hooks (PreToolUse, PostToolUse, SessionStart), MCP servers for persistent tooling (SQLite-backed, launched as subprocesses with per-server data directories under `.claude/<plugin>/`), and skills (discoverable by Claude Code at configured skill paths). The specific hooks, servers, and skills each plugin provides are documented in that plugin's own `architecture.md`.
 
 ## Marketplace
 
-The marketplace manifest at `.claude-plugin/marketplace.json` registers both plugins with source paths relative to the repository root. Claude Code resolves these paths when users install from the marketplace.
+The marketplace manifest at `.claude-plugin/marketplace.json` registers the plugin with a source path relative to the repository root. Claude Code resolves this path when users install from the marketplace.
 
 Distribution: users add the GitHub repository as a marketplace source, then install individual plugins. Each plugin installs to `~/.claude/plugins/` with its own lifecycle (init, status, update).
 
@@ -107,11 +106,9 @@ claude-plugins/
 │   ├── skills/                  — project-local dev skills (checkpoint, sync-templates)
 │   ├── hooks/                   — project-level pre-commit guards
 │   ├── ocd/                     — ocd plugin project data (navigator db)
-│   ├── blueprint/               — blueprint plugin project data (research db)
 │   └── settings.json            — project-level permission patterns
 ├── plugins/
-│   ├── ocd/                     — ocd plugin (own system, see plugins/ocd/architecture.md)
-│   └── blueprint/               — blueprint plugin (own system, see plugins/blueprint/architecture.md)
+│   └── ocd/                     — ocd plugin (own system, see plugins/ocd/architecture.md)
 ├── scripts/                     — shared development scripts (dev-only)
 ├── tests/                       — project-level integration tests (dev-only)
 └── purpose-map/                 — methodology tooling for live-invention audits (dev-only)

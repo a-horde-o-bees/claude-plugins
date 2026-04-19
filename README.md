@@ -19,7 +19,6 @@ This branch (`main`) is active development. It contains work in progress that ma
 | Plugin | Status | Description |
 |--------|--------|-------------|
 | [ocd](plugins/ocd/) | Active (v0.1.0) | Deterministic enforcement of permissions, rules, and structural conventions with agent-facing project navigation |
-| [blueprint](plugins/blueprint/) | In development | Structured solution research and implementation planning through entity-based analysis |
 
 ## Installation
 
@@ -30,14 +29,12 @@ Add the marketplace and install plugins:
 ```
 /plugin marketplace add https://github.com/a-horde-o-bees/claude-plugins.git
 /plugin install ocd@a-horde-o-bees
-/plugin install blueprint@a-horde-o-bees
 ```
 
 Restart Claude session so hooks and commands load, then initialize in target project:
 
 ```
 /ocd:setup init
-/blueprint:init
 ```
 
 Restart Claude session again so deployed rules auto-load into context.
@@ -53,14 +50,12 @@ After updating, check if deployed rules and conventions need updating:
 
 ```
 /ocd:setup status
-/blueprint:status
 ```
 
 If any files show `divergent`, force-update and restart:
 
 ```
 /ocd:setup init --force
-/blueprint:init --force
 /exit
 claude --continue
 ```
@@ -78,7 +73,7 @@ Remove a plugin or the marketplace:
 
 For contributors working on plugin source.
 
-**After cloning, run `/ocd:setup init` and `/blueprint:init` in the cloned project to deploy local rules, conventions, and databases.** These files are gitignored — every clone initializes its own. Skipping install leaves the working agent without the rules that govern development here, and the plugin databases will be missing.
+**After cloning, run `/ocd:setup init` in the cloned project to deploy local rules, conventions, and the navigator database.** These files are gitignored — every clone initializes its own. Skipping install leaves the working agent without the rules that govern development here, and the navigator database will be missing.
 
 Two approaches:
 
@@ -105,7 +100,7 @@ Load plugins directly from a local clone without marketplace:
 
 ```
 git clone https://github.com/a-horde-o-bees/claude-plugins.git
-claude --plugin-dir ./claude-plugins/plugins/ocd --plugin-dir ./claude-plugins/plugins/blueprint
+claude --plugin-dir ./claude-plugins/plugins/ocd
 ```
 
 After making source changes, reload and restart:
@@ -122,14 +117,12 @@ Check if deployed rules and conventions need updating:
 
 ```
 /ocd:setup status
-/blueprint:status
 ```
 
 If any files show `divergent`, force-update and restart:
 
 ```
 /ocd:setup init --force
-/blueprint:init --force
 /exit
 claude --continue
 ```
@@ -148,7 +141,6 @@ Notes:
 See [architecture.md](architecture.md) for marketplace structure, shared infrastructure, and how plugins relate. Each plugin documents its own internals:
 
 - [ocd architecture](plugins/ocd/architecture.md) — hooks, rules, navigator, conventions engine
-- [blueprint architecture](plugins/blueprint/architecture.md) — MCP server, research database, entity lifecycle
 
 ## Versioning
 

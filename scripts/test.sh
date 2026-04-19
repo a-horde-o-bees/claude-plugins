@@ -21,8 +21,4 @@ echo "=== OCD plugin tests ==="
 .venv/bin/python3 -m pytest plugins/ocd/ -c plugins/ocd/pytest.ini -v "${ocd_args[@]}" "${common_args[@]}"
 
 echo ""
-echo "=== Blueprint plugin tests ==="
-.venv/bin/python3 -m pytest plugins/blueprint/ -c plugins/blueprint/pytest.ini -v "${common_args[@]}"
-
-echo ""
 echo "All tests passed."
