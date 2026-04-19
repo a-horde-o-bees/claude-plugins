@@ -1,17 +1,19 @@
 ---
 name: git
-description: Manage local git operations — record commits, push branches, and shelve in-flight plugin systems onto dedicated dev branches.
-argument-hint: "<commit | push --branch <branch-name> | box <plugin:system> | open <plugin:system> | close | unbox <plugin:system> | boxes>"
+description: Manage local git history — record commits grouped by topic and push a branch to origin. Sandbox-based feature lifecycle (new, pack, open, close, unpack, list) lives under /ocd:sandbox.
+argument-hint: "<commit | push --branch <branch-name>>"
 allowed-tools:
   - Bash(git *)
 ---
 
 # /git
 
-Manage local git operations. Verbs fall into two families:
+Manage local git history. Two verbs:
 
-- **History** — `commit` records topic-grouped changes, `push` sends a branch to the remote.
-- **In-flight systems** — `box`, `open`, `close`, `unbox`, `boxes` shelve plugin systems onto dedicated dev branches so holistic testing on main isn't contaminated by unstable in-development work.
+- `commit` records topic-grouped changes
+- `push` sends a branch to the remote
+
+Feature-level sandboxing — shelving an in-flight feature onto a dedicated branch, re-activating it, reintegrating it — lives under `/ocd:sandbox` via the `new`, `pack`, `open`, `close`, `unpack`, and `list` verbs. Use that skill for feature lifecycle; this one stays narrow to commit + push.
 
 ## Workflow
 
@@ -19,23 +21,13 @@ Manage local git operations. Verbs fall into two families:
 2. {verb} = first token of $ARGUMENTS
 3. {verb-arg} = remainder of $ARGUMENTS after {verb}
 
-> Verb dispatch — history verbs manage commits and pushes; box-family verbs manage in-flight systems on dev branches.
+> Verb dispatch — commit and push are the only verbs. Everything else is under /ocd:sandbox.
 
 4. If {verb} is `commit`:
     1. Call: Commit
 5. Else if {verb} is `push`:
     1. Call: Push
-6. Else if {verb} is `box`:
-    1. Call: `_box.md` ({verb-arg} = {verb-arg})
-7. Else if {verb} is `open`:
-    1. Call: `_open.md` ({verb-arg} = {verb-arg})
-8. Else if {verb} is `close`:
-    1. Call: `_close.md`
-9. Else if {verb} is `unbox`:
-    1. Call: `_unbox.md` ({verb-arg} = {verb-arg})
-10. Else if {verb} is `boxes`:
-    1. Call: `_boxes.md`
-11. Else: Exit to user: unrecognized verb {verb} — expected commit, push, box, open, close, unbox, or boxes
+6. Else: Exit to user: unrecognized verb {verb} — expected commit or push
 
 ## Commit
 
