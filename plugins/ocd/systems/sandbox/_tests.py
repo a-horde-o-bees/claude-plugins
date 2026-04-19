@@ -5,6 +5,7 @@ and teardown all happen in one script invocation. The worktree is always
 removed before return, including on pytest failure or subprocess error.
 """
 
+import os
 import shutil
 import subprocess
 import sys
@@ -104,9 +105,18 @@ def _invoke_tests(
     elif project_only:
         args.append("--project")
 
+    # Point the tests runner at the parent project's venv. Inside the
+    # worktree, `git rev-parse --show-toplevel` resolves to the worktree
+    # itself, which has no .venv. The parent project owns the .venv and
+    # the plugin venvs both, so CLAUDE_PROJECT_DIR must reference the
+    # parent explicitly while pytest still discovers tests from cwd.
+    env = os.environ.copy()
+    env["CLAUDE_PROJECT_DIR"] = str(plugin.get_project_dir())
+
     result = subprocess.run(
         args,
         cwd=worktree,
+        env=env,
         stdout=sys.stdout,
         stderr=sys.stderr,
     )
