@@ -7,7 +7,9 @@ import pytest
 
 from systems.permissions._operations import (
     _get_recommended_additional_directories,
+    run_permissions_clean,
     run_permissions_deploy,
+    run_permissions_status,
 )
 
 
@@ -67,3 +69,32 @@ class TestDeployWritesAdditionalDirectories:
         dirs = settings.get("permissions", {}).get("additionalDirectories", [])
         assert "/pre/existing" in dirs
         assert ".." in dirs
+
+
+class TestStatusReportsAdditionalDirectories:
+    def test_status_surfaces_recommended_additional_directories(
+        self, project_dir, capsys,
+    ):
+        run_permissions_status()
+        out = capsys.readouterr().out
+        assert "additional directories" in out
+        assert ".." in out
+
+
+class TestCleanRemovesRedundantDirectories:
+    def test_clean_removes_dir_present_in_both_scopes(self, project_dir, capsys):
+        run_permissions_deploy(scope="project")
+        run_permissions_deploy(scope="user")
+        capsys.readouterr()
+        project_settings = json.loads(
+            (project_dir / ".claude" / "settings.json").read_text(),
+        )
+        assert ".." in project_settings["permissions"]["additionalDirectories"]
+
+        run_permissions_clean(scope="project")
+        capsys.readouterr()
+
+        project_settings = json.loads(
+            (project_dir / ".claude" / "settings.json").read_text(),
+        )
+        assert ".." not in project_settings["permissions"]["additionalDirectories"]
