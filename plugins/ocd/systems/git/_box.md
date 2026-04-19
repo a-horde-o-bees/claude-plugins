@@ -4,20 +4,32 @@ Move a feature off main onto a dedicated dev branch, hiding it from holistic tes
 
 ### Variables
 
-- {verb-arg} — positional value after the verb. System shorthand `<plugin>:<system>` is the common case; a natural-language description is accepted for cross-cutting features and triggers a scope-authoring conversation.
+- {verb-arg} — positional value after the verb. Natural-language description of the feature to box; may name a single plugin system directly ("navigator", "ocd:navigator") or describe a cross-cutting feature spanning multiple paths.
 
 ### Process
 
 1. Parse {verb-arg}:
-    1. If {verb-arg} matches `<plugin>:<system>`:
-        1. {plugin} = plugin part
-        2. {system} = system part
-        3. {feature-id} = `{plugin}/{system}`
-        4. {default-scope} = Call: Build Default Scope From Shorthand
-    2. Else:
-        1. {description} = {verb-arg}
-        2. {feature-id} = kebab-case slug derived from {description}, confirmed with the user
-        3. {default-scope} = empty — user authors scope from scratch
+    1. {description} = {verb-arg}
+    2. {feature-id} = kebab-case slug derived from {description}, confirmed with the user
+    3. Propose {default-scope} from {description}:
+        1. If {description} clearly names a single plugin system (e.g., "navigator", "ocd:navigator", "box the navigator system"):
+            1. {plugin} = plugin name (inferred from description or asked)
+            2. {system} = system name
+            3. {system-path} = `plugins/{plugin}/systems/{system}`
+            4. {default-scope} =
+                - paths: [{system-path}]
+                - path-refs: [{system-path}]
+                - symbols:
+                    - `slash`: `/{plugin}:{system}`
+                    - `module`: `{system}` — greps `systems[./]{system}(\b|$)`
+                    - `bare`: `{system}` — greps backticked name in markdown, or table-row first column under `plugins/`
+        2. Else: query navigator to surface candidate paths:
+            1. tool: `paths_search` with {description}
+            2. If navigator returns its dormant-state message: {default-scope} is empty — user authors scope from scratch in step 4
+            3. Else:
+                1. {default-scope}.paths = paths from the search result whose indexed purposes align with {description}
+                2. {default-scope}.path-refs = {default-scope}.paths
+                3. {default-scope}.symbols = empty — user adds specific symbols in step 4 if needed
 2. {dev-branch} = `dev/{feature-id}`
 
 > Preconditions — box must run on a clean main checkout; the default scope's paths must exist; no conflicting dev branch may already exist.
@@ -124,7 +136,7 @@ Move a feature off main onto a dedicated dev branch, hiding it from holistic tes
     5. bash: `git checkout -b {dev-branch}`
     6. For each {path} in {scope}.paths: bash: `git checkout {pre-box-commit} -- {path}`
     7. If {status-md-content} is non-empty:
-        1. {status-location} = primary path of the scope (single path for system shorthand; longest common directory prefix for multi-path features)
+        1. {status-location} = primary path of the scope (single path for single-path scopes; longest common directory prefix for multi-path features)
         2. Write {status-location}/_status.md with a level-1 heading "In-Flight Status: {feature-id}", a one-line purpose statement, then {status-md-content}
     8. bash: `git add` for each scope path
     9. bash: `git commit -m "restore {feature-id}"`
@@ -142,22 +154,3 @@ Move a feature off main onto a dedicated dev branch, hiding it from holistic tes
     - main: scope paths removed; HEAD advanced by 1 commit
     - {dev-branch}: scope preserved; `_status.md` present if content migrated; pushed to origin
 
-## Build Default Scope From Shorthand
-
-> Called when {verb-arg} is `<plugin>:<system>`. Produces the default scope object the user confirms or extends in step 4.
-
-### Variables
-
-- {plugin} — plugin part of the shorthand
-- {system} — system part of the shorthand
-
-### Process
-
-1. {system-path} = `plugins/{plugin}/systems/{system}`
-2. Return to caller:
-    - paths: [{system-path}]
-    - path-refs: [{system-path}]
-    - symbols:
-        - `slash`: `/{plugin}:{system}`
-        - `module`: `{system}` — greps `systems[./]{system}(\b|$)`
-        - `bare`: `{system}` — greps backticked name in markdown, or table-row first column under `plugins/`
