@@ -11,17 +11,6 @@
         ]
       }
     ],
-    "SessionEnd": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "test -f \"$CLAUDE_PROJECT_DIR/scripts/sync-templates.py\" && python3 \"$CLAUDE_PROJECT_DIR/scripts/sync-templates.py\" >/dev/null 2>&1 || true",
-            "timeout": 10
-          }
-        ]
-      }
-    ],
     "PreToolUse": [
       {
         "matcher": "Bash|Edit|Write",

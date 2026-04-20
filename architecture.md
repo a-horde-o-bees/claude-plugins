@@ -71,17 +71,17 @@ The discipline is consistent across plugins: a system can only influence agent b
 
 ### Plugin Framework
 
-`plugin/__init__.py` in each plugin is identical — a generic framework for deployment, formatting, skill discovery, and init/status orchestration. Propagated across plugins by a pre-commit hook. Contains no plugin-specific logic; each plugin's skill `_init.py` modules provide their own infrastructure.
+Each plugin's `systems/framework/` package is identical — a generic framework for environment resolution, plugin metadata, template deployment, output formatting, system and skill discovery, init/status orchestration, test suite discovery and dispatch, and per-plugin venv resolution. Propagated across plugins by a pre-commit hook. Contains no plugin-specific logic; each plugin's skill `_init.py` modules provide their own infrastructure.
 
 ### Template-Deployed Model
 
-Templates live in plugin source (`plugins/<plugin>/templates/rules/`, `plugins/<plugin>/templates/conventions/`, `plugins/<plugin>/templates/patterns/`, `plugins/<plugin>/templates/logs/`). Init deploys copies to the consumer's project (`.claude/rules/`, `.claude/conventions/`, `.claude/patterns/`, `.claude/logs/`). Users edit deployed copies; `scripts/sync-templates.py` syncs deployed content back to templates before commits (main branch only — release branches don't carry the sync script). Governance metadata (`includes`, `excludes`, `governed_by`) lives in each file's YAML frontmatter; the governance library reconciles rules and conventions against disk state on every query, so entries stay current without an explicit registration step.
+Templates live per-system in plugin source — project-wide rules in `plugins/<plugin>/systems/rules/templates/`, system-scoped rules in `plugins/<plugin>/systems/<system>/rules/`, conventions in `plugins/<plugin>/systems/conventions/templates/`, patterns in `plugins/<plugin>/systems/patterns/templates/`, log templates in `plugins/<plugin>/systems/log/templates/<type>/`. Templates are the authoritative source; deployed copies in `.claude/rules/`, `.claude/conventions/`, `.claude/patterns/`, `.claude/logs/` are derived artifacts (gitignored). Each system's `_init.py` deploys its own templates; a guard hook blocks direct edits to deployed copies so changes only flow template → deployed. `scripts/sync-templates.py` (the auto-init orchestrator) rectifies the full deployed tree at `/checkpoint` — force-runs every system's `init()`, prunes orphans in template-managed categories, backs up existing `.claude/**/*.db` files to `.claude/pre-sync/` and reconciles them against post-init schemas (match → restore data; mismatch → surface a migration flag), then runs `navigator scan` for every plugin that ships one. Governance metadata (`includes`, `excludes`, `governed_by`) lives in each file's YAML frontmatter; the governance library reconciles rules and conventions against disk state on every query, so entries stay current without an explicit registration step.
 
 ### Development Scripts
 
 | Script | Purpose |
 |--------|---------|
-| `scripts/sync-templates.py` | Sync deployed copies back to template files; called by pre-commit hook |
+| `scripts/sync-templates.py` | Auto-init orchestrator — rectifies deployed state against current templates, called by `/checkpoint` |
 | `scripts/run-plugin.sh` | Run plugin CLI with correct environment variables for local development |
 | `scripts/test.sh` | Run full test suite across project and all plugins |
 | `scripts/pyextract.py` | Utility for extracting Python code blocks from markdown |

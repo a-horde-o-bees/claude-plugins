@@ -1,16 +1,20 @@
 """Block direct edits to deployed and propagated files.
 
 Two categories of derived files should not be edited directly:
-1. Deployed rules, conventions, patterns, and log templates — synced from plugin templates
+1. Deployed rules, conventions, patterns, and log templates — rectified
+   from plugin templates at /checkpoint via the auto-init script
 2. Propagated files — copied from ocd to other plugins by pre-commit hook
 
 Edit canonical sources instead:
-- Rules/conventions/patterns: edit templates in plugins/ocd/templates/{rules,conventions,patterns}/
-- Log templates (_template.md): edit in plugins/ocd/templates/logs/
-- plugin/__init__.py, plugin/__main__.py: edit in plugins/ocd/plugin/
+- Project-wide rules: plugins/ocd/systems/rules/templates/
+- System-scoped rules: plugins/ocd/systems/<system>/rules/
+- Conventions: plugins/ocd/systems/conventions/templates/
+- Patterns: plugins/ocd/systems/patterns/templates/
+- Log templates: plugins/ocd/systems/log/templates/<type>/
+- Framework files (propagated to non-ocd plugins): plugins/ocd/systems/framework/
 
-After editing templates, run /sync-templates to push changes to deployed
-copies, or let the pre-commit hook do it automatically at commit time.
+Deployed copies land on disk through the owning system's init() during
+/checkpoint's auto-init step — not at commit time.
 """
 
 import json
