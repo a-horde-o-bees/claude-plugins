@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-  "name": "a-horde-o-bees-dev",
-  "description": "Dev channel for a-horde-o-bees plugins — tracks main. Tests, CI artifacts, and in-flight changes ship with every update. Subscribe via `/plugin marketplace add a-horde-o-bees/claude-plugins` for the default add path; for curated releases, see the stable channel.",
+  "name": "a-horde-o-bees",
+  "description": "Stable channel for a-horde-o-bees plugins — tracks the latest tagged release. Curated release branches strip dev artifacts and pin semver versions. Subscribe via `/plugin marketplace add` with a URL to this file.",
   "owner": {
     "name": "a-horde-o-bees"
   },
@@ -11,7 +11,7 @@
       "source": {
         "source": "github",
         "repo": "a-horde-o-bees/claude-plugins",
-        "ref": "main"
+        "ref": "v0.1.0"
       },
       "description": "Deterministic enforcement of permissions, rules, and structural conventions with agent-facing project navigation",
       "category": "development"
