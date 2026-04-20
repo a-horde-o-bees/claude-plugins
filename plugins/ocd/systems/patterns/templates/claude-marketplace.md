@@ -46,15 +46,17 @@ my-marketplace/
 
 Each subsection describes a design component a repo author chooses among mutually-exclusive implementation paths. The **Docs** column marks paths explicitly recommended by Claude Code documentation (primary signal). The **Adoption** column shows how many of the 18 sample repos use each path (secondary signal).
 
-**Legend.** ★ — path explicitly prescribed or recommended in [plugins-reference](https://code.claude.com/docs/en/plugins-reference) or [plugin-marketplaces](https://code.claude.com/docs/en/plugin-marketplaces). ○ — docs shown as valid but without endorsement. (blank) — docs silent; adoption is the only available signal.
+**Legend.** ★ — path explicitly prescribed or recommended in [plugins-reference](https://code.claude.com/docs/en/plugins-reference) or [plugin-marketplaces](https://code.claude.com/docs/en/plugin-marketplaces). ☆ — docs shown as valid but without endorsement. (blank) — docs silent; adoption is the only available signal.
 
 When the ★ and highest-adoption rows disagree, the conflict is flagged explicitly in the decision's narrative.
+
+**Two samples.** Decisions below use the primary sample (18 repos) unless otherwise noted. Dependency-management decisions use a secondary sample (20 repos filtered for plugins with real runtime dep management) because the primary sample was skill-heavy and underrepresents dep handling. Each table's denominator is consistent within the table; the table header says which sample it uses.
 
 ### Marketplace manifest layout
 
 Where the marketplace catalog lives. Determines whether Claude Code can find it via the documented default path and whether a single marketplace subscription covers the repo's plugins.
 
-| Implementation path | Docs | Adoption |
+| Implementation path | Docs | Adoption (primary, /18) |
 |---|---|---|
 | Single `.claude-plugin/marketplace.json` at repo root | | 17/18 |
 | Multiple `marketplace.json` files at different paths | | 1/18 |
@@ -65,13 +67,13 @@ Docs do not prescribe a file count. Community convention is single.
 
 How a marketplace entry points at plugin source code. Determines whether plugin code lives in the same repo as the marketplace or is fetched from a pinned external ref.
 
-| Implementation path | Docs | Adoption |
+| Implementation path | Docs | Adoption (primary, /18) |
 |---|---|---|
-| Relative string (`"./<dir>"`) | ○ | 14/18 |
-| `url`+`sha` object | ○ | 2/18 |
-| `github` object | ○ | 1/18 |
-| `npm` object | ○ | 1/18 |
-| `git-subdir` object | ○ | 0 default; per-entry in aggregator catalogs |
+| Relative string (`"./<dir>"`) | ☆ | 14/18 |
+| `url`+`sha` object | ☆ | 2/18 |
+| `github` object | ☆ | 1/18 |
+| `npm` object | ☆ | 1/18 |
+| `git-subdir` as default source | ☆ | 0/18 (appears only as per-entry pinning in aggregator catalogs) |
 
 Docs show all shapes as valid without endorsing one. The version-authority decision below is coupled — relative sources get `version` in the marketplace entry; other sources get it in `plugin.json`.
 
@@ -79,7 +81,7 @@ Docs show all shapes as valid without endorsing one. The version-authority decis
 
 How users subscribe to dev vs stable channels of the same plugin. Claude Code's CLI supports `plugin marketplace add <owner>/<repo>@<ref>` for ref pinning regardless of how the marketplace itself is organized.
 
-| Implementation path | Docs | Adoption |
+| Implementation path | Docs | Adoption (primary, /18) |
 |---|---|---|
 | Two separate marketplaces with different `name` values, each pinning a different ref/SHA | ★ | 0/18 |
 | No channel split declared; users pin via CLI `@ref` | | 18/18 |
@@ -91,18 +93,18 @@ How users subscribe to dev vs stable channels of the same plugin. Claude Code's 
 
 Single source of truth for a plugin's version. Claude Code's plugin-reference documents "plugin manifest always wins silently" when both locations carry the field — duplication drifts.
 
-| Implementation path | Docs | Adoption |
+| Implementation path | Docs | Adoption (primary, /18) |
 |---|---|---|
-| `plugin.json` only (for `github`/`url`/`git-subdir`/`npm` sources) | ★ | 10/14 with version |
-| Marketplace entry only (for relative-path sources) | ★ | 3/14 |
-| Both (duplicated) | | 1/14 (observed drift: `5.0.0-alpha` vs `4.2.0`) |
+| `plugin.json` only (for `github`/`url`/`git-subdir`/`npm` sources) | ★ | 10/18 |
+| Marketplace entry only (for relative-path sources) | ★ | 3/18 |
+| Both (duplicated) | | 1/18 (observed drift: `5.0.0-alpha` vs `4.2.0`) |
 | Absent from both | | 4/18 (aggregator marketplaces) |
 
 Docs split the recommendation by source type: "For relative-path plugins, set the version in the marketplace entry. For all other plugin sources, set it in the plugin manifest." Community majority puts version in `plugin.json` regardless of source shape.
 
 ### Default branch
 
-| Implementation path | Docs | Adoption |
+| Implementation path | Docs | Adoption (primary, /18) |
 |---|---|---|
 | `main` | | 16/18 |
 | `master` | | 2/18 |
@@ -113,20 +115,21 @@ Docs silent. Convention is `main`.
 
 Where semver tags annotate commits. Docs prescribe semver (`MAJOR.MINOR.PATCH`) for tags but not where to place them.
 
-| Implementation path | Docs | Adoption |
+| Implementation path | Docs | Adoption (primary, /18) |
 |---|---|---|
-| Tags on `main` | | 14/15 with tags |
-| Tags on `release/*` branches | | 1/15 |
+| Tags on `main` | | 13/18 |
+| Tags on `release/*` branches | | 1/18 |
 | No tags | | 4/18 (all aggregator marketplaces) |
 
 ### Release branching
 
 Whether release prep happens on `main` directly or on dedicated long-lived branches.
 
-| Implementation path | Docs | Adoption |
+| Implementation path | Docs | Adoption (primary, /18) |
 |---|---|---|
-| Tag on `main` directly; no release branches | | 13/14 with tags |
-| Dedicated `release/x.y` long-lived branches | | 1/14 |
+| Tag on `main` directly; no release branches | | 13/18 |
+| Dedicated `release/x.y` long-lived branches | | 1/18 |
+| No release cadence (no tags) | | 4/18 |
 
 Docs silent. Community norm is tag-on-main.
 
@@ -134,43 +137,47 @@ Docs silent. Community norm is tag-on-main.
 
 Docs call out pre-release suffixes explicitly: "Use pre-release versions like `2.0.0-beta.1` for testing."
 
-| Implementation path | Docs | Adoption |
+| Implementation path | Docs | Adoption (primary, /18) |
 |---|---|---|
-| Plain semver only (`vX.Y.Z`) | ★ | 12/14 tagged |
-| Pre-release suffixes used (`-rc`, `-beta`, `-alpha`) | ★ | 2/14 tagged |
+| Plain semver only (`vX.Y.Z`) | ★ | 12/18 |
+| Pre-release suffixes used (`-rc`, `-beta`, `-alpha`) | ★ | 2/18 |
+| No tags (neither used) | | 4/18 |
 
-Both are docs-prescribed: plain semver for releases, pre-release suffixes for testing versions. Use either as appropriate.
+Both tagged paths are docs-prescribed: plain semver for releases, pre-release suffixes for testing versions. Use either as appropriate.
 
 ### Tests location
 
 Where tests live relative to plugin directories. Determines what ships to the plugin cache — there is no `.claudeignore`, so tests inside `plugins/<name>/` ship to every user who installs.
 
-| Implementation path | Docs | Adoption |
+| Implementation path | Docs | Adoption (primary, /18) |
 |---|---|---|
-| `tests/` at repo root only | | 8/10 Python-testing |
-| `tests/` at repo root with per-plugin subdirs (`tests/plugins/<name>/`) | | 1/10 Python-testing |
-| `tests/` inside plugin directory | | 1/10 Python-testing |
+| `tests/` at repo root only | | 8/18 |
+| `tests/` at repo root with per-plugin subdirs (`tests/plugins/<name>/`) | | 1/18 |
+| `tests/` inside plugin directory | | 1/18 |
+| No Python tests / not applicable | | 8/18 |
 
-Docs silent. Community majority is tests at repo root. Inside the plugin directory is an anti-pattern at scale because there is no `.claudeignore` — tests ship to user caches.
+Docs silent. Community majority among Python-testing repos is tests at repo root. Inside the plugin directory is an anti-pattern at scale because there is no `.claudeignore` — tests ship to user caches.
 
 ### Pytest configuration location
 
-| Implementation path | Docs | Adoption |
+| Implementation path | Docs | Adoption (primary, /18) |
 |---|---|---|
-| `[tool.pytest.ini_options]` in `pyproject.toml` | | 6/10 Python-testing |
-| Dedicated `pytest.ini` | | 0/10 Python-testing |
-| No explicit config | | 4/10 Python-testing |
+| `[tool.pytest.ini_options]` in `pyproject.toml` | | 6/18 |
+| Dedicated `pytest.ini` | | 0/18 |
+| No explicit config | | 4/18 |
+| No Python tests / not applicable | | 8/18 |
 
-Docs silent. Community convention is `pyproject.toml`.
+Docs silent. Community convention among Python-testing repos is `pyproject.toml`.
 
 ### Python dependency manifest format
 
-| Implementation path | Docs | Adoption |
+| Implementation path | Docs | Adoption (primary, /18) |
 |---|---|---|
-| `pyproject.toml` | | 6/10 Python-using |
-| `requirements.txt` | | ≤1/10 Python-using |
+| `pyproject.toml` | | 6/18 |
+| `requirements.txt` | | 1/18 |
+| No Python deps / not applicable | | 11/18 |
 
-Docs silent on format. The runtime install mechanism is what docs prescribe (see next decision).
+Docs silent on manifest format. The install mechanism is what docs prescribe (see next decision).
 
 ### Dependency install mechanism
 
@@ -178,19 +185,23 @@ How runtime dependencies (Python venvs, Node `node_modules`, Rust/Go binaries) a
 
 Docs prescribe a complete pattern: SessionStart hook installs into `${CLAUDE_PLUGIN_DATA}` using the docs' `diff -q` idiom so manifest changes trigger reinstall. Exact language from plugins-reference: *"a persistent directory for plugin state that survives updates. Use this for installed dependencies such as `node_modules` or Python virtual environments... The recommended pattern compares the bundled manifest against a copy in the data directory and reinstalls when they differ."* Docs ship a worked example using `diff -q` + trailing `rm` on failure.
 
-| Implementation path | Docs | Adoption |
+**Uses the dependency-management sample (20 repos filtered for real runtime dep management).**
+
+| Implementation path | Docs | Adoption (dep-management, /20) |
 |---|---|---|
-| SessionStart hook → install into `${CLAUDE_PLUGIN_DATA}` → manifest-diff change detection → retry-next-session on failure | ★ | 17/20 dep-heavy repos |
+| SessionStart hook → install into `${CLAUDE_PLUGIN_DATA}` → manifest-diff change detection → retry-next-session on failure | ★ | 17/20 |
 | SessionStart hook but installs into `${CLAUDE_PLUGIN_ROOT}` (not `${CLAUDE_PLUGIN_DATA}`) | | 3/20 (usually citing language-specific module-resolution constraints) |
-| README-only manual setup | | 0/20 observed |
-| Pre-bundled (committed `node_modules`, vendored packages) | | 0/20 observed |
-| `npx`/`uvx` ad-hoc runtime fetch | | 0/20 primary; 1/20 hybrid |
+| README-only manual setup | | 0/20 |
+| Pre-bundled (committed `node_modules`, vendored packages) | | 0/20 |
+| `npx`/`uvx` ad-hoc runtime fetch as primary | | 0/20 (1/20 as hybrid within a SessionStart flow) |
 
 ### Dependency change detection
 
 How the SessionStart hook decides whether to reinstall deps.
 
-| Implementation path | Docs | Adoption |
+**Uses the dependency-management sample (20 repos).**
+
+| Implementation path | Docs | Adoption (dep-management, /20) |
 |---|---|---|
 | `diff -q` bundled manifest against cached copy in data dir | ★ | 12/20 |
 | Hash (sha256/md5) of manifest | | 4/20 |
@@ -201,23 +212,23 @@ How the SessionStart hook decides whether to reinstall deps.
 
 Independent yes/no features a repo may adopt in any combination. The **Docs** column marks features Claude Code documentation explicitly recommends.
 
-| Feature | Docs | Adoption |
+| Feature | Docs | Adoption (primary, /18) |
 |---|---|---|
+| Components at plugin root (not inside `.claude-plugin/`) | ★ | 18/18 |
+| `README.md` at repo root | | 18/18 |
+| At least one CI workflow | | 16/18 |
 | Semver tags | ★ | 14/18 |
+| Per-plugin `README.md` | | 12/18 |
+| `ci.yml` or equivalent push/PR pytest | | 9/18 |
+| `CHANGELOG.md` documenting version changes | ★ | 9/18 |
+| `release.yml` tag-triggered | | 5/18 |
+| Pre-release tag suffixes for test versions | ★ | 2/18 |
+| `architecture.md` at marketplace root | | 2/18 |
+| Marketplace manifest validation workflow (runs `claude plugin validate`) | ★ (command recommended; CI workflow around it is inference) | 1/18 |
 | `release/*` long-lived branches | | 1/18 |
 | `dev`/`develop` long-lived branches | | 1/18 |
-| Pre-release tag suffixes for test versions | ★ | 2/18 |
-| At least one CI workflow | | 16/18 |
-| `ci.yml` or equivalent push/PR pytest | | 9/18 |
-| `release.yml` tag-triggered | | 5/18 |
-| Marketplace manifest validation workflow (runs `claude plugin validate`) | ★ (command recommended; workflow is inference) | 1/18 |
 | Scheduled SHA-bump PR workflow | | 1/18 (aggregator catalogs only) |
-| `README.md` at repo root | | 18/18 |
-| `CHANGELOG.md` documenting version changes | ★ | 9/18 |
-| `architecture.md` at marketplace root | | 2/18 |
-| Per-plugin `README.md` | | ~12/18 |
-| `bin/` for PATH-accessible plugin executables | ★ | prescribed as the correct location when the plugin ships PATH-accessible binaries |
-| Components at plugin root (not inside `.claude-plugin/`) | ★ | 18/18 |
+| `bin/` for PATH-accessible plugin executables | ★ | 2/18 observed (prescribed location when plugin ships PATH-accessible binaries; absent when not applicable) |
 
 ## Non-obvious gotchas
 
