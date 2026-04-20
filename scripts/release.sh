@@ -7,8 +7,11 @@
 #   - Creates release/x.y branch at current main
 #   - Bumps every plugins/*/plugin.json version to x.y.0
 #   - Prepends a release entry to CHANGELOG.md (operator fills in details)
-#   - Updates .claude-plugin/marketplace.stable.json to pin ref:vx.y.0
-#   - Commits "release x.y.0", tags vx.y.0, pushes branch + tag + main
+#   - Operator commits, tags vx.y.0, pushes branch + tag
+#
+# Stable channel install uses marketplace-ref pinning:
+#   /plugin marketplace add a-horde-o-bees/claude-plugins@vx.y.0
+# No separate stable-channel manifest is maintained.
 #
 # For x.y.z where z > 0 (patch on existing release branch):
 #   - Requires checkout on release/x.y already
@@ -87,24 +90,6 @@ PY
     echo "Bumped $manifest to $version"
 done
 
-# Update stable marketplace pointer
-stable_manifest=".claude-plugin/marketplace.stable.json"
-if [ -f "$stable_manifest" ]; then
-    python3 - <<PY "$stable_manifest" "$tag"
-import json, sys
-path, new_ref = sys.argv[1], sys.argv[2]
-data = json.loads(open(path).read())
-for plugin in data.get("plugins", []):
-    source = plugin.get("source")
-    if isinstance(source, dict) and "ref" in source:
-        source["ref"] = new_ref
-with open(path, "w") as f:
-    json.dump(data, f, indent=2)
-    f.write("\n")
-PY
-    echo "Pointed $stable_manifest at $tag"
-fi
-
 # Prepend a CHANGELOG entry stub (operator edits before commit)
 if [ -f CHANGELOG.md ]; then
     date_stamp="$(date -u +%Y-%m-%d)"
@@ -137,4 +122,4 @@ echo "  5. git push origin $release_branch"
 echo "  6. git push origin '$tag'"
 echo ""
 echo "Users install this release via the stable channel:"
-echo "  /plugin marketplace add https://raw.githubusercontent.com/a-horde-o-bees/claude-plugins/main/.claude-plugin/marketplace.stable.json"
+echo "  /plugin marketplace add a-horde-o-bees/claude-plugins@$tag"

@@ -16,14 +16,14 @@ Use at your own discretion. If something breaks, the LICENSE applies.
 
 ## Installation
 
-Two channels ship from this repo — pick the one that matches how much churn you want to accept:
+One marketplace, two channels. You pick the channel by pinning (or not pinning) a ref when you add the marketplace.
 
 ### Stable channel (recommended for use)
 
-Pins to the most recent tagged release on a curated `release/*` branch. Dev artifacts (tests, CI configs) stripped. Updates only when a new release is cut.
+Pins to a tagged release. The marketplace at that tag points at the frozen plugin content of that release branch. Updates require re-adding with a newer tag (or running `/plugin marketplace update` after repointing).
 
 ```
-/plugin marketplace add https://raw.githubusercontent.com/a-horde-o-bees/claude-plugins/main/.claude-plugin/marketplace.stable.json
+/plugin marketplace add a-horde-o-bees/claude-plugins@v0.1.0
 /plugin install ocd@a-horde-o-bees
 ```
 
@@ -32,8 +32,8 @@ Pins to the most recent tagged release on a curated `release/*` branch. Dev arti
 Tracks `main`. Ships with tests, CI configs, and in-flight changes. Updates on every push to `main`; `0.0.z` version auto-bumps for cache invalidation.
 
 ```
-/plugin marketplace add https://github.com/a-horde-o-bees/claude-plugins.git
-/plugin install ocd@a-horde-o-bees-dev
+/plugin marketplace add a-horde-o-bees/claude-plugins
+/plugin install ocd@a-horde-o-bees
 ```
 
 ### After install
@@ -46,10 +46,10 @@ Restart Claude session so hooks and commands load, then initialize in target pro
 
 Restart Claude session again so deployed rules auto-load into context.
 
-Update plugins after upstream changes. Substitute the marketplace name for whichever channel you installed (`a-horde-o-bees` for stable, `a-horde-o-bees-dev` for dev):
+Update plugins after upstream changes:
 
 ```
-/plugin marketplace update <marketplace-name>
+/plugin marketplace update a-horde-o-bees
 /reload-plugins
 ```
 
@@ -69,11 +69,11 @@ claude --continue
 
 Restart after init is only needed when rule files change. Convention-only updates take effect immediately.
 
-Remove a plugin or the marketplace. Substitute the marketplace name for whichever channel you installed:
+Remove a plugin or the marketplace:
 
 ```
 /plugin uninstall ocd
-/plugin marketplace remove <marketplace-name>
+/plugin marketplace remove a-horde-o-bees
 ```
 
 ### Local development
@@ -92,10 +92,10 @@ Develop within a clone that is also the marketplace source. Plugins load via the
 /push
 ```
 
-Commits and pushes all changes. Then refresh the marketplace cache and reload (contributors typically work against the dev channel):
+Commits and pushes all changes. Then refresh the marketplace cache and reload:
 
 ```
-/plugin marketplace update a-horde-o-bees-dev
+/plugin marketplace update a-horde-o-bees
 /reload-plugins
 ```
 

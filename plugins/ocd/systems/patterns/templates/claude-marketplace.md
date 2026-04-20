@@ -14,8 +14,7 @@ Canonical shape for a Claude Code plugin marketplace repository. Use this patter
 ```text
 my-marketplace/
 ├── .claude-plugin/
-│   ├── marketplace.json              # Dev channel (plugin source → ref: main)
-│   └── marketplace.stable.json       # Stable channel (plugin source → ref: vX.Y.Z)
+│   └── marketplace.json              # Single catalog; channel picked at install via @ref
 ├── plugins/
 │   ├── <plugin-a>/                   # Plugin dir ships to user cache as-is
 │   │   ├── .claude-plugin/
@@ -77,41 +76,11 @@ Long-lived branches beyond `main` and `release/*` add overhead without benefit a
 
 ## Release channels
 
-Two marketplaces, one repo. Users subscribe to whichever channel matches their risk tolerance.
+One `marketplace.json` at `.claude-plugin/marketplace.json`. Users select their channel at install time by pinning (or not pinning) a ref when they add the marketplace. The marketplace at the selected ref supplies both its own catalog shape and its plugin sources — since relative-path sources resolve against whatever ref the marketplace was fetched at, pinning to a release tag naturally loads that release's plugin content.
 
-### Dev channel
+### The one manifest
 
 `.claude-plugin/marketplace.json`:
-
-```json
-{
-  "name": "<owner>-dev",
-  "owner": { "name": "<Owner Name>" },
-  "plugins": [
-    {
-      "name": "<plugin-a>",
-      "source": {
-        "source": "github",
-        "repo": "<owner>/<repo>",
-        "ref": "main"
-      }
-    }
-  ]
-}
-```
-
-Users install via:
-
-```
-/plugin marketplace add <owner>/<repo>
-/plugin install <plugin-a>@<owner>-dev
-```
-
-The `ref: "main"` is explicit — even when the repo's default branch is main, declaring it removes ambiguity and makes the dev/stable split visible at first read.
-
-### Stable channel
-
-`.claude-plugin/marketplace.stable.json`:
 
 ```json
 {
@@ -120,29 +89,40 @@ The `ref: "main"` is explicit — even when the repo's default branch is main, d
   "plugins": [
     {
       "name": "<plugin-a>",
-      "source": {
-        "source": "github",
-        "repo": "<owner>/<repo>",
-        "ref": "v1.2.0"
-      }
+      "source": "./plugins/<plugin-a>"
     }
   ]
 }
 ```
 
-Users install via:
+Plugin source uses a relative path so the content follows the marketplace's own checkout ref. `release/x.y` branches carry their own curated `marketplace.json` + `plugins/<plugin-a>/` content; `main` carries the dev-state version.
+
+### User install commands
+
+Dev channel — tracks `main`:
 
 ```
-/plugin marketplace add <owner>/<repo>#.claude-plugin/marketplace.stable.json
+/plugin marketplace add <owner>/<repo>
 /plugin install <plugin-a>@<owner>
 ```
 
-The stable marketplace entry is updated on every release cut to point at the new tag. `ref: "<tag>"` can be replaced with explicit `sha:` pinning if you need commit-level precision.
+Stable channel — pinned to a release tag:
+
+```
+/plugin marketplace add <owner>/<repo>@vX.Y.Z
+/plugin install <plugin-a>@<owner>
+```
+
+Same marketplace name in both cases. A user can only subscribe to one ref of the marketplace at a time (Claude Code enforces uniqueness by name), so switching channels requires `/plugin marketplace remove` then re-add with the desired ref.
 
 ### Naming
 
-- Marketplace name (in manifest): the dev channel suffixes with `-dev`; the stable channel holds the unadorned owner name. Reasoning: stable is the default channel new users should land on, dev is the opt-in.
+- Marketplace name in the manifest is the unadorned owner name (no `-dev`, `-stable`, or channel suffix). The channel distinction lives in the install command's `@ref`, not in the marketplace name itself.
 - Reserved marketplace names per Claude Code docs must be avoided: `claude-code-marketplace`, `claude-code-plugins`, `claude-plugins-official`, `anthropic-marketplace`, `anthropic-plugins`, `agent-skills`, `knowledge-work-plugins`, `life-sciences`.
+
+### Why not a separate marketplace.stable.json
+
+A second manifest in the same tree (e.g. `marketplace.stable.json`) is technically installable via a direct URL to the file, but URL-based marketplaces do not auto-update — users would have to re-add to pick up a new release. Ref-based pinning keeps auto-update working and sticks to one standard filename.
 
 ## Plugin dir discipline
 
@@ -214,7 +194,7 @@ Agent tests (`pytest.mark.agent`) stay skipped in CI unless the workflow explici
     1. Create branch `release/x.y` at current `main`.
     2. Bump `plugins/*/plugin.json` versions to `x.y.0`.
     3. Prepend an entry to `CHANGELOG.md`.
-    4. Update `.claude-plugin/marketplace.stable.json` plugin sources to `ref: "vx.y.0"`.
+    4. Ensure the release branch's `.claude-plugin/marketplace.json` carries the release-branch plugin content (relative-path sources naturally follow the ref).
     5. Commit ("release x.y.0"), tag `vx.y.0`, push branch + tag.
 4. If the release is `x.y.z` where `z > 0` (patch on an existing release branch):
     1. Switch to `release/x.y`.
@@ -250,8 +230,7 @@ Drop the `plugins/` wrapper. The plugin manifest lives at `.claude-plugin/plugin
 my-plugin-repo/
 ├── .claude-plugin/
 │   ├── plugin.json
-│   ├── marketplace.json
-│   └── marketplace.stable.json
+│   └── marketplace.json
 ├── skills/ commands/ agents/ hooks/
 ├── tests/
 │   ├── unit/
@@ -315,16 +294,15 @@ MCP server repos follow whatever release conventions are natural to their packag
 
 ## Checklist for a new marketplace repo
 
-1. Create `.claude-plugin/marketplace.json` with dev-channel manifest.
-2. Create `.claude-plugin/marketplace.stable.json` with stable-channel manifest (points at `ref: v0.1.0` initially).
-3. Create first plugin under `plugins/<plugin-a>/.claude-plugin/plugin.json`.
-4. Initialize `tests/` at repo root with `integration/` and `plugins/<plugin-a>/` subdirs.
-5. Add `scripts/test.sh` delegating to the plugin framework's test runner.
-6. Add `scripts/release.sh` for release cuts.
-7. Add `.github/workflows/validate.yml` and `.github/workflows/test.yml`.
-8. Install pre-commit hook for `0.0.z` auto-bump on main.
-9. Write `README.md` with dev-channel and stable-channel install commands.
-10. Write `CHANGELOG.md` stub.
-11. Write `architecture.md` and `CLAUDE.md`.
-12. Tag the first stable release (`v0.1.0`), update `marketplace.stable.json` to pin it.
-13. Verify: install from both channels on a clean machine; confirm plugin cache contains only intended files.
+1. Create `.claude-plugin/marketplace.json` with plugin source set to a relative path (`./plugins/<plugin-a>`). One manifest; the ref at install time selects the channel.
+2. Create first plugin under `plugins/<plugin-a>/.claude-plugin/plugin.json`.
+3. Initialize `tests/` at repo root with `integration/` and `plugins/<plugin-a>/` subdirs.
+4. Add `scripts/test.sh` delegating to the plugin framework's test runner.
+5. Add `scripts/release.sh` for release cuts.
+6. Add `.github/workflows/validate.yml` and `.github/workflows/test.yml`.
+7. Install pre-commit hook for `0.0.z` auto-bump on main.
+8. Write `README.md` with dev-channel and stable-channel install commands.
+9. Write `CHANGELOG.md` stub.
+10. Write `architecture.md` and `CLAUDE.md`.
+11. Tag the first stable release (`v0.1.0`). Users install stable via `/plugin marketplace add <owner>/<repo>@v0.1.0`.
+12. Verify: install from both channels on a clean machine; confirm plugin cache contains only intended files.
