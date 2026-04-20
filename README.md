@@ -8,28 +8,35 @@ This is a personal development project. It is experimental, actively evolving, a
 
 Use at your own discretion. If something breaks, the LICENSE applies.
 
-## Releases
-
-**Latest stable release:** [`v0.1.0`](https://github.com/a-horde-o-bees/claude-plugins/tree/v0.1.0) — consumer install instructions and stable documentation live there.
-
-This branch (`main`) is active development. It contains work in progress that may be incomplete or breaking. For production use, install from a release branch.
-
 ## Plugins
 
-| Plugin | Status | Description |
-|--------|--------|-------------|
-| [ocd](plugins/ocd/) | Active (v0.1.0) | Deterministic enforcement of permissions, rules, and structural conventions with agent-facing project navigation |
+| Plugin | Description |
+|--------|-------------|
+| [ocd](plugins/ocd/) | Deterministic enforcement of permissions, rules, and structural conventions with agent-facing project navigation |
 
 ## Installation
 
-### From GitHub
+Two channels ship from this repo — pick the one that matches how much churn you want to accept:
 
-Add the marketplace and install plugins:
+### Stable channel (recommended for use)
+
+Pins to the most recent tagged release on a curated `release/*` branch. Dev artifacts (tests, CI configs) stripped. Updates only when a new release is cut.
+
+```
+/plugin marketplace add https://raw.githubusercontent.com/a-horde-o-bees/claude-plugins/main/.claude-plugin/marketplace.stable.json
+/plugin install ocd@a-horde-o-bees
+```
+
+### Dev channel (early adopters and contributors)
+
+Tracks `main`. Ships with tests, CI configs, and in-flight changes. Updates on every push to `main`; `0.0.z` version auto-bumps for cache invalidation.
 
 ```
 /plugin marketplace add https://github.com/a-horde-o-bees/claude-plugins.git
-/plugin install ocd@a-horde-o-bees
+/plugin install ocd@a-horde-o-bees-dev
 ```
+
+### After install
 
 Restart Claude session so hooks and commands load, then initialize in target project:
 
@@ -39,10 +46,10 @@ Restart Claude session so hooks and commands load, then initialize in target pro
 
 Restart Claude session again so deployed rules auto-load into context.
 
-Update plugins after upstream changes:
+Update plugins after upstream changes. Substitute the marketplace name for whichever channel you installed (`a-horde-o-bees` for stable, `a-horde-o-bees-dev` for dev):
 
 ```
-/plugin marketplace update a-horde-o-bees
+/plugin marketplace update <marketplace-name>
 /reload-plugins
 ```
 
@@ -62,11 +69,11 @@ claude --continue
 
 Restart after init is only needed when rule files change. Convention-only updates take effect immediately.
 
-Remove a plugin or the marketplace:
+Remove a plugin or the marketplace. Substitute the marketplace name for whichever channel you installed:
 
 ```
 /plugin uninstall ocd
-/plugin marketplace remove a-horde-o-bees
+/plugin marketplace remove <marketplace-name>
 ```
 
 ### Local development
@@ -85,10 +92,10 @@ Develop within a clone that is also the marketplace source. Plugins load via the
 /push
 ```
 
-Commits and pushes all changes. Then refresh the marketplace cache and reload:
+Commits and pushes all changes. Then refresh the marketplace cache and reload (contributors typically work against the dev channel):
 
 ```
-/plugin marketplace update a-horde-o-bees
+/plugin marketplace update a-horde-o-bees-dev
 /reload-plugins
 ```
 
