@@ -148,6 +148,30 @@ When worktree isolation is unnecessary:
 - Tests that operate entirely in `tmp_path` or other external temp directories
 - Unit tests that mock git operations
 
+### Agent-Spawning Tests
+
+Some behaviors can only be verified end-to-end by spawning a real Claude subprocess — hook behavior during real Edit or Write calls, plugin wiring during a fresh `claude -p` session, MCP servers binding under a fresh `CLAUDE_PROJECT_DIR`. These tests exercise the integration between the plugin and a running agent, which deterministic tests and mocks cannot substitute for.
+
+Real agent tests cost tokens, take seconds to minutes per test, and carry model-variance and API-reliability flakiness. They are opt-in by default: mark them `pytestmark = pytest.mark.agent` at the module level, and the pytest configuration skips them unless `--run-agent` is passed on the command line.
+
+What agent tests should verify:
+
+- Plugin wiring around the subprocess — PATH resolution, venv binding, `CLAUDE_PROJECT_DIR` propagation, hook registration
+- Hook invocation and corrective output under real tool calls the agent makes
+- Substrate setup and teardown correctness when a real agent runs inside the sandbox
+
+What agent tests should *not* verify:
+
+- Exact strings the agent produces — model variance makes these brittle; test the observable side effects (file contents, hook output, exit codes) instead
+- Specific tool-call sequences — agents reorder work; assert the required state at the end, not the path taken
+- Model quality or reasoning — that belongs in evaluation protocols, not pytest
+
+Discipline for cost:
+
+- Fail fast before the subprocess call — assert preconditions (fixture files exist, `claude` binary on PATH, venv present) before spending tokens
+- Keep agent tests narrow — one behavior per test, minimal prompt, minimal expected work
+- Share setup where possible — a session-scoped fixture that spins up a sandbox once costs far less than per-test setup
+
 ## Where Tests Live
 
 Test files go in one of three homes depending on what they verify:
