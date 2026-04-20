@@ -74,7 +74,7 @@ def test_runner_main() -> int:
 
 def _run_suite(suite: _test_discovery.Suite, cwd: Path) -> SuiteResult:
     print(f"\n=== {suite.name} ===", flush=True)
-    args = [str(suite.venv), "-m", "pytest", str(suite.rel_path), "-v"]
+    args = [str(suite.venv), "-m", "pytest", *[str(p) for p in suite.rel_paths], "-v"]
     if suite.pytest_ini is not None:
         args.extend(["-c", str(suite.pytest_ini)])
 

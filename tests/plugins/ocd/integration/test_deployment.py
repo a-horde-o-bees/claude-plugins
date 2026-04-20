@@ -24,12 +24,20 @@ from pathlib import Path
 
 import pytest
 
-OCD_PLUGIN_DIR = Path(__file__).resolve().parent.parent.parent
+import framework
+
+OCD_PLUGIN_DIR = framework.get_plugin_root()
 
 
 def _clear_plugin_modules() -> None:
-    """Drop cached imports so a fresh plugin context loads cleanly."""
-    prefixes = ("framework", "plugin", "systems")
+    """Drop cached plugin-scoped imports so a fresh plugin context loads cleanly.
+
+    Excludes `framework` — its classes (NotReadyError, etc.) are referenced
+    by modules that may have been imported during pytest collection by
+    other tests. Reloading framework creates a new class object, breaking
+    `isinstance` checks in the held references.
+    """
+    prefixes = ("plugin", "systems")
     for key in list(sys.modules):
         root = key.split(".", 1)[0]
         if root in prefixes:

@@ -20,7 +20,25 @@ import subprocess
 import sys
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+def _git_root() -> Path:
+    """Anchor at the enclosing git root rather than walking `__file__` parents.
+
+    Matches what `framework.get_project_dir()` does internally when
+    `CLAUDE_PROJECT_DIR` is unset. Script has no access to the plugin
+    framework at import time (it bootstraps the framework), so we call
+    git directly instead of importing the helper.
+    """
+    result = subprocess.run(
+        ["git", "rev-parse", "--show-toplevel"],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    return Path(result.stdout.strip()).resolve()
+
+
+PROJECT_ROOT = _git_root()
 CLAUDE_DIR = PROJECT_ROOT / ".claude"
 PRE_SYNC_DIR = CLAUDE_DIR / "pre-sync"
 

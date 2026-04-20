@@ -899,7 +899,15 @@ def uncovered(db):
     """
     import subprocess
 
-    project_root = Path(__file__).parent.parent
+    root_result = subprocess.run(
+        ["git", "rev-parse", "--show-toplevel"],
+        capture_output=True, text=True,
+    )
+    if root_result.returncode != 0:
+        print(f"Error: git rev-parse failed: {root_result.stderr.strip()}")
+        sys.exit(1)
+    project_root = Path(root_result.stdout.strip()).resolve()
+
     result = subprocess.run(
         ["git", "ls-files"],
         capture_output=True, text=True, cwd=str(project_root),
