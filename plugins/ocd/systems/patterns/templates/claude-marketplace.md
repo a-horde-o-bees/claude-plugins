@@ -58,7 +58,7 @@ When the ★ and highest-adoption rows disagree, the conflict is flagged explici
 
 Where the marketplace catalog lives. Determines whether Claude Code can find it via the documented default path and whether a single marketplace subscription covers the repo's plugins.
 
-| Implementation path | Docs | Adoption (primary, /18) |
+| Implementation path | Docs | Adoption |
 |---|---|---|
 | Single `.claude-plugin/marketplace.json` at repo root | | 17/18 |
 | Multiple `marketplace.json` files at different paths | | 1/18 |
@@ -69,7 +69,7 @@ Docs do not prescribe a file count. Community convention is single.
 
 How a marketplace entry points at plugin source code. Determines whether plugin code lives in the same repo as the marketplace or is fetched from a pinned external ref.
 
-| Implementation path | Docs | Adoption (primary, /18) |
+| Implementation path | Docs | Adoption |
 |---|---|---|
 | Relative string (`"./<dir>"`) | ☆ | 14/18 |
 | `url`+`sha` object | ☆ | 2/18 |
@@ -83,11 +83,10 @@ Docs show all shapes as valid without endorsing one. The version-authority decis
 
 How users subscribe to dev vs stable channels of the same plugin. Claude Code's CLI supports `plugin marketplace add <owner>/<repo>@<ref>` for ref pinning regardless of how the marketplace itself is organized.
 
-| Implementation path | Docs | Adoption (primary, /18) |
+| Implementation path | Docs | Adoption |
 |---|---|---|
 | Two separate marketplaces with different `name` values, each pinning a different ref/SHA | ★ | 0/18 |
 | No channel split declared; users pin via CLI `@ref` | | 18/18 |
-| Second manifest file (e.g. `marketplace.stable.json`) | | 0/18 |
 
 **Docs vs adoption conflict.** Anthropic's plugin-marketplaces doc explicitly recommends two marketplaces with different `name` values for stable/latest channels (worked example: `stable-tools` + `latest-tools`). Zero sample repos implement this — community treats `@ref` pinning as the de-facto mechanism. Plugin-name collisions between channels (each `plugin.json` carries the same `name` unless authors ship separate plugin files) explain why community doesn't adopt. For portfolio signal, the docs pattern is the formal choice; for real-world compatibility, most users will expect the `@ref` pattern.
 
@@ -97,7 +96,7 @@ Single source of truth for a plugin's version. Claude Code's plugin-reference do
 
 Applicable to repos that declare a version somewhere. 4 aggregator marketplaces declare no version anywhere and are excluded from the denominator below.
 
-| Implementation path | Docs | Adoption (version-declaring, /14) |
+| Implementation path | Docs | Adoption |
 |---|---|---|
 | `plugin.json` only (for `github`/`url`/`git-subdir`/`npm` sources) | ★ | 10/14 |
 | Marketplace entry only (for relative-path sources) | ★ | 3/14 |
@@ -107,7 +106,7 @@ Docs split the recommendation by source type: "For relative-path plugins, set th
 
 ### Default branch
 
-| Implementation path | Docs | Adoption (primary, /18) |
+| Implementation path | Docs | Adoption |
 |---|---|---|
 | `main` | | 16/18 |
 | `master` | | 2/18 |
@@ -120,7 +119,7 @@ Where semver tags annotate commits. Docs prescribe semver (`MAJOR.MINOR.PATCH`) 
 
 Applicable to repos that tag releases. 4 aggregator marketplaces are untagged and excluded.
 
-| Implementation path | Docs | Adoption (tagged, /14) |
+| Implementation path | Docs | Adoption |
 |---|---|---|
 | Tags on `main` | | 13/14 |
 | Tags on `release/*` branches | | 1/14 |
@@ -129,7 +128,7 @@ Applicable to repos that tag releases. 4 aggregator marketplaces are untagged an
 
 Whether release prep happens on `main` directly or on dedicated long-lived branches. Applicable to repos with a release cadence. 4 aggregator marketplaces have no release cadence and are excluded.
 
-| Implementation path | Docs | Adoption (release-cadence, /14) |
+| Implementation path | Docs | Adoption |
 |---|---|---|
 | Tag on `main` directly; no release branches | | 13/14 |
 | Dedicated `release/x.y` long-lived branches | | 1/14 |
@@ -140,7 +139,7 @@ Docs silent. Community norm is tag-on-main.
 
 Docs call out pre-release suffixes explicitly: "Use pre-release versions like `2.0.0-beta.1` for testing." Applicable to repos that tag. 4 untagged repos excluded.
 
-| Implementation path | Docs | Adoption (tagged, /14) |
+| Implementation path | Docs | Adoption |
 |---|---|---|
 | Plain semver only (`vX.Y.Z`) | ★ | 12/14 |
 | Pre-release suffixes (`-rc`, `-beta`, `-alpha`) | ★ | 2/14 |
@@ -151,7 +150,7 @@ Both paths are docs-prescribed: plain semver for releases, pre-release suffixes 
 
 Where tests live relative to plugin directories. Determines what ships to the plugin cache — there is no `.claudeignore`, so tests inside `plugins/<name>/` ship to every user who installs. Applicable to repos with Python tests. 8 repos have no Python tests and are excluded.
 
-| Implementation path | Docs | Adoption (Python-testing, /10) |
+| Implementation path | Docs | Adoption |
 |---|---|---|
 | `tests/` at repo root only | | 8/10 |
 | `tests/` at repo root with per-plugin subdirs (`tests/plugins/<name>/`) | | 1/10 |
@@ -163,19 +162,18 @@ Docs silent. Community majority is tests at repo root. Inside the plugin directo
 
 Applicable to repos with Python tests. 8 excluded.
 
-| Implementation path | Docs | Adoption (Python-testing, /10) |
+| Implementation path | Docs | Adoption |
 |---|---|---|
 | `[tool.pytest.ini_options]` in `pyproject.toml` | | 6/10 |
-| Dedicated `pytest.ini` | | 0/10 |
 | No explicit config | | 4/10 |
 
-Docs silent. Community convention is `pyproject.toml`.
+Docs silent. Community convention is `pyproject.toml`. Dedicated `pytest.ini` is a widely-known pytest option but was not observed in any repo in the sample.
 
 ### Python dependency manifest format
 
 Applicable to repos with Python deps. 11 repos have no Python deps and are excluded.
 
-| Implementation path | Docs | Adoption (Python-using, /7) |
+| Implementation path | Docs | Adoption |
 |---|---|---|
 | `pyproject.toml` | | 6/7 |
 | `requirements.txt` | | 1/7 |
@@ -190,13 +188,11 @@ Docs prescribe a complete pattern: SessionStart hook installs into `${CLAUDE_PLU
 
 **Uses the dependency-management sample (20 repos filtered for real runtime dep management).**
 
-| Implementation path | Docs | Adoption (dep-management, /20) |
+| Implementation path | Docs | Adoption |
 |---|---|---|
 | SessionStart hook → install into `${CLAUDE_PLUGIN_DATA}` → manifest-diff change detection → retry-next-session on failure | ★ | 17/20 |
 | SessionStart hook but installs into `${CLAUDE_PLUGIN_ROOT}` (not `${CLAUDE_PLUGIN_DATA}`) | | 3/20 (usually citing language-specific module-resolution constraints) |
-| README-only manual setup | | 0/20 |
-| Pre-bundled (committed `node_modules`, vendored packages) | | 0/20 |
-| `npx`/`uvx` ad-hoc runtime fetch as primary | | 0/20 (1/20 as hybrid within a SessionStart flow) |
+| `npx`/`uvx` ad-hoc runtime fetch as a hybrid within a SessionStart flow | | 1/20 |
 
 ### Dependency change detection
 
@@ -204,7 +200,7 @@ How the SessionStart hook decides whether to reinstall deps.
 
 **Uses the dependency-management sample (20 repos).**
 
-| Implementation path | Docs | Adoption (dep-management, /20) |
+| Implementation path | Docs | Adoption |
 |---|---|---|
 | `diff -q` bundled manifest against cached copy in data dir | ★ | 12/20 |
 | Hash (sha256/md5) of manifest | | 4/20 |
@@ -219,7 +215,7 @@ Independent yes/no features a repo may adopt in any combination. The **Docs** co
 
 Applicable to every repo in the sample.
 
-| Feature | Docs | Adoption (/18) |
+| Feature | Docs | Adoption |
 |---|---|---|
 | Components at plugin root (not inside `.claude-plugin/`) | ★ | 18/18 |
 | `README.md` at repo root | | 18/18 |
@@ -272,7 +268,9 @@ Applicability differs from the full sample. Each row names its applicability cri
 
 ## References
 
-All adoption counts cite these 18 repositories. Dates reflect activity at the time of sampling; all were recently maintained.
+Two samples inform this pattern. Primary sample (18 repos) is used for every decision except the two dependency-management decisions; dependency-management sample (20 repos filtered for real runtime dep management) is used for those two. `CronusL-1141/AI-company` appears in both samples.
+
+### Primary sample (18)
 
 **Anthropic-owned (6):**
 
@@ -297,5 +295,30 @@ All adoption counts cite these 18 repositories. Dates reflect activity at the ti
 - [IgorGanapolsky/ThumbGate](https://github.com/IgorGanapolsky/ThumbGate) — `npm` source type (outlier)
 - [REPOZY/superpowers-optimized](https://github.com/REPOZY/superpowers-optimized) — only sampled repo with a `dev` branch
 - [HiH-DimaN/idea-to-deploy](https://github.com/HiH-DimaN/idea-to-deploy) — `github` source type (outlier)
+
+### Dependency-management sample (20)
+
+Second research wave filtered for plugins with real runtime dep management (Python venvs, Node `node_modules`, Rust/Go binaries). Used only for the two dep-management decisions.
+
+- [CronusL-1141/AI-company](https://github.com/CronusL-1141/AI-company) — Python venv, `diff -q` (also in primary sample)
+- [anthril/official-claude-plugins](https://github.com/anthril/official-claude-plugins) — Python venv, stamp file + `diff -q`
+- [Arcanon-hub/arcanon](https://github.com/Arcanon-hub/arcanon) — Node/npm, sentinel `diff -q`; installs into ROOT (cites ESM)
+- [ekadetov/llm-wiki](https://github.com/ekadetov/llm-wiki) — Node/npm, version file + `diff -q`
+- [marioGusmao/mg-plugins](https://github.com/marioGusmao/mg-plugins) — Node/npm, `diff -q` + Node ABI tracking
+- [thecodeartificerX/codetographer](https://github.com/thecodeartificerX/codetographer) — Node/npm, copy-then-install
+- [tretuttle/AI-Stuff](https://github.com/tretuttle/AI-Stuff) — Node + Playwright Chromium, sha256 + install marker
+- [NoelClay/academic-research-mcp-plugin](https://github.com/NoelClay/academic-research-mcp-plugin) — Python venv + Node, `diff -q` both
+- [123jimin-vibe/plugin-prompt-engineer](https://github.com/123jimin-vibe/plugin-prompt-engineer) — Python venv, version file
+- [includeHasan/prospect-studio](https://github.com/includeHasan/prospect-studio) — Node/npm, sha256; installs into ROOT (cites ESM)
+- [damionrashford/trader-os](https://github.com/damionrashford/trader-os) — Node via bun/npm, `diff -q` (cites docs URL in comment)
+- [Chulf58/FORGE](https://github.com/Chulf58/FORGE) — Node, mtime vs lockfile; installs into ROOT
+- [smcady/Cairn](https://github.com/smcady/Cairn) — Python venv, `diff -q`
+- [JordanCoin/pdf-to-text](https://github.com/JordanCoin/pdf-to-text) — WASM binary download, version file
+- [ZhuBit/cowork-semantic-search](https://github.com/ZhuBit/cowork-semantic-search) — Python venv, sha256
+- [raphaelchristi/harness-evolver](https://github.com/raphaelchristi/harness-evolver) — Python venv, existence-only (no manifest diff)
+- [brunoborges/ghx](https://github.com/brunoborges/ghx) — Go binaries into DATA, existence-only
+- [jxw1102/flipper-claude-buddy](https://github.com/jxw1102/flipper-claude-buddy) — Python venv, md5 hash
+- [BrandCast-Signage/root](https://github.com/BrandCast-Signage/root) — Node/npm, mixed: third-party into `~/.root-framework`, plugin's own into DATA
+- [Lykhoyda/rn-dev-agent](https://github.com/Lykhoyda/rn-dev-agent) — Node/npm into DATA + symlink back to ROOT, version stamp
 
 **Sample gaps disclosed.** GitHub's code-search API caps `path:.claude-plugin filename:marketplace.json` at 2,424 hits with 30 per call, not exhaustively enumerated. The community sample is 12 of ~24 that survived filters out of the first 400 probed of 1,491 unique plugin-source repos listed in `anthropics/claude-plugins-community`. Distributions above are valid for the sample; the global population may differ.
