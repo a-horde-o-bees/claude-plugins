@@ -50,7 +50,9 @@ Each subsection describes a design component a repo author chooses among mutuall
 
 When the ★ and highest-adoption rows disagree, the conflict is flagged explicitly in the decision's narrative.
 
-**Two samples.** Decisions below use the primary sample (18 repos) unless otherwise noted. Dependency-management decisions use a secondary sample (20 repos filtered for plugins with real runtime dep management) because the primary sample was skill-heavy and underrepresents dep handling. Each table's denominator is consistent within the table; the table header says which sample it uses.
+**Denominator rule.** Each table's denominator is the applicable subset for that decision, not the full sample. When a decision does not apply to every repo (e.g., version authority doesn't apply to repos without a version; pytest config doesn't apply to repos without Python tests), the narrative names the applicability criterion and how many repos are excluded. Adoption counts are always "adoption where applicable."
+
+**Two samples.** Primary sample = 18 repos (used for all decisions unless noted). Dependency-management sample = 20 repos filtered for plugins with real runtime dep management, used only for the two dep-management decisions because the primary sample was skill-heavy.
 
 ### Marketplace manifest layout
 
@@ -93,12 +95,13 @@ How users subscribe to dev vs stable channels of the same plugin. Claude Code's 
 
 Single source of truth for a plugin's version. Claude Code's plugin-reference documents "plugin manifest always wins silently" when both locations carry the field — duplication drifts.
 
-| Implementation path | Docs | Adoption (primary, /18) |
+Applicable to repos that declare a version somewhere. 4 aggregator marketplaces declare no version anywhere and are excluded from the denominator below.
+
+| Implementation path | Docs | Adoption (version-declaring, /14) |
 |---|---|---|
-| `plugin.json` only (for `github`/`url`/`git-subdir`/`npm` sources) | ★ | 10/18 |
-| Marketplace entry only (for relative-path sources) | ★ | 3/18 |
-| Both (duplicated) | | 1/18 (observed drift: `5.0.0-alpha` vs `4.2.0`) |
-| Absent from both | | 4/18 (aggregator marketplaces) |
+| `plugin.json` only (for `github`/`url`/`git-subdir`/`npm` sources) | ★ | 10/14 |
+| Marketplace entry only (for relative-path sources) | ★ | 3/14 |
+| Both (duplicated) | | 1/14 (observed drift: `5.0.0-alpha` vs `4.2.0`) |
 
 Docs split the recommendation by source type: "For relative-path plugins, set the version in the marketplace entry. For all other plugin sources, set it in the plugin manifest." Community majority puts version in `plugin.json` regardless of source shape.
 
@@ -115,67 +118,67 @@ Docs silent. Convention is `main`.
 
 Where semver tags annotate commits. Docs prescribe semver (`MAJOR.MINOR.PATCH`) for tags but not where to place them.
 
-| Implementation path | Docs | Adoption (primary, /18) |
+Applicable to repos that tag releases. 4 aggregator marketplaces are untagged and excluded.
+
+| Implementation path | Docs | Adoption (tagged, /14) |
 |---|---|---|
-| Tags on `main` | | 13/18 |
-| Tags on `release/*` branches | | 1/18 |
-| No tags | | 4/18 (all aggregator marketplaces) |
+| Tags on `main` | | 13/14 |
+| Tags on `release/*` branches | | 1/14 |
 
 ### Release branching
 
-Whether release prep happens on `main` directly or on dedicated long-lived branches.
+Whether release prep happens on `main` directly or on dedicated long-lived branches. Applicable to repos with a release cadence. 4 aggregator marketplaces have no release cadence and are excluded.
 
-| Implementation path | Docs | Adoption (primary, /18) |
+| Implementation path | Docs | Adoption (release-cadence, /14) |
 |---|---|---|
-| Tag on `main` directly; no release branches | | 13/18 |
-| Dedicated `release/x.y` long-lived branches | | 1/18 |
-| No release cadence (no tags) | | 4/18 |
+| Tag on `main` directly; no release branches | | 13/14 |
+| Dedicated `release/x.y` long-lived branches | | 1/14 |
 
 Docs silent. Community norm is tag-on-main.
 
 ### Version pre-release suffix convention
 
-Docs call out pre-release suffixes explicitly: "Use pre-release versions like `2.0.0-beta.1` for testing."
+Docs call out pre-release suffixes explicitly: "Use pre-release versions like `2.0.0-beta.1` for testing." Applicable to repos that tag. 4 untagged repos excluded.
 
-| Implementation path | Docs | Adoption (primary, /18) |
+| Implementation path | Docs | Adoption (tagged, /14) |
 |---|---|---|
-| Plain semver only (`vX.Y.Z`) | ★ | 12/18 |
-| Pre-release suffixes used (`-rc`, `-beta`, `-alpha`) | ★ | 2/18 |
-| No tags (neither used) | | 4/18 |
+| Plain semver only (`vX.Y.Z`) | ★ | 12/14 |
+| Pre-release suffixes (`-rc`, `-beta`, `-alpha`) | ★ | 2/14 |
 
-Both tagged paths are docs-prescribed: plain semver for releases, pre-release suffixes for testing versions. Use either as appropriate.
+Both paths are docs-prescribed: plain semver for releases, pre-release suffixes for testing versions. Use either as appropriate.
 
 ### Tests location
 
-Where tests live relative to plugin directories. Determines what ships to the plugin cache — there is no `.claudeignore`, so tests inside `plugins/<name>/` ship to every user who installs.
+Where tests live relative to plugin directories. Determines what ships to the plugin cache — there is no `.claudeignore`, so tests inside `plugins/<name>/` ship to every user who installs. Applicable to repos with Python tests. 8 repos have no Python tests and are excluded.
 
-| Implementation path | Docs | Adoption (primary, /18) |
+| Implementation path | Docs | Adoption (Python-testing, /10) |
 |---|---|---|
-| `tests/` at repo root only | | 8/18 |
-| `tests/` at repo root with per-plugin subdirs (`tests/plugins/<name>/`) | | 1/18 |
-| `tests/` inside plugin directory | | 1/18 |
-| No Python tests / not applicable | | 8/18 |
+| `tests/` at repo root only | | 8/10 |
+| `tests/` at repo root with per-plugin subdirs (`tests/plugins/<name>/`) | | 1/10 |
+| `tests/` inside plugin directory | | 1/10 |
 
-Docs silent. Community majority among Python-testing repos is tests at repo root. Inside the plugin directory is an anti-pattern at scale because there is no `.claudeignore` — tests ship to user caches.
+Docs silent. Community majority is tests at repo root. Inside the plugin directory is an anti-pattern at scale because there is no `.claudeignore` — tests ship to user caches.
 
 ### Pytest configuration location
 
-| Implementation path | Docs | Adoption (primary, /18) |
-|---|---|---|
-| `[tool.pytest.ini_options]` in `pyproject.toml` | | 6/18 |
-| Dedicated `pytest.ini` | | 0/18 |
-| No explicit config | | 4/18 |
-| No Python tests / not applicable | | 8/18 |
+Applicable to repos with Python tests. 8 excluded.
 
-Docs silent. Community convention among Python-testing repos is `pyproject.toml`.
+| Implementation path | Docs | Adoption (Python-testing, /10) |
+|---|---|---|
+| `[tool.pytest.ini_options]` in `pyproject.toml` | | 6/10 |
+| Dedicated `pytest.ini` | | 0/10 |
+| No explicit config | | 4/10 |
+
+Docs silent. Community convention is `pyproject.toml`.
 
 ### Python dependency manifest format
 
-| Implementation path | Docs | Adoption (primary, /18) |
+Applicable to repos with Python deps. 11 repos have no Python deps and are excluded.
+
+| Implementation path | Docs | Adoption (Python-using, /7) |
 |---|---|---|
-| `pyproject.toml` | | 6/18 |
-| `requirements.txt` | | 1/18 |
-| No Python deps / not applicable | | 11/18 |
+| `pyproject.toml` | | 6/7 |
+| `requirements.txt` | | 1/7 |
 
 Docs silent on manifest format. The install mechanism is what docs prescribe (see next decision).
 
@@ -212,7 +215,11 @@ How the SessionStart hook decides whether to reinstall deps.
 
 Independent yes/no features a repo may adopt in any combination. The **Docs** column marks features Claude Code documentation explicitly recommends.
 
-| Feature | Docs | Adoption (primary, /18) |
+### Universal features
+
+Applicable to every repo in the sample.
+
+| Feature | Docs | Adoption (/18) |
 |---|---|---|
 | Components at plugin root (not inside `.claude-plugin/`) | ★ | 18/18 |
 | `README.md` at repo root | | 18/18 |
@@ -221,14 +228,21 @@ Independent yes/no features a repo may adopt in any combination. The **Docs** co
 | Per-plugin `README.md` | | 12/18 |
 | `ci.yml` or equivalent push/PR pytest | | 9/18 |
 | `CHANGELOG.md` documenting version changes | ★ | 9/18 |
-| `release.yml` tag-triggered | | 5/18 |
-| Pre-release tag suffixes for test versions | ★ | 2/18 |
 | `architecture.md` at marketplace root | | 2/18 |
 | Marketplace manifest validation workflow (runs `claude plugin validate`) | ★ (command recommended; CI workflow around it is inference) | 1/18 |
-| `release/*` long-lived branches | | 1/18 |
 | `dev`/`develop` long-lived branches | | 1/18 |
-| Scheduled SHA-bump PR workflow | | 1/18 (aggregator catalogs only) |
-| `bin/` for PATH-accessible plugin executables | ★ | 2/18 observed (prescribed location when plugin ships PATH-accessible binaries; absent when not applicable) |
+
+### Conditional features
+
+Applicability differs from the full sample. Each row names its applicability criterion and uses a denominator matching the applicable subset.
+
+| Feature | Docs | Applicable to | Adoption where applicable |
+|---|---|---|---|
+| `release.yml` tag-triggered workflow | | Repos with a release cadence (14 tagged repos) | 5/14 |
+| `release/*` long-lived branches | | Repos with a release cadence (14 tagged repos) | 1/14 |
+| Pre-release tag suffixes for test versions | ★ | Repos that tag (14 tagged repos) | 2/14 |
+| Scheduled SHA-bump PR workflow | | Aggregator marketplaces pinning external plugins by SHA (2 Anthropic aggregators in sample) | 1/2 |
+| `bin/` for PATH-accessible plugin executables | ★ | Plugins that ship PATH-accessible binaries (sample count not directly measured; 2/18 observed to have `bin/`) | Where present, location is the docs-prescribed `bin/` |
 
 ## Non-obvious gotchas
 
