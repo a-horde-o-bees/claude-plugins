@@ -1,309 +1,221 @@
 # Claude Marketplace
 
-Canonical shape for a Claude Code plugin marketplace repository. Use this pattern when starting any repo that publishes one or more Claude Code plugins — it captures the directory layout, versioning, branch model, release channels, CI, and release automation as a single coherent design. Aligned with the dominant conventions in well-maintained Claude plugin repos (superpowers-style single-author monorepo; Anthropic-style curated catalog is noted as an adaptation).
+Canonical shape for a Claude Code plugin marketplace repository, derived from 18 recently-maintained public repos (6 Anthropic, 12 community) that satisfy filters for marketplace manifest + Python + tests + multi-branch/tagged discipline. Every dimension below cites an adoption count across the sample so a reader can distinguish convention from outlier. Full repo list in *References* at the bottom.
 
 ## When to use
 
-- **This pattern** — a repository you own that publishes one or more Claude Code plugins you maintain. Marketplace is a thin wrapper that lets users subscribe and auto-update.
-- **Adaptation: single-plugin repo** — drop the `plugins/` wrapper; the plugin lives at the repo root. See *Adaptations*.
-- **Adaptation: curated third-party catalog** (like `anthropics/claude-plugins-official`) — plugin dirs hold only manifest metadata, actual plugin source is pinned to external repos via `github` / `url` / `git-subdir` sources with `ref` + `sha` pinning and scheduled auto-bump PRs. Different discipline (see *Adaptations*).
-- **Not for MCP-only repos** — standalone MCP servers distribute via npm or PyPI, not through the plugin marketplace. If you wrap an MCP server in a plugin, the plugin repo follows this pattern and references the MCP package via `mcpServers` config.
+- **This pattern** — a repository publishing one or more Claude Code plugins through a `.claude-plugin/marketplace.json` manifest at its root.
+- **Adaptation: single-plugin repo** — drop the `plugins/` wrapper; the plugin lives at the repo root. Adoption: 4/18 in the sample place plugin content at repo root with `source: "./"`, the rest use `plugins/<name>/` subdirs.
+- **Adaptation: curated third-party aggregator** — plugin dirs hold only metadata; `source` pins external repos by `sha`. Adoption: 2/18 (both Anthropic: `claude-plugins-official`, `claude-plugins-community`). Different discipline (scheduled SHA-bump PRs, `strict: false` entries).
+- **Not for MCP-only repos** — standalone MCP servers distribute via npm or PyPI. If a plugin wraps an MCP server, the plugin repo follows this pattern and references the MCP package via `mcpServers` config.
 
-## Repository structure
+## Canonical shape
 
 ```text
 my-marketplace/
 ├── .claude-plugin/
-│   └── marketplace.json              # Single catalog; channel picked at install via @ref
+│   └── marketplace.json          # Exactly one manifest. Adoption: 17/18.
 ├── plugins/
-│   ├── <plugin-a>/                   # Plugin dir ships to user cache as-is
-│   │   ├── .claude-plugin/
-│   │   │   └── plugin.json           # Plugin manifest — version authority
-│   │   ├── skills/ commands/ agents/ hooks/ bin/
-│   │   ├── .mcp.json .lsp.json       # If applicable
-│   │   ├── requirements.txt          # Runtime deps (SessionStart hook reads)
-│   │   ├── README.md LICENSE
-│   │   └── architecture.md           # Plugin-level design (dev-facing; acceptable noise)
-│   └── <plugin-b>/…
-├── tests/                            # ALL tests — project + per-plugin — at repo root
-│   ├── integration/                  # Marketplace-level integration
-│   ├── unit/                         # Project-level unit tests
-│   └── plugins/
-│       ├── <plugin-a>/
-│       │   ├── unit/
-│       │   └── integration/
-│       └── <plugin-b>/…
-├── scripts/                          # Dev tooling
-│   ├── test.sh                       # Delegates to the plugin framework's test runner
-│   ├── release.sh                    # Cuts release branch + tag
-│   └── validate.sh                   # Optional local validate before PR
+│   └── <plugin>/
+│       ├── .claude-plugin/
+│       │   └── plugin.json       # Plugin `name` and `version` live here. Adoption: 10/14 with version.
+│       ├── skills/ commands/ agents/ hooks/ bin/
+│       ├── .mcp.json .lsp.json   # If applicable
+│       ├── requirements.txt | pyproject.toml
+│       ├── README.md LICENSE
+│       └── architecture.md       # Plugin-level design (optional)
+├── tests/                        # At repo root. Adoption: 9/10 Python-testing repos.
+│   ├── integration/
+│   └── plugins/<plugin>/         # Per-plugin nesting. Adoption: 1/10 (everything-claude-code).
+├── scripts/
+│   ├── test.sh                   # Wrapper around the project's test runner
+│   └── release.sh                # Optional — tag-cut automation
 ├── .github/
 │   └── workflows/
-│       ├── validate.yml              # Marketplace + plugin manifests + frontmatter
-│       └── test.yml                  # Full test suite
-├── .gitignore                        # Excludes .venv/, __pycache__/, plugin data, etc.
-├── .claude/                          # Dev-only agent config for working in this repo
-│   ├── settings.json                 # Committed project settings
-│   ├── settings.local.json           # gitignored — per-user overrides
-│   ├── rules/ conventions/ patterns/ # Deployed copies — gitignored; regenerated
-│   └── logs/                         # Committed decision / idea / problem / friction entries
-├── README.md                         # User-facing: install commands for each channel
-├── CHANGELOG.md                      # Updated on every release cut
-├── architecture.md                   # Repo-level technical design
-└── CLAUDE.md                         # Agent procedures for working in this repo
+│       ├── ci.yml                # Push/PR pytest. Adoption: 9/18.
+│       ├── release.yml           # Tag-triggered release. Adoption: 5/18.
+│       └── validate.yml          # Manifest linting. Adoption: 1/18 (Anthropic-only).
+├── pyproject.toml                # Pytest config lives here. Adoption: 6/10 vs pytest.ini 0/10.
+├── README.md
+├── CHANGELOG.md
+├── LICENSE
+├── architecture.md
+└── CLAUDE.md                     # Agent procedures (optional)
 ```
 
-The core discipline: **plugin dirs contain only files that should ship to the user's cache**. Everything dev-side lives at the repo root. Tests, CI configs, project-wide scripts, dev docs, editor settings — none of these belong inside `plugins/<name>/`. This replaces the file-exclusion manifest that Claude Code does not provide.
+## Dimensional adoption
 
-## Versioning model
+### Marketplace manifest
 
-Every plugin declares its version in exactly one place: `plugins/<name>/.claude-plugin/plugin.json`. Never duplicate into marketplace entries. Claude Code's rule is "plugin manifest always wins silently" — duplicate values create drift that cannot be detected at runtime.
+| Dimension | Adoption | Notes |
+|---|---|---|
+| Single `marketplace.json` file | 17/18 | One exception is a nested partner plugin, not a channel split. No repo uses `marketplace.stable.json` or similar. |
+| `source` as relative string (`"./"`, `"./<dir>"`) | 14/18 | Self-contained marketplaces. |
+| `source` as `url`+`sha` object | 2/18 | Aggregator marketplaces pinning third-party plugins (Anthropic). |
+| `source` as `github`/`npm` object | 2/18 | Community outliers. |
+| Marketplace `name` matches repo author or domain | 18/18 | Reserved names to avoid: `claude-code-marketplace`, `claude-code-plugins`, `claude-plugins-official`, `anthropic-marketplace`, `anthropic-plugins`, `agent-skills`, `knowledge-work-plugins`, `life-sciences`. |
 
-**Version space is split by branch:**
+### Channel selection (stable vs dev)
 
-- `main` holds `0.0.z` — a monotonic dev build counter bumped automatically by a pre-commit hook on every commit. `main` is never released from directly. The counter exists because Claude Code uses `version` changes to detect that the plugin cache is stale; without it, users on the dev channel would not see updates.
-- `release/x.y` branches own real semver (`x.y.z`). Cut from `main` at release time; `x.y.0` is the first release, `x.y.z` tracks patches on that minor line. Main continues its `0.0.z` incrementing unaffected by the release cut.
+| Dimension | Adoption | Notes |
+|---|---|---|
+| User-facing dev/stable channel declared in marketplace | 0/18 | No repo in the sample implements a channel split at the marketplace level. |
+| Channel selected via CLI `@ref` pinning | — | Supported by Claude Code universally; users run `plugin marketplace add <owner>/<repo>@<ref>`. No repo *organizes* around it, but the CLI accepts the form. |
+| Second marketplace file (`marketplace.stable.json` or similar) | 0/18 | Not observed. Installing via URL to an alternate JSON file disables auto-update. |
 
-**Pre-release suffixes** (`-beta.1`, `-rc.1`) are legitimate but unusual in this ecosystem. Prefer a second experimental marketplace over pre-release tags when you need them.
+The practical pattern: one marketplace.json. Dev users install with the default branch; stable users install pinned to a release tag or commit SHA.
 
-## Branch model
+### Branches and tags
 
-- `main` — dev trunk. Install target for the dev channel. All feature merges land here first.
-- `release/x.y` — cut per minor release. Holds the curated release content. Patch releases bump `x.y.z` on this branch.
-- Topic branches — `feat/<topic>`, `fix/<topic>`, `<initials>/<topic>`. PR-merged into main. No long-lived `dev` integration branch needed.
+| Dimension | Adoption | Notes |
+|---|---|---|
+| Default branch is `main` | 16/18 | 2 use `master` (community only). |
+| Semver tags (`vX.Y.Z`) | 14/18 | 2 use pre-release suffixes (`-rc`, `-beta`, `-alpha`). 4 have zero tags (3 of those are Anthropic aggregator marketplaces). |
+| Tags annotate commits on `main` | 14/15 with tags | `Chachamaru127/claude-code-harness` is the only repo tagging on dedicated `release/*` branches. |
+| `release/x.y` long-lived branches | 1/18 | Uncommon. Community norm is tag-on-main. |
+| Long-lived `dev` / `develop` branch | 0/18 | One repo (`superpowers-optimized`) has a `dev` branch; no evidence it is exposed as a user channel. |
 
-Long-lived branches beyond `main` and `release/*` add overhead without benefit at this scale. If a feature needs a prolonged isolation (multiple sessions, crossing other changes), use a sandbox branch that merges back to main via a normal PR.
+### Plugin.json version authority
 
-## Release channels
+| Dimension | Adoption | Notes |
+|---|---|---|
+| `version` declared in `plugin.json` only | 10/14 with version | Dominant convention. |
+| `version` in marketplace entry only | 3/14 | Outlier — declarations can drift. |
+| `version` in both (duplicated) | 1/14 | Observed: drifted in the one case (`eight-eyes`: plugin.json `5.0.0-alpha` vs marketplace entry `4.2.0`). Do not duplicate. |
+| `version` absent entirely | 4/18 | All Anthropic aggregator marketplaces. Acceptable only when the marketplace catalogs remote plugins whose `version` lives in their own repos. |
 
-One `marketplace.json` at `.claude-plugin/marketplace.json`. Users select their channel at install time by pinning (or not pinning) a ref when they add the marketplace. The marketplace at the selected ref supplies both its own catalog shape and its plugin sources — since relative-path sources resolve against whatever ref the marketplace was fetched at, pinning to a release tag naturally loads that release's plugin content.
+### Tests
 
-### The one manifest
+| Dimension | Adoption | Notes |
+|---|---|---|
+| `tests/` at repo root | 9/10 Python-testing | Dominant convention. |
+| Per-plugin nested tests `tests/plugins/<name>/` | 1/10 | Observed precedent: `everything-claude-code`. Compatible with 9/10 root-tests norm. |
+| Pytest config in `pyproject.toml` | 6/10 Python-testing | Dominant. |
+| Dedicated `pytest.ini` | 0/10 Python-testing | Not observed in the sample. |
+| `conftest.py` present | 4/10 | Used for shared fixtures and custom command-line options. |
 
-`.claude-plugin/marketplace.json`:
+### CI workflows
 
-```json
-{
-  "name": "<owner>",
-  "owner": { "name": "<Owner Name>" },
-  "plugins": [
-    {
-      "name": "<plugin-a>",
-      "source": "./plugins/<plugin-a>"
-    }
-  ]
-}
-```
+| Dimension | Adoption | Notes |
+|---|---|---|
+| At least one workflow in `.github/workflows/` | 16/18 | 2 repos have no CI. |
+| `ci.yml` or equivalent (push/PR pytest) | 9/18 | Dominant test-automation shape. |
+| `release.yml` triggered by `v*` tag | 5/18 | Standard release-automation shape. |
+| Marketplace manifest validation workflow | 1/18 | Anthropic-only (`claude-plugins-official`). Cheap insurance; worth adopting for signal. |
+| Scheduled SHA-bump PR workflow | 1/18 | Anthropic-only. Applies only to aggregator marketplaces. |
 
-Plugin source uses a relative path so the content follows the marketplace's own checkout ref. `release/x.y` branches carry their own curated `marketplace.json` + `plugins/<plugin-a>/` content; `main` carries the dev-state version.
+### Python dependencies
 
-### User install commands
+| Dimension | Adoption | Notes |
+|---|---|---|
+| `pyproject.toml` | 6/10 Python-using | Dominant. |
+| `requirements.txt` as primary dep manifest | ≤1/10 | Rare; usually appears as a test fixture rather than the real manifest. |
+| SessionStart hook installs into isolated venv | 0/18 | Not observed in the sample. `claude-plugins` (this repo) is novel here; document the mechanism clearly for users. |
 
-Dev channel — tracks `main`:
+### Documentation
 
-```
-/plugin marketplace add <owner>/<repo>
-/plugin install <plugin-a>@<owner>
-```
+| Dimension | Adoption | Notes |
+|---|---|---|
+| `README.md` at repo root | 18/18 | Universal. |
+| `CHANGELOG.md` | 9/18 | Optional; paired with `release.yml` when present. |
+| `architecture.md` | 2/18 | Optional; rare at marketplace root. |
+| Per-plugin `README.md` | ~12/18 | Standard when plugin is non-trivial. |
 
-Stable channel — pinned to a release tag:
+## Design decisions with rationale
 
-```
-/plugin marketplace add <owner>/<repo>@vX.Y.Z
-/plugin install <plugin-a>@<owner>
-```
+### One marketplace.json, channel via `@ref`
 
-Same marketplace name in both cases. A user can only subscribe to one ref of the marketplace at a time (Claude Code enforces uniqueness by name), so switching channels requires `/plugin marketplace remove` then re-add with the desired ref.
+**Decision.** Ship a single `.claude-plugin/marketplace.json`. Users subscribe to a dev channel by adding the marketplace without a ref; subscribe to a stable channel by adding with `@vX.Y.Z`.
 
-### Naming
+**Evidence.** 17/18 repos have exactly one marketplace.json. 0/18 implement a channel split in the manifest layer. The CLI's `plugin marketplace add <owner>/<repo>@<ref>` gives users channel selection without requiring coordinated marketplace-manifest infrastructure.
 
-- Marketplace name in the manifest is the unadorned owner name (no `-dev`, `-stable`, or channel suffix). The channel distinction lives in the install command's `@ref`, not in the marketplace name itself.
-- Reserved marketplace names per Claude Code docs must be avoided: `claude-code-marketplace`, `claude-code-plugins`, `claude-plugins-official`, `anthropic-marketplace`, `anthropic-plugins`, `agent-skills`, `knowledge-work-plugins`, `life-sciences`.
+**Rejected: second marketplace file (e.g. `marketplace.stable.json`).** Installable only via direct URL to the JSON, which breaks auto-update (URL-based marketplaces do not refresh). 0/18 adoption; no observed precedent.
 
-### Why not a separate marketplace.stable.json
+**Rejected: two separate marketplaces with different `name` fields.** Supported by Claude Code docs for dual-channel setups but introduces plugin.json-name collisions unless each channel also uses different plugin names, which is a substantial maintenance split. 0/18 adoption in the sample.
 
-A second manifest in the same tree (e.g. `marketplace.stable.json`) is technically installable via a direct URL to the file, but URL-based marketplaces do not auto-update — users would have to re-add to pick up a new release. Ref-based pinning keeps auto-update working and sticks to one standard filename.
+### Tests at repo root
 
-## Plugin dir discipline
+**Decision.** `tests/` lives at repo root. Per-plugin tests nest under `tests/plugins/<name>/`.
 
-What ships inside `plugins/<name>/` and what stays at repo root:
+**Evidence.** 9/10 Python-testing repos put tests at repo root. `everything-claude-code` demonstrates the per-plugin nested pattern compatibly. Plugin caches install the entire `plugins/<name>/` tree into `~/.claude/plugins/cache/`; tests at the plugin-dir level would ship with every install. Claude Code has no file-exclusion manifest (no `.claudeignore`), so the only way to keep dev artifacts out of the cache is structurally via repo layout.
 
-| File or directory                        | Ships to cache | Location                  |
-| :--------------------------------------- | :------------- | :------------------------ |
-| `.claude-plugin/plugin.json`             | yes            | plugin dir                |
-| `skills/`, `commands/`, `agents/`        | yes            | plugin dir                |
-| `hooks/hooks.json`, hook scripts         | yes            | plugin dir                |
-| `.mcp.json`, `.lsp.json`                 | yes            | plugin dir                |
-| `bin/`                                   | yes            | plugin dir                |
-| `requirements.txt` (Python runtime deps) | yes            | plugin dir                |
-| `package.json` (Node runtime deps)       | yes            | plugin dir                |
-| `README.md`, `LICENSE`                   | yes            | plugin dir                |
-| `architecture.md` (plugin-level)         | yes (small)    | plugin dir                |
-| `CHANGELOG.md` (plugin-specific)         | yes (small)    | plugin dir (optional)     |
-| `tests/`                                 | **no**         | repo root `tests/plugins/<name>/` |
-| `conftest.py`, `pytest.ini`              | **no**         | repo root `tests/`        |
-| CI workflows                             | **no**         | repo root `.github/`      |
-| Dev-only scripts                         | **no**         | repo root `scripts/`      |
-| `.claude/` (agent config)                | **no**         | repo root                 |
+### Pytest config in `pyproject.toml`
 
-The cache is the directory name the plugin installs into — `~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/`. Every file under the plugin dir at install time ends up there. Discipline on what belongs where is the entire dev-vs-prod separation mechanism; there is no `.claudeignore`.
+**Decision.** Pytest configuration goes in `pyproject.toml` under `[tool.pytest.ini_options]`.
 
-## Test organization
+**Evidence.** 6/10 Python-testing repos use this form. 0/10 use a dedicated `pytest.ini`. Consolidating reduces the file count and matches community convention.
 
-All tests live at the repo root in a single `tests/` tree. Per-plugin tests nest under `tests/plugins/<name>/`. Project-wide tests live under `tests/integration/` or `tests/unit/` at the top level.
+### Plugin version lives in `plugin.json`
 
-**Why at the root, not inside plugin dirs:** tests are dev artifacts that would otherwise ship to user caches. Keeping them at the root is the structural equivalent of excluding them from distribution.
+**Decision.** `plugin.json` is the sole location for `version`. Do not duplicate into marketplace entries.
 
-**Per-plugin venv isolation:** each plugin's tests run under that plugin's own venv (`~/.claude/plugins/data/<plugin>-<namespace>/venv/`), which matches the runtime environment Claude Code uses in production. Project-level tests run under the project's `.venv/`. The test runner resolves these automatically.
+**Evidence.** 10/14 repos with a version set it in `plugin.json` only. The one repo with duplication (`eight-eyes`) had drifted values between the two locations, demonstrating the failure mode documented in Claude Code's plugin-reference (plugin.json wins silently; marketplace entry goes stale).
 
-**Agent-spawning tests:** tests that spawn real Claude subprocesses via `claude -p` (validating end-to-end integration with hooks, MCP servers, permissions) are marked `pytestmark = pytest.mark.agent` and gated behind an opt-in flag (`--run-agent` by convention). Agent tests cost tokens; they stay off by default and opt-in per run. See the testing convention for full discipline.
+### Semver tags on main; release branches optional
 
-## CI validation
+**Decision.** Main branch tracks `0.0.z` as a dev build counter bumped automatically via pre-commit hook (enables cache invalidation for dev-channel users). Real semver lives on tags; tags annotate commits on `main` directly unless the repo opts into `release/x.y` branches.
 
-Two workflows at minimum:
+**Evidence.** 14/15 tagged repos put tags on `main`. Only `claude-code-harness` uses dedicated release branches — a disciplined choice but not community norm. Either works; the release-branch variant reads as more rigorous for portfolio signal, the tag-on-main variant matches what most users will recognize.
 
-### `.github/workflows/validate.yml`
+### CI: push/PR pytest + tag-triggered release
 
-Runs on every PR that touches `.claude-plugin/**`, `plugins/**/.claude-plugin/**`, or `plugins/**/skills/**`. Validates:
+**Decision.** `ci.yml` runs pytest on every push and PR. `release.yml` triggers on `v*` tag push and handles release automation. Optionally add `validate.yml` for manifest linting.
 
-- Every `marketplace.json` parses and conforms to the marketplace schema.
-- Every `plugin.json` parses and conforms to the plugin manifest schema.
-- Every skill, agent, and command has well-formed frontmatter.
-- Every `hooks/hooks.json` (if present) parses and matches the hook schema.
-
-Claude Code ships a CLI validator that does most of this: `claude plugin validate .`. Workflow wraps it.
-
-### `.github/workflows/test.yml`
-
-Runs on every PR and on push to `main` / `release/*`:
-
-- Sets up the project venv and each plugin's runtime venv.
-- Runs `bash scripts/test.sh` (delegating to the plugin framework's test runner).
-- Reports per-suite pass/fail.
-- Optionally: gate merges on pass.
-
-Agent tests (`pytest.mark.agent`) stay skipped in CI unless the workflow explicitly opts in with `--run-agent` — doing so requires `ANTHROPIC_API_KEY` as a secret and burns tokens. Consider a separate scheduled workflow for agent tests.
-
-## Release pipeline
-
-`scripts/release.sh x.y.z` cuts a release with one command. It should:
-
-1. Verify working tree is clean and current branch is `main`.
-2. Verify `main` is ahead of the most recent release tag (no-op releases get refused).
-3. If the release is `x.y.0` (new minor line):
-    1. Create branch `release/x.y` at current `main`.
-    2. Bump `plugins/*/plugin.json` versions to `x.y.0`.
-    3. Prepend an entry to `CHANGELOG.md`.
-    4. Ensure the release branch's `.claude-plugin/marketplace.json` carries the release-branch plugin content (relative-path sources naturally follow the ref).
-    5. Commit ("release x.y.0"), tag `vx.y.0`, push branch + tag.
-4. If the release is `x.y.z` where `z > 0` (patch on an existing release branch):
-    1. Switch to `release/x.y`.
-    2. Cherry-pick or merge the fix commits.
-    3. Bump `plugin.json` to `x.y.z`, prepend CHANGELOG, tag `vx.y.z`, push.
-5. Emit the install command users should run to pick up the release.
-
-Automation beyond a shell script (release-please, changesets, semantic-release) is not standard in this ecosystem. Keep the pipeline legible — someone reading the script should understand the release process without external context.
-
-## Documentation requirements
-
-At the repo root:
-
-- **`README.md`** — user-facing. Opens with install commands for both channels. Covers what each plugin does (one paragraph each), links to `plugins/<name>/README.md` for details, lists dependencies on global tools, and describes the release-channel distinction.
-- **`CHANGELOG.md`** — release history. Keep-a-Changelog format. Updated on every release cut, not on every commit.
-- **`architecture.md`** — developer-facing. Repo-level layers, how the plugins relate, shared infrastructure, release pipeline summary. References `plugins/<name>/architecture.md` for per-plugin internals without duplicating them.
-- **`CLAUDE.md`** — agent procedures for working in this repo. Versioning discipline, branch model, release process, test invocation. Short and operational — architecture belongs in architecture.md.
-
-Each plugin directory:
-
-- **`plugins/<name>/README.md`** — user-facing, plugin-scoped.
-- **`plugins/<name>/.claude-plugin/plugin.json`** — manifest.
-- **`plugins/<name>/architecture.md`** — plugin-level technical design if non-trivial.
-- Plugin-level `CLAUDE.md` only when the plugin has its own agent-facing operational procedures distinct from the repo-level ones.
-
-## Adaptations
-
-### Single-plugin repo
-
-Drop the `plugins/` wrapper. The plugin manifest lives at `.claude-plugin/plugin.json` in the repo root. The marketplace.json plugin source uses `source: "./"` (the plugin is the whole repo).
-
-```
-my-plugin-repo/
-├── .claude-plugin/
-│   ├── plugin.json
-│   └── marketplace.json
-├── skills/ commands/ agents/ hooks/
-├── tests/
-│   ├── unit/
-│   └── integration/
-├── scripts/ .github/
-├── requirements.txt
-├── README.md CHANGELOG.md architecture.md CLAUDE.md LICENSE
-└── …
-```
-
-Everything else in this pattern carries over unchanged — versioning, branches, release channels, test root, CI, release pipeline.
-
-### Curated third-party catalog
-
-When the marketplace publishes plugins you do not own (Anthropic's `claude-plugins-official` is the canonical example), plugin dirs hold only metadata and the plugin source fetches from the third-party repo:
-
-```json
-{
-  "name": "<third-party-plugin>",
-  "source": {
-    "source": "github",
-    "repo": "<third-party-owner>/<third-party-repo>",
-    "ref": "<branch-or-tag>",
-    "sha": "<40-char-commit-sha>"
-  }
-}
-```
-
-In this mode:
-
-- No code lives under `plugins/<name>/` — it is a metadata-only directory or absent entirely, with the marketplace entry carrying the full definition (`strict: false`).
-- A scheduled GitHub Actions workflow (weekly cron) opens a batched PR that bumps `sha` values to the upstream HEAD for each pinned source. Reviewer approves bumps after smoke-testing.
-- No `release/*` branches; releases are the SHA-bump PRs themselves.
-
-### MCP-only repo
-
-Standalone MCP servers distribute via npm or PyPI, not through the plugin marketplace. If you also publish a Claude plugin that wraps the MCP server, that plugin is a separate repo using the main pattern; its `.mcp.json` references the MCP package by name:
-
-```json
-{
-  "mcpServers": {
-    "my-server": {
-      "command": "npx",
-      "args": ["-y", "@my-org/my-mcp-server"]
-    }
-  }
-}
-```
-
-MCP server repos follow whatever release conventions are natural to their package ecosystem (npm changelogs, PyPI semver).
+**Evidence.** 9/18 have `ci.yml`-shape automation; 5/18 have `release.yml`-shape automation. Manifest validation workflows appear in 1/18 (Anthropic-only) — cheap signal for portfolio-level polish.
 
 ## Non-obvious gotchas
 
-- **`version` in both `plugin.json` and marketplace entry**: plugin.json wins silently. Always declare in one place — `plugin.json` for non-relative-path plugins; marketplace entry for relative-path (plugin source `source: "./"` or `"./plugins/<name>"`).
-- **Relative-path plugin sources require a git-based marketplace**: if users add the marketplace via a direct URL to `marketplace.json` (not a git clone), relative paths do not resolve. Prefer `github` / `url` / `git-subdir` sources with explicit `ref` pinning so both install paths work.
-- **`additionalDirectories` in `permissions`**: accepts literal paths. Globs are not supported. `..` is portable because it resolves against the active project at runtime, so using `..` in either `.claude/settings.json` (project-scope) or `~/.claude/settings.json` (user-scope) is safe for enabling sibling-worktree operations.
-- **Plugin cache carries everything in the plugin dir**: there is no server-side filtering, no build step, no `.claudeignore`. Discipline on plugin dir content is enforced only by repo convention.
-- **Background auto-updates run without git credentials**: private-repo plugins need `GITHUB_TOKEN` / `GITLAB_TOKEN` / `BITBUCKET_TOKEN` exported in the user's shell for auto-update to succeed. Public repos avoid this entirely.
-- **Marketplace state is per-user, not per-worktree**: `~/.claude/plugins/known_marketplaces.json` is global. Switching between worktrees does not isolate marketplace config.
-- **Pre-commit version bump**: the `0.0.z` auto-bump on main is a commit hook, not a CI step — skipping hooks (`git commit --no-verify`) silently skips the bump and produces a dev commit Claude Code cannot distinguish from a prior one.
-- **`--plugin-dir` shadowing by marketplace cache `bin/`**: `claude --plugin-dir <local-checkout>` loads the plugin module from the checkout (so MCP tools and skill content reflect the dev tree) but does not prepend the checkout's `bin/` to PATH ahead of the marketplace cache's bin directories. Bash-invoked binaries (`<plugin>-run`, anything in `bin/`) resolve to whichever marketplace-cached version got on PATH first — often stale. Consequence: sub-session tests that spawn `<plugin>-run` via Bash exercise cached code, not the checkout. Workaround: `/checkpoint` (commit + push + marketplace update) so the cached install is the version under test, then iterate. `--plugin-dir` alone is not a reliable dev-iteration path when tests shell out to plugin binaries. Documented under `.claude/logs/problem/Marketplace cache PATH shadowing.md` for the reproduction and root cause.
+- **No `.claudeignore` exists.** Plugin cache carries the entire `plugins/<name>/` directory; dev/prod separation happens only via repo layout discipline (tests at repo root, not inside plugin dirs).
+- **`version` duplication (plugin.json + marketplace entry) silently drifts.** Observed in the wild; documented in Claude Code's plugin-reference. Single source of truth: `plugin.json`.
+- **Relative-path plugin sources require a git-based marketplace.** Users adding the marketplace via direct URL to `marketplace.json` (not git clone) get relative-path resolution failures. Use explicit `github` + `ref` sources if both install paths need to work.
+- **`additionalDirectories` in `permissions`** accepts literal paths, not globs. `..` is portable (resolves against the active project at runtime).
+- **Background auto-updates run without git credentials** — private-repo plugins require `GITHUB_TOKEN` / equivalent exported in the user's shell.
+- **Marketplace state is per-user, not per-worktree.** `~/.claude/plugins/known_marketplaces.json` is global; switching worktrees does not isolate marketplace config.
+- **`--plugin-dir` PATH-shadowing.** `claude --plugin-dir <local-checkout>` loads the plugin module from the checkout (so MCP tools and skill content reflect the dev tree) but does not prepend the checkout's `bin/` to PATH ahead of the marketplace cache's bin directories. Bash-invoked binaries (`<plugin>-run`, anything in `bin/`) resolve to stale marketplace cache versions. Workaround: run `/checkpoint` (commit + push + marketplace update) so the cached install is the version under test, then iterate. `--plugin-dir` alone is not a reliable dev-iteration path when tests shell out to plugin binaries. Full reproduction and root cause documented in `.claude/logs/problem/Marketplace cache PATH shadowing.md`.
+- **Pre-commit version bump** — the `0.0.z` auto-bump on main is a commit hook, not a CI step. Skipping hooks (`git commit --no-verify`) silently skips the bump and produces a dev commit Claude Code cannot distinguish from a prior one.
 
 ## Checklist for a new marketplace repo
 
-1. Create `.claude-plugin/marketplace.json` with plugin source set to a relative path (`./plugins/<plugin-a>`). One manifest; the ref at install time selects the channel.
-2. Create first plugin under `plugins/<plugin-a>/.claude-plugin/plugin.json`.
+1. Create `.claude-plugin/marketplace.json` with a single plugin entry whose `source` is a relative path (`./plugins/<plugin-a>`).
+2. Create the first plugin under `plugins/<plugin-a>/.claude-plugin/plugin.json` with `name` and `version` fields.
 3. Initialize `tests/` at repo root with `integration/` and `plugins/<plugin-a>/` subdirs.
-4. Add `scripts/test.sh` delegating to the plugin framework's test runner.
-5. Add `scripts/release.sh` for release cuts.
-6. Add `.github/workflows/validate.yml` and `.github/workflows/test.yml`.
-7. Install pre-commit hook for `0.0.z` auto-bump on main.
-8. Write `README.md` with dev-channel and stable-channel install commands.
-9. Write `CHANGELOG.md` stub.
-10. Write `architecture.md` and `CLAUDE.md`.
-11. Tag the first stable release (`v0.1.0`). Users install stable via `/plugin marketplace add <owner>/<repo>@v0.1.0`.
-12. Verify: install from both channels on a clean machine; confirm plugin cache contains only intended files.
+4. Put pytest configuration in `pyproject.toml` under `[tool.pytest.ini_options]`.
+5. Add `scripts/test.sh` delegating to the test runner.
+6. Add `scripts/release.sh` for tag cuts (optional).
+7. Add `.github/workflows/ci.yml` running pytest on push/PR.
+8. Add `.github/workflows/release.yml` triggered on `v*` tag push (optional).
+9. Add `.github/workflows/validate.yml` for manifest linting (optional; portfolio signal).
+10. Install pre-commit hook for `0.0.z` auto-bump on `main` (optional; enables dev-channel cache invalidation).
+11. Write `README.md`, `CHANGELOG.md`, `LICENSE`, and (optionally) `architecture.md` and `CLAUDE.md`.
+12. Tag the first stable release (`v0.1.0`). Users install stable via `/plugin marketplace add <owner>/<repo>@v0.1.0`.
+13. Verify by installing from both `main` (default branch) and the tagged ref on a clean machine; confirm the plugin cache contains only intended files.
+
+## References
+
+All observations above are cited to these repositories. Dates reflect recent activity at the time of sampling.
+
+**Anthropic-owned (6):**
+
+- [anthropics/claude-plugins-official](https://github.com/anthropics/claude-plugins-official) — official curated marketplace; 144 plugins; `url`+`sha` aggregator pattern
+- [anthropics/claude-plugins-community](https://github.com/anthropics/claude-plugins-community) — community catalog; 1,636 plugins; mixed `url`+`sha` and `git-subdir`+`ref`
+- [anthropics/knowledge-work-plugins](https://github.com/anthropics/knowledge-work-plugins) — 41 plugins; relative sources
+- [anthropics/financial-services-plugins](https://github.com/anthropics/financial-services-plugins) — 8 plugins; relative sources
+- [anthropics/life-sciences](https://github.com/anthropics/life-sciences) — 17 plugins; relative sources; semver tags on main
+- [anthropics/healthcare](https://github.com/anthropics/healthcare) — 7 plugins; relative sources; semver tags on main
+
+**Community (12):**
+
+- [AgentBuildersApp/eight-eyes](https://github.com/AgentBuildersApp/eight-eyes) — single plugin; `v5.0.0-alpha` tag; version drift between plugin.json and marketplace entry
+- [BULDEE/ai-craftsman-superpowers](https://github.com/BULDEE/ai-craftsman-superpowers) — 30 semver tags
+- [BaseInfinity/sdlc-wizard](https://github.com/BaseInfinity/sdlc-wizard) — 11 tags; extensive CI (8 workflows); 30+ feature branches
+- [Chachamaru127/claude-code-harness](https://github.com/Chachamaru127/claude-code-harness) — only sampled repo using `release/*` branches for release cuts
+- [CodeAlive-AI/codealive-skills](https://github.com/CodeAlive-AI/codealive-skills) — 10 tags; pytest with coverage in CI
+- [CronusL-1141/AI-company](https://github.com/CronusL-1141/AI-company) — 6 tags; `master` default; dedicated `conftest.py`
+- [Kanevry/session-orchestrator](https://github.com/Kanevry/session-orchestrator) — pre-release tag suffixes (`-rc`, `-beta`)
+- [Vortiago/mcp-outline](https://github.com/Vortiago/mcp-outline) — 18 tags; `release.yml` tag-triggered; `publish-pypi.yml` — demonstrates full release pipeline
+- [affaan-m/everything-claude-code](https://github.com/affaan-m/everything-claude-code) — per-plugin nested tests pattern; reusable workflows
+- [IgorGanapolsky/ThumbGate](https://github.com/IgorGanapolsky/ThumbGate) — `npm` source type (outlier)
+- [REPOZY/superpowers-optimized](https://github.com/REPOZY/superpowers-optimized) — only repo with a `dev` branch; shell-based tests; no CI
+- [HiH-DimaN/idea-to-deploy](https://github.com/HiH-DimaN/idea-to-deploy) — `github` source type (outlier); 20 tags
+
+**Sample gaps disclosed.** GitHub's code-search API caps `path:.claude-plugin filename:marketplace.json` at 2,424 hits with 30 per call, not exhaustively enumerated. The community sample is 12 of ~24 that survived filters out of the first 400 probed out of 1,491 unique plugin-source repos listed in `anthropics/claude-plugins-community`. Distributions in this document are valid for this sample; the global population may differ.
