@@ -10,5 +10,7 @@ testpaths = [
     "systems/sandbox",
     "systems/check",
     "hooks/auto_approval",
+    "hooks/convention_gate",
+    "hooks/install_deps",
     "integration",
 ]
