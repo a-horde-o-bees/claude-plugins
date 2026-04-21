@@ -128,7 +128,8 @@ class TestHookInvocation:
         result = run("hooks.auto_approval", stdin=hook_input)
         assert result.returncode == 0, result.stderr
         output = json.loads(result.stdout)
-        assert output.get("decision") == "block"
+        assert output["hookSpecificOutput"]["permissionDecision"] == "deny"
+        assert "Directory changes" in output["hookSpecificOutput"]["permissionDecisionReason"]
 
     def test_auto_approval_approves_allowed_compound(self) -> None:
         hook_input = json.dumps({

@@ -19,4 +19,13 @@ def approve() -> None:
 
 
 def block(reason: str) -> None:
-    json.dump({"decision": "block", "reason": reason}, sys.stdout)
+    json.dump(
+        {
+            "hookSpecificOutput": {
+                "hookEventName": "PreToolUse",
+                "permissionDecision": "deny",
+                "permissionDecisionReason": reason,
+            }
+        },
+        sys.stdout,
+    )

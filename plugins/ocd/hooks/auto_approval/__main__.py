@@ -8,7 +8,7 @@ import sys
 from . import *  # noqa: F403
 
 
-def main() -> None:
+def _dispatch() -> None:
     hook_input = json.load(sys.stdin)
     tool_name = hook_input.get("tool_name", "")
     tool_input = hook_input.get("tool_input", {})
@@ -46,6 +46,17 @@ def main() -> None:
         settings = load_merged_settings(project_dir)
         check_edit_write(tool_name, tool_input, project_dir, settings)
         return
+
+
+def main() -> None:
+    """Fail-open wrapper. Any unhandled exception surfaces a single stderr
+    line and exits 0 — Claude Code's fallback (prompt user) takes over. The
+    hook's job is auto-approval; it must never block a tool call by crashing.
+    """
+    try:
+        _dispatch()
+    except Exception as exc:
+        sys.stderr.write(f"auto_approval hook error — {type(exc).__name__}: {exc}\n")
 
 
 if __name__ == "__main__":
