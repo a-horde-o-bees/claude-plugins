@@ -1,7 +1,6 @@
 {
   "permissions": {
     "allow": [
-      "Bash(./scripts/run-plugin.sh:*)",
       "Bash(bash scripts/test.sh:*)",
       "Bash(bin/plugins-run:*)",
       "mcp__plugin_ocd_navigator__*"
@@ -14,7 +13,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 .claude/hooks/guard-templates.py",
+            "command": "python3 .claude/hooks/guard_derived.py",
             "timeout": 5
           }
         ]

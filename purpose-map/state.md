@@ -90,4 +90,4 @@ python3 -c "import sqlite3; db = sqlite3.connect('purpose-map/purpose-map-v1.db'
 - `plugins/ocd/run.py` — module launcher; auto-promotes bare names to `systems.<name>` when present
 - `plugins/ocd/systems/framework/` — plugin framework (generic, shared across plugins; propagated to non-ocd plugins via pre-commit hook)
 - `plugins/ocd/hooks/` — auto-approval, convention_gate, and install_deps hooks
-- `scripts/sync-templates.py` — auto-init orchestrator: force-run every system's init, prune orphans, reconcile DB backups, navigator scan (invoked by `/checkpoint`)
+- `scripts/auto_init.py` — auto-init orchestrator: force-run every system's init, prune orphans, reconcile DB backups, navigator scan (invoked by `/checkpoint`)

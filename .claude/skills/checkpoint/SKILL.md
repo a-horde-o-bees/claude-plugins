@@ -4,7 +4,7 @@ description: Commit, push, auto-init, refresh marketplace, update plugins, recom
 allowed-tools:
   - Skill
   - Bash(claude plugins *)
-  - Bash(python3 scripts/sync-templates.py)
+  - Bash(python3 scripts/auto_init.py)
 ---
 
 # /checkpoint
@@ -19,7 +19,7 @@ Bundle the full development checkpoint cycle — commit, push, rectify deployed 
 
 1. Commit — skill: `/ocd:git commit`
 2. Push — skill: `/ocd:git push --branch main`
-3. Auto-init — bash: `python3 scripts/sync-templates.py`
+3. Auto-init — bash: `python3 scripts/auto_init.py`
 4. Marketplace refresh — bash: `claude plugins marketplace update a-horde-o-bees`
 5. Update plugin — bash: `claude plugins update ocd@a-horde-o-bees`
 
