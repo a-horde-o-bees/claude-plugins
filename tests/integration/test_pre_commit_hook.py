@@ -1,10 +1,16 @@
 """Integration tests for the pre-commit hook.
 
-Verifies that shared files propagate from ocd to other plugins
-when canonical sources are staged. Runs in a disposable git worktree
-so tests cannot affect the main working tree.
+Verifies two pre-commit behaviors: shared-file propagation from ocd to
+other plugins when canonical sources are staged, and plugin.json
+version auto-bumping — the Option E cache-invalidation mechanism that
+must fire on every plugin-tree change except release commits (where
+only plugin.json is staged so the hook's escape hatch triggers).
+
+Runs in a disposable git worktree so tests cannot affect the main
+working tree.
 """
 
+import json
 import shutil
 import subprocess
 
@@ -116,3 +122,88 @@ class TestPreCommitPropagation:
                 "Should not create systems/framework/ directory"
         finally:
             self._unstage_file(canonical)
+
+
+class TestPreCommitVersionBump:
+    """Test .githooks/pre-commit auto-bumps plugin.json version on commits
+    that touch the plugin tree, and correctly skips the bump when only
+    plugin.json itself is staged (the release-commit escape hatch).
+    """
+
+    PLUGIN_JSON_REL = "plugins/ocd/.claude-plugin/plugin.json"
+
+    @pytest.fixture(autouse=True)
+    def setup(self, worktree):
+        self.root = worktree
+        self.plugin_json = worktree / self.PLUGIN_JSON_REL
+        # Snapshot baseline so every test starts from the same working-tree
+        # state regardless of prior-test leakage.
+        self._baseline = self.plugin_json.read_bytes()
+        yield
+        # Restore working tree and index to baseline
+        self.plugin_json.write_bytes(self._baseline)
+        subprocess.run(
+            ["git", "reset", "HEAD", "--", self.PLUGIN_JSON_REL],
+            cwd=self.root, capture_output=True,
+        )
+        subprocess.run(
+            ["git", "checkout", "--", self.PLUGIN_JSON_REL],
+            cwd=self.root, capture_output=True,
+        )
+
+    def _run_hook(self) -> subprocess.CompletedProcess[str]:
+        hook = self.root / ".githooks" / "pre-commit"
+        return subprocess.run(
+            ["bash", str(hook)],
+            cwd=self.root, capture_output=True, text=True,
+        )
+
+    def _version(self) -> str:
+        return json.loads(self.plugin_json.read_text())["version"]
+
+    def _bump_z(self, version: str) -> str:
+        parts = version.split(".")
+        parts[-1] = str(int(parts[-1]) + 1)
+        return ".".join(parts)
+
+    def test_bumps_z_when_plugin_tree_changes(self):
+        """Staging any plugin-tree change other than plugin.json itself
+        triggers the auto-bump. Hook reads plugin.json, increments z,
+        writes back, stages plugin.json."""
+        starting = self._version()
+        scratch = self.root / "plugins" / "ocd" / ".pre_commit_test_scratch.md"
+        scratch.write_text("test content\n")
+        try:
+            subprocess.run(
+                ["git", "add", str(scratch)],
+                cwd=self.root, capture_output=True, check=True,
+            )
+            result = self._run_hook()
+            assert result.returncode == 0, result.stderr
+            assert self._version() == self._bump_z(starting), \
+                f"Expected version {self._bump_z(starting)}, got {self._version()}"
+        finally:
+            subprocess.run(
+                ["git", "reset", "HEAD", "--", str(scratch)],
+                cwd=self.root, capture_output=True,
+            )
+            if scratch.exists():
+                scratch.unlink()
+
+    def test_skips_bump_when_only_plugin_json_staged(self):
+        """Release-commit escape hatch: if plugin.json is the only plugin-tree
+        file staged, hook does NOT re-bump z. The operator's manual edit
+        (bump y, reset z=0 at release cut) survives unchanged."""
+        manual_version = "9.9.9"
+        data = json.loads(self._baseline)
+        data["version"] = manual_version
+        self.plugin_json.write_text(json.dumps(data, indent=2) + "\n")
+        subprocess.run(
+            ["git", "add", self.PLUGIN_JSON_REL],
+            cwd=self.root, capture_output=True, check=True,
+        )
+
+        result = self._run_hook()
+        assert result.returncode == 0, result.stderr
+        assert self._version() == manual_version, \
+            "Hook must not bump z when only plugin.json is staged"
