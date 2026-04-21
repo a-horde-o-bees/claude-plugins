@@ -1,108 +1,206 @@
 # Claude Marketplace — Pattern Alignment
 
-Audit of this repository's current state against the [claude-marketplace pattern](.claude/patterns/ocd/claude-marketplace.md). Snapshot evolves as the project refactors toward the pattern's canonical shape. Mirrors the pattern's Decisions and Features sections one-to-one.
+Audit of this repository's current state against the [claude-marketplace pattern](.claude/patterns/ocd/claude-marketplace.md). Snapshot evolves as the project refactors toward the pattern's canonical shape. Mirrors the pattern's purpose sections one-to-one.
 
-For each entry:
+For each purpose:
 
-- **Chosen path** — which implementation path this repo currently uses.
-- **Convention match** — whether that path is the dominant convention in the pattern's sample.
-- **Gap** — if the chosen path is an outlier or absent, what closing the gap would require.
+- **Chosen path** — what this repo currently does for the purpose.
+- **Convention match** — ✓ dominant, ⟁ partial / outlier-but-defensible, ✗ outlier requiring action, — not applicable.
+- **Gap** — if present, what closing it would require.
 
-## Decisions
+## Marketplace discoverability
 
-### Marketplace manifest layout
+**Manifest layout.** Single `.claude-plugin/marketplace.json` at repo root. ✓ Dominant (17/18).
 
-- **Chosen path:** Single `.claude-plugin/marketplace.json` at repo root.
-- **Convention match:** ✓ Dominant (17/18).
-- **Gap:** None.
+**Marketplace-level metadata.** Top-level `description` (no `metadata` wrapper). ✓ Matches `claude-plugins-official` — 6/21 of the sample, including the highest-signal adopter.
 
-### Plugin source format
+**Per-plugin discoverability.** `category: "development"` on the single plugin entry; no `tags` or `keywords`. ✓ Matches the 5/21 category-only pattern.
 
-- **Chosen path:** Relative string (`"./plugins/ocd"`).
-- **Convention match:** ✓ Dominant (14/18).
-- **Gap:** None.
+- *Optional refinement:* adding `tags` (e.g. `["discipline", "project-navigation"]`) would align with Anthropic's life-sciences/healthcare pattern (5/21 use `category + tags`). Not a gap — current shape is defensible.
 
-### Channel selection mechanism
+**`$schema` reference.** Present (`https://anthropic.com/claude-code/marketplace.schema.json`). ⟁ Rare but high-signal (~6/54 — all Anthropic-aligned or thoughtful community repos).
 
-- **Chosen path:** No channel split declared in the manifest; README documents that users pin via CLI `@ref`.
-- **Convention match:** ✓ Universal (18/18).
-- **Gap:** None.
+**Reserved names.** Marketplace name is `a-horde-o-bees`. ✓ No conflict with docs blocklist.
 
-### Version authority
+## Plugin source binding
 
-- **Chosen path:** `version` in `plugin.json` only.
-- **Convention match:** ✓ Dominant (10/14 with version).
-- **Gap:** None.
+**Source format.** Relative string (`"./plugins/ocd"`). ✓ Dominant (14/18).
 
-### Default branch
+**Authority (`strict`).** Default (`strict: true` implicit). ✓ Dominant (16/21 default + 1/21 explicit).
 
-- **Chosen path:** `main`.
-- **Convention match:** ✓ Dominant (16/18).
-- **Gap:** None.
+**Version authority.** Version in `plugin.json` only (`0.0.338` on main — dev build counter). ✓ Dominant (10/14 with version).
 
-### Tag placement
+## Channel distribution
 
-- **Chosen path:** Tags on `main`. `plugin.json` on `main` tracks a monotonic `0.0.z` dev build counter; real semver tags annotate the tip of release branches when cut.
-- **Convention match:** Partial (14/15 with tags put tags on `main`). The dev-counter-on-main + semver-on-release-branches split is not reflected in the sample; closest precedent is `Chachamaru127/claude-code-harness`, the only repo with `release/*` branches.
-- **Gap:** The dev-counter scheme is a deliberate choice to enable cache invalidation for dev-channel users without touching real semver. Outlier but defensible.
+**Mechanism.** No channel split declared; README documents `@ref` pinning. ✓ Universal (18/18).
 
-### Release branching
+- The pattern doc flags this as a docs-vs-adoption conflict — docs (★) recommend two separate marketplaces with different `name` values. Community uniformly uses `@ref` pinning. This repo follows community.
 
-- **Chosen path:** `release/x.y` long-lived branches planned; one branch currently exists under the legacy name `v0.1.0` (shadowing the `v0.1.0` tag — should be renamed to `release/0.1`).
-- **Convention match:** Rare (1/14 with tags uses this). Only `claude-code-harness` uses the same discipline.
-- **Gap:** Non-standard but matches this repo's versioning policy documented in `CLAUDE.md`. Action item: rename the `v0.1.0` branch to `release/0.1` so the tag-and-branch name collision is resolved. Unambiguous `git` resolution becomes `v0.1.0` → tag only.
+## Multi-harness distribution
 
-### Version pre-release suffix convention
+Not applicable. This plugin targets Claude Code only. — No multi-harness parallel manifests, no cross-ecosystem content mirrors.
 
-- **Chosen path:** Plain semver (`vX.Y.Z`); no pre-release suffixes in use.
-- **Convention match:** ✓ Dominant (12/14 tagged).
-- **Gap:** None.
+## Version control and release cadence
 
-### Tests location
+**Scheme (Option E, confirmed).** Plain semver `x.y.z` in `plugin.json`; tags live on main; no release branches. Pre-commit hook auto-bumps `z` on commits that touch the plugin tree (excluding plugin.json-only commits). Release cut = bump `y`, reset `z=0`, commit with only plugin.json staged (hook skips bump), tag `v<x.y.0>` on that commit. Patch release = tag a specific main commit as `v<current-version>`; no edit required because z already increments per commit.
 
-- **Chosen path:** `tests/` at repo root with per-plugin subdirs (`tests/plugins/ocd/`).
-- **Convention match:** Rare (1/10). Only observed precedent: `affaan-m/everything-claude-code`.
-- **Gap:** Outlier but structurally consistent with the 9/10 "tests at repo root" majority. The per-plugin nesting is the sole way to keep dev artifacts out of user plugin caches at marketplace-scale where multiple plugins live in one repo. Defensible.
+Pre-first-release, main stays at `0.0.z` (current state) until `v0.1.0` is cut after this refactor completes.
 
-### Pytest configuration location
+**Default branch.** `main`. ✓ Dominant (16/18).
 
-- **Chosen path:** Dedicated `tests/plugins/ocd/pytest.ini` per plugin.
-- **Convention match:** ✗ Outlier (0/10 use `pytest.ini`; 6/10 use `pyproject.toml`).
-- **Gap:** Action item — consolidate pytest config into `pyproject.toml` either at repo root or at `tests/plugins/ocd/pyproject.toml`. `pythonpath` and `testpaths` both work under `[tool.pytest.ini_options]`.
+**Tag placement.** Tags on main (once the Option E scheme is active). ✓ Dominant (14/14). Current state: `v0.1.0` tag exists at a historical commit predating this refactor and no longer represents a usable release — needs re-pointing or re-cutting when the first real release lands.
 
-### Python dependency manifest
+**Release branching.** None under Option E. ✓ Dominant (13/14 tagged repos). The legacy `v0.1.0` branch that exists today serves no purpose under Option E and should be deleted as part of release prep. No action item requires Option E's adoption; cleanup happens when the destructive-remote gate is crossed.
 
-- **Chosen path:** `plugins/ocd/requirements.txt` for runtime deps (installed by SessionStart hook into isolated plugin venv).
-- **Convention match:** ✗ Outlier (≤1/10 use `requirements.txt` as primary). The SessionStart-venv mechanism is novel (0/18 in sample).
-- **Gap:** Dependency manifest format is secondary to the overall approach. The SessionStart-installs-into-isolated-venv mechanism is unprecedented but defensible — it solves a real problem (per-plugin dep isolation) that other repos don't address. Document the mechanism clearly in `README.md`/`CLAUDE.md` so consumers recognize it.
+**Pre-release suffixes.** Plain semver only. ✓ Dominant (12/14). One minor outlier under Option E: `z` auto-increments per commit rather than holding at the last-release value. Preserves cache-reload detection for dev-channel users; specifically-justified deviation.
 
-## Features
+## Plugin-component registration
 
-| Feature | This repo | Pattern adoption |
-|---|---|---|
-| Semver tags | present (`v0.1.0`) | 14/18 |
-| `release/*` long-lived branches | planned (`release/0.1` not yet named; `v0.1.0` branch is the legacy) | 1/18 |
-| `dev`/`develop` long-lived branches | absent | 1/18 |
-| Pre-release tag suffixes | absent | 2/18 |
-| At least one CI workflow | present | 16/18 |
-| `ci.yml` or equivalent push/PR pytest | present as `.github/workflows/test.yml` | 9/18 |
-| `release.yml` tag-triggered | **absent** | 5/18 |
-| Marketplace manifest validation workflow | present as `.github/workflows/validate.yml` | 1/18 |
-| Scheduled SHA-bump PR workflow | absent (not applicable — not an aggregator) | 1/18 |
-| SessionStart-based plugin venv install | **present (novel)** | 0/18 |
-| `README.md` at repo root | present | 18/18 |
-| `CHANGELOG.md` | present | 9/18 |
-| `architecture.md` at marketplace root | present | 2/18 |
-| Per-plugin `README.md` | present | ~12/18 |
+**Style.** `skills: ["./systems/"]` — explicit default-path array in `plugin.json`. ✓ Matches the second-most-common pattern (~12/54 use explicit path arrays — substantially more common than the earlier "1/21" count suggested). Self-documenting and valid.
 
-## Gap summary (open action items)
+**Agent frontmatter.** Does not ship custom agents. — Not applicable.
 
-1. **Rename the `v0.1.0` branch to `release/0.1`** — resolves the branch-and-tag ambiguity; matches `CLAUDE.md`'s documented release-branch convention.
-2. **Consolidate pytest config from `pytest.ini` into `pyproject.toml`** — aligns with 6/10 community convention; reduces file count.
-3. **Add a `release.yml` tag-triggered workflow** — standard release-automation shape (5/18); pairs naturally with the existing `scripts/release.sh`.
+## Dependency installation
+
+**Install location.** `${CLAUDE_PLUGIN_DATA}/venv` via uv. ✓ Dominant (~12/20) + ★ docs-prescribed.
+
+**Change detection.** `diff -q` on `requirements.txt` against cached copy in `$CLAUDE_PLUGIN_DATA/`; venv-existence fallback triggers reinstall if venv is missing. ✓ Matches docs-prescribed idiom (12/20). **Resolved** this session.
+
+**Retry-next-session invariant.** `rm -f $CLAUDE_PLUGIN_DATA/requirements.txt` on install failure (via bash ERR trap). Next session's `diff -q` sees a missing cached manifest and retries. ✓ Matches docs worked-example pattern. **Resolved** this session.
+
+**Failure signaling.** Plain stderr (`echo ... >&2`) + `exit 1`. ✓ Matches community norm — 1/20 repos emit `systemMessage` JSON; docs worked-example uses silent retry (no JSON output). The earlier "Gap — emit systemMessage JSON" action item was withdrawn after pattern-doc corrections showed it was not docs-prescribed.
+
+**Runtime variant.** Python venv via uv. ✓ Aligns with the ~8/20 Python-venv shape.
+
+**Install timing.** SessionStart install (not bin-wrapper lazy install, not hybrid). ✓ Dominant pattern; appropriate since deps are required for every plugin operation.
+
+**Pointer-file pattern for bin wrappers.** `install_deps.sh` writes `$CLAUDE_PLUGIN_ROOT/.venv-python` when `bin/` exists. ✓ Matches anthril/ppc-manager pattern — the most robust observed option for bridging SessionStart install and bin invocation.
+
+## Bin-wrapped CLI distribution
+
+**Ships `bin/`.** Yes — `plugins/ocd/bin/ocd-run`.
+
+**Runtime resolution.** 6-step fallback chain: `$CLAUDE_PLUGIN_DATA` → `.venv-python` pointer → cache-path derivation → `--plugin-dir` inline-mode derivation → self-contained dev checkout → system `python3`. ⟁ Outlier (14/23 use the simple env-var-with-fallback form). This repo's chain is strictly more robust — handles every observed invocation context including `--plugin-dir` dev mode. Defensible.
+
+**Shebang.** `#!/bin/bash`. ✓ 4/23 — minority but common.
+
+**Venv handling.** Direct `exec "$_venv_python" "$plugin_root/run.py" "$@"`. ✓ Preferred pattern (not `source activate`).
+
+**Platform support.** Nix-only. ✓ 17/23.
+
+**chmod +x.** File is mode 100755 in git (verified).
+
+## User configuration
+
+Does not use `userConfig`. — Not applicable. Plugin's configuration surface is minimal and uses project-local files (rules, conventions) rather than per-user prompted settings.
+
+## Tool-use enforcement
+
+**Hooks.** Ships `auto_approval` (matches `Bash|Edit|Write`) and `convention_gate` (matches `Read|Edit|Write`) as PreToolUse handlers with 10s timeouts.
+
+**Output and failure convention.** Audit pending this session. Expected patterns: stderr summary on block (BULDEE-style, CHANGELOG v3.4.4 precedent), top-level try/catch with fail-open or fail-closed posture (Kanevry-style centralized helpers).
+
+- **Gap — action item 2 (audit + fix if needed):** inspect `auto_approval` and `convention_gate` for JSON-only-to-stdout ("No stderr output") anti-pattern and bare `exit 1` crash path (BULDEE v3.4.4 / Kanevry REQ-01 precedents).
+
+## Session context loading
+
+Not implemented in this repo. — Not applicable.
+
+## Live monitoring and notifications
+
+Not implemented in this repo. — Not applicable.
+
+## Plugin-to-plugin dependencies
+
+Single-plugin marketplace. — Not applicable.
+
+## Project-level tooling layout
+
+**Location.** Project-level operations live at project root under `tools/` and are exposed through `bin/plugins-run`. Specifically: `tools/testing/` (test discovery, runner, venv resolution, detached-worktree wrapper) and `tools/setup/` (git hookspath configuration). ✓ Matches universal convention — 0/54 sampled repos package project-level orchestration inside a plugin.
+
+- **Resolved** (was a prior outlier): the test runner previously lived inside `plugins/ocd/systems/framework/` and was invoked through `ocd-run tests`. That was a layering inversion — project-level orchestration routed through a plugin's binary. Moved out to `tools/testing/` + `bin/plugins-run` during this pass.
+- **Resolved** (was a prior outlier): the ocd plugin's `init` used to auto-wire this project's `.githooks/` via `git config core.hookspath`. Moved to `bin/plugins-run setup`, making the hookspath decision explicit per checkout rather than imposed by plugin install.
+- `scripts/test.sh` and `scripts/release.sh` remain at project root as thin delegators / release helpers.
+
+## Testing and CI
+
+**Tests location.** `tests/` at repo root with per-plugin subdirs (`tests/plugins/ocd/`). ⟁ Rare (1/10). Only observed precedent: `affaan-m/everything-claude-code`. Per-plugin nesting is the sole way to keep dev artifacts out of user plugin caches when multiple plugins live in one repo. Defensible.
+
+**Pytest configuration location.** `tests/plugins/ocd/pyproject.toml` under `[tool.pytest.ini_options]`. ✓ Matches the 6/10 community convention (pyproject.toml for pytest config). **Resolved** — action item 3 from a prior diff.
+
+**Python dependency manifest format.** `plugins/ocd/requirements.txt`. ✗ Outlier (1/7 in the sample uses `requirements.txt`; 6/7 use `pyproject.toml`).
+
+- **Gap — action item 3:** move runtime dep declarations into `plugins/ocd/pyproject.toml` under `[project.dependencies]` (or equivalent). Update `install_deps.sh` to reference the new manifest path. Update change-detection target. Update the install_deps integration tests' fixture.
+
+**CI workflows.** Absent — workflows were removed in commit `70def06` pending CI/CD research (now complete). ✗ Outlier (15/18 have at least one workflow; 9/18 have ci.yml or equivalent push/PR pytest).
+
+- **Gap — action item 4:** reintroduce CI workflow. Minimum shape (from pattern-doc research): `push: [branches: [main]]` + `pull_request`, single-runtime (ubuntu-latest, Python 3.11 or equivalent), direct `bash scripts/test.sh` invocation. Matrix unnecessary for a Python-only single-plugin repo; can add later if multi-OS support becomes a priority.
+
+## Release automation
+
+**`release.yml`.** Absent (removed in `70def06`). ✗ 5/14 tagged repos have one.
+
+- **Gap — action item 5:** add `.github/workflows/release.yml` triggered on `v*` tag push. Per pattern research, this repo's shape should include deep tag-sanity gates (verify tag format, verify tag is on a `release/*` branch, verify tag matches `plugin.json` version) since this repo's versioning policy enforces release-branch-only tagging. Requires `workflow` scope on the GitHub PAT.
+
+**Release script.** `scripts/release.sh` exists. ✓ Pairs with `release.yml` when that lands.
+
+## Marketplace validation
+
+**Validation workflow.** Absent (`validate.yml` was part of the `70def06` removal). ✗ ~8/54 have a dedicated validator script; ~41/54 have none.
+
+- **Gap — action item 6:** reintroduce `validate.yml` using schema-based validation (Python+json or bun + plain TypeScript), not `claude plugin validate` CLI invocation. Per pattern research, 0/54 sampled repos wire the CLI into CI; Anthropic's own `claude-plugins-official` uses bun + plain TypeScript (~65-line manual shape checker, no zod library).
+
+## Documentation
+
+**README.md at repo root.** Present. ✓ 18/18.
+
+**CHANGELOG.md.** Present. ✓ 9/18.
+
+**architecture.md at repo root.** Present. ✓ 2/18 (rare but high-signal).
+
+**CLAUDE.md.** Present. ✓ ~22/54 — now common for active plugins (earlier "rare" framing was stale).
+
+**Per-plugin `README.md`.** Present (`plugins/ocd/README.md`). ✓ 12/18.
+
+**Community health files.** Absent. ⟁ Rare in sample but signals "serious project."
+
+- *Optional refinement:* add `SECURITY.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`. Not a gap — signal, not requirement.
+
+## Action-item summary
+
+Ordered by estimated effort / impact. Numbering reflects the current list after earlier action items were resolved or dropped.
+
+**Resolved this session:**
+
+- **`install_deps.sh`** now has `diff -q` change detection + `rm` retry invariant via bash ERR trap. Integration tests cover first-run, unchanged-manifest, changed-manifest, missing-venv, failure-rm, and idempotency cases.
+- **`pytest.ini` → `pyproject.toml`** consolidation.
+- **`tools/` + `bin/plugins-run`** extracted from plugin (test runner, venv resolution, sandbox-tests, setup) — closes the project-level-inside-plugin layering inversion.
+- **Pattern doc** restructured to purpose-oriented + 17 corrections applied + new "Multi-harness distribution" and "Project-level tooling layout" purpose sections.
+- **Versioning scheme** confirmed as Option E (tag-on-main, no release branches, dev counter on z).
+
+**Dropped:**
+
+- **~~Emit JSON `systemMessage` on install failure.~~** Pattern-doc correction showed this was not docs-prescribed. Current stderr approach is consistent with the docs worked example.
+- **~~Rename `v0.1.0` branch → `release/0.1`.~~** Under Option E, release branches don't exist. Legacy branch should be deleted outright (not renamed) when destructive-remote gate is crossed; action item 1 below subsumes this.
+
+**Open:**
+
+1. **Hook output convention audit** — inspect `auto_approval` and `convention_gate` for JSON-only-to-stdout anti-pattern and bare-`exit 1` crash path. Fix if found. Small, self-contained.
+2. **`requirements.txt` → `[project.dependencies]` in `pyproject.toml`** — mechanical move, update `install_deps.sh` to reference new path, update change-detection cached-copy target, update install_deps test fixture. Small.
+3. **Add `.github/workflows/ci.yml`** — requires `workflow` scope on PAT. Single-runtime, `bash scripts/test.sh`.
+4. **Add `.github/workflows/release.yml`** — requires PAT. Shape under Option E: trigger on `push: tags: ['v*']`, verify tag format, verify tag-commit `plugin.json` version matches tag, run tests, `gh release create --generate-notes`.
+5. **Add `.github/workflows/validate.yml`** — requires PAT. Schema-based validation (Python+json or bun+plain TS).
+6. **Delete legacy `v0.1.0` branch + re-point or delete historical `v0.1.0` tag** — destructive remote op, deferred until actual `v0.1.0` release is cut after refactor+cleanup completes.
+7. **Community health files** (`SECURITY.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`) — optional polish, deferred.
+8. **Per-verb integration test coverage** — discipline logged in `.claude/logs/idea/Per-verb integration test coverage.md`; tiered rollout planned.
 
 ## Novel-but-defensible choices
 
-- **SessionStart hook installing into per-plugin isolated venv** (`plugins/ocd/hooks/install_deps.sh`). Unprecedented in the sample but solves a real per-plugin dependency-isolation problem. Keep; document mechanism.
-- **Dev build counter `0.0.z` on `main` + semver tags on `release/*` branches.** Disciplined version-space split not directly observed in the sample but not in conflict with any convention; enables cache invalidation for dev-channel users without burning semver space.
-- **Per-plugin nested tests under `tests/plugins/<name>/`.** Matches `affaan-m/everything-claude-code` precedent; consistent with the 9/10 tests-at-repo-root convention.
+Annotated with updated adoption signal from the 54-repo deep research:
+
+- **SessionStart hook installing into per-plugin `${CLAUDE_PLUGIN_DATA}/venv`** — dominant (~12/20 of the dep-management sample) and ★ docs-prescribed. This repo matches the majority.
+- **Auto-bump `z` per commit on main (Option E)** — preserves Claude Code's reload detection for dev-channel users tracking main. The auto-bump-z behavior is not directly observed in the sample (most repos hold at last-release version between tags), but the rest of the scheme aligns with convention: tags on main, no release branches, plain semver format. Minor justified deviation.
+- **Per-plugin nested tests under `tests/plugins/<name>/`** — matches `affaan-m/everything-claude-code` precedent; consistent with the 9/10 tests-at-repo-root convention.
+- **6-step bin-wrapper runtime resolution chain** — more elaborate than the 14/23 simple env-var-with-fallback pattern, but handles the `--plugin-dir` dev-mode case that simpler wrappers break in. Defensible complexity, especially for a development-loop-heavy plugin.
+- **Pointer-file pattern (`.venv-python`)** — matches anthril/ppc-manager's pattern (1/23 observed); the most robust observed bridge between SessionStart install and bin invocation for a plugin with non-trivial venv resolution needs.
+- **Project-level `bin/plugins-run` + `tools/` layout** — matches the universal community convention (0/54 package project-level orchestration inside a plugin). `bin/plugins-run` is a bash dispatcher resolving the project venv and invoking `tools/` modules; mirrors the ergonomic property of plugin-scoped bins (on PATH, callable by short name) at project scope.
