@@ -1,24 +1,25 @@
 #!/bin/bash
-# Cut a release of one or more plugins in this marketplace.
+# Cut a release tag for this plugin marketplace.
 #
 # Usage: scripts/release.sh <x.y.z>
 #
-# For x.y.0 (new minor line):
-#   - Creates release/x.y branch at current main
-#   - Bumps every plugins/*/plugin.json version to x.y.0
-#   - Prepends a release entry to CHANGELOG.md (operator fills in details)
-#   - Operator commits, tags vx.y.0, pushes branch + tag
+# Option E release flow:
+#   - Tags live on main; no release branches.
+#   - plugin.json auto-bumps z on every commit touching the plugin tree.
+#     Release commits stage only plugin.json (+ optionally root CHANGELOG),
+#     which the pre-commit hook recognizes as "no plugin code changes" and
+#     skips the auto-bump.
 #
-# Stable channel install uses marketplace-ref pinning:
-#   /plugin marketplace add a-horde-o-bees/claude-plugins@vx.y.0
-# No separate stable-channel manifest is maintained.
+# What this script does:
+#   1. Precondition checks: on main, clean tree, aligned with origin/main,
+#      version is semver, version > current, tag doesn't exist.
+#   2. Bump plugins/*/.claude-plugin/plugin.json to the new version.
+#   3. Leave staging + committing + tagging + pushing to the operator so
+#      CHANGELOG curation and release-commit review happen with eyes on.
 #
-# For x.y.z where z > 0 (patch on existing release branch):
-#   - Requires checkout on release/x.y already
-#   - Requires fix commits already in place on the branch
-#   - Bumps plugin.json to x.y.z, prepends CHANGELOG, tags vx.y.z, pushes
-#
-# Exits non-zero on any precondition failure; git state is untouched.
+# Exits non-zero on any precondition failure. git state is touched only
+# by the plugin.json bump (already written — discard with `git checkout
+# -- plugins/*/.claude-plugin/plugin.json` to abort before committing).
 
 set -euo pipefail
 
@@ -28,98 +29,96 @@ if [ $# -ne 1 ]; then
 fi
 
 version="$1"
+tag="v${version}"
 
 if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
     echo "Version must match x.y.z (got: $version)" >&2
     exit 64
 fi
 
-major="${version%%.*}"
-minor_patch="${version#*.}"
-minor="${minor_patch%%.*}"
-patch="${version##*.}"
-release_branch="release/${major}.${minor}"
-tag="v${version}"
-
 repo_root="$(git rev-parse --show-toplevel)"
 cd "$repo_root"
 
+# Precondition: on main
+current_branch="$(git rev-parse --abbrev-ref HEAD)"
+if [ "$current_branch" != "main" ]; then
+    echo "Releases cut from main; currently on $current_branch" >&2
+    exit 1
+fi
+
+# Precondition: working tree clean
 if ! git diff --quiet || ! git diff --cached --quiet; then
     echo "Working tree has uncommitted changes — stash or commit before releasing" >&2
     exit 1
 fi
 
-current_branch="$(git rev-parse --abbrev-ref HEAD)"
-
-if [ "$patch" = "0" ]; then
-    # Minor release — cut from main
-    if [ "$current_branch" != "main" ]; then
-        echo "Minor releases cut from main; currently on $current_branch" >&2
-        exit 1
-    fi
-    if git show-ref --verify --quiet "refs/heads/$release_branch"; then
-        echo "Branch $release_branch already exists locally — patch release?" >&2
-        exit 1
-    fi
-    git checkout -b "$release_branch"
-else
-    # Patch release — must already be on the matching release branch
-    if [ "$current_branch" != "$release_branch" ]; then
-        echo "Patch releases cut from $release_branch; currently on $current_branch" >&2
-        exit 1
-    fi
+# Precondition: aligned with origin/main
+git fetch origin main --quiet
+if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then
+    echo "Local main is not aligned with origin/main — pull or push before releasing" >&2
+    exit 1
 fi
 
+# Precondition: tag doesn't exist
 if git rev-parse --verify --quiet "refs/tags/$tag" >/dev/null; then
     echo "Tag $tag already exists" >&2
     exit 1
 fi
 
-# Bump plugin manifest versions (one authority — marketplace entries must not duplicate)
+# Bump each plugin's plugin.json (semver-ascending check included)
+bumped=()
 for manifest in plugins/*/.claude-plugin/plugin.json; do
     [ -f "$manifest" ] || continue
-    python3 - <<PY "$manifest" "$version"
+    current=$(python3 -c "import json; print(json.load(open('$manifest'))['version'])")
+    if ! python3 - "$current" "$version" <<'PY'
+import sys
+def parse(v: str) -> tuple[int, ...]:
+    return tuple(int(x) for x in v.split("."))
+current, new = sys.argv[1], sys.argv[2]
+sys.exit(0 if parse(new) > parse(current) else 1)
+PY
+    then
+        echo "Error: $manifest version $current is not less than target $version" >&2
+        exit 1
+    fi
+    python3 - "$manifest" "$version" <<'PY'
 import json, sys
 path, new_version = sys.argv[1], sys.argv[2]
-data = json.loads(open(path).read())
+with open(path) as f:
+    data = json.load(f)
 data["version"] = new_version
 with open(path, "w") as f:
     json.dump(data, f, indent=2)
     f.write("\n")
 PY
-    echo "Bumped $manifest to $version"
+    bumped+=("$manifest: $current → $version")
 done
 
-# Prepend a CHANGELOG entry stub (operator edits before commit)
-if [ -f CHANGELOG.md ]; then
-    date_stamp="$(date -u +%Y-%m-%d)"
-    tmpfile="$(mktemp)"
-    {
-        echo "## [$version] - $date_stamp"
-        echo ""
-        echo "### Added"
-        echo ""
-        echo "### Changed"
-        echo ""
-        echo "### Fixed"
-        echo ""
-        cat CHANGELOG.md
-    } > "$tmpfile"
-    mv "$tmpfile" CHANGELOG.md
-    echo "Prepended changelog stub for $version — fill in before committing"
+if [ ${#bumped[@]} -eq 0 ]; then
+    echo "No plugin manifests found under plugins/*/.claude-plugin/plugin.json" >&2
+    exit 1
 fi
 
+echo "Bumped plugin manifests:"
+for line in "${bumped[@]}"; do
+    echo "  $line"
+done
+
 echo ""
-echo "Staged changes:"
-git status --short
+echo "Next steps (operator review + curate CHANGELOG, then commit + tag + push):"
 echo ""
-echo "Next steps:"
-echo "  1. Edit CHANGELOG.md to describe what's in this release"
-echo "  2. git add -u"
-echo "  3. git commit -m 'release $version'"
-echo "  4. git tag -a '$tag' -m 'release $version'"
-echo "  5. git push origin $release_branch"
-echo "  6. git push origin '$tag'"
+echo "  1. Edit CHANGELOG.md — move the [Unreleased] contents into a new"
+echo "     ## [$version] - \$(date -u +%Y-%m-%d) section, then reset [Unreleased]"
+echo "     to the placeholder."
+echo "  2. git add plugins/*/.claude-plugin/plugin.json CHANGELOG.md"
+echo "  3. git commit -m 'release $tag'"
+echo "     (pre-commit hook skips auto-bump because no plugins/<name>/ files"
+echo "     other than plugin.json are staged)"
+echo "  4. git tag -a '$tag' -m 'release $tag'"
+echo "  5. git push origin main '$tag'"
 echo ""
-echo "Users install this release via the stable channel:"
+echo "release.yml fires on tag push: verifies tag format + plugin.json"
+echo "version alignment, runs tests, creates GitHub release."
+echo ""
+echo "Users install via:"
 echo "  /plugin marketplace add a-horde-o-bees/claude-plugins@$tag"
