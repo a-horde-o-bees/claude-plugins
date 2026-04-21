@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CLAUDE_HOME: ${{ github.workspace }}/.ci-claude-home
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+
+      - name: Sync project venv
+        run: uv sync --group dev
+
+      - name: Bootstrap ocd plugin venv
+        env:
+          CLAUDE_PLUGIN_ROOT: ${{ github.workspace }}/plugins/ocd
+          CLAUDE_PLUGIN_DATA: ${{ github.workspace }}/.ci-claude-home/plugins/data/ocd-ci
+        run: |
+          mkdir -p "$CLAUDE_PLUGIN_DATA"
+          bash plugins/ocd/hooks/install_deps.sh
+
+      - name: Run tests
+        run: bash scripts/test.sh
