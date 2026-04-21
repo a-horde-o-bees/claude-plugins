@@ -5,6 +5,7 @@ testpaths = [
     "systems/framework",
     "systems/governance",
     "systems/navigator",
+    "systems/pdf",
     "systems/permissions",
     "systems/refactor",
     "systems/sandbox",
