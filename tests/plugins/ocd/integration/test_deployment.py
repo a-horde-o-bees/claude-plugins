@@ -90,6 +90,9 @@ class TestProjectWideRules:
     def test_workflow_deployed_flat(self, deployed_tree: Path) -> None:
         assert (deployed_tree / ".claude/rules/ocd/workflow.md").is_file()
 
+    def test_testing_deployed_flat(self, deployed_tree: Path) -> None:
+        assert (deployed_tree / ".claude/rules/ocd/testing.md").is_file()
+
 
 class TestSystemScopedRules:
     """System-contributed rules deploy under .claude/rules/<plugin>/systems/ flat."""
@@ -115,9 +118,6 @@ class TestConventions:
 
     def test_python_convention_deployed(self, deployed_tree: Path) -> None:
         assert (deployed_tree / ".claude/conventions/ocd/python.md").is_file()
-
-    def test_testing_convention_deployed(self, deployed_tree: Path) -> None:
-        assert (deployed_tree / ".claude/conventions/ocd/testing.md").is_file()
 
 
 class TestPatterns:

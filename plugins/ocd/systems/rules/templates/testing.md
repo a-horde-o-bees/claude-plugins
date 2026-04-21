@@ -1,14 +1,53 @@
 ---
-includes:
-  - "test_*.*"
-  - "conftest.*"
+includes: "*"
 governed_by:
   - .claude/rules/ocd/design-principles.md
 ---
 
-# Testing Conventions
+# Testing
 
-Testing guidance for projects where code is consumed by both humans and AI agents. Language-agnostic principles organized by when tests add value versus when they are overhead.
+Testing discipline — when to test, how to test, where tests live, and the minimum coverage bar every callable must meet. Always-on because the decision "do I test this" precedes the act of editing a test file.
+
+## Test Durability
+
+Verification of new code belongs in the test structure. Not in ad-hoc bash commands. Not in inline Python heredocs. Not in `python -c "..."` snippets. Not in any one-shot execution outside the test files.
+
+- All verification of new code — including smoke tests, "just to check" runs, round-trip confirmations, parse-and-render checks, and any other one-shot validation — goes through the test structure as a test in the relevant test file
+- The discipline is absolute. If the verification is worth doing, the test is worth writing first. There is no "I'll just quickly check before writing the test" path
+- Exploration and learning (reading code, querying state, understanding existing behavior) are different from verifying new code; explore freely, but verification of new code that you wrote requires a test
+- Test fixtures handle environment setup automatically while ad-hoc commands require inline env vars that need manual approval — and the durability cost matters more than the friction cost
+
+## Callable Surface Coverage
+
+Every callable surface a consumer invokes — CLI verb, subcommand, hook handler, skill entry point, MCP tool, script — has at least one test exercising it. The test may be unit, integration, or end-to-end; the choice depends on what the callable does. What matters is that no callable goes untested.
+
+- A callable with zero test references is a missing test, not a "simple enough" exemption
+- Untested callables accumulate rot — the next change breaks them silently because nothing fails
+- Required flags must have at least one test path exercising them
+- Boolean flags that change behavior meaningfully (destructive `--force`, mode-switching flags) require their own test path; boolean flags that only affect output ceremony (`--quiet`, `--no-color`) are covered transitively by flagless invocations
+
+### Crawlable inventory
+
+Coverage is decidable from the repository:
+
+1. List every callable — CLI verbs (argparse in `__main__.py`), hook handlers (entries in `hooks.json`), skill slash commands (`SKILL.md` files), MCP tools (tool registrations), project-level scripts (`bin/`, `scripts/`)
+2. For each callable, grep test files for an invocation
+3. Callables with zero invocations are coverage gaps
+
+A discipline check under `/ocd:check` runs this crawl as part of universal conformance.
+
+### Exempt
+
+- Private helpers (underscore-prefixed, not reachable through a public dispatch path) — covered transitively by public callers' tests
+- Deprecated callables slated for removal — delete rather than continue testing
+
+## Test Scope Selection
+
+Run tests at the scope that matches the change.
+
+- Run only tests directly affected by current changes, scoped to narrowest relevant test file
+- Run broader suites only when explicitly requested
+- Exception: run full suite after structural changes (moves, renames, refactors) and before checkpoints — broken imports and cascading failures won't surface in narrow tests
 
 ## Fundamental Boundary
 
@@ -122,8 +161,10 @@ When it adds value:
 
 When it is overhead:
 
-- Duplicating what unit tests already cover with mocked boundaries
+- Duplicating what unit tests already cover with mocked boundaries — the same behavior covered by both kinds is testing-for-its-own-sake
 - Testing library behavior documented by library authors
+
+**Value filter for an integration test:** what dispatch-class or real-world failure does this catch that unit tests don't? If the answer is "nothing specific," it's a retread of unit coverage. Content assertions should validate structure (shape, required fields, exit codes) — not semantic behavior that unit tests already cover.
 
 ### Git Worktree Isolation
 
@@ -172,6 +213,16 @@ Discipline for cost:
 - Keep agent tests narrow — one behavior per test, minimal prompt, minimal expected work
 - Share setup where possible — a session-scoped fixture that spins up a sandbox once costs far less than per-test setup
 
+## Ambient-State Isolation
+
+Tests must own their state. Never rely on ambient user settings, global environment, or the developer's home directory happening to contain what the test needs.
+
+- Tests that read `~/.claude/settings.json` (or similar) set `HOME` to a scratch path in the fixture and write the exact settings they need
+- Tests that read `CLAUDE_PROJECT_DIR` content set it to a `tmp_path` and populate only what the test requires
+- Tests that shell out to tools that may read ambient state (git, `uv`, etc.) scope that state via env vars or `cwd`
+
+CI's clean environment surfaces ambient-state dependencies loudly — a test that passes locally but fails in CI with "JSONDecodeError: Expecting value" or similar is almost always a fixture gap, not a flake.
+
 ## Where Tests Live
 
 Test files go in one of three homes depending on what they verify:
@@ -194,7 +245,7 @@ If manifest says `pattern: "*.py"` and test asserts `pattern == "*.py"`, test as
 
 ### Coverage Metrics Disconnected from Risk
 
-100% coverage on a formatting function has less value than 60% coverage on permission enforcement with adversarial edge cases. Allocate testing effort proportionally to failure impact.
+100% coverage on a formatting function has less value than 60% coverage on permission enforcement with adversarial edge cases. Allocate testing effort proportionally to failure impact — the Callable Surface Coverage bar sets the floor, Decision Framework allocates effort above it.
 
 ### Unit Testing Non-Deterministic Behavior
 
@@ -202,13 +253,15 @@ Agent judgment, NL interpretation, and workflow execution quality cannot be caug
 
 ## Decision Framework
 
-For any component, ask:
+For any callable or deterministic component, ask:
 
-1. If deterministic:
+1. Does the callable have at least one test? If no: write one — the test kind is your choice per the rules below, but untested callables are the first gap to close.
+2. If deterministic:
     1. If contract agents depend on (output format, exit codes, help text): snapshot test
     2. If invariants exist (properties that must hold for all inputs): property test
     3. If idempotent by design: test idempotency explicitly
     4. If security boundary: test exhaustively with adversarial cases
     5. If silent failure would cause downstream agent malfunction: test regardless of code simplicity
-    6. If test merely restates configuration: skip — testing theater
-2. Else: evaluate through protocols, do not unit test
+    6. If a proposed integration test duplicates existing unit coverage with no new failure mode: skip — overhead
+    7. If a proposed test merely restates configuration: skip — testing theater
+3. Else: evaluate through protocols, do not unit test
