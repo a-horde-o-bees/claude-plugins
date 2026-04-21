@@ -1,12 +1,13 @@
-"""Tests verb — create detached worktree at a ref, invoke `ocd-run tests`, clean up.
+"""Detached-worktree test execution.
 
-Single-call lifecycle: the verb is fully non-interactive so setup, execution,
-and teardown all happen in one script invocation. The worktree is always
-removed before return, including on pytest failure or subprocess error.
+Creates an ephemeral sibling worktree at a given ref, invokes the
+project-level test runner inside it, and cleans up before returning.
+Single-call lifecycle: setup, execution, and teardown all happen in
+one invocation — the worktree is always removed before return.
 
-Detached test worktrees follow the sibling convention — placed at
+Sibling convention mirrors the ocd:sandbox plugin's scheme:
 `<parent>/<project>--tmp-test-<short-sha>/` so all ephemeral substrates
-share one permission glob and the main project tree stays clean.
+share one permission glob.
 """
 
 import os
@@ -15,15 +16,13 @@ import subprocess
 import sys
 from pathlib import Path
 
-import framework
-
-from ._worktree import sibling_path
+from . import _environment
 
 
 TEST_NAME_PREFIX = "tmp-test-"
 
 
-def tests_run(
+def sandbox_tests_run(
     ref: str = "main",
     plugin_filter: str | None = None,
     project_only: bool = False,
@@ -33,10 +32,10 @@ def tests_run(
     Returns the tests CLI's exit code (0 pass, non-zero fail). Worktree
     is always removed before return.
     """
-    project_root = framework.get_project_dir()
+    project_root = _environment.get_project_dir()
     ref_sha = _resolve_ref(project_root, ref)
     short_sha = ref_sha[:7]
-    worktree = sibling_path(f"{TEST_NAME_PREFIX}{short_sha}")
+    worktree = _sibling_path(project_root, f"{TEST_NAME_PREFIX}{short_sha}")
 
     if worktree.exists():
         raise RuntimeError(
@@ -46,9 +45,13 @@ def tests_run(
 
     _create_worktree(project_root, worktree, ref_sha)
     try:
-        return _invoke_tests(worktree, plugin_filter, project_only)
+        return _invoke_tests(project_root, worktree, plugin_filter, project_only)
     finally:
         _remove_worktree(project_root, worktree)
+
+
+def _sibling_path(project_root: Path, name: str) -> Path:
+    return project_root.parent / f"{project_root.name}--{name}"
 
 
 def _resolve_ref(project_root: Path, ref: str) -> str:
@@ -101,11 +104,15 @@ def _remove_worktree(project_root: Path, worktree: Path) -> None:
 
 
 def _invoke_tests(
+    project_root: Path,
     worktree: Path,
     plugin_filter: str | None,
     project_only: bool,
 ) -> int:
-    args = ["ocd-run", "tests"]
+    args = [
+        str(project_root / "bin" / "plugins-run"),
+        "tests",
+    ]
     if plugin_filter is not None:
         args.extend(["--plugin", plugin_filter])
     elif project_only:
@@ -117,7 +124,7 @@ def _invoke_tests(
     # the plugin venvs both, so CLAUDE_PROJECT_DIR must reference the
     # parent explicitly while pytest still discovers tests from cwd.
     env = os.environ.copy()
-    env["CLAUDE_PROJECT_DIR"] = str(framework.get_project_dir())
+    env["CLAUDE_PROJECT_DIR"] = str(project_root)
 
     result = subprocess.run(
         args,

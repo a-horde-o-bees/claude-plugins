@@ -27,7 +27,7 @@ class Suite:
     """Paths relative to the worktree that pytest collects from. List so the
     project suite can enumerate top-level test subdirs other than `plugins/`."""
 
-    pytest_ini: Path | None
+    pytest_config: Path | None
     """Path to `-c` config argument, or None when pytest finds config automatically."""
 
     venv: Path
@@ -65,7 +65,7 @@ def discover_suites(
                 Suite(
                     name="project",
                     rel_paths=project_paths,
-                    pytest_ini=None,
+                    pytest_config=None,
                     venv=_venv.resolve_project_venv(),
                 ),
             )
@@ -79,8 +79,8 @@ def discover_suites(
     for plugin_tests_dir in sorted(plugin_tests_root.iterdir()):
         if not plugin_tests_dir.is_dir():
             continue
-        pytest_ini = plugin_tests_dir / "pytest.ini"
-        if not pytest_ini.is_file():
+        pytest_config = plugin_tests_dir / "pyproject.toml"
+        if not pytest_config.is_file():
             continue
         plugin_name = plugin_tests_dir.name
         if plugin_filter is not None and plugin_name != plugin_filter:
@@ -90,7 +90,7 @@ def discover_suites(
             Suite(
                 name=f"plugin:{plugin_name}",
                 rel_paths=[rel],
-                pytest_ini=rel / "pytest.ini",
+                pytest_config=rel / "pyproject.toml",
                 venv=_venv.resolve_plugin_venv(plugin_name),
             ),
         )

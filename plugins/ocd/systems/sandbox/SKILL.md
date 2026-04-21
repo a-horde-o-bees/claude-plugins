@@ -1,7 +1,7 @@
 ---
 name: sandbox
-description: Work on an isolated sandbox of the project — durable feature boxes (new, pack, open, close, unpack, list) for in-flight development that parallel sessions can drive without clobbering each other, and ephemeral sandboxes (exercise, tests, cleanup) for fresh-install or interactive validation against the current tree. All substrates share one sibling-path convention, one permission rule, and one cleanup sweep.
-argument-hint: "<new <feature-id> | pack <description> | open <feature-id> | close <feature-id> | unpack <feature-id> | list | exercise [description] | tests [--ref <ref>] | cleanup>"
+description: Work on an isolated sandbox of the project — durable feature boxes (new, pack, open, close, unpack, list) for in-flight development that parallel sessions can drive without clobbering each other, and ephemeral sandboxes (exercise, cleanup) for fresh-install or interactive validation against the current tree. All substrates share one sibling-path convention, one permission rule, and one cleanup sweep.
+argument-hint: "<new <feature-id> | pack <description> | open <feature-id> | close <feature-id> | unpack <feature-id> | list | exercise [description] | cleanup>"
 allowed-tools:
   - AskUserQuestion
   - Bash(git *)
@@ -19,7 +19,7 @@ allowed-tools:
 One umbrella for every isolated-workspace operation. Two verb families:
 
 - **Durable** — a feature-level sandbox that persists across sessions. `new` starts empty, `pack` extracts scope from main, `open` / `close` toggle the sibling worktree on and off without touching the branch, `unpack` reintegrates back into main. `list` is the inventory.
-- **Ephemeral** — a disposable sandbox for validation. `exercise` classifies a change into fresh-install vs interactive concerns and runs both, `tests` runs the project test suite on a clean ref, `cleanup` sweeps leftovers.
+- **Ephemeral** — a disposable sandbox for validation. `exercise` classifies a change into fresh-install vs interactive concerns and runs both, `cleanup` sweeps leftovers.
 
 ## Process Model
 
@@ -27,15 +27,15 @@ Every durable sandbox lives in a **sibling worktree** at `<parent>/<project>--<n
 
 Ephemeral sandboxes share the same sibling convention with a `tmp-` name prefix (`<project>--tmp-<topic>/`) and a `sandbox/tmp/<topic>` branch namespace. The `tmp-` prefix distinguishes disposable substrates from durable feature boxes in the inventory and keeps a single `<project>--*` permission glob covering everything.
 
-`exercise` classifies a change description into fresh-install concerns (routed to a sibling project substrate invoked as a `claude -p` subprocess) and interactive concerns (routed to a branched sibling worktree driven by the invoking session). Both substrates are internal mechanics of `exercise` — they are not separately exposed as user verbs. `tests` runs the test suite in a detached sibling worktree at a named ref.
+`exercise` classifies a change description into fresh-install concerns (routed to a sibling project substrate invoked as a `claude -p` subprocess) and interactive concerns (routed to a branched sibling worktree driven by the invoking session). Both substrates are internal mechanics of `exercise` — they are not separately exposed as user verbs.
 
 ## Substrate Primitives
 
-Three setup/teardown shapes back the verbs:
+Two setup/teardown shapes back the verbs:
 
 ### Sibling project (sibling + `claude -p`)
 
-Internal substrate of `exercise`.
+Internal substrate of `exercise` for fresh-install concerns.
 
 - **Setup** — create `<parent>/<project>--tmp-<topic>/`, `git init`, apply fixtures, invoke `env -C <sandbox-path> claude -p "<prompt>"` and capture stdout.
 - **Teardown** — `rm -rf <sandbox-path>`, either post-run or via `cleanup`.
@@ -48,14 +48,6 @@ Used by durable verbs (`new`, `pack`, `open`, `close`, `unpack`) and by the inte
 - **Setup** — `ocd-run sandbox worktree-add <name> --branch <branch> [--base-ref <ref>] [--block-push]`.
 - **Teardown** — `ocd-run sandbox worktree-remove <name> [--delete-branch] [--unblock-push]`. Push is always unblocked on exit, since a crashed verb must not leave origin in a broken state.
 - **Execution model** — the invoking session drives work directly inside the sibling via `env -C <sibling-path>` for bash and explicit paths for file ops. For sustained feature work, the user starts a fresh session inside the sibling so `CLAUDE_PROJECT_DIR` binds correctly end-to-end.
-
-### Detached sibling worktree
-
-Consumed by `tests` — the full lifecycle runs inside `ocd-run sandbox tests`, which the verb invokes as a single command.
-
-- **Setup** — `git worktree add --detach <parent>/<project>--tmp-test-<short-sha>/ <ref-sha>`. No branch, no push blocking.
-- **Teardown** — `git worktree remove --force`. No branch to delete.
-- **Execution model** — `ocd-run sandbox tests` internally invokes `ocd-run tests` inside the detached sibling; pytest runs per suite under its resolved venv (project venv for project tests, plugin venv for plugin tests). Sibling is always removed before return.
 
 ## Route Selection
 
@@ -72,7 +64,6 @@ Durable vs ephemeral follows from what the user is doing, not from a route matri
 ### Pick an ephemeral verb when
 
 - Validating a change end-to-end — `exercise <description>` (single-concern descriptions route to a single bucket; multi-concern descriptions run both)
-- Running the test suite on a clean ref — `tests [--ref <ref>]`
 - Sweeping leftover disposables — `cleanup`
 
 ### Interactivity criterion (used by `exercise`)
@@ -93,7 +84,7 @@ If none apply, the concern routes to the fresh-install bucket — pure determini
 - Main tree stays on `main` throughout every durable verb — no checkouts on the main tree
 - `close` refuses to park a sibling with uncommitted or unpushed work — unpushed work signals the branch has not been end-to-end tested; fix before parking
 - `unpack` is mechanically dumb — all integration work (rebase against current main, reference cleanup, verification) happens on the feature branch during `open` state; conflicts at unpack time mean the branch was not reintegrated before unpack
-- `cleanup` scans only the parent project's `--tmp-*` namespace and `sandbox/tmp/` branches — durable feature boxes are never touched by cleanup
+- `cleanup` scans the parent project's `--tmp-*` sibling namespace and `sandbox/tmp/` branches, plus any detached worktree left at `<project>--tmp-*/` by external test-runner invocations — durable feature boxes are never touched
 - `exercise` classifies concerns strictly by the Interactivity criterion — if a concern could plausibly fit either bucket, surface the ambiguity to the user before proceeding
 
 ## Workflow
@@ -118,11 +109,9 @@ If none apply, the concern routes to the fresh-install bucket — pure determini
     1. Call: `_list.md`
 10. Else if {verb} is `exercise`:
     1. Call: Exercise
-11. Else if {verb} is `tests`:
-    1. Call: Tests
-12. Else if {verb} is `cleanup`:
+11. Else if {verb} is `cleanup`:
     1. Call: Cleanup
-13. Else: Exit to user: unrecognized verb {verb} — expected new, pack, open, close, unpack, list, exercise, tests, or cleanup
+12. Else: Exit to user: unrecognized verb {verb} — expected new, pack, open, close, unpack, list, exercise, or cleanup
 
 ## Exercise
 
@@ -172,21 +161,9 @@ If none apply, the concern routes to the fresh-install bucket — pure determini
     1. If interactive bucket partial state exists: bash: `ocd-run sandbox worktree teardown {topic}` — always unblocks push even on crash
     2. Exit to user: exercise failed — check output for which bucket failed and the cause
 
-## Tests
-
-> Run the project test suite against a clean ref in a detached sibling worktree. Deterministic verb — no plan, no classifier, no change description. Delegates the full lifecycle to `ocd-run sandbox tests`. For fast dev feedback without sibling isolation, use `ocd-run tests` directly in the current tree.
-
-1. Pass arguments through unchanged — `--ref <value>`, `--plugin <name>`, `--project` flow directly to `ocd-run sandbox tests`
-2. bash: `ocd-run sandbox tests {args}`
-3. Present stdout to user verbatim — the CLI formats a per-suite table, failing-test listing, and overall verdict
-4. Return to caller — CLI exit code is the verb's exit code (0 on pass, non-zero when any suite failed or errored)
-
-5. Error Handling:
-    1. If `ocd-run sandbox tests` exits with an error (unresolved ref, suite setup, venv missing): Exit to user — surface stderr so the user sees the corrective action. Sibling cleanup is the CLI's responsibility.
-
 ## Cleanup
 
-> Find and remove ephemeral sandbox artifacts — sibling projects matching `<project>--tmp-*` and worktrees on `sandbox/tmp/*` branches (plus any detached worktree left over from `tests`). Durable feature boxes are out of scope — remove those via `unpack`. Always confirms before deletion.
+> Find and remove ephemeral sandbox artifacts — sibling projects matching `<project>--tmp-*` and worktrees on `sandbox/tmp/*` branches, plus any detached worktree left at `<project>--tmp-*/` by external test-runner invocations. Durable feature boxes are out of scope — remove those via `unpack`. Always confirms before deletion.
 
 1. bash: `ocd-run sandbox cleanup inventory` — outputs JSON with `siblings` and `worktrees` arrays
 2. Parse JSON output

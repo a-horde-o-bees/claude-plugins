@@ -17,9 +17,6 @@
 #   systems/framework/_formatting.py       — output formatting (to systems/framework/)
 #   systems/framework/_system_discovery.py — system and skill discovery (to systems/framework/)
 #   systems/framework/_orchestration.py    — install and list orchestration (to systems/framework/)
-#   systems/framework/_test_discovery.py   — test suite discovery (to systems/framework/)
-#   systems/framework/_test_runner.py      — pytest dispatch (to systems/framework/)
-#   systems/framework/_venv.py             — per-plugin venv resolution (to systems/framework/)
 #   systems/framework/_errors.py           — shared exception types (to systems/framework/)
 #   systems/rules/_init.py                 — rules subsystem (to systems/rules/)
 #   systems/conventions/_init.py           — conventions subsystem (to systems/conventions/)
@@ -70,9 +67,6 @@ SHARED_FILES=(
     "plugins/ocd/systems/framework/_formatting.py:systems/framework"
     "plugins/ocd/systems/framework/_system_discovery.py:systems/framework"
     "plugins/ocd/systems/framework/_orchestration.py:systems/framework"
-    "plugins/ocd/systems/framework/_test_discovery.py:systems/framework"
-    "plugins/ocd/systems/framework/_test_runner.py:systems/framework"
-    "plugins/ocd/systems/framework/_venv.py:systems/framework"
     "plugins/ocd/systems/framework/_errors.py:systems/framework"
     "plugins/ocd/systems/rules/_init.py:systems/rules"
     "plugins/ocd/systems/conventions/_init.py:systems/conventions"

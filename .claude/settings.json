@@ -3,6 +3,7 @@
     "allow": [
       "Bash(./scripts/run-plugin.sh:*)",
       "Bash(bash scripts/test.sh:*)",
+      "Bash(bin/plugins-run:*)",
       "mcp__plugin_ocd_navigator__*"
     ]
   },

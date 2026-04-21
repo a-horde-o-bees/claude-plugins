@@ -1,0 +1,34 @@
+#!/bin/bash
+# plugins-run — project-level CLI for this claude-plugins repository.
+#
+# Resolves the project venv's python3 and dispatches to the tools/
+# package. End users of the plugins never invoke this; it exists solely
+# for maintainers operating on the repository itself.
+#
+# Usage:
+#   plugins-run tests [--plugin <name> | --project]
+#   plugins-run sandbox-tests [--ref <ref>] [--plugin <name> | --project]
+#   plugins-run setup
+
+set -euo pipefail
+
+script_real="$(readlink -f "$0")"
+project_root="$(dirname "$(dirname "$script_real")")"
+
+_venv_python=""
+
+if [[ -x "$project_root/.venv/bin/python3" ]]; then
+    _venv_python="$project_root/.venv/bin/python3"
+fi
+
+if [[ -z "$_venv_python" ]]; then
+    _venv_python="$(command -v python3 || true)"
+fi
+
+if [[ -z "$_venv_python" ]]; then
+    echo "plugins-run: no python3 found" >&2
+    exit 127
+fi
+
+cd "$project_root"
+exec "$_venv_python" -m tools "$@"

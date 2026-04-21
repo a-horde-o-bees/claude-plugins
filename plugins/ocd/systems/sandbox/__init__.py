@@ -6,11 +6,12 @@ steps that follow — substrate lifecycle, subprocess orchestration,
 cleanup — live here as Python so skill-side bash invocations stay simple
 and don't trigger permission heuristics on compound shell patterns.
 
-`tests` is fully non-interactive and has no planning phase. The skill
-delegates its whole lifecycle to `ocd-run sandbox tests`.
+Project-level test orchestration via detached worktrees lives at
+`tools/testing/_sandbox.py` (invokable as `bin/plugins-run sandbox-tests`)
+rather than here — it depends on this project's test infrastructure and
+should not ship with the plugin.
 """
 
 from ._cleanup import *  # noqa: F401,F403
 from ._project import *  # noqa: F401,F403
-from ._tests import *  # noqa: F401,F403
 from ._worktree import *  # noqa: F401,F403

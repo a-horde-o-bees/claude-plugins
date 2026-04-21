@@ -2,7 +2,6 @@
 
 Subcommands mirror the verb structure documented in SKILL.md:
 
-    ocd-run sandbox tests [--ref <ref>] [--plugin <name> | --project]
     ocd-run sandbox project setup <path>
     ocd-run sandbox project teardown <path>
     ocd-run sandbox worktree setup <topic>
@@ -15,6 +14,9 @@ Subcommands mirror the verb structure documented in SKILL.md:
     ocd-run sandbox sibling-path <name>
     ocd-run sandbox cleanup inventory
     ocd-run sandbox cleanup remove [--sibling <path> ...] [--worktree <path> ...]
+
+The `tests` verb moved to `bin/plugins-run sandbox-tests` — it depends
+on project-level test infrastructure and is not a plugin concern.
 """
 
 import argparse
@@ -33,7 +35,6 @@ def main() -> int:
     )
     verbs = parser.add_subparsers(dest="verb", required=True)
 
-    _add_tests_parser(verbs)
     _add_project_parser(verbs)
     _add_worktree_parser(verbs)
     _add_durable_parsers(verbs)
@@ -41,12 +42,6 @@ def main() -> int:
 
     args = parser.parse_args()
 
-    if args.verb == "tests":
-        return tests_run(
-            ref=args.ref,
-            plugin_filter=args.plugin,
-            project_only=args.project,
-        )
     if args.verb == "project":
         return _dispatch_project(args)
     if args.verb == "worktree":
@@ -64,18 +59,6 @@ def main() -> int:
     if args.verb == "cleanup":
         return _dispatch_cleanup(args)
     return 1
-
-
-def _add_tests_parser(verbs: argparse._SubParsersAction) -> None:
-    tests = verbs.add_parser("tests", help="Run the project test suite.")
-    tests.add_argument("--ref", default="main", help="Git ref (default: main).")
-    scope = tests.add_mutually_exclusive_group()
-    scope.add_argument("--plugin", help="Run only the named plugin's tests.")
-    scope.add_argument(
-        "--project",
-        action="store_true",
-        help="Run only the project-level tests/ suite.",
-    )
 
 
 def _add_project_parser(verbs: argparse._SubParsersAction) -> None:

@@ -26,7 +26,7 @@ def resolve_project_venv() -> Path:
     if not path.is_file():
         raise RuntimeError(
             f"project venv not found at {path} — bootstrap with `uv venv` "
-            "before running ocd-test",
+            "before running plugins-run tests",
         )
     return path
 

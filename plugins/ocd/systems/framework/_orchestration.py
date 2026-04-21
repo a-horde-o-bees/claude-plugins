@@ -7,37 +7,14 @@ systems (navigator, permissions) follow the same contract.
 """
 
 import importlib
-import subprocess
-from pathlib import Path
 
 from ._system_discovery import _discover_systems, _discover_workflow_skills
-from ._environment import get_claude_home, get_plugin_root, get_project_dir
+from ._environment import get_claude_home, get_plugin_root
 from ._formatting import format_bare_skill, format_section
 from ._metadata import find_marketplace_source, format_header, get_installed_version, get_plugin_name
 
 
 _META_SKILLS = {"setup"}
-
-
-def _set_hookspath(project_dir: Path) -> bool:
-    """Configure git to use .githooks/ when that directory exists.
-
-    Returns True if hookspath was newly set, False if already set or absent.
-    """
-    githooks_dir = project_dir / ".githooks"
-    if not githooks_dir.is_dir():
-        return False
-    current = subprocess.run(
-        ["git", "-C", str(project_dir), "config", "--get", "core.hookspath"],
-        capture_output=True, text=True,
-    )
-    if current.returncode == 0 and current.stdout.strip() == ".githooks":
-        return False
-    subprocess.run(
-        ["git", "-C", str(project_dir), "config", "core.hookspath", ".githooks"],
-        capture_output=True,
-    )
-    return True
 
 
 def run_init(force: bool = False, system: str | None = None) -> None:
@@ -50,7 +27,6 @@ def run_init(force: bool = False, system: str | None = None) -> None:
     are defined per-subsystem (typically rebuilds state from scratch).
     """
     plugin_root = get_plugin_root()
-    project_dir = get_project_dir()
     plugin_name = get_plugin_name(plugin_root)
 
     systems = _discover_systems(plugin_root)
@@ -74,11 +50,6 @@ def run_init(force: bool = False, system: str | None = None) -> None:
 
         if system_name == "rules":
             rules_changed = any(f["before"] != f["after"] for f in result["files"])
-
-    # Git hookspath (project-wide; skipped when scoped to a single subsystem)
-    if system is None and _set_hookspath(project_dir):
-        print("Git hookspath set to .githooks")
-        print()
 
     # Workflow skills (only when not scoped)
     if system is None:
