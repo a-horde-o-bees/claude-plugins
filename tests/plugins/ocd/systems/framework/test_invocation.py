@@ -131,12 +131,25 @@ class TestHookInvocation:
         assert output["hookSpecificOutput"]["permissionDecision"] == "deny"
         assert "Directory changes" in output["hookSpecificOutput"]["permissionDecisionReason"]
 
-    def test_auto_approval_approves_allowed_compound(self) -> None:
+    def test_auto_approval_approves_allowed_compound(self, tmp_path: Path) -> None:
+        # Isolate from ambient user settings by pointing HOME + project dir at
+        # a scratch tree with a controlled allowlist for ls and grep.
+        home = tmp_path / "home"
+        home.mkdir()
+        project = tmp_path / "project"
+        (project / ".claude").mkdir(parents=True)
+        (project / ".claude" / "settings.json").write_text(json.dumps({
+            "permissions": {"allow": ["Bash(ls:*)", "Bash(grep:*)"]}
+        }))
         hook_input = json.dumps({
             "tool_name": "Bash",
             "tool_input": {"command": "ls | grep foo"},
         })
-        result = run("hooks.auto_approval", stdin=hook_input)
+        result = run(
+            "hooks.auto_approval",
+            stdin=hook_input,
+            env={"HOME": str(home), "CLAUDE_PROJECT_DIR": str(project)},
+        )
         assert result.returncode == 0, result.stderr
         output = json.loads(result.stdout)
         assert output.get("hookSpecificOutput", {}).get("permissionDecision") == "allow"
