@@ -21,15 +21,15 @@ Ad-hoc validates instruction content; real invocation validates orchestration. B
 
 ## Versioning
 
-`x.y.z` in each plugin's `.claude-plugin/plugin.json`. Main and release branches live in disjoint version spaces — `(x,y,z)` never points at more than one commit across branches.
+`x.y.z` semver in each plugin's `.claude-plugin/plugin.json`. Tags live on main; no release branches.
 
-**Main** tracks `0.0.z` permanently. `z` is a monotonic dev build counter, bumped automatically by the git pre-commit hook on every commit to catch Claude Code's reload detection. Main is never released from directly.
+**Pre-commit hook auto-bumps `z`** on every commit that stages changes to the plugin tree other than `plugin.json` itself. This keeps Claude Code's reload detection firing as dev-channel users track main. Commits that stage only `plugin.json` skip the auto-bump — that's the escape hatch release cuts use.
 
-**Release branches** own real semver:
+**Release cut:** bump `y`, reset `z = 0`, commit with only `plugin.json` staged, tag `v<x.y.0>` on that commit, push main + tag. `scripts/release.sh` automates the sequence; `.github/workflows/release.yml` fires on tag push to verify tag-commit version alignment, run tests, and create the GitHub release.
 
-- When cutting a new release `x.y.0`: branch from main, bump `plugin.json` to `x.y.0`, run release prep (content curation, doc regeneration). All prep commits hold `plugin.json` at `x.y.0`. Tag at the final commit.
-- Patch releases on a release branch: bump `plugin.json` to `x.y.(z+1)` on the patch commit and tag.
-- Main continues z-incrementing in `0.0.z` space, unaffected by the release cut.
+**Patch release:** tag a specific main commit as `v<current-version>`. No plugin.json edit required — the auto-bump already assigns each commit a unique patch-level version. The tag is the "deliberate release" signal; the commit's z value is just its place in the dev sequence.
+
+**Pre-first-release:** `plugin.json` stays at `0.0.z` until the first `v0.1.0` release is cut. After that, the release series tracks whatever `y` is at the most recent tag; z auto-increments between tags.
 
 ## Plugin Reference
 
@@ -43,7 +43,7 @@ Edit templates under each owning system's directory — rules in `plugins/ocd/sy
 
 ## Adding Python Dependencies
 
-Add the package to the target plugin's `requirements.txt`. The plugin's SessionStart hook detects the change on next session start and reinstalls into the plugin's isolated venv automatically.
+Add the package to the target plugin's `pyproject.toml` under `[project.dependencies]`. The plugin's SessionStart hook detects the change on next session start (via `diff -q` against the cached copy) and reinstalls into the plugin's isolated venv automatically.
 
 Prerequisite: `uv` must be installed on the user's system.
 
@@ -60,6 +60,15 @@ Use `SessionStart` hooks for Python packages (isolated in plugin venv). Use runt
 
 ## Testing
 
-- All tests: `bash scripts/test.sh`
-- Project tests in `tests/`, per-plugin tests isolated by `pythonpath`
-- Plugin configs: `plugins/<plugin>/pytest.ini`; project config: `pyproject.toml`
+- All tests: `bin/plugins-run tests` (or `bash scripts/test.sh`, which delegates to it). Scope flags: `--plugin <name>` for a single plugin's suite, `--project` for project-level tests only.
+- Tests at a clean ref in a detached worktree: `bin/plugins-run sandbox-tests --ref <ref>`. Worktree is always removed before return.
+- Project tests in `tests/`, per-plugin tests isolated by `pythonpath`.
+- Plugin configs: `tests/plugins/<plugin>/pyproject.toml` under `[tool.pytest.ini_options]`; project config: root `pyproject.toml`.
+
+## Project-level tooling
+
+Project-level operations (test orchestration, one-time project setup) live under `tools/` and `bin/plugins-run` at project root — not inside any plugin. Anything tied to this repo's development infrastructure belongs here so it doesn't ship to downstream consumers of the plugins.
+
+- `bin/plugins-run setup` — configure local git hookspath (run once per checkout).
+- `bin/plugins-run tests [--plugin <name> | --project]` — run suites in the current tree.
+- `bin/plugins-run sandbox-tests [--ref <ref>]` — run suites in a detached worktree at a given ref.

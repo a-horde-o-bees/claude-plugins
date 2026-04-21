@@ -18,9 +18,9 @@ Plugin internals (see per-plugin architecture.md)
 
 | Plugin | Status | Purpose | Architecture |
 |--------|--------|---------|-------------|
-| [ocd](plugins/ocd/) | Active (v0.1.0 released) | Deterministic enforcement of permissions, rules, and structural conventions with agent-facing project navigation | [architecture.md](plugins/ocd/architecture.md) |
+| [ocd](plugins/ocd/) | Pre-release (dev channel only) | Deterministic enforcement of permissions, rules, and structural conventions with agent-facing project navigation | [architecture.md](plugins/ocd/architecture.md) |
 
-Plugins are independent systems — each has its own manifest, hooks, skills, rules, and tests. The released version of ocd lives on the `v0.1.0` release branch.
+Plugins are independent systems — each has its own manifest, hooks, skills, rules, and tests. Tagged releases live on `main`; no release branches.
 
 Each plugin may register Claude Code hooks (PreToolUse, PostToolUse, SessionStart), MCP servers for persistent tooling (SQLite-backed, launched as subprocesses with per-server data directories under `.claude/<plugin>/`), and skills (discoverable by Claude Code at configured skill paths). The specific hooks, servers, and skills each plugin provides are documented in that plugin's own `architecture.md`.
 
@@ -90,7 +90,17 @@ These are dev-only — stripped from release branches.
 
 ### Testing
 
-Project-level tests in `tests/`, per-plugin tests isolated by `pytest.ini` with independent `pythonpath` settings. Each plugin's tests run in isolation matching production import paths. `scripts/test.sh` runs all suites sequentially. Tests are dev-only and stripped from release branches.
+Project-level tests in `tests/`, per-plugin tests isolated by `tests/plugins/<plugin>/pyproject.toml` (`[tool.pytest.ini_options]`) with independent `pythonpath` settings. Each plugin's tests run in isolation matching production import paths. Tests are dev-only and stripped from release branches.
+
+Test orchestration lives at project root under `tools/testing/` and is invoked via `bin/plugins-run tests` (with `scripts/test.sh` as a thin delegator). The runner discovers the project suite plus each `tests/plugins/<name>/` suite, resolves each suite's venv (project `.venv/` for project tests, per-plugin data-dir venvs for plugin tests), dispatches pytest per suite, and compiles a unified report. Tests at an arbitrary ref run via `bin/plugins-run sandbox-tests --ref <ref>`, which creates a detached sibling worktree, invokes the runner inside it, and removes the worktree on return.
+
+### Project-level tooling
+
+Operations tied to this repository's development infrastructure — test orchestration, one-time project setup — live under `tools/` at project root and are exposed through `bin/plugins-run`. They are deliberately outside every plugin directory so they are not copied into end-user plugin caches and do not impose project-local conventions on downstream consumers of the plugins.
+
+- `tools/testing/` — test discovery, runner, venv resolution, detached-worktree wrapper.
+- `tools/setup/` — git hookspath configuration. Installed plugins do not configure the downstream project's git; that decision is explicit per checkout.
+- `bin/plugins-run` — bash entry point that resolves the project venv and dispatches to `tools/` modules.
 
 ## File Organization
 

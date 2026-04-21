@@ -18,18 +18,18 @@ Use at your own discretion. If something breaks, the LICENSE applies.
 
 One marketplace, two channels. You pick the channel by pinning (or not pinning) a ref when you add the marketplace.
 
-### Stable channel (recommended for use)
+### Stable channel (recommended once a release ships)
 
-Pins to a tagged release. The marketplace at that tag points at the frozen plugin content of that release branch. Updates require re-adding with a newer tag (or running `/plugin marketplace update` after repointing).
+Pins to a tagged release. No stable release has been cut yet — this section will list a `@v<x.y.z>` pin once the first release tag is published.
 
 ```
-/plugin marketplace add a-horde-o-bees/claude-plugins@v0.1.0
+/plugin marketplace add a-horde-o-bees/claude-plugins@v<x.y.z>
 /plugin install ocd@a-horde-o-bees
 ```
 
-### Dev channel (early adopters and contributors)
+### Dev channel (current — tracks main)
 
-Tracks `main`. Ships with tests, CI configs, and in-flight changes. Updates on every push to `main`; `0.0.z` version auto-bumps for cache invalidation.
+Tracks `main`. Ships with tests, CI configs, and in-flight changes. `plugin.json` auto-bumps on every commit so Claude Code's reload detection fires; the version is pre-release (`0.0.z`) until the first real release is cut.
 
 ```
 /plugin marketplace add a-horde-o-bees/claude-plugins

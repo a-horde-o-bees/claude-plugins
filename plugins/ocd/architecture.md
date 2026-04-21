@@ -87,7 +87,7 @@ Rules use the template-deployed model: sources are authoritative; deployed copie
 
 Skill packages live under `systems/` (declared via `plugin.json`'s `skills` field). Each contains at minimum a `SKILL.md` describing the workflow. Some include extracted component files (`_*.md`) for subflows that only run on optional execution paths. Per the Subsystem Doc Consolidation rule in `system-docs.md`, skills' operational reference IS `SKILL.md` — no separate README or architecture is required; purpose statements below are propagated from each skill's frontmatter `description` field.
 
-**Released skills** (stable, shipped in v0.1.0):
+**Skills:**
 
 | Skill | Purpose (from SKILL.md frontmatter) |
 |-------|-------------------------------------|
