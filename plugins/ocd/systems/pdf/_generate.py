@@ -13,7 +13,7 @@ try:
 except ImportError:
     print(
         "Missing dependencies: weasyprint and markdown.\n"
-        "Declared in plugins/ocd/requirements.txt; install_deps.sh installs\n"
+        "Declared in plugins/ocd/pyproject.toml; install_deps.sh installs\n"
         "them into the plugin venv on SessionStart. Invoke via `ocd-run pdf`,\n"
         "not system python3 directly.",
         file=sys.stderr,

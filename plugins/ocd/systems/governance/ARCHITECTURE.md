@@ -19,9 +19,7 @@ All answers read directly from disk on every call. No database, no caching, no r
 ```
 Consumer (hook, MCP tool, CLI, other library)
     ↓ import systems.governance
-Facade (__init__.py — re-exports governance_match, list_rules, list_conventions, governance_order)
-    ↓ calls
-Operations (_governance.py)
+Facade and operations (__init__.py)
     ↓ reads files, parses frontmatter via
 Frontmatter parser (_frontmatter.py)
     ↓ returns
@@ -36,8 +34,7 @@ Facade (above)
 
 | Module | Responsibility |
 |--------|---------------|
-| `__init__.py` | Facade — re-exports the public interface |
-| `_governance.py` | Core operations: file-to-convention matching, entry listing, dependency-level grouping |
+| `__init__.py` | Facade and core operations — public interface plus file-to-convention matching, entry listing, dependency-level grouping |
 | `_frontmatter.py` | Purpose-built YAML frontmatter parser for the governance field set (no PyYAML dependency) |
 | `__main__.py` | CLI — argument parsing and dispatch wrappers around the facade |
 

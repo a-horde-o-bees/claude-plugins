@@ -48,9 +48,10 @@ SQLite databases (.claude/ocd/)
 
 Deny rules take precedence over allow rules. File paths resolve against allowed directories (project root + `additionalDirectories`). Compound commands (`&&`, `||`, `;`, `|`) split outside quotes and each part is evaluated independently — all parts must pass.
 
-**Output protocol:**
+**Output protocol.** Both layers speak Claude Code's `hookSpecificOutput` schema:
 - `approve()` — emit `permissionDecision: allow`
-- `block(reason)` — emit `decision: block` with corrective guidance
+- `block(reason)` — emit `permissionDecision: deny` with `permissionDecisionReason` carrying corrective guidance; Claude Code relays the reason to the agent
+- Unhandled exception — dispatch is wrapped in a fail-open try/except that writes one stderr line and exits 0, so a crash never blocks a tool call; Claude Code's default permission prompt takes over
 - No output — fall through to Claude Code's default permission prompt
 
 ### PreToolUse: Convention Gate
@@ -81,7 +82,7 @@ Plugin-wide rule templates in `systems/rules/templates/` deploy to `.claude/rule
 
 System-owned rules live alongside the system that prescribes them — `systems/<name>/rules/` — and deploy flat under `.claude/rules/ocd/systems/<name>.md` via the system's own init per System Dormancy (see marketplace-level `ARCHITECTURE.md`). Today navigator owns `navigator.md` (navigator usage guidance), log owns `log.md` (log type selection and routing), and refactor owns `refactor.md` (when to reach for `/ocd:refactor` over manual sed or Edit). The `systems/` subdir inside `.claude/rules/ocd/` namespaces system-scoped rules away from project-wide foundational rules, so filenames can match system names without colliding.
 
-Rules use the template-deployed model: sources are authoritative; deployed copies in `.claude/rules/ocd/` are derived (gitignored). A guard hook blocks direct edits to deployed copies so changes only flow template → deployed. `/checkpoint` runs `scripts/auto_init.py` (the auto-init orchestrator) to rectify deployed state against current templates.
+Rules use the template-deployed model: sources are authoritative; deployed copies in `.claude/rules/ocd/` are derived artifacts tracked in git so the rectified state travels with the repo. A guard hook blocks direct edits to deployed copies so changes only flow template → deployed. `/checkpoint` runs `scripts/auto_init.py` (the auto-init orchestrator) to rectify deployed state against current templates.
 
 ## Skills
 
@@ -111,7 +112,7 @@ Agent-facing tools exposed over the Model Context Protocol. The plugin registers
 
 ## Libraries
 
-Python packages consumed as imports. Each is a subsystem with its own README.md and ARCHITECTURE.md; this section is the plugin-level overview.
+Python packages consumed as imports. Each is a subsystem under `systems/`; substantial ones document their architecture separately, while thin subsystems consolidate their purpose into a README. This section is the plugin-level overview.
 
 | Library | Package | Purpose | Docs |
 |---------|---------|---------|------|
@@ -127,16 +128,18 @@ Consumers within this plugin: the `convention_gate` hook imports `systems.govern
 
 ## Plugin Framework
 
-`plugin/` — generic deployment, formatting, skill discovery, and orchestration shared across plugins. Propagated identically to every plugin via pre-commit hook. Decomposed into 6 internal modules:
+`systems/framework/` — generic deployment, formatting, system discovery, and orchestration shared across plugins. Propagated identically to every plugin via pre-commit hook. Internal modules:
 
 | Module | Responsibility |
 |--------|---------------|
 | `_environment.py` | Plugin path resolution (`get_project_dir`, `get_plugin_root`, `get_plugin_data_dir`) |
 | `_metadata.py` | Plugin version, name, marketplace source discovery |
 | `_deployment.py` | Template file deployment primitives (copy, compare, orphan clearing) |
+| `_enabled.py` | Per-system opt-in state (`enabled-systems.json`) — read, toggle, persist |
+| `_errors.py` | Framework exception types (`NotReadyError`, etc.) |
 | `_formatting.py` | Output column alignment and section rendering |
-| `_discovery.py` | System and workflow skill discovery |
-| `_orchestration.py` | `run_init` and `run_status` entry points — discover every subsystem under `systems/` and dispatch uniformly |
+| `_system_discovery.py` | System and workflow skill discovery |
+| `_orchestration.py` | `run_init` and `run_status` entry points — discover every enabled subsystem and dispatch uniformly |
 
 ## Entry Points
 
@@ -145,9 +148,13 @@ All execution flows through `run.py`, which adds the plugin root to `sys.path` a
 ```
 ocd-run hooks.auto_approval          # Hook invocation
 ocd-run hooks.convention_gate        # Hook invocation
-ocd-run setup init [--force]         # Init orchestration
-ocd-run setup status                 # Status reporting
-ocd-run navigator scan .             # Navigator CLI (operational)
+ocd-run setup <verb>                 # Setup — init | status | enable | disable | guided
+ocd-run navigator <verb>             # Navigator CLI — scan | describe | list | search | set | resolve-skill | init
+ocd-run check <dimension>            # Discipline checks (dormancy today)
+ocd-run governance <verb>            # Governance queries — match | list | order
+ocd-run refactor <tool>              # Mass transformation primitives (rename-symbol)
+ocd-run sandbox <verb>               # Sandbox substrate primitives (worktree-add, cleanup, ...)
+ocd-run pdf --src ... --dest ...     # PDF export
 ```
 
 Hooks are invoked by Claude Code via `hooks.json` configuration. Navigator agent-facing operations are exposed via MCP server (`systems/navigator/server.py`); CLI retained for operational commands (init, scan, governance-load). No shebangs or execute permissions — all scripts run via `python3` interpreter prefix.
@@ -160,31 +167,33 @@ Navigator database uses WAL mode with 5-second busy timeout for concurrent acces
 
 ```
 plugins/ocd/
-├── .claude-plugin/plugin.json   — plugin manifest (name, version, license)
+├── .claude-plugin/plugin.json   — plugin manifest (name, version, description, homepage)
 ├── .mcp.json                    — MCP server registration (navigator)
+├── ARCHITECTURE.md              — this document
+├── README.md                    — user-facing overview and setup
+├── LICENSE                      — MIT
+├── pyproject.toml               — Python runtime dependencies (installed into plugin venv by install_deps.sh)
+├── run.py                       — module launcher with package context
+├── bin/
+│   └── ocd-run                  — plugin CLI — resolves venv and dispatches to systems
 ├── hooks/
-│   ├── hooks.json               — hook registration (SessionStart, SessionEnd, PreToolUse)
+│   ├── hooks.json               — hook registration (SessionStart, PreToolUse)
 │   ├── install_deps.sh          — install/refresh plugin venv dependencies
 │   ├── auto_approval/           — permission enforcement package (hardcoded + dynamic)
 │   └── convention_gate.py       — surface applicable conventions on Read/Edit/Write
-├── systems/                  — every cohesive unit lives here (domain Python + skill + templates + tests colocated)
-│   ├── navigator/               — project structure index (SKILL.md + CLI + MCP server + _init)
-│   ├── governance/              — rules/conventions governance library (no SKILL.md; MCP+lib only)
-│   ├── conventions/             — deployable convention templates
-│   ├── rules/                   — deployable rule templates
-│   ├── patterns/                — deployable pattern templates
-│   ├── logs/                    — deployable log type templates
-│   ├── permissions/             — permission pattern management (settings.json asset + _init)
-│   ├── pdf/                     — markdown-to-PDF via WeasyPrint
-│   ├── git/                     — git operations skill (/ocd:git commit/push)
-│   ├── log/                     — log entry capture (add/list/remove as component subflows)
-│   ├── setup/                   — plugin infrastructure skill (/ocd:setup init/status/permissions)
-│   ├── audit-governance/        — governance chain audit (in development)
-│   ├── audit-static/            — static analysis audit for any path (in development)
-│   ├── sandbox/                 — isolated sandbox environment skill
-│   └── update-system-docs/      — documentation maintenance (design-only placeholder)
-├── plugin/                      — plugin framework (discovery, orchestration, metadata, formatting)
-├── requirements.txt             — Python dependencies installed into plugin venv
-├── run.py                       — module launcher with package context
-└── tests/                       — hook and invocation tests (dev-only)
+└── systems/                     — every cohesive unit lives here (domain Python + skill + templates colocated)
+    ├── framework/               — plugin framework (orchestration, discovery, deployment, formatting)
+    ├── check/                   — discipline-check skill (dormancy today)
+    ├── conventions/             — deployable convention templates
+    ├── git/                     — git skill (commit, push)
+    ├── governance/              — rules/conventions governance library (no SKILL.md; lib + CLI only)
+    ├── log/                     — log entry capture skill and deployable log-type templates
+    ├── navigator/               — project structure index (SKILL.md + CLI + MCP server + library)
+    ├── patterns/                — deployable pattern templates
+    ├── pdf/                     — markdown-to-PDF skill via WeasyPrint
+    ├── permissions/             — permission pattern management (settings.json asset)
+    ├── refactor/                — mass source transformation skill
+    ├── rules/                   — deployable rule templates
+    ├── sandbox/                 — isolated sandbox skill (durable + ephemeral substrates)
+    └── setup/                   — plugin infrastructure skill (init, status, enable, disable, guided)
 ```

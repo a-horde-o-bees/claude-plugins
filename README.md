@@ -80,7 +80,7 @@ Remove a plugin or the marketplace:
 
 For contributors working on plugin source.
 
-**After cloning, run `/ocd:setup init` in the cloned project to deploy local rules, conventions, and the navigator database.** These files are gitignored — every clone initializes its own. Skipping install leaves the working agent without the rules that govern development here, and the navigator database will be missing.
+**After cloning, run `bin/plugins-run setup` once to wire this repo's git hooks (including the pre-commit auto-bump of plugin versions).** Deployed rules, conventions, patterns, and the navigator database travel with the repo as tracked files, so a contributor's clone is immediately usable for development. `/checkpoint` runs `scripts/auto_init.py` to rectify deployed state against current templates whenever divergence is detected.
 
 Two approaches:
 
@@ -151,10 +151,11 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for marketplace structure, shared infrast
 
 ## Versioning
 
-Plugin versions follow `x.y.z` format. Main and release branches live in disjoint version spaces — no `(x,y,z)` tuple ever points at more than one commit.
+Plugin versions follow `x.y.z` semver in `plugin.json`. Tags live on `main`; no release branches.
 
-- **Main** tracks `0.0.z` permanently. `z` is a monotonic dev build counter bumped on every commit to catch local reload detection. Main is never released from directly.
-- **Release branches** own real semver. A new release is cut at `x.y.0` on a dedicated branch; patches on that branch bump `z`. Release branches are the install target for consumers; main is for development only.
+- **Pre-first-release.** `plugin.json` tracks `0.0.z` until the first `v0.1.0` tag is cut. A pre-commit hook bumps `z` on every commit that touches the plugin tree so Claude Code's reload detection fires for users tracking main.
+- **Release cut.** Bump `y`, reset `z = 0`, commit with only `plugin.json` staged (the auto-bump skips plugin.json-only commits), tag `v<x.y.0>` on that commit. `scripts/release.sh` automates the sequence.
+- **Patch release.** Tag any main commit as `v<current-version>`; no edit required because `z` already auto-increments per commit. The tag is the "deliberate release" signal.
 
 ## License
 

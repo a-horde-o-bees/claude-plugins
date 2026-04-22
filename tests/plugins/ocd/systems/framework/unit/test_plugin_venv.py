@@ -1,4 +1,4 @@
-"""Smoke check: every plugin-venv-only package from ocd's requirements.txt must be importable during testing.
+"""Smoke check: every plugin-venv-only package from ocd's pyproject.toml must be importable during testing.
 
 The intent is to fail loudly if the test runner gave us the wrong venv — e.g.,
 the project `.venv` instead of the ocd plugin venv. If any of these imports

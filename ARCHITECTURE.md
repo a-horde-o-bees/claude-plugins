@@ -75,7 +75,7 @@ Each plugin's `systems/framework/` package is identical — a generic framework 
 
 ### Template-Deployed Model
 
-Templates live per-system in plugin source — project-wide rules in `plugins/<plugin>/systems/rules/templates/`, system-scoped rules in `plugins/<plugin>/systems/<system>/rules/`, conventions in `plugins/<plugin>/systems/conventions/templates/`, patterns in `plugins/<plugin>/systems/patterns/templates/`, log templates in `plugins/<plugin>/systems/log/templates/<type>/`. Templates are the authoritative source. Deployed copies in `.claude/rules/`, `.claude/conventions/`, `.claude/patterns/` are derived artifacts (gitignored). Log-type templates deploy alongside user log entries at project-root `logs/<type>/`, which is tracked — logs are project notes the agent curates, not Claude Code infrastructure, so they sit outside the `.claude/` sensitivity envelope. Each system's `_init.py` deploys its own templates; a guard hook blocks direct edits to deployed copies so changes only flow template → deployed. `scripts/auto_init.py` (the auto-init orchestrator) rectifies the full deployed tree at `/checkpoint` — force-runs every system's `init()`, prunes orphans in template-managed categories, backs up existing `.claude/**/*.db` files to `.claude/pre-sync/` and reconciles them against post-init schemas (match → restore data; mismatch → surface a migration flag), then runs `navigator scan` for every plugin that ships one. Governance metadata (`includes`, `excludes`, `governed_by`) lives in each file's YAML frontmatter; the governance library reconciles rules and conventions against disk state on every query, so entries stay current without an explicit registration step.
+Templates live per-system in plugin source — project-wide rules in `plugins/<plugin>/systems/rules/templates/`, system-scoped rules in `plugins/<plugin>/systems/<system>/rules/`, conventions in `plugins/<plugin>/systems/conventions/templates/`, patterns in `plugins/<plugin>/systems/patterns/templates/`, log templates in `plugins/<plugin>/systems/log/templates/<type>/`. Templates are the authoritative source. Deployed copies in `.claude/rules/`, `.claude/conventions/`, `.claude/patterns/` are derived artifacts; they are tracked in git so the rectified state travels with the repo and every consumer (CI, fresh checkouts, new sessions) sees the same corpus. Log-type templates deploy alongside user log entries at project-root `logs/<type>/` — logs are project notes the agent curates, not Claude Code infrastructure, so they live outside the `.claude/` tree entirely. Each system's `_init.py` deploys its own templates; a guard hook blocks direct edits to deployed copies so changes only flow template → deployed. `scripts/auto_init.py` (the auto-init orchestrator) rectifies the full deployed tree at `/checkpoint` — force-runs every system's `init()`, prunes orphans in template-managed categories, backs up existing `.claude/**/*.db` files to `.claude/pre-sync/` and reconciles them against post-init schemas (match → restore data; mismatch → surface a migration flag), then runs `navigator scan` for every plugin that ships one. Governance metadata (`includes`, `excludes`, `governed_by`) lives in each file's YAML frontmatter; the governance library reconciles rules and conventions against disk state on every query, so entries stay current without an explicit registration step.
 
 ### Development Scripts
 
@@ -86,11 +86,11 @@ Templates live per-system in plugin source — project-wide rules in `plugins/<p
 | `scripts/test.sh` | Thin delegator to `bin/plugins-run tests` |
 | `scripts/validate-manifests.py` | Validate marketplace + plugin manifests; invoked by CI |
 
-These are dev-only — stripped from release branches.
+These are dev-only — maintainers' tooling, not shipped to plugin consumers.
 
 ### Testing
 
-Project-level tests in `tests/`, per-plugin tests isolated by `tests/plugins/<plugin>/pyproject.toml` (`[tool.pytest.ini_options]`) with independent `pythonpath` settings. Each plugin's tests run in isolation matching production import paths. Tests are dev-only and stripped from release branches.
+Project-level tests in `tests/`, per-plugin tests isolated by `tests/plugins/<plugin>/pyproject.toml` (`[tool.pytest.ini_options]`) with independent `pythonpath` settings. Each plugin's tests run in isolation matching production import paths. Tests are dev-only — maintainers' infrastructure, not shipped to plugin consumers.
 
 Test orchestration lives at project root under `tools/testing/` and is invoked via `bin/plugins-run tests` (with `scripts/test.sh` as a thin delegator). The runner discovers the project suite plus each `tests/plugins/<name>/` suite, resolves each suite's venv (project `.venv/` for project tests, per-plugin data-dir venvs for plugin tests), dispatches pytest per suite, and compiles a unified report. Tests at an arbitrary ref run via `bin/plugins-run sandbox-tests --ref <ref>`, which creates a detached sibling worktree, invokes the runner inside it, and removes the worktree on return.
 
@@ -109,17 +109,21 @@ claude-plugins/
 ├── .claude-plugin/
 │   └── marketplace.json         — marketplace manifest registering plugins
 ├── .claude/
-│   ├── rules/                   — deployed rule files (gitignored; regenerated by /ocd:setup init)
-│   ├── conventions/             — deployed convention files (gitignored; regenerated by /ocd:setup init)
-│   ├── patterns/                — deployed pattern files (gitignored)
-│   ├── logs/                    — dev-only log entries (decisions, friction, problems, ideas)
+│   ├── rules/                   — deployed rule files (tracked; rectified by scripts/auto_init.py)
+│   ├── conventions/             — deployed convention files (tracked; rectified by scripts/auto_init.py)
+│   ├── patterns/                — deployed pattern files (tracked; rectified by scripts/auto_init.py)
 │   ├── skills/                  — project-local dev skills (checkpoint)
 │   ├── hooks/                   — project-level pre-commit guards
-│   ├── ocd/                     — ocd plugin project data (navigator db)
+│   ├── ocd/                     — ocd plugin project data (navigator db, enabled-systems.json)
 │   └── settings.json            — project-level permission patterns
+├── bin/
+│   └── plugins-run              — project-level dispatcher into tools/ modules
+├── tools/                       — project-level development tooling (testing orchestration, setup)
 ├── plugins/
 │   └── ocd/                     — ocd plugin (own system, see plugins/ocd/ARCHITECTURE.md)
-├── scripts/                     — shared development scripts (dev-only)
+├── scripts/                     — shared development scripts (auto_init, release, manifest validator, test delegator)
 ├── tests/                       — project-level integration tests (dev-only)
+├── logs/                        — project log entries (decisions, friction, problems, ideas)
+├── research/                    — external research notes (dev-only)
 └── purpose-map/                 — methodology tooling for live-invention audits (dev-only)
 ```

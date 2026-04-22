@@ -11,7 +11,7 @@ Tool design, server architecture, and data conventions for MCP servers exposed a
 
 ## Tool Naming
 
-Tool names follow `object_action` format — the domain object first, then the operation. Agents discover related tools by scanning for a shared prefix. Names map to the server's internal module structure: tools backed by `_governance.py` are prefixed `governance_`, tools backed by `_skills.py` are prefixed `skills_`.
+Tool names follow `object_action` format — the domain object first, then the operation. Agents discover related tools by scanning for a shared prefix. Names map to the server's internal module structure: tools backed by `_skills.py` are prefixed `skills_`, tools backed by `_references.py` are prefixed `references_`.
 
 Examples: `governance_match`, `governance_list`, `paths_get`, `skills_resolve` — not `list_governance`, `describe_path`, `resolve_skill`.
 
@@ -144,22 +144,20 @@ Standard structure:
 
 ```
 plugins/<plugin>/
-├── lib/
-│   └── <name>/                  ← Domain library as a Python package
-│       ├── __init__.py          ← Facade — public functions (business logic)
-│       ├── __main__.py          ← Operational CLI
-│       ├── _db.py               ← Internal modules per python.md decomposition
-│       └── (other internals, tests)
-└── servers/
-    ├── __init__.py
-    ├── _helpers.py              ← Shared MCP response helpers
-    └── <name>.py                ← Thin MCP adapter — FastMCP setup + tool decorators
+└── systems/
+    └── <name>/                  ← System directory — library + MCP server + skill colocated
+        ├── __init__.py          ← Facade — public functions (business logic)
+        ├── __main__.py          ← Operational CLI
+        ├── server.py            ← Thin MCP adapter — FastMCP setup + tool decorators
+        ├── _server_helpers.py   ← Shared MCP response helpers and subprocess env bootstrap
+        ├── _db.py               ← Internal modules per python.md decomposition
+        └── (SKILL.md, other internals, tests)
 ```
 
 The MCP adapter module (`systems/<name>/server.py`):
 
-- Imports the library as a namespace: `import lib.<name> as _<short>` — the underscore-prefixed alias signals a private reference and avoids name collisions between tool wrapper functions and library functions (both share names because FastMCP derives the tool name from the function name)
-- Imports shared helpers: `from ._helpers import _ok, _err`
+- Imports the library as a namespace: `import systems.<name> as _<short>` — the underscore-prefixed alias signals a private reference and avoids name collisions between tool wrapper functions and library functions (both share names because FastMCP derives the tool name from the function name)
+- Imports shared helpers: `from ._server_helpers import _ok, _err`
 - Defines `mcp = FastMCP("<name>", instructions="...")` with cross-tool positioning
 - Decorates thin wrappers with `@mcp.tool()` — each wrapper validates, delegates to a library function, and serializes the result
 - Ends with `if __name__ == "__main__": mcp.run()` so the module is launchable
@@ -194,7 +192,7 @@ Shared utility functions used by multiple server modules in the same plugin live
 - `_ok(result)` — serialize a successful result as a JSON string
 - `_err(e)` — wrap an exception as a JSON error response
 
-Server modules import these from the servers package: `from ._helpers import _ok, _err`.
+Server modules import these from the system package: `from ._server_helpers import _ok, _err`.
 
 Project, plugin, and plugin-data paths resolve through the plugin framework helpers (`plugin.get_project_dir()`, `plugin.get_plugin_root()`, `plugin.get_plugin_data_dir()`) — see `python.md` *Project, Plugin, and Data Directory Resolution*. Servers do not define their own project-root helpers.
 

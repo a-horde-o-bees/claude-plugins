@@ -19,7 +19,7 @@ The following runs without user action once the plugin is installed. Each entry 
 
 ### Session start: dependency installation
 
-Installs Python packages from the plugin's `requirements.txt` into an isolated virtual environment using `uv`. Required for MCP servers and hook scripts to function. Skips if dependencies haven't changed since last install. Prerequisite: `uv` must be installed on the user's system.
+Installs Python packages from the plugin's `pyproject.toml` into an isolated virtual environment using `uv`. Required for MCP servers and hook scripts to function. Skips if dependencies haven't changed since last install. Prerequisite: `uv` must be installed on the user's system.
 
 ### Session start: rules auto-loading
 
@@ -36,10 +36,6 @@ Fires before every Bash, Edit, and Write operation. Two layers: hardcoded blocks
 ### PreToolUse: convention gate
 
 Fires before every Read, Edit, and Write operation. Non-blocking — always allows the tool call. Injects applicable conventions from `.claude/conventions/` into the agent's context based on the target file's path and the convention's `includes` pattern. On Read: conventions are surfaced for awareness. On Edit/Write: the agent is directed to conform and refactor if non-conformant.
-
-### Install: git hookspath wiring
-
-During `/ocd:setup init`, if the project contains a `.githooks/` directory, the plugin sets `core.hookspath=.githooks` in the local git config. This connects version-controlled git hooks (pre-commit, etc.) maintained by the project. Does nothing if `.githooks/` does not exist. The plugin does not create or modify hook files — it only wires the directory if one is already present.
 
 ## Capabilities
 
@@ -107,16 +103,17 @@ Agent-facing entry point at `systems/navigator/__main__.py`. Agents call `--help
 
 ### Other Skills
 
-Released skills (stable, available via `/ocd:` slash commands):
+Slash commands under `/ocd:` — descriptions source from each skill's SKILL.md frontmatter:
 
 | Skill | Purpose |
 |-------|---------|
-| `/ocd:git commit` | Topic-grouped commits with end-state descriptions |
-| `/ocd:git push` | Push to remote with pre-push commit check |
-| `/ocd:setup init` | Deploy rules, conventions, and skill infrastructure |
-| `/ocd:setup status` | Report plugin version, deployment state, skill status |
-| `/ocd:log` | Capture decisions, friction, problems, ideas as log entries |
-| `/ocd:pdf` | Export markdown to PDF via WeasyPrint with configurable CSS |
+| `/ocd:check` | Run universal discipline checks (dormancy today) against plugin systems |
+| `/ocd:git` | Record topic-grouped commits and push a branch to origin |
+| `/ocd:log` | Capture or manage project log entries — decisions, friction, problems, ideas |
+| `/ocd:pdf` | Export markdown files to PDF using WeasyPrint |
+| `/ocd:refactor` | Execute mass source transformations through a scan → plan → apply → verify → test workflow |
+| `/ocd:sandbox` | Work on an isolated sandbox — durable feature boxes plus ephemeral validation sandboxes |
+| `/ocd:setup` | Manage ocd plugin infrastructure — enable/disable systems, report state, guided setup |
 
 ### MCP Servers
 
