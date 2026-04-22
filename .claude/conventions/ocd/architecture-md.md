@@ -1,14 +1,14 @@
 ---
-includes: "architecture.md"
+includes: "ARCHITECTURE.md"
 governed_by:
   - .claude/rules/ocd/design-principles.md
   - .claude/rules/ocd/system-docs.md
   - .claude/rules/ocd/markdown.md
 ---
 
-# architecture.md Conventions
+# ARCHITECTURE.md Conventions
 
-Content standards for `architecture.md` files. System-facing technical reference documenting layers, components, relationships, design patterns, and key implementation details.
+Content standards for `ARCHITECTURE.md` files. System-facing technical reference documenting layers, components, relationships, design patterns, and key implementation details.
 
 ## Purpose Statement
 
@@ -29,9 +29,9 @@ Include what a developer needs to modify the system safely. Exclude user-facing 
 
 ## Nesting
 
-When a system contains systems, describe each subsystem's role in the overall architecture — what it does, how it connects to other components, what interface it exposes. Do not re-explain the subsystem's internal structure; link to the subsystem's own `architecture.md` for technical internals.
+When a system contains systems, describe each subsystem's role in the overall architecture — what it does, how it connects to other components, what interface it exposes. Do not re-explain the subsystem's internal structure; link to the subsystem's own `ARCHITECTURE.md` for technical internals.
 
-A parent architecture.md answers "how do these pieces fit together?" Each subsystem's architecture.md answers "how does this piece work internally?"
+A parent ARCHITECTURE.md answers "how do these pieces fit together?" Each subsystem's ARCHITECTURE.md answers "how does this piece work internally?"
 
 ## Structure
 
