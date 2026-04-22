@@ -131,8 +131,6 @@ When an agent encounters If, If, Else at the same level, the Else belongs to the
 
 **`While X:`** — repeats while condition holds
 
-**`When X:`** — event-triggered, reactive to a state change rather than evaluated at a fixed point in the sequence
-
 **`Continue next`** — exits current iteration and skips to next `For each:` element
 
 **`Break loop`** — exits current `For each:` or `While:` loop
@@ -144,8 +142,6 @@ When an agent encounters If, If, Else at the same level, the Else belongs to the
     1. If {file} invalid: Continue next {file}
     2. Process {file}
     3. If threshold reached: Break loop
-2. When event occurs:
-    1. Handle event
 ```
 
 ## Invocations
@@ -299,18 +295,6 @@ Extracting agent instructions into a component file and using `Spawn: Call:` kee
 2. Action
 ```
 
-### isolation: "worktree"
-
-**`isolation: "worktree"`** — parenthetical modifier on `Spawn:` that runs the agent in a git worktree, an isolated copy of the repository where file changes, commits, and tool invocations stay contained. Worktree creation and cleanup are handled by the system. Composes with `async`:
-
-```
-1. async Spawn (isolation: "worktree"):
-    1. Call: `_component-name.md` ({variable-name} = Content)
-    2. Return to caller:
-        - Content
-2. Action
-```
-
 ### Continue
 
 **`Continue {agent-ref}:`** — resumes a previously-spawned agent, retaining its full accumulated context from prior cycles. The agent reference is captured as a variable from the `Spawn:` step.
@@ -398,7 +382,6 @@ PFN constructs and their programming analogues:
 | Assignment | {name} = value | `name = value` |
 | Conditional | If/Else if/Else: | `if/elif/else:` |
 | Iteration | For each:, While: | `for:`, `while:` |
-| Event | When: | Signal handler |
 | Loop control | Continue next, Break loop | `continue`, `break` |
 | Jump | Go to step N. Label | — |
 | Invocation | mechanism: content | Uniform calling convention |
@@ -407,6 +390,5 @@ PFN constructs and their programming analogues:
 | Resume | Continue {agent-ref}: | Message to running coroutine |
 | Return | Return to caller / Return to caller: | `return` / `return value` |
 | Concurrency | async Spawn: | `asyncio.TaskGroup` |
-| Isolation | Spawn (isolation: "worktree"): | Subprocess in temp directory |
 | Error handling | Error Handling: | `except:` |
 | Exit | Exit to user / Exit to user: | `sys.exit()` / `sys.exit(value)` |

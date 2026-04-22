@@ -126,9 +126,6 @@ class TestPatterns:
     def test_mass_rename_pattern_deployed(self, deployed_tree: Path) -> None:
         assert (deployed_tree / ".claude/patterns/ocd/mass-rename.md").is_file()
 
-    def test_worktree_isolation_pattern_deployed(self, deployed_tree: Path) -> None:
-        assert (deployed_tree / ".claude/patterns/ocd/worktree-isolation.md").is_file()
-
 
 class TestLogTemplates:
     """Log-type templates deploy under .claude/logs/<type>/."""
