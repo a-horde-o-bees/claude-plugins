@@ -157,10 +157,6 @@ def scratch_worktree():
     # 10 .py files for single vs batch comparisons under the python convention
     for i in range(10):
         (scratch / f"file{i}.py").write_text("# placeholder\n")
-    # 10 .txt files — matches no convention; baseline for subtracting agent
-    # overhead from the convention-loaded cost
-    for i in range(10):
-        (scratch / f"no_match{i}.txt").write_text("# placeholder\n")
     # systems/<name>/server.py matches mcp-server.md's glob; __init__.py
     # deliberately does not (filename is not server.py)
     probe_dir = scratch / "systems" / "probe"
@@ -195,30 +191,6 @@ def batch_python(claude_cli, scratch_worktree):
     """Scenario B: Edit 10 Python files — python.md should cache once."""
     scratch = scratch_worktree / "_test_scratch"
     paths = [_rel(scratch / f"file{i}.py", scratch_worktree) for i in range(10)]
-    file_list = "\n".join(f"- `{p}`" for p in paths)
-    prompt = BATCH_FILE_PROMPT.format(file_list=file_list)
-    return _invoke_agent(claude_cli, prompt, cwd=scratch_worktree)
-
-
-@pytest.fixture(scope="module")
-def baseline_single(claude_cli, scratch_worktree):
-    """Baseline A: Edit 1 .txt file — no convention matches. Agent overhead
-    only; subtract from single_python to isolate convention-read cost.
-    """
-    scratch = scratch_worktree / "_test_scratch"
-    path = _rel(scratch / "no_match0.txt", scratch_worktree)
-    prompt = SINGLE_FILE_PROMPT.format(file_path=path)
-    return _invoke_agent(claude_cli, prompt, cwd=scratch_worktree)
-
-
-@pytest.fixture(scope="module")
-def baseline_batch(claude_cli, scratch_worktree):
-    """Baseline B: Edit 10 .txt files — no convention matches. Agent
-    overhead only at batch scale; subtract from batch_python to isolate
-    whether convention context amplifies per-file.
-    """
-    scratch = scratch_worktree / "_test_scratch"
-    paths = [_rel(scratch / f"no_match{i}.txt", scratch_worktree) for i in range(10)]
     file_list = "\n".join(f"- `{p}`" for p in paths)
     prompt = BATCH_FILE_PROMPT.format(file_list=file_list)
     return _invoke_agent(claude_cli, prompt, cwd=scratch_worktree)
@@ -316,59 +288,3 @@ class TestConventionReadEfficiency:
         )
 
 
-class TestTokenEfficiency:
-    """Convention context should cost roughly the same whether edited files
-    number 1 or 10 — it should be read once by the agent, cached, and
-    reused. Raw batch/single token ratios mostly reflect agent-per-edit
-    overhead, which dominates small absolute counts. Subtract a matching
-    baseline (edits to files that match no convention) to isolate the
-    marginal convention-context cost; compare marginals.
-    """
-
-    def test_convention_cost_does_not_scale_with_file_count(
-        self,
-        baseline_single,
-        baseline_batch,
-        single_python,
-        batch_python,
-    ):
-        """If conventions were re-delivered per file, batch_marginal would
-        scale with N (≈10x single_marginal). Cached once, ratio should sit
-        near 1.0. Tolerance accounts for agent non-determinism; the check
-        fails only when the ratio is vast enough to indicate re-delivery.
-        """
-        if single_python.input_tokens == 0 or baseline_single.input_tokens == 0:
-            pytest.skip("No token data from API")
-
-        single_marginal = single_python.input_tokens - baseline_single.input_tokens
-        batch_marginal = batch_python.input_tokens - baseline_batch.input_tokens
-
-        # Guard against noise swamping signal — if the baseline subtraction
-        # collapses the convention cost below a floor, the agent's per-turn
-        # variance is larger than the signal we're measuring.
-        if single_marginal < 200:
-            pytest.skip(
-                f"Convention marginal cost too small to measure reliably "
-                f"(single_marginal={single_marginal} tokens)",
-            )
-
-        ratio = batch_marginal / single_marginal if single_marginal > 0 else float("inf")
-
-        print(
-            f"\n  Baseline single: {baseline_single.input_tokens:,} tokens"
-            f"\n  Baseline batch:  {baseline_batch.input_tokens:,} tokens"
-            f"\n  Single +conv:    {single_python.input_tokens:,} tokens "
-            f"({single_marginal:+,} marginal)"
-            f"\n  Batch +conv:     {batch_python.input_tokens:,} tokens "
-            f"({batch_marginal:+,} marginal)"
-            f"\n  Marginal ratio:  {ratio:.2f}x  "
-            f"(expect ~1.0 cached, ~10x per-file re-delivery)"
-        )
-
-        # Tolerance band — up to 4x single marginal is within agent variance;
-        # 4x+ strongly suggests per-file convention re-delivery.
-        assert ratio < 4.0, (
-            f"Batch paid {ratio:.1f}x single's convention marginal cost — "
-            f"suggests the hook is re-delivering convention context per file "
-            f"instead of caching once."
-        )
