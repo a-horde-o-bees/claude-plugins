@@ -11,6 +11,7 @@ library behavior (testing.md's overhead rule).
 """
 
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -48,7 +49,7 @@ class TestFrameworkCLI:
 
     def test_status_shows_version(self) -> None:
         result = run("framework", "status")
-        assert "v0.0." in result.stdout
+        assert re.search(r"v\d+\.\d+\.\d+", result.stdout)
 
     def test_status_shows_skills(self) -> None:
         result = run("framework", "status")
