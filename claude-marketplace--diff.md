@@ -170,13 +170,14 @@ Single-plugin marketplace. — Not applicable.
 
 Ordered by estimated effort / impact. Numbering reflects the current list after earlier action items were resolved or dropped.
 
-**Resolved this session:**
+**Resolved:**
 
-- **`install_deps.sh`** now has `diff -q` change detection + `rm` retry invariant via bash ERR trap. Integration tests cover first-run, unchanged-manifest, changed-manifest, missing-venv, failure-rm, and idempotency cases.
+- **`install_deps.sh`** has `diff -q` change detection + `rm` retry invariant via bash ERR trap. Integration tests cover first-run, unchanged-manifest, changed-manifest, missing-venv, failure-rm, and idempotency cases.
 - **`pytest.ini` → `pyproject.toml`** consolidation.
 - **`tools/` + `bin/plugins-run`** extracted from plugin (test runner, venv resolution, sandbox-tests, setup) — closes the project-level-inside-plugin layering inversion.
 - **Pattern doc** restructured to purpose-oriented + 17 corrections applied + new "Multi-harness distribution" and "Project-level tooling layout" purpose sections.
 - **Versioning scheme** confirmed as Option E (tag-on-main, no release branches, dev counter on z).
+- **Per-verb integration test coverage** — every callable surface (scripts, hooks, tools, every system's `__main__.py` CLI dispatch) now has at least one test exercising it. `rules/ocd/testing.md`'s Callable Surface Coverage bar is met. The remaining piece — automating the check as a `/ocd:check` dimension — is tracked in `logs/idea/Callable-surface coverage crawler.md` (build the machinery, not add more tests).
 
 **Dropped:**
 
@@ -192,7 +193,6 @@ Ordered by estimated effort / impact. Numbering reflects the current list after 
 5. **Add `.github/workflows/validate.yml`** — requires PAT. Schema-based validation (Python+json or bun+plain TS).
 6. **Delete legacy `v0.1.0` branch + re-point or delete historical `v0.1.0` tag** — destructive remote op, deferred until actual `v0.1.0` release is cut after refactor+cleanup completes.
 7. **Community health files** (`SECURITY.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`) — optional polish, deferred.
-8. **Per-verb integration test coverage** — discipline logged in `logs/idea/Per-verb integration test coverage.md`; tiered rollout planned.
 
 ## Novel-but-defensible choices
 
