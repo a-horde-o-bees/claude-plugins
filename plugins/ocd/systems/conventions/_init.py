@@ -66,3 +66,28 @@ def status() -> dict:
             "after": state,
         })
     return {"files": files, "extra": []}
+
+
+def clean() -> dict:
+    """Remove deployed convention files. Inverse of init()."""
+    target = _target_dir()
+    rel = _deployed_rel()
+    files: list[dict] = []
+    if not target.is_dir():
+        return {"files": files, "extra": []}
+
+    for md in sorted(target.rglob("*.md")):
+        files.append({
+            "path": f"{rel}/{md.relative_to(target)}",
+            "before": "current",
+            "after": "absent",
+        })
+        md.unlink()
+
+    for path in sorted(target.rglob("*"), reverse=True):
+        if path.is_dir() and not any(path.iterdir()):
+            path.rmdir()
+    if target.is_dir() and not any(target.iterdir()):
+        target.rmdir()
+
+    return {"files": files, "extra": []}

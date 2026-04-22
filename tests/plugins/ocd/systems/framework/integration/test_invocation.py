@@ -136,3 +136,156 @@ class TestServerInvocation:
     def test_navigator_loads(self) -> None:
         result = _run_server_briefly("systems.navigator.server")
         assert result.returncode == 0, result.stderr
+
+
+class TestOptInInit:
+    """Opt-in surface on `framework init` — --all, --systems, first-time
+    default, and mutual-exclusivity validation."""
+
+    def _config(self, project_dir: Path) -> Path:
+        return project_dir / ".claude" / "ocd" / "enabled-systems.json"
+
+    def test_first_init_enables_all_and_writes_config(self, tmp_path: Path) -> None:
+        result = run("framework", "init", env={"CLAUDE_PROJECT_DIR": str(tmp_path)})
+        assert result.returncode == 0, result.stderr
+        config = self._config(tmp_path)
+        assert config.is_file()
+        import json
+        data = json.loads(config.read_text())
+        assert "rules" in data["enabled"]
+        assert "conventions" in data["enabled"]
+
+    def test_init_all_enables_every_system(self, tmp_path: Path) -> None:
+        result = run(
+            "framework", "init", "--all",
+            env={"CLAUDE_PROJECT_DIR": str(tmp_path)},
+        )
+        assert result.returncode == 0, result.stderr
+        import json
+        enabled = json.loads(self._config(tmp_path).read_text())["enabled"]
+        assert set(enabled) >= {"rules", "conventions", "patterns", "log", "navigator"}
+
+    def test_init_systems_limits_to_list(self, tmp_path: Path) -> None:
+        result = run(
+            "framework", "init", "--systems", "rules,conventions",
+            env={"CLAUDE_PROJECT_DIR": str(tmp_path)},
+        )
+        assert result.returncode == 0, result.stderr
+        import json
+        enabled = json.loads(self._config(tmp_path).read_text())["enabled"]
+        assert sorted(enabled) == ["conventions", "rules"]
+        # Only enabled systems' deploys exist
+        assert (tmp_path / ".claude" / "rules" / "ocd").is_dir()
+        assert (tmp_path / ".claude" / "conventions" / "ocd").is_dir()
+        assert not (tmp_path / ".claude" / "patterns" / "ocd").is_dir()
+
+    def test_init_systems_rejects_unknown(self, tmp_path: Path) -> None:
+        result = run(
+            "framework", "init", "--systems", "rules,not_a_real_system",
+            env={"CLAUDE_PROJECT_DIR": str(tmp_path)},
+        )
+        assert result.returncode == 0  # orchestration prints + returns, not exit(1)
+        assert "Unknown system" in result.stdout
+
+    def test_all_and_systems_mutually_exclusive(self, tmp_path: Path) -> None:
+        result = run(
+            "framework", "init", "--all", "--systems", "rules",
+            env={"CLAUDE_PROJECT_DIR": str(tmp_path)},
+        )
+        assert result.returncode != 0
+        assert "mutually exclusive" in result.stderr
+
+    def test_subsequent_init_respects_persisted_selection(self, tmp_path: Path) -> None:
+        """First init with --systems; second init without flags deploys
+        only what was persisted, not everything."""
+        run(
+            "framework", "init", "--systems", "rules",
+            env={"CLAUDE_PROJECT_DIR": str(tmp_path)},
+        )
+        result = run("framework", "init", env={"CLAUDE_PROJECT_DIR": str(tmp_path)})
+        assert result.returncode == 0, result.stderr
+        assert (tmp_path / ".claude" / "rules" / "ocd").is_dir()
+        assert not (tmp_path / ".claude" / "conventions" / "ocd").is_dir()
+
+    def test_disabled_tree_pruned_when_selection_shrinks(self, tmp_path: Path) -> None:
+        """Init with --all, then init with --systems limited — the
+        removed systems' deploy trees are cleaned up."""
+        run("framework", "init", "--all", env={"CLAUDE_PROJECT_DIR": str(tmp_path)})
+        assert (tmp_path / ".claude" / "patterns" / "ocd").is_dir()
+
+        result = run(
+            "framework", "init", "--systems", "rules",
+            env={"CLAUDE_PROJECT_DIR": str(tmp_path)},
+        )
+        assert result.returncode == 0, result.stderr
+        assert not (tmp_path / ".claude" / "patterns" / "ocd").is_dir()
+        assert not (tmp_path / ".claude" / "conventions" / "ocd").is_dir()
+
+
+class TestOptInEnableDisable:
+    """enable/disable verbs toggle a single system and reconcile disk state."""
+
+    def test_disable_removes_deployed_tree(self, tmp_path: Path) -> None:
+        run("framework", "init", "--all", env={"CLAUDE_PROJECT_DIR": str(tmp_path)})
+        assert (tmp_path / ".claude" / "rules" / "ocd").is_dir()
+
+        result = run(
+            "framework", "disable", "rules",
+            env={"CLAUDE_PROJECT_DIR": str(tmp_path)},
+        )
+        assert result.returncode == 0, result.stderr
+        assert not (tmp_path / ".claude" / "rules" / "ocd").is_dir()
+
+        import json
+        enabled = json.loads(
+            (tmp_path / ".claude" / "ocd" / "enabled-systems.json").read_text(),
+        )["enabled"]
+        assert "rules" not in enabled
+
+    def test_enable_restores_deployed_tree(self, tmp_path: Path) -> None:
+        run(
+            "framework", "init", "--systems", "conventions",
+            env={"CLAUDE_PROJECT_DIR": str(tmp_path)},
+        )
+        assert not (tmp_path / ".claude" / "rules" / "ocd").is_dir()
+
+        result = run(
+            "framework", "enable", "rules",
+            env={"CLAUDE_PROJECT_DIR": str(tmp_path)},
+        )
+        assert result.returncode == 0, result.stderr
+        assert (tmp_path / ".claude" / "rules" / "ocd").is_dir()
+
+    def test_enable_unknown_system(self, tmp_path: Path) -> None:
+        result = run(
+            "framework", "enable", "not_a_real_system",
+            env={"CLAUDE_PROJECT_DIR": str(tmp_path)},
+        )
+        assert result.returncode == 0
+        assert "Unknown system" in result.stdout
+
+    def test_disable_already_disabled_is_noop(self, tmp_path: Path) -> None:
+        run(
+            "framework", "init", "--systems", "conventions",
+            env={"CLAUDE_PROJECT_DIR": str(tmp_path)},
+        )
+        result = run(
+            "framework", "disable", "rules",
+            env={"CLAUDE_PROJECT_DIR": str(tmp_path)},
+        )
+        assert result.returncode == 0, result.stderr
+        assert "already disabled" in result.stdout
+
+
+class TestOptInStatus:
+    """Status reflects opt-in state per system."""
+
+    def test_status_marks_enabled_systems(self, tmp_path: Path) -> None:
+        run(
+            "framework", "init", "--systems", "rules",
+            env={"CLAUDE_PROJECT_DIR": str(tmp_path)},
+        )
+        result = run("framework", "status", env={"CLAUDE_PROJECT_DIR": str(tmp_path)})
+        assert result.returncode == 0, result.stderr
+        assert "Rules [enabled]" in result.stdout
+        assert "[disabled]" in result.stdout
