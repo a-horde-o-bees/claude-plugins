@@ -100,6 +100,7 @@ Confirm shared understanding with the user before committing to action — align
 - Before deviating from the plan: explain what changed and why the deviation is needed; proceed after user approves
 - Before continuing after user asks a question during multi-step work: address the user's question and confirm resuming paused operations
 - Before proceeding after receiving a response: verify all prior questions were addressed; if unanswered, surface them before continuing
+- Before interrupting clearly-directed work to ask: proceed; confirmation gates belong on ambiguity, scoping decisions, and deviations, not habitual mid-phase checkpoints
 
 ## Principled Pushback
 
@@ -116,6 +117,7 @@ When something is wrong, trace to the root cause and correct it — even if that
 - A schema that allows invalid data is migrated, not guarded by application-layer checks
 - Aliases and indirection layers that map short names to real names are symptoms of an incomplete refactor — propagate the real names instead
 - Before proposing a workaround that changes what is delivered: explain what is missing and present alternative approaches; proceed only after user selects direction
+- When mid-execution an approach diverges from what was asked: stop and flag the gap before continuing; never silently reframe the workaround as equivalent to the original ask
 - Before working around unexpected constraints: research the constraint, explain what it prevents and what alternatives exist; proceed after user directs
 - Before changing approach due to errors: research the error cause, explain what failed and propose corrected approach; proceed after user directs
 
