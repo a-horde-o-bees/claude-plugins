@@ -6,7 +6,7 @@ Each plugin that ships a CLI runner (e.g. `ocd-run`, a hypothetical `blueprint-r
 
 ## Alignment with System Dormancy
 
-The per-plugin model matches the dormancy discipline documented in project `architecture.md`: a plugin's influence on the agent (rules, tools, permission contributions) reaches the user only when that plugin has been deployed. A cross-plugin permission contribution would be absent until the plugin's init runs.
+The per-plugin model matches the dormancy discipline documented in project `ARCHITECTURE.md`: a plugin's influence on the agent (rules, tools, permission contributions) reaches the user only when that plugin has been deployed. A cross-plugin permission contribution would be absent until the plugin's init runs.
 
 ## Design shapes to consider
 

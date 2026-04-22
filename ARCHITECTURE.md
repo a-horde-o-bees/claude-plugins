@@ -11,18 +11,18 @@ Marketplace manifest (.claude-plugin/marketplace.json)
     ↓ plugin source paths
 Plugins (plugins/ocd/)
     ↓ own entry points, hooks, skills
-Plugin internals (see per-plugin architecture.md)
+Plugin internals (see per-plugin ARCHITECTURE.md)
 ```
 
 ## Plugins
 
 | Plugin | Status | Purpose | Architecture |
 |--------|--------|---------|-------------|
-| [ocd](plugins/ocd/) | Pre-release (dev channel only) | Deterministic enforcement of permissions, rules, and structural conventions with agent-facing project navigation | [architecture.md](plugins/ocd/architecture.md) |
+| [ocd](plugins/ocd/) | Pre-release (dev channel only) | Deterministic enforcement of permissions, rules, and structural conventions with agent-facing project navigation | [ARCHITECTURE.md](plugins/ocd/ARCHITECTURE.md) |
 
 Plugins are independent systems — each has its own manifest, hooks, skills, rules, and tests. Tagged releases live on `main`; no release branches.
 
-Each plugin may register Claude Code hooks (PreToolUse, PostToolUse, SessionStart), MCP servers for persistent tooling (SQLite-backed, launched as subprocesses with per-server data directories under `.claude/<plugin>/`), and skills (discoverable by Claude Code at configured skill paths). The specific hooks, servers, and skills each plugin provides are documented in that plugin's own `architecture.md`.
+Each plugin may register Claude Code hooks (PreToolUse, PostToolUse, SessionStart), MCP servers for persistent tooling (SQLite-backed, launched as subprocesses with per-server data directories under `.claude/<plugin>/`), and skills (discoverable by Claude Code at configured skill paths). The specific hooks, servers, and skills each plugin provides are documented in that plugin's own `ARCHITECTURE.md`.
 
 ## Marketplace
 
@@ -35,8 +35,8 @@ Distribution: users add the GitHub repository as a marketplace source, then inst
 Every system boundary in this project — the repository root, each plugin, each skill that carries agent procedures — maintains a consistent set of documents, each targeting one consumer perspective:
 
 - **`README.md`** — user-facing. What the system does, how to install and use it. At the repository root, the README targets developers and contributors working on the marketplace; at plugin and subsystem boundaries, the README targets the end users of that component.
-- **`architecture.md`** — developer-facing. Layers, components, relationships, and key implementation details. A parent `architecture.md` describes each subsystem's role in the overall composition and links to the subsystem's own `architecture.md` for internals, rather than re-explaining what belongs to the subsystem.
-- **`CLAUDE.md`** or **`SKILL.md`** — agent-facing. Present only when the system has agent-facing procedures. Opens by directing the agent to read the sibling `architecture.md` before acting. Contains procedures, workflow rules, and tool invocation patterns; structural context is read from `architecture.md` rather than embedded inline.
+- **`ARCHITECTURE.md`** — developer-facing. Layers, components, relationships, and key implementation details. A parent `ARCHITECTURE.md` describes each subsystem's role in the overall composition and links to the subsystem's own `ARCHITECTURE.md` for internals, rather than re-explaining what belongs to the subsystem.
+- **`CLAUDE.md`** or **`SKILL.md`** — agent-facing. Present only when the system has agent-facing procedures. Opens by directing the agent to read the sibling `ARCHITECTURE.md` before acting. Contains procedures, workflow rules, and tool invocation patterns; structural context is read from `ARCHITECTURE.md` rather than embedded inline.
 
 Readers navigate from general to specific through the nesting chain. A parent document answers "how do these pieces fit together"; each subsystem's documents answer "how does this piece work internally." Neither layer re-explains content that belongs to the other.
 
@@ -118,7 +118,7 @@ claude-plugins/
 │   ├── ocd/                     — ocd plugin project data (navigator db)
 │   └── settings.json            — project-level permission patterns
 ├── plugins/
-│   └── ocd/                     — ocd plugin (own system, see plugins/ocd/architecture.md)
+│   └── ocd/                     — ocd plugin (own system, see plugins/ocd/ARCHITECTURE.md)
 ├── scripts/                     — shared development scripts (dev-only)
 ├── tests/                       — project-level integration tests (dev-only)
 └── purpose-map/                 — methodology tooling for live-invention audits (dev-only)

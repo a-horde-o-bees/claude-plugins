@@ -80,7 +80,7 @@ Move a feature off main onto a dedicated `sandbox/<feature>` branch in a sibling
 
 8. Classify tendrils:
     1. {auto-delete} = tendrils that are clearly structural:
-        - Rows in `plugins/<plugin>/README.md` skills-table or `plugins/<plugin>/architecture.md` subsystem-table (line starts with `|` inside a markdown table)
+        - Rows in `plugins/<plugin>/README.md` skills-table or `plugins/<plugin>/ARCHITECTURE.md` subsystem-table (line starts with `|` inside a markdown table)
         - Path or module imports in code files whose sole content is the reference
     2. {auto-migrate} = tendrils whose source is content about the feature:
         - Bullet entries in `purpose-map/state.md` or project-root `state.md` that describe work on the feature

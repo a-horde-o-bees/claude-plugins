@@ -14,7 +14,7 @@ The v0.1.0 release was cut manually through a series of steps coordinated across
 2. **Alignment pass** — conformed remaining skills and conventions to locked-down governance; no governance changes during alignment
 3. **Branch creation** — created `v0.1.0` branch from `main` at the point where all in-scope work was complete
 4. **Dev content stripping** — removed content not ready for consumers from the release branch (blueprint plugin, purpose-map, in-progress audit skills)
-5. **Documentation regeneration** — rebuilt README.md and architecture.md on the release branch to reflect release scope only (single plugin, stripped features)
+5. **Documentation regeneration** — rebuilt README.md and ARCHITECTURE.md on the release branch to reflect release scope only (single plugin, stripped features)
 6. **Residue cleanup** — found and removed stale cross-references to stripped content
 7. **Version bump** — bumped `plugin.json` version to `0.1.0`
 8. **Tag** — tagged the final release commit as `v0.1.0`
@@ -28,7 +28,7 @@ The v0.1.0 release was cut manually through a series of steps coordinated across
 - **Main README always points to latest stable.** Update the "Releases" section link when a new release ships.
 - **GitHub Release page per version.** Each tagged release gets a Release page with: what's included, install instructions, and what's new since the prior release (changelog-style for v0.2.0+).
 - **Strip, don't stub.** Remove unshipped plugins and tools entirely from the release branch rather than leaving empty directories or "coming soon" placeholders.
-- **Documentation regeneration is mandatory after stripping.** README and architecture.md on the release branch must reflect only what shipped — stale references to stripped content confuse consumers.
+- **Documentation regeneration is mandatory after stripping.** README and ARCHITECTURE.md on the release branch must reflect only what shipped — stale references to stripped content confuse consumers.
 - **Version bump happens on the release branch, not main.** Main uses `z`-increment versions for dev commits. The `y`-increment (public release) only appears on the release branch.
 - **Smoke test after tagging.** Before creating the GitHub Release, verify the install flow works: `marketplace add ...#vX.Y.Z`, `plugin install`, init, status.
 

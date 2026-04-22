@@ -13,10 +13,10 @@ Self-contained in this folder — database, CLI, and documentation. No dependenc
 - **`purpose_map.py`** — implementation. The CLI and the only thing that touches the database.
 - **`purpose-map.db`** — SQLite database. The live state of the model.
 - **`CLAUDE.md`** (this file) — **operational reference**. Data model, CLI, evaluation protocol, writing guidelines. Stable across evaluation passes — changes only when the tool itself changes. Read on entry to any session.
-- **`architecture.md`** — **design rationale**. The problem, the structural decisions, the alternatives. Stable across evaluation passes — changes only when the methodology evolves. Read when context on *why* is needed.
+- **`ARCHITECTURE.md`** — **design rationale**. The problem, the structural decisions, the alternatives. Stable across evaluation passes — changes only when the methodology evolves. Read when context on *why* is needed.
 - **`state.md`** — **resumption state**. Current progress, scope, outstanding items. Mutates session-to-session. Read after CLAUDE.md to pick up where the last session left off.
 
-Routing: if the agent needs it to *do* the next step, CLAUDE.md. If it explains *why that step exists*, architecture.md. If it's specific to the current evaluation pass, state.md.
+Routing: if the agent needs it to *do* the next step, CLAUDE.md. If it explains *why that step exists*, ARCHITECTURE.md. If it's specific to the current evaluation pass, state.md.
 
 ## Data Model
 

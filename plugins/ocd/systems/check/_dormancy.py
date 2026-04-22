@@ -1,7 +1,7 @@
 """Dormancy checker.
 
 Verifies a system's dormancy surfaces conform to the System Dormancy
-discipline — see marketplace-level architecture.md. Runs against any
+discipline — see marketplace-level ARCHITECTURE.md. Runs against any
 system with an init contract, exercising its readiness interface and
 rule deployment in an isolated project directory. Does not depend on
 which plugin owns the system.

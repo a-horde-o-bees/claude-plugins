@@ -146,7 +146,7 @@ Single-plugin marketplace. — Not applicable.
 
 **CHANGELOG.md.** Present. ✓ 9/18.
 
-**architecture.md at repo root.** Present. ✓ 2/18 (rare but high-signal).
+**`ARCHITECTURE.md` at repo root.** Present. ✓ 5/5 of the repos that place an architecture doc at repo root use the uppercase form — 100% dominance for this location. Across all 18 sample repos that ship an architecture doc anywhere (root or under `docs/`), uppercase leads ~11/18. Prior audit's "2/18" figure collapsed case into one bucket and undercounted; corrected here. Uppercase aligns with the sibling root-doc convention (`README.md`, `CHANGELOG.md`, `LICENSE`, `SECURITY.md`) — agent-facing all-caps is the dominant signal across the ecosystem.
 
 **CLAUDE.md.** Present. ✓ ~22/54 — now common for active plugins (earlier "rare" framing was stale).
 

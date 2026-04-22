@@ -145,9 +145,9 @@ Notes:
 
 ## Architecture
 
-See [architecture.md](architecture.md) for marketplace structure, shared infrastructure, and how plugins relate. Each plugin documents its own internals:
+See [ARCHITECTURE.md](ARCHITECTURE.md) for marketplace structure, shared infrastructure, and how plugins relate. Each plugin documents its own internals:
 
-- [ocd architecture](plugins/ocd/architecture.md) — hooks, rules, navigator, conventions engine
+- [ocd architecture](plugins/ocd/ARCHITECTURE.md) — hooks, rules, navigator, conventions engine
 
 ## Versioning
 

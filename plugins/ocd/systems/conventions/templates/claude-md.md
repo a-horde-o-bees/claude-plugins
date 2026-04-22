@@ -23,11 +23,11 @@ Document what an agent needs to operate within the system:
 - **Tool invocation patterns** — how to run system-specific tools and scripts
 - **Content routing** — where different types of content belong within the system
 
-Include only procedures and operational guidance. Exclude technical internals (layers, schema, design patterns) — that belongs in architecture.md. Exclude user-facing content (installation, configuration, usage) — that belongs in README.md.
+Include only procedures and operational guidance. Exclude technical internals (layers, schema, design patterns) — that belongs in ARCHITECTURE.md. Exclude user-facing content (installation, configuration, usage) — that belongs in README.md.
 
 ## Architecture Reference
 
-When a procedure requires structural context to be actionable, direct the agent to read architecture.md rather than embedding the context inline. The architecture document is the single source for how the system works; the operational document references it rather than re-explaining.
+When a procedure requires structural context to be actionable, direct the agent to read ARCHITECTURE.md rather than embedding the context inline. The architecture document is the single source for how the system works; the operational document references it rather than re-explaining.
 
 ## Structure
 

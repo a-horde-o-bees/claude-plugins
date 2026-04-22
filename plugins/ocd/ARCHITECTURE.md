@@ -75,11 +75,11 @@ Plugin-wide rule templates in `systems/rules/templates/` deploy to `.claude/rule
 |------|-------|
 | `design-principles.md` | Foundational principles governing all artifacts and agent behavior |
 | `workflow.md` | Working directory, agents, testing — execution discipline for working in this project |
-| `system-docs.md` | README and architecture.md requirements per system, including the Subsystem Doc Consolidation rule and purpose-statement propagation |
+| `system-docs.md` | README and ARCHITECTURE.md requirements per system, including the Subsystem Doc Consolidation rule and purpose-statement propagation |
 | `process-flow-notation.md` | Structured programming notation for skill workflows |
 | `markdown.md` | Base content standards for markdown files |
 
-System-owned rules live alongside the system that prescribes them — `systems/<name>/rules/` — and deploy flat under `.claude/rules/ocd/systems/<name>.md` via the system's own init per System Dormancy (see marketplace-level `architecture.md`). Today navigator owns `navigator.md` (navigator usage guidance), log owns `log.md` (log type selection and routing), and refactor owns `refactor.md` (when to reach for `/ocd:refactor` over manual sed or Edit). The `systems/` subdir inside `.claude/rules/ocd/` namespaces system-scoped rules away from project-wide foundational rules, so filenames can match system names without colliding.
+System-owned rules live alongside the system that prescribes them — `systems/<name>/rules/` — and deploy flat under `.claude/rules/ocd/systems/<name>.md` via the system's own init per System Dormancy (see marketplace-level `ARCHITECTURE.md`). Today navigator owns `navigator.md` (navigator usage guidance), log owns `log.md` (log type selection and routing), and refactor owns `refactor.md` (when to reach for `/ocd:refactor` over manual sed or Edit). The `systems/` subdir inside `.claude/rules/ocd/` namespaces system-scoped rules away from project-wide foundational rules, so filenames can match system names without colliding.
 
 Rules use the template-deployed model: sources are authoritative; deployed copies in `.claude/rules/ocd/` are derived (gitignored). A guard hook blocks direct edits to deployed copies so changes only flow template → deployed. `/checkpoint` runs `scripts/auto_init.py` (the auto-init orchestrator) to rectify deployed state against current templates.
 
@@ -111,7 +111,7 @@ Agent-facing tools exposed over the Model Context Protocol. The plugin registers
 
 ## Libraries
 
-Python packages consumed as imports. Each is a subsystem with its own README.md and architecture.md; this section is the plugin-level overview.
+Python packages consumed as imports. Each is a subsystem with its own README.md and ARCHITECTURE.md; this section is the plugin-level overview.
 
 | Library | Package | Purpose | Docs |
 |---------|---------|---------|------|
@@ -120,8 +120,8 @@ Python packages consumed as imports. Each is a subsystem with its own README.md 
 | `patterns` | `systems/patterns/` | Patterns subsystem — deploys reusable workflow pattern templates to `.claude/patterns/<plugin>/`; referenced by skills, not auto-loaded. | [README](systems/patterns/README.md) |
 | `logs` | `systems/log/` | Logs subsystem — deploys per-type templates to the shared `logs/<type>/` pool at project root (unnamespaced; contributes to project-level log types). | [README](systems/log/README.md) |
 | `permissions` | `systems/permissions/` | Permissions subsystem — reports auto-approve coverage; specialized CLI ops (`status`, `install`, `analyze`, `clean`) manage recommended patterns across project and user scopes. | [README](systems/permissions/README.md) |
-| `governance` | `systems/governance/` | Convention and rule governance library: match files to applicable governance entries, list entries by kind, and compute the dependency-ordered level grouping. Reads directly from disk on every call — no database, no caching. | [README](systems/governance/README.md) · [architecture.md](systems/governance/architecture.md) |
-| `navigator` | `systems/navigator/` | Project structure index backed by SQLite. Maintains a queryable directory of project files and directories with human-written descriptions agents use to decide whether to open a file. | [README](systems/navigator/README.md) · [architecture.md](systems/navigator/architecture.md) |
+| `governance` | `systems/governance/` | Convention and rule governance library: match files to applicable governance entries, list entries by kind, and compute the dependency-ordered level grouping. Reads directly from disk on every call — no database, no caching. | [README](systems/governance/README.md) · [ARCHITECTURE.md](systems/governance/ARCHITECTURE.md) |
+| `navigator` | `systems/navigator/` | Project structure index backed by SQLite. Maintains a queryable directory of project files and directories with human-written descriptions agents use to decide whether to open a file. | [README](systems/navigator/README.md) · [ARCHITECTURE.md](systems/navigator/ARCHITECTURE.md) |
 
 Consumers within this plugin: the `convention_gate` hook imports `systems.governance`; the navigator MCP server imports `systems.navigator`; plugin orchestration (`run_init` / `run_status`) discovers and calls every `systems/*/_init.py` uniformly for per-subsystem deployment and reporting.
 

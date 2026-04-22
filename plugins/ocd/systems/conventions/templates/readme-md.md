@@ -24,7 +24,7 @@ Document what a user needs to adopt and use the system:
 - **Usage** — how to invoke, common workflows, examples
 - **Dependencies** — what must be present for the system to work
 
-Include what a user needs to get started and be productive. Exclude technical internals (layers, schema, design patterns) — that belongs in architecture.md. Exclude agent-facing procedures (workflow rules the agent follows, tool invocation patterns for automation) — that belongs in CLAUDE.md or SKILL.md.
+Include what a user needs to get started and be productive. Exclude technical internals (layers, schema, design patterns) — that belongs in ARCHITECTURE.md. Exclude agent-facing procedures (workflow rules the agent follows, tool invocation patterns for automation) — that belongs in CLAUDE.md or SKILL.md.
 
 ## Nesting
 

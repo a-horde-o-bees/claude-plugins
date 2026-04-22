@@ -3,7 +3,7 @@ includes:
   - ".claude/rules/*.md"
   - ".claude/conventions/*.md"
 excludes:
-  - "architecture.md"
+  - "ARCHITECTURE.md"
   - "README.md"
 governed_by:
   - .claude/rules/ocd/markdown.md

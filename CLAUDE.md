@@ -1,6 +1,6 @@
 # Project Instructions
 
-Operational procedures for agents working in the claude-plugins marketplace repository. Read the sibling `architecture.md` before acting.
+Operational procedures for agents working in the claude-plugins marketplace repository. Read the sibling `ARCHITECTURE.md` before acting.
 
 ## Development Workflow
 
