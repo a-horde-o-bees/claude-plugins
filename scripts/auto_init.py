@@ -136,8 +136,8 @@ def _prune_orphans(claimed: set[Path]) -> None:
     """Remove files under .claude/{category}/<plugin>/ that no system claimed.
 
     Scoped to TEMPLATE_CATEGORIES where every file should trace back to a
-    template. Other trees (.claude/logs for user content, plugin data dirs,
-    worktrees, pre-sync) are left alone.
+    template. Other trees (project-root `logs/` for user content, plugin
+    data dirs, worktrees, pre-sync) are left alone.
     """
     for category in TEMPLATE_CATEGORIES:
         category_dir = CLAUDE_DIR / category

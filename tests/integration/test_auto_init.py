@@ -129,8 +129,8 @@ class TestOrphanPruning:
             assert not orphan.exists()
 
     def test_leaves_non_template_categories_alone(self, empty_repo: Path):
-        """`.claude/logs/` is user content — never pruned by auto_init."""
-        log_entry = empty_repo / ".claude" / "logs" / "idea" / "keep-me.md"
+        """`logs/` is user content at project root — never pruned by auto_init."""
+        log_entry = empty_repo / "logs" / "idea" / "keep-me.md"
         log_entry.parent.mkdir(parents=True)
         log_entry.write_text("user content\n")
 

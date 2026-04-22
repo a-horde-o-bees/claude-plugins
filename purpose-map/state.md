@@ -25,11 +25,11 @@ Surfaced by `/ocd:sandbox exercise` (then named `test`) run against commit `1cb3
 **Critical — sandbox skill itself:**
 
 - [x] **Worktree subagent missing `AskUserQuestion` and agent-spawn tools.** *Resolved.* Worktree verb now drops `Spawn (isolation: "worktree"):` in favor of an executor-driven model: the invoking session creates an explicit git worktree at `.claude/worktrees/<topic>/`, drives test steps directly (bash via `env -C`, skills via Skill tool, prompts via `AskUserQuestion`), and cleans up at the end. Route Selection documents two residuals honestly: MCP tools bound at parent session start still see main's `CLAUDE_PROJECT_DIR`, and nested `Spawn:` inside invoked skills still hits the subagent tool-surface limit (executor drives those manually).
-- [ ] **Sensitive-file gate behavior in worktree — unverified under new model.** Prior test showed writes to `.claude/logs/idea/*.md` completing without prompting inside the spawned subagent. Under the new executor-driven worktree the write should route through the parent session's permission context, where the gate's actual behavior applies. Re-validate by re-running the worktree portion of the full-exercise test after the skill rewrite lands.
+- [ ] **Sensitive-file gate behavior in worktree — unverified under new model.** Prior test showed writes to `logs/idea/*.md` completing without prompting inside the spawned subagent. Under the new executor-driven worktree the write should route through the parent session's permission context, where the gate's actual behavior applies. Re-validate by re-running the worktree portion of the full-exercise test after the skill rewrite lands.
 
 **Skill surface issues:**
 
-- [ ] **`/ocd:log <bogus-type>` dispatches without validating the type.** Skill routes to `_add.md` without pre-checking whether the type exists under `.claude/logs/`. Add a pre-dispatch validation that lists valid types.
+- [ ] **`/ocd:log <bogus-type>` dispatches without validating the type.** Skill routes to `_add.md` without pre-checking whether the type exists under `logs/`. Add a pre-dispatch validation that lists valid types.
 - [ ] **`/ocd:pdf` setup requires `.claude/ocd/pdf/css/` mkdir that the sensitive-file gate blocks.** Skill's Workflow has no documented escape hatch. Either document the `--css <preset>` bypass, move the gated mkdir behind a lazy initializer invoked only when the user has explicitly opted into custom CSS, or provide a flag that skips the directory creation and uses the plugin-cache preset directly.
 
 **Polish:**
@@ -66,7 +66,7 @@ Outstanding methodology items:
 - **`<plugin>-run` binary naming convention not codified** — established in practice for ocd (`bin/ocd-run` with suffix-style, object_action shape), and reasoned in commit `f31e0b5`. Not yet written into a convention doc. When a second plugin with a `<plugin>-run` wrapper lands, promote the pattern into a `plugin-layout.md` convention (or extend `skill-md.md`) so future plugins follow uniformly.
 - **`install_deps.sh` plugin-binary collision check** — currently no guard for cases where `bin/<plugin>-run` collides with a command already on PATH. Low risk since `<plugin>-run` is inherently unique-ish, but a simple `command -v` probe during install_deps could warn the author proactively.
 - **`test_deploy_exits_zero` permissions test fixture** — pre-existing failure in `tests/test_invocation.py`. The test invokes `plugin permissions deploy --scope project` in a tmp dir, but `recommended-permissions.json` isn't on the expected path so deploy reports "not found" instead of "added". Needs fixture rework to place the template where the deploy code looks for it.
-- **Logged problems awaiting action** — see `.claude/logs/problem/` for currently open items (governance test coverage thin vs navigator, convention-agent test missing worktree isolation, principle-proposal entries for autonomous execution and capability-gap flagging, worktree isolation leak, plugin name resolution repeat-path risk).
+- **Logged problems awaiting action** — see `logs/problem/` for currently open items (governance test coverage thin vs navigator, convention-agent test missing worktree isolation, principle-proposal entries for autonomous execution and capability-gap flagging, worktree isolation leak, plugin name resolution repeat-path risk).
 
 ## v1 Reference Database
 

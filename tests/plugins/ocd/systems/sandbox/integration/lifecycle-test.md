@@ -93,10 +93,10 @@ Setup requires 9 fixture tendrils so every scanner pattern and every disposition
 | F2 | `plugins/<plugin>/architecture.md` subsystem-table row | module (if row embeds a path ref) | auto-delete if caught; see O7 |
 | F3 | `plugins/<plugin>/runner.py` bare import line | module | interactive → `edit` (import + call both removed) |
 | F4 | `state.md` section about the system | path + module | auto-migrate |
-| F5 | `.claude/logs/<type>/<system>*.md` whose filename names the system | slash | auto-migrate |
+| F5 | `logs/<type>/<system>*.md` whose filename names the system | slash | auto-migrate |
 | F6 | `docs/guide.md` illustrative prose | slash | interactive → `migrate` |
 | F7 | `plugins/<plugin>/helper.py` docstring example | slash | interactive → `edit` |
-| F8 | `.claude/logs/idea/unrelated.md` body-only mention | slash | interactive → `leave` |
+| F8 | `logs/idea/unrelated.md` body-only mention | slash | interactive → `leave` |
 | F9 | `plugins/<plugin>/config.yml` inline comment | slash | interactive → `remove` |
 
 - Exercise box — verify auto-delete + auto-migrate + all 4 interactive dispositions route correctly

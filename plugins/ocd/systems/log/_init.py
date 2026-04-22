@@ -1,10 +1,13 @@
 """Logs subsystem.
 
 Deploy log-type templates from systems/log/templates/<type>/ into
-.claude/logs/<type>/ — unnamespaced by plugin. Each plugin contributes
-log types to a shared project-level pool; the user authors log entries
-alongside the templates, so deployment uses keep_orphans to preserve
-user content.
+logs/<type>/ at project root — unnamespaced by plugin. Each plugin
+contributes log types to a shared project-level pool; the user authors
+log entries alongside the templates, so deployment uses keep_orphans
+to preserve user content. Logs sit at project root rather than inside
+.claude/ because they are project notes authored by the agent, not
+Claude Code infrastructure — the sensitivity envelope around .claude/
+does not apply to user content.
 
 Also deploys log-owned rule files (log-routing) to the plugin's rule
 corpus so the log routing prescription only reaches the agent once the
@@ -29,11 +32,11 @@ def _templates_dir() -> Path:
 
 
 def _target_dir() -> Path:
-    return framework.get_project_dir() / ".claude" / "logs"
+    return framework.get_project_dir() / "logs"
 
 
 def _deployed_rel() -> str:
-    return ".claude/logs"
+    return "logs"
 
 
 def _rules_src_dir() -> Path:

@@ -23,7 +23,7 @@ import sys
 
 GUARDED_PATTERNS = [
     re.compile(r"^\.claude/(rules|conventions|patterns)/"),    # deployed from templates
-    re.compile(r"^\.claude/logs/[^/]+/_template\.md$"),  # deployed log templates
+    re.compile(r"^logs/[^/]+/_template\.md$"),  # deployed log templates
     re.compile(r"^plugins/(?!ocd/)[^/]+/plugin/(__init__|__main__)\.py$"),  # propagated plugin framework
 ]
 

@@ -9,7 +9,7 @@ canonical shape:
 - System-scoped rules → .claude/rules/<plugin>/systems/<system>.md (nested one level)
 - Conventions         → .claude/conventions/<plugin>/<conv>.md     (flat)
 - Patterns            → .claude/patterns/<plugin>/<pattern>.md     (flat)
-- Log templates       → .claude/logs/<type>/_template.md           (by log type)
+- Log templates       → logs/<type>/_template.md                   (by log type, at project root)
 
 The separation between flat project-wide rules and `systems/`-nested
 system-scoped rules prevents filename collisions while keeping the
@@ -128,8 +128,8 @@ class TestPatterns:
 
 
 class TestLogTemplates:
-    """Log-type templates deploy under .claude/logs/<type>/."""
+    """Log-type templates deploy under logs/<type>/ at project root."""
 
     @pytest.mark.parametrize("log_type", ["decision", "friction", "idea", "problem"])
     def test_log_template_deployed(self, deployed_tree: Path, log_type: str) -> None:
-        assert (deployed_tree / f".claude/logs/{log_type}/_template.md").is_file()
+        assert (deployed_tree / f"logs/{log_type}/_template.md").is_file()

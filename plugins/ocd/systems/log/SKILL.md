@@ -11,7 +11,7 @@ allowed-tools:
 
 # /log
 
-Create, list, or remove project log entries. Log type routing is in always-on context via the log-routing rule; each type's `_template.md` in `.claude/logs/{type}/` defines entry structure.
+Create, list, or remove project log entries. Log type routing is in always-on context via the log-routing rule; each type's `_template.md` in `logs/{type}/` defines entry structure.
 
 ## Rules
 

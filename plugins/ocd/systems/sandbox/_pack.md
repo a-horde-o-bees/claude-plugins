@@ -84,7 +84,7 @@ Move a feature off main onto a dedicated `sandbox/<feature>` branch in a sibling
         - Path or module imports in code files whose sole content is the reference
     2. {auto-migrate} = tendrils whose source is content about the feature:
         - Bullet entries in `purpose-map/state.md` or project-root `state.md` that describe work on the feature
-        - Files in `.claude/logs/**/*.md` whose filename or level-1 heading names any scope symbol
+        - Files in `logs/**/*.md` whose filename or level-1 heading names any scope symbol
     3. {interactive} = every remaining tendril — prose mentions, illustrative examples, docstring samples, log entries that only mention the feature in passing
 
 > Auto-handle — apply deterministic deletions and accumulate migrated content before touching the index.

@@ -2,7 +2,7 @@
 
 Project-facing observations about upstream or environmental behavior that this project navigates around because the root cause sits outside our control. Each entry names the cause, the impact on how agents and users operate, and the workaround. Entries stay until the upstream situation changes.
 
-If this file grows past ~3 entries and a shared structure emerges across them, promote to a `.claude/logs/gotcha/` log type so every entry is individually discoverable and the lifecycle discipline matches the other log types.
+If this file grows past ~3 entries and a shared structure emerges across them, promote to a `logs/gotcha/` log type so every entry is individually discoverable and the lifecycle discipline matches the other log types.
 
 ## PATH shadowing after plugin update
 

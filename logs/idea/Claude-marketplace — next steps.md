@@ -53,5 +53,5 @@ Update `claude-marketplace--diff.md` to reflect:
 
 ## Not in scope for this queue
 
-- `research-and-refactor loop` for blueprint (separate idea log `.claude/logs/idea/Research-and-refactor loop for blueprint.md`)
+- `research-and-refactor loop` for blueprint (separate idea log `logs/idea/Research-and-refactor loop for blueprint.md`)
 - Blueprint plugin parity work (tracked in `_status.md` on `sandbox/blueprint-plugin` branch)

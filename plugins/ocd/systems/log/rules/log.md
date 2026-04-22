@@ -26,8 +26,8 @@ First decide whether to log at all:
 
 ## Entry Format
 
-Each entry is a file in `.claude/logs/{type}/{Title}.md`. Title is the entry's subject, used as both the filename and the level-1 heading — short enough to scan in a directory listing, detailed enough to distinguish from siblings. Read the type's `_template.md` for entry structure specific to that type.
+Each entry is a file in `logs/{type}/{Title}.md`. Title is the entry's subject, used as both the filename and the level-1 heading — short enough to scan in a directory listing, detailed enough to distinguish from siblings. Read the type's `_template.md` for entry structure specific to that type.
 
 ## Custom Types
 
-To add a log type: create a folder in `.claude/logs/` with a `_template.md` describing what qualifies, what doesn't, and entry structure guidance, then add the type to the routing table above.
+To add a log type: create a folder in `logs/` with a `_template.md` describing what qualifies, what doesn't, and entry structure guidance, then add the type to the routing table above.

@@ -192,7 +192,7 @@ Ordered by estimated effort / impact. Numbering reflects the current list after 
 5. **Add `.github/workflows/validate.yml`** — requires PAT. Schema-based validation (Python+json or bun+plain TS).
 6. **Delete legacy `v0.1.0` branch + re-point or delete historical `v0.1.0` tag** — destructive remote op, deferred until actual `v0.1.0` release is cut after refactor+cleanup completes.
 7. **Community health files** (`SECURITY.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`) — optional polish, deferred.
-8. **Per-verb integration test coverage** — discipline logged in `.claude/logs/idea/Per-verb integration test coverage.md`; tiered rollout planned.
+8. **Per-verb integration test coverage** — discipline logged in `logs/idea/Per-verb integration test coverage.md`; tiered rollout planned.
 
 ## Novel-but-defensible choices
 

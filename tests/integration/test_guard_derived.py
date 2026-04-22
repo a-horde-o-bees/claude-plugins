@@ -45,7 +45,7 @@ class TestDeployedFilesBlocked:
         assert path in decision["permissionDecisionReason"]
 
     def test_log_template_denied(self):
-        result = _run_hook(".claude/logs/decision/_template.md")
+        result = _run_hook("logs/decision/_template.md")
         assert result.returncode == 2
         decision = json.loads(result.stdout)["hookSpecificOutput"]
         assert decision["permissionDecision"] == "deny"
@@ -73,7 +73,7 @@ class TestUnguardedPathsAllowed:
     @pytest.mark.parametrize("path", [
         "README.md",
         "plugins/ocd/systems/pdf/_generate.py",
-        ".claude/logs/decision/some-entry.md",  # real log entries, not templates
+        "logs/decision/some-entry.md",  # real log entries, not templates
         ".claude/hooks/guard_derived.py",
     ])
     def test_path_allowed(self, path: str):
