@@ -8,12 +8,6 @@ build/
 .plugin_root
 .venv-python
 
-# Plugin-init deployed copies — every clone initializes its own
-.claude/rules/
-.claude/conventions/
-.claude/patterns/
-.claude/ocd/
-
 # Sandbox-skill worktrees — disposable substrate outputs
 .claude/worktrees/
 

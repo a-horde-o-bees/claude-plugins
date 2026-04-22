@@ -1,0 +1,22 @@
+path,entry_type,exclude,traverse,purpose
+**/__pycache__,directory,1,0,
+**/.git,directory,1,0,
+**/.venv,directory,1,0,
+**/.pytest_cache,directory,1,0,
+**/*.egg-info,directory,1,0,
+**/node_modules,directory,1,0,
+**/dist,directory,1,0,
+**/build,directory,1,0,
+**/.vscode,directory,1,0,
+**/.idea,directory,1,0,
+**/uv.lock,file,1,1,
+**/tests,directory,0,0,Test suites; contains unit/ and integration/ subdirectories
+**/__init__.py,file,0,1,Package marker
+**/__main__.py,file,0,1,Module invocation shortcut
+**/SKILL.md,file,0,1,Skill definition and workflow
+**/conftest.py,file,0,1,Pytest fixtures and configuration
+.claude/*/*/paths.csv,file,0,0,System declaration of deployed paths and purposes
+.claude/ocd/navigator,directory,0,1,Navigator system deployed artifacts
+.claude/ocd/navigator/navigator.db,file,0,0,Navigator SQLite index of project paths and purposes
+.claude/ocd/navigator/navigator.db-shm,file,1,0,
+.claude/ocd/navigator/navigator.db-wal,file,1,0,
