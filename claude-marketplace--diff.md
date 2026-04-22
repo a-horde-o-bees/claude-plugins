@@ -48,9 +48,9 @@ Pre-first-release, main stays at `0.0.z` (current state) until `v0.1.0` is cut a
 
 **Default branch.** `main`. ✓ Dominant (16/18).
 
-**Tag placement.** Tags on main (once the Option E scheme is active). ✓ Dominant (14/14). Current state: `v0.1.0` tag exists at a historical commit predating this refactor and no longer represents a usable release — needs re-pointing or re-cutting when the first real release lands.
+**Tag placement.** Tags on main under Option E. ✓ Dominant (14/14). No tags currently exist; `v0.1.0` will be the first tagged release on main.
 
-**Release branching.** None under Option E. ✓ Dominant (13/14 tagged repos). The legacy `v0.1.0` branch that exists today serves no purpose under Option E and should be deleted as part of release prep. No action item requires Option E's adoption; cleanup happens when the destructive-remote gate is crossed.
+**Release branching.** None under Option E. ✓ Dominant (13/14 tagged repos). The legacy `v0.1.0` branch and historical tag have been removed; no cleanup remains.
 
 **Pre-release suffixes.** Plain semver only. ✓ Dominant (12/14). One minor outlier under Option E: `z` auto-increments per commit rather than holding at the last-release value. Preserves cache-reload detection for dev-channel users; specifically-justified deviation.
 
@@ -98,9 +98,7 @@ Does not use `userConfig`. — Not applicable. Plugin's configuration surface is
 
 **Hooks.** Ships `auto_approval` (matches `Bash|Edit|Write`) and `convention_gate` (matches `Read|Edit|Write`) as PreToolUse handlers with 10s timeouts.
 
-**Output and failure convention.** Audit pending this session. Expected patterns: stderr summary on block (BULDEE-style, CHANGELOG v3.4.4 precedent), top-level try/catch with fail-open or fail-closed posture (Kanevry-style centralized helpers).
-
-- **Gap — action item 2 (audit + fix if needed):** inspect `auto_approval` and `convention_gate` for JSON-only-to-stdout ("No stderr output") anti-pattern and bare `exit 1` crash path (BULDEE v3.4.4 / Kanevry REQ-01 precedents).
+**Output and failure convention.** Both hooks emit `hookSpecificOutput` JSON with the appropriate `permissionDecision` (`allow` for convention_gate, `allow`/`deny` for auto_approval). `auto_approval.__main__` wraps dispatch in a top-level try/except that writes one stderr line and exits 0 on any unhandled exception — fail-open matches the hook's auto-approval role (a crash must never block a tool call; Claude Code's user-prompt fallback takes over). Blocks surface a human-readable reason via `permissionDecisionReason`, which Claude Code relays to the agent. ✓ Matches the Kanevry-style centralized-helper pattern.
 
 ## Session context loading
 
@@ -128,27 +126,19 @@ Single-plugin marketplace. — Not applicable.
 
 **Pytest configuration location.** `tests/plugins/ocd/pyproject.toml` under `[tool.pytest.ini_options]`. ✓ Matches the 6/10 community convention (pyproject.toml for pytest config). **Resolved** — action item 3 from a prior diff.
 
-**Python dependency manifest format.** `plugins/ocd/requirements.txt`. ✗ Outlier (1/7 in the sample uses `requirements.txt`; 6/7 use `pyproject.toml`).
+**Python dependency manifest format.** `plugins/ocd/pyproject.toml` under `[project.dependencies]`. ✓ Matches the dominant 6/7 convention. **Resolved** — `install_deps.sh` references the new manifest path; change-detection target and install_deps integration fixture updated.
 
-- **Gap — action item 3:** move runtime dep declarations into `plugins/ocd/pyproject.toml` under `[project.dependencies]` (or equivalent). Update `install_deps.sh` to reference the new manifest path. Update change-detection target. Update the install_deps integration tests' fixture.
-
-**CI workflows.** Absent — workflows were removed in commit `70def06` pending CI/CD research (now complete). ✗ Outlier (15/18 have at least one workflow; 9/18 have ci.yml or equivalent push/PR pytest).
-
-- **Gap — action item 4:** reintroduce CI workflow. Minimum shape (from pattern-doc research): `push: [branches: [main]]` + `pull_request`, single-runtime (ubuntu-latest, Python 3.11 or equivalent), direct `bash scripts/test.sh` invocation. Matrix unnecessary for a Python-only single-plugin repo; can add later if multi-OS support becomes a priority.
+**CI workflows.** `.github/workflows/ci.yml` — `push: [branches: [main]]` + `pull_request`, single-runtime (ubuntu-latest), `uv sync` + plugin-venv bootstrap + `bash scripts/test.sh`. ✓ Matches the 9/18 push/PR pytest shape. **Resolved**.
 
 ## Release automation
 
-**`release.yml`.** Absent (removed in `70def06`). ✗ 5/14 tagged repos have one.
+**`release.yml`.** Present. Triggered on `v*` tag push. Tag-sanity gates: verifies tag matches `vX.Y.Z` format, verifies `plugin.json` version at the tag commit equals the tag's version, runs tests, creates GitHub release with `gh release create --generate-notes`. Option E shape — no release-branch check (tags live on main). ✓ Matches the 5/14 tagged-repo shape. **Resolved**.
 
-- **Gap — action item 5:** add `.github/workflows/release.yml` triggered on `v*` tag push. Per pattern research, this repo's shape should include deep tag-sanity gates (verify tag format, verify tag is on a `release/*` branch, verify tag matches `plugin.json` version) since this repo's versioning policy enforces release-branch-only tagging. Requires `workflow` scope on the GitHub PAT.
-
-**Release script.** `scripts/release.sh` exists. ✓ Pairs with `release.yml` when that lands.
+**Release script.** `scripts/release.sh` exists. ✓ Pairs with `release.yml`.
 
 ## Marketplace validation
 
-**Validation workflow.** Absent (`validate.yml` was part of the `70def06` removal). ✗ ~8/54 have a dedicated validator script; ~41/54 have none.
-
-- **Gap — action item 6:** reintroduce `validate.yml` using schema-based validation (Python+json or bun + plain TypeScript), not `claude plugin validate` CLI invocation. Per pattern research, 0/54 sampled repos wire the CLI into CI; Anthropic's own `claude-plugins-official` uses bun + plain TypeScript (~65-line manual shape checker, no zod library).
+**Validation workflow.** `.github/workflows/validate.yml` runs `python3 scripts/validate-manifests.py` on push/PR to main. Schema-based shape check against `.claude-plugin/marketplace.json` and each plugin's `plugin.json` — matches Anthropic's `claude-plugins-official` bun+plain-TS pattern in spirit (no CLI `claude plugin validate` invocation). ✓ Matches the ~8/54 dedicated-validator shape. **Resolved**.
 
 ## Documentation
 
@@ -168,7 +158,7 @@ Single-plugin marketplace. — Not applicable.
 
 ## Action-item summary
 
-Ordered by estimated effort / impact. Numbering reflects the current list after earlier action items were resolved or dropped.
+All blocking marketplace-convention items are resolved. From a marketplace-alignment standpoint the repository is releasable as `v0.1.0`.
 
 **Resolved:**
 
@@ -178,21 +168,21 @@ Ordered by estimated effort / impact. Numbering reflects the current list after 
 - **Pattern doc** restructured to purpose-oriented + 17 corrections applied + new "Multi-harness distribution" and "Project-level tooling layout" purpose sections.
 - **Versioning scheme** confirmed as Option E (tag-on-main, no release branches, dev counter on z).
 - **Per-verb integration test coverage** — every callable surface (scripts, hooks, tools, every system's `__main__.py` CLI dispatch) now has at least one test exercising it. `rules/ocd/testing.md`'s Callable Surface Coverage bar is met. The remaining piece — automating the check as a `/ocd:check` dimension — is tracked in `logs/idea/Callable-surface coverage crawler.md` (build the machinery, not add more tests).
+- **Hook output convention** — `auto_approval` and `convention_gate` both emit `hookSpecificOutput` with proper `permissionDecision`; `auto_approval.__main__` wraps dispatch in a fail-open try/except that writes one stderr line and exits 0 on unhandled exceptions. No bare `exit 1` crash path; no JSON-only-to-stdout anti-pattern.
+- **`requirements.txt` → `[project.dependencies]` in `pyproject.toml`** — mechanical move complete; `install_deps.sh`, change-detection target, and install_deps test fixture all reference the new path.
+- **`.github/workflows/ci.yml`** — push/PR on main, single-runtime, `uv sync` + plugin-venv bootstrap + `bash scripts/test.sh`.
+- **`.github/workflows/release.yml`** — triggers on `v*` tag push, verifies tag format + `plugin.json` version alignment, runs tests, creates release with `--generate-notes`.
+- **`.github/workflows/validate.yml`** — schema-based manifest validation via `scripts/validate-manifests.py`.
+- **Legacy `v0.1.0` branch + historical tag** — both removed from local and remote. The next `v0.1.0` will be the first real release on main.
 
 **Dropped:**
 
 - **~~Emit JSON `systemMessage` on install failure.~~** Pattern-doc correction showed this was not docs-prescribed. Current stderr approach is consistent with the docs worked example.
-- **~~Rename `v0.1.0` branch → `release/0.1`.~~** Under Option E, release branches don't exist. Legacy branch should be deleted outright (not renamed) when destructive-remote gate is crossed; action item 1 below subsumes this.
+- **~~Rename `v0.1.0` branch → `release/0.1`.~~** Under Option E, release branches don't exist; legacy branch + tag were deleted outright.
 
 **Open:**
 
-1. **Hook output convention audit** — inspect `auto_approval` and `convention_gate` for JSON-only-to-stdout anti-pattern and bare-`exit 1` crash path. Fix if found. Small, self-contained.
-2. **`requirements.txt` → `[project.dependencies]` in `pyproject.toml`** — mechanical move, update `install_deps.sh` to reference new path, update change-detection cached-copy target, update install_deps test fixture. Small.
-3. **Add `.github/workflows/ci.yml`** — requires `workflow` scope on PAT. Single-runtime, `bash scripts/test.sh`.
-4. **Add `.github/workflows/release.yml`** — requires PAT. Shape under Option E: trigger on `push: tags: ['v*']`, verify tag format, verify tag-commit `plugin.json` version matches tag, run tests, `gh release create --generate-notes`.
-5. **Add `.github/workflows/validate.yml`** — requires PAT. Schema-based validation (Python+json or bun+plain TS).
-6. **Delete legacy `v0.1.0` branch + re-point or delete historical `v0.1.0` tag** — destructive remote op, deferred until actual `v0.1.0` release is cut after refactor+cleanup completes.
-7. **Community health files** (`SECURITY.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`) — optional polish, deferred.
+1. **Community health files** (`SECURITY.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`) — optional polish, not a release blocker.
 
 ## Novel-but-defensible choices
 
