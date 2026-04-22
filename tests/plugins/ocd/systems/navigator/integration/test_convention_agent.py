@@ -28,7 +28,11 @@ pytestmark = pytest.mark.agent
 
 PLUGIN_ROOT = framework.get_plugin_root()
 PROJECT_ROOT = framework.get_project_dir()
-SCRATCH_DIR = PROJECT_ROOT / "_test_scratch"
+
+# Scratch files and spawned agents live inside a sandbox worktree
+# created by the module-scoped scratch_files fixture (see below) —
+# never in the project working tree. Per testing.md Git Worktree
+# Isolation.
 
 
 # ---------------------------------------------------------------------------
@@ -81,7 +85,7 @@ After editing all files, report in this exact JSON format (no other text):
 ALLOWED_TOOLS = "Edit Write Read"
 
 
-def _invoke_agent(claude_cli: str, prompt: str) -> RunResult:
+def _invoke_agent(claude_cli: str, prompt: str, cwd: Path) -> RunResult:
     """Spawn a claude -p agent and parse results."""
     proc = subprocess.run(
         [
@@ -91,7 +95,7 @@ def _invoke_agent(claude_cli: str, prompt: str) -> RunResult:
             "--max-budget-usd", "1.00",
         ],
         capture_output=True, text=True, timeout=180,
-        cwd=str(PROJECT_ROOT),
+        cwd=str(cwd),
     )
     assert proc.returncode == 0, f"claude -p failed: {proc.stderr[:500]}"
 
@@ -131,29 +135,39 @@ def _parse_report(text: str) -> AgentReport:
 # Scratch file management
 # ---------------------------------------------------------------------------
 
-@pytest.fixture(scope="module", autouse=True)
-def scratch_files():
-    """Create scratch .py files for agents to edit, clean up after."""
-    SCRATCH_DIR.mkdir(exist_ok=True)
-    files = [SCRATCH_DIR / f"file{i}.py" for i in range(5)]
-    for f in files:
-        f.write_text("# placeholder\n")
-    # Also create a servers/ scratch file that matches mcp-server convention
-    srv_dir = SCRATCH_DIR / "servers"
-    srv_dir.mkdir(exist_ok=True)
+@pytest.fixture(scope="module")
+def scratch_worktree():
+    """Module-scoped sandbox worktree hosting scratch files for every
+    scenario in this file. Agents run with cwd=<worktree>, so writes
+    cannot escape into the project working tree. Per testing.md Git
+    Worktree Isolation.
+
+    Deployed conventions/rules/patterns are tracked and therefore
+    flow into the worktree from git — no init step needed. The
+    convention gate hook resolves `governance_match` against real
+    conventions inside the worktree at creation time.
+    """
+    from systems.sandbox import worktree_setup, worktree_teardown
+
+    topic = "pytest-convention-agent"
+    worktree = worktree_setup(topic)
+
+    scratch = worktree / "_test_scratch"
+    scratch.mkdir()
+    for i in range(5):
+        (scratch / f"file{i}.py").write_text("# placeholder\n")
+    srv_dir = scratch / "servers"
+    srv_dir.mkdir()
     (srv_dir / "test_server.py").write_text("# placeholder\n")
     (srv_dir / "__init__.py").write_text("")
-
-    yield
-
-    # Cleanup
-    import shutil
-    if SCRATCH_DIR.exists():
-        shutil.rmtree(SCRATCH_DIR)
+    try:
+        yield worktree
+    finally:
+        worktree_teardown(topic)
 
 
-def _rel(path: Path) -> str:
-    return str(path.relative_to(PROJECT_ROOT))
+def _rel(path: Path, base: Path) -> str:
+    return str(path.relative_to(base))
 
 
 # ---------------------------------------------------------------------------
@@ -161,34 +175,38 @@ def _rel(path: Path) -> str:
 # ---------------------------------------------------------------------------
 
 @pytest.fixture(scope="module")
-def single_python(claude_cli):
+def single_python(claude_cli, scratch_worktree):
     """Scenario A: Edit 1 Python file."""
-    path = _rel(SCRATCH_DIR / "file0.py")
+    scratch = scratch_worktree / "_test_scratch"
+    path = _rel(scratch / "file0.py", scratch_worktree)
     prompt = SINGLE_FILE_PROMPT.format(file_path=path)
-    return _invoke_agent(claude_cli, prompt)
+    return _invoke_agent(claude_cli, prompt, cwd=scratch_worktree)
 
 
 @pytest.fixture(scope="module")
-def batch_python(claude_cli):
+def batch_python(claude_cli, scratch_worktree):
     """Scenario B: Edit 5 Python files of the same type."""
-    paths = [_rel(SCRATCH_DIR / f"file{i}.py") for i in range(5)]
+    scratch = scratch_worktree / "_test_scratch"
+    paths = [_rel(scratch / f"file{i}.py", scratch_worktree) for i in range(5)]
     file_list = "\n".join(f"- `{p}`" for p in paths)
     prompt = BATCH_FILE_PROMPT.format(file_list=file_list)
-    return _invoke_agent(claude_cli, prompt)
+    return _invoke_agent(claude_cli, prompt, cwd=scratch_worktree)
 
 
 @pytest.fixture(scope="module")
-def server_file(claude_cli):
+def server_file(claude_cli, scratch_worktree):
     """Scenario C: Edit a file in servers/ — should get mcp-server convention."""
-    path = _rel(SCRATCH_DIR / "servers" / "test_server.py")
+    scratch = scratch_worktree / "_test_scratch"
+    path = _rel(scratch / "servers" / "test_server.py", scratch_worktree)
     prompt = SINGLE_FILE_PROMPT.format(file_path=path)
-    return _invoke_agent(claude_cli, prompt)
+    return _invoke_agent(claude_cli, prompt, cwd=scratch_worktree)
 
 
 @pytest.fixture(scope="module")
-def write_new_file(claude_cli):
+def write_new_file(claude_cli, scratch_worktree):
     """Scenario D: Write a new .py file — hook fires on Write too."""
-    path = _rel(SCRATCH_DIR / "new_module.py")
+    scratch = scratch_worktree / "_test_scratch"
+    path = _rel(scratch / "new_module.py", scratch_worktree)
     prompt = (
         f"Write a new file at `{path}` containing `# new module\\n`. "
         "After writing, report in this exact JSON format (no other text):\n"
@@ -196,15 +214,16 @@ def write_new_file(claude_cli):
         '"conventions_read": [<conventions you Read>], '
         '"files_edited": [<files you wrote>]}'
     )
-    return _invoke_agent(claude_cli, prompt)
+    return _invoke_agent(claude_cli, prompt, cwd=scratch_worktree)
 
 
 @pytest.fixture(scope="module")
-def server_init(claude_cli):
+def server_init(claude_cli, scratch_worktree):
     """Scenario E: Edit servers/__init__.py — mcp-server should be excluded."""
-    path = _rel(SCRATCH_DIR / "servers" / "__init__.py")
+    scratch = scratch_worktree / "_test_scratch"
+    path = _rel(scratch / "servers" / "__init__.py", scratch_worktree)
     prompt = SINGLE_FILE_PROMPT.format(file_path=path)
-    return _invoke_agent(claude_cli, prompt)
+    return _invoke_agent(claude_cli, prompt, cwd=scratch_worktree)
 
 
 # ---------------------------------------------------------------------------

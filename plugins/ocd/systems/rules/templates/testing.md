@@ -172,9 +172,26 @@ Integration tests that create, modify, or stage files within the project reposit
 
 Without isolation, tests that use `git checkout --`, `git restore`, or `git reset` to clean up after themselves silently destroy uncommitted changes in the main working tree.
 
-**Mechanism.** Create a detached worktree from HEAD via `git worktree add <path> HEAD --detach`; tear it down with `git worktree remove --force`. Tests receive the worktree path and reference all project files relative to it.
+**Canonical fixture.** The `sandbox_worktree` pytest fixture in `tests/plugins/ocd/conftest.py` wraps the ocd sandbox system's ephemeral worktree primitives — tests import it by name and receive a worktree path:
 
-**Fixture patterns live in the language convention.** Worktree isolation is language-agnostic — the fixture machinery that implements it (pytest session-scoped fixtures, Jest setup hooks, etc.) is language-specific and documented alongside the language's other testing patterns, not here.
+```python
+@pytest.fixture
+def sandbox_worktree(request):
+    """Disposable sandbox worktree for integration tests that modify project files."""
+    from systems.sandbox import worktree_setup, worktree_teardown
+    topic = f"pytest-{request.node.name.replace(':', '-')}"
+    path = worktree_setup(topic)
+    try:
+        yield path
+    finally:
+        worktree_teardown(topic)
+```
+
+The fixture is a thin wrapper over `systems.sandbox.worktree_setup(topic)` / `worktree_teardown(topic)`, which create a sibling worktree at `<parent>/<project>--tmp-<topic>/` with a `sandbox/tmp/<topic>` branch and clear it on exit. Topic derives from the pytest node name so concurrent tests never collide. Orphaned worktrees left by crashed tests are swept by `ocd-run sandbox cleanup`.
+
+**Why sandbox, not a bespoke fixture.** The sandbox system is this project's canonical disposable-workspace mechanism — used by `/ocd:sandbox exercise`, by future `/ocd:sandbox run <test.md>` markdown-driven tests, and by pytest integration tests. One set of primitives, one set of orphan-sweep semantics, one permission glob covering every substrate. A bespoke worktree fixture would fork this convention with no added value.
+
+**Cross-suite reuse.** Tests under `tests/plugins/ocd/` can import `systems.sandbox` directly because the plugin's venv puts it on sys.path. Project-level tests (under `tests/integration/`) run in the project venv without that import path; they should shell out to `ocd-run sandbox worktree setup <topic>` / `teardown <topic>` instead. Same primitives, different invocation.
 
 When worktree isolation is required:
 

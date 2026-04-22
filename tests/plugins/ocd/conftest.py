@@ -74,3 +74,23 @@ def ocd_run(project_root: Path) -> Path:
     chain — the same path agents hit when invoking `ocd-run ...`.
     """
     return project_root / "plugins" / "ocd" / "bin" / "ocd-run"
+
+
+@pytest.fixture
+def sandbox_worktree(request):
+    """Disposable sandbox worktree for integration tests that modify project files.
+
+    Wraps `systems.sandbox.worktree_setup` / `worktree_teardown` — the
+    canonical ephemeral-worktree primitives. Yields the path to a
+    detached worktree at `<parent>/<project>--tmp-pytest-<node>/`.
+    Orphaned worktrees from crashed tests are swept by
+    `ocd-run sandbox cleanup`. See testing.md Git Worktree Isolation.
+    """
+    from systems.sandbox import worktree_setup, worktree_teardown
+
+    topic = f"pytest-{request.node.name.replace(':', '-').replace('[', '-').replace(']', '')}"
+    path = worktree_setup(topic)
+    try:
+        yield path
+    finally:
+        worktree_teardown(topic)
