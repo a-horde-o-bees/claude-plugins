@@ -94,9 +94,9 @@ def _run_init(init_mod, result: CheckResult) -> bool:
 
 
 def _check_rule_deployment(surfaces: SystemSurfaces, project_dir: Path, result: CheckResult) -> None:
-    """Verify rule files deployed to .claude/rules/<plugin>/<system>/ after init."""
+    """Verify rule files deployed to .claude/rules/<plugin>/systems/ after init."""
     plugin_name = framework.get_plugin_name(framework.get_plugin_root())
-    deployed_dir = project_dir / ".claude" / "rules" / plugin_name / surfaces.name
+    deployed_dir = project_dir / ".claude" / "rules" / plugin_name / "systems"
     for src in surfaces.rule_files:
         deployed = deployed_dir / src.name
         if not deployed.exists():
