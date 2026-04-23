@@ -39,7 +39,7 @@ This is the primary source for patterns, supported fields, and examples. Fetch t
 
 ## Editing Rules, Conventions, and Patterns
 
-Edit templates under each owning system's directory — rules in `plugins/ocd/systems/<system>/rules/` for system-scoped rules or `plugins/ocd/systems/rules/templates/` for project-wide rules; conventions in `plugins/ocd/systems/conventions/templates/`; patterns in `plugins/ocd/systems/patterns/templates/`. Never edit deployed copies in `.claude/` — a guard hook blocks those writes. Run `/checkpoint` to rectify deployed state: its auto-init step force-runs every system's `init()`, prunes orphans, and reconciles any DB backups.
+Edit templates under each owning system's directory — rules in `plugins/ocd/systems/<system>/rules/` for system-scoped rules or `plugins/ocd/systems/rules/templates/` for project-wide rules; conventions in `plugins/ocd/systems/conventions/templates/`; log-type templates in `plugins/ocd/systems/log/templates/<type>/` (covers patterns, research, decision, friction, idea, problem). Never edit deployed copies in `.claude/` or deployed log templates under `logs/<type>/_template.md` — a guard hook blocks those writes. Run `/checkpoint` to rectify deployed state: its auto-init step force-runs every system's `init()`, prunes orphans, and reconciles any DB backups.
 
 ## Adding Python Dependencies
 

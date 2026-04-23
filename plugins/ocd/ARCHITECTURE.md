@@ -118,7 +118,6 @@ Python packages consumed as imports. Each is a subsystem under `systems/`; subst
 |---------|---------|---------|------|
 | `rules` | `systems/rules/` | Rules subsystem — deploys markdown rule templates to `.claude/rules/<plugin>/` as always-on agent context. | [README](systems/rules/README.md) |
 | `conventions` | `systems/conventions/` | Conventions subsystem — deploys convention templates to `.claude/conventions/<plugin>/` for file-governance via `governed_by` frontmatter. | [README](systems/conventions/README.md) |
-| `patterns` | `systems/patterns/` | Patterns subsystem — deploys reusable workflow pattern templates to `.claude/patterns/<plugin>/`; referenced by skills, not auto-loaded. | [README](systems/patterns/README.md) |
 | `logs` | `systems/log/` | Logs subsystem — deploys per-type templates to the shared `logs/<type>/` pool at project root (unnamespaced; contributes to project-level log types). | [README](systems/log/README.md) |
 | `permissions` | `systems/permissions/` | Permissions subsystem — reports auto-approve coverage; specialized CLI ops (`status`, `install`, `analyze`, `clean`) manage recommended patterns across project and user scopes. | [README](systems/permissions/README.md) |
 | `governance` | `systems/governance/` | Convention and rule governance library: match files to applicable governance entries, list entries by kind, and compute the dependency-ordered level grouping. Reads directly from disk on every call — no database, no caching. | [README](systems/governance/README.md) · [ARCHITECTURE.md](systems/governance/ARCHITECTURE.md) |
@@ -189,7 +188,6 @@ plugins/ocd/
     ├── governance/              — rules/conventions governance library (no SKILL.md; lib + CLI only)
     ├── log/                     — log entry capture skill and deployable log-type templates
     ├── navigator/               — project structure index (SKILL.md + CLI + MCP server + library)
-    ├── patterns/                — deployable pattern templates
     ├── pdf/                     — markdown-to-PDF skill via WeasyPrint
     ├── permissions/             — permission pattern management (settings.json asset)
     ├── refactor/                — mass source transformation skill

@@ -1,8 +1,8 @@
 # Marketplace Standards
 
-Commitments this marketplace repository makes for each purpose a Claude Code plugin marketplace has to address. Each section states the standard this project follows and a one-line rationale. Ecosystem context, observed adoption counts, and alternatives considered live in the research pattern at [.claude/patterns/ocd/claude-marketplace.md](.claude/patterns/ocd/claude-marketplace.md) (source template: `plugins/ocd/systems/patterns/templates/claude-marketplace.md`).
+Commitments this marketplace repository makes for each purpose a Claude Code plugin marketplace has to address. Each section states the standard this project follows and a one-line rationale. Ecosystem context, observed adoption counts, and alternatives considered live in the consolidated research at [logs/research/claude-marketplace/consolidated.md](logs/research/claude-marketplace/consolidated.md), backed by 54 per-repo samples under `logs/research/claude-marketplace/samples/`.
 
-Graduated from the former `claude-marketplace--diff.md` alignment audit once alignment work stabilized. The methodology that produced this doc is captured in the [alignment-audit pattern template](plugins/ocd/systems/patterns/templates/alignment-audit.md).
+Graduated from the former `claude-marketplace--diff.md` alignment audit once alignment work stabilized. The methodology that produced this doc is captured in the [alignment-audit pattern](logs/patterns/alignment-audit.md).
 
 ## Marketplace discoverability
 
@@ -139,4 +139,4 @@ Consolidated list of deliberate deviations from convention, with justification p
 
 ## Provenance
 
-This doc graduated from the alignment-audit artifact that lived at `claude-marketplace--diff.md` before stabilizing. The audit methodology is captured at [`plugins/ocd/systems/patterns/templates/alignment-audit.md`](plugins/ocd/systems/patterns/templates/alignment-audit.md). The ecosystem research this aligns against is at [`.claude/patterns/ocd/claude-marketplace.md`](.claude/patterns/ocd/claude-marketplace.md). Outstanding work (items that were open in the audit or surfaced later) is tracked in [`ROADMAP.md`](ROADMAP.md) and the idea logs under `logs/idea/`.
+This doc graduated from the alignment-audit artifact that lived at `claude-marketplace--diff.md` before stabilizing. The audit methodology is captured at [`logs/patterns/alignment-audit.md`](logs/patterns/alignment-audit.md). The ecosystem research this aligns against is at [`logs/research/claude-marketplace/consolidated.md`](logs/research/claude-marketplace/consolidated.md) with 54 per-repo samples under `logs/research/claude-marketplace/samples/`. Outstanding work (items that were open in the audit or surfaced later) is tracked in [`ROADMAP.md`](ROADMAP.md) and the idea logs under `logs/idea/`.

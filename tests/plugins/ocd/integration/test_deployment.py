@@ -8,7 +8,6 @@ canonical shape:
 - Project-wide rules  → .claude/rules/<plugin>/<rule>.md           (flat)
 - System-scoped rules → .claude/rules/<plugin>/systems/<system>.md (nested one level)
 - Conventions         → .claude/conventions/<plugin>/<conv>.md     (flat)
-- Patterns            → .claude/patterns/<plugin>/<pattern>.md     (flat)
 - Log templates       → logs/<type>/_template.md                   (by log type, at project root)
 
 The separation between flat project-wide rules and `systems/`-nested
@@ -120,16 +119,15 @@ class TestConventions:
         assert (deployed_tree / ".claude/conventions/ocd/python.md").is_file()
 
 
-class TestPatterns:
-    """Patterns deploy flat under .claude/patterns/<plugin>/."""
-
-    def test_mass_rename_pattern_deployed(self, deployed_tree: Path) -> None:
-        assert (deployed_tree / ".claude/patterns/ocd/mass-rename.md").is_file()
-
-
 class TestLogTemplates:
     """Log-type templates deploy under logs/<type>/ at project root."""
 
-    @pytest.mark.parametrize("log_type", ["decision", "friction", "idea", "problem"])
+    @pytest.mark.parametrize("log_type", ["decision", "friction", "idea", "patterns", "problem"])
     def test_log_template_deployed(self, deployed_tree: Path, log_type: str) -> None:
         assert (deployed_tree / f"logs/{log_type}/_template.md").is_file()
+
+    def test_research_subject_template_deployed(self, deployed_tree: Path) -> None:
+        assert (deployed_tree / "logs/research/_template.md").is_file()
+
+    def test_research_samples_template_deployed(self, deployed_tree: Path) -> None:
+        assert (deployed_tree / "logs/research/_samples-template.md").is_file()

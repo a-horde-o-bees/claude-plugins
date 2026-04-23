@@ -1,10 +1,10 @@
 # Comprehensive Resample — Seven Dimensions Against the 54-Repo Corpus
 
-Report-only resampling of seven dimensions recently folded into `plugins/ocd/systems/patterns/templates/claude-marketplace.md` against every per-repo research note under `research/claude-marketplace/repos/` (54 unique repos). Produces corrected adoption counts and a broader citation pool than the partial ~14-repo samples the pattern doc currently cites.
+Report-only resampling of seven dimensions recently folded into `logs/research/claude-marketplace/consolidated.md` against every per-repo research note under `logs/research/claude-marketplace/samples/` (54 unique repos). Produces corrected adoption counts and a broader citation pool than the partial ~14-repo samples the pattern doc currently cites.
 
 ## Methodology
 
-- **Corpus:** 54 per-repo research notes at `research/claude-marketplace/repos/*.md` (skipping `_TEMPLATE.md`, `_INDEX.md`, `_CORRECTIONS.md`).
+- **Corpus:** 54 per-repo research notes at `logs/research/claude-marketplace/samples/*.md` (skipping `_TEMPLATE.md`, `_INDEX.md`, `_CORRECTIONS.md`).
 - **Primary extraction:** `grep` over per-section markers (`**\`userConfig\` present**`, `**CHANGELOG.md**`, `**Test framework**`, etc.) followed by classification from the surrounding prose.
 - **Aggregate cross-reference:** `_INDEX.md` (its cross-sample themes preamble already provides extracted counts for purposes 5, 6, 8, 9, 13, 16 — these were sanity-checked against the per-repo files).
 - **Spot-checks:** limited to repos where the research note was silent on a dimension but classification mattered; none of the seven dimensions required a broad spot-check campaign (research notes cover these dimensions in adequate breadth, if not always depth).

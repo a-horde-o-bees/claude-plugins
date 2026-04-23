@@ -164,7 +164,7 @@ class TestOptInInit:
         assert result.returncode == 0, result.stderr
         import json
         enabled = json.loads(self._config(tmp_path).read_text())["enabled"]
-        assert set(enabled) >= {"rules", "conventions", "patterns", "log", "navigator"}
+        assert set(enabled) >= {"rules", "conventions", "log", "navigator"}
 
     def test_init_systems_limits_to_list(self, tmp_path: Path) -> None:
         result = run(
@@ -178,7 +178,7 @@ class TestOptInInit:
         # Only enabled systems' deploys exist
         assert (tmp_path / ".claude" / "rules" / "ocd").is_dir()
         assert (tmp_path / ".claude" / "conventions" / "ocd").is_dir()
-        assert not (tmp_path / ".claude" / "patterns" / "ocd").is_dir()
+        assert not (tmp_path / "logs" / "decision").is_dir()
 
     def test_init_systems_rejects_unknown(self, tmp_path: Path) -> None:
         result = run(
@@ -212,14 +212,13 @@ class TestOptInInit:
         """Init with --all, then init with --systems limited — the
         removed systems' deploy trees are cleaned up."""
         run("framework", "init", "--all", env={"CLAUDE_PROJECT_DIR": str(tmp_path)})
-        assert (tmp_path / ".claude" / "patterns" / "ocd").is_dir()
+        assert (tmp_path / ".claude" / "conventions" / "ocd").is_dir()
 
         result = run(
             "framework", "init", "--systems", "rules",
             env={"CLAUDE_PROJECT_DIR": str(tmp_path)},
         )
         assert result.returncode == 0, result.stderr
-        assert not (tmp_path / ".claude" / "patterns" / "ocd").is_dir()
         assert not (tmp_path / ".claude" / "conventions" / "ocd").is_dir()
 
 

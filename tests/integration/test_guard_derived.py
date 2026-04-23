@@ -35,7 +35,7 @@ class TestDeployedFilesBlocked:
         ".claude/rules/ocd/design-principles.md",
         ".claude/rules/ocd/testing.md",
         ".claude/conventions/ocd/python.md",
-        ".claude/patterns/some-pattern.md",
+        "logs/research/_samples-template.md",
     ])
     def test_deployed_path_denied(self, path: str):
         result = _run_hook(path)

@@ -1,6 +1,6 @@
 # Pattern-Doc Corrections
 
-Corrections surfaced by the 54-repo deep-research aggregation against `plugins/ocd/systems/patterns/templates/claude-marketplace.md`. Each entry records the current pattern-doc text, the evidence from the deep-research files, and a proposed edit.
+Corrections surfaced by the 54-repo deep-research aggregation against `logs/research/claude-marketplace/consolidated.md`. Each entry records the current pattern-doc text, the evidence from the deep-research files, and a proposed edit.
 
 ## 1. Dependency installation → Failure signaling → ★ on "JSON `systemMessage` on stdout"
 

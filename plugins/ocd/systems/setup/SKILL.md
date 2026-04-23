@@ -9,7 +9,7 @@ allowed-tools:
 
 # /setup
 
-Manage ocd plugin infrastructure. Every deployable system (rules, conventions, patterns, log, navigator, permissions, refactor) is opt-in — the user chooses which ones belong in their project. The enabled selection persists in `.claude/ocd/enabled-systems.json` so subsequent inits and checkpoints honor the choice without re-prompting.
+Manage ocd plugin infrastructure. Every deployable system (rules, conventions, log, navigator, permissions, refactor) is opt-in — the user chooses which ones belong in their project. The enabled selection persists in `.claude/ocd/enabled-systems.json` so subsequent inits and checkpoints honor the choice without re-prompting.
 
 ## Rules
 

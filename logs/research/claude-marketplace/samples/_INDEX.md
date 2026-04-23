@@ -1,6 +1,6 @@
 # Marketplace Repos — Research Index
 
-Per-repo structured findings captured during deep-research verification of the claude-marketplace pattern doc (`plugins/ocd/systems/patterns/templates/claude-marketplace.md`). Each file fills [_TEMPLATE.md](_TEMPLATE.md) — a purpose-oriented structure mirroring the pattern doc's 16 purpose sections, plus identification, novel-axes, and gaps.
+Per-repo structured findings captured during deep-research verification of the claude-marketplace pattern doc (`logs/research/claude-marketplace/consolidated.md`). Each file fills [_TEMPLATE.md](_TEMPLATE.md) — a purpose-oriented structure mirroring the pattern doc's 16 purpose sections, plus identification, novel-axes, and gaps.
 
 These are the empirical source data for pattern-doc verification. A repo's presence here is a claim that its structure was directly inspected; the per-file content records what was observed. Gaps sections record what was not resolvable within the inspection budget.
 

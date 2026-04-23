@@ -75,7 +75,7 @@ Keep both docs simultaneously when the repo is still settling; retire the audit 
 
 - Audit file: project-root lowercase filename, typically named `<pattern-name>--diff.md` (e.g. `claude-marketplace--diff.md`). Lowercase because it's a working artifact, not an entry point (per the Filename Case rule in `rules/system-docs.md`).
 - Standards file that graduates from it: project-root all-caps filename, typically named `<PATTERN>-STANDARDS.md` (e.g. `MARKETPLACE-STANDARDS.md`).
-- Research pattern doc: lives under `plugins/<plugin>/systems/patterns/templates/<pattern-name>.md`, deployed to `.claude/patterns/<plugin>/<pattern-name>.md` via auto-init.
+- Research doc: lives under `logs/research/<subject>/consolidated.md` with per-entity samples under `samples/` and optional research-wave outputs (surveys, resamples) as additional root-level docs. See the research log-type template at `logs/research/_template.md`.
 
 ## Sibling concerns
 

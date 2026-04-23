@@ -3,8 +3,8 @@
 Stores the list of enabled systems in `.claude/<plugin>/enabled-systems.json`
 so `/ocd:setup init` and `enable`/`disable` verbs can cherry-pick which
 systems deploy into the project. Systems not in the list are not
-initialized and their deployed artifacts (rules, conventions, patterns,
-log templates) are removed via each system's `clean()` contract.
+initialized and their deployed artifacts (rules, conventions, log
+templates) are removed via each system's `clean()` contract.
 
 Auto-init (scripts/auto_init.py) does not consult this file — it is the
 plugin-developer bootstrap path that always force-runs every system.

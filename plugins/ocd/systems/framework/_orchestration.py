@@ -2,8 +2,8 @@
 
 Top-level run_init and run_status entry points that discover every
 systems/ entry and dispatch uniformly to each subsystem's _init.py.
-Content domains (rules, conventions, patterns, log) and operational
-systems (navigator, permissions) follow the same contract.
+Content domains (rules, conventions, log) and operational systems
+(navigator, permissions) follow the same contract.
 
 Enable/disable orchestration respects the per-project opt-in config
 (`.claude/<plugin>/enabled-systems.json`). `run_init` deploys only

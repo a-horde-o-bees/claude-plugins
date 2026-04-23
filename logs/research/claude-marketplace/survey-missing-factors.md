@@ -1,6 +1,6 @@
 # Missing design factors — survey
 
-Discovery-wave report across 7 design dimensions the pattern doc (`plugins/ocd/systems/patterns/templates/claude-marketplace.md`) does not yet cover as Decisions subsections. Draws on the 54-repo research corpus under `research/claude-marketplace/repos/` and the aggregated `_INDEX.md`.
+Discovery-wave report across 7 design dimensions the pattern doc (`logs/research/claude-marketplace/consolidated.md`) does not yet cover as Decisions subsections. Draws on the 54-repo research corpus under `logs/research/claude-marketplace/samples/` and the aggregated `_INDEX.md`.
 
 For each dimension:
 
