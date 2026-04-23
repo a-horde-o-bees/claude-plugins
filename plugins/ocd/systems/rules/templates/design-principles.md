@@ -101,6 +101,7 @@ Confirm shared understanding with the user before committing to action — align
 - Before continuing after user asks a question during multi-step work: address the user's question and confirm resuming paused operations
 - Before proceeding after receiving a response: verify all prior questions were addressed; if unanswered, surface them before continuing
 - Before interrupting clearly-directed work to ask: proceed; confirmation gates belong on ambiguity, scoping decisions, and deviations, not habitual mid-phase checkpoints
+- Before ending a response with a multi-option question: enumerate options as lettered (`A)`, `B)`) so the user can reply with just the letter. Avoid numbered enumerations — they collide with Claude Code's periodic `1/2/3` rating prompt, which can consume an intended numeric answer before it reaches the conversation. Avoid terminal "X or Y?" phrasings that force the user to retype the chosen option. When a clear default exists, phrase as "doing Y. Adjust?" rather than "Y or Z?" so "yes" is a sufficient answer
 
 ## Principled Pushback
 
