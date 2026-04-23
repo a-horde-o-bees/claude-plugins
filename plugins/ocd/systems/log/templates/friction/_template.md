@@ -1,3 +1,7 @@
+---
+log-role: queue
+---
+
 # Friction
 
 Process gaps encountered during work: a rule the system forced you to violate, a missing capability, a broken process step, unexpected state, or a runtime issue where investigating inline would derail the current task.
