@@ -26,6 +26,25 @@ Every system maintains a consumer-facing entry point and a developer-facing desi
 - `ARCHITECTURE.md` — layers, components, relationships, design patterns, key implementation details. Required for systems with substantial internal structure
 - `CLAUDE.md` / `SKILL.md` — operational procedures, workflow rules, tool invocation patterns. Present only when the system has agent-facing procedures. Skills use `SKILL.md`; other systems use `CLAUDE.md`
 
+## Filename Case
+
+All-caps filenames signal entry points at a system boundary — docs a reader should be able to find without knowing the system's internals. Lowercase filenames signal content within a structure — navigable only once you're inside the system.
+
+**All-caps — entry points:**
+
+- Three-document-model docs at every system boundary: `README.md`, `ARCHITECTURE.md`, `CLAUDE.md`, `SKILL.md`
+- Project-root community-health and planning conventions: `LICENSE`, `CHANGELOG.md`, `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, `ROADMAP.md`, `MARKETPLACE-STANDARDS.md`
+
+**Lowercase — content within a structure:**
+
+- Convention, rule, and pattern templates (`design-principles.md`, `architecture-md.md`, `claude-marketplace.md`) — content *of* the governance system
+- Log entries under `logs/<type>/` — content *of* the logs system
+- Component files extracted from a skill's workflow (`_pack.md`, `_open.md`)
+- Working state files (`state.md`) and audit artifacts that aren't entry points
+- Python files (`.py`) and other code — standard language conventions apply
+
+The rule matches established ecosystem conventions (GitHub's `LICENSE`/`CHANGELOG`/`CONTRIBUTING` pattern plus the claude-marketplace pattern's 5/5 root-level all-caps `ARCHITECTURE.md` adoption) and makes future naming decisions deterministic: the case of the filename answers whether the file is a door or a piece of furniture inside the room.
+
 ## Subsystem Doc Consolidation
 
 A subsystem earns its own `README.md` and `ARCHITECTURE.md` when it has substantial internal structure — multiple components, its own schema, its own public interface beyond a single entry point. Libraries, plugins, and substantive services fit this category.
