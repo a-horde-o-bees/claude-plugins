@@ -57,7 +57,6 @@ Work that shapes how rules, conventions, and cross-plugin interactions evolve.
 - **Per-plugin permission contribution** — each plugin with a CLI runner should own a permissions template its own init deploys. Blueprint / future plugins have no mechanism today. [idea log](logs/idea/Per-plugin%20permission%20contribution.md)
 - **Permissions skill design** — surface for managing permissions as a user-facing operation. [idea log](logs/idea/Permissions%20skill%20design.md)
 - **Opt-in clean for navigator log permissions** — three systems with non-template state need `clean()` implementations. [idea log](logs/idea/Opt-in%20clean%20for%20navigator%20log%20permissions.md)
-- **Claude-marketplace next steps** — largely consumed by the pattern doc restructure, v0.1.0 release, and recent research waves (22, follow-up 1+7, comprehensive resample). Remaining open research waves: 14 (bin/ implementation patterns — done in pattern doc), 15 (CI/CD patterns — done in pattern doc). [idea log](logs/idea/Claude-marketplace%20—%20next%20steps.md) — **candidate for archive/cleanup** since most content is now reflected in `MARKETPLACE-STANDARDS.md` and the pattern doc.
 
 ## Methodology and meta
 
@@ -67,7 +66,6 @@ Tools and disciplines for how work gets done across the project.
 - **Audit-governance inversion technique from purpose-map** — reuse the unmet-test discipline as an audit mechanism. [idea log](logs/idea/Audit-governance%20inversion%20technique%20from%20purpose-map.md)
 - **Audit-testing skill for test infrastructure quality** — audit skill focused on test infrastructure rather than production code. [idea log](logs/idea/Audit-testing%20skill%20for%20test%20infrastructure%20quality.md)
 - **honesty-as-paramount-design-principle** — proposed design principle (epistemic honesty / admit-what-you-don't-know). [idea log](logs/idea/honesty-as-paramount-design-principle.md)
-- **Release cutting skill or process** — v0.1.0 cut manually using Option E; captured the pattern. Now partially consumed — `scripts/release.sh` + `release.yml` automate the sequence. Remaining: decide whether a full `/ocd:release` skill is worth building or the documented process in CLAUDE.md is sufficient. [idea log](logs/idea/Release%20cutting%20skill%20or%20process.md) — **candidate for archive** if the documented-process answer holds.
 - **workflow-rule-prefer-explicit-commands-over-loops** — proposed workflow rule. [idea log](logs/idea/workflow-rule-prefer-explicit-commands-over-loops.md)
 
 ## Friction and problems
@@ -81,7 +79,7 @@ Captured discipline gaps and concrete defects.
 
 Surfaced during earlier work; intentionally kept from promoting to action items until they become painful.
 
-- **`<plugin>-run` binary naming convention not codified** — established in practice for ocd (`bin/ocd-run`) but not written into a convention doc. Promote when a second plugin lands.
+- **`<plugin>-run` binary naming convention not codified** — established in practice for ocd (`bin/ocd-run`) but not written into a convention doc. Promote when a second plugin lands (imminent — blueprint plugin parity is queued under Active sandbox features).
 - **`install_deps.sh` plugin-binary collision check** — no guard for cases where `bin/<plugin>-run` collides with an existing PATH command. Low risk since `<plugin>-run` is unique-ish; `command -v` probe during install_deps could warn proactively.
 - **`test_deploy_exits_zero` permissions test fixture** — pre-existing failure in `tests/test_invocation.py`. Needs fixture rework to place the recommended-permissions template where deploy expects it.
 - **Print() usage review** — deferred during the logging convention drop. Pick up next time CLI output surface gets substantial edits.
@@ -99,13 +97,6 @@ Known future work, not currently scheduled.
 
 - **Community health files** — `SECURITY.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md` at project root. Pull in when external contributors arrive. [idea log](logs/idea/Community%20health%20files.md)
 - **adhd plugin** — name reservation only. Not yet created; noted so the name isn't taken.
-
-## Stale entries to clean up
-
-Idea logs that overlap substantially with completed work and should be pruned or refactored:
-
-- `Claude-marketplace — next steps.md` — most content consumed by the pattern-doc restructure, v0.1.0 release, research waves, and `MARKETPLACE-STANDARDS.md`. Prune or rewrite as a summary of what's left.
-- `Release cutting skill or process.md` — v0.1.0 is cut using Option E automation. If the documented-process answer is sufficient (no `/ocd:release` skill planned), delete the idea log.
 
 ## How this doc stays accurate
 
