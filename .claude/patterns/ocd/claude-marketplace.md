@@ -303,7 +303,10 @@ Claude Code discovers skills and agents at prompt time by matching the user's in
 
 #### Explicit discipline
 
-1/54 repos codify description-writing rules explicitly. **CodeAlive-AI/codealive-skills** prescribes concrete targets in its `CLAUDE.md`: length aim 300–500 characters, hard limit 1024, include "concrete trigger verbs/nouns users actually say," and design for many agents in many contexts rather than one session's failure modes. The discipline is explicit because the plugin targets multiple AI hosts (Claude Code + skills.sh + MCP + plugin-bridge) where each host's matcher behaves differently.
+2/54 repos codify description-writing rules explicitly.
+
+- **CodeAlive-AI/codealive-skills** prescribes concrete targets in its `CLAUDE.md`: length aim 300–500 characters, hard limit 1024, include "concrete trigger verbs/nouns users actually say," and design for many agents in many contexts rather than one session's failure modes. The discipline is explicit because the plugin targets multiple AI hosts (Claude Code + skills.sh + MCP + plugin-bridge) where each host's matcher behaves differently. Prose-only discipline.
+- **HiH-DimaN/idea-to-deploy** takes a different, architecturally stronger approach: CONTRIBUTING.md establishes SKILL.md `## Trigger phrases` canonicity, and `tests/verify_triggers.py` (a CI gate) enforces drift between each skill's trigger phrases and the hook regex tables that route work to them. When a skill's triggers drift from what the hook matches, CI fails. This promotes description-matcher discipline from prose rule to enforced contract.
 
 Elsewhere in the sample, descriptions vary widely in shape, length, and whether they name a trigger verb. The adoption count is low because most authors don't formalize their rules — not because the discipline is contested.
 
@@ -313,8 +316,10 @@ Agents' `description` field accepts inline `<example>…<commentary>` XML blocks
 
 - **Lykhoyda/rn-dev-agent** — multi-paragraph YAML literal block with 3 example blocks per agent; matcher reads the full block as a trigger-rich description.
 - **anthropics/knowledge-work-plugins** — `partner-built/brand-voice/agents/*.md` uses YAML folded scalar (`>`) with embedded `<example>` blocks.
+- **skullninja/coco-workflow** — agent descriptions embed XML-ish `<example>` blocks inline in YAML strings.
+- **affaan-m/everything-claude-code** — uses `Use PROACTIVELY when…` trigger-verb lead-in in descriptions (not XML few-shot but the same axis of engineering the matcher signal).
 
-2–3/54 directly observed — not yet a named convention, but illustrative of the few-shot axis that skill descriptions can also (informally) exploit.
+3-4/54 directly observed — not yet a named convention, but illustrative of the few-shot axis that skill descriptions can also (informally) exploit.
 
 #### Multilingual trigger surface
 
@@ -378,7 +383,7 @@ Three legal forms observed, plus absence:
 | YAML array / list | `- Read`, `- Write`, ... | 2/14 |
 | Absent | — | 8/14 |
 
-Docs prescribe "a space-separated string or a YAML list." Permission-rule scoping (lukasmalkmus/moneymoney deliberately omits write-verb scopes like `mm transfer` to force confirmation prompts) is a sharper design pattern — scope-limiting as UX. The mixed form within a single field (HiH-DimaN's kickstart has plain tool names alongside `Bash(git:*)` in the same space-separated list) is legal but confusing.
+Docs prescribe "a space-separated string or a YAML list." Permission-rule scoping as a sharper design pattern — scope-limiting as UX — is observed in ≥4/54 (lukasmalkmus/moneymoney deliberately omits write-verb scopes like `mm transfer` to force confirmation prompts; damionrashford uses `Bash(uv run *)` on agents; HiH-DimaN mixes plain and permission-rule forms within a single field; skullninja's skills scope bash verbs to plugin CLIs). The mixed form within a single field (HiH-DimaN's kickstart has plain tool names alongside `Bash(git:*)` in the same space-separated list) is legal but confusing.
 
 #### Pitfalls
 
@@ -566,18 +571,21 @@ Applicability: plugins with per-user settings. Docs prescribe `sensitive: true` 
 
 #### Schema richness
 
-Docs show `description` + `sensitive` as the minimal example; real plugins use richer JSON-schema-like shape with `type`, `title`, `default`, enum constraints. ~14/54 repos declare non-trivial `userConfig`. Across that set, typed schemas (`type`, `title`, `default`, sometimes enum/default) are universal when the field count exceeds ~3 — tokens-only configs stay minimal; configs with multiple user-meaningful parameters consistently adopt the typed form.
+Docs show `description` + `sensitive` as the minimal example; real plugins use richer JSON-schema-like shape with `type`, `title`, `default`, enum constraints. ~12/54 repos declare non-trivial `userConfig` directly (13/54 counting anthril/official-claude-plugins's ppc-manager, which declares fields in tests/README but ships an empty `plugin.json` — intended but not live). Across that set, typed schemas (`type`, `title`, `default`, sometimes enum/default) are universal when the field count exceeds ~3 — tokens-only configs stay minimal; configs with multiple user-meaningful parameters consistently adopt the typed form.
 
 #### File-convention user config (bypasses `userConfig`)
 
-~6/54 repos deliberately sidestep `userConfig` in favor of filesystem convention: config files in the user's workspace or home directory that the plugin reads directly at runtime.
+~8-10/54 repos deliberately sidestep `userConfig` in favor of filesystem convention: config files in the user's workspace or home directory that the plugin reads directly at runtime.
 
 | Path | Repos | Rationale observed |
 |---|---|---|
 | `~/<plugin>/settings.json` in user home | ShaheerKhawaja/ProductionOS | Survives plugin updates; cross-tool shareable |
-| Project-local `<plugin>.config.yaml` or `.env.local` | Lykhoyda, skullninja/coco-workflow (`.coco/config.yaml`), BrandCast-Signage (`root.config.json` in consumer project) | Per-project config; not tied to plugin install |
+| Project-local `<plugin>.config.yaml` or `.env.local` | Lykhoyda/rn-dev-agent (dual-mode — has both userConfig AND `.env.local`), skullninja/coco-workflow (`.coco/config.yaml`), BrandCast-Signage (`root.config.json` in consumer project), raphaelchristi/harness-evolver (`.evolver.json` in user's project) | Per-project config; not tied to plugin install |
 | OS keychain directly (not via `sensitive: true`) | CodeAlive-AI/codealive-skills | Cross-agent secret sharing (Keychain/Secret Service/Credential Manager) |
 | `.claude/<plugin>.local.md.example` files | anthropics/financial-services-plugins | Gitignored markdown examples read by skill prose |
+| `config/config.json` edited via plugin command | 777genius/claude-notifications-go (via `/claude-notifications-go:settings` command) | Plugin owns its own config surface; explicit command edits it |
+| `${CLAUDE_PLUGIN_DATA}/<plugin>-config.json` seeded on SessionStart | Chulf58/FORGE (copies `forge-config.default.json` to `${CLAUDE_PLUGIN_DATA}/forge-config.json`) | Per-install config carried outside the plugin tree; survives plugin refresh |
+| Env var (`AUTO_MEMORY_DIR`) | a3lem/my-claude-plugins | Zero-file config for single-value settings |
 
 Motivations observed: (1) persist-across-plugin-updates (userConfig values in `settings.json` survive updates, but file-convention paths under the plugin dir do not), (2) cross-tool sharing (one config readable by Claude Code, Codex, Cursor simultaneously), (3) secret distribution (OS keychain is often already the plugin's only credential source), (4) per-project vs per-user separation (userConfig is per-user only).
 
@@ -608,7 +616,7 @@ The three failure modes have different remediations — they are not variants of
 Two mechanisms bridge `userConfig` values into child-process environments (hooks, MCP servers, CLI wrappers):
 
 - **`${user_config.KEY}` substitution** in `.mcp.json` `env:` blocks. Claude Code expands the reference at server-launch time, binding the stored (plaintext or keychain-backed) value into the environment the server sees. Observed in anthril, damionrashford, Arcanon-hub, includeHasan, BULDEE, SkinnnyJay.
-- **`CLAUDE_PLUGIN_OPTION_<KEY>`** env var. Claude Code exports each `userConfig` key as an environment variable with this prefix, available to any child process. Observed in BULDEE's `agent-ddd-verifier.sh`, damionrashford's hook scripts, jxw1102, includeHasan.
+- **`CLAUDE_PLUGIN_OPTION_<KEY>`** env var. Claude Code exports each `userConfig` key as an environment variable with this prefix, available to any child process. Observed in BULDEE's `agent-ddd-verifier.sh`, damionrashford's hook scripts, jxw1102, includeHasan, Lykhoyda/rn-dev-agent (5/~12 userConfig adopters).
 
 The two mechanisms coexist — `${user_config.KEY}` for declarative server config, `CLAUDE_PLUGIN_OPTION_<KEY>` for ambient access from arbitrary scripts. Both are widely used but underdocumented in the plugin reference; verify against current docs when adopting.
 
@@ -655,11 +663,11 @@ Explicit conventions observed in 2/21 repos: BULDEE/ai-craftsman-superpowers' `p
 
 ### Agent delegation patterns
 
-Skills and agents delegate work to subagents through Claude Code's subagent-invocation mechanism. Beyond the baseline "spawn one agent, return its result," three sub-patterns recur in repos that ship agents (~20/54 of the sample). Denominator for adoption counts below is repos that ship agents, not the full sample.
+Skills and agents delegate work to subagents through Claude Code's subagent-invocation mechanism. Beyond the baseline "spawn one agent, return its result," three sub-patterns recur in repos that ship agents (~24-30/54 of the corpus — "ships agents" is inferred from agent frontmatter captures rather than an explicit field). Denominator for adoption counts below is repos that ship agents, not the full sample.
 
 #### Hook-enforced scope walls
 
-Agents declare tool scope in frontmatter; PreToolUse / PostToolUse / SubagentStop hooks enforce it at runtime. **AgentBuildersApp/eight-eyes** is the reference implementation: 8 role-specific agents (skeptic, security, performance, accessibility, docs, implementer, verifier, reviewer) each with different tool scope, a structured-result-block contract (`COLLAB_RESULT_JSON_BEGIN` … `COLLAB_RESULT_JSON_END` that SubagentStop parses), and blind-review enforced by SubagentStart context-shaping (skeptic literally can't see implementer's summary). BULDEE uses a similar shape at smaller scale. Observed in 3/20.
+Agents declare tool scope in frontmatter; PreToolUse / PostToolUse / SubagentStop hooks enforce it at runtime. **AgentBuildersApp/eight-eyes** is the reference implementation: 8 role-specific agents (skeptic, security, performance, accessibility, docs, implementer, verifier, reviewer) each with different tool scope, a structured-result-block contract (`COLLAB_RESULT_JSON_BEGIN` … `COLLAB_RESULT_JSON_END` that SubagentStop parses), and blind-review enforced by SubagentStart context-shaping (skeptic literally can't see implementer's summary). BULDEE uses a similar shape at smaller scale. **Chachamaru127/claude-code-harness** represents the most aggressive hook-based scope enforcement observed — 18 hook events including `SubagentStart`, `TaskCreated`, `TeammateIdle` (all undocumented in the baseline plugin reference). Observed in 3/~25 (AgentBuildersApp, BULDEE, Chachamaru127); 1 adjacent (REPOZY ships `test-subagent-hook-scope.sh` — scope-enforcement infrastructure without a fully-verified structured-contract shape).
 
 The pattern matters because tool scope declared in agent frontmatter is advisory — the runtime binding happens in the hooks. A plugin that claims isolation without the hook enforcement is making a claim the runtime doesn't verify.
 
@@ -669,13 +677,16 @@ Agents invoke skills as sub-routines via a `skills:` array in frontmatter. Claud
 
 - **CodeAlive-AI/codealive-skills** — `agents/codealive-context-explorer.md` uses `skills: [codealive-context-engine]` with `model: haiku`. The skill composition plus model downgrade is cost-aware: offload iterative searches to a cheaper model so the caller's expensive-model conversation stays short.
 - **damionrashford/trader-os** — `quant-analyst` agent declares `skills: [quant-math, position-sizing, bayesian-updating, time-series]`, pulling four analytical sub-routines into the agent's context as invocable primitives.
-- **BULDEE/ai-craftsman-superpowers** — `team-lead.md` declares agent-orchestration tools (`TeamCreate`, `TaskCreate`, `TaskList`, `TaskUpdate`, `SendMessage`) in `allowedTools`; these are not in the public plugin reference.
+- **BULDEE/ai-craftsman-superpowers** — agents reference `skills` in the `craftsman:<skill>` namespace; `team-lead.md` additionally declares agent-orchestration tools (`TeamCreate`, `TaskCreate`, `TaskList`, `TaskUpdate`, `SendMessage`) in `allowedTools`; these are not in the public plugin reference.
+- **CronusL-1141/AI-company** — team-member agents use `skills: [os-register, meeting-participate]` to compose multi-agent collaboration routines.
+- **Lykhoyda/rn-dev-agent** — agents declare `skills` lists (`rn-testing`, `rn-best-practices`) alongside XML example blocks for the description-matcher.
+- **Chachamaru127/claude-code-harness** — agents have `skills` arrays; richest frontmatter overall (including `initialPrompt` multi-line literal blocks for seeding agent context).
 
-3+/20 of agent-shipping repos.
+6/~25 of agent-shipping repos — doubled from the initial sample once the full corpus was walked.
 
 #### Non-canonical frontmatter fields (worktree / background / effort)
 
-Multiple agents declare frontmatter fields that are partially or entirely absent from Claude Code's public plugin reference: `isolation: worktree`, `background: true`, `effort: medium|high|xhigh`, `maxTurns`, `stakes: low|medium|high`, `subagent_type: <plugin>:<name>`. `isolation: worktree` alone is observed in 7/20 agent-shipping repos (AgentBuildersApp, BULDEE, REPOZY, damionrashford, NoelClay, Lykhoyda, skullninja). Several of these fields are enforced by the plugin's own hooks rather than by Claude Code — the frontmatter becomes a declaration consumed by the plugin's own machinery, not a Claude Code directive.
+Multiple agents declare frontmatter fields that are partially or entirely absent from Claude Code's public plugin reference: `isolation: worktree`, `background: true`, `effort: medium|high|xhigh`, `maxTurns`, `stakes: low|medium|high`, `subagent_type: <plugin>:<name>`, `initialPrompt` (multi-line literal block seeding the agent), and `color` (widely used, effect undocumented — 10+/25 agent-shipping repos). `isolation: worktree` alone is observed in 8/~25 agent-shipping repos (AgentBuildersApp, BULDEE, Chachamaru127, REPOZY, damionrashford, NoelClay, Lykhoyda, skullninja). Several of these fields are enforced by the plugin's own hooks rather than by Claude Code — the frontmatter becomes a declaration consumed by the plugin's own machinery, not a Claude Code directive.
 
 #### Pitfalls
 
@@ -733,17 +744,18 @@ Trade-offs: durable scheduling without requiring a running Claude Code session o
 
 Declare that one plugin requires another, with optional semver constraints. Introduced in Claude Code v2.1.110+.
 
-Applicability: multi-plugin marketplaces where plugins share functionality. Effectively 0/21 verified adoption in sampled repos; feature is too new to have percolated. damionrashford/trader-os mentions its `trading-core` shared layer is depended on by sibling plugins in description text, but explicit `dependencies` arrays in `plugin.json` were not verified.
+Applicability: multi-plugin marketplaces where plugins share functionality. **0/54 verified adoption of Claude Code v2.1.110+'s native `dependencies` field**; feature is too new to have percolated. **1/54 uses the field name through a custom Python resolver**: mdproctor/cc-praxis's `scripts/claude-skill install <plugin>` walks `resolve_dependencies` accepting both bare strings and `{name: ...}` objects — a bespoke resolver predating or paralleling the official feature. damionrashford/trader-os mentions its `trading-core` shared layer is depended on by sibling plugins in description text, but does not use the `dependencies` field — see Prose/installer-encoded dependencies below.
 
 Declaration: `dependencies: [{ name, version, marketplace? }]` in `plugin.json`. Resolution uses the `{plugin-name}--v{version}` git tag convention — separate tag namespace from the plain `v{version}` used for marketplace-wide releases.
 
 #### Prose/installer-encoded dependencies (pre-schema alternative)
 
-Three repos ship multi-plugin marketplaces where one plugin is functionally depended on by siblings, expressed in prose or installer code rather than declared in manifest. These predate Claude Code v2.1.110 or target older hosts — schema-supported enforcement is deliberately skipped, not forgotten:
+Four repos ship multi-plugin marketplaces where one plugin is functionally depended on by siblings, expressed in prose or installer code rather than declared in manifest. These predate Claude Code v2.1.110 or target older hosts — schema-supported enforcement is deliberately skipped, not forgotten:
 
 - **damionrashford/trader-os** — README architecture diagram and CLAUDE.md both describe `trading-core` as "shared quant layer the other plugins consume." Users who install `polymarket` without `trading-core` get broken scripts; nothing in manifest-land warns them. CLAUDE.md tells contributors to "Consume trading-core's math + journal from your scripts (don't re-implement Kelly)" but doesn't wire the `dependencies` field.
 - **BrandCast-Signage/root** — `mcp-root-board` vs `mcp-local-rag` ownership-based install split documented in CHANGELOG 2.3.0's "Why" section, not in manifest. Split rationale: first-party vs third-party install location, lifecycle coupling.
 - **stellarlinkco/myclaude** — The npx installer encodes inter-module dependencies programmatically (`WRAPPER_REQUIRED_MODULES = new Set(['do', 'omo'])`, `WRAPPER_REQUIRED_SKILLS = new Set(['dev'])` in `cli.js`): "if you select `do` or `omo`, also run `install.sh` for the `codeagent-wrapper` binary." Implicit module dependency baked into the installer rather than declared in `config.json`.
+- **anthropics/financial-services-plugins** — README states "Start with **financial analysis** — the core plugin that provides shared modeling tools and all MCP data connectors," but enforces this only as prose. `investment-banking` and sibling plugins ship empty `.mcp.json` files and skills that assume `financial-analysis`'s MCP servers are loaded, with nothing in the metadata expressing the relationship. Anthropic-owned case demonstrates the pattern isn't limited to community repos.
 
 #### Flat-by-convention (deliberate alternative)
 
@@ -890,18 +902,19 @@ Direct `pytest` is the community norm. The `scripts/test.sh` wrapper pattern (us
 
 #### Fixture discipline
 
-Fixture-level conventions observed across repos that ship Python test suites. Denominator: repos with pytest or unittest adoption (~4/13 sampled; extrapolating to ~10-15/54 overall — Python test adoption is thinner than the narrative suggests, as many "test-rich" repos ship shell-script suites or vitest).
+Fixture-level conventions observed across repos that ship Python test suites. Denominator: repos with pytest or unittest adoption — ~16/54 across the corpus (Vortiago, AgentBuildersApp, Cairn, ZhuBit, CodeAlive-AI, CronusL-1141, mdproctor/cc-praxis, SkinnnyJay, a3lem, anthril/ppc-manager, SankaiAI, raphaelchristi, robertnowell, affaan-m, Lykhoyda, 123jimin-vibe). Many "test-rich" repos in the broader corpus ship shell-script suites or vitest/node:test instead — Python test adoption is thinner than narrative reports suggest.
 
 **Real backends over mocks.** 0/5 sampled Python test suites use `unittest.mock`. Every fixture goes after a real backend — SQLite in-memory (Cairn, CronusL), real Docker compose stack (Vortiago), real CLI subprocess invocation (SkinnnyJay's `claude_runner` and `codex_runner`, AgentBuildersApp's real `git` and hook scripts), real git-init'd tempdirs (AgentBuildersApp's `setUp` per test). Strong consistency signal: the ecosystem tests integration end-to-end, not isolated units with mocked seams. Aligns with the broader testing discipline that catches integration breakage where mocks hide it.
 
 **Fixture scope discipline.** Session scope for expensive setup (Vortiago's Docker stack, SkinnnyJay's seeded vault, Cairn's session-metrics accumulator); function scope for per-test isolation (Cairn's `integration_count`, CronusL's `tmp_project_dir`, Vortiago's `mcp_session`); module scope unused across all 4 conftest-using repos. Session+function two-tier is the observed pattern.
 
-**Opt-in real-subprocess gates.** Tests that spawn real CLIs or real agents cost tokens, take seconds to run, and may require external resources. Two gating mechanisms observed:
+**Opt-in real-subprocess gates.** Tests that spawn real CLIs or real agents cost tokens, take seconds to run, and may require external resources. Three gating mechanisms observed:
 
 - **Environment variable gate** — SkinnnyJay's `RUN_CLAUDE_TESTS` / `RUN_CODEX_SKILL_EVALS` env vars control whether real `claude` / `codex` CLIs are invoked.
 - **pytest marker + CLI flag** — this project's `pytest.mark.agent` paired with `--run-agent` on the pytest command line.
+- **CI-workflow `if: false` + absent-secret gate** — HiH-DimaN/idea-to-deploy's `fixture-smoke.yml` is fully written and committed but guarded by both `if: false` AND absence of `ANTHROPIC_API_KEY`. "Ship the infrastructure, do not pay the cost" discipline for expensive LLM-based integration tests. Novel: the gate lives in the workflow itself, not in the test runner.
 
-Same intent, different mechanism. 2/5 of sampled real-backend test suites use an explicit opt-in gate; others run real-backend tests unconditionally.
+Three distinct mechanisms, same intent. 3/~16 of Python-testing repos use an explicit opt-in gate; others run real-backend tests unconditionally (or don't have real-subprocess tests to gate).
 
 **Fixture-discipline Pitfalls:**
 
@@ -939,7 +952,7 @@ Community norm is tag push as the trigger, no manual entry points. Multi-trigger
 | Platform binary build + attach to release | 1/6 |
 | PyPI trusted publishing (OIDC) + MCP registry publish | 1/6 |
 
-All use either `softprops/action-gh-release@v*` or `gh release create`. No sampled repo uses `release-drafter`, `release-please`, or `semantic-release`.
+All release workflows use either `softprops/action-gh-release@v*` or `gh release create`. No sampled repo uses `release-drafter`, `release-please`, or `semantic-release` inside the release workflow. **Outside the release workflow**, 3 repos generate CHANGELOG.md via `git-cliff` (Emasoft/token-reporter-plugin, stellarlinkco/myclaude, Chachamaru127/claude-code-harness) and 1 uses `@changesets/changelog-github` (IgorGanapolsky/ThumbGate). These tools produce the checked-in CHANGELOG pre-release rather than synthesizing release notes at tag time.
 
 #### Tag-sanity gates
 
@@ -1037,12 +1050,17 @@ GitHub's `generate_release_notes` is the path of least resistance — it capture
 
 #### Novel — CHANGELOG as runtime-consumed artifact
 
-**BaseInfinity/sdlc-wizard**'s `/update-wizard` skill fetches `CHANGELOG.md` via WebFetch at runtime and diffs against the installed version stamp. The CHANGELOG is consumed by the plugin itself, not just by human readers — promoting it from "human docs" to "agent-readable contract." Implications:
+Two repos treat the CHANGELOG (or an equivalent) as an agent-readable artifact consumed at runtime:
+
+- **BaseInfinity/sdlc-wizard** — `/update-wizard` skill fetches `CHANGELOG.md` via WebFetch at runtime and diffs against the installed version stamp.
+- **REPOZY/superpowers-optimized** — ships `RELEASE-NOTES.md` (116 KB, free-form "What's New" sections) consumed by a SessionStart hook and injected into session context. Same pattern, different filename.
+
+Implications:
 
 - Format discipline matters more when a skill has to parse the file reliably.
-- The CHANGELOG becomes part of the install/update UX, not just a retroactive record.
+- The CHANGELOG (or equivalent) becomes part of the install/update UX, not just a retroactive record.
 
-1/54 — one-off, but illustrative of what CHANGELOG can carry when treated as data rather than prose.
+2/54 — still a minority pattern, but no longer a one-off. When treating release notes as runtime-consumed, pick a parseable structure and commit to it.
 
 #### Pitfalls
 
