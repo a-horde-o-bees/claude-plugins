@@ -297,10 +297,6 @@ The `tools:` list accepts the same permission-rule syntax as settings.json `perm
 - `allowed-prompts` — a3lem (undocumented).
 - `disable-model-invocation: true` — HiH-DimaN (prevents the model from invoking the agent without user confirmation).
 
-#### Pitfalls
-
-**Setting `name:` on command frontmatter breaks auto-namespacing.** BULDEE/ai-craftsman-superpowers' CHANGELOG v3.3.3 documents the trap directly: when a command file under `commands/` declares `name:` in its frontmatter, Claude Code uses the literal value as the slash-command name instead of deriving `<plugin>:<command>` from the filename and plugin directory. Autocomplete then shows the bare name (e.g. `/setup`) instead of the namespaced form (`/craftsman:setup`). Corrective pattern: omit `name:` entirely from command frontmatter — official Anthropic plugins (vercel, metrikia, stripe) all omit it. Skills under `skills/` are distinct — they require `name:` for the skill-matcher to route correctly.
-
 ### Description as the discovery surface
 
 Claude Code discovers skills and agents at prompt time by matching the user's intent against each one's frontmatter `description` field. The description is therefore not documentation prose — it is a discovery contract. A skill that does useful work but whose description doesn't surface matching trigger verbs or nouns will not be reached by the model when the user needs it.
@@ -329,6 +325,68 @@ Agents' `description` field accepts inline `<example>…<commentary>` XML blocks
 **Description lacking trigger verbs/nouns doesn't surface.** The matcher works against the description content — a well-documented skill with a vague description ("Handles the Foo domain") won't be found when the user says "add a Foo." Name the verbs users actually say.
 
 **Frontmatter description is effectively one line.** Claude Code's skill metadata layer caps scalar description fields around 1024 characters. Longer content belongs in the body, not the frontmatter — CodeAlive-AI's explicit 1024 hard limit aligns with observed matcher behavior.
+
+### Command and skill frontmatter
+
+Field-level discipline on slash-command and SKILL.md frontmatter. Complements *Description as the discovery surface* above: that subsection covers the matcher mechanism and the description content itself; this one covers the surrounding fields (`name`, `argument-hint`, `allowed-tools`) and their asymmetric handling between command and skill surfaces.
+
+Sample: 14 skill/command files across 9 repos — BULDEE, Chulf58, HiH-DimaN, ZhuBit, lukasmalkmus, anthropics/claude-plugins-official, Kanevry, Vortiago, CodeAlive-AI, damionrashford, NoelClay, SkinnnyJay.
+
+#### Description length regimes
+
+Two clusters:
+
+- **Short commands** — 19-97 chars for task-style commands with explicit invocation. Examples: anthropics/commit (19), SkinnnyJay/query (78), BULDEE/session-init (101).
+- **Medium-to-long skills** — 145-847 chars for description-matched skills. Examples: HiH-DimaN/kickstart (145), CodeAlive-AI/context-engine (262), damionrashford/quant-math (847 — heavy trigger-verb enumeration).
+
+No sampled surface exceeds the ★ docs-prescribed 1,536-char display cap (`https://code.claude.com/docs/en/skills#frontmatter-reference` — "the combined `description` and `when_to_use` text is truncated at 1,536 characters").
+
+#### Description framing
+
+9/14 sampled surfaces lead with trigger-verb framing ("Use when the user…", "Activated automatically when…") — ★ matches docs guidance ("Front-load the key use case"). 5/14 use bare "what it does" descriptors — misaligned with docs and leaving the matcher without trigger phrases. The framing split is load-bearing: bare descriptors don't reach users who describe the task by action rather than by domain.
+
+#### `argument-hint` format drift
+
+Four distinct forms observed across 9 argument-taking surfaces:
+
+| Form | Example | Adoption |
+|---|---|---|
+| Typed angle-bracket (★ docs-prescribed) | `"<folder path>"` | 4/9 |
+| Prose description | `project idea or description` | 3/9 |
+| Flag-style enumeration | `[--fast\|--standard\|--deep] [--upgrade <tier>]` | 1/9 (Kanevry) |
+| Subcommand | `[subcommand]` | 1/9 (damionrashford) |
+
+Only the typed bracket form matches docs examples (`[issue-number]`, `[filename] [format]`). The prose form is legal but inconsistent; agents consuming skill metadata programmatically have to parse two formats.
+
+#### `name:` — command vs skill asymmetry
+
+Commands and skills handle `name:` differently:
+
+- **Commands** — 4/7 omit `name:` (anthropics/commit, anthropics/feature-dev, anthropics/create-plugin, BULDEE/challenge, Kanevry/bootstrap); 2/7 include it (ZhuBit/index, NoelClay/learn); 1/7 has no frontmatter at all. Omission enables Claude Code's directory-based namespacing — the command resolves as `/<plugin>:<command>` from the file path, producing the correct plugin-qualified slash command.
+- **SKILL.md** — 8/8 include `name:`. Directory-name fallback exists but authors opt in; skills must survive directory moves, and pinning `name:` keeps identity stable across filesystem layout changes.
+
+The asymmetry is ★ docs-prescribed (skills-reference) and load-bearing: commands benefit from auto-namespacing, skills benefit from pinned identity. 3/4 of the `name:`-omitting commands are in plugin layouts where namespace-from-directory is the right answer.
+
+#### `allowed-tools` syntax variance
+
+Three legal forms observed, plus absence:
+
+| Form | Example | Adoption |
+|---|---|---|
+| Space-separated plain names | `Read Write Edit Glob Grep` | 2/14 |
+| Permission-rule scoped | `Bash(git add:*)`, `Bash(mm accounts *)` | 2/14 |
+| YAML array / list | `- Read`, `- Write`, ... | 2/14 |
+| Absent | — | 8/14 |
+
+Docs prescribe "a space-separated string or a YAML list." Permission-rule scoping (lukasmalkmus/moneymoney deliberately omits write-verb scopes like `mm transfer` to force confirmation prompts) is a sharper design pattern — scope-limiting as UX. The mixed form within a single field (HiH-DimaN's kickstart has plain tool names alongside `Bash(git:*)` in the same space-separated list) is legal but confusing.
+
+#### Pitfalls
+
+**Setting `name:` on command frontmatter breaks auto-namespacing.** BULDEE/ai-craftsman-superpowers' CHANGELOG v3.3.3 documents the trap: when a command file under `commands/` declares `name:` in its frontmatter, Claude Code uses the literal value as the slash-command name instead of deriving `<plugin>:<command>` from the filename and plugin directory. Autocomplete shows the bare name (e.g. `/setup`) instead of the namespaced form (`/craftsman:setup`). Confirmed by the 4/7 omission pattern across the sample, including Anthropic's own plugins (vercel, metrikia, stripe, commit-commands). Corrective pattern: omit `name:` from command frontmatter. SKILL.md files are distinct — they require `name:` for the skill-matcher.
+
+**Bare "what it does" description loses the discovery surface.** 5/14 of sampled surfaces use bare descriptors naming the domain noun but not the trigger verbs. The matcher works against the description content — a well-documented skill with a vague description ("Handles the Foo domain") won't be found when the user says "add a Foo." Name the verbs users actually say.
+
+**`argument-hint` prose form doesn't round-trip.** Prose hints ("project idea or description") render correctly as autocomplete hints but don't align with docs' typed-bracket convention. Agents parsing skill metadata programmatically have to handle two forms; style drift in docs-consuming tooling follows.
 
 ### Dependency installation
 
@@ -829,6 +887,28 @@ When caching is present, built-in setup-action caching precedes standalone `acti
 | `npm test` / node-script | 3/10 |
 
 Direct `pytest` is the community norm. The `scripts/test.sh` wrapper pattern (used by this project) is rare; appears when CI also exercises bash-based validation.
+
+#### Fixture discipline
+
+Fixture-level conventions observed across repos that ship Python test suites. Denominator: repos with pytest or unittest adoption (~4/13 sampled; extrapolating to ~10-15/54 overall — Python test adoption is thinner than the narrative suggests, as many "test-rich" repos ship shell-script suites or vitest).
+
+**Real backends over mocks.** 0/5 sampled Python test suites use `unittest.mock`. Every fixture goes after a real backend — SQLite in-memory (Cairn, CronusL), real Docker compose stack (Vortiago), real CLI subprocess invocation (SkinnnyJay's `claude_runner` and `codex_runner`, AgentBuildersApp's real `git` and hook scripts), real git-init'd tempdirs (AgentBuildersApp's `setUp` per test). Strong consistency signal: the ecosystem tests integration end-to-end, not isolated units with mocked seams. Aligns with the broader testing discipline that catches integration breakage where mocks hide it.
+
+**Fixture scope discipline.** Session scope for expensive setup (Vortiago's Docker stack, SkinnnyJay's seeded vault, Cairn's session-metrics accumulator); function scope for per-test isolation (Cairn's `integration_count`, CronusL's `tmp_project_dir`, Vortiago's `mcp_session`); module scope unused across all 4 conftest-using repos. Session+function two-tier is the observed pattern.
+
+**Opt-in real-subprocess gates.** Tests that spawn real CLIs or real agents cost tokens, take seconds to run, and may require external resources. Two gating mechanisms observed:
+
+- **Environment variable gate** — SkinnnyJay's `RUN_CLAUDE_TESTS` / `RUN_CODEX_SKILL_EVALS` env vars control whether real `claude` / `codex` CLIs are invoked.
+- **pytest marker + CLI flag** — this project's `pytest.mark.agent` paired with `--run-agent` on the pytest command line.
+
+Same intent, different mechanism. 2/5 of sampled real-backend test suites use an explicit opt-in gate; others run real-backend tests unconditionally.
+
+**Fixture-discipline Pitfalls:**
+
+- **Silent pass on mock-only tests.** When a test suite mocks its primary dependency (git, DB, MCP server), the happy-path assertion can pass while real integration is broken. Authors who mock should explicitly note what integration is not covered.
+- **Unconditional real-subprocess tests burn tokens on every CI run.** Without an opt-in gate, real-agent tests fire on every push — expensive and slow. Add a marker (`pytest.mark.agent`) or env-var gate (`RUN_<X>_TESTS`) so default CI stays fast.
+
+Out of scope for this pattern doc (future-wave material): `conftest.py` structural templates (shape varies too much across the 4 sampled repos), worktree-isolated test fixtures (unique to this project — no shared convention), and `tests/fixtures/` directory conventions (3 repos have fixture dirs, all with different layouts).
 
 #### Pitfalls
 
