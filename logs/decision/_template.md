@@ -1,3 +1,7 @@
+---
+log-role: reference
+---
+
 # Decision
 
 Non-obvious choices where alternatives were considered and rejected, or where the reasoning is not derivable from code or conventions. Preserves rationale so future sessions don't re-explore rejected alternatives.

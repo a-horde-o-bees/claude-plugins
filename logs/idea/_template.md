@@ -1,3 +1,7 @@
+---
+log-role: queue
+---
+
 # Idea
 
 Exploratory ideas, future work, and improvement suggestions. Project-scoped ideas tied to the current codebase.

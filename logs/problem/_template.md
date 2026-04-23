@@ -1,3 +1,7 @@
+---
+log-role: queue
+---
+
 # Problem
 
 Observed defects or issues noticed mid-work that need investigation later. Concrete, unexpected, and wrong.

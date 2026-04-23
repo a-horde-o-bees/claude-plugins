@@ -1,3 +1,7 @@
+---
+log-role: reference
+---
+
 # Research
 
 Long-form investigation of a subject — an ecosystem, a population of artifacts, a design space — producing consolidated findings backed by per-entity samples. Research accumulates under `logs/research/<subject>/` with one directory per subject. Samples live in a nested `samples/` directory and mirror the consolidated doc's purpose structure so cross-sample tallying produces comparable counts.

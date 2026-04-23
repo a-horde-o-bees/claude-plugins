@@ -1,3 +1,7 @@
+---
+log-role: reference
+---
+
 # Pattern
 
 Reusable workflow shapes, methodology references, and architectural templates codified from experience or research. Patterns are stable reference material that skills and agents consult when executing, and that future sessions consult to stay consistent with how the project approaches recurring work.
