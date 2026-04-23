@@ -60,6 +60,26 @@ Pre-first-release, main stays at `0.0.z` (current state) until `v0.1.0` is cut a
 
 **Agent frontmatter.** Does not ship custom agents. — Not applicable.
 
+## Description as the discovery surface
+
+**Framing.** 8 skills use action-verb-led prose. Mix of patterns: `/ocd:log` uses explicit "Reach for this when..." trigger-verb framing (strongest docs alignment); `/ocd:git`, `/ocd:check`, `/ocd:setup`, `/ocd:refactor`, `/ocd:sandbox` lead with action verbs ("Manage", "Run", "Execute", "Work on") followed by scope; `/ocd:pdf`, `/ocd:navigator` are shorter action descriptors without explicit when-to-use framing. ⟁ Mixed alignment — most skills match the 9/14 trigger-verb cohort in spirit, `/ocd:log`'s explicit "Reach for this when..." form is the strongest match docs-wise. Sharpening the shorter descriptions toward explicit trigger-verb framing is low-cost polish; not a release blocker.
+
+**Length.** 8 SKILL.md descriptions span ~50-530 characters (well under the 1,536-char docs cap). Falls into the medium-to-long cluster observed across the corpus for description-matched skills.
+
+**Few-shot patterns.** Not used. — Not applicable; skills are user-invocable rather than auto-discovered via agent-matching where `<example>`/`<commentary>` XML blocks pay off.
+
+**Multilingual triggers.** Not applicable — English-only.
+
+## Command and skill frontmatter
+
+**Commands vs skills.** Ships 0 commands under `commands/` and 8 skills under `plugins/ocd/systems/<skill>/SKILL.md`. The BULDEE `name:`-on-commands defect does not apply here since we don't ship slash commands separate from skills.
+
+**SKILL.md `name:` discipline.** 8/8 skills declare `name:` in frontmatter. ✓ Matches the universal SKILL.md 8/8 convention — skills pin identity against directory moves.
+
+**`argument-hint` format.** All skills use the ★ docs-prescribed typed angle-bracket form. Examples: `check` (`"<dormancy | all> [<system-name>] [--plugin <path>]"`), `navigator` (`"[directory-path]"`), `setup` (full verb-and-flag enumeration). ✓ 8/8 typed form; no prose-form drift.
+
+**`allowed-tools` syntax.** YAML-list form with permission-rule scoping where narrow scopes matter — e.g. `Bash(ocd-run:*)` restricts bash to the plugin CLI only. ✓ Matches the YAML-array cohort (2/14 in sample) with permission-rule scoping added as lukasmalkmus/moneymoney demonstrated (scope-limiting as UX).
+
 ## Dependency installation
 
 **Install location.** `${CLAUDE_PLUGIN_DATA}/venv` via uv. ✓ Dominant (~12/20) + ★ docs-prescribed.
@@ -100,6 +120,10 @@ Does not use `userConfig`. — Not applicable. Plugin's configuration surface is
 
 **Output and failure convention.** Both hooks emit `hookSpecificOutput` JSON with the appropriate `permissionDecision` (`allow` for convention_gate, `allow`/`deny` for auto_approval). `auto_approval.__main__` wraps dispatch in a top-level try/except that writes one stderr line and exits 0 on any unhandled exception — fail-open matches the hook's auto-approval role (a crash must never block a tool call; Claude Code's user-prompt fallback takes over). Blocks surface a human-readable reason via `permissionDecisionReason`, which Claude Code relays to the agent. ✓ Matches the Kanevry-style centralized-helper pattern.
 
+## Agent delegation patterns
+
+Does not ship agents. — Not applicable. Skill-to-skill invocation happens via the in-session Skill tool (e.g. `/checkpoint` calling `/ocd:git`); no plugin-shipped agents under `agents/` exist. The pattern doc's three sub-patterns (hook-enforced scope walls, skill composition, non-canonical frontmatter) apply to repos that ship agents — not to this single-skill-surface plugin.
+
 ## Session context loading
 
 Not implemented in this repo. — Not applicable.
@@ -130,6 +154,8 @@ Single-plugin marketplace. — Not applicable.
 
 **CI workflows.** `.github/workflows/ci.yml` — `push: [branches: [main]]` + `pull_request`, single-runtime (ubuntu-latest), `uv sync` + plugin-venv bootstrap + `bash scripts/test.sh`. ✓ Matches the 9/18 push/PR pytest shape. **Resolved**.
 
+**Fixture discipline.** Tests run against real backends throughout — real SQLite for navigator, real `git` subprocess via the session-scoped `sandbox_worktree` fixture for integration tests that mutate repo state, real `ocd-run` subprocess for CLI coverage, real plugin venv for install_deps tests. No `unittest.mock` usage. Function-scoped `tmp_path` for filesystem isolation. Opt-in real-agent tests gated by `pytest.mark.agent` + `--run-agent` CLI flag. ✓ Aligns with the ecosystem's real-backends-over-mocks convention (0/5 of sampled Python suites use `unittest.mock`). Opt-in-gate pattern matches SkinnnyJay's env-var gate intent via pytest's native marker mechanism. Worktree-isolation fixture (unique to this project per the sample — no shared convention observed) is documented in `rules/ocd/testing.md` as the canonical primitive.
+
 ## Release automation
 
 **`release.yml`.** Present. Triggered on `v*` tag push. Tag-sanity gates: verifies tag matches `vX.Y.Z` format, verifies `plugin.json` version at the tag commit equals the tag's version, runs tests, creates GitHub release with `gh release create --generate-notes`. Option E shape — no release-branch check (tags live on main). ✓ Matches the 5/14 tagged-repo shape. **Resolved**.
@@ -144,7 +170,11 @@ Single-plugin marketplace. — Not applicable.
 
 **README.md at repo root.** Present. ✓ 18/18.
 
-**CHANGELOG.md.** Present. ✓ 9/18.
+**CHANGELOG.md.** Present, Keep-a-Changelog format (dated `## [version] — date` sections with `### Added` sub-headings; v0.1.0 is the first entry). ✓ 9/18 presence; matches the ~17/27 Keep-a-Changelog-explicit cohort among repos that ship a CHANGELOG.
+
+**Release-notes source.** `release.yml` uses `gh release create --generate-notes` — auto-generated from commits/PRs for the tag range. ✓ Matches the ~8/15 release-workflow-repos majority. Trade-off: CHANGELOG narrative and release page notes are decoupled (CHANGELOG reads as curated history; release page reads as commit manifest). Threading CHANGELOG into the release body (Chachamaru's awk-extraction pattern) is available if the decoupling becomes noticeable friction.
+
+**CHANGELOG-as-runtime artifact.** Not applicable — CHANGELOG is for human/author consumption only; no skill fetches it at runtime (unlike BaseInfinity's `/update-wizard` pattern).
 
 **`ARCHITECTURE.md` at repo root.** Present. ✓ 5/5 of the repos that place an architecture doc at repo root use the uppercase form — 100% dominance for this location. Across all 18 sample repos that ship an architecture doc anywhere (root or under `docs/`), uppercase leads ~11/18. Prior audit's "2/18" figure collapsed case into one bucket and undercounted; corrected here. Uppercase aligns with the sibling root-doc convention (`README.md`, `CHANGELOG.md`, `LICENSE`, `SECURITY.md`) — agent-facing all-caps is the dominant signal across the ecosystem.
 

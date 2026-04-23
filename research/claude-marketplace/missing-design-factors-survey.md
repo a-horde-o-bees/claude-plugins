@@ -308,3 +308,115 @@ If a future wave wants to claim this dimension as a Decisions subsection, it sho
 | 7 | Test fixture conventions | Not actionable; template §13 covers decidable plumbing; fixture internals under-sampled. Future wave material. |
 
 Three of seven dimensions warrant net-new pattern-doc content: dimensions 2 and 3 as new subsections (with scoping caveats), and dimension 6 as a meaningful expansion to §16. Two (4 and 5) are absorbed into existing subsections. Two (1 and 7) are report-only findings pending a targeted re-scan.
+
+---
+
+## 1b. Dimension 1 follow-up — targeted re-scan
+
+**Scope.** Frontmatter-level decisions on slash commands and SKILL.md files — `description` length and framing, `argument-hint` presence and format, `name:` discipline, `allowed-tools` syntax, README structure for skill introduction.
+
+**Sample.** 14 skill/command files across 9 repos (BULDEE, Chulf58/FORGE, HiH-DimaN, ZhuBit, lukasmalkmus, anthropics/claude-plugins-official, Kanevry, Vortiago, CodeAlive-AI, damionrashford, NoelClay, SkinnnyJay). One representative command and one representative skill per repo where both exist; skill-only or command-only where the repo ships one surface.
+
+### Observation
+
+**`description` framing splits sharply between "when to use" and "what it does".** 9/14 lead with a trigger-verb framing ("Use when the user…", "Use whenever…", "Activated automatically when…"); 5/14 are bare "what it does" descriptors. The docs (★ `https://code.claude.com/docs/en/skills#frontmatter-reference`) explicitly prescribe the former for `description`: "Front-load the key use case"; "the combined `description` and `when_to_use` text is truncated at 1,536 characters." Skills that ship a bare "what" description are leaving the description-matcher without the trigger phrases it needs to surface them.
+
+**`description` length clusters in two regimes.** Short commands (19–97 chars) for task-style commands where invocation is explicit; medium-to-long skills (145–847 chars) for description-matched skills. Outliers: lukasmalkmus/moneymoney (677 chars, bilingual German/English trigger phrases), damionrashford/quant-math (847 chars, heavy trigger-verb enumeration). No sampled skill exceeds the docs-prescribed 1,536-char display cap, so no one is bumping the ceiling.
+
+**`argument-hint` format drifts.** Three distinct forms observed: typed angle-bracket (`"<folder path>"`, `"<search query or folder path>"`, `<question-or-query>`) — 4/9 argument-taking skills; prose description (`project idea or description`, `Optional feature description`, `Optional plugin description`) — 3/9; flag-style (`[--fast|--standard|--deep] [--upgrade <tier>]`) — 1/9 (Kanevry); subcommand (`[subcommand]`) — 1/9 (damionrashford). Docs prescribe the bracketed form (★ `[issue-number]` or `[filename] [format]`); the prose form contradicts that convention but isn't blocked.
+
+**`name:` on commands is inconsistently applied.** Of 7 sampled commands, 4 omit `name:` (BULDEE/challenge, anthropics/commit, anthropics/feature-dev, anthropics/create-plugin, Kanevry/bootstrap) — matching BULDEE's documented advice and Anthropic's own practice. 2 include `name:` (ZhuBit/index, NoelClay/learn). 1 has no frontmatter at all (Chulf58/FORGE/hello.md — intentional for a trivial echo command). The omission pattern correlates with being in a plugin directory where namespace-from-directory matters; 3/4 omissions are in plugin layouts (anthropics, Kanevry, BULDEE). SKILL.md files universally include `name:` (8/8) — docs-prescribed fallback applies but authors opt in, which is reasonable since skills must survive directory moves.
+
+**`allowed-tools` syntax varies.** Space-separated plain names (HiH-DimaN, SkinnnyJay) — 2/14; permission-rule scoped form (lukasmalkmus with verb-scoping like `Bash(mm accounts *)`, anthropics/commit with `Bash(git add:*)`) — 2/14; YAML array/list form (NoelClay/learn, anthropics/create-plugin) — 2/14; absent (8/14). Docs prescribe "a space-separated string or a YAML list." Permission-rule form is a legal space-separated-string case with function-call syntax embedded; the mixed form in one file (HiH-DimaN's kickstart has both plain tool names and `Bash(git:*)` in the same space-separated list) is the concrete drift the main survey flagged.
+
+**README skill-introduction structure is inconsistent but not chaotic.** 10 READMEs sampled, line counts spanning 65 to ~2,100. Predominant structure lead-ins:
+
+- Features-then-install (Vortiago, ZhuBit, CodeAlive-AI) — 3/10
+- Install-then-features (FORGE, BULDEE, anthropics-official) — 3/10
+- Problem-then-solution-then-install (HiH-DimaN, Kanevry, trader-os) — 3/10
+- Structure-only (anthropics-plugins-official — no Features/Commands sections at all) — 1/10
+
+No repo explicitly lists commands as a discovery surface at the README top level except BULDEE (a Commands section appears after Quick Start). Skills-as-list sections are rare in README body; most repos surface skill discovery through in-product `/` menu and rely on description-matching rather than README lists.
+
+### Evidence
+
+- **BULDEE/ai-craftsman-superpowers** — `commands/challenge.md`: no `name:`, no `argument-hint`, description 158 chars ("Senior architecture review and code challenge. Use when reviewing code or PRs for quality, auditing architecture decisions, or responding to code review comments."). SKILL.md `session-init`: has `name:`, description 101 chars, includes `disable-model-invocation: true`.
+- **Chulf58/FORGE** — `commands/forge/hello.md`: no frontmatter at all (trivial echo command). `commands/forge/doctor.md`: no YAML frontmatter — body-only content. Pattern: FORGE ships command-style skills under `skills/` and treats `commands/` as lightweight entry points.
+- **HiH-DimaN/idea-to-deploy** — `skills/kickstart/SKILL.md`: description 145 chars, `argument-hint: project idea or description` (prose form), `allowed-tools: Read Write Edit Glob Grep Bash(git:*) Bash(mkdir:*) ...` (mixed plain + scoped).
+- **ZhuBit/cowork-semantic-search** — `commands/index.md`: description 57 chars ("Index a folder of documents for semantic search"), `argument-hint: "<folder path>"` (typed). `skills/semantic-search/SKILL.md`: description 472 chars with bilingual trigger phrases ("was ist in dem Dokument uber..."), `argument-hint: "<search query or folder path>"`.
+- **lukasmalkmus/moneymoney** — `skills/moneymoney/SKILL.md`: description 677 chars using YAML block-scalar (`|`), bilingual trigger verbs (German: Überweisung, überweisen, Lastschrift; English: transfer, direct debit). Permission-rule scoped `allowed-tools` with deliberate write-verb omission.
+- **anthropics/claude-plugins-official** — `plugins/commit-commands/commands/commit.md`: no `name:`, description 19 chars ("Create a git commit"). `plugins/feature-dev/commands/feature-dev.md`: no `name:`, description 97 chars, `argument-hint: Optional feature description` (prose). `plugins/plugin-dev/commands/create-plugin.md`: no `name:`, description 123 chars, YAML-array `allowed-tools`. `plugins/plugin-dev/skills/skill-development/SKILL.md`: `name: skill-development`, description 287 chars leads with "This skill should be used when the user wants to..." — the docs-recommended trigger-verb form. README itself is minimal (~65 lines): Structure → Installation → Contributing; no Features/Commands/Skills sections.
+- **Kanevry/session-orchestrator** — `commands/bootstrap.md`: no `name:`, description 79 chars, `argument-hint: "[--fast|--standard|--deep] [--upgrade <tier>] ..."` (flag-style enumeration — unusual).
+- **damionrashford/trader-os** — `plugins/trading-core/skills/quant-math/SKILL.md`: description 847 chars — the longest in the sample — dense with trigger verbs and formula names ("what's my Sharpe", "compute VaR", "expected value of this bet", "convert odds", "confidence interval on my backtest"). `argument-hint: [subcommand]`.
+- **CodeAlive-AI/codealive-skills** — `skills/codealive-context-engine/SKILL.md`: description 262 chars, trigger-phrase heavy ("Use when the user mentions 'CodeAlive', asks to list or get data sources, ..."). README 224 lines; Installation → Setup → Usage order. No Quick Start section.
+- **NoelClay/academic-research-mcp-plugin** — `commands/learn.md`: description 94 chars ("Start a research-based learning session on any topic. Usage: /learn <topic>") — inlines argument hint in description rather than using the field. `skills/research-tutor/SKILL.md`: description 264 chars using YAML block-scalar.
+- **SkinnnyJay/wiki-llm** — `skills/wiki-query/SKILL.md`: description 147 chars, `argument-hint: "<question about vault content>"` (typed). `commands/query.md`: no `name:`, description 78 chars.
+
+### Recommendation
+
+**Promote to a full Decisions subsection in the pattern doc.** Data depth now supports adoption-count claims across three sub-axes, matching the original main-survey recommendation but with concrete denominators:
+
+1. **Description framing and length** — docs-prescribed trigger-verb form is followed by 9/14 sampled surfaces; bare "what it does" by 5/14. This is the sharp adoption-count finding for the description discoverability axis. Cross-references Dimension 2 recommendation (description quality), which suggested a docs-sourced subsection; this sample adds the adoption-count backing.
+2. **`argument-hint` format drift** — four distinct forms observed across 9 argument-taking surfaces, with only the typed bracket form (`<query>`) aligned with ★ docs-prescribed examples. Four-variant drift is enough to warrant a Pitfalls callout or a conventions note pointing to the docs example.
+3. **`name:` on commands vs SKILL.md** — commands omit `name:` 4/7 (matching BULDEE's defect note and anthropics' practice); SKILL.md includes `name:` 8/8. The asymmetry is load-bearing and docs-prescribed (★ skills-reference): directory-name fallback exists for both, but commands benefit from it for plugin namespacing while skills benefit from pinning the name so directory moves don't rename the skill. The main survey already recommended lifting the BULDEE defect into §5 Pitfalls; this sample confirms the pattern generalizes across Anthropic's own plugins.
+
+README structure is too heterogeneous to claim a pattern — 4 distinct lead-in shapes across 10 repos, each internally coherent. Defer README structure to a style-guide addendum if ever warranted; not pattern-doc material today.
+
+Fold-in location: new Decisions subsection under the existing **Plugin-component registration** section, or as a dedicated **Command and skill frontmatter** subsection since it now covers three first-class findings (framing, argument-hint, name:). The three findings share a consumer (Claude Code's description-matcher and slash-command router), so consolidating into one subsection serves the reader better than splitting across existing sections.
+
+---
+
+## 7b. Dimension 7 follow-up — targeted re-scan
+
+**Scope.** Fixture-level testing conventions in plugins that ship test suites — `conftest.py` shape, fixture scoping, integration-test isolation mechanism, mock-vs-real backends, agent-subprocess test opt-in patterns.
+
+**Sample.** 13 repos with Python or JS test suites (Cairn, Vortiago, CronusL, SkinnnyJay, AgentBuildersApp, Kanevry, BULDEE, Chachamaru, BaseInfinity, damionrashford, CodeAlive, NoelClay, Lykhoyda, ZhuBit). Conftest.py fetched and read on all repos where present (4 repos: Cairn ×2, Vortiago ×1, CronusL ×2, SkinnnyJay ×1). Test layouts inspected on all 13.
+
+### Observation
+
+**Python pytest adoption is thinner than the 54-repo narrative suggested.** Only 4/13 sampled repos actually ship a `conftest.py`: Cairn (2 files), Vortiago (1 file), CronusL (2 files), SkinnnyJay (1 file). Most "test-rich" repos in the research notes turn out to use shell scripts (Chachamaru with ~100 `test-*.sh` files; BaseInfinity similar; BULDEE no Python tests; damionrashford none), vitest/Node (Kanevry, AgentBuildersApp-adjacent), or `unittest` not pytest (AgentBuildersApp's 1,300-line single-class `unittest.TestCase` with method-level `setUp`/`tearDown`, no pytest fixtures). The narrative-reported "148 tests" in AgentBuildersApp is a single `unittest` module, not a pytest suite.
+
+**Fixture scoping is deliberate where present.** The 4 pytest-using repos use session scope for expensive setup (Vortiago's Docker stack, SkinnnyJay's seeded vault, Cairn's session-metrics) and function scope for per-test isolation (Cairn's `integration_count`, CronusL's `tmp_project_dir` / `db_repository`, Vortiago's `mcp_session`). No repo uses module scope. Autouse appears in 1/4 (SkinnnyJay's `cleanup_claude`, which runs credential scrubbing before every test).
+
+**Isolation mechanisms cluster into four patterns:**
+
+- **tmp_path + in-memory databases** — Cairn's `temp_db` fixture (SQLite in `tmp_path`), CronusL's `"sqlite+aiosqlite://"` in-memory DB, SkinnnyJay's vault in `tmp_path`. Dominant pattern (3/4 of conftest-using repos).
+- **Real Docker compose stack** — Vortiago's `outline_stack` session fixture spins `docker compose up -d` for the full MCP-plus-Outline stack, with real OIDC login via `httpx` and real `mcp_outline` server subprocess via `stdio_client`. 1/4 conftest-using repos; the only case of real external-service backing.
+- **Real git tempdir** — AgentBuildersApp's `unittest.setUp` creates a fresh git-init'd temp repo per test method, spawns real `git` commands via `subprocess`, tests against actual adapter manifest files in `PLUGIN_ROOT / "adapters" / ...`. Real-subprocess-everywhere discipline, no mocking.
+- **No isolation fixture at all** — ZhuBit ships pytest tests (`test_chunker.py`, `test_indexer.py`, etc.) without a conftest, relying on per-test setup in test files. 1/13.
+
+**Mock usage is nearly absent.** Across all 4 conftest-using repos and the AgentBuildersApp unittest suite, **zero uses `unittest.mock`**. SkinnnyJay imports `lib.claude_env` for credential stripping (not mocking, just env-var scrubbing). CronusL replaces FastAPI lifespan context to suppress init/cleanup during tests — dependency injection, not mocking. Every repo tests against real backends (SQLite in-memory, real subprocess CLIs, real Docker containers, real git). This is a strong consistency signal: the claude-plugin ecosystem tests integration, not isolation.
+
+**Real-subprocess tests against real CLIs are common where they matter.** Vortiago spawns real `mcp_outline` server via `sys.executable -m mcp_outline`; SkinnnyJay's `claude_runner` and `codex_runner` fixtures invoke the real `claude` and `codex` binaries from PATH, gated by environment variables `RUN_CLAUDE_TESTS` and `RUN_CODEX_SKILL_EVALS`; AgentBuildersApp invokes real hook scripts via subprocess. This is a partial analog to this project's `pytest.mark.agent` with `--run-agent` — the mechanism differs (env-var gate vs pytest marker) but the intent is identical: opt-in real-subprocess tests that cost tokens or external resources.
+
+**No worktree-isolation fixture observed in the sample.** This project's `sandbox_worktree` fixture (wrapping `systems.sandbox`) remains unique in the corpus. The closest analog is AgentBuildersApp's real-git-tempdir pattern, which is git-init'd scratch dirs rather than worktrees on the actual repo — a different mechanism that doesn't share the main repo's object store.
+
+**No `tests/fixtures/` directory convention.** Fixtures-as-data (test corpus files, mock inputs) are inconsistent: Cairn has an `external_project` fixture dir; Chachamaru has `tests/fixtures/` with scenario corpus; BaseInfinity has `tests/e2e/fixtures/` with 10+ mini-project fixtures (fresh-python, fresh-nextjs, legacy-messy, etc.) — genuine fixture-data directories. But no shared convention; each repo invents its own layout.
+
+### Evidence
+
+- **smcady/Cairn** — `tests/conftest.py` (110 lines): `metrics_recorder` (session), `_count_integration_tests` (function autouse). No `unittest.mock`, `subprocess`, or `tmp_path` imports at the top level — fixtures defer `tmp_path` to test parameters. `tests/integration/conftest.py` (27 lines): `temp_db` and `reset_cairn_registry`, default scope, `tmp_path`-based SQLite.
+- **Vortiago/mcp-outline** — `tests/e2e/conftest.py` (~430 lines, 6 session-scoped fixtures): `outline_stack`, `_outline_credentials`, `outline_api_key`, `outline_access_token`, `mcp_server_params`, `mcp_session`. Uses `subprocess` to spawn `docker compose up -d`, real `httpx` for OIDC, real MCP server subprocess via `stdio_client`. No mocks.
+- **CronusL-1141/AI-company** — `tests/conftest.py` (~30 lines): `tmp_project_dir`, `db_repository` (async, function scope). `tests/integration/conftest.py` (~65 lines): `integration_client`, `repo_and_client`. In-memory SQLite (`sqlite+aiosqlite://`), FastAPI lifespan replaced, no mocks.
+- **SkinnnyJay/wiki-llm** — `tests/conftest.py` (385 lines): `cleanup_claude` (session autouse), `seeded_vault` (session tmp_path), `claude_runner` / `codex_runner` / `skill_eval_runner` (function). Imports `subprocess`, real CLI invocation gated by `RUN_CLAUDE_TESTS` / `RUN_CODEX_SKILL_EVALS` env vars.
+- **AgentBuildersApp/eight-eyes** — `tests/test_collab_hooks.py` (~1,300 lines, 148 tests): single `unittest.TestCase` class, method-scoped `setUp`/`tearDown` with tempdir + real `git init`, tests invoke real hook scripts via `subprocess`, reads real `PLUGIN_ROOT / "adapters" / "copilot_cli" / "plugin.json"` manifest files. No pytest, no mocks.
+- **Kanevry/session-orchestrator** — vitest (Node), not pytest; `tests/` tree with `hooks/`, `integration/`, `lib/`, `skills/`, `unit/`, `fixtures/`. Nested skill-local tests at `skills/vault-sync/tests/` with their own `package.json`.
+- **ZhuBit/cowork-semantic-search** — `tests/` contains `test_chunker.py`, `test_indexer.py`, `test_mcp_tools.py`, `test_parsers.py`, `test_search.py`, `test_store.py` plus `helpers.py` — but no `conftest.py`. Per-test setup inline.
+- **BULDEE, Chachamaru, BaseInfinity, damionrashford, CodeAlive-AI, NoelClay** — no `conftest.py`; test surfaces are shell scripts or bundled-helper Python only. The corpus-reported "extensive test suites" in these repos are bash-orchestrated, not pytest.
+- **Lykhoyda/rn-dev-agent** — `tests/helpers.py`, `test_cli_smoke.py`, `test_setup_and_client.py`; default branch is not `main` so raw fetch 404'd, but the tree listing confirms three Python test files and no conftest.
+
+### Recommendation
+
+**Partially actionable — enough data for one focused Decisions subsection, not a broad one.** The Dim-7 main-survey conclusion ("not enough sample depth on fixture internals") is overturned by the deeper read on three specific axes where the data converges:
+
+1. **Real-backend-over-mock is the de facto convention.** 0/5 Python test suites in the sample use `unittest.mock`. Every fixture goes after real backends (real SQLite in-memory, real subprocess CLIs, real Docker, real git). This is a strong enough consistency finding to document as a convention: "Claude-plugin test suites test integration end-to-end against real backends; mocking is nearly absent. Use in-memory databases and gated real-subprocess invocation for cost control." This matches this project's `testing.md` "Integration Tests Across Boundaries" guidance — observation and doctrine converge.
+2. **Fixture scope discipline.** Session scope for expensive setup (Docker stack, seeded vault, metrics accumulator); function scope for per-test isolation; module scope unused. Worth a one-bullet note in the pattern doc since it's a consistent practice across 4/4 conftest-using repos.
+3. **Opt-in real-subprocess / real-CLI tests.** SkinnnyJay's env-var gate (`RUN_CLAUDE_TESTS`) and this project's `pytest.mark.agent` (`--run-agent`) are the same pattern realized through different mechanisms. Worth surfacing as a named pattern for agent-spawning tests with cost implications.
+
+Not actionable:
+
+- **`conftest.py` structure** — too much shape variance across 4 repos for a shared template to emerge; each fits its own infrastructure.
+- **Worktree isolation** — still unique to this project. The "not yet converged convention" framing from the main survey stands.
+- **`tests/fixtures/` directory structure** — three repos have fixture dirs, each with a different layout; no shared convention to document.
+
+Fold-in location: new Decisions subsection under the existing **Testing and CI** section (§13), scoped narrowly as "Fixture discipline" with the three findings above. Denominator: repos with Python test suites (4/13 sampled, ~10–15 across the full 54-repo corpus if extrapolated). The scoping caveat from the main survey ("not enough sample depth") is now resolved for these three axes; broader fixture conventions remain future-wave material.
