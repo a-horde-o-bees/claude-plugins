@@ -2,7 +2,7 @@
 
 Per-repo structured findings captured during Phase 2 of the cross-platform MCP pattern research. Each file fills the same template (identification, language/runtime, transport, distribution, config surface, auth, multi-tenancy, capabilities, observability, host integrations, Claude Code plugin wrapper, tests, CI, packaging, ergonomics, repo layout, notable choices, unanticipated axes, gaps). Most Python-primary files also carry a `## Python-specific` section.
 
-These are the empirical source data for `plugins/ocd/systems/patterns/templates/mcp-repo-cross-platform.md` (to be written in Phase 3). A repo's presence here is a claim that its structure was directly inspected; the per-file content records what was observed. Gaps sections record what was not resolvable within budget.
+These are the empirical source data for `logs/research/mcp/consolidated.md` (the subject's consolidated pattern). A repo's presence here is a claim that its structure was directly inspected; the per-file content records what was observed. Gaps sections record what was not resolvable within budget.
 
 Sample size: **104 repos** + 1 `_missing` record. Built in three passes: (1) language-agnostic cross-platform discovery (~63 repos), (2) Python-specific enrichment on existing Python files, (3) Python-focused discovery across three domains (data/ML/vector, infra/ops/security, breadth-fill + awslabs sub-server drill-down).
 

@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
-No unreleased changes.
+Populated at release time by the planned `/ocd:git release synthesize` verb (see [idea log](logs/idea/Agent-synthesized%20CHANGELOG%20at%20release%20time.md)) — the verb crawls git history since the last tag, agent-synthesizes a Keep-a-Changelog entry with cross-commit deconfliction, and produces a draft for operator review. Between releases, in-flight changes live in git history; this section is not maintained manually.
 
 ## [0.1.0] - 2026-04-22
 

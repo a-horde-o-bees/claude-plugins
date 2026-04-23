@@ -4,6 +4,13 @@ Synthesis of outstanding work across the project. Pulls from idea logs, sandbox 
 
 This doc is not an exhaustive tracker — the idea logs under `logs/idea/` and the sandbox branches' `_status.md` files hold full context. The roadmap is the scan-once view.
 
+## High priority
+
+Items tagged `priority:high` in their idea logs' frontmatter — floated up for scan-once visibility. Full entries remain in their theme sections below.
+
+- **Agent-synthesized CHANGELOG at release time** — `/ocd:git release` verb that crawls git log since last tag, agent-synthesizes a Keep-a-Changelog entry (grouping by topic, deconflicting cross-commit overrides), writes draft for operator review, tags + pushes. Drops `[Unreleased]` in favor of synthesis at release time. Full context: Methodology and meta section. [idea log](logs/idea/Agent-synthesized%20CHANGELOG%20at%20release%20time.md)
+- **Per-plugin permission contribution** — each plugin with a CLI runner owns its own permissions template rather than coupling to ocd's. Blocker for the imminent blueprint plugin. Full context: Governance and ecosystem section. [idea log](logs/idea/Per-plugin%20permission%20contribution.md)
+
 ## Active sandbox features
 
 Four features packed off main onto sandbox branches. Each carries its own `_status.md` on its branch.
@@ -54,7 +61,7 @@ Work that shapes how rules, conventions, and cross-plugin interactions evolve.
 - **PFN recursion awareness on Spawn and Call** — current PFN doesn't make recursion semantics explicit. [idea log](logs/idea/PFN%20recursion%20awareness%20on%20Spawn%20and%20Call.md)
 - **PFN self-description audit** — verify PFN prescribes chains of events unambiguously (e.g. prior issues with `isolation: "worktree"` and `When:` constructs that relied on runtime resolution). [idea log](logs/idea/PFN%20self-description%20audit.md)
 - **Purpose-first framing for pattern research** — methodology discipline for authoring pattern docs: purpose-organized from the start rather than feature-organized and refactored later. [idea log](logs/idea/Purpose-first%20framing%20for%20pattern%20research.md)
-- **Per-plugin permission contribution** — each plugin with a CLI runner should own a permissions template its own init deploys. Blueprint / future plugins have no mechanism today. [idea log](logs/idea/Per-plugin%20permission%20contribution.md)
+- **Per-plugin permission contribution** ⭐ priority:high — each plugin with a CLI runner should own a permissions template its own init deploys. Blueprint / future plugins have no mechanism today. [idea log](logs/idea/Per-plugin%20permission%20contribution.md)
 - **Permissions skill design** — surface for managing permissions as a user-facing operation. [idea log](logs/idea/Permissions%20skill%20design.md)
 - **Opt-in clean for navigator log permissions** — three systems with non-template state need `clean()` implementations. [idea log](logs/idea/Opt-in%20clean%20for%20navigator%20log%20permissions.md)
 
@@ -62,6 +69,7 @@ Work that shapes how rules, conventions, and cross-plugin interactions evolve.
 
 Tools and disciplines for how work gets done across the project.
 
+- **Agent-synthesized CHANGELOG at release time** ⭐ priority:high — `/ocd:git release` verb that crawls git log, synthesizes Keep-a-Changelog entries with cross-commit deconfliction, tags + pushes. Replaces manual `[Unreleased]` curation. [idea log](logs/idea/Agent-synthesized%20CHANGELOG%20at%20release%20time.md)
 - **Purpose-map as reusable analysis tool** — the failure-mode framing / need-rationale split / reactive refinement methodology is potentially applicable beyond component auditing (migration validation, general "does this contribute?" analysis). [idea log](logs/idea/Purpose-map%20as%20reusable%20analysis%20tool.md)
 - **Audit-governance inversion technique from purpose-map** — reuse the unmet-test discipline as an audit mechanism. [idea log](logs/idea/Audit-governance%20inversion%20technique%20from%20purpose-map.md)
 - **Audit-testing skill for test infrastructure quality** — audit skill focused on test infrastructure rather than production code. [idea log](logs/idea/Audit-testing%20skill%20for%20test%20infrastructure%20quality.md)
@@ -97,6 +105,22 @@ Known future work, not currently scheduled.
 
 - **Community health files** — `SECURITY.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md` at project root. Pull in when external contributors arrive. [idea log](logs/idea/Community%20health%20files.md)
 - **adhd plugin** — name reservation only. Not yet created; noted so the name isn't taken.
+
+## Priority tagging
+
+Idea logs that warrant elevated attention add `priority:high` to their YAML frontmatter:
+
+```yaml
+---
+tags: ["priority:high"]
+---
+```
+
+The High priority section at the top of this doc lists these items with a short pointer to their theme-section home. In-place theme entries are annotated with `⭐ priority:high` so readers browsing by theme see the flag too.
+
+The tag is sparing — use for items that are concrete blockers, imminent triggers (e.g. a dependency soon to arrive), or regression risks if left unaddressed. Not every good idea qualifies. When the trigger resolves or the blocker clears, drop the tag and let the item live in its theme section.
+
+Only `priority:high` floats to the top. `priority:medium` / `priority:low` aren't a thing — unflagged means standard theme-section priority, decided by reader judgment when scanning the section.
 
 ## How this doc stays accurate
 

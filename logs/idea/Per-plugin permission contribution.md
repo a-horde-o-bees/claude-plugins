@@ -1,3 +1,7 @@
+---
+tags: ["priority:high"]
+---
+
 # Per-plugin permission contribution
 
 ## Purpose
