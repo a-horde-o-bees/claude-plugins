@@ -1,4 +1,5 @@
 rule,pattern,reason
+*,**/fixture_*.*,Scanner test fixtures — files whose content is deliberate anti-pattern input across every dimension; flagging them would mean the check works against its own tests
 Python - parent-walking,**/conftest.py,Pytest fixture anchor — legitimate base for test discovery; other fixtures read through it rather than anchoring themselves
 Python - parent-walking,plugins/*/run.py,Plugin CLI entry-point dispatcher; the blessed plugin-root anchor that other modules consume indirectly
 Python - parent-walking,plugins/*/bin/*,Plugin shim entry scripts — must anchor to locate their Python package before any other code runs

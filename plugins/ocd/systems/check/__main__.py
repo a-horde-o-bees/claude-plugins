@@ -1,9 +1,14 @@
 """Check CLI.
 
 Presentation layer: argument parsing and dispatch. Business logic lives
-in _dormancy and future dimension modules. Output is structured per
-system — one header line, per-check pass/fail/skip lines, trailing
-summary. Exit 0 when all checks pass, 1 when any fail.
+in per-dimension modules (`_dormancy`, `_markdown`, `_python`). Output
+is structured per target — one header line, per-check pass/fail/skip
+lines, trailing summary. Exit 0 when all checks pass, 1 when any fail.
+
+Adding a dimension: write a `_dispatch_<name>` that returns an int
+exit code, register it in `DIMENSIONS`, and add a subparser in
+`build_parser`. The `all` dispatcher iterates `DIMENSIONS` and no
+other code changes — SKILL.md step 7 is a single `ocd-run check all`.
 """
 
 from __future__ import annotations
@@ -20,8 +25,6 @@ from ._allowlist import filter_allowed, load_allowlist
 from ._markdown import scan_paths as scan_markdown_paths
 from ._python import scan_paths as scan_python_paths
 
-
-DIMENSIONS = {"dormancy", "markdown", "python"}
 
 # __main__.py is a per-system CLI dispatcher — it may anchor to its own
 # directory to read sibling config (`allowlist.csv`). This is the only
@@ -73,13 +76,17 @@ def _print_result(result) -> None:
         print(f"  ~ {s}")
 
 
-def _dispatch_dormancy(args: argparse.Namespace) -> None:
-    plugin_root = Path(args.plugin).resolve() if args.plugin else framework.get_plugin_root()
-    if args.system:
-        systems = [plugin_root / "systems" / args.system]
+def _dispatch_dormancy(args: argparse.Namespace) -> int:
+    plugin_root = (
+        Path(args.plugin).resolve() if getattr(args, "plugin", None)
+        else framework.get_plugin_root()
+    )
+    system = getattr(args, "system", None)
+    if system:
+        systems = [plugin_root / "systems" / system]
         if not systems[0].is_dir():
-            print(f"System not found: {args.system}", file=sys.stderr)
-            sys.exit(1)
+            print(f"System not found: {system}", file=sys.stderr)
+            return 1
     else:
         systems = _discover_systems(plugin_root)
 
@@ -95,22 +102,29 @@ def _dispatch_dormancy(args: argparse.Namespace) -> None:
         if not result.ok:
             any_fail = True
 
-    if any_fail:
-        sys.exit(1)
+    return 1 if any_fail else 0
 
 
-def _dispatch_markdown(args: argparse.Namespace) -> None:
+def _dispatch_markdown(args: argparse.Namespace) -> int:
     """Scan markdown files for literal-character and blank-line discipline violations.
 
     Reports with rule name, file:line:col, and surrounding context. Literal-
     char violations are judgment-required (never auto-fixed); blank-line
     violations are auto-fixable via the module's `fix_blank_lines`.
+    Results pass through the shared allowlist so cross-dimension
+    exemptions (e.g. `fixture_*.*`) suppress consistently.
     """
-    roots = [Path(p).resolve() for p in args.paths] if args.paths else [Path.cwd()]
-    violations = scan_markdown_paths(roots, strict=args.strict)
+    paths = getattr(args, "paths", None) or []
+    roots = [Path(p).resolve() for p in paths] if paths else [Path.cwd()]
+    strict = getattr(args, "strict", False)
+    raw = scan_markdown_paths(roots, strict=strict)
+    allowlist = load_allowlist(ALLOWLIST_CSV)
+    project_root = _project_root_from(roots)
+    violations, _suppressed = filter_allowed(raw, allowlist, project_root)
+
     if not violations:
         print("Clean — no markdown violations found.")
-        return
+        return 0
     by_path: dict[Path, list] = {}
     for v in violations:
         by_path.setdefault(v.path, []).append(v)
@@ -123,10 +137,10 @@ def _dispatch_markdown(args: argparse.Namespace) -> None:
     total = len(violations)
     files = len(by_path)
     print(f"\n{total} violation(s) in {files} file(s)", file=sys.stderr)
-    sys.exit(1)
+    return 1
 
 
-def _dispatch_python(args: argparse.Namespace) -> None:
+def _dispatch_python(args: argparse.Namespace) -> int:
     """Scan Python files for parent-walking patterns.
 
     Flags any `.parent`, `.parents[N]`, or `os.path.dirname(...)`
@@ -135,7 +149,8 @@ def _dispatch_python(args: argparse.Namespace) -> None:
     are suppressed via `allowlist.csv`. `--show-allowed` surfaces the
     suppressed entries so reviewers can audit the allowlist.
     """
-    roots = [Path(p).resolve() for p in args.paths] if args.paths else [Path.cwd()]
+    paths = getattr(args, "paths", None) or []
+    roots = [Path(p).resolve() for p in paths] if paths else [Path.cwd()]
     raw = scan_python_paths(roots)
     allowlist = load_allowlist(ALLOWLIST_CSV)
     project_root = _project_root_from(roots)
@@ -143,7 +158,7 @@ def _dispatch_python(args: argparse.Namespace) -> None:
 
     if not violations and not suppressed:
         print("Clean — no parent-walking patterns found.")
-        return
+        return 0
 
     if violations:
         by_path: dict[Path, list] = {}
@@ -155,7 +170,7 @@ def _dispatch_python(args: argparse.Namespace) -> None:
                 print(f"  {path}:{v.line}:{v.col}: {v.rule}")
                 print(f"    {v.snippet}")
 
-    if args.show_allowed and suppressed:
+    if getattr(args, "show_allowed", False) and suppressed:
         print(f"\nSuppressed by allowlist ({len(suppressed)}):")
         for v in suppressed:
             print(f"  {v.path}:{v.line}:{v.col}: {v.rule}")
@@ -170,12 +185,36 @@ def _dispatch_python(args: argparse.Namespace) -> None:
             f"{allowed_n} suppressed by allowlist",
             file=sys.stderr,
         )
-        sys.exit(1)
-    else:
-        print(
-            f"Clean — no parent-walking patterns found "
-            f"({allowed_n} suppressed by allowlist)."
-        )
+        return 1
+    print(
+        f"Clean — no parent-walking patterns found "
+        f"({allowed_n} suppressed by allowlist)."
+    )
+    return 0
+
+
+DIMENSIONS = {
+    "dormancy": _dispatch_dormancy,
+    "markdown": _dispatch_markdown,
+    "python": _dispatch_python,
+}
+
+
+def _dispatch_all(args: argparse.Namespace) -> int:
+    """Run every registered dimension at its default scope.
+
+    Each dispatcher reads its own fields from the passed Namespace via
+    `getattr(..., default)` — an empty Namespace triggers default
+    behavior for every dimension. Adding a new dispatcher to
+    `DIMENSIONS` is all it takes for `all` to pick it up.
+    """
+    rc = 0
+    for dispatch in DIMENSIONS.values():
+        dim_args = argparse.Namespace()
+        dim_rc = dispatch(dim_args)
+        if dim_rc:
+            rc = dim_rc
+    return rc
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -187,14 +226,15 @@ def build_parser() -> argparse.ArgumentParser:
             "Dimensions available:\n"
             "  dormancy  Verify System Dormancy contract — readiness interface,\n"
             "            rule deployment, MCP dormancy gate pattern.\n"
-            "  markdown  Scan .md files for literal {, }, <, >, (and optionally *, _)\n"
-            "            outside backtick-delimited inline/fenced code — enforces the\n"
-            "            markdown.md rule to prevent renderer consumption.\n"
+            "  markdown  Scan .md files for unprotected literal characters and\n"
+            "            blank-line discipline violations.\n"
             "  python    Scan .py files for parent-walking patterns — chained\n"
             "            .parent.parent…, .parents[N>=1], or nested os.path.dirname\n"
             "            calls that couple files to their disk location.\n"
+            "  all       Run every dimension at its default scope.\n"
             "\n"
             "Usage:\n"
+            "  check all                          Run every dimension\n"
             "  check dormancy                     Run dormancy on all systems in the plugin\n"
             "  check dormancy <system-name>       Run dormancy on one system\n"
             "  check dormancy --plugin <path>     Target a different plugin's systems\n"
@@ -213,7 +253,7 @@ def build_parser() -> argparse.ArgumentParser:
     d_p.add_argument("--plugin", default=None, help="Plugin root override (default: current plugin)")
     d_p.set_defaults(_dispatch=_dispatch_dormancy)
 
-    m_p = sub.add_parser("markdown", help="Scan markdown for unprotected literals")
+    m_p = sub.add_parser("markdown", help="Scan markdown for unprotected literals and blank-line issues")
     m_p.add_argument(
         "paths",
         nargs="*",
@@ -239,6 +279,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p_p.set_defaults(_dispatch=_dispatch_python)
 
+    a_p = sub.add_parser("all", help="Run every dimension at its default scope")
+    a_p.set_defaults(_dispatch=_dispatch_all)
+
     return parser
 
 
@@ -246,10 +289,9 @@ def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
     if hasattr(args, "_dispatch"):
-        args._dispatch(args)
-    else:
-        parser.print_help()
-        sys.exit(1)
+        sys.exit(args._dispatch(args))
+    parser.print_help()
+    sys.exit(1)
 
 
 if __name__ == "__main__":

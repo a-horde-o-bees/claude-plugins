@@ -14,9 +14,13 @@ Run universal discipline checks against plugin systems or project files. Dimensi
 
 Each check dimension verifies one universal discipline. Dimensions target different scopes:
 
-- **`dormancy`** — scopes to plugin systems. Scans a system's folder, detects which dormancy-relevant surfaces it exposes (init contract, readiness interface, MCP server, rule contribution), and runs the applicable assertions.
-- **`markdown`** — scopes to project files. Walks `.md` files, uses a deterministic line+char state machine to detect characters (`{`, `}`, `<`, `>`, optionally `*`, `_`) outside backtick-protected inline/fenced code, and to enforce blank-line discipline around lists, headings, and blocks.
-- **`python`** — scopes to project files. Walks `.py` files, parses each to AST, and flags parent-walking patterns: chained `.parent.parent…` accesses, `.parents[N]` with N ≥ 1, and nested `os.path.dirname(...)` calls.
+- **`dormancy`** — scans a plugin system's folder, detects which dormancy-relevant surfaces it exposes (init contract, readiness interface, MCP server, rule contribution), and runs the applicable assertions.
+- **`markdown`** — scans `.md` files for unprotected literal characters (`{`, `}`, `<`, `>`, optionally `*`, `_`) outside backtick-protected code spans, and enforces blank-line discipline around lists, headings, and blocks.
+- **`python`** — scans `.py` files for parent-walking patterns: chained `.parent.parent…` accesses, `.parents[N]` with N ≥ 1, and nested `os.path.dirname(...)` calls rooted at `__file__`.
+
+`all` runs every dimension at its default scope and aggregates exit codes — new dimensions register in the CLI's `DIMENSIONS` registry and `all` picks them up without any skill-level change.
+
+Files matching `fixture_*.*` are suppressed across every dimension via a wildcard entry in `allowlist.csv` — scanner test inputs contain the anti-patterns by design, so flagging them would pit the check against its own fixtures.
 
 Real systems and documents drift — checkers are tested against synthetic fixtures, not against any particular plugin's live content.
 
@@ -52,18 +56,9 @@ Python dimension verifies:
 ## Workflow
 
 1. If not $ARGUMENTS: Exit to user: skill description and argument-hint
-2. {dimension} = first token of $ARGUMENTS
-3. {remainder} = $ARGUMENTS after {dimension}
-4. If {dimension} is `dormancy`: bash: `ocd-run check dormancy {remainder}`
-5. Else if {dimension} is `markdown`: bash: `ocd-run check markdown {remainder}`
-6. Else if {dimension} is `python`: bash: `ocd-run check python {remainder}`
-7. Else if {dimension} is `all`:
-    1. bash: `ocd-run check dormancy`
-    2. bash: `ocd-run check markdown {remainder}`
-    3. bash: `ocd-run check python {remainder}`
-8. Else: Exit to user: unrecognized dimension {dimension} — expected dormancy, markdown, python, or all
-9. Present CLI output to user — no summarization or reformatting
-10. Return to caller
+2. bash: `ocd-run check $ARGUMENTS` — CLI dispatches the dimension; `all` fans out over every registered dimension
+3. Present CLI output to user — no summarization or reformatting
+4. Return to caller
 
 ### Report
 

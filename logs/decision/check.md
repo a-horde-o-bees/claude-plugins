@@ -98,7 +98,7 @@ Seed patterns:
 ### Consequences
 
 - **Enables:** regression guard against file-anchored parent-walking re-entering the codebase. Existing anchors pass via the allowlist; new anchors added consciously via a CSV row
-- **Enables:** test fixture convention formalized — `fixture_*.py` files under `tests/plugins/ocd/fixtures/` are pytest-collect-ignored via `collect_ignore_glob`, so scanner sample inputs live alongside tests without being mistaken for test modules
+- **Enables:** test fixture convention formalized — `fixture_*.*` files co-locate with the tests that consume them (same directory as the `test_*.py`), and a wildcard `*,**/fixture_*.*` allowlist row suppresses them across every dimension. No `fixtures/` folder; file naming is the convention. Pytest's default discovery glob is `test_*.py`, so `fixture_*.py` doesn't need explicit collection exclusion
 - **Enables:** `--show-allowed` flag surfaces the suppressed entries so the allowlist itself stays reviewable — no silent exemptions
 - **Constrains:** rule is AST-only, so two-line laundering (`here = Path(__file__).parent; root = here.parent`) catches the first line but not the second. Accepted: the first line already flags, so the laundering is cosmetic
 - **Constrains:** `.parents[N]` with non-constant N (`.parents[some_var]`) still matches because the subscript's value chain is what's checked, not the index value. `dirname` with bare import name relies on identifier — an unrelated `dirname` function would false-positive if chained to `__file__`; in practice, `os.path.dirname` is the only dirname in use

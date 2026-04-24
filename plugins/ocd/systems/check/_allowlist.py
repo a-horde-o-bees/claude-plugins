@@ -3,7 +3,8 @@
 Reads `allowlist.csv` from the system folder and provides a predicate
 for filtering violations by `(rule, path)`. Row schema:
 
-    rule     — exact-match against `Violation.rule` / `PyViolation.rule`
+    rule     — exact-match against `Violation.rule` / `PyViolation.rule`,
+               or `*` to match any rule (cross-dimension suppression)
     pattern  — fnmatch glob matched against the path's posix string
     reason   — prose explanation surfaced in `--verbose` output
 
@@ -12,6 +13,12 @@ relative when the scanner is invoked from the project root). fnmatch
 `*` matches any character including `/`, so `*conftest.py` matches any
 conftest file anywhere in the tree. Users wanting tighter matches can
 anchor patterns to earlier path segments (e.g. `plugins/*/run.py`).
+
+The `*` rule is for files whose content is inherently exempt across
+every check dimension — scanner test fixtures (`fixture_*.*`) are the
+canonical example: they exist to contain the anti-patterns the checks
+detect, so flagging them would mean the check works against its own
+tests.
 
 This loader is intentionally I/O-only — it does not look up its own
 CSV path via `__file__`. The caller supplies the path; that keeps
@@ -80,7 +87,7 @@ def is_allowed(
     else:
         rel = path.as_posix()
     for entry in entries:
-        if entry.rule != rule:
+        if entry.rule != "*" and entry.rule != rule:
             continue
         if fnmatch(rel, entry.pattern):
             return True

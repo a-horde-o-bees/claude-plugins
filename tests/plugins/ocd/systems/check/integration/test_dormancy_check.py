@@ -4,21 +4,19 @@ Exercises the checker against synthetic fixture systems that represent
 each combination of surfaces and each class of failure. Real plugin
 systems are not used as fixtures — they drift, and the checker must
 hold its own ground truth.
+
+Fixture-path resolution and `sys.path` setup live in the local
+conftest (`dormancy_fixtures_dir` fixture and its autouse companion),
+so test bodies do not anchor to `__file__` directly.
 """
 
-import sys
 from pathlib import Path
 
-
-FIXTURES_DIR = Path(__file__).parent / "fixtures"
-if str(FIXTURES_DIR) not in sys.path:
-    sys.path.insert(0, str(FIXTURES_DIR))
-
-from systems.check import check_dormancy, scan_system  # noqa: E402
+from systems.check import check_dormancy, scan_system
 
 
-def _run(fixture_name: str, tmp_project_dir: Path):
-    fixture_path = FIXTURES_DIR / fixture_name
+def _run(fixture_name: str, fixtures_dir: Path, tmp_project_dir: Path):
+    fixture_path = fixtures_dir / fixture_name
     surfaces = scan_system(fixture_path)
     return check_dormancy(
         surfaces,
@@ -31,8 +29,8 @@ def _run(fixture_name: str, tmp_project_dir: Path):
 class TestCompliantRuntime:
     """Fixture with full readiness interface passes every check."""
 
-    def test_passes(self, tmp_path):
-        result = _run("compliant_runtime", tmp_path)
+    def test_passes(self, tmp_path, dormancy_fixtures_dir):
+        result = _run("compliant_runtime", dormancy_fixtures_dir, tmp_path)
         assert result.ok, f"unexpected failures: {result.failures}"
         assert "ready() returns False when infrastructure absent" in result.passes
         assert any("ensure_ready() raises NotReadyError" in p for p in result.passes)
@@ -43,8 +41,8 @@ class TestCompliantRuntime:
 class TestDeployOnly:
     """Fixture without readiness interface passes — treated as deploy-only."""
 
-    def test_passes(self, tmp_path):
-        result = _run("deploy_only", tmp_path)
+    def test_passes(self, tmp_path, dormancy_fixtures_dir):
+        result = _run("deploy_only", dormancy_fixtures_dir, tmp_path)
         assert result.ok, f"unexpected failures: {result.failures}"
         assert any("deploy-only" in s for s in result.skipped)
 
@@ -52,16 +50,16 @@ class TestDeployOnly:
 class TestBrokenReadyAlwaysTrue:
     """Fixture whose ready() returns True even in absent state fails."""
 
-    def test_flags_lying_predicate(self, tmp_path):
-        result = _run("broken_ready_always_true", tmp_path)
+    def test_flags_lying_predicate(self, tmp_path, dormancy_fixtures_dir):
+        result = _run("broken_ready_always_true", dormancy_fixtures_dir, tmp_path)
         assert not result.ok, "expected failures but result.ok is True"
         assert any(
             "ready() returned True against an empty project dir" in f
             for f in result.failures
         ), f"missing expected failure; got: {result.failures}"
 
-    def test_flags_ensure_ready_not_raising(self, tmp_path):
-        result = _run("broken_ready_always_true", tmp_path)
+    def test_flags_ensure_ready_not_raising(self, tmp_path, dormancy_fixtures_dir):
+        result = _run("broken_ready_always_true", dormancy_fixtures_dir, tmp_path)
         assert any(
             "ensure_ready() did not raise" in f for f in result.failures
         ), f"missing expected failure; got: {result.failures}"
