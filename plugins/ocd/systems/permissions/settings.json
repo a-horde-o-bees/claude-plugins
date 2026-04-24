@@ -51,9 +51,18 @@
       ]
     },
     "git": {
-      "description": "Version control",
+      "description": "Version control and code-forge CLIs",
       "patterns": [
-        "Bash(git:*)"
+        "Bash(git:*)",
+        "Bash(gh:*)"
+      ]
+    },
+    "archives": {
+      "description": "Archive packing and extraction",
+      "patterns": [
+        "Bash(tar:*)",
+        "Bash(zip:*)",
+        "Bash(unzip:*)"
       ]
     },
     "python": {
@@ -94,6 +103,12 @@
         "Bash(ocd-run:*)"
       ]
     },
+    "project": {
+      "description": "Project-level CLI runner (<scope>-run convention — project scope)",
+      "patterns": [
+        "Bash(project-run:*)"
+      ]
+    },
     "system": {
       "description": "System utilities (optional — environment-specific)",
       "patterns": [
@@ -102,7 +117,12 @@
         "Bash(which:*)",
         "Bash(env:*)",
         "Bash(echo:*)",
-        "Bash(test:*)"
+        "Bash(test:*)",
+        "Bash(ps:*)",
+        "Bash(pgrep:*)",
+        "Bash(lsof:*)",
+        "Bash(ss:*)",
+        "Bash(ping:*)"
       ]
     }
   },
