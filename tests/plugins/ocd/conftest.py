@@ -47,6 +47,41 @@ def pytest_collection_modifyitems(config, items):
 
 
 @pytest.fixture(scope="session")
+def messy_markdown() -> Path:
+    """Path to the shared "messy fixture" markdown file.
+
+    Packs every known pathological case (italic, placeholders in multiple
+    contexts, ordered list broken by blockquote, blank-line discipline
+    violations, literal characters) into one file so tests can make many
+    assertions against a single render or a single lint scan, keeping
+    test time low. Do not modify in place — copy to tmp_path for autofix
+    tests.
+    """
+    return Path(__file__).parent / "fixtures" / "messy-markdown.md"
+
+
+@pytest.fixture(scope="session")
+def parent_walking_sample() -> Path:
+    """Path to the shared parent-walking fixture Python file.
+
+    Mirrors `messy_markdown`: one file that packs every parent-walking
+    pattern (chained `.parent`, `.parents[N>=1]`, nested dirname calls)
+    alongside legitimate cases (single `.parent`, `.parents[0]`) so the
+    scanner can be asserted in one scan. Not a real module — the
+    scanner only parses the AST. Filename uses the `fixture_*.py`
+    convention so pytest's `collect_ignore_glob` below skips it.
+    """
+    return Path(__file__).parent / "fixtures" / "fixture_parent_walking.py"
+
+
+# Exclude Python fixtures from pytest collection. Files under
+# `fixtures/` that match `fixture_*.py` are sample inputs for scanners
+# and static-analysis tests — they must not be collected as test
+# modules. The path is glob-matched relative to this conftest's dir.
+collect_ignore_glob = ["fixtures/fixture_*.py"]
+
+
+@pytest.fixture(scope="session")
 def project_root() -> Path:
     """Walk up from this conftest until a .git directory is found."""
     here = Path(__file__).resolve()
@@ -74,6 +109,17 @@ def ocd_run(project_root: Path) -> Path:
     chain — the same path agents hit when invoking `ocd-run ...`.
     """
     return project_root / "plugins" / "ocd" / "bin" / "ocd-run"
+
+
+@pytest.fixture(scope="session")
+def preset_compact_css(project_root: Path) -> Path:
+    """Absolute path to the bundled compact.css preset in the ocd plugin.
+
+    Rendering integration tests reference the real preset stylesheet (not
+    a synthetic one) so relative @font-face URLs, list-style choices, and
+    font-weight declarations are exercised end-to-end.
+    """
+    return project_root / "plugins" / "ocd" / "systems" / "pdf" / "compact.css"
 
 
 @pytest.fixture

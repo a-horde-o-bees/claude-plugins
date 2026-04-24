@@ -11,3 +11,6 @@ belongs in __main__.py.
 
 from ._scanner import *  # noqa: F401,F403
 from ._dormancy import *  # noqa: F401,F403
+from ._markdown import *  # noqa: F401,F403
+from ._python import *  # noqa: F401,F403
+from ._allowlist import *  # noqa: F401,F403
