@@ -13,7 +13,7 @@ def setup_project() -> int:
     """Run all project-local setup steps. Returns 0 on success."""
     project_dir = _environment.get_project_dir()
 
-    print(f"plugins-run setup — {project_dir}")
+    print(f"project-run setup — {project_dir}")
     print()
 
     if set_hookspath(project_dir):

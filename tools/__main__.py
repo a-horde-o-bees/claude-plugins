@@ -1,8 +1,8 @@
 """Top-level CLI dispatcher for project-level tooling.
 
-Invoked by `bin/plugins-run <verb> [args...]`. Each verb dispatches into
+Invoked by `bin/project-run <verb> [args...]`. Each verb dispatches into
 a submodule under `tools/`; argparse subparsers define the per-verb
-argument surface so `bin/plugins-run --help` enumerates the whole
+argument surface so `bin/project-run --help` enumerates the whole
 project-level operation catalogue in one place.
 """
 
@@ -15,7 +15,7 @@ from .setup import setup_project
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        prog="plugins-run",
+        prog="project-run",
         description="Project-level operations for the claude-plugins repo.",
     )
     verbs = parser.add_subparsers(dest="verb", required=True)

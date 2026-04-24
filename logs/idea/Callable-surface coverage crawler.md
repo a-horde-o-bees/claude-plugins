@@ -14,7 +14,7 @@ Callables are discoverable from specific file patterns across the repo:
 - **Hook handlers** — entries in every `hooks.json` with `command`, `http`, `prompt`, or `agent` types. Also the `.claude/settings.json` hooks array for project-local hooks.
 - **Skill slash commands** — every `SKILL.md` declares its verb via frontmatter `name` + body workflow. Sub-verbs typically in `argument-hint`.
 - **MCP tools** — tool registrations in MCP server code (decorators or `server.tool()` calls for Python SDK; varies per server framework).
-- **Project-level bins** — `bin/plugins-run` subcommands, `scripts/*.sh`, `scripts/*.py`.
+- **Project-level bins** — `bin/project-run` subcommands, `scripts/*.sh`, `scripts/*.py`.
 
 ## Test reference discovery
 

@@ -87,7 +87,6 @@ Captured discipline gaps and concrete defects.
 
 Surfaced during earlier work; intentionally kept from promoting to action items until they become painful.
 
-- **`<plugin>-run` binary naming convention not codified** — established in practice for ocd (`bin/ocd-run`) but not written into a convention doc. Promote when a second plugin lands (imminent — blueprint plugin parity is queued under Active sandbox features).
 - **`install_deps.sh` plugin-binary collision check** — no guard for cases where `bin/<plugin>-run` collides with an existing PATH command. Low risk since `<plugin>-run` is unique-ish; `command -v` probe during install_deps could warn proactively.
 - **`test_deploy_exits_zero` permissions test fixture** — pre-existing failure in `tests/test_invocation.py`. Needs fixture rework to place the recommended-permissions template where deploy expects it.
 - **Print() usage review** — deferred during the logging convention drop. Pick up next time CLI output surface gets substantial edits.

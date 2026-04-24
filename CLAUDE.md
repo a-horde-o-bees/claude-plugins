@@ -60,15 +60,15 @@ Use `SessionStart` hooks for Python packages (isolated in plugin venv). Use runt
 
 ## Testing
 
-- All tests: `bin/plugins-run tests` (or `bash scripts/test.sh`, which delegates to it). Scope flags: `--plugin <name>` for a single plugin's suite, `--project` for project-level tests only.
-- Tests at a clean ref in a detached worktree: `bin/plugins-run sandbox-tests --ref <ref>`. Worktree is always removed before return.
+- All tests: `bin/project-run tests` (or `bash scripts/test.sh`, which delegates to it). Scope flags: `--plugin <name>` for a single plugin's suite, `--project` for project-level tests only.
+- Tests at a clean ref in a detached worktree: `bin/project-run sandbox-tests --ref <ref>`. Worktree is always removed before return.
 - Project tests in `tests/`, per-plugin tests isolated by `pythonpath`.
 - Plugin configs: `tests/plugins/<plugin>/pyproject.toml` under `[tool.pytest.ini_options]`; project config: root `pyproject.toml`.
 
 ## Project-level tooling
 
-Project-level operations (test orchestration, one-time project setup) live under `tools/` and `bin/plugins-run` at project root — not inside any plugin. Anything tied to this repo's development infrastructure belongs here so it doesn't ship to downstream consumers of the plugins.
+Project-level operations (test orchestration, one-time project setup) live under `tools/` and `bin/project-run` at project root — not inside any plugin. Anything tied to this repo's development infrastructure belongs here so it doesn't ship to downstream consumers of the plugins.
 
-- `bin/plugins-run setup` — configure local git hookspath (run once per checkout).
-- `bin/plugins-run tests [--plugin <name> | --project]` — run suites in the current tree.
-- `bin/plugins-run sandbox-tests [--ref <ref>]` — run suites in a detached worktree at a given ref.
+- `bin/project-run setup` — configure local git hookspath (run once per checkout).
+- `bin/project-run tests [--plugin <name> | --project]` — run suites in the current tree.
+- `bin/project-run sandbox-tests [--ref <ref>]` — run suites in a detached worktree at a given ref.

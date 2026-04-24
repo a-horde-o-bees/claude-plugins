@@ -5,7 +5,7 @@
 ## Proposed home
 
 - New path: `tools/check/` alongside `tools/testing/` and `tools/setup/`
-- Invoked via `bin/plugins-run check dormancy [--plugin <name>]`
+- Invoked via `bin/project-run check dormancy [--plugin <name>]`
 - Defaults to iterating every `plugins/*/` when `--plugin` is omitted
 - Tests move to project-level `tests/integration/test_check_dormancy.py` with fixtures still synthetic
 
@@ -27,4 +27,4 @@ The opt-in work split explicitly deferred this. Check's current location does no
 ## Prerequisites
 
 - Opt-in feature committed and stable (so check's location does not interact with opt-in semantics)
-- Decision on whether `bin/plugins-run check` should iterate every plugin by default or require explicit `--plugin`
+- Decision on whether `bin/project-run check` should iterate every plugin by default or require explicit `--plugin`

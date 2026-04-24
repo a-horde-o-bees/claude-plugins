@@ -15,7 +15,7 @@ Subcommands mirror the verb structure documented in SKILL.md:
     ocd-run sandbox cleanup inventory
     ocd-run sandbox cleanup remove [--sibling <path> ...] [--worktree <path> ...]
 
-The `tests` verb moved to `bin/plugins-run sandbox-tests` — it depends
+The `tests` verb moved to `bin/project-run sandbox-tests` — it depends
 on project-level test infrastructure and is not a plugin concern.
 """
 

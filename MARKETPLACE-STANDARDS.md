@@ -99,9 +99,15 @@ Graduated from the former `claude-marketplace--diff.md` alignment audit once ali
 
 ## Project-level tooling layout
 
-**Standard.** Project-level operations tied to this repository's development infrastructure live at project root under `tools/` (specifically `tools/testing/` for test discovery, runner, venv resolution, and detached-worktree wrapping; `tools/setup/` for git hookspath configuration). Exposed through `bin/plugins-run` — a bash entry point that resolves the project venv and dispatches to `tools/` modules. `scripts/` at project root holds thin delegators (`scripts/test.sh`) and release helpers (`scripts/release.sh`, `scripts/auto_init.py`, `scripts/validate-manifests.py`).
+**Standard.** Project-level operations tied to this repository's development infrastructure live at project root under `tools/` (specifically `tools/testing/` for test discovery, runner, venv resolution, and detached-worktree wrapping; `tools/setup/` for git hookspath configuration). Exposed through `bin/project-run` — a bash entry point that resolves the project venv and dispatches to `tools/` modules. `scripts/` at project root holds thin delegators (`scripts/test.sh`) and release helpers (`scripts/release.sh`, `scripts/auto_init.py`, `scripts/validate-manifests.py`).
 
-**Why.** 0/54 sampled repos package project-level orchestration inside a plugin — placing dev infrastructure inside `plugins/` is a layering inversion that leaks dev state into end-user plugin caches. `bin/plugins-run` mirrors the ergonomic property of plugin-scoped bins (on PATH, callable by short name) at project scope.
+**Why.** 0/54 sampled repos package project-level orchestration inside a plugin — placing dev infrastructure inside `plugins/` is a layering inversion that leaks dev state into end-user plugin caches. `bin/project-run` mirrors the ergonomic property of plugin-scoped bins (on PATH, callable by short name) at project scope.
+
+## Runner binary naming
+
+**Standard.** `<scope>-run` — every runnable scope ships a bash wrapper at `bin/<scope>-run` that resolves the appropriate Python interpreter and dispatches to a module of the same scope. Plugin scope uses the plugin name (`ocd-run`, `blueprint-run`); the project-root scope uses `project-run`. Wrappers live in `bin/` so Claude Code's per-plugin `bin/` PATH-inclusion (and the project-level equivalent) surfaces them as short callable names.
+
+**Why.** One naming rule across scopes keeps the PATH-surface predictable — no reader has to remember whether the project-level runner is `plugins-run`, `repo-run`, or `claude-run`. Short names without scope qualifiers (`run`) would collide across plugins; long names with version qualifiers would break PATH discipline. `<scope>-run` is the narrowest unambiguous form. Agents interacting with permissions (`Bash(project-run:*)`, `Bash(ocd-run:*)`) see a consistent shape, and each scope's permission entry is self-describing.
 
 ## Testing and CI
 
@@ -135,7 +141,7 @@ Consolidated list of deliberate deviations from convention, with justification p
 - **Per-plugin nested tests under `tests/plugins/<name>/`.** 1/10 precedent. The only way to keep dev artifacts out of user plugin caches when multi-plugin.
 - **6-step bin-wrapper runtime resolution chain.** More elaborate than the 14/23 simple form, but handles `--plugin-dir` dev-mode that simpler wrappers break in.
 - **Pointer-file pattern (`.venv-python`).** 1/23 observed (anthril/ppc-manager). The most robust observed bridge between SessionStart install and bin invocation.
-- **Project-level `bin/plugins-run` + `tools/` layout.** 0/54 — novel as a concrete mechanism, but matches the universal convention that project-level orchestration doesn't live inside a plugin.
+- **Project-level `bin/project-run` + `tools/` layout.** 0/54 — novel as a concrete mechanism, but matches the universal convention that project-level orchestration doesn't live inside a plugin.
 
 ## Provenance
 

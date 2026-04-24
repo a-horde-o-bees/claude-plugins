@@ -110,7 +110,7 @@ def _invoke_tests(
     project_only: bool,
 ) -> int:
     args = [
-        str(project_root / "bin" / "plugins-run"),
+        str(project_root / "bin" / "project-run"),
         "tests",
     ]
     if plugin_filter is not None:

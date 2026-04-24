@@ -83,7 +83,7 @@ Templates live per-system in plugin source — project-wide rules in `plugins/<p
 |--------|---------|
 | `scripts/auto_init.py` | Auto-init orchestrator — rectifies deployed state against current templates, called by `/checkpoint` |
 | `scripts/release.sh` | Release-cut automation — bumps `y`, resets `z = 0`, tags main, pushes |
-| `scripts/test.sh` | Thin delegator to `bin/plugins-run tests` |
+| `scripts/test.sh` | Thin delegator to `bin/project-run tests` |
 | `scripts/validate-manifests.py` | Validate marketplace + plugin manifests; invoked by CI |
 
 These are dev-only — maintainers' tooling, not shipped to plugin consumers.
@@ -92,15 +92,15 @@ These are dev-only — maintainers' tooling, not shipped to plugin consumers.
 
 Project-level tests in `tests/`, per-plugin tests isolated by `tests/plugins/<plugin>/pyproject.toml` (`[tool.pytest.ini_options]`) with independent `pythonpath` settings. Each plugin's tests run in isolation matching production import paths. Tests are dev-only — maintainers' infrastructure, not shipped to plugin consumers.
 
-Test orchestration lives at project root under `tools/testing/` and is invoked via `bin/plugins-run tests` (with `scripts/test.sh` as a thin delegator). The runner discovers the project suite plus each `tests/plugins/<name>/` suite, resolves each suite's venv (project `.venv/` for project tests, per-plugin data-dir venvs for plugin tests), dispatches pytest per suite, and compiles a unified report. Tests at an arbitrary ref run via `bin/plugins-run sandbox-tests --ref <ref>`, which creates a detached sibling worktree, invokes the runner inside it, and removes the worktree on return.
+Test orchestration lives at project root under `tools/testing/` and is invoked via `bin/project-run tests` (with `scripts/test.sh` as a thin delegator). The runner discovers the project suite plus each `tests/plugins/<name>/` suite, resolves each suite's venv (project `.venv/` for project tests, per-plugin data-dir venvs for plugin tests), dispatches pytest per suite, and compiles a unified report. Tests at an arbitrary ref run via `bin/project-run sandbox-tests --ref <ref>`, which creates a detached sibling worktree, invokes the runner inside it, and removes the worktree on return.
 
 ### Project-level tooling
 
-Operations tied to this repository's development infrastructure — test orchestration, one-time project setup — live under `tools/` at project root and are exposed through `bin/plugins-run`. They are deliberately outside every plugin directory so they are not copied into end-user plugin caches and do not impose project-local conventions on downstream consumers of the plugins.
+Operations tied to this repository's development infrastructure — test orchestration, one-time project setup — live under `tools/` at project root and are exposed through `bin/project-run`. They are deliberately outside every plugin directory so they are not copied into end-user plugin caches and do not impose project-local conventions on downstream consumers of the plugins.
 
 - `tools/testing/` — test discovery, runner, venv resolution, detached-worktree wrapper.
 - `tools/setup/` — git hookspath configuration. Installed plugins do not configure the downstream project's git; that decision is explicit per checkout.
-- `bin/plugins-run` — bash entry point that resolves the project venv and dispatches to `tools/` modules.
+- `bin/project-run` — bash entry point that resolves the project venv and dispatches to `tools/` modules.
 
 ## File Organization
 
@@ -116,7 +116,7 @@ claude-plugins/
 │   ├── ocd/                     — ocd plugin project data (navigator db, enabled-systems.json)
 │   └── settings.json            — project-level permission patterns
 ├── bin/
-│   └── plugins-run              — project-level dispatcher into tools/ modules
+│   └── project-run              — project-level dispatcher into tools/ modules
 ├── tools/                       — project-level development tooling (testing orchestration, setup)
 ├── plugins/
 │   └── ocd/                     — ocd plugin (own system, see plugins/ocd/ARCHITECTURE.md)

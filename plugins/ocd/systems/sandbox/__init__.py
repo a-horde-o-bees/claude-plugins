@@ -7,7 +7,7 @@ cleanup — live here as Python so skill-side bash invocations stay simple
 and don't trigger permission heuristics on compound shell patterns.
 
 Project-level test orchestration via detached worktrees lives at
-`tools/testing/_sandbox.py` (invokable as `bin/plugins-run sandbox-tests`)
+`tools/testing/_sandbox.py` (invokable as `bin/project-run sandbox-tests`)
 rather than here — it depends on this project's test infrastructure and
 should not ship with the plugin.
 """

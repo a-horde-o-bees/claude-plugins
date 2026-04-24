@@ -80,7 +80,7 @@ Remove a plugin or the marketplace:
 
 For contributors working on plugin source.
 
-**After cloning, run `bin/plugins-run setup` once to wire this repo's git hooks (including the pre-commit auto-bump of plugin versions).** Deployed rules, conventions, patterns, and the navigator database travel with the repo as tracked files, so a contributor's clone is immediately usable for development. `/checkpoint` runs `scripts/auto_init.py` to rectify deployed state against current templates whenever divergence is detected.
+**After cloning, run `bin/project-run setup` once to wire this repo's git hooks (including the pre-commit auto-bump of plugin versions).** Deployed rules, conventions, patterns, and the navigator database travel with the repo as tracked files, so a contributor's clone is immediately usable for development. `/checkpoint` runs `scripts/auto_init.py` to rectify deployed state against current templates whenever divergence is detected.
 
 Two approaches:
 

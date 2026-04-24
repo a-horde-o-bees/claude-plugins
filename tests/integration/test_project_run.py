@@ -1,6 +1,6 @@
 """Integration tests for project-level tooling under tools/.
 
-Covers the callable surface behind `bin/plugins-run`:
+Covers the callable surface behind `bin/project-run`:
 - `setup` verb — set_hookspath + setup_project end-to-end
 - `sandbox-tests` verb — worktree-collision guard (happy-path run is
   covered transitively by every CI invocation)

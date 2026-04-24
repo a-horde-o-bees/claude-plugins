@@ -1,14 +1,18 @@
 #!/bin/bash
-# plugins-run — project-level CLI for this claude-plugins repository.
+# project-run — project-level CLI for this claude-plugins repository.
 #
 # Resolves the project venv's python3 and dispatches to the tools/
 # package. End users of the plugins never invoke this; it exists solely
 # for maintainers operating on the repository itself.
 #
+# Naming: `<scope>-run` — plugin-scoped runners use `<plugin>-run`
+# (`ocd-run`, `blueprint-run`, ...); the project-root runner uses
+# `project-run`. Single convention across scopes, PATH-safe by design.
+#
 # Usage:
-#   plugins-run tests [--plugin <name> | --project]
-#   plugins-run sandbox-tests [--ref <ref>] [--plugin <name> | --project]
-#   plugins-run setup
+#   project-run tests [--plugin <name> | --project]
+#   project-run sandbox-tests [--ref <ref>] [--plugin <name> | --project]
+#   project-run setup
 
 set -euo pipefail
 
@@ -26,7 +30,7 @@ if [[ -z "$_venv_python" ]]; then
 fi
 
 if [[ -z "$_venv_python" ]]; then
-    echo "plugins-run: no python3 found" >&2
+    echo "project-run: no python3 found" >&2
     exit 127
 fi
 
