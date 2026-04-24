@@ -46,7 +46,7 @@ logs/research/<subject>/
 │   ├── _TEMPLATE.md             — optional: subject-specific sample template
 │   ├── <entity>.md              — per-sample entry
 │   └── ...
-├── context-resources/           — optional: external docs and references that informed
+├── context/                     — optional: external docs and references that informed
 │   │                                the research (API docs, tool readmes, blog posts)
 │   └── ...
 └── scripts/                     — optional: tallying and maintenance scripts (e.g. walk
@@ -56,7 +56,7 @@ logs/research/<subject>/
 
 Multiple docs at subject root are fine when later research waves produce standalone artifacts (a missing-dimensions survey, a comprehensive resample) that contribute to but don't replace the consolidated doc. Leave each wave's output as a dated or topically-named file alongside the consolidated synthesis.
 
-`context-resources/` and `scripts/` are subject-specific and optional. Use them when external docs need archiving alongside the research (to survive source-side changes), or when scripted maintenance is worth preserving (e.g. a script that retrofits new purposes into every sample file when the consolidated doc's purpose set evolves).
+`context/` and `scripts/` are subject-specific and optional. Use them when external docs need archiving alongside the research (to survive source-side changes), or when scripted maintenance is worth preserving (e.g. a script that retrofits new purposes into every sample file when the consolidated doc's purpose set evolves).
 
 ## Samples Discipline
 
