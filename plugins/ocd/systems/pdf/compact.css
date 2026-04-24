@@ -4,7 +4,20 @@
  * This is a preset — copy it, modify it, or replace it entirely.
  */
 
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap');
+/* Roboto variable fonts bundled next to the CSS for WeasyPrint portability.
+ * WeasyPrint 56+ no longer synthesizes italic from regular faces (cairo drop),
+ * so italic must be delivered as an explicit font face rather than inferred.
+ * WeasyPrint doesn't accept CSS4 `font-weight: 100 900` range syntax on
+ * @font-face, so declare each needed weight explicitly. All declarations
+ * point to the same variable-font file — the axis resolves at render time. */
+@font-face { font-family: 'Roboto'; font-style: normal; font-weight: 400; src: url('./Roboto-Regular.woff2') format('woff2'); }
+@font-face { font-family: 'Roboto'; font-style: normal; font-weight: 500; src: url('./Roboto-Regular.woff2') format('woff2'); }
+@font-face { font-family: 'Roboto'; font-style: normal; font-weight: 600; src: url('./Roboto-Regular.woff2') format('woff2'); }
+@font-face { font-family: 'Roboto'; font-style: normal; font-weight: 700; src: url('./Roboto-Regular.woff2') format('woff2'); }
+@font-face { font-family: 'Roboto'; font-style: italic; font-weight: 400; src: url('./Roboto-Italic.woff2') format('woff2'); }
+@font-face { font-family: 'Roboto'; font-style: italic; font-weight: 500; src: url('./Roboto-Italic.woff2') format('woff2'); }
+@font-face { font-family: 'Roboto'; font-style: italic; font-weight: 600; src: url('./Roboto-Italic.woff2') format('woff2'); }
+@font-face { font-family: 'Roboto'; font-style: italic; font-weight: 700; src: url('./Roboto-Italic.woff2') format('woff2'); }
 
 /*light */
 .markdown-body {
@@ -1174,7 +1187,7 @@ table {
 /* --- Compact overrides --- */
 
 @page {
-  margin: 1.5cm 1.8cm;
+  margin: 1.3cm 1.3cm;
   size: letter;
 }
 
@@ -1183,8 +1196,20 @@ body, .markdown-body {
 }
 
 .markdown-body {
-  font-size: 11pt;
-  line-height: 1.25;
+  font-size: 10pt;
+  line-height: 1.4;
+}
+
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4 {
+  font-weight: 700;
+}
+
+.markdown-body h5,
+.markdown-body h6 {
+  font-weight: 500;
 }
 
 .markdown-body h1 {
@@ -1206,37 +1231,67 @@ body, .markdown-body {
 }
 
 .markdown-body h3 {
-  font-size: 1em;
-  margin-top: 0.8em;
+  font-size: 1.15em;
+  margin-top: 1em;
   margin-bottom: 0.2em;
 }
 
+.markdown-body em {
+  font-style: italic;
+  color: #59636e;
+}
+
+/* Company paragraphs contain both strong (company name) and em (dates).
+   Role paragraphs contain strong only. This makes company bold larger
+   than role bold without needing a heading. */
+.markdown-body p:has(em) strong {
+  font-size: 1.15em;
+}
+
 .markdown-body h4 {
-  font-size: 0.95em;
-  margin-top: 0.6em;
-  margin-bottom: 0.15em;
+  font-size: 1em;
+  margin-top: 1em;
+  margin-bottom: 0.2em;
 }
 
 .markdown-body p {
-  margin-top: 0.75em;
-  margin-bottom: 0.75em;
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
+
+.markdown-body p:has(+ ul) {
+  margin-bottom: 0.5em;
 }
 
 .markdown-body b,
 .markdown-body strong {
-  font-weight: 500;
+  font-weight: 700;
 }
 
+/* `list-style-position: inside` renders markers inside the li's content box
+   so they share one text flow with the li text — rather than being positioned
+   as independent glyphs in the PDF content stream. This fixes:
+     - PDF selection grabbing bullet columns across unrelated sections
+     - Clipboard copy separating the bullet onto its own line
+     - ATS parsers treating bullets as a separate spatial column
+     - Nested ordered-list markers (roman, alpha) appearing orphaned from content
+   Uniform across any list depth and any list-style-type. Minor visual cost:
+   markers indent with the text rather than hanging outside. */
 .markdown-body ul,
 .markdown-body ol {
   margin-top: 0.25em;
   margin-bottom: 0.5em;
   padding-left: 1.5em;
+  list-style-position: inside;
+}
+
+.markdown-body ul {
+  list-style-type: "- ";
 }
 
 .markdown-body li {
-  margin-top: 0.35em;
-  margin-bottom: 0.35em;
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
 }
 
 .markdown-body li > ul,
@@ -1248,8 +1303,8 @@ body, .markdown-body {
 
 .markdown-body li > ul li,
 .markdown-body li > ol li {
-  margin-top: 0.25em;
-  margin-bottom: 0.25em;
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
 }
 
 .markdown-body hr {
