@@ -52,6 +52,35 @@ class TestWorktreeAddRemove:
         )
         assert result.stdout.strip() == ""
 
+    def test_add_from_remote_ref_does_not_auto_track(self, project_repo: Path):
+        """`worktree_add` with a remote-tracking `base_ref` (e.g.
+        `origin/main`) must not auto-set upstream on the new branch.
+
+        Git's default behavior is to track the start-point when the
+        start-point is a remote-tracking ref — helpful for checkouts
+        meant to follow that ref, wrong for sandbox feature branches.
+        If the default leaks through, a failed or deferred `git push
+        -u` leaves the sandbox tracking `origin/main`, and a later
+        `git pull` or defaultless `git push` from the sandbox could
+        silently touch main instead of the feature branch.
+        """
+        worktree_add(
+            "feature-x", "sandbox/feature-x", base_ref="origin/main"
+        )
+        sibling = sibling_path("feature-x")
+        result = subprocess.run(
+            [
+                "git", "-C", str(sibling),
+                "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{upstream}",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        assert result.returncode != 0, (
+            "expected no upstream on new sandbox branch "
+            f"(got: {result.stdout.strip()!r})"
+        )
+
 
 class TestWorktreeListStatus:
     def test_list_surfaces_added_worktree(self, project_repo: Path):

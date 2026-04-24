@@ -86,7 +86,15 @@ def worktree_add(
                 f"branch already exists: {branch} — pick a different name "
                 "or attach to the existing branch with base_ref=None",
             )
-        git_args = ["worktree", "add", "-b", branch, str(path), base_ref]
+        # `--no-track` suppresses git's default "track the start-point"
+        # behavior, which fires when `base_ref` is a remote-tracking ref
+        # (e.g. `origin/main`). Sandbox branches should have no upstream
+        # until an explicit `git push -u` sets it to the feature branch's
+        # own remote — otherwise a deferred or failed push leaves the
+        # sandbox tracking origin/main silently.
+        git_args = [
+            "worktree", "add", "--no-track", "-b", branch, str(path), base_ref,
+        ]
     else:
         if not _branch_exists_anywhere(project_root, branch):
             raise RuntimeError(

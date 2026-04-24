@@ -26,16 +26,17 @@ Create an empty feature sandbox — a new `sandbox/<feature>` branch checked out
     5. If exit 0: Exit to user: remote branch {branch} already exists on origin
     6. If {sibling-path} exists on disk: Exit to user: path already exists at {sibling-path}
 
-> Confirm target — surface repo root, sibling path, branch, and base commit together so the user catches "wrong project" mistakes (e.g. invoking from a linked worktree or from an unrelated repo) before any filesystem change.
+> Confirm target — surface repo root, sibling path, branch, and recent history together so the user catches "wrong project" mistakes (e.g. invoking from a linked worktree or from an unrelated repo) before any filesystem change. Show the last 5 commits rather than just the base commit: rectification commits (`Deployed — rectify …`) on main frequently sit at the tip, and their descriptions are near-identical across projects — the history block above them is what distinguishes one repo from another.
 
 6. Gather target info:
     1. {repo-root} = bash: `git rev-parse --show-toplevel`
-    2. {base-commit} = bash: `git log -1 --format='%h %s' origin/main`
+    2. {recent-history} = bash: `git log -5 --format='%h %s' origin/main`
 7. Present target info to the user — one block showing:
     - Repo: {repo-root}
     - Sibling path: {sibling-path}
     - New branch: {branch}
-    - Base: origin/main @ {base-commit}
+    - Base: origin/main (tip of recent history below)
+    - Recent history (last 5 on origin/main): {recent-history}
 8. AskUserQuestion — "Create sandbox worktree?"; options: `["Proceed", "Cancel"]`
 9. If `Cancel`: Exit to user: new cancelled
 
