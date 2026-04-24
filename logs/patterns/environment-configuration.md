@@ -56,7 +56,7 @@ Configuration stored as files in known project locations. Used when the configur
 
 Examples:
 
-- `.claude/ocd/pdf/css/*.css` — stylesheet selection via filesystem (the directory IS the config)
+- `.claude/ocd/pdf/templates/<name>/` — template selection via filesystem (the directory IS the config; one subfolder with one `.css` plus assets)
 - `.claude/ocd/navigator/navigator.db` — SQLite database as configuration + state
 
 **When to use:** when the configuration is rich content (stylesheets, databases, templates) rather than scalar values, or when filesystem inspection is the natural discovery mechanism.

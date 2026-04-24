@@ -87,7 +87,7 @@ def preset_compact_css(project_root: Path) -> Path:
     a synthetic one) so relative @font-face URLs, list-style choices, and
     font-weight declarations are exercised end-to-end.
     """
-    return project_root / "plugins" / "ocd" / "systems" / "pdf" / "compact.css"
+    return project_root / "plugins" / "ocd" / "systems" / "pdf" / "templates" / "compact" / "compact.css"
 
 
 @pytest.fixture
