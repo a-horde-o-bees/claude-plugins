@@ -1,6 +1,6 @@
 # Open
 
-Activate an existing `sandbox/<feature>` branch in a sibling worktree. If the worktree already exists, `open` just surfaces the path. If it does not, `open` creates the worktree, rebases the dev branch onto current `origin/main` inside it (so the feature starts from today's main), and hands back the path. Main tree is never checked out; rebase conflicts are resolved in the sibling.
+Activate an existing `sandbox/<feature>` branch in a sibling worktree. Pure create-if-missing — no rebase. If the worktree already exists on the expected branch, open is a silent no-op. Sync the branch with current `origin/main` by running `/sandbox update {feature-id}` from the sibling's session after open.
 
 ### Variables
 
@@ -15,7 +15,7 @@ Activate an existing `sandbox/<feature>` branch in a sibling worktree. If the wo
 3. {branch} = `sandbox/{feature-id}`
 4. {sibling-path} = bash: `ocd-run sandbox sibling-path {sibling-name}`
 
-> Short-circuit — an already-created sibling worktree is the open state; `open` then reduces to emitting the path.
+> Idempotent early-out — an already-present sibling on the expected branch is the open state. Wrong-branch collision still exits; that requires human judgment.
 
 5. If {sibling-path} exists on disk:
     1. {status-json} = bash: `ocd-run sandbox worktree-status {sibling-name}`
@@ -23,7 +23,7 @@ Activate an existing `sandbox/<feature>` branch in a sibling worktree. If the wo
     3. Return to caller:
         - already open
         - worktree: {sibling-path}
-        - next: `cd {sibling-path} && claude`
+        - next: `cd {sibling-path} && claude`; run `/sandbox update {feature-id}` from that session to sync with origin/main
 
 > Preconditions — branch must exist locally or on origin.
 
@@ -40,19 +40,7 @@ Activate an existing `sandbox/<feature>` branch in a sibling worktree. If the wo
 7. Create sibling worktree on existing branch:
     1. bash: `ocd-run sandbox worktree-add {sibling-name} --branch {branch}`
 
-> Rebase inside the sibling — brings the feature up to today's main. Conflicts belong to the user to resolve in the sibling, not on main.
-
-8. Rebase onto current main:
-    1. bash: `git -C {sibling-path} fetch origin main --quiet`
-    2. bash: `git -C {sibling-path} rebase origin/main`
-    3. If rebase fails:
-        1. Exit to user:
-            - rebase conflict on {branch} in {sibling-path}
-            - resolve conflicts inside the sibling; then `git -C {sibling-path} rebase --continue`
-            - or abort with `git -C {sibling-path} rebase --abort` and close the worktree
-
-9. Return to caller:
+8. Return to caller:
     - opened: {branch}
     - worktree: {sibling-path}
-    - rebased onto current origin/main
-    - next: `cd {sibling-path} && claude`
+    - next: `cd {sibling-path} && claude`; run `/sandbox update {feature-id}` from that session to sync with origin/main

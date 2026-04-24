@@ -1,7 +1,7 @@
 ---
 name: sandbox
-description: Work on an isolated sandbox of the project — durable feature boxes (new, pack, open, close, unpack, list) for in-flight development that parallel sessions can drive without clobbering each other, and ephemeral sandboxes (exercise, cleanup) for fresh-install or interactive validation against the current tree. All substrates share one sibling-path convention, one permission rule, and one cleanup sweep.
-argument-hint: "<new <feature-id> | pack <description> | open <feature-id> | close <feature-id> | unpack <feature-id> | list | exercise [description] | cleanup>"
+description: Work on an isolated sandbox of the project — durable feature boxes (new, pack, open, update, close, unpack, list) for in-flight development that parallel sessions can drive without clobbering each other, and ephemeral sandboxes (exercise, cleanup) for fresh-install or interactive validation against the current tree. All substrates share one sibling-path convention, one permission rule, and one cleanup sweep.
+argument-hint: "<new <feature-id> | pack <description> | open <feature-id> | update <feature-id> | close <feature-id> | unpack <feature-id> | list | exercise [description] | cleanup>"
 allowed-tools:
   - AskUserQuestion
   - Bash(git *)
@@ -18,7 +18,7 @@ allowed-tools:
 
 One umbrella for every isolated-workspace operation. Two verb families:
 
-- **Durable** — a feature-level sandbox that persists across sessions. `new` starts empty, `pack` extracts scope from main, `open` / `close` toggle the sibling worktree on and off without touching the branch, `unpack` reintegrates back into main. `list` is the inventory.
+- **Durable** — a feature-level sandbox that persists across sessions. `new` starts empty, `pack` extracts scope from main, `open` / `close` toggle the sibling worktree on and off without touching the branch, `update` rebases the branch onto current `origin/main` from inside the sibling's session, `unpack` reintegrates back into main. `list` is the inventory.
 - **Ephemeral** — a disposable sandbox for validation. `exercise` classifies a change into fresh-install vs interactive concerns and runs both, `cleanup` sweeps leftovers.
 
 ## Process Model
@@ -43,7 +43,7 @@ Internal substrate of `exercise` for fresh-install concerns.
 
 ### Branched sibling worktree
 
-Used by durable verbs (`new`, `pack`, `open`, `close`, `unpack`) and by the interactive bucket of `exercise`.
+Used by durable verbs (`new`, `pack`, `open`, `update`, `close`, `unpack`) and by the interactive bucket of `exercise`.
 
 - **Setup** — `ocd-run sandbox worktree-add <name> --branch <branch> [--base-ref <ref>] [--block-push]`.
 - **Teardown** — `ocd-run sandbox worktree-remove <name> [--delete-branch] [--unblock-push]`. Push is always unblocked on exit, since a crashed verb must not leave origin in a broken state.
@@ -58,6 +58,7 @@ Durable vs ephemeral follows from what the user is doing, not from a route matri
 - Starting a new feature — `new <feature-id>`
 - Shelving in-flight scope off main to hide it from holistic testing — `pack <description>`
 - Activating or parking an existing feature sandbox — `open <feature-id>` / `close <feature-id>`
+- Rebasing a feature branch onto current `origin/main` from inside its sibling session — `update <feature-id>`
 - Merging a completed feature back to main — `unpack <feature-id>`
 - Surveying what's in flight — `list`
 
@@ -83,7 +84,8 @@ If none apply, the concern routes to the fresh-install bucket — pure determini
 - Feature ids starting with `tmp/` or `tmp-` or equal to `tmp` are reserved for the ephemeral namespace — reject them in `new` and `pack`
 - Main tree stays on `main` throughout every durable verb — no checkouts on the main tree
 - `close` refuses to park a sibling with uncommitted or unpushed work — unpushed work signals the branch has not been end-to-end tested; fix before parking
-- `unpack` is mechanically dumb — all integration work (rebase against current main, reference cleanup, verification) happens on the feature branch during `open` state; conflicts at unpack time mean the branch was not reintegrated before unpack
+- `update` runs from inside the sibling's session — rebase conflicts need the sibling-scoped `CLAUDE_PROJECT_DIR` for file-resolution context; invoking from the main tree's session and switching mid-flow for conflict resolution breaks the boundary
+- `unpack` is mechanically dumb — branch must already be rebased onto current `origin/main` via `/sandbox update` before unpack; conflicts at unpack time mean origin/main advanced between the precondition check and the merge
 - `cleanup` scans the parent project's `--tmp-*` sibling namespace and `sandbox/tmp/` branches, plus any detached worktree left at `<project>--tmp-*/` by external test-runner invocations — durable feature boxes are never touched
 - `exercise` classifies concerns strictly by the Interactivity criterion — if a concern could plausibly fit either bucket, surface the ambiguity to the user before proceeding
 
@@ -101,17 +103,19 @@ If none apply, the concern routes to the fresh-install bucket — pure determini
     1. Call: `_pack.md` ({verb-arg} = {verb-arg})
 6. Else if {verb} is `open`:
     1. Call: `_open.md` ({verb-arg} = {verb-arg})
-7. Else if {verb} is `close`:
+7. Else if {verb} is `update`:
+    1. Call: `_update.md` ({verb-arg} = {verb-arg})
+8. Else if {verb} is `close`:
     1. Call: `_close.md` ({verb-arg} = {verb-arg})
-8. Else if {verb} is `unpack`:
+9. Else if {verb} is `unpack`:
     1. Call: `_unpack.md` ({verb-arg} = {verb-arg})
-9. Else if {verb} is `list`:
+10. Else if {verb} is `list`:
     1. Call: `_list.md`
-10. Else if {verb} is `exercise`:
+11. Else if {verb} is `exercise`:
     1. Call: Exercise
-11. Else if {verb} is `cleanup`:
+12. Else if {verb} is `cleanup`:
     1. Call: Cleanup
-12. Else: Exit to user: unrecognized verb {verb} — expected new, pack, open, close, unpack, list, exercise, or cleanup
+13. Else: Exit to user: unrecognized verb {verb} — expected new, pack, open, update, close, unpack, list, exercise, or cleanup
 
 ## Exercise
 
