@@ -1,10 +1,14 @@
-# Sandbox consolidates worktree lifecycle
+---
+log-role: reference
+---
 
-## Purpose
+# Sandbox
 
-`/ocd:sandbox` owns the entire worktree-based isolation domain (durable feature work + ephemeral testing). Sibling-path substrate enables true parallel Claude sessions.
+Decisions governing the sandbox system — worktree-based isolation for durable feature work and ephemeral testing.
 
-## Context
+## Sandbox consolidates worktree lifecycle
+
+### Context
 
 Two concerns meet at "isolated workspace for some concern":
 
@@ -16,7 +20,7 @@ Both need filesystem isolation, a git branch, and lifecycle management. The prio
 1. Durable verbs (`box`, `open`, `close`, `unbox`) checked out dev branches in the main working tree. Parallel sessions could not coexist — one session's checkout clobbered another's state.
 2. Ephemeral substrate at `.claude/worktrees/<topic>/` nested worktrees inside the main project. Identical relative paths existed in both trees; main-session tool calls silently leaked edits to main (relative paths resolve against `CLAUDE_PROJECT_DIR`; bash without `env -C` ran against main's cwd; MCP servers stayed bound to main's project dir; spawned subagents inherited main's context).
 
-## Options Considered
+### Options Considered
 
 **Keep separate skills, add `new` verb to `/ocd:git`** — minimal surface change. Rejected: leaves both parallelism and substrate-leakage problems unsolved.
 
@@ -30,7 +34,7 @@ Both need filesystem isolation, a git branch, and lifecycle management. The prio
 
 **Gitignore `.claude/settings.json`** — per-user settings only. Rejected: hooks and baseline permissions stop propagating on clone. Keep it tracked; extend existing `/ocd:setup guided` permissions subflow for the `additionalDirectories` rule instead.
 
-## Decision
+### Decision
 
 - Single skill `/ocd:sandbox` owns durable + ephemeral verbs. `/ocd:git` slims to `commit` + `push`.
 - Durable verbs: `new`, `pack`, `open`, `close`, `unpack`, `list` (`box`/`unbox` renamed to `pack`/`unpack`).
@@ -40,17 +44,12 @@ Both need filesystem isolation, a git branch, and lifecycle management. The prio
 - Python primitives extend `plugins/ocd/systems/sandbox/_worktree.py`. No standalone subsystem.
 - Permissions subflow in `/ocd:setup guided` extended to offer the `additionalDirectories` rule via the existing project/user scope selection.
 
-## Consequences
+### Consequences
 
-**Enables:**
-
-- Parallel sessions — each sibling worktree starts its own Claude session with `CLAUDE_PROJECT_DIR` bound correctly; no tool/state leakage between sessions
-- Main tree stays on `main` through the entire box-family lifecycle — no checkouts disrupt a running session
-- One substrate, one permission rule, one cleanup sweep, one inventory view
-
-**Constrains:**
-
-- Existing `dev/<feature>` branches need one-time rename to `sandbox/<feature>`
-- Users re-learning the verb surface find feature-lifecycle operations under `/ocd:sandbox`, not `/ocd:git`
-- Sibling paths require explicit `additionalDirectories` permission per project (or user-scope default) — subflow handles this, but it is a one-time gesture per setup
-- Nested `.claude/worktrees/` location is retired; any leftover artifacts there need migration or cleanup
+- **Enables:** parallel sessions — each sibling worktree starts its own Claude session with `CLAUDE_PROJECT_DIR` bound correctly; no tool/state leakage between sessions
+- **Enables:** main tree stays on `main` through the entire box-family lifecycle — no checkouts disrupt a running session
+- **Enables:** one substrate, one permission rule, one cleanup sweep, one inventory view
+- **Constrains:** existing `dev/<feature>` branches need one-time rename to `sandbox/<feature>`
+- **Constrains:** users re-learning the verb surface find feature-lifecycle operations under `/ocd:sandbox`, not `/ocd:git`
+- **Constrains:** sibling paths require explicit `additionalDirectories` permission per project (or user-scope default) — subflow handles this, but it is a one-time gesture per setup
+- **Constrains:** nested `.claude/worktrees/` location is retired; any leftover artifacts there need migration or cleanup
