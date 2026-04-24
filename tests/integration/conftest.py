@@ -1,6 +1,7 @@
 """Shared fixtures for integration tests."""
 
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
@@ -8,19 +9,38 @@ import pytest
 
 
 def _git_root() -> Path:
-    """Anchor at the enclosing git root rather than walking __file__ parents.
+    """Resolve the enclosing git root anchored at this conftest's directory.
 
-    Mirrors framework.get_project_dir()'s fallback. The project venv
-    has no access to the plugin framework module, so tests at project
-    level invoke git directly instead of importing the helper.
+    Using `git -C <dir>` instead of relying on the subprocess's CWD
+    keeps the helper correct regardless of where pytest is invoked.
+    Anchoring to `Path(__file__).parent` (rather than walking multiple
+    `.parent` levels) is legitimate here — conftest.py is the blessed
+    anchor per the Python-check allowlist (`**/conftest.py`).
     """
+    conftest_dir = Path(__file__).parent
     result = subprocess.run(
-        ["git", "rev-parse", "--show-toplevel"],
+        ["git", "-C", str(conftest_dir), "rev-parse", "--show-toplevel"],
         capture_output=True,
         text=True,
         check=True,
     )
     return Path(result.stdout.strip()).resolve()
+
+
+def _install_research_scripts_on_syspath() -> None:
+    """Make `logs/research/_scripts/` importable for integration tests.
+
+    Cross-corpus research utilities live outside any plugin package, so
+    they aren't reachable through the plugin's venv import path. Tests
+    that use `sample_tools` etc. depend on this sys.path insertion; it
+    runs at conftest import time so test collection succeeds.
+    """
+    scripts_dir = _git_root() / "logs" / "research" / "_scripts"
+    if scripts_dir.is_dir() and str(scripts_dir) not in sys.path:
+        sys.path.insert(0, str(scripts_dir))
+
+
+_install_research_scripts_on_syspath()
 
 
 @pytest.fixture(scope="session")
