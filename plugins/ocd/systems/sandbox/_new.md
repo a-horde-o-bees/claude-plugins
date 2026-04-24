@@ -16,30 +16,37 @@ Create an empty feature sandbox — a new `sandbox/<feature>` branch checked out
 3. {branch} = `sandbox/{feature-id}`
 4. {sibling-path} = bash: `ocd-run sandbox sibling-path {sibling-name}`
 
-> Preconditions — main must be up-to-date with origin; no name, branch, or path collision.
+> Preconditions — no branch or path collision with the target. Caller's current branch and working tree are not checked; the new sibling branches directly from `origin/main` and is independent of caller state.
 
 5. Verify preconditions:
-    1. {current-branch} = bash: `git rev-parse --abbrev-ref HEAD`
-    2. If {current-branch} is not `main`: Exit to user: new requires main checkout; currently on {current-branch}
-    3. bash: `git status --short`
-    4. If output is non-empty: Exit to user: working tree has changes — commit or stash before creating a new sandbox
-    5. bash: `git fetch origin main --quiet`
-    6. bash: `git rev-list --count main..origin/main`
-    7. If non-zero: Exit to user: main is behind origin/main — pull before creating a new sandbox
-    8. bash: `git show-ref --verify --quiet refs/heads/{branch}`
-    9. If exit 0: Exit to user: local branch {branch} already exists
-    10. bash: `git ls-remote --exit-code --heads origin {branch}`
-    11. If exit 0: Exit to user: remote branch {branch} already exists on origin
-    12. If {sibling-path} exists on disk: Exit to user: path already exists at {sibling-path}
+    1. bash: `git fetch origin main --quiet`
+    2. bash: `git show-ref --verify --quiet refs/heads/{branch}`
+    3. If exit 0: Exit to user: local branch {branch} already exists
+    4. bash: `git ls-remote --exit-code --heads origin {branch}`
+    5. If exit 0: Exit to user: remote branch {branch} already exists on origin
+    6. If {sibling-path} exists on disk: Exit to user: path already exists at {sibling-path}
 
-> Create — sibling worktree on a new branch from main, then push the branch so other sessions/machines can see it.
+> Confirm target — surface repo root, sibling path, branch, and base commit together so the user catches "wrong project" mistakes (e.g. invoking from a linked worktree or from an unrelated repo) before any filesystem change.
 
-6. Create sibling worktree:
-    1. bash: `ocd-run sandbox worktree-add {sibling-name} --branch {branch} --base-ref main`
-7. Push branch to origin:
+6. Gather target info:
+    1. {repo-root} = bash: `git rev-parse --show-toplevel`
+    2. {base-commit} = bash: `git log -1 --format='%h %s' origin/main`
+7. Present target info to the user — one block showing:
+    - Repo: {repo-root}
+    - Sibling path: {sibling-path}
+    - New branch: {branch}
+    - Base: origin/main @ {base-commit}
+8. AskUserQuestion — "Create sandbox worktree?"; options: `["Proceed", "Cancel"]`
+9. If `Cancel`: Exit to user: new cancelled
+
+> Create — sibling worktree on a new branch from `origin/main`, then push the branch so other sessions/machines can see it.
+
+10. Create sibling worktree:
+    1. bash: `ocd-run sandbox worktree-add {sibling-name} --branch {branch} --base-ref origin/main`
+11. Push branch to origin:
     1. bash: `git -C {sibling-path} push -u origin {branch}`
 
-8. Return to caller:
+12. Return to caller:
     - created: {branch}
     - worktree: {sibling-path}
     - next: `cd {sibling-path} && claude` to begin working in an isolated session; main tree stays on main
