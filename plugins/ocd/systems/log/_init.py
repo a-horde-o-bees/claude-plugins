@@ -92,7 +92,16 @@ def _rule_status_entries() -> list[dict]:
 
 
 def init(force: bool = False) -> dict:
-    """Deploy log-type templates and log-owned rules."""
+    """Deploy log-type templates, log-owned rules, and log's paths.csv.
+
+    paths.csv carries the log system's pre-described path patterns for
+    the `logs/` tree (entry directories, templates, research subject
+    shape with traverse=0 on samples/ and context/ so per-entity files
+    aren't individually indexed). Navigator's scan aggregates every
+    system's deployed paths.csv via its `.claude/*/*/paths.csv`
+    pattern, so deploying this file is how the log system registers
+    its own domain's pre-descriptions.
+    """
     src_dir = _templates_dir()
     target = _target_dir()
     rel = _deployed_rel()
@@ -115,6 +124,15 @@ def init(force: bool = False) -> dict:
                 files.append(r)
 
     files.extend(_deploy_rules(force))
+
+    paths_entry = framework.deploy_paths_csv(
+        framework.get_plugin_root(),
+        framework.get_project_dir(),
+        "log",
+        force=force,
+    )
+    if paths_entry is not None:
+        files.append(paths_entry)
 
     return {"files": files, "extra": []}
 

@@ -1,0 +1,15 @@
+path,entry_type,exclude,traverse,purpose
+.claude/{plugin}/log,directory,0,1,Log system deployed artifacts
+logs,directory,0,1,Project logs organized by type — captures information worth preserving for future sessions (decisions with rationale, reusable patterns, long-form research, friction, problems, ideas)
+logs/decision,directory,0,1,Decision logs — one file per subject collecting non-obvious choices alongside their rationale and rejected alternatives
+logs/friction,directory,0,1,Friction queue — workflow-level gaps between how a process should work and how it actually does
+logs/idea,directory,0,1,Idea queue — exploratory ideas, future work, and improvement suggestions awaiting action
+logs/patterns,directory,0,1,Reusable workflow patterns and methodology templates that apply across systems
+logs/problem,directory,0,1,Problem queue — concrete artifact defects observed but not yet addressed
+logs/research,directory,0,1,Long-form research subjects organized by directory — each subject carries consolidated findings plus per-entity evidence under samples/ and optional context/ and scripts/
+logs/*/_template.md,file,0,1,Log-type template defining structure and authoring guidance for entries under its parent directory
+logs/research/_samples-template.md,file,0,1,Per-sample template describing the structure individual research sample entries follow
+logs/research/*/consolidated.md,file,0,1,Synthesized findings for the research subject — purpose-organized with adoption counts and citations against the samples corpus
+logs/research/*/samples,directory,0,0,Per-entity sample corpus for the research subject — each entry follows the subject's shared samples template; tallied by the consolidated doc
+logs/research/*/context,directory,0,0,External docs archived alongside the research subject (API pages, blog posts, tool readmes) as reference; per-doc contents not individually described
+logs/research/*/scripts,directory,0,0,Tallying and maintenance scripts specific to the research subject (e.g. walking samples to aggregate per-purpose data points)
