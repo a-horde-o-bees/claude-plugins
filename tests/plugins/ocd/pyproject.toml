@@ -2,7 +2,7 @@
 pythonpath = ["../../../plugins/ocd", "../../../plugins/ocd/systems"]
 addopts = "--import-mode=importlib"
 testpaths = [
-    "systems/framework",
+    "systems/setup",
     "systems/governance",
     "systems/navigator",
     "systems/pdf",

@@ -3,7 +3,7 @@
 import os
 from pathlib import Path
 
-import framework
+from tools.errors import NotReadyError
 
 
 def _marker_path() -> Path:
@@ -16,7 +16,7 @@ def ready() -> bool:
 
 def ensure_ready() -> None:
     if not ready():
-        raise framework.NotReadyError(
+        raise NotReadyError(
             "compliant_runtime fixture is dormant — run init to initialize."
         )
 

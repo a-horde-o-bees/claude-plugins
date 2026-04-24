@@ -6,23 +6,23 @@ files in .claude/conventions/ carry frontmatter with include/exclude
 patterns and governed_by dependencies; rule files in .claude/rules/
 are always-on context with no pattern matching.
 
-All functions resolve project directory internally via plugin framework.
-All functions return structured data (dicts/lists). Formatting for
-CLI display belongs in cli.py.
+All functions resolve project directory internally via the environment
+helpers. All functions return structured data (dicts/lists). Formatting
+for CLI display belongs in cli.py.
 """
 
 from __future__ import annotations
 
 from pathlib import Path
 
-import framework
+from tools import environment
 
 from ._frontmatter import matches_pattern, normalize_patterns, parse_governance
 
 
 def _scan_governance_files() -> tuple[list[Path], list[Path]]:
     """Scan governance directories and return (rule_files, convention_files)."""
-    project_dir = framework.get_project_dir()
+    project_dir = environment.get_project_dir()
     rules_dir = project_dir / ".claude" / "rules"
     conv_dir = project_dir / ".claude" / "conventions"
 
@@ -44,7 +44,7 @@ def governance_match(file_paths: list[str], include_rules: bool = False) -> dict
 
     Scans convention files from disk on every call — no caching.
     """
-    project_dir = framework.get_project_dir()
+    project_dir = environment.get_project_dir()
     rule_files, conv_files = _scan_governance_files()
 
     result_matches: dict[str, list[str]] = {}
@@ -81,7 +81,7 @@ def governance_match(file_paths: list[str], include_rules: bool = False) -> dict
 
 def governance_list() -> list[dict]:
     """List all governance entries with patterns and loading mode."""
-    project_dir = framework.get_project_dir()
+    project_dir = environment.get_project_dir()
     rule_files, conv_files = _scan_governance_files()
 
     result = []
@@ -181,7 +181,7 @@ def governance_order() -> dict:
 
     Returns {levels: [[{path, governors}, ...], ...], dangling: [...]}.
     """
-    project_dir = framework.get_project_dir()
+    project_dir = environment.get_project_dir()
     rule_files, conv_files = _scan_governance_files()
 
     entries: set[str] = set()

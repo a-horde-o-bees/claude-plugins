@@ -18,7 +18,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-import framework
+from tools import environment
 
 from . import check_dormancy, scan_system
 from ._allowlist import filter_allowed, load_allowlist
@@ -36,16 +36,16 @@ ALLOWLIST_CSV = Path(__file__).parent / "allowlist.csv"
 def _project_root_from(paths: list[Path]) -> Path:
     """Resolve a project root for allowlist matching.
 
-    Walks upward from the first path until a `.git` directory is
-    found; falls back to the path itself. Used to render violation
-    paths project-relative before fnmatch against allowlist patterns.
+    Delegates to `environment.get_git_root_for` from the first seed
+    path; falls back to the seed itself when the seed is outside any
+    git checkout. Used to render violation paths project-relative
+    before fnmatch against allowlist patterns.
     """
     seed = paths[0] if paths else Path.cwd()
-    current = seed.resolve() if seed.is_dir() else seed.resolve().parent
-    for candidate in [current, *current.parents]:
-        if (candidate / ".git").is_dir():
-            return candidate
-    return current
+    try:
+        return environment.get_git_root_for(seed)
+    except RuntimeError:
+        return seed.resolve() if seed.is_dir() else seed.resolve().parent
 
 
 def _discover_systems(plugin_root: Path) -> list[Path]:
@@ -79,7 +79,7 @@ def _print_result(result) -> None:
 def _dispatch_dormancy(args: argparse.Namespace) -> int:
     plugin_root = (
         Path(args.plugin).resolve() if getattr(args, "plugin", None)
-        else framework.get_plugin_root()
+        else environment.get_plugin_root()
     )
     system = getattr(args, "system", None)
     if system:

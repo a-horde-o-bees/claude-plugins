@@ -12,7 +12,7 @@ installed, not the development checkout's private venv.
 
 from pathlib import Path
 
-from . import _environment
+from tools import environment
 
 
 def resolve_project_venv() -> Path:
@@ -21,7 +21,7 @@ def resolve_project_venv() -> Path:
     Raises RuntimeError when the venv is absent — the project venv is a
     bootstrap prerequisite and tests cannot proceed without it.
     """
-    project_root = _environment.get_project_dir()
+    project_root = environment.get_project_dir()
     path = project_root / ".venv" / "bin" / "python3"
     if not path.is_file():
         raise RuntimeError(
@@ -40,7 +40,7 @@ def resolve_plugin_venv(plugin_name: str) -> Path:
     found — plugins with missing venvs should surface loudly rather than
     fall back to the project venv, which silently masks dependency drift.
     """
-    data_dir = _environment.get_claude_home() / "plugins" / "data"
+    data_dir = environment.get_claude_home() / "plugins" / "data"
     if not data_dir.is_dir():
         raise RuntimeError(
             f"Claude plugin data directory not found at {data_dir}",

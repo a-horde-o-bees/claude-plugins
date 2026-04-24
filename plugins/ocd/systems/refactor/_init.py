@@ -10,20 +10,21 @@ Interface contract: init() and status() return
 
 from pathlib import Path
 
-import framework
+from systems import setup
+from tools import environment
 
 
 def _plugin_name() -> str:
-    return framework.get_plugin_name(framework.get_plugin_root())
+    return setup.get_plugin_name(environment.get_plugin_root())
 
 
 def _rules_src_dir() -> Path:
-    return framework.get_plugin_root() / "systems" / "refactor" / "rules"
+    return environment.get_plugin_root() / "systems" / "refactor" / "rules"
 
 
 def _rules_dst_dir() -> Path:
     return (
-        framework.get_project_dir()
+        environment.get_project_dir()
         / ".claude"
         / "rules"
         / _plugin_name()
@@ -38,7 +39,7 @@ def _rules_rel_prefix() -> str:
 def init(force: bool = False) -> dict:
     """Deploy refactor-owned rule files."""
     rel = _rules_rel_prefix()
-    results = framework.deploy_files(
+    results = setup.deploy_files(
         src_dir=_rules_src_dir(),
         dst_dir=_rules_dst_dir(),
         pattern="*.md",
@@ -61,7 +62,7 @@ def status() -> dict:
     for src in sorted(src_dir.glob("*.md")):
         if not src.is_file():
             continue
-        state = framework.compare_deployed(src, dst_dir / src.name)
+        state = setup.compare_deployed(src, dst_dir / src.name)
         files.append({
             "path": f"{rel}/{src.name}",
             "before": state,

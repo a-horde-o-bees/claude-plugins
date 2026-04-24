@@ -19,6 +19,15 @@ Two ways to exercise a skill during development:
 
 Ad-hoc validates instruction content; real invocation validates orchestration. Before closing out skill work, verify via real invocation after a `/checkpoint`.
 
+## Plugin Bin Invocation
+
+Each plugin ships a `plugins/<plugin>/bin/<plugin>-run` entry point (`ocd-run`, future `blueprint-run`, …). During development two invocation forms coexist in the permission allowlist; pick the one matching what you need to verify.
+
+- **Bare name** — `ocd-run <verb>`. Resolves via `$PATH` to the installed plugin cache (`~/.claude/plugins/cache/<author>/<plugin>/<version>/bin/`). This is whatever was synced at the last `/checkpoint`; edits in the working tree are invisible until the cache refreshes. Allow-listed in user settings (`Bash(<plugin>-run:*)`) because it's stable across sessions and projects.
+- **Full path** — `plugins/<plugin>/bin/<plugin>-run <verb>`. Invokes the in-tree copy directly — no cache, edits take effect immediately. Allow-listed in this project's `.claude/settings.json` (`Bash(plugins/<plugin>/bin/<plugin>-run:*)`) because ad-hoc verification of plugin code in this repo must run against the working tree, not the last cached version.
+
+Default to the full-path form when validating changes you haven't checkpointed yet. Use the bare form when you specifically want to exercise what downstream users have installed.
+
 ## Versioning
 
 `x.y.z` semver in each plugin's `.claude-plugin/plugin.json`. Tags live on main; no release branches.

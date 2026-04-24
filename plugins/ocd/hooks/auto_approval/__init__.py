@@ -10,6 +10,8 @@ Two layers, fixed evaluation order:
    directories. Approves operations that settings would allow.
 """
 
+from tools.environment import get_project_dir  # noqa: F401
+
 from ._checking import *  # noqa: F403
 from ._matching import *  # noqa: F403
 from ._matching import _glob_match, _strip_env_assignments  # noqa: F401

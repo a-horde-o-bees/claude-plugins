@@ -20,19 +20,20 @@ Interface contract: init() and status() return
 
 from pathlib import Path
 
-import framework
+from systems import setup
+from tools import environment
 
 
 def _plugin_name() -> str:
-    return framework.get_plugin_name(framework.get_plugin_root())
+    return setup.get_plugin_name(environment.get_plugin_root())
 
 
 def _templates_dir() -> Path:
-    return framework.get_plugin_root() / "systems" / "log" / "templates"
+    return environment.get_plugin_root() / "systems" / "log" / "templates"
 
 
 def _target_dir() -> Path:
-    return framework.get_project_dir() / "logs"
+    return environment.get_project_dir() / "logs"
 
 
 def _deployed_rel() -> str:
@@ -40,12 +41,12 @@ def _deployed_rel() -> str:
 
 
 def _rules_src_dir() -> Path:
-    return framework.get_plugin_root() / "systems" / "log" / "rules"
+    return environment.get_plugin_root() / "systems" / "log" / "rules"
 
 
 def _rules_dst_dir() -> Path:
     return (
-        framework.get_project_dir()
+        environment.get_project_dir()
         / ".claude"
         / "rules"
         / _plugin_name()
@@ -60,7 +61,7 @@ def _rules_rel_prefix() -> str:
 def _deploy_rules(force: bool) -> list[dict]:
     """Deploy log-owned rule files to the plugin's rule corpus."""
     rel = _rules_rel_prefix()
-    results = framework.deploy_files(
+    results = setup.deploy_files(
         src_dir=_rules_src_dir(),
         dst_dir=_rules_dst_dir(),
         pattern="*.md",
@@ -82,7 +83,7 @@ def _rule_status_entries() -> list[dict]:
     for src in sorted(src_dir.glob("*.md")):
         if not src.is_file():
             continue
-        state = framework.compare_deployed(src, dst_dir / src.name)
+        state = setup.compare_deployed(src, dst_dir / src.name)
         entries.append({
             "path": f"{rel}/{src.name}",
             "before": state,
@@ -112,7 +113,7 @@ def init(force: bool = False) -> dict:
             if not type_dir.is_dir():
                 continue
             type_name = type_dir.name
-            results = framework.deploy_files(
+            results = setup.deploy_files(
                 src_dir=type_dir,
                 dst_dir=target / type_name,
                 pattern="*.md",
@@ -125,9 +126,9 @@ def init(force: bool = False) -> dict:
 
     files.extend(_deploy_rules(force))
 
-    paths_entry = framework.deploy_paths_csv(
-        framework.get_plugin_root(),
-        framework.get_project_dir(),
+    paths_entry = setup.deploy_paths_csv(
+        environment.get_plugin_root(),
+        environment.get_project_dir(),
         "log",
         force=force,
     )
@@ -153,7 +154,7 @@ def status() -> dict:
                 if not src.is_file():
                     continue
                 dst = target / type_name / src.name
-                state = framework.compare_deployed(src, dst)
+                state = setup.compare_deployed(src, dst)
                 files.append({
                     "path": f"{rel}/{type_name}/{src.name}",
                     "before": state,

@@ -48,12 +48,15 @@ def pytest_collection_modifyitems(config, items):
 
 @pytest.fixture(scope="session")
 def project_root() -> Path:
-    """Walk up from this conftest until a .git directory is found."""
-    here = Path(__file__).resolve()
-    for candidate in [here, *here.parents]:
-        if (candidate / ".git").is_dir():
-            return candidate
-    raise RuntimeError("project root not found — no .git directory in ancestors")
+    """Resolve the git repository root containing this conftest.
+
+    Delegates to the canonical environment helper so linked worktrees
+    (where `.git` is a file pointer rather than a directory) resolve
+    correctly.
+    """
+    from tools.environment import get_git_root_for
+
+    return get_git_root_for(Path(__file__))
 
 
 @pytest.fixture(scope="session")

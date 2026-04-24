@@ -22,7 +22,7 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
-import framework
+from tools import environment
 
 
 PUSHURL_BLOCK = "file:///dev/null"
@@ -50,7 +50,7 @@ class WorktreeStatus:
 
 def sibling_path(name: str) -> Path:
     """Resolve `<parent>/<project>--<name>/` for the current project."""
-    project_root = framework.get_project_dir()
+    project_root = environment.get_project_dir()
     return project_root.parent / f"{project_root.name}--{name}"
 
 
@@ -71,7 +71,7 @@ def worktree_add(
     so accidental pushes from the worktree fail loudly. Pair with
     `worktree_remove(..., unblock_push=True)`.
     """
-    project_root = framework.get_project_dir()
+    project_root = environment.get_project_dir()
     path = sibling_path(name)
 
     if path.exists():
@@ -126,7 +126,7 @@ def worktree_remove(
     even if worktree removal fails, so a crashed caller cannot leave
     origin in a broken state.
     """
-    project_root = framework.get_project_dir()
+    project_root = environment.get_project_dir()
     path = sibling_path(name)
     branch = _worktree_branch(path) if delete_branch else None
 
@@ -163,7 +163,7 @@ def worktree_remove(
 
 def worktree_list() -> list[WorktreeStatus]:
     """Enumerate every worktree on this project, main tree excluded."""
-    project_root = framework.get_project_dir()
+    project_root = environment.get_project_dir()
     raw = _list_raw(project_root)
     entries = []
     for path, branch, detached in raw:

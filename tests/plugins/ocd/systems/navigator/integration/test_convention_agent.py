@@ -22,12 +22,12 @@ from pathlib import Path
 
 import pytest
 
-import framework
+from tools import environment
 
 pytestmark = pytest.mark.agent
 
-PLUGIN_ROOT = framework.get_plugin_root()
-PROJECT_ROOT = framework.get_project_dir()
+PLUGIN_ROOT = environment.get_plugin_root()
+PROJECT_ROOT = environment.get_project_dir()
 
 # Scratch files and spawned agents live inside a sandbox worktree
 # created by the module-scoped scratch_files fixture (see below) —

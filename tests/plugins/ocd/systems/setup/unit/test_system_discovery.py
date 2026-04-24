@@ -1,4 +1,4 @@
-"""Unit tests for framework._discovery.
+"""Unit tests for setup._system_discovery.
 
 Covers the deterministic scan behavior of _discover_systems (scans
 `systems/*/` for `_init.py`) and _discover_workflow_skills (scans
@@ -9,7 +9,7 @@ missing parent directories gracefully.
 
 from pathlib import Path
 
-from framework._system_discovery import _discover_systems, _discover_workflow_skills
+from systems.setup._system_discovery import _discover_systems, _discover_workflow_skills
 
 
 class TestDiscoverSystems:

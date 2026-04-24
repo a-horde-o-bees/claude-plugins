@@ -1,20 +1,28 @@
 """Integration tests for the pre-commit hook.
 
-Verifies two pre-commit behaviors: shared-file propagation from ocd to
-other plugins when canonical sources are staged, and plugin.json
-version auto-bumping — the Option E cache-invalidation mechanism that
-must fire on every plugin-tree change except release commits (where
-only plugin.json is staged so the hook's escape hatch triggers).
+Verifies two pre-commit behaviors: shared-file propagation from
+canonical sources to other plugins when those sources are staged, and
+plugin.json version auto-bumping — the Option E cache-invalidation
+mechanism that must fire on every plugin-tree change except release
+commits (where only plugin.json is staged so the hook's escape hatch
+triggers).
 
 Runs in a disposable git worktree so tests cannot affect the main
-working tree.
+working tree. The hook invoked is the main project's current
+working-tree copy, not the disposable worktree's HEAD snapshot — tests
+must validate the hook under edit rather than the last committed
+version.
 """
 
 import json
 import shutil
 import subprocess
+from pathlib import Path
 
 import pytest
+
+
+MAIN_TREE_HOOK = Path(__file__).resolve().parents[2] / ".githooks" / "pre-commit"
 
 
 class TestPreCommitPropagation:
@@ -25,7 +33,8 @@ class TestPreCommitPropagation:
         self.root = worktree
         self.plugin_dir = worktree / "plugins" / "test-hook-plugin"
         self.plugin_dir.mkdir(parents=True, exist_ok=True)
-        (self.plugin_dir / "systems" / "framework").mkdir(parents=True, exist_ok=True)
+        (self.plugin_dir / "systems" / "setup").mkdir(parents=True, exist_ok=True)
+        (self.plugin_dir / "tools").mkdir(parents=True, exist_ok=True)
         subprocess.run(
             ["git", "add", str(self.plugin_dir)],
             cwd=self.root, capture_output=True,
@@ -39,9 +48,8 @@ class TestPreCommitPropagation:
             shutil.rmtree(self.plugin_dir)
 
     def _run_hook(self):
-        hook = self.root / ".githooks" / "pre-commit"
         return subprocess.run(
-            ["bash", str(hook)],
+            ["bash", str(MAIN_TREE_HOOK)],
             cwd=self.root, capture_output=True, text=True,
         )
 
@@ -49,6 +57,7 @@ class TestPreCommitPropagation:
         subprocess.run(["git", "add", str(path)], cwd=self.root, capture_output=True)
 
     def _touch_and_stage(self, path):
+        path.parent.mkdir(parents=True, exist_ok=True)
         with open(path, "a") as f:
             f.write("\n")
         self._stage_file(path)
@@ -64,14 +73,14 @@ class TestPreCommitPropagation:
         )
 
     def test_no_action_when_canonical_not_staged(self):
-        target = self.plugin_dir / "systems" / "framework" / "__init__.py"
+        target = self.plugin_dir / "systems" / "setup" / "__init__.py"
         result = self._run_hook()
         assert result.returncode == 0
         assert not target.exists(), "Should not propagate when nothing staged"
 
-    def test_propagates_framework_init(self):
-        canonical = self.root / "plugins" / "ocd" / "systems" / "framework" / "__init__.py"
-        target = self.plugin_dir / "systems" / "framework" / "__init__.py"
+    def test_propagates_setup_init(self):
+        canonical = self.root / "plugins" / "ocd" / "systems" / "setup" / "__init__.py"
+        target = self.plugin_dir / "systems" / "setup" / "__init__.py"
 
         self._touch_and_stage(canonical)
         try:
@@ -83,9 +92,9 @@ class TestPreCommitPropagation:
         finally:
             self._unstage_file(canonical)
 
-    def test_propagates_framework_main(self):
-        canonical = self.root / "plugins" / "ocd" / "systems" / "framework" / "__main__.py"
-        target = self.plugin_dir / "systems" / "framework" / "__main__.py"
+    def test_propagates_setup_main(self):
+        canonical = self.root / "plugins" / "ocd" / "systems" / "setup" / "__main__.py"
+        target = self.plugin_dir / "systems" / "setup" / "__main__.py"
 
         self._touch_and_stage(canonical)
         try:
@@ -97,9 +106,27 @@ class TestPreCommitPropagation:
         finally:
             self._unstage_file(canonical)
 
+    def test_propagates_tools_environment(self):
+        """Canonical source at project-root tools/ propagates into every
+        plugin's tools/ subdir — the always-on primitives vendored per plugin.
+        """
+        canonical = self.root / "tools" / "environment.py"
+        target = self.plugin_dir / "tools" / "environment.py"
+
+        self._touch_and_stage(canonical)
+        try:
+            result = self._run_hook()
+            assert result.returncode == 0, result.stderr
+            assert target.exists(), "environment.py was not propagated"
+            assert canonical.read_bytes() == target.read_bytes(), \
+                "Propagated environment.py content does not match canonical"
+        finally:
+            self._unstage_file(canonical)
+
     def test_skips_ocd_plugin(self):
-        """Ocd is the canonical source — hook should not copy to itself."""
-        canonical = self.root / "plugins" / "ocd" / "systems" / "framework" / "__init__.py"
+        """Ocd is the source of setup/; project-root tools/ is canonical for
+        env/errors. Hook must not copy to either source location."""
+        canonical = self.root / "plugins" / "ocd" / "systems" / "setup" / "__init__.py"
         original = canonical.read_bytes()
 
         self._touch_and_stage(canonical)
@@ -111,15 +138,15 @@ class TestPreCommitPropagation:
 
     def test_skips_plugin_without_target_dir(self):
         """If a plugin lacks the target subdirectory, skip it."""
-        shutil.rmtree(self.plugin_dir / "systems" / "framework")
-        canonical = self.root / "plugins" / "ocd" / "systems" / "framework" / "__init__.py"
+        shutil.rmtree(self.plugin_dir / "systems" / "setup")
+        canonical = self.root / "plugins" / "ocd" / "systems" / "setup" / "__init__.py"
 
         self._touch_and_stage(canonical)
         try:
             result = self._run_hook()
             assert result.returncode == 0, result.stderr
-            assert not (self.plugin_dir / "systems" / "framework" / "__init__.py").exists(), \
-                "Should not create systems/framework/ directory"
+            assert not (self.plugin_dir / "systems" / "setup" / "__init__.py").exists(), \
+                "Should not create systems/setup/ directory"
         finally:
             self._unstage_file(canonical)
 
@@ -152,9 +179,8 @@ class TestPreCommitVersionBump:
         )
 
     def _run_hook(self) -> subprocess.CompletedProcess[str]:
-        hook = self.root / ".githooks" / "pre-commit"
         return subprocess.run(
-            ["bash", str(hook)],
+            ["bash", str(MAIN_TREE_HOOK)],
             cwd=self.root, capture_output=True, text=True,
         )
 

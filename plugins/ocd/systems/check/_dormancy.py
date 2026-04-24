@@ -14,7 +14,9 @@ import os
 from dataclasses import dataclass, field
 from pathlib import Path
 
-import framework
+from systems import setup
+from tools import environment
+from tools.errors import NotReadyError
 
 from ._scanner import SystemSurfaces, scan_system
 
@@ -55,7 +57,7 @@ def _check_readiness_dormant(facade, result: CheckResult) -> None:
 
     try:
         facade.ensure_ready()
-    except framework.NotReadyError as e:
+    except NotReadyError as e:
         if str(e).strip():
             result.passes.append("ensure_ready() raises NotReadyError with a non-empty message")
         else:
@@ -77,7 +79,7 @@ def _check_readiness_operational(facade, result: CheckResult) -> None:
     try:
         facade.ensure_ready()
         result.passes.append("ensure_ready() does not raise after init")
-    except framework.NotReadyError as e:
+    except NotReadyError as e:
         result.failures.append(f"ensure_ready() raised after init: {e}")
     except Exception as e:
         result.failures.append(f"ensure_ready() raised {type(e).__name__} after init: {e}")
@@ -95,7 +97,7 @@ def _run_init(init_mod, result: CheckResult) -> bool:
 
 def _check_rule_deployment(surfaces: SystemSurfaces, project_dir: Path, result: CheckResult) -> None:
     """Verify rule files deployed to .claude/rules/<plugin>/systems/ after init."""
-    plugin_name = framework.get_plugin_name(framework.get_plugin_root())
+    plugin_name = setup.get_plugin_name(environment.get_plugin_root())
     deployed_dir = project_dir / ".claude" / "rules" / plugin_name / "systems"
     for src in surfaces.rule_files:
         deployed = deployed_dir / src.name

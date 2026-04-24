@@ -21,7 +21,7 @@ import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-import framework
+from tools import environment
 
 
 EPHEMERAL_SIBLING_PREFIX = "--tmp-"
@@ -49,7 +49,7 @@ class Inventory:
 
 def cleanup_inventory() -> Inventory:
     """Gather ephemeral sandbox artifacts in the parent project's namespace."""
-    project_root = framework.get_project_dir()
+    project_root = environment.get_project_dir()
     parent_dir = project_root.parent
     parent_name = project_root.name
 
@@ -67,7 +67,7 @@ def cleanup_print_inventory_json() -> None:
 
 def cleanup_remove(sibling_paths: list[Path], worktree_paths: list[Path]) -> None:
     """Remove the named siblings and worktrees."""
-    project_root = framework.get_project_dir()
+    project_root = environment.get_project_dir()
 
     for sibling in sibling_paths:
         if sibling.exists():

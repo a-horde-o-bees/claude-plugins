@@ -49,8 +49,8 @@ class TestModulePromotion:
     """
 
     def test_bare_name_promoted_to_systems(self) -> None:
-        """`ocd-run framework status` resolves to `systems.framework`."""
-        result = _run("framework", "status")
+        """`ocd-run setup status` resolves to `systems.setup`."""
+        result = _run("setup", "status")
         assert result.returncode == 0, result.stderr
         # Output shape: plugin header + per-system sections + skills list
         assert "ocd" in result.stdout.lower()
@@ -93,10 +93,10 @@ class TestSubsystemDispatch:
         assert isinstance(payload["siblings"], list)
         assert isinstance(payload["worktrees"], list)
 
-    def test_framework_status_scopes_to_system(self) -> None:
-        """`ocd-run framework status --system <name>` narrows the report to one
+    def test_setup_status_scopes_to_system(self) -> None:
+        """`ocd-run setup status --system <name>` narrows the report to one
         subsystem. Exercises argparse flag marshaling through the bash layer.
         """
-        result = _run("framework", "status", "--system", "conventions")
+        result = _run("setup", "status", "--system", "conventions")
         assert result.returncode == 0, result.stderr
         assert "Conventions" in result.stdout

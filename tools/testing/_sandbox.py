@@ -16,7 +16,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from . import _environment
+from tools import environment
 
 
 TEST_NAME_PREFIX = "tmp-test-"
@@ -32,7 +32,7 @@ def sandbox_tests_run(
     Returns the tests CLI's exit code (0 pass, non-zero fail). Worktree
     is always removed before return.
     """
-    project_root = _environment.get_project_dir()
+    project_root = environment.get_project_dir()
     ref_sha = _resolve_ref(project_root, ref)
     short_sha = ref_sha[:7]
     worktree = _sibling_path(project_root, f"{TEST_NAME_PREFIX}{short_sha}")
