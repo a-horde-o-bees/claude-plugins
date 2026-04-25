@@ -51,6 +51,11 @@ d = json.loads(p.read_text())
 d['version'] = '${new}'
 p.write_text(json.dumps(d, indent=2) + '\n')
 "
+        # Stage to whichever index is current (the temp index during
+        # partial-commit, the main index otherwise). The main-index
+        # sync under partial-commit happens in the post-commit hook —
+        # pre-commit can't write the main index while git holds its
+        # commit-level lock.
         git add "$plugin_json"
     fi
 done

@@ -207,3 +207,78 @@ class TestPreCommitVersionBump:
         assert result.returncode == 0, result.stderr
         assert self._version() == manual_version, \
             "Hook must not bump z when only plugin.json is staged"
+
+    def test_bump_under_partial_commit_leaves_clean_status(self, project_root):
+        """Partial-commit form (`git commit -m msg <file>`) must leave the
+        main index in sync with HEAD after the auto-bump.
+
+        When git commit is invoked with explicit paths, GIT_INDEX_FILE is
+        set to a temp index for the pre-commit hook's duration. The
+        hook's `git add plugin.json` updates the temp index, the commit
+        captures it, and HEAD ends up bumped. But the main index was
+        never updated — it still holds the pre-bump plugin.json. Result
+        post-commit: working tree has the bumped value (hook wrote it),
+        main index has the pre-bump value, HEAD has the bumped value —
+        an MM state on plugin.json that requires manual `git reset HEAD`
+        + `git checkout --` to clear before the next commit.
+
+        The hook must explicitly sync the bump into the main index too,
+        regardless of whether GIT_INDEX_FILE points at a temp.
+        """
+        # The session-scoped `worktree` fixture creates the worktree at
+        # HEAD --detach, so the worktree's .githooks/* reflects the
+        # committed hooks, not whatever is currently in the project's
+        # working tree. Sync the working-tree hooks into the worktree
+        # before exercising — otherwise this test validates HEAD's
+        # hooks (potentially missing the fix-under-test) rather than
+        # the current project hooks. Sync both pre-commit and
+        # post-commit; the partial-commit MM fix lives in post-commit.
+        for hook_name in ("pre-commit", "post-commit"):
+            src = project_root / ".githooks" / hook_name
+            if not src.is_file():
+                continue
+            dst = self.root / ".githooks" / hook_name
+            shutil.copy2(src, dst)
+
+        scratch = self.root / "plugins" / "ocd" / ".pre_commit_test_scratch.md"
+        scratch.write_text("test content\n")
+        scratch_rel = str(scratch.relative_to(self.root))
+        try:
+            # Stage the scratch first so the partial-commit form below has
+            # something to commit. Partial-commit (`git commit -m msg
+            # <path>`) requires the path to be tracked or already staged
+            # — otherwise git rejects it as "did not match any file(s)
+            # known to git." Staging via `git add` puts the file in the
+            # main index, where partial-commit then snapshots into a temp
+            # index for the hook's duration.
+            subprocess.run(
+                ["git", "add", scratch_rel],
+                cwd=self.root, capture_output=True, check=True,
+            )
+            result = subprocess.run(
+                ["git", "commit", "-m", "partial-commit test", scratch_rel],
+                cwd=self.root, capture_output=True, text=True,
+            )
+            assert result.returncode == 0, (
+                f"partial commit failed: stdout={result.stdout!r} "
+                f"stderr={result.stderr!r}"
+            )
+            status = subprocess.run(
+                ["git", "status", "--short", "--", self.PLUGIN_JSON_REL],
+                cwd=self.root, capture_output=True, text=True, check=True,
+            )
+            assert status.stdout.strip() == "", (
+                "plugin.json should be clean after partial-commit auto-bump, "
+                f"got status: {status.stdout!r}"
+            )
+        finally:
+            subprocess.run(
+                ["git", "reset", "--soft", "HEAD~1"],
+                cwd=self.root, capture_output=True,
+            )
+            subprocess.run(
+                ["git", "reset", "HEAD", "--", scratch_rel],
+                cwd=self.root, capture_output=True,
+            )
+            if scratch.exists():
+                scratch.unlink()

@@ -44,6 +44,19 @@ _install_research_scripts_on_syspath()
 
 
 @pytest.fixture(scope="session")
+def project_root() -> Path:
+    """Absolute path to the project's main working tree.
+
+    Tests that need to read the project's current files (e.g. to copy
+    the working-tree pre-commit hook into the disposable worktree
+    before exercising it) use this rather than walking `__file__`
+    themselves — conftest.py is the blessed anchor per the python-check
+    allowlist.
+    """
+    return _git_root()
+
+
+@pytest.fixture(scope="session")
 def worktree():
     """Disposable git worktree for integration tests.
 

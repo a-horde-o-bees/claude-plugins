@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+#
+# Post-commit: sync main index with HEAD for files the pre-commit hook
+# bumped under partial-commit semantics.
+#
+# When git commit is invoked with explicit paths (`git commit -m msg
+# <file>`), it sets GIT_INDEX_FILE to a temp index for the duration of
+# pre-commit. The pre-commit hook's plugin.json bump and `git add` only
+# touch that temp index — the main index keeps the pre-bump value.
+# After commit: HEAD has the bumped plugin.json (from temp), the working
+# tree has the bumped value (the hook wrote it to disk), but the main
+# index still has the pre-bump value. `git status` shows MM on
+# plugin.json until manually cleared.
+#
+# This hook runs after the commit completes (no GIT_INDEX_FILE, no
+# commit-level lock). For each plugin.json whose working-tree contents
+# match HEAD but whose main-index entry differs (the partial-commit MM
+# signature), `git add` syncs the main index. No-op when the hook
+# didn't bump (full-commit path already updates the main index, or
+# nothing in the plugin tree changed).
+
+set -euo pipefail
+
+for plugin_json in plugins/*/.claude-plugin/plugin.json; do
+    [ -f "$plugin_json" ] || continue
+
+    head_blob="$(git rev-parse "HEAD:${plugin_json}" 2>/dev/null || true)"
+    [ -n "$head_blob" ] || continue
+
+    index_blob="$(git ls-files -s -- "$plugin_json" 2>/dev/null | awk '{print $2}')"
+    [ -n "$index_blob" ] || continue
+
+    # Working tree matches HEAD but index does not — partial-commit MM signature.
+    if [ "$index_blob" != "$head_blob" ]; then
+        wt_blob="$(git hash-object -- "$plugin_json")"
+        if [ "$wt_blob" = "$head_blob" ]; then
+            git add "$plugin_json"
+        fi
+    fi
+done
