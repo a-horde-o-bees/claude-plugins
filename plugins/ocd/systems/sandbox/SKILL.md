@@ -1,7 +1,7 @@
 ---
 name: sandbox
-description: Work on an isolated sandbox of the project — durable feature boxes (new, pack, open, update, close, unpack, list) for in-flight development that parallel sessions can drive without clobbering each other, and ephemeral sandboxes (exercise, cleanup) for fresh-install or interactive validation against the current tree. All substrates share one sibling-path convention, one permission rule, and one cleanup sweep.
-argument-hint: "<new <feature-id> | pack <description> | open <feature-id> | update [feature-id] | close [feature-id] | unpack [feature-id] | list | exercise [description] | cleanup>"
+description: Work on an isolated sandbox of the project — durable feature boxes (new, pack, open, update, close, unpack, list, tasks) for in-flight development that parallel sessions can drive without clobbering each other, and ephemeral sandboxes (exercise, cleanup) for fresh-install or interactive validation against the current tree. Each durable sandbox carries a `SANDBOX-TASKS.md` at its project root capturing goal, pointers, and the running task checklist; `tasks` reads it. All substrates share one sibling-path convention, one permission rule, and one cleanup sweep.
+argument-hint: "<new <feature-id> | pack <description> | open <feature-id> | update [feature-id] | close [feature-id] | unpack [feature-id] | list | tasks [feature-id] | exercise [description] | cleanup>"
 allowed-tools:
   - AskUserQuestion
   - Bash(git *)
@@ -19,7 +19,7 @@ allowed-tools:
 
 One umbrella for every isolated-workspace operation. Two verb families:
 
-- **Durable** — a feature-level sandbox that persists across sessions. `new` starts empty, `pack` extracts scope from cwd's branch (usually main, can be another sandbox when splitting a sub-feature), `open` / `close` toggle the sibling worktree on and off without touching the branch, `update` rebases the named feature branch onto current `origin/main`, `unpack` reintegrates back into main. `list` is the inventory.
+- **Durable** — a feature-level sandbox that persists across sessions. `new` starts empty, `pack` extracts scope from cwd's branch (usually main, can be another sandbox when splitting a sub-feature), `open` / `close` toggle the sibling worktree on and off without touching the branch, `update` rebases the named feature branch onto current `origin/main`, `unpack` reintegrates back into main. `list` is the inventory; `tasks` reads the sandbox's running task checklist from its `SANDBOX-TASKS.md`.
 - **Ephemeral** — a disposable sandbox for validation. `exercise` classifies a change into fresh-install vs interactive concerns and runs both, `cleanup` sweeps leftovers.
 
 ## Process Model
@@ -62,6 +62,7 @@ Durable vs ephemeral follows from what the user is doing, not from a route matri
 - Rebasing a feature branch onto current `origin/main` — `update <feature-id>`
 - Merging a completed feature back to main — `unpack <feature-id>`
 - Surveying what's in flight — `list`
+- Reading the current sandbox's `SANDBOX-TASKS.md` — `tasks [feature-id]`
 
 ### Pick an ephemeral verb when
 
@@ -88,6 +89,7 @@ If none apply, the concern routes to the fresh-install bucket — pure determini
 - `update` runs from any worktree — git operations target the named sibling explicitly via `git -C <sibling-path>`. If rebase conflicts arise, the user is directed to `cd` into the sibling and resolve there so governance files (rules, conventions) are scoped to the feature branch's deployed state
 - `unpack` is mechanically dumb — branch must already be rebased onto current `origin/main` via `/sandbox update` before unpack; conflicts at unpack time mean origin/main advanced between the precondition check and the merge
 - `unpack` integrates via pull request — `gh pr create` opens the PR, required status checks gate the merge, `gh pr merge --merge --delete-branch` lands it. All git operations target the main worktree explicitly via `git -C`, so unpack runs from main or from any sibling worktree
+- Every durable sandbox carries a `SANDBOX-TASKS.md` at the sibling's project root — seeded by `new` and `pack`, read by `tasks`, and cleared by `unpack` in a final commit before the PR opens. The file is sandbox-scoped scaffolding; main never carries it. `unpack` requires the sibling to exist so the cleanup commit can land
 - `cleanup` scans the parent project's `--tmp-*` sibling namespace and `sandbox/tmp/` branches, plus any detached worktree left at `<project>--tmp-*/` by external test-runner invocations — durable feature boxes are never touched
 - `exercise` classifies concerns strictly by the Interactivity criterion — if a concern could plausibly fit either bucket, surface the ambiguity to the user before proceeding
 
@@ -113,11 +115,13 @@ If none apply, the concern routes to the fresh-install bucket — pure determini
     1. Call: `_unpack.md` ({verb-arg} = {verb-arg})
 10. Else if {verb} is `list`:
     1. Call: `_list.md`
-11. Else if {verb} is `exercise`:
+11. Else if {verb} is `tasks`:
+    1. Call: `_tasks.md` ({verb-arg} = {verb-arg})
+12. Else if {verb} is `exercise`:
     1. Call: Exercise
-12. Else if {verb} is `cleanup`:
+13. Else if {verb} is `cleanup`:
     1. Call: Cleanup
-13. Else: Exit to user: unrecognized verb {verb} — expected new, pack, open, update, close, unpack, list, exercise, or cleanup
+14. Else: Exit to user: unrecognized verb {verb} — expected new, pack, open, update, close, unpack, list, tasks, exercise, or cleanup
 
 ## Exercise
 

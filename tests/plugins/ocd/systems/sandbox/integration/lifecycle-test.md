@@ -34,7 +34,7 @@ Runs in a sibling project with a local bare-repo origin so git operations stay i
     - Main advances 1 commit (`box boxprobe:target`); system directory removed
     - `sandbox/boxprobe/target` branch created with `restore boxprobe:target` commit; system directory preserved
     - Both branches pushed to origin
-    - No `_status.md` written (no migrated content)
+    - `SANDBOX-TASKS.md` seeded at sibling project root from the sandbox template; Tasks section carries the placeholder line (no migrated content)
 
 ### 2. Open with no main divergence
 
