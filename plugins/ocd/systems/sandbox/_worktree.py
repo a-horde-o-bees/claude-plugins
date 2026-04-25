@@ -49,9 +49,16 @@ class WorktreeStatus:
 
 
 def sibling_path(name: str) -> Path:
-    """Resolve `<parent>/<project>--<name>/` for the current project."""
-    project_root = environment.get_project_dir()
-    return project_root.parent / f"{project_root.name}--{name}"
+    """Resolve `<parent>/<project>--<name>/` for the current project.
+
+    Anchored at the main worktree, so the same name resolves to the
+    same path whether the caller runs from main or from inside any
+    sibling worktree. Without anchoring, a sibling caller would derive
+    its sibling path from its own basename and produce a doubly-nested
+    location (`<project>--<sibling>--<name>`).
+    """
+    main_root = _main_project_root()
+    return main_root.parent / f"{main_root.name}--{name}"
 
 
 def worktree_add(
@@ -71,7 +78,7 @@ def worktree_add(
     so accidental pushes from the worktree fail loudly. Pair with
     `worktree_remove(..., unblock_push=True)`.
     """
-    project_root = environment.get_project_dir()
+    project_root = _main_project_root()
     path = sibling_path(name)
 
     if path.exists():
@@ -126,7 +133,7 @@ def worktree_remove(
     even if worktree removal fails, so a crashed caller cannot leave
     origin in a broken state.
     """
-    project_root = environment.get_project_dir()
+    project_root = _main_project_root()
     path = sibling_path(name)
     branch = _worktree_branch(path) if delete_branch else None
 
@@ -163,7 +170,7 @@ def worktree_remove(
 
 def worktree_list() -> list[WorktreeStatus]:
     """Enumerate every worktree on this project, main tree excluded."""
-    project_root = environment.get_project_dir()
+    project_root = _main_project_root()
     raw = _list_raw(project_root)
     entries = []
     for path, branch, detached in raw:
@@ -245,6 +252,33 @@ def worktree_teardown(topic: str) -> None:
         delete_branch=True,
         unblock_push=True,
     )
+
+
+def _main_project_root() -> Path:
+    """Resolve the main worktree path. Works from any worktree.
+
+    `git rev-parse --git-common-dir` returns the .git directory shared
+    by every worktree on the project — main's .git, regardless of the
+    caller's cwd. Its parent is the main worktree. Required wherever a
+    name-based path computation must yield the same result from main
+    and from any sibling — `get_project_dir()` correctly returns cwd's
+    worktree root, but that's the wrong anchor for sibling-naming.
+    """
+    cwd_root = environment.get_project_dir()
+    result = subprocess.run(
+        [
+            "git",
+            "-C",
+            str(cwd_root),
+            "rev-parse",
+            "--path-format=absolute",
+            "--git-common-dir",
+        ],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    return Path(result.stdout.strip()).parent.resolve()
 
 
 def _list_raw(project_root: Path) -> list[tuple[str, str | None, bool]]:

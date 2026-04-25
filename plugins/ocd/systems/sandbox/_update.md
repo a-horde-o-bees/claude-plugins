@@ -1,16 +1,19 @@
 # Update
 
-Rebase an open feature sandbox onto current `origin/main` and force-push. Run from inside the sibling worktree's session — rebase conflicts need the sibling-scoped context (conventions, MCP scopes, file paths) for resolution. Idempotent: if the branch is already on top of `origin/main` and in sync with origin, update is a silent no-op.
+Rebase an open feature sandbox onto current `origin/main` and force-push. All git operations target the named sibling via `git -C <sibling-path>`, so the verb runs correctly from main or from any sibling worktree. If rebase conflicts arise, the user is directed to `cd` into the sibling for governance-correct resolution. Idempotent: if the branch is already on top of `origin/main` and in sync with origin, update is a silent no-op.
 
 ### Variables
 
-- {verb-arg} — positional value: feature id
+- {verb-arg} — positional value: feature id. If empty, infer from cwd's branch (must be `sandbox/<id>`).
 
 ### Process
 
 1. Parse {verb-arg}:
-    1. If {verb-arg} is empty: Exit to user: update requires a feature id
-    2. {feature-id} = {verb-arg}
+    1. If {verb-arg} non-empty: {feature-id} = {verb-arg}
+    2. Else:
+        1. {current-branch} = bash: `git rev-parse --abbrev-ref HEAD`
+        2. If {current-branch} does not start with `sandbox/`: Exit to user: update requires a feature id (or run from inside a `sandbox/<id>` worktree)
+        3. {feature-id} = {current-branch} with `sandbox/` prefix removed
 2. {sibling-name} = {feature-id} with every `/` replaced by `-` — filesystem-safe flat form
 3. {branch} = `sandbox/{feature-id}`
 4. {sibling-path} = bash: `ocd-run sandbox sibling-path {sibling-name}`
@@ -40,7 +43,7 @@ Rebase an open feature sandbox onto current `origin/main` and force-push. Run fr
         2. If rebase fails:
             1. Exit to user:
                 - rebase conflict on {branch} in {sibling-path}
-                - resolve conflicts inside the sibling; then `git -C {sibling-path} rebase --continue`
+                - `cd {sibling-path}` and start a session there so governance files (rules, conventions) match the feature's deployed state, then resolve conflicts and `git rebase --continue`
                 - or abort with `git -C {sibling-path} rebase --abort`
                 - re-invoke `/sandbox update {feature-id}` when resolved
 

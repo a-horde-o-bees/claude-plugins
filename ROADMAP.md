@@ -30,7 +30,7 @@ Quality-of-life improvements to existing shipped skills. Mix of items from `purp
 
 - **Skill description framing polish on `/ocd:pdf` and `/ocd:navigator`** — sharpen toward explicit "when to use" trigger-verb framing. [idea log](logs/idea/Skill%20description%20framing%20polish.md)
 - **`/ocd:log <bogus-type>` validation** — skill routes to `_add.md` without checking whether the type exists under `logs/`. Add pre-dispatch validation.
-- **`/ocd:pdf` sensitive-file mkdir ceremony** — Workflow has no escape hatch when gate blocks `.claude/ocd/pdf/css/` mkdir. Either document `--css <preset>` bypass, move mkdir behind a lazy initializer, or provide a flag that skips directory creation.
+- **`/ocd:pdf` sensitive-file mkdir ceremony** — Workflow has no escape hatch when gate blocks `.claude/ocd/pdf/templates/` mkdir. Either document `--css <preset>` bypass, move mkdir behind a lazy initializer, or provide a flag that skips directory creation.
 - **Scan output omits `staled N parent(s)` on single-parent cascade** — DB state correct, but user-visible summary doesn't include the count.
 - **`setup init` no-op output is noisy** — prints all subsystem sections and "Done" even when deploy was a no-op.
 - **`setup badverb` error comes from argparse, not SKILL.md unrecognized-verb branch** — either dead code in SKILL.md fallback or argparse shadowing.

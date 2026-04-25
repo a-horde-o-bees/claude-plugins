@@ -1,7 +1,7 @@
 ---
 name: sandbox
 description: Work on an isolated sandbox of the project — durable feature boxes (new, pack, open, update, close, unpack, list) for in-flight development that parallel sessions can drive without clobbering each other, and ephemeral sandboxes (exercise, cleanup) for fresh-install or interactive validation against the current tree. All substrates share one sibling-path convention, one permission rule, and one cleanup sweep.
-argument-hint: "<new <feature-id> | pack <description> | open <feature-id> | update <feature-id> | close <feature-id> | unpack <feature-id> [--direct] | list | exercise [description] | cleanup>"
+argument-hint: "<new <feature-id> | pack <description> | open <feature-id> | update [feature-id] | close [feature-id] | unpack [feature-id] | list | exercise [description] | cleanup>"
 allowed-tools:
   - AskUserQuestion
   - Bash(git *)
@@ -19,7 +19,7 @@ allowed-tools:
 
 One umbrella for every isolated-workspace operation. Two verb families:
 
-- **Durable** — a feature-level sandbox that persists across sessions. `new` starts empty, `pack` extracts scope from main, `open` / `close` toggle the sibling worktree on and off without touching the branch, `update` rebases the branch onto current `origin/main` from inside the sibling's session, `unpack` reintegrates back into main. `list` is the inventory.
+- **Durable** — a feature-level sandbox that persists across sessions. `new` starts empty, `pack` extracts scope from cwd's branch (usually main, can be another sandbox when splitting a sub-feature), `open` / `close` toggle the sibling worktree on and off without touching the branch, `update` rebases the named feature branch onto current `origin/main`, `unpack` reintegrates back into main. `list` is the inventory.
 - **Ephemeral** — a disposable sandbox for validation. `exercise` classifies a change into fresh-install vs interactive concerns and runs both, `cleanup` sweeps leftovers.
 
 ## Process Model
@@ -57,9 +57,9 @@ Durable vs ephemeral follows from what the user is doing, not from a route matri
 ### Pick a durable verb when
 
 - Starting a new feature — `new <feature-id>`
-- Shelving in-flight scope off main to hide it from holistic testing — `pack <description>`
+- Shelving in-flight scope off cwd's branch (main or another sandbox) into a new sandbox — `pack <description>`
 - Activating or parking an existing feature sandbox — `open <feature-id>` / `close <feature-id>`
-- Rebasing a feature branch onto current `origin/main` from inside its sibling session — `update <feature-id>`
+- Rebasing a feature branch onto current `origin/main` — `update <feature-id>`
 - Merging a completed feature back to main — `unpack <feature-id>`
 - Surveying what's in flight — `list`
 
@@ -85,9 +85,9 @@ If none apply, the concern routes to the fresh-install bucket — pure determini
 - Feature ids starting with `tmp/` or `tmp-` or equal to `tmp` are reserved for the ephemeral namespace — reject them in `new` and `pack`
 - Main tree stays on `main` throughout every durable verb — no checkouts on the main tree
 - `close` refuses to park a sibling with uncommitted or unpushed work — unpushed work signals the branch has not been end-to-end tested; fix before parking
-- `update` runs from inside the sibling's session — rebase conflicts need the sibling-scoped `CLAUDE_PROJECT_DIR` for file-resolution context; invoking from the main tree's session and switching mid-flow for conflict resolution breaks the boundary
+- `update` runs from any worktree — git operations target the named sibling explicitly via `git -C <sibling-path>`. If rebase conflicts arise, the user is directed to `cd` into the sibling and resolve there so governance files (rules, conventions) are scoped to the feature branch's deployed state
 - `unpack` is mechanically dumb — branch must already be rebased onto current `origin/main` via `/sandbox update` before unpack; conflicts at unpack time mean origin/main advanced between the precondition check and the merge
-- `unpack` defaults to PR-based integration — required status checks gate the merge, the PR diff is the reviewable artifact. `--direct` is an escape hatch that merges on main locally and pushes; use only when the PR flow is unavailable
+- `unpack` integrates via pull request — `gh pr create` opens the PR, required status checks gate the merge, `gh pr merge --merge --delete-branch` lands it. All git operations target the main worktree explicitly via `git -C`, so unpack runs from main or from any sibling worktree
 - `cleanup` scans the parent project's `--tmp-*` sibling namespace and `sandbox/tmp/` branches, plus any detached worktree left at `<project>--tmp-*/` by external test-runner invocations — durable feature boxes are never touched
 - `exercise` classifies concerns strictly by the Interactivity criterion — if a concern could plausibly fit either bucket, surface the ambiguity to the user before proceeding
 

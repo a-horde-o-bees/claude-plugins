@@ -20,6 +20,33 @@ from systems.sandbox._worktree import (
 )
 
 
+class TestSiblingPath:
+    def test_resolves_to_peer_of_project_root(self, project_repo: Path):
+        result = sibling_path("feature-x")
+        assert result.parent == project_repo.parent
+
+    def test_uses_double_hyphen_separator(self, project_repo: Path):
+        result = sibling_path("feature-x")
+        assert result.name == f"{project_repo.name}--feature-x"
+
+    def test_resolves_identically_from_inside_a_sibling(
+        self, project_repo: Path, monkeypatch
+    ):
+        """`sibling_path` must anchor at the main worktree, so the same
+        name resolves to the same path whether the caller runs from main
+        or from inside a sibling. Without anchoring, a sibling caller
+        derives its sibling path from its own basename and produces
+        `<project>--<sibling>--<name>` — a doubly-nested location.
+        """
+        sibling = worktree_add(
+            "feature-a", "sandbox/feature-a", base_ref="main"
+        )
+        from_main = sibling_path("feature-b")
+        monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(sibling))
+        from_sibling = sibling_path("feature-b")
+        assert from_main == from_sibling
+
+
 class TestWorktreeAddRemove:
     def test_add_creates_sibling_on_new_branch(self, project_repo: Path):
         path = worktree_add("feature-x", "sandbox/feature-x", base_ref="main")
@@ -81,6 +108,59 @@ class TestWorktreeAddRemove:
             f"(got: {result.stdout.strip()!r})"
         )
 
+    def test_add_from_sandbox_branch_inherits_source_history(
+        self, project_repo: Path
+    ):
+        """`worktree_add` with `base_ref=<sandbox-branch>` produces a
+        new sibling whose HEAD has the source branch's tip in its
+        ancestry. This is the primitive that pack relies on when
+        splitting a sub-feature off an in-flight sandbox: the new
+        sandbox branches from the source's tip, inheriting whatever
+        commits the source has accumulated.
+        """
+        source = worktree_add(
+            "feature-a", "sandbox/feature-a", base_ref="main"
+        )
+        subprocess.run(
+            ["git", "-C", str(source), "config", "user.email", "test@example.com"],
+            check=True,
+        )
+        subprocess.run(
+            ["git", "-C", str(source), "config", "user.name", "Test"],
+            check=True,
+        )
+        (source / "feature-a-only.md").write_text("a-only\n")
+        subprocess.run(
+            ["git", "-C", str(source), "add", "feature-a-only.md"], check=True
+        )
+        subprocess.run(
+            ["git", "-C", str(source), "commit", "-m", "a-only", "--quiet"],
+            check=True,
+        )
+        source_tip = subprocess.run(
+            ["git", "-C", str(source), "rev-parse", "HEAD"],
+            capture_output=True, text=True, check=True,
+        ).stdout.strip()
+
+        sub = worktree_add(
+            "feature-a-helpers",
+            "sandbox/feature-a-helpers",
+            base_ref="sandbox/feature-a",
+        )
+        check = subprocess.run(
+            [
+                "git", "-C", str(sub),
+                "merge-base", "--is-ancestor", source_tip, "HEAD",
+            ],
+            capture_output=True,
+        )
+        assert check.returncode == 0, (
+            f"sub-feature HEAD does not have source tip {source_tip} in ancestry"
+        )
+        assert (sub / "feature-a-only.md").exists(), (
+            "sub-feature worktree should contain source-only file"
+        )
+
 
 class TestWorktreeListStatus:
     def test_list_surfaces_added_worktree(self, project_repo: Path):
@@ -105,6 +185,41 @@ class TestWorktreeListStatus:
         assert status.exists is True
         assert status.branch == "sandbox/feature-x"
         assert status.clean is True
+
+    def test_status_works_from_inside_a_sibling(
+        self, project_repo: Path, monkeypatch
+    ):
+        """`worktree_status` looks up siblings by name — that name is
+        anchored at the main worktree. From inside a sibling, the same
+        name must resolve to the same registered worktree as it does
+        from main. Without the anchor, the sibling-cwd caller computes
+        a doubly-nested path and reports `exists: false`.
+        """
+        sibling = worktree_add(
+            "feature-x", "sandbox/feature-x", base_ref="main"
+        )
+        monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(sibling))
+        status = worktree_status("feature-x")
+        assert status.exists is True
+        assert status.branch == "sandbox/feature-x"
+
+    def test_list_excludes_main_when_called_from_inside_a_sibling(
+        self, project_repo: Path, monkeypatch
+    ):
+        """`worktree_list` enumerates non-main worktrees. The "main"
+        anchor must be the actual main project, not the cwd's worktree
+        — otherwise listing from a sibling would exclude the sibling
+        itself instead of main.
+        """
+        sibling = worktree_add(
+            "feature-x", "sandbox/feature-x", base_ref="main"
+        )
+        monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(sibling))
+        entries = worktree_list()
+        names = [e.name for e in entries]
+        paths = [e.path.resolve() for e in entries]
+        assert "feature-x" in names
+        assert project_repo.resolve() not in paths
 
 
 class TestEphemeralSetupTeardown:

@@ -30,7 +30,7 @@ Surfaced by `/ocd:sandbox exercise` (then named `test`) run against commit `1cb3
 **Skill surface issues:**
 
 - [ ] **`/ocd:log <bogus-type>` dispatches without validating the type.** Skill routes to `_add.md` without pre-checking whether the type exists under `logs/`. Add a pre-dispatch validation that lists valid types.
-- [ ] **`/ocd:pdf` setup requires `.claude/ocd/pdf/css/` mkdir that the sensitive-file gate blocks.** Skill's Workflow has no documented escape hatch. Either document the `--css <preset>` bypass, move the gated mkdir behind a lazy initializer invoked only when the user has explicitly opted into custom CSS, or provide a flag that skips the directory creation and uses the plugin-cache preset directly.
+- [ ] **`/ocd:pdf` setup requires `.claude/ocd/pdf/templates/` mkdir that the sensitive-file gate blocks.** Skill's Workflow has no documented escape hatch. Either document the `--css <preset>` bypass, move the gated mkdir behind a lazy initializer invoked only when the user has explicitly opted into custom CSS, or provide a flag that skips the directory creation and uses the plugin-cache preset directly.
 
 **Polish:**
 
