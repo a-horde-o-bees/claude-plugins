@@ -1,7 +1,7 @@
 ---
 name: sandbox
 description: Work on an isolated sandbox of the project — durable feature boxes (new, pack, open, update, close, unpack, list) for in-flight development that parallel sessions can drive without clobbering each other, and ephemeral sandboxes (exercise, cleanup) for fresh-install or interactive validation against the current tree. All substrates share one sibling-path convention, one permission rule, and one cleanup sweep.
-argument-hint: "<new <feature-id> | pack <description> | open <feature-id> | update <feature-id> | close <feature-id> | unpack <feature-id> [--direct] | list | exercise [description] | cleanup>"
+argument-hint: "<new <feature-id> | pack <description> | open <feature-id> | update <feature-id> | close <feature-id> | unpack <feature-id> | list | exercise [description] | cleanup>"
 allowed-tools:
   - AskUserQuestion
   - Bash(git *)
@@ -87,7 +87,7 @@ If none apply, the concern routes to the fresh-install bucket — pure determini
 - `close` refuses to park a sibling with uncommitted or unpushed work — unpushed work signals the branch has not been end-to-end tested; fix before parking
 - `update` runs from any worktree — git operations target the named sibling explicitly via `git -C <sibling-path>`. If rebase conflicts arise, the user is directed to `cd` into the sibling and resolve there so governance files (rules, conventions) are scoped to the feature branch's deployed state
 - `unpack` is mechanically dumb — branch must already be rebased onto current `origin/main` via `/sandbox update` before unpack; conflicts at unpack time mean origin/main advanced between the precondition check and the merge
-- `unpack` defaults to PR-based integration — required status checks gate the merge, the PR diff is the reviewable artifact. `--direct` is an escape hatch that merges on main locally and pushes; use only when the PR flow is unavailable
+- `unpack` integrates via pull request — `gh pr create` opens the PR, required status checks gate the merge, `gh pr merge --merge --delete-branch` lands it. All git operations target the main worktree explicitly via `git -C`, so unpack runs from main or from any sibling worktree
 - `cleanup` scans the parent project's `--tmp-*` sibling namespace and `sandbox/tmp/` branches, plus any detached worktree left at `<project>--tmp-*/` by external test-runner invocations — durable feature boxes are never touched
 - `exercise` classifies concerns strictly by the Interactivity criterion — if a concern could plausibly fit either bucket, surface the ambiguity to the user before proceeding
 
