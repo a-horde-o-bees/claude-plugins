@@ -40,8 +40,16 @@ class TestPreCommitPropagation:
             cwd=self.root, capture_output=True,
         )
         yield
+        # Reset index to HEAD and restore tracked files to clear any side
+        # effects from the hook — bumps to plugins/ocd/.claude-plugin/plugin.json
+        # and propagated copies under test-hook-plugin must not leak into the
+        # next test class running in the same session-scoped worktree.
         subprocess.run(
-            ["git", "reset", "HEAD", "--", str(self.plugin_dir)],
+            ["git", "reset", "HEAD"],
+            cwd=self.root, capture_output=True,
+        )
+        subprocess.run(
+            ["git", "checkout", "--", "."],
             cwd=self.root, capture_output=True,
         )
         if self.plugin_dir.exists():
