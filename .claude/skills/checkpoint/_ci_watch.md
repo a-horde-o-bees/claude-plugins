@@ -1,6 +1,6 @@
 # CI Watch (background)
 
-Wait for GitHub Actions CI runs to complete for a given commit SHA, then return a composed notification message to the caller. Spawned asynchronously by /checkpoint so the foreground doesn't block on CI (typically 30–90s per run, sometimes longer). The parent checkpoint returns immediately after dispatch; this agent runs independently and the session receiving the task-completion result fires `PushNotification` with the returned message. Composition is the agent's job because it's deterministic and runs in any environment; delivery is the caller's job because `PushNotification` is foreground-session-scoped and not exposed to spawned agents.
+Wait for GitHub Actions CI runs to complete for a given commit SHA and return the aggregated outcome to the caller. Spawned asynchronously by /checkpoint so the foreground doesn't block on CI (typically 30–90s per run, sometimes longer). The parent checkpoint returns immediately after dispatch; this agent runs independently and the session receiving the task-completion result reports the outcome inline.
 
 ### Variables
 
@@ -19,12 +19,8 @@ Wait for GitHub Actions CI runs to complete for a given commit SHA, then return 
     - All `success` → {verdict} = `pass`, {detail} = count of workflows
     - Any `failure` → {verdict} = `fail`, {detail} = first failing workflow name + run URL
     - Any `cancelled` / `timed_out` / still in progress → {verdict} = `incomplete`, {detail} = workflow names + statuses
-6. Compose notification {message} (one line, under 200 chars, no markdown):
-    - `pass` → `CI green on {short-sha} — {detail} workflow(s) passed`
-    - `fail` → `CI FAILED on {short-sha}: {workflow-name} → {run-url}`
-    - `incomplete` → `CI incomplete on {short-sha}: {detail}`
-7. Return to caller:
+6. Return to caller:
+    - short-sha: {short-sha}
     - verdict: {verdict}
     - detail: {detail}
-    - notify-message: {message} — caller fires `PushNotification` with this string
     - runs: full JSON of the matched runs
