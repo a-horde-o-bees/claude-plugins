@@ -1,7 +1,7 @@
 ---
 name: sandbox
 description: Work on an isolated sandbox of the project — durable feature boxes (new, pack, open, update, close, unpack, list) for in-flight development that parallel sessions can drive without clobbering each other, and ephemeral sandboxes (exercise, cleanup) for fresh-install or interactive validation against the current tree. All substrates share one sibling-path convention, one permission rule, and one cleanup sweep.
-argument-hint: "<new <feature-id> | pack <description> | open <feature-id> | update <feature-id> | close <feature-id> | unpack <feature-id> | list | exercise [description] | cleanup>"
+argument-hint: "<new <feature-id> | pack <description> | open <feature-id> | update [feature-id] | close [feature-id] | unpack [feature-id] | list | exercise [description] | cleanup>"
 allowed-tools:
   - AskUserQuestion
   - Bash(git *)
