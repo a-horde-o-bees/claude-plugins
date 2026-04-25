@@ -3,6 +3,7 @@ name: checkpoint
 description: Commit, auto-init, push, refresh marketplace, update plugins, verify CI, recommend restart
 allowed-tools:
   - Skill
+  - Agent
   - Bash(claude plugins *)
   - Bash(python3 scripts/auto_init.py)
   - Bash(git status *)
@@ -37,19 +38,19 @@ Bundle the full development checkpoint cycle — commit, rectify deployed state 
 5. Marketplace refresh — bash: `claude plugins marketplace update a-horde-o-bees`
 6. Update plugin — bash: `claude plugins update ocd@a-horde-o-bees`
 
-> CI gate — verify GitHub Actions passed for the latest push before declaring the checkpoint clean. Uses `gh run watch` which blocks until the run completes, so a red build surfaces in the checkpoint report rather than sitting unnoticed on main.
+> CI gate (async) — dispatch a background agent to watch GitHub Actions and push a desktop notification when CI completes. Foreground checkpoint returns immediately after dispatch; the user learns the outcome via notification instead of the agent stalling on `gh run watch`. Runs already completed at dispatch time are reported synchronously so the foreground still sees stable-state results.
 
 7. CI gate:
     1. {sha} = bash: `git rev-parse origin/main`
     2. bash: `gh run list --branch main --limit 5 --json databaseId,headSha,conclusion,status,workflowName,url`
     3. Parse the JSON output; identify runs whose `headSha` matches {sha}
-    4. If no matching runs found: Report CI status as "no runs scheduled for {sha} — check manually via `gh run list`" and proceed to Report
-    5. For each matching run with `status` in (`in_progress`, `queued`):
-        1. bash: `gh run watch <databaseId> --exit-status` — blocks until the run completes; exits non-zero on failure
-    6. {ci-status} = aggregate conclusions across the matching set:
-        - All `success` → `passed`
-        - Any `failure` → `failed` (with workflow names and run URLs)
-        - Any timeout or still-running → `still running` (with run URLs)
+    4. If no matching runs found: Set {ci-status} = `"no runs scheduled for {sha} yet — check manually via gh run list"` and proceed to Report
+    5. {watch-ids} = run IDs with `status` in (`in_progress`, `queued`)
+    6. If {watch-ids} is empty:
+        1. {ci-status} = synchronous aggregate — all `success` → `passed`; any `failure` → `failed` (with workflow name + URL); any other conclusion → surface as-is
+    7. Else:
+        1. async Spawn: Call: `_ci_watch.md` ({sha} = {sha}, {run-ids} = {watch-ids})
+        2. {ci-status} = `"dispatched for runs {watch-ids} — notification on completion"`
 
 ### Report
 
@@ -57,11 +58,12 @@ Bundle the full development checkpoint cycle — commit, rectify deployed state 
 - Auto-init output: deployed file changes, orphans removed, DB migration flags if any
 - Plugins updated: versions
 - CI status for {sha}:
-  - **Passed** — list the workflows that ran successfully
-  - **FAILED** — flag prominently with workflow name + run URL; recommend investigating before further work
-  - **Still running** — list in-progress run URLs so the user can check later
+  - **Passed** (all runs were already complete at dispatch time) — list the workflows that ran successfully
+  - **Failed** (some run was already complete + failed at dispatch time) — flag prominently with workflow name + run URL; recommend investigating before further work
+  - **Dispatched** (runs were still in progress at dispatch time) — report the watched run IDs; the background agent will push a desktop notification when CI completes. No foreground wait.
   - **No runs scheduled** — note that no workflows were triggered (or GitHub hadn't scheduled yet; manual recheck may be needed)
-- If commits were pushed AND CI passed: recommend session restart (`/exit` then `claude --continue`) — rules, hooks, MCP servers, and skill code all run from the cached plugin install and pick up changes only after restart
-- If CI failed: restart recommendation is still valid but investigating the CI failure comes first
+- If commits were pushed AND CI passed (synchronous): recommend session restart (`/exit` then `claude --continue`)
+- If CI was dispatched (async): recommend the restart anyway — the user can restart now and will receive the CI notification independent of session state. If the notification reports a failure after restart, investigate then
+- If CI failed (synchronous): restart recommendation is still valid but investigating the CI failure comes first
 - If nothing was pushed: checkpoint complete, no restart needed
 - If auto-init surfaced DB schema mismatches: flag the backup paths under `.claude/pre-sync/` and prompt the user to migrate before the next /checkpoint
