@@ -80,6 +80,7 @@ Tools and disciplines for how work gets done across the project.
 - **Audit-testing skill for test infrastructure quality** — audit skill focused on test infrastructure rather than production code. [idea log](logs/idea/Audit-testing%20skill%20for%20test%20infrastructure%20quality.md)
 - **honesty-as-paramount-design-principle** — proposed design principle (epistemic honesty / admit-what-you-don't-know). [idea log](logs/idea/honesty-as-paramount-design-principle.md)
 - **workflow-rule-prefer-explicit-commands-over-loops** — proposed workflow rule. [idea log](logs/idea/workflow-rule-prefer-explicit-commands-over-loops.md)
+- **Extend claude-marketplace research to cover discovery channels** — existing research covers marketplace shape; doesn't cover where authors get listed (Anthropic-blessed pipeline, auto-crawled aggregators, awesome lists, organic channels). Preliminary leads captured in the idea log; gated on `/log research` skill tree update landing first. [idea log](logs/idea/Extend%20claude-marketplace%20research%20to%20cover%20discovery%20channels.md)
 
 ## Friction and problems
 
