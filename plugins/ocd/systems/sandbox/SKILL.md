@@ -19,7 +19,7 @@ allowed-tools:
 
 One umbrella for every isolated-workspace operation. Two verb families:
 
-- **Durable** — a feature-level sandbox that persists across sessions. `new` starts empty, `pack` extracts scope from main, `open` / `close` toggle the sibling worktree on and off without touching the branch, `update` rebases the named feature branch onto current `origin/main`, `unpack` reintegrates back into main. `list` is the inventory.
+- **Durable** — a feature-level sandbox that persists across sessions. `new` starts empty, `pack` extracts scope from cwd's branch (usually main, can be another sandbox when splitting a sub-feature), `open` / `close` toggle the sibling worktree on and off without touching the branch, `update` rebases the named feature branch onto current `origin/main`, `unpack` reintegrates back into main. `list` is the inventory.
 - **Ephemeral** — a disposable sandbox for validation. `exercise` classifies a change into fresh-install vs interactive concerns and runs both, `cleanup` sweeps leftovers.
 
 ## Process Model
@@ -57,7 +57,7 @@ Durable vs ephemeral follows from what the user is doing, not from a route matri
 ### Pick a durable verb when
 
 - Starting a new feature — `new <feature-id>`
-- Shelving in-flight scope off main to hide it from holistic testing — `pack <description>`
+- Shelving in-flight scope off cwd's branch (main or another sandbox) into a new sandbox — `pack <description>`
 - Activating or parking an existing feature sandbox — `open <feature-id>` / `close <feature-id>`
 - Rebasing a feature branch onto current `origin/main` — `update <feature-id>`
 - Merging a completed feature back to main — `unpack <feature-id>`
