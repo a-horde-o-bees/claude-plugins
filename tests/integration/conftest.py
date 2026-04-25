@@ -1,7 +1,6 @@
 """Shared fixtures for integration tests."""
 
 import subprocess
-import sys
 import tempfile
 from pathlib import Path
 
@@ -25,22 +24,6 @@ def _git_root() -> Path:
         check=True,
     )
     return Path(result.stdout.strip()).resolve()
-
-
-def _install_research_scripts_on_syspath() -> None:
-    """Make `logs/research/_scripts/` importable for integration tests.
-
-    Cross-corpus research utilities live outside any plugin package, so
-    they aren't reachable through the plugin's venv import path. Tests
-    that use `sample_tools` etc. depend on this sys.path insertion; it
-    runs at conftest import time so test collection succeeds.
-    """
-    scripts_dir = _git_root() / "logs" / "research" / "_scripts"
-    if scripts_dir.is_dir() and str(scripts_dir) not in sys.path:
-        sys.path.insert(0, str(scripts_dir))
-
-
-_install_research_scripts_on_syspath()
 
 
 @pytest.fixture(scope="session")
