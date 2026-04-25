@@ -34,32 +34,37 @@ staged=$(git diff --cached --name-only)
 
 # --- Bump plugin versions ---
 # Each plugin with staged changes (excluding plugin.json itself) gets its
-# z version incremented. Keeps marketplace reload detection working without
-# requiring the agent to remember the bump.
+# z version incremented on commits to main. Feature branches skip the
+# bump — only commits landing on main fire dev-channel reload detection,
+# and bumping on sandbox branches creates rebase conflicts at update
+# time when origin/main has advanced past the branch's z value.
 
-for plugin_json in plugins/*/.claude-plugin/plugin.json; do
-    plugin_dir=$(dirname "$(dirname "$plugin_json")")
-    plugin_name=$(basename "$plugin_dir")
+current_branch=$(git rev-parse --abbrev-ref HEAD)
+if [ "$current_branch" = "main" ]; then
+    for plugin_json in plugins/*/.claude-plugin/plugin.json; do
+        plugin_dir=$(dirname "$(dirname "$plugin_json")")
+        plugin_name=$(basename "$plugin_dir")
 
-    # Skip if only plugin.json changed (avoid double-bump on amend)
-    if echo "$staged" | grep -v "\.claude-plugin/plugin\.json" | grep -q "^plugins/${plugin_name}/"; then
-        current=$(python3 -c "import json; print(json.load(open('${plugin_json}'))['version'])")
-        new=$(python3 -c "v='${current}'.split('.'); v[-1]=str(int(v[-1])+1); print('.'.join(v))")
-        python3 -c "
+        # Skip if only plugin.json changed (avoid double-bump on amend)
+        if echo "$staged" | grep -v "\.claude-plugin/plugin\.json" | grep -q "^plugins/${plugin_name}/"; then
+            current=$(python3 -c "import json; print(json.load(open('${plugin_json}'))['version'])")
+            new=$(python3 -c "v='${current}'.split('.'); v[-1]=str(int(v[-1])+1); print('.'.join(v))")
+            python3 -c "
 import json, pathlib
 p = pathlib.Path('${plugin_json}')
 d = json.loads(p.read_text())
 d['version'] = '${new}'
 p.write_text(json.dumps(d, indent=2) + '\n')
 "
-        # Stage to whichever index is current (the temp index during
-        # partial-commit, the main index otherwise). The main-index
-        # sync under partial-commit happens in the post-commit hook —
-        # pre-commit can't write the main index while git holds its
-        # commit-level lock.
-        git add "$plugin_json"
-    fi
-done
+            # Stage to whichever index is current (the temp index during
+            # partial-commit, the main index otherwise). The main-index
+            # sync under partial-commit happens in the post-commit hook —
+            # pre-commit can't write the main index while git holds its
+            # commit-level lock.
+            git add "$plugin_json"
+        fi
+    done
+fi
 
 # --- Propagate shared plugin files ---
 

@@ -62,3 +62,27 @@ def worktree():
             cwd=root,
             capture_output=True,
         )
+
+
+@pytest.fixture
+def pristine_repo(tmp_path: Path) -> Path:
+    """Standalone git repo on `main` for tests that exercise gates keyed on branch.
+
+    The session-scoped `worktree` fixture creates a detached worktree of
+    the parent project — useful when tests need its actual files, but a
+    hook gate keying on `branch == main` cannot be satisfied there since
+    the parent's main worktree owns the only `main` ref. This fixture
+    initializes a fresh repo with `main` as the initial branch so such
+    gates evaluate truthy. Function-scoped so each test gets isolated
+    state.
+    """
+    subprocess.run(
+        ["git", "init", "-b", "main", str(tmp_path)],
+        capture_output=True, check=True,
+    )
+    for key, value in (("user.email", "test@example.com"), ("user.name", "Test")):
+        subprocess.run(
+            ["git", "-C", str(tmp_path), "config", key, value],
+            capture_output=True, check=True,
+        )
+    return tmp_path
