@@ -2,7 +2,7 @@
 
 Synthesis of outstanding work across the project. Pulls from idea logs, sandbox branches, friction/problem logs, and `purpose-map/state.md`. Organized by theme for prioritization; individual entries link to the canonical source file that owns the detail.
 
-This doc is not an exhaustive tracker — the idea logs under `logs/idea/` and the sandbox branches' `_status.md` files hold full context. The roadmap is the scan-once view.
+This doc is not an exhaustive tracker — the idea logs under `logs/idea/` and each sandbox branch's `SANDBOX-TASKS.md` (read via `/ocd:sandbox tasks`) hold full context. The roadmap is the scan-once view.
 
 ## High priority
 
@@ -15,7 +15,7 @@ Items tagged `priority:high` in their idea logs' frontmatter — floated up for 
 
 ## Active sandbox features
 
-Four features packed off main onto sandbox branches. Each carries its own `_status.md` on its branch.
+Four features packed off main onto sandbox branches. Each carries its own `SANDBOX-TASKS.md` at the sibling's project root — open the sandbox and run `/ocd:sandbox tasks` to read the running checklist.
 
 | Feature | Branch | Status highlights |
 |---------|--------|-------------------|

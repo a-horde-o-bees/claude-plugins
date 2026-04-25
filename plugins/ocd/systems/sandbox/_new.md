@@ -40,14 +40,23 @@ Create an empty feature sandbox — a new `sandbox/<feature>` branch checked out
 8. AskUserQuestion — "Create sandbox worktree?"; options: `["Proceed", "Cancel"]`
 9. If `Cancel`: Exit to user: new cancelled
 
-> Create — sibling worktree on a new branch from `origin/main`, then push the branch so other sessions/machines can see it.
+> Create — sibling worktree on a new branch from `origin/main`, then seed `SANDBOX-TASKS.md` at the sibling's project root from the template, commit it, and push the branch so other sessions/machines can see it.
 
 10. Create sibling worktree:
     1. bash: `ocd-run sandbox worktree-add {sibling-name} --branch {branch} --base-ref origin/main`
-11. Push branch to origin:
-    1. bash: `git -C {sibling-path} push -u origin {branch}`
+11. Seed `SANDBOX-TASKS.md` from template:
+    1. {template-path} = `{sibling-path}/plugins/ocd/systems/sandbox/templates/SANDBOX-TASKS.md`
+    2. {target-path} = `{sibling-path}/SANDBOX-TASKS.md`
+    3. Read {template-path}
+    4. Substitute the literal `{feature-id}` placeholder in the heading with the actual feature id
+    5. Write the substituted content to {target-path}
+12. Commit and push:
+    1. bash: `git -C {sibling-path} add SANDBOX-TASKS.md`
+    2. bash: `git -C {sibling-path} commit -m "Sandbox tasks — initial scope for {feature-id}"`
+    3. bash: `git -C {sibling-path} push -u origin {branch}`
 
-12. Return to caller:
+13. Return to caller:
     - created: {branch}
     - worktree: {sibling-path}
+    - tasks file: {sibling-path}/SANDBOX-TASKS.md — populate Goal, Pointers, and initial Tasks before substantive work begins
     - next: `cd {sibling-path} && claude` to begin working in an isolated session; main tree stays on main

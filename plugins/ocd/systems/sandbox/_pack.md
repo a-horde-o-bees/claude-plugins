@@ -1,6 +1,6 @@
 # Pack
 
-Move a feature off the current branch onto a dedicated `sandbox/<feature>` branch in a sibling worktree, hiding it from holistic testing until the user is ready to reintegrate and unpack. The source branch is whatever cwd is on — usually `main`, but can be another `sandbox/*` branch when splitting a sub-feature out of an in-flight sandbox. Usually a feature maps to a single plugin system, but a feature can also span multiple paths (a system plus shared workflow files, or a cross-cutting change touching several subsystems). Pack resolves the feature's scope — paths and symbols — through a brief conversation, then cuts structural ties on the source branch and migrates in-flight notes to a `_status.md` in the sibling worktree.
+Move a feature off the current branch onto a dedicated `sandbox/<feature>` branch in a sibling worktree, hiding it from holistic testing until the user is ready to reintegrate and unpack. The source branch is whatever cwd is on — usually `main`, but can be another `sandbox/*` branch when splitting a sub-feature out of an in-flight sandbox. Usually a feature maps to a single plugin system, but a feature can also span multiple paths (a system plus shared workflow files, or a cross-cutting change touching several subsystems). Pack resolves the feature's scope — paths and symbols — through a brief conversation, then cuts structural ties on the source branch and seeds a `SANDBOX-TASKS.md` at the sibling's project root from the template, populated with the feature's goal and any migrated in-flight notes as tasks.
 
 When the source is not `main`, the new sandbox's history will contain the source branch's commits — surface this to the user before proceeding so they understand the unpack ordering implication.
 
@@ -97,9 +97,9 @@ When the source is not `main`, the new sandbox's history will contain the source
         - Files in `logs/**/*.md` whose filename or level-1 heading names any scope symbol
     3. {interactive} = every remaining tendril — prose mentions, illustrative examples, docstring samples, log entries that only mention the feature in passing
 
-> Auto-handle — apply deterministic deletions and accumulate migrated content before touching the index.
+> Auto-handle — apply deterministic deletions and accumulate migrated content before touching the index. Migrated content is collected as task entries (already-checkbox bullets stay as-is; prose paragraphs become single-checkbox tasks).
 
-11. {status-md-content} = empty accumulator
+11. {migrated-tasks} = empty accumulator (task entries, GFM checkbox lines)
 
 12. For each {tendril} in {auto-delete}:
     1. Delete the referenced line (or the full table row) from the tendril's file
@@ -107,9 +107,9 @@ When the source is not `main`, the new sandbox's history will contain the source
 13. For each {tendril} in {auto-migrate}:
     1. If source is a `state.md`:
         1. Lift the bullet (plus any nested sub-bullets) or heading section from state.md
-        2. Append to {status-md-content} under the heading "## Open Work"
+        2. If the bullet already starts with `- [ ]` or `- [x]`, append it to {migrated-tasks} verbatim; else convert to `- [ ] <bullet text>` and append
     2. If source is a log file:
-        1. Lift the full file content (minus the level-1 heading) into {status-md-content} under the heading "## Migrated Log: {original filename}"
+        1. Lift the full file content (minus the level-1 heading) into {migrated-tasks} as a series of checkbox tasks under a `### {original log title}` subheading; convert prose paragraphs to single-checkbox tasks
         2. Delete the original log file
 
 > Interactive — surface remaining tendrils one at a time; the user directs disposition.
@@ -119,7 +119,7 @@ When the source is not `main`, the new sandbox's history will contain the source
     2. AskUserQuestion with options: `["migrate", "remove", "edit", "leave"]`
     3. If `migrate`:
         1. Prompt the user for what content to migrate (default: the containing paragraph or bullet)
-        2. Lift that content into {status-md-content} under the heading "## Migrated Note: {source-file}"
+        2. Append the content to {migrated-tasks} as one or more checkbox tasks under a `### {source-file}` subheading
         3. Remove the content from the source file on the source branch's working tree
     4. If `remove`: delete the referenced line (or user-specified span) from the source file
     5. If `edit`:
@@ -138,7 +138,7 @@ When the source is not `main`, the new sandbox's history will contain the source
         - {remaining}
         - re-run pack once resolved
 
-> Transition — two commits land: one on the source branch with tendril cleanup + scope removal, one on the sibling branch that carries the `_status.md` if content was migrated. The sibling is branched from the source's tip BEFORE the scope-removal commit, so the scope paths are already present in the sibling without needing manual restoration. The source worktree (cwd) stays on its branch throughout; no checkouts.
+> Transition — two commits land: one on the source branch with tendril cleanup + scope removal, one on the sibling branch that seeds `SANDBOX-TASKS.md` at the sibling's project root with the feature goal and any migrated tasks. The sibling is branched from the source's tip BEFORE the scope-removal commit, so the scope paths are already present in the sibling without needing manual restoration. The source worktree (cwd) stays on its branch throughout; no checkouts.
 
 18. Execute transition:
     1. bash: `ocd-run sandbox worktree-add {sibling-name} --branch {branch} --base-ref {source-branch}`
@@ -146,11 +146,16 @@ When the source is not `main`, the new sandbox's history will contain the source
         1. For each {path} in {scope}.paths: bash: `git rm -r {path}`
         2. Stage tendril modifications from steps 12–14: bash: `git add -u`
         3. bash: `git commit -m "pack {feature-id}"`
-    3. In the sibling (if {status-md-content} non-empty):
-        1. {status-location} = primary path of the scope (single path for single-path scopes; longest common directory prefix for multi-path features)
-        2. Write `{sibling-path}/{status-location}/_status.md` with a level-1 heading "In-Flight Status: {feature-id}", a one-line purpose statement, then {status-md-content}
-        3. bash: `git -C {sibling-path} add {status-location}/_status.md`
-        4. bash: `git -C {sibling-path} commit -m "restore {feature-id}"`
+    3. In the sibling, seed `SANDBOX-TASKS.md` at the project root:
+        1. {template-path} = `{sibling-path}/plugins/ocd/systems/sandbox/templates/SANDBOX-TASKS.md`
+        2. {target-path} = `{sibling-path}/SANDBOX-TASKS.md`
+        3. Read {template-path}
+        4. Substitute the literal `{feature-id}` placeholder in the heading with the actual feature id
+        5. Replace the placeholder paragraph below the heading with a one-line goal synthesized from {description}
+        6. Replace the `- (first task)` line under the Tasks heading with the entries collected in {migrated-tasks}; if {migrated-tasks} is empty, leave the placeholder for the user to fill in
+        7. Write the substituted content to {target-path}
+        8. bash: `git -C {sibling-path} add SANDBOX-TASKS.md`
+        9. bash: `git -C {sibling-path} commit -m "Sandbox tasks — initial scope for {feature-id}"`
     4. Push both branches:
         1. bash: `git -C {sibling-path} push -u origin {branch}`
         2. bash: `git push origin {source-branch}`
@@ -160,9 +165,9 @@ When the source is not `main`, the new sandbox's history will contain the source
     - source: {source-branch}
     - scope: {scope}.paths and {scope}.symbols
     - tendrils auto-deleted: count
-    - tendrils migrated to `_status.md`: count
+    - tendrils migrated to SANDBOX-TASKS.md: count
     - tendrils handled interactively: count (by disposition)
     - tendrils left on {source-branch} via override: count
     - source: scope paths removed; HEAD advanced by 1 commit; pushed
-    - sibling: {sibling-path} on {branch}; scope preserved; `_status.md` present if content migrated; pushed
-    - next: `cd {sibling-path} && claude` to continue feature work
+    - sibling: {sibling-path} on {branch}; scope preserved; SANDBOX-TASKS.md seeded at project root with {migrated-tasks count} migrated task(s); pushed
+    - next: `cd {sibling-path} && claude` to continue feature work; populate Pointers section if any logs/ROADMAP entries are meant to be resolved by this work
