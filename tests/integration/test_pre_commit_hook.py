@@ -255,8 +255,17 @@ class TestPreCommitVersionBump:
                 ["git", "add", scratch_rel],
                 cwd=self.root, capture_output=True, check=True,
             )
+            # Inline identity — CI runners have no git user.email/name
+            # configured, and the existing tests bypass this by running
+            # the hook directly rather than via `git commit`. This test
+            # must drive a real commit, so configure identity per-call.
             result = subprocess.run(
-                ["git", "commit", "-m", "partial-commit test", scratch_rel],
+                [
+                    "git",
+                    "-c", "user.email=test@example.com",
+                    "-c", "user.name=Partial Commit Test",
+                    "commit", "-m", "partial-commit test", scratch_rel,
+                ],
                 cwd=self.root, capture_output=True, text=True,
             )
             assert result.returncode == 0, (
