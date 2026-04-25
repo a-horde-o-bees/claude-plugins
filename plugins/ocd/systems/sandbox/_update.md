@@ -1,6 +1,6 @@
 # Update
 
-Rebase an open feature sandbox onto current `origin/main` and force-push. Run from inside the sibling worktree's session — rebase conflicts need the sibling-scoped context (conventions, MCP scopes, file paths) for resolution. Idempotent: if the branch is already on top of `origin/main` and in sync with origin, update is a silent no-op.
+Rebase an open feature sandbox onto current `origin/main` and force-push. All git operations target the named sibling via `git -C <sibling-path>`, so the verb runs correctly from main or from any sibling worktree. If rebase conflicts arise, the user is directed to `cd` into the sibling for governance-correct resolution. Idempotent: if the branch is already on top of `origin/main` and in sync with origin, update is a silent no-op.
 
 ### Variables
 
@@ -40,7 +40,7 @@ Rebase an open feature sandbox onto current `origin/main` and force-push. Run fr
         2. If rebase fails:
             1. Exit to user:
                 - rebase conflict on {branch} in {sibling-path}
-                - resolve conflicts inside the sibling; then `git -C {sibling-path} rebase --continue`
+                - `cd {sibling-path}` and start a session there so governance files (rules, conventions) match the feature's deployed state, then resolve conflicts and `git rebase --continue`
                 - or abort with `git -C {sibling-path} rebase --abort`
                 - re-invoke `/sandbox update {feature-id}` when resolved
 
