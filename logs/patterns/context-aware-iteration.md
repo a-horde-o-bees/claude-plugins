@@ -8,6 +8,16 @@ Standard Claude Code sub-agents cannot be resumed — context is garbage-collect
 
 Sub-agents also cannot observe their own token usage at any point. Only the orchestrator reads `total_tokens` when the Agent tool returns. Budget discipline must live there.
 
+## Baseline isolation
+
+The load-bearing move. Any iterative workload with fixed setup cost plus variable per-item cost is unpredictable until the two are decomposed. The total cost is observable; the components are not — until you measure with zero items.
+
+A spawn that does nothing isolates the fixed cost (system prompt + tool defs + instructions ≈ 30–40K tokens for a Claude sub-agent). Subtracting that baseline from a non-zero spawn's total reveals the per-item ratio, which is what governs subsequent batch sizing. **The agent instruction set in the baseline spawn must match the working spawns exactly** — a generic baseline undercounts instruction-set tokens and biases every later prediction.
+
+Skipping baseline isolation — guessing from rule of thumb, or charging a small first batch's overhead against per-item cost — propagates a wrong constant through every subsequent prediction. The cost of one extra spawn that does nothing but produce a number is much less than the cost of a runaway batch that overflows budget mid-run.
+
+**The principle generalizes outside sub-agent budgeting:** container startup vs per-request latency, API auth handshake vs per-call cost, pipeline initialization vs per-record processing. Whenever total cost has both fixed and variable components and only the total is observable, run with zero variable units once to isolate the fixed component.
+
 ## Artifacts
 
 Two per-workflow CSVs at a conventional location (e.g., `<domain>/_<workflow>-queue.csv` and `<domain>/_<workflow>-log.csv`).
@@ -140,6 +150,7 @@ Optional extension. Once `|ratio_k − running_avg_ratio| / running_avg_ratio < 
 
 ## Anti-patterns this prevents
 
+- **Conflating fixed and variable cost.** Skipping the baseline spawn forces every subsequent prediction to absorb the unknown overhead; the per-item ratio inflates by the entire system-prompt / tool-defs cost and over-shrinks future batches. The baseline-isolation step exists specifically to keep these components separated.
 - **Per-agent self-budgeting.** Agents cannot observe token usage; any char-to-token heuristic inside the agent is a guess layered on a guess. Move the budget to the orchestrator, where real usage is observable.
 - **Queue-order (FIFO) batching.** Wastes 15–25% of each batch's capacity when items vary in size. Bin-packing over a pre-measured table captures most of that.
 - **Fresh baseline per item.** Spawning one agent per item pays ~30K overhead for ~5K of real work. Batch until amortized overhead is a small fraction of batch cost.
