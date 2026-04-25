@@ -108,6 +108,59 @@ class TestWorktreeAddRemove:
             f"(got: {result.stdout.strip()!r})"
         )
 
+    def test_add_from_sandbox_branch_inherits_source_history(
+        self, project_repo: Path
+    ):
+        """`worktree_add` with `base_ref=<sandbox-branch>` produces a
+        new sibling whose HEAD has the source branch's tip in its
+        ancestry. This is the primitive that pack relies on when
+        splitting a sub-feature off an in-flight sandbox: the new
+        sandbox branches from the source's tip, inheriting whatever
+        commits the source has accumulated.
+        """
+        source = worktree_add(
+            "feature-a", "sandbox/feature-a", base_ref="main"
+        )
+        subprocess.run(
+            ["git", "-C", str(source), "config", "user.email", "test@example.com"],
+            check=True,
+        )
+        subprocess.run(
+            ["git", "-C", str(source), "config", "user.name", "Test"],
+            check=True,
+        )
+        (source / "feature-a-only.md").write_text("a-only\n")
+        subprocess.run(
+            ["git", "-C", str(source), "add", "feature-a-only.md"], check=True
+        )
+        subprocess.run(
+            ["git", "-C", str(source), "commit", "-m", "a-only", "--quiet"],
+            check=True,
+        )
+        source_tip = subprocess.run(
+            ["git", "-C", str(source), "rev-parse", "HEAD"],
+            capture_output=True, text=True, check=True,
+        ).stdout.strip()
+
+        sub = worktree_add(
+            "feature-a-helpers",
+            "sandbox/feature-a-helpers",
+            base_ref="sandbox/feature-a",
+        )
+        check = subprocess.run(
+            [
+                "git", "-C", str(sub),
+                "merge-base", "--is-ancestor", source_tip, "HEAD",
+            ],
+            capture_output=True,
+        )
+        assert check.returncode == 0, (
+            f"sub-feature HEAD does not have source tip {source_tip} in ancestry"
+        )
+        assert (sub / "feature-a-only.md").exists(), (
+            "sub-feature worktree should contain source-only file"
+        )
+
 
 class TestWorktreeListStatus:
     def test_list_surfaces_added_worktree(self, project_repo: Path):
