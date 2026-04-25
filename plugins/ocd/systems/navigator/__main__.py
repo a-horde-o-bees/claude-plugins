@@ -10,7 +10,7 @@ import argparse
 import sys
 from pathlib import Path
 
-import framework
+from tools.errors import NotReadyError
 
 from . import *  # noqa: F403 — underscore-prefixed names are internal; bare names are public
 
@@ -495,7 +495,7 @@ def main() -> None:
     if hasattr(args, "_dispatch"):
         try:
             args._dispatch(args)
-        except framework.NotReadyError as e:
+        except NotReadyError as e:
             print(str(e), file=sys.stderr)
             sys.exit(1)
     else:

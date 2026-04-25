@@ -12,10 +12,11 @@ import subprocess
 import sys
 from pathlib import Path
 
-import framework
 import pytest
 
-PLUGIN_ROOT = framework.get_plugin_root()
+from tools import environment
+
+PLUGIN_ROOT = environment.get_plugin_root()
 RUN_PY = str(PLUGIN_ROOT / "run.py")
 
 

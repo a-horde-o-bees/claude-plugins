@@ -8,7 +8,7 @@ first — first match wins.
 import json
 from pathlib import Path
 
-import framework
+from tools import environment
 
 
 def _parse_frontmatter_name(skill_md: Path) -> str | None:
@@ -107,8 +107,8 @@ def skills_resolve(name: str) -> Path | None:
     if ":" in name:
         name = name.split(":", 1)[1]
 
-    project_dir = framework.get_project_dir()
-    plugin_root = framework.get_plugin_root()
+    project_dir = environment.get_project_dir()
+    plugin_root = environment.get_plugin_root()
 
     # 1. Personal skills
     personal_skills = _get_claude_home() / "skills"
@@ -142,8 +142,8 @@ def skills_list() -> list[dict[str, str]]:
 
     Returns list of {name, source, path} dicts in priority order.
     """
-    project_dir = framework.get_project_dir()
-    plugin_root = framework.get_plugin_root()
+    project_dir = environment.get_project_dir()
+    plugin_root = environment.get_plugin_root()
 
     results: list[dict[str, str]] = []
     seen_names: set[str] = set()

@@ -51,20 +51,43 @@ class TestDeployedFilesBlocked:
         assert decision["permissionDecision"] == "deny"
 
 
-class TestPropagatedFrameworkBlocked:
+class TestPropagatedSetupBlocked:
     @pytest.mark.parametrize("path", [
-        "plugins/some-other-plugin/plugin/__init__.py",
-        "plugins/some-other-plugin/plugin/__main__.py",
+        "plugins/some-other-plugin/systems/setup/__init__.py",
+        "plugins/some-other-plugin/systems/setup/__main__.py",
+        "plugins/some-other-plugin/systems/setup/_orchestration.py",
     ])
-    def test_non_ocd_framework_denied(self, path: str):
+    def test_non_ocd_setup_denied(self, path: str):
         result = _run_hook(path)
         assert result.returncode == 2
         decision = json.loads(result.stdout)["hookSpecificOutput"]
         assert decision["permissionDecision"] == "deny"
 
-    def test_ocd_framework_allowed(self):
-        """Canonical source in ocd/ is editable — regex excludes ocd/."""
-        result = _run_hook("plugins/ocd/plugin/__init__.py")
+    def test_ocd_setup_allowed(self):
+        """Canonical source in ocd/systems/setup/ is editable — regex excludes ocd/."""
+        result = _run_hook("plugins/ocd/systems/setup/__init__.py")
+        assert result.returncode == 0
+        assert result.stdout == ""
+
+
+class TestPropagatedToolsBlocked:
+    @pytest.mark.parametrize("path", [
+        "plugins/ocd/tools/environment.py",
+        "plugins/ocd/tools/errors.py",
+        "plugins/some-other-plugin/tools/environment.py",
+        "plugins/some-other-plugin/tools/errors.py",
+    ])
+    def test_plugin_tools_denied(self, path: str):
+        """Every plugin's tools/environment.py and tools/errors.py are
+        propagated copies — canonical lives at project-root tools/."""
+        result = _run_hook(path)
+        assert result.returncode == 2
+        decision = json.loads(result.stdout)["hookSpecificOutput"]
+        assert decision["permissionDecision"] == "deny"
+
+    def test_project_root_tools_allowed(self):
+        """Canonical source at project root is editable."""
+        result = _run_hook("tools/environment.py")
         assert result.returncode == 0
         assert result.stdout == ""
 

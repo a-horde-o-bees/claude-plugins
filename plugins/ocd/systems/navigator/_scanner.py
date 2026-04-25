@@ -7,8 +7,8 @@ path_patterns table so per-system declarations flow into navigator's
 pattern matching.
 
 All walking is anchored on the project root resolved via
-framework.get_project_dir(); paths stored in the paths table are always
-project-relative.
+environment.get_project_dir(); paths stored in the paths table are
+always project-relative.
 """
 
 import csv
@@ -19,7 +19,7 @@ import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
 
-import framework
+from tools import environment
 
 from ._db import get_connection
 
@@ -48,7 +48,7 @@ def _compute_file_metrics(file_path: Path) -> dict:
     """Compute git hash, line count, and char count from a single file read.
 
     file_path must be an absolute path (callers that start from project-
-    relative data compose with framework.get_project_dir first).
+    relative data compose with environment.get_project_dir first).
 
     Returns dict with keys: git_hash, line_count, char_count.
     All values None for directories or on read error.
@@ -105,7 +105,7 @@ def _mark_parents_stale(conn: sqlite3.Connection, entry_path: str) -> list[str]:
 
 def _discover_deployed_paths_csv() -> list[Path]:
     """Return absolute paths of every deployed paths.csv under .claude/*/*/."""
-    project_dir = framework.get_project_dir()
+    project_dir = environment.get_project_dir()
     claude_dir = project_dir / ".claude"
     deployed = []
     if not claude_dir.is_dir():
@@ -130,7 +130,7 @@ def _consolidate_path_patterns(conn: sqlite3.Connection) -> None:
     hash differs, rebuilds path_patterns from scratch and updates
     path_pattern_sources. No-op when sources are current.
     """
-    project_dir = framework.get_project_dir()
+    project_dir = environment.get_project_dir()
     deployed = _discover_deployed_paths_csv()
 
     current_sources: dict[str, str] = {}
@@ -182,7 +182,7 @@ def _walk_filesystem(
 ) -> dict[str, str]:
     """Walk filesystem with pattern-based pruning.
 
-    Walks `framework.get_project_dir() / target_subpath` (empty subpath
+    Walks `environment.get_project_dir() / target_subpath` (empty subpath
     means the whole project). All paths in the returned dict are
     project-relative strings, independent of working directory.
 
@@ -199,7 +199,7 @@ def _walk_filesystem(
     exclude_patterns = [r for r in pattern_rows if r["exclude"]]
     shallow_patterns = [r for r in pattern_rows if not r["exclude"] and not r["traverse"]]
 
-    project_dir = framework.get_project_dir()
+    project_dir = environment.get_project_dir()
     scan_root = project_dir / target_subpath if target_subpath else project_dir
 
     disk_paths: dict[str, str] = {}
@@ -252,7 +252,7 @@ def scan_path(db_path: str, target_subpath: str = "") -> str:
     """Sync filesystem to database. Auto-adds missing, auto-removes stale.
 
     target_subpath is relative to the project root (empty means whole
-    project). Walking is always anchored on framework.get_project_dir(),
+    project). Walking is always anchored on environment.get_project_dir(),
     independent of working directory. Paths stored in the paths table
     are project-relative.
 
@@ -262,7 +262,7 @@ def scan_path(db_path: str, target_subpath: str = "") -> str:
     if target_subpath == ".":
         target_subpath = ""
 
-    project_dir = framework.get_project_dir()
+    project_dir = environment.get_project_dir()
 
     conn = get_connection(db_path)
     try:

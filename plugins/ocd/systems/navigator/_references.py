@@ -16,7 +16,7 @@ import re
 from collections import deque
 from pathlib import Path
 
-import framework
+from tools import environment
 
 from systems.governance import parse_governance
 
@@ -67,7 +67,7 @@ def _parse_skill_refs(file_path: str) -> list[str]:
                 # Env var path — resolve only if it's a file reference
                 if not _FILE_EXTENSIONS.search(ref):
                     continue
-                plugin_root = framework.get_plugin_root()
+                plugin_root = environment.get_plugin_root()
                 resolved = Path(ref.replace("${CLAUDE_PLUGIN_ROOT}", str(plugin_root)))
                 if resolved.exists():
                     refs.append(str(resolved.resolve()))

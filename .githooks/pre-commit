@@ -9,15 +9,16 @@
 # not here — commits can batch without paying the force-init cost each time.
 #
 # Propagated files:
-#   systems/framework/__init__.py          — facade with star imports (to systems/framework/)
-#   systems/framework/__main__.py          — CLI entry point (to systems/framework/)
-#   systems/framework/_environment.py      — environment resolution (to systems/framework/)
-#   systems/framework/_metadata.py         — plugin metadata discovery (to systems/framework/)
-#   systems/framework/_deployment.py       — template deployment primitives (to systems/framework/)
-#   systems/framework/_formatting.py       — output formatting (to systems/framework/)
-#   systems/framework/_system_discovery.py — system and skill discovery (to systems/framework/)
-#   systems/framework/_orchestration.py    — install and list orchestration (to systems/framework/)
-#   systems/framework/_errors.py           — shared exception types (to systems/framework/)
+#   tools/environment.py                   — path resolution (canonical at project root, copied to <plugin>/tools/)
+#   tools/errors.py                        — shared exception types  (canonical at project root, copied to <plugin>/tools/)
+#   systems/setup/__init__.py              — facade with star imports (to systems/setup/)
+#   systems/setup/__main__.py              — CLI entry point (to systems/setup/)
+#   systems/setup/_metadata.py             — plugin metadata discovery (to systems/setup/)
+#   systems/setup/_deployment.py           — template deployment primitives (to systems/setup/)
+#   systems/setup/_enabled.py              — per-system opt-in state (to systems/setup/)
+#   systems/setup/_formatting.py           — output formatting (to systems/setup/)
+#   systems/setup/_system_discovery.py     — system and skill discovery (to systems/setup/)
+#   systems/setup/_orchestration.py        — install/enable/disable orchestration (to systems/setup/)
 #   systems/rules/_init.py                 — rules subsystem (to systems/rules/)
 #   systems/conventions/_init.py           — conventions subsystem (to systems/conventions/)
 #   systems/patterns/_init.py              — patterns subsystem (to systems/patterns/)
@@ -62,20 +63,22 @@ done
 
 # --- Propagate shared plugin files ---
 
-# Map of canonical paths to target subdirectories within each plugin
+# Map of canonical paths to target subdirectories within each plugin.
+# Canonical sources for always-on primitives live at project-root tools/;
+# setup package and per-subsystem _init.py files live under plugins/ocd/.
 SHARED_FILES=(
-    "plugins/ocd/systems/framework/__init__.py:systems/framework"
-    "plugins/ocd/systems/framework/__main__.py:systems/framework"
-    "plugins/ocd/systems/framework/_environment.py:systems/framework"
-    "plugins/ocd/systems/framework/_metadata.py:systems/framework"
-    "plugins/ocd/systems/framework/_deployment.py:systems/framework"
-    "plugins/ocd/systems/framework/_formatting.py:systems/framework"
-    "plugins/ocd/systems/framework/_system_discovery.py:systems/framework"
-    "plugins/ocd/systems/framework/_orchestration.py:systems/framework"
-    "plugins/ocd/systems/framework/_errors.py:systems/framework"
+    "tools/environment.py:tools"
+    "tools/errors.py:tools"
+    "plugins/ocd/systems/setup/__init__.py:systems/setup"
+    "plugins/ocd/systems/setup/__main__.py:systems/setup"
+    "plugins/ocd/systems/setup/_metadata.py:systems/setup"
+    "plugins/ocd/systems/setup/_deployment.py:systems/setup"
+    "plugins/ocd/systems/setup/_enabled.py:systems/setup"
+    "plugins/ocd/systems/setup/_formatting.py:systems/setup"
+    "plugins/ocd/systems/setup/_system_discovery.py:systems/setup"
+    "plugins/ocd/systems/setup/_orchestration.py:systems/setup"
     "plugins/ocd/systems/rules/_init.py:systems/rules"
     "plugins/ocd/systems/conventions/_init.py:systems/conventions"
-    "plugins/ocd/systems/patterns/_init.py:systems/patterns"
     "plugins/ocd/systems/log/_init.py:systems/log"
     "plugins/ocd/systems/permissions/__init__.py:systems/permissions"
     "plugins/ocd/systems/permissions/_init.py:systems/permissions"
@@ -96,12 +99,22 @@ for entry in "${SHARED_FILES[@]}"; do
 
     filename="$(basename "$canonical")"
 
-    # Copy to every non-ocd plugin that already has the target subdirectory.
-    # Opt-in model: a plugin only receives a propagated file once its
-    # maintainer has created the subsystem directory that holds it.
+    # Derive the plugin that owns the canonical source, if any. Canonical
+    # sources at project root (no plugins/ prefix) are owned by none — every
+    # plugin receives a vendored copy. Canonical sources under plugins/<name>/
+    # skip <name> so the source is never copied over itself.
+    source_plugin=""
+    if [[ "$canonical" == plugins/* ]]; then
+        source_plugin="${canonical#plugins/}"
+        source_plugin="${source_plugin%%/*}"
+    fi
+
+    # Copy to every eligible plugin that already has the target
+    # subdirectory. Opt-in model: a plugin only receives a propagated file
+    # once its maintainer has created the subsystem directory that holds it.
     for plugin_dir in plugins/*/; do
         plugin_name="$(basename "$plugin_dir")"
-        [ "$plugin_name" = "ocd" ] && continue
+        [ -n "$source_plugin" ] && [ "$plugin_name" = "$source_plugin" ] && continue
 
         dest_dir="${plugin_dir}${target_subdir}"
         [ -d "$dest_dir" ] || continue

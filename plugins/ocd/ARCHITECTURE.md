@@ -125,20 +125,27 @@ Python packages consumed as imports. Each is a subsystem under `systems/`; subst
 
 Consumers within this plugin: the `convention_gate` hook imports `systems.governance`; the navigator MCP server imports `systems.navigator`; plugin orchestration (`run_init` / `run_status`) discovers and calls every `systems/*/_init.py` uniformly for per-subsystem deployment and reporting.
 
-## Plugin Framework
+## Always-On Primitives
 
-`systems/framework/` — generic deployment, formatting, system discovery, and orchestration shared across plugins. Propagated identically to every plugin via pre-commit hook. Internal modules:
+`tools/` — path and error primitives vendored into every plugin. Ships with the plugin and is importable before any system is activated, so hooks fired on the critical path (auto_approval PreToolUse, SessionStart) can resolve project and plugin directories and raise typed errors without depending on lifecycle state. Canonical sources live at project-root `tools/`; each plugin's own `plugins/<name>/tools/` holds propagated copies maintained by the pre-commit hook.
 
 | Module | Responsibility |
 |--------|---------------|
-| `_environment.py` | Plugin path resolution (`get_project_dir`, `get_plugin_root`, `get_plugin_data_dir`) |
+| `environment.py` | Path resolution (`get_project_dir`, `get_plugin_root`, `get_plugin_data_dir`, `get_claude_home`, `get_git_root_for`) |
+| `errors.py` | Shared exception types (`NotReadyError`) |
+
+## Setup Package
+
+`systems/setup/` — install/init/status/enable/disable orchestration plus the `/ocd:setup` skill. Opt-in like every other system; activated via `/ocd:setup`. Propagated identically to every plugin via pre-commit hook so each plugin exposes the same administrative surface. Internal modules:
+
+| Module | Responsibility |
+|--------|---------------|
 | `_metadata.py` | Plugin version, name, marketplace source discovery |
 | `_deployment.py` | Template file deployment primitives (copy, compare, orphan clearing) |
 | `_enabled.py` | Per-system opt-in state (`enabled-systems.json`) — read, toggle, persist |
-| `_errors.py` | Framework exception types (`NotReadyError`, etc.) |
 | `_formatting.py` | Output column alignment and section rendering |
 | `_system_discovery.py` | System and workflow skill discovery |
-| `_orchestration.py` | `run_init` and `run_status` entry points — discover every enabled subsystem and dispatch uniformly |
+| `_orchestration.py` | `run_init`, `run_status`, `run_enable`, `run_disable` entry points — discover every enabled subsystem and dispatch uniformly |
 
 ## Entry Points
 
@@ -180,8 +187,8 @@ plugins/ocd/
 │   ├── install_deps.sh          — install/refresh plugin venv dependencies
 │   ├── auto_approval/           — permission enforcement package (hardcoded + dynamic)
 │   └── convention_gate.py       — surface applicable conventions on Read/Edit/Write
+├── tools/                       — always-on primitives (environment, errors) vendored from project root
 └── systems/                     — every cohesive unit lives here (domain Python + skill + templates colocated)
-    ├── framework/               — plugin framework (orchestration, discovery, deployment, formatting)
     ├── check/                   — discipline-check skill (dormancy today)
     ├── conventions/             — deployable convention templates
     ├── git/                     — git skill (commit, push)
@@ -193,5 +200,5 @@ plugins/ocd/
     ├── refactor/                — mass source transformation skill
     ├── rules/                   — deployable rule templates
     ├── sandbox/                 — isolated sandbox skill (durable + ephemeral substrates)
-    └── setup/                   — plugin infrastructure skill (init, status, enable, disable, guided)
+    └── setup/                   — install/init/status orchestration (and `/ocd:setup` skill)
 ```

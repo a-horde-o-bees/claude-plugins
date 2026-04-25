@@ -16,7 +16,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from ._environment import get_project_dir
+from tools.environment import get_project_dir
 from ._metadata import get_plugin_name
 
 

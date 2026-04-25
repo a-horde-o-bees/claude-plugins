@@ -12,7 +12,9 @@ Interface contract: init() and status() return
 import sqlite3
 from pathlib import Path
 
-import framework
+from systems import setup
+from tools import environment
+from tools.errors import NotReadyError
 
 from . import _db
 
@@ -21,12 +23,12 @@ EXPECTED_TABLES = {"paths", "path_patterns", "path_pattern_sources", "config"}
 
 
 def _plugin_name() -> str:
-    return framework.get_plugin_name(framework.get_plugin_root())
+    return setup.get_plugin_name(environment.get_plugin_root())
 
 
 def _db_path() -> Path:
     return (
-        framework.get_project_dir()
+        environment.get_project_dir()
         / ".claude"
         / _plugin_name()
         / "navigator"
@@ -39,12 +41,12 @@ def _db_rel_path() -> str:
 
 
 def _rules_src_dir() -> Path:
-    return framework.get_plugin_root() / "systems" / "navigator" / "rules"
+    return environment.get_plugin_root() / "systems" / "navigator" / "rules"
 
 
 def _rules_dst_dir() -> Path:
     return (
-        framework.get_project_dir()
+        environment.get_project_dir()
         / ".claude"
         / "rules"
         / _plugin_name()
@@ -85,7 +87,7 @@ def ready(db_path: Path | None = None) -> bool:
 def ensure_ready(db_path: Path | None = None) -> None:
     """Raise NotReadyError when navigator is not operational."""
     if not ready(db_path):
-        raise framework.NotReadyError(
+        raise NotReadyError(
             "Navigator is dormant — run /ocd:setup init to initialize."
         )
 
@@ -146,7 +148,7 @@ def _deploy_rules(force: bool) -> list[dict]:
     actually deployed — see System Dormancy in the project architecture.
     """
     rel = _rules_rel_prefix()
-    results = framework.deploy_files(
+    results = setup.deploy_files(
         src_dir=_rules_src_dir(),
         dst_dir=_rules_dst_dir(),
         pattern="*.md",
@@ -168,7 +170,7 @@ def _rule_status_entries() -> list[dict]:
     for src in sorted(src_dir.glob("*.md")):
         if not src.is_file():
             continue
-        state = framework.compare_deployed(src, dst_dir / src.name)
+        state = setup.compare_deployed(src, dst_dir / src.name)
         entries.append({
             "path": f"{rel}/{src.name}",
             "before": state,
@@ -204,9 +206,9 @@ def init(force: bool = False) -> dict:
 
     files = [{"path": rel_path, "before": before, "after": after}]
 
-    paths_entry = framework.deploy_paths_csv(
-        framework.get_plugin_root(),
-        framework.get_project_dir(),
+    paths_entry = setup.deploy_paths_csv(
+        environment.get_plugin_root(),
+        environment.get_project_dir(),
         "navigator",
         force=force,
     )

@@ -16,7 +16,7 @@ import importlib
 
 from ._enabled import effective_enabled, read_enabled, write_enabled
 from ._system_discovery import _discover_systems, _discover_workflow_skills
-from ._environment import get_claude_home, get_plugin_root
+from tools.environment import get_claude_home, get_plugin_root
 from ._formatting import format_bare_skill, format_section
 from ._metadata import find_marketplace_source, format_header, get_installed_version, get_plugin_name
 

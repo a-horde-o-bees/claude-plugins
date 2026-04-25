@@ -3,14 +3,16 @@
 Two categories of derived files should not be edited directly:
 1. Deployed rules, conventions, and log templates — rectified from
    plugin templates at /checkpoint via the auto-init script
-2. Propagated files — copied from ocd to other plugins by pre-commit hook
+2. Propagated files — copied from canonical sources to other plugins
+   by the pre-commit hook
 
 Edit canonical sources instead:
 - Project-wide rules: plugins/ocd/systems/rules/templates/
 - System-scoped rules: plugins/ocd/systems/<system>/rules/
 - Conventions: plugins/ocd/systems/conventions/templates/
 - Log templates: plugins/ocd/systems/log/templates/<type>/
-- Framework files (propagated to non-ocd plugins): plugins/ocd/systems/framework/
+- Setup package (propagated to non-ocd plugins): plugins/ocd/systems/setup/
+- Always-on primitives (propagated to every plugin's tools/): tools/ at project root
 
 Deployed copies land on disk through the owning system's init() during
 /checkpoint's auto-init step — not at commit time.
@@ -23,7 +25,8 @@ import sys
 GUARDED_PATTERNS = [
     re.compile(r"^\.claude/(rules|conventions)/"),    # deployed from templates
     re.compile(r"^logs/[^/]+/_(?:template|samples-template)\.md$"),  # deployed log templates
-    re.compile(r"^plugins/(?!ocd/)[^/]+/plugin/(__init__|__main__)\.py$"),  # propagated plugin framework
+    re.compile(r"^plugins/(?!ocd/)[^/]+/systems/setup/[^/]+\.py$"),  # propagated setup package
+    re.compile(r"^plugins/[^/]+/tools/(environment|errors)\.py$"),   # propagated always-on primitives
 ]
 
 

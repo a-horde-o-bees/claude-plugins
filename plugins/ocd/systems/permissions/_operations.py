@@ -9,14 +9,15 @@ redundant entries.
 import json
 from pathlib import Path
 
-import framework
+from systems import setup
+from tools import environment
 
 
 def _settings_path(scope: str) -> Path:
     """Resolve settings.json path for a scope."""
     if scope == "project":
-        return framework.get_project_dir() / ".claude" / "settings.json"
-    return framework.get_claude_home() / "settings.json"
+        return environment.get_project_dir() / ".claude" / "settings.json"
+    return environment.get_claude_home() / "settings.json"
 
 
 def _get_both_settings() -> dict:
@@ -28,7 +29,7 @@ def _get_both_settings() -> dict:
     result = {}
     for scope in ("project", "user"):
         path = _settings_path(scope)
-        settings = framework.read_json(path)
+        settings = setup.read_json(path)
         perms = settings.get("permissions", {})
         result[scope] = {
             "path": str(path),
@@ -41,12 +42,12 @@ def _get_both_settings() -> dict:
 
 def _recommended_settings_path() -> Path:
     """Path to the permissions subsystem's recommended-patterns config."""
-    return framework.get_plugin_root() / "systems" / "permissions" / "settings.json"
+    return environment.get_plugin_root() / "systems" / "permissions" / "settings.json"
 
 
 def _get_recommended_patterns() -> set[str]:
     """Flat set of all recommended patterns across categories."""
-    ref = framework.read_json(_recommended_settings_path())
+    ref = setup.read_json(_recommended_settings_path())
     patterns = set()
     for cat in ref.get("categories", {}).values():
         patterns.update(cat.get("patterns", []))
@@ -55,13 +56,13 @@ def _get_recommended_patterns() -> set[str]:
 
 def _get_recommended_by_category() -> dict:
     """Recommended patterns grouped by category with descriptions."""
-    ref = framework.read_json(_recommended_settings_path())
+    ref = setup.read_json(_recommended_settings_path())
     return ref.get("categories", {})
 
 
 def _get_recommended_additional_directories() -> dict:
     """Recommended additionalDirectories block with description and paths."""
-    ref = framework.read_json(_recommended_settings_path())
+    ref = setup.read_json(_recommended_settings_path())
     block = ref.get("additionalDirectories", {})
     return {
         "description": block.get("description", ""),
@@ -132,12 +133,12 @@ def _merge_permissions(scope: str) -> None:
         print("  recommended-permissions.json not found")
         return
 
-    ref = framework.read_json(ref_path)
+    ref = setup.read_json(ref_path)
     categories = ref.get("categories", {})
     rec_dirs_block = _get_recommended_additional_directories()
 
     settings_path = _settings_path(scope)
-    settings = framework.read_json(settings_path)
+    settings = setup.read_json(settings_path)
     existing_patterns = set(settings.get("permissions", {}).get("allow", []))
     existing_dirs = list(settings.get("permissions", {}).get("additionalDirectories", []))
 
@@ -342,7 +343,7 @@ def run_permissions_clean(scope: str) -> None:
         return
 
     path = _settings_path(scope)
-    settings = framework.read_json(path)
+    settings = setup.read_json(path)
     perms = settings.setdefault("permissions", {})
 
     if patterns_to_remove:

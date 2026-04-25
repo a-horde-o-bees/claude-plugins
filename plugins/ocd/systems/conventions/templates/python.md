@@ -54,18 +54,26 @@ Use `pathlib.Path` throughout:
 
 ### Project, Plugin, and Data Directory Resolution
 
-Three absolute paths always resolve through the plugin framework helpers in `plugin/__init__.py` — never through direct environment reads, never from `os.getcwd()`, never through parent walks from arbitrary paths:
+Path resolution always routes through `tools.environment` — never through direct environment reads, never from `os.getcwd()`, never through parent walks from arbitrary paths. The module is vendored into every plugin at `<plugin>/tools/environment.py` (canonical at project-root `tools/environment.py`) so it imports identically from any location:
 
-- `plugin.get_project_dir()` — resolves `CLAUDE_PROJECT_DIR`; falls back to `git rev-parse --show-toplevel` when unset, which is deterministic within any checkout or worktree of the same repo; raises when neither the env var is set nor git root is discoverable
-- `plugin.get_plugin_root()` — resolves `CLAUDE_PLUGIN_ROOT`; falls back to a deterministic walk from `plugin/__init__.py`'s own `__file__` position, which is intrinsic to the code layout
-- `plugin.get_plugin_data_dir()` — resolves `CLAUDE_PLUGIN_DATA`; raises when unset because per-plugin persistent storage is Claude Code–managed and inferable from nothing
+```python
+from tools import environment
+project_dir = environment.get_project_dir()
+plugin_root = environment.get_plugin_root()
+```
 
-All three return absolute canonical paths (`Path.resolve()`). Absolute is required for disk I/O — callers that need display-friendly paths compute `relative_to()` at the point of use. The project's relative-path convention is preserved: database entries, tool output, and embedded command paths remain project-relative; the absolute root is local plumbing for reading files.
+- `get_project_dir()` — resolves `CLAUDE_PROJECT_DIR`; falls back to `git rev-parse --show-toplevel` when unset, which is deterministic within any checkout or worktree of the same repo (correct for linked worktrees where `.git` is a file pointer rather than a directory); raises when neither the env var is set nor git root is discoverable
+- `get_plugin_root()` — resolves `CLAUDE_PLUGIN_ROOT`; falls back to a deterministic walk that anchors on the nearest ancestor containing `.claude-plugin/plugin.json`, which is intrinsic to the plugin layout
+- `get_plugin_data_dir()` — resolves `CLAUDE_PLUGIN_DATA`; raises when unset because per-plugin persistent storage is Claude Code–managed and inferable from nothing
+- `get_claude_home()` — resolves `~/.claude` (override via `CLAUDE_HOME` for testing)
+- `get_git_root_for(path)` — resolves the git root containing an arbitrary input path via `git -C <path> rev-parse --show-toplevel`; use when the caller has a concrete input path whose owning repo it needs rather than the ambient project directory
+
+All return absolute canonical paths (`Path.resolve()`). Absolute is required for disk I/O — callers that need display-friendly paths compute `relative_to()` at the point of use. The project's relative-path convention is preserved: database entries, tool output, and embedded command paths remain project-relative; the absolute root is local plumbing for reading files.
 
 Do not:
 
 - Fall back to `os.getcwd()` when `CLAUDE_PROJECT_DIR` is unset — silent cwd fallback corrupts state when run from the wrong directory
-- Walk `path.parents[N]` from arbitrary paths to derive project or plugin root — fragile and breaks when layout changes
+- Walk `path.parents[N]` from arbitrary paths to derive project or plugin root — fragile and breaks when layout changes; use `get_git_root_for(path)` when the input-path semantic matters
 - Accept `project_dir` or `plugin_root` as a function argument when the caller would only be re-resolving it — resolve shared paths internally via the helpers
 
 One documented exception: MCP server subprocesses launched by Claude Code bootstrap `CLAUDE_PROJECT_DIR` from cwd at import time via `systems/navigator/_server_helpers.py`, because Claude Code guarantees the MCP server cwd matches the project directory but does not propagate the env var automatically and does not expand variable references in `.mcp.json` env blocks. See `mcp-server.md` *MCP Subprocess Environment Bootstrap*. This is the only place cwd is permitted as a project-directory source.
@@ -114,7 +122,7 @@ Both functions return `{"files": [...], "extra": [...]}`:
 - `init(force=False)` — deploy infrastructure; `force=True` rebuilds from scratch
 - `status()` — report infrastructure state
 
-Entry points take only their own domain-specific arguments. Project and plugin paths are resolved internally via the plugin framework helpers (`plugin.get_project_dir()`, `plugin.get_plugin_root()`, `plugin.get_plugin_data_dir()`) — see *Project, Plugin, and Data Directory Resolution*. Never accept those paths as parameters.
+Entry points take only their own domain-specific arguments. Project and plugin paths are resolved internally via `tools.environment` (`get_project_dir()`, `get_plugin_root()`, `get_plugin_data_dir()`) — see *Project, Plugin, and Data Directory Resolution*. Never accept those paths as parameters.
 
 `files` entries: `{"path": str, "before": str, "after": str}` — relative deployed path with state transitions.
 
@@ -200,7 +208,7 @@ Use `_{purpose}.py` (internal) when functions exist to support the package and h
 
 ### Import Pattern
 
-Skill packages use relative imports. Each plugin's `run.py` launcher establishes proper `__package__` context via `runpy.run_module()`. Plugin infrastructure (`plugin.py`) loads skill `_init.py` modules via `importlib.import_module()` with full package path.
+Skill packages use relative imports. Each plugin's `run.py` launcher establishes proper `__package__` context via `runpy.run_module()`. The setup orchestration (`systems/setup/`) loads each subsystem's `_init.py` via `importlib.import_module()` with full package path.
 
 Within-package:
 
@@ -210,10 +218,12 @@ from ._db import get_connection
 from . import *  # __main__.py importing facade
 ```
 
-Cross-package (e.g., skill `_init.py` referencing plugin framework):
+Cross-package — always-on primitives via the vendored `tools/` package, install/init/status orchestration via `systems.setup`:
 
 ```python
-import plugin
+from tools import environment        # path resolution (always-on, no setup required)
+from tools.errors import NotReadyError
+from systems import setup            # deploy_files, compare_deployed, get_plugin_name, ...
 ```
 
 - Resolve import paths through package structure, not `sys.path` manipulation
