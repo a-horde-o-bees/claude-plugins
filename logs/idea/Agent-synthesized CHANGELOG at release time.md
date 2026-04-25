@@ -56,3 +56,26 @@ This idea folds in the reasoning from the deleted `Release cutting skill or proc
 ## When to build
 
 Defer until v0.2.0 approaches. Current priority surfaces because the `[Unreleased]` CHANGELOG gap flagged this session has no clean resolution without this — manual CHANGELOG maintenance between releases is the overhead we're trying to eliminate, so retroactive CHANGELOG authoring at v0.2.0 time needs this helper in place.
+
+## Operational state at handoff (2026-04-25)
+
+Status of the v0.2.0 release approach when this idea was last touched:
+
+- **Main:** synced and clean at `392970d` (last merge: PR #3 branch-aware checkpoint).
+- **Tests:** `bin/project-run tests` 671 passing.
+- **CI:** green on tip.
+- **Tags:** only `v0.1.0` exists; next release is `v0.2.0` (minor — `z` increments per commit on main, so a new tag is always at least a `y` bump).
+- **Plugin cache:** at `0.1.24`.
+- **Active sandboxes** (per `ocd-run sandbox worktree-list`):
+    - `centralize-tools` — detached worktree leftover; PR #1 already merged. **Cleanup**: `ocd-run sandbox worktree-remove centralize-tools` (or via /ocd:sandbox skill).
+    - `log-research` — at main tip, dirty, pushed. Decide whether to land in v0.2.0.
+    - `pdf` — 1 commit ahead of main, dirty, **not pushed**. The FontConfiguration / @font-face / list-marker work captured in `logs/decision/pdf.md` is in this branch. Decide before release: land or keep parked.
+    - `purpose-map` — at main tip, dirty, pushed. Decide.
+- **CHANGELOG `[Unreleased]`** is a pointer to this verb. For v0.2.0 cut without this verb built, the CHANGELOG entry is hand-written for the v0.1.0 → v0.2.0 span.
+
+### Two paths from here
+
+- **Build the verb, exercise it on v0.2.0.** First real run validates the synthesis prompt against ~40 commits. Output IS the v0.2.0 CHANGELOG entry. End-to-end "build → use → ship" in one motion.
+- **Hand-write a v0.2.0 CHANGELOG entry now**, defer the verb. Lower up-front lift, but 40 commits is a meaningful manual exercise — and the deconfliction property the verb is designed for is exactly what you'd be doing by hand.
+
+The first path is recommended — the manual exercise IS the verb's job, and doing it once by hand without the helper means doing it again next release without it. Build once.
