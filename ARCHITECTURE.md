@@ -83,7 +83,6 @@ Templates live per-system in plugin source — project-wide rules in `plugins/<p
 |--------|---------|
 | `scripts/auto_init.py` | Auto-init orchestrator — rectifies deployed state against current templates, called by `/checkpoint` |
 | `scripts/release.sh` | Release-cut automation — bumps `y`, resets `z = 0`, tags main, pushes |
-| `scripts/test.sh` | Thin delegator to `bin/project-run tests` |
 | `scripts/validate-manifests.py` | Validate marketplace + plugin manifests; invoked by CI |
 
 These are dev-only — maintainers' tooling, not shipped to plugin consumers.
@@ -92,7 +91,7 @@ These are dev-only — maintainers' tooling, not shipped to plugin consumers.
 
 Project-level tests in `tests/`, per-plugin tests isolated by `tests/plugins/<plugin>/pyproject.toml` (`[tool.pytest.ini_options]`) with independent `pythonpath` settings. Each plugin's tests run in isolation matching production import paths. Tests are dev-only — maintainers' infrastructure, not shipped to plugin consumers.
 
-Test orchestration lives at project root under `tools/testing/` and is invoked via `bin/project-run tests` (with `scripts/test.sh` as a thin delegator). The runner discovers the project suite plus each `tests/plugins/<name>/` suite, resolves each suite's venv (project `.venv/` for project tests, per-plugin data-dir venvs for plugin tests), dispatches pytest per suite, and compiles a unified report. Tests at an arbitrary ref run via `bin/project-run sandbox-tests --ref <ref>`, which creates a detached sibling worktree, invokes the runner inside it, and removes the worktree on return.
+Test orchestration lives at project root under `tools/testing/` and is invoked via `bin/project-run tests`. The runner discovers the project suite plus each `tests/plugins/<name>/` suite, resolves each suite's venv (project `.venv/` for project tests, per-plugin data-dir venvs for plugin tests), dispatches pytest per suite, and compiles a unified report. Unknown flags forward verbatim to pytest, so `bin/project-run tests --plugin ocd --run-agent` flows the agent flag through without a `--` separator. Tests at an arbitrary ref run via `bin/project-run sandbox-tests --ref <ref>`, which creates a detached sibling worktree, invokes the runner inside it, and removes the worktree on return.
 
 ### Project-level tooling
 

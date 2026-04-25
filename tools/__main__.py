@@ -41,17 +41,24 @@ def main() -> int:
         help="Configure project-local dev settings (git hookspath, etc.).",
     )
 
-    args = parser.parse_args()
+    args, pytest_args = parser.parse_known_args()
 
     if args.verb == "tests":
-        return tests_run(plugin_filter=args.plugin, project_only=args.project)
+        return tests_run(
+            plugin_filter=args.plugin,
+            project_only=args.project,
+            pytest_args=pytest_args,
+        )
     if args.verb == "sandbox-tests":
         return sandbox_tests_run(
             ref=args.ref,
             plugin_filter=args.plugin,
             project_only=args.project,
+            pytest_args=pytest_args,
         )
     if args.verb == "setup":
+        if pytest_args:
+            parser.error(f"unrecognized arguments: {' '.join(pytest_args)}")
         return setup_project()
     return 1
 

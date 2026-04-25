@@ -30,7 +30,7 @@ def _bind_plugin_data_env(monkeypatch):
 def pytest_addoption(parser):
     parser.addoption(
         "--run-agent", action="store_true", default=False,
-        help="Run agent tests (spawns claude CLI, makes real API calls)",
+        help="Run only agent tests (spawns claude CLI, makes real API calls). Without this flag, agent tests are skipped and the deterministic suite runs.",
     )
 
 
@@ -39,7 +39,12 @@ def pytest_configure(config):
 
 
 def pytest_collection_modifyitems(config, items):
-    if not config.getoption("--run-agent"):
+    if config.getoption("--run-agent"):
+        skip = pytest.mark.skip(reason="--run-agent runs only agent-marked tests")
+        for item in items:
+            if "agent" not in item.keywords:
+                item.add_marker(skip)
+    else:
         skip = pytest.mark.skip(reason="needs --run-agent flag (makes real API calls)")
         for item in items:
             if "agent" in item.keywords:

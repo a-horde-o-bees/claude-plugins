@@ -34,11 +34,13 @@ class SuiteResult:
 def tests_run(
     plugin_filter: str | None = None,
     project_only: bool = False,
+    pytest_args: list[str] | None = None,
 ) -> int:
     """Run discovered test suites in the current working directory.
 
     Returns the highest pytest exit code across suites — 0 when every
-    suite passes, non-zero when any suite fails or errors.
+    suite passes, non-zero when any suite fails or errors. `pytest_args`
+    is forwarded verbatim to each suite's pytest invocation.
     """
     cwd = Path.cwd()
     suites = _discovery.discover_suites(cwd, plugin_filter, project_only)
@@ -46,7 +48,7 @@ def tests_run(
         _print_no_suites(plugin_filter, project_only)
         return 0
 
-    results = [_run_suite(suite, cwd) for suite in suites]
+    results = [_run_suite(suite, cwd, pytest_args) for suite in suites]
     _print_report(results)
     return max(r.exit_code for r in results)
 
@@ -55,7 +57,9 @@ def test_runner_argparse(parser: argparse.ArgumentParser) -> None:
     """Configure `tests` subcommand argparse in-place.
 
     Called by the top-level dispatcher to wire up shared test-invocation
-    flags without duplicating the argument schema.
+    flags without duplicating the argument schema. Unknown flags flow up
+    through `parser.parse_known_args()` at the top level and are
+    forwarded verbatim to pytest — no `--` separator required.
     """
     group = parser.add_mutually_exclusive_group()
     group.add_argument(
@@ -69,11 +73,20 @@ def test_runner_argparse(parser: argparse.ArgumentParser) -> None:
     )
 
 
-def _run_suite(suite: _discovery.Suite, cwd: Path) -> SuiteResult:
+def _run_suite(
+    suite: _discovery.Suite,
+    cwd: Path,
+    pytest_args: list[str] | None = None,
+) -> SuiteResult:
     print(f"\n=== {suite.name} ===", flush=True)
     args = [str(suite.venv), "-m", "pytest", *[str(p) for p in suite.rel_paths], "-v"]
     if suite.pytest_config is not None:
         args.extend(["-c", str(suite.pytest_config)])
+    if pytest_args:
+        # Strip leading `--` separator if present — argparse REMAINDER
+        # captures it verbatim and pytest treats it as end-of-options.
+        forwarded = pytest_args[1:] if pytest_args[0] == "--" else pytest_args
+        args.extend(forwarded)
 
     result = subprocess.run(
         args,

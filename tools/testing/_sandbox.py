@@ -26,11 +26,13 @@ def sandbox_tests_run(
     ref: str = "main",
     plugin_filter: str | None = None,
     project_only: bool = False,
+    pytest_args: list[str] | None = None,
 ) -> int:
     """Run the tests CLI inside a detached sibling worktree at ref.
 
     Returns the tests CLI's exit code (0 pass, non-zero fail). Worktree
-    is always removed before return.
+    is always removed before return. `pytest_args` is forwarded verbatim
+    to the inner runner.
     """
     project_root = environment.get_project_dir()
     ref_sha = _resolve_ref(project_root, ref)
@@ -45,7 +47,7 @@ def sandbox_tests_run(
 
     _create_worktree(project_root, worktree, ref_sha)
     try:
-        return _invoke_tests(project_root, worktree, plugin_filter, project_only)
+        return _invoke_tests(project_root, worktree, plugin_filter, project_only, pytest_args)
     finally:
         _remove_worktree(project_root, worktree)
 
@@ -108,6 +110,7 @@ def _invoke_tests(
     worktree: Path,
     plugin_filter: str | None,
     project_only: bool,
+    pytest_args: list[str] | None = None,
 ) -> int:
     args = [
         str(project_root / "bin" / "project-run"),
@@ -117,6 +120,11 @@ def _invoke_tests(
         args.extend(["--plugin", plugin_filter])
     elif project_only:
         args.append("--project")
+    if pytest_args:
+        forwarded = pytest_args[1:] if pytest_args[0] == "--" else pytest_args
+        if forwarded:
+            args.append("--")
+            args.extend(forwarded)
 
     # Point the tests runner at the parent project's venv. Inside the
     # worktree, `git rev-parse --show-toplevel` resolves to the worktree

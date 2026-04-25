@@ -37,4 +37,4 @@ jobs:
           bash plugins/ocd/hooks/install_deps.sh
 
       - name: Run tests
-        run: bash scripts/test.sh
+        run: bin/project-run tests

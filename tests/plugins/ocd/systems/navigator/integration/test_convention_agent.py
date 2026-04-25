@@ -10,7 +10,7 @@ Tests verify that:
 3. Excludes prevent wrong conventions from surfacing
 4. Token cost doesn't scale with file count
 
-Requires --run-agent flag: `bash scripts/test.sh --run-agent`
+Requires --run-agent flag: `bin/project-run tests --plugin ocd --run-agent`
 """
 
 from __future__ import annotations

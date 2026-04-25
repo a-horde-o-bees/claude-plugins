@@ -8,8 +8,9 @@ side effects.
 
 Marked `pytest.mark.agent` so they only run with `--run-agent`. They
 require the user's installed plugin cache to reflect the branch under
-test — run `/checkpoint` before invoking with `--run-agent` so the
-cached SKILL.md / component files match the working tree.
+test — run `/checkpoint` before invoking so the cached SKILL.md /
+component files match the working tree, then:
+`bin/project-run tests --plugin ocd --run-agent`.
 """
 
 import shutil

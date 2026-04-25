@@ -69,7 +69,7 @@ Use `SessionStart` hooks for Python packages (isolated in plugin venv). Use runt
 
 ## Testing
 
-- All tests: `bin/project-run tests` (or `bash scripts/test.sh`, which delegates to it). Scope flags: `--plugin <name>` for a single plugin's suite, `--project` for project-level tests only.
+- All tests: `bin/project-run tests`. Scope flags: `--plugin <name>` for a single plugin's suite, `--project` for project-level tests only. Unknown flags forward verbatim to pytest, e.g. `bin/project-run tests --plugin ocd --run-agent -v` (a leading `--` separator is also accepted).
 - Tests at a clean ref in a detached worktree: `bin/project-run sandbox-tests --ref <ref>`. Worktree is always removed before return.
 - Project tests in `tests/`, per-plugin tests isolated by `pythonpath`.
 - Plugin configs: `tests/plugins/<plugin>/pyproject.toml` under `[tool.pytest.ini_options]`; project config: root `pyproject.toml`.
