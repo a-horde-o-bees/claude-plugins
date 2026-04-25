@@ -44,7 +44,7 @@ Bundle the development checkpoint cycle for the current branch — commit, recti
     2. Update plugin — bash: `claude plugins update ocd@a-horde-o-bees`
     3. CI gate (async):
 
-> Dispatch a background agent to watch GitHub Actions and push a desktop notification when CI completes. Foreground checkpoint returns immediately after dispatch; the user learns the outcome via notification instead of the agent stalling on `gh run watch`. Runs already completed at dispatch time are reported synchronously so the foreground still sees stable-state results.
+> Dispatch a background agent to watch GitHub Actions and compose a notification message describing the outcome. Foreground checkpoint returns immediately after dispatch; the session receiving the agent's task-completion result fires `PushNotification` with the returned `notify-message` field, since `PushNotification` is foreground-session-scoped and not exposed to spawned agents. Runs already completed at dispatch time are reported synchronously so the foreground still sees stable-state results.
 
         1. {sha} = bash: `git rev-parse origin/main`
         2. bash: `gh run list --branch main --limit 5 --json databaseId,headSha,conclusion,status,workflowName,url`
@@ -67,10 +67,10 @@ Bundle the development checkpoint cycle for the current branch — commit, recti
     - CI status for {sha}:
         - **Passed** (all runs were already complete at dispatch time) — list the workflows that ran successfully
         - **Failed** (some run was already complete + failed at dispatch time) — flag prominently with workflow name + run URL; recommend investigating before further work
-        - **Dispatched** (runs were still in progress at dispatch time) — report the watched run IDs; the background agent will push a desktop notification when CI completes. No foreground wait.
+        - **Dispatched** (runs were still in progress at dispatch time) — report the watched run IDs; the agent's task-completion result carries a `notify-message` for the receiving session to deliver via `PushNotification`. No foreground wait.
         - **No runs scheduled** — note that no workflows were triggered (or GitHub hadn't scheduled yet; manual recheck may be needed)
     - If commits were pushed AND CI passed (synchronous): recommend session restart (`/exit` then `claude --continue`)
-    - If CI was dispatched (async): recommend the restart anyway — the user can restart now and will receive the CI notification independent of session state. If the notification reports a failure after restart, investigate then
+    - If CI was dispatched (async): recommend waiting for the task-completion result before restart — the receiving session delivers the push, so a restart before completion drops the notification. Manual `gh run list` recheck is the fallback if restart can't wait
     - If CI failed (synchronous): restart recommendation is still valid but investigating the CI failure comes first
 - Else: note that marketplace refresh, plugin update, CI gate, and restart recommendation are main-only and were skipped on this branch
 - If nothing was pushed: checkpoint complete, no restart needed

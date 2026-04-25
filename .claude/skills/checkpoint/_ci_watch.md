@@ -1,6 +1,6 @@
 # CI Watch (background)
 
-Wait for GitHub Actions CI runs to complete for a given commit SHA, then push a notification summarizing the outcome. Spawned asynchronously by /checkpoint so the foreground doesn't block on CI (typically 30–90s per run, sometimes longer). The parent checkpoint returns immediately after dispatch; this agent runs independently and the user learns the outcome via desktop notification.
+Wait for GitHub Actions CI runs to complete for a given commit SHA, then return a composed notification message to the caller. Spawned asynchronously by /checkpoint so the foreground doesn't block on CI (typically 30–90s per run, sometimes longer). The parent checkpoint returns immediately after dispatch; this agent runs independently and the session receiving the task-completion result fires `PushNotification` with the returned message. Composition is the agent's job because it's deterministic and runs in any environment; delivery is the caller's job because `PushNotification` is foreground-session-scoped and not exposed to spawned agents.
 
 ### Variables
 
@@ -23,8 +23,8 @@ Wait for GitHub Actions CI runs to complete for a given commit SHA, then push a 
     - `pass` → `CI green on {short-sha} — {detail} workflow(s) passed`
     - `fail` → `CI FAILED on {short-sha}: {workflow-name} → {run-url}`
     - `incomplete` → `CI incomplete on {short-sha}: {detail}`
-7. PushNotification: status=`proactive`, message={message}
-8. Return to caller:
+7. Return to caller:
     - verdict: {verdict}
     - detail: {detail}
+    - notify-message: {message} — caller fires `PushNotification` with this string
     - runs: full JSON of the matched runs
