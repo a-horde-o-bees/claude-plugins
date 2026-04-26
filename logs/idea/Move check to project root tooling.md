@@ -1,6 +1,8 @@
 # Move check to project root tooling
 
-`plugins/ocd/systems/check/` runs the System Dormancy conformance check against plugin systems. Its domain — verifying every plugin's systems follow the dormancy contract — is cross-plugin and inherently project-level, not something a consumer of the ocd plugin would care about or toggle. It currently ships bundled with ocd because the implementation depends on the plugin framework (`framework.NotReadyError`, `framework.get_plugin_root`, `framework.get_plugin_name`).
+`plugins/ocd/systems/check/` runs the System Dormancy conformance check against plugin systems. Its domain — verifying every plugin's systems follow the dormancy contract, plus markdown and python discipline checks across the tree — is cross-plugin and inherently project-level, not something a consumer of the ocd plugin would care about or toggle per-system. It currently ships bundled with ocd because the implementation depends on the plugin framework (`framework.NotReadyError`, `framework.get_plugin_root`, `framework.get_plugin_name`).
+
+Markdown and python check dimensions added since this idea was first written further reinforce the project-level positioning — neither is plugin-specific; both apply uniformly across the whole working tree.
 
 ## Proposed home
 
@@ -28,3 +30,21 @@ The opt-in work split explicitly deferred this. Check's current location does no
 
 - Opt-in feature committed and stable (so check's location does not interact with opt-in semantics)
 - Decision on whether `bin/project-run check` should iterate every plugin by default or require explicit `--plugin`
+
+## Naming
+
+Once `check` is project-level rather than plugin-system, consider renaming to `lint` if the bulk of the dimensions (markdown, python, future shellcheck/ruff/PyMarkdownLnt) are linting-style checks rather than conformance checks. Dormancy is the only dimension that strictly verifies a contract; the rest are linters in the conventional sense. Either pick the name that matches the dominant dimension type at promotion time, or land both verbs and let invocation patterns disambiguate.
+
+## Run scheduling
+
+`/ocd:check` (or `/ocd:lint`) belongs run with tests — they share the same "verify before merging" lifecycle. Concrete integration points:
+
+- `bin/project-run tests` runs the lint pass alongside (or before) pytest, so contributors who run tests automatically get lint feedback. Failure of either gates the run.
+- `.github/workflows/ci.yml` calls the same project-run target — single source of truth for what "checked" means.
+- Pre-commit hook is optional follow-on: once the project-level invocation exists and is fast enough, wire it into `.githooks/pre-commit` for staged-file scoped runs.
+
+## Adoption discipline
+
+When a new dimension turns on (or an existing dimension's scope expands), rectify the existing tree to conform before the gate fires — do not introduce a transitional allowlist. Allowlists for genuinely-blessed exceptions (anchor files for the parent-walking rule, fixture inputs for the markdown rule) stay; allowlists for "we'll fix this later" do not. The discipline only works when contributors trust that a green run means clean tree, not "clean tree minus the historical backlog."
+
+This means: dimension turn-on is a coordinated rectification PR — fix every existing violation in the same change that wires the dimension into `bin/project-run tests` and CI. The size of that PR is the size of the existing violation count; tolerable if rectification is mechanical (autofix) and reviewable if not.

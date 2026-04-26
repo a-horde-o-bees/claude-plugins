@@ -161,29 +161,40 @@ class TestPreCommitPropagation:
 
 class TestPreCommitVersionBump:
     """Test .githooks/pre-commit auto-bumps plugin.json version on commits
-    that touch the plugin tree, and correctly skips the bump when only
-    plugin.json itself is staged (the release-commit escape hatch).
+    to main that touch the plugin tree, and correctly skips the bump when
+    only plugin.json itself is staged (the release-commit escape hatch).
+
+    Runs in a `pristine_repo` (fresh `git init -b main`) rather than the
+    parent-project `worktree` fixture — the bump path is gated on
+    `branch == main`, and only a standalone repo can satisfy that gate
+    (the parent's main worktree owns the only `main` ref).
     """
 
-    PLUGIN_JSON_REL = "plugins/ocd/.claude-plugin/plugin.json"
+    PLUGIN_JSON_REL = "plugins/test-plugin/.claude-plugin/plugin.json"
+    STARTING_VERSION = "0.0.1"
 
     @pytest.fixture(autouse=True)
-    def setup(self, worktree):
-        self.root = worktree
-        self.plugin_json = worktree / self.PLUGIN_JSON_REL
-        # Snapshot baseline so every test starts from the same working-tree
-        # state regardless of prior-test leakage.
-        self._baseline = self.plugin_json.read_bytes()
-        yield
-        # Restore working tree and index to baseline
-        self.plugin_json.write_bytes(self._baseline)
+    def setup(self, pristine_repo: Path):
+        self.root = pristine_repo
+        self.plugin_json = pristine_repo / self.PLUGIN_JSON_REL
+        self.plugin_json.parent.mkdir(parents=True)
+        self.plugin_json.write_text(
+            json.dumps(
+                {"name": "test-plugin", "version": self.STARTING_VERSION},
+                indent=2,
+            ) + "\n"
+        )
+        # Initial commit so HEAD exists — the partial-commit test drives
+        # `git commit -m msg <path>` which requires HEAD to compare
+        # against. --no-verify because the project hook isn't installed
+        # in this fresh repo (and we don't want it firing on the seed).
         subprocess.run(
-            ["git", "reset", "HEAD", "--", self.PLUGIN_JSON_REL],
-            cwd=self.root, capture_output=True,
+            ["git", "add", "."],
+            cwd=self.root, capture_output=True, check=True,
         )
         subprocess.run(
-            ["git", "checkout", "--", self.PLUGIN_JSON_REL],
-            cwd=self.root, capture_output=True,
+            ["git", "commit", "-m", "initial", "--no-verify"],
+            cwd=self.root, capture_output=True, check=True,
         )
 
     def _run_hook(self) -> subprocess.CompletedProcess[str]:
@@ -205,31 +216,23 @@ class TestPreCommitVersionBump:
         triggers the auto-bump. Hook reads plugin.json, increments z,
         writes back, stages plugin.json."""
         starting = self._version()
-        scratch = self.root / "plugins" / "ocd" / ".pre_commit_test_scratch.md"
+        scratch = self.root / "plugins" / "test-plugin" / ".pre_commit_test_scratch.md"
         scratch.write_text("test content\n")
-        try:
-            subprocess.run(
-                ["git", "add", str(scratch)],
-                cwd=self.root, capture_output=True, check=True,
-            )
-            result = self._run_hook()
-            assert result.returncode == 0, result.stderr
-            assert self._version() == self._bump_z(starting), \
-                f"Expected version {self._bump_z(starting)}, got {self._version()}"
-        finally:
-            subprocess.run(
-                ["git", "reset", "HEAD", "--", str(scratch)],
-                cwd=self.root, capture_output=True,
-            )
-            if scratch.exists():
-                scratch.unlink()
+        subprocess.run(
+            ["git", "add", str(scratch)],
+            cwd=self.root, capture_output=True, check=True,
+        )
+        result = self._run_hook()
+        assert result.returncode == 0, result.stderr
+        assert self._version() == self._bump_z(starting), \
+            f"Expected version {self._bump_z(starting)}, got {self._version()}"
 
     def test_skips_bump_when_only_plugin_json_staged(self):
         """Release-commit escape hatch: if plugin.json is the only plugin-tree
         file staged, hook does NOT re-bump z. The operator's manual edit
         (bump y, reset z=0 at release cut) survives unchanged."""
         manual_version = "9.9.9"
-        data = json.loads(self._baseline)
+        data = json.loads(self.plugin_json.read_text())
         data["version"] = manual_version
         self.plugin_json.write_text(json.dumps(data, indent=2) + "\n")
         subprocess.run(
@@ -242,7 +245,7 @@ class TestPreCommitVersionBump:
         assert self._version() == manual_version, \
             "Hook must not bump z when only plugin.json is staged"
 
-    def test_bump_under_partial_commit_leaves_clean_status(self, project_root):
+    def test_bump_under_partial_commit_leaves_clean_status(self, project_root: Path):
         """Partial-commit form (`git commit -m msg <file>`) must leave the
         main index in sync with HEAD after the auto-bump.
 
@@ -259,69 +262,41 @@ class TestPreCommitVersionBump:
         The hook must explicitly sync the bump into the main index too,
         regardless of whether GIT_INDEX_FILE points at a temp.
         """
-        # The session-scoped `worktree` fixture creates the worktree at
-        # HEAD --detach, so the worktree's .githooks/* reflects the
-        # committed hooks, not whatever is currently in the project's
-        # working tree. Sync the working-tree hooks into the worktree
-        # before exercising — otherwise this test validates HEAD's
-        # hooks (potentially missing the fix-under-test) rather than
-        # the current project hooks. Sync both pre-commit and
-        # post-commit; the partial-commit MM fix lives in post-commit.
-        for hook_name in ("pre-commit", "post-commit"):
-            src = project_root / ".githooks" / hook_name
-            if not src.is_file():
-                continue
-            dst = self.root / ".githooks" / hook_name
-            shutil.copy2(src, dst)
+        # Install project hooks via core.hooksPath so `git commit` fires
+        # the working-tree pre-commit + post-commit (the MM-state fix
+        # lives in post-commit). pristine_repo is a fresh `git init`, so
+        # nothing fires by default.
+        subprocess.run(
+            ["git", "-C", str(self.root), "config", "core.hooksPath",
+             str(project_root / ".githooks")],
+            capture_output=True, check=True,
+        )
 
-        scratch = self.root / "plugins" / "ocd" / ".pre_commit_test_scratch.md"
+        scratch = self.root / "plugins" / "test-plugin" / ".pre_commit_test_scratch.md"
         scratch.write_text("test content\n")
         scratch_rel = str(scratch.relative_to(self.root))
-        try:
-            # Stage the scratch first so the partial-commit form below has
-            # something to commit. Partial-commit (`git commit -m msg
-            # <path>`) requires the path to be tracked or already staged
-            # — otherwise git rejects it as "did not match any file(s)
-            # known to git." Staging via `git add` puts the file in the
-            # main index, where partial-commit then snapshots into a temp
-            # index for the hook's duration.
-            subprocess.run(
-                ["git", "add", scratch_rel],
-                cwd=self.root, capture_output=True, check=True,
-            )
-            # Inline identity — CI runners have no git user.email/name
-            # configured, and the existing tests bypass this by running
-            # the hook directly rather than via `git commit`. This test
-            # must drive a real commit, so configure identity per-call.
-            result = subprocess.run(
-                [
-                    "git",
-                    "-c", "user.email=test@example.com",
-                    "-c", "user.name=Partial Commit Test",
-                    "commit", "-m", "partial-commit test", scratch_rel,
-                ],
-                cwd=self.root, capture_output=True, text=True,
-            )
-            assert result.returncode == 0, (
-                f"partial commit failed: stdout={result.stdout!r} "
-                f"stderr={result.stderr!r}"
-            )
-            status = subprocess.run(
-                ["git", "status", "--short", "--", self.PLUGIN_JSON_REL],
-                cwd=self.root, capture_output=True, text=True, check=True,
-            )
-            assert status.stdout.strip() == "", (
-                "plugin.json should be clean after partial-commit auto-bump, "
-                f"got status: {status.stdout!r}"
-            )
-        finally:
-            subprocess.run(
-                ["git", "reset", "--soft", "HEAD~1"],
-                cwd=self.root, capture_output=True,
-            )
-            subprocess.run(
-                ["git", "reset", "HEAD", "--", scratch_rel],
-                cwd=self.root, capture_output=True,
-            )
-            if scratch.exists():
-                scratch.unlink()
+        # Partial-commit (`git commit -m msg <path>`) requires the path
+        # to be tracked or already staged — otherwise git rejects it as
+        # "did not match any file(s) known to git." Staging via `git add`
+        # puts the file in the main index, where partial-commit then
+        # snapshots into a temp index for the hook's duration.
+        subprocess.run(
+            ["git", "add", scratch_rel],
+            cwd=self.root, capture_output=True, check=True,
+        )
+        result = subprocess.run(
+            ["git", "commit", "-m", "partial-commit test", scratch_rel],
+            cwd=self.root, capture_output=True, text=True,
+        )
+        assert result.returncode == 0, (
+            f"partial commit failed: stdout={result.stdout!r} "
+            f"stderr={result.stderr!r}"
+        )
+        status = subprocess.run(
+            ["git", "status", "--short", "--", self.PLUGIN_JSON_REL],
+            cwd=self.root, capture_output=True, text=True, check=True,
+        )
+        assert status.stdout.strip() == "", (
+            "plugin.json should be clean after partial-commit auto-bump, "
+            f"got status: {status.stdout!r}"
+        )

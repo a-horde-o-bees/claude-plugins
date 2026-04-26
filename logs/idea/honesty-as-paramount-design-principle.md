@@ -18,6 +18,7 @@ Refine the design principles to elevate honesty as an explicit top-tier principl
 - **When applying a framework or taxonomy to existing artifacts:** audit every artifact against the framework, not just new ones. Artifacts produced before the framework existed are the highest-risk category.
 - **Before claiming parity between two things** (e.g., "my X is equivalent to their Y," "these patterns transfer"): name the specific bridge — what property is shared, what property differs — rather than asserting equivalence implicitly.
 - **When summarizing findings from research:** distinguish what was directly observed from what was inferred, and from what wasn't investigated at all. Absence of evidence is not evidence of absence.
+- **Before stating ranking, market-position, or population claims about external tools, libraries, ecosystems, or registries:** verify with a fetch or caveat the claim as memory ("from training data, may be stale"). Confident assertions about install bases, "most-pulled X," or "de-facto standard Y" must be backed by an authoritative source or marked as uncertain — never asserted from training data alone.
 
 ## Relationship to existing principles
 
@@ -30,6 +31,8 @@ This proposed principle sits above the triggers — they derive from it. The tri
 ## Origin
 
 Surfaced during a job-search session where iterative refinement of application materials caught multiple framing issues that had propagated across artifacts. Specific incidents: (a) claiming "10 years production AI" when the honest count is ~7 months of AI work grounded in 10 years of engineering; (b) using "building production AI systems" for work that was mostly AI-assisted delivery of non-AI systems; (c) labeling all freelance sub-projects as "Agentic Software Engineer" when three of four were traditional integration work. Each issue was individually small; cumulatively they would have collapsed at hiring-manager review. The framing issues only surfaced when the candidate explicitly paused to challenge the language. A codified principle plus triggers would make the pause automatic rather than opportunistic.
+
+A second incident class, surfaced in a 2026-04-26 markdown linter discussion: confident assertions about external ecosystem rankings — "markdownlint-cli2 is the de-facto standard," "`pre-commit-hooks.markdownlint` is the most-pulled markdown hook on the pre-commit registry" — where the second was a fabricated package name with a fabricated ranking. The user caught it; retraction followed. The defensible reasoning behind the broader claim was preserved (rule-ID vocabulary lock-in, VS Code extension presence, GitHub's internal use), but the specific ranking bullet had no source. Same pattern as the job-search incidents: compelling-sounding specifics asserted without verification, propagating into output. The supporting trigger about external-system claims was added in response to this incident.
 
 ## Next steps if pursued
 

@@ -1,0 +1,10 @@
+{
+  "enabled": [
+    "conventions",
+    "log",
+    "navigator",
+    "permissions",
+    "refactor",
+    "rules"
+  ]
+}

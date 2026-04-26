@@ -1,4 +1,4 @@
-"""Tests for logs/research/_scripts/sample_tools.py.
+"""Tests for systems.log.research._sample_tools.
 
 Heading-tree parse/serialize round-trip, sibling-duplicate detection,
 cross-sample counting, and section consolidation. Uses tmp_path with
@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from sample_tools import (
+from systems.log.research._sample_tools import (
     CHAIN_SEPARATOR,
     DuplicateHeadingError,
     Section,

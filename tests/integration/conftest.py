@@ -1,7 +1,6 @@
 """Shared fixtures for integration tests."""
 
 import subprocess
-import sys
 import tempfile
 from pathlib import Path
 
@@ -25,22 +24,6 @@ def _git_root() -> Path:
         check=True,
     )
     return Path(result.stdout.strip()).resolve()
-
-
-def _install_research_scripts_on_syspath() -> None:
-    """Make `logs/research/_scripts/` importable for integration tests.
-
-    Cross-corpus research utilities live outside any plugin package, so
-    they aren't reachable through the plugin's venv import path. Tests
-    that use `sample_tools` etc. depend on this sys.path insertion; it
-    runs at conftest import time so test collection succeeds.
-    """
-    scripts_dir = _git_root() / "logs" / "research" / "_scripts"
-    if scripts_dir.is_dir() and str(scripts_dir) not in sys.path:
-        sys.path.insert(0, str(scripts_dir))
-
-
-_install_research_scripts_on_syspath()
 
 
 @pytest.fixture(scope="session")
@@ -79,3 +62,27 @@ def worktree():
             cwd=root,
             capture_output=True,
         )
+
+
+@pytest.fixture
+def pristine_repo(tmp_path: Path) -> Path:
+    """Standalone git repo on `main` for tests that exercise gates keyed on branch.
+
+    The session-scoped `worktree` fixture creates a detached worktree of
+    the parent project — useful when tests need its actual files, but a
+    hook gate keying on `branch == main` cannot be satisfied there since
+    the parent's main worktree owns the only `main` ref. This fixture
+    initializes a fresh repo with `main` as the initial branch so such
+    gates evaluate truthy. Function-scoped so each test gets isolated
+    state.
+    """
+    subprocess.run(
+        ["git", "init", "-b", "main", str(tmp_path)],
+        capture_output=True, check=True,
+    )
+    for key, value in (("user.email", "test@example.com"), ("user.name", "Test")):
+        subprocess.run(
+            ["git", "-C", str(tmp_path), "config", key, value],
+            capture_output=True, check=True,
+        )
+    return tmp_path

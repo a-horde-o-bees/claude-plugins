@@ -1,3 +1,10 @@
+---
+title: Frontmatter probe
+argument-hint: "<verb1 | verb2 [--flag <value>]>"
+placeholder-key: {frontmatter-placeholder}
+emphasis-look-alike: *star* and _under_
+---
+
 # Messy Fixture for OCD Rendering + Lint Tests
 
 ## Summary
@@ -81,5 +88,42 @@ Prose with {literal-placeholder} in paragraph context.
 Arrow context: proposes -> Aaron responds.
 
 Math context: volunteers > 50 triggers review.
+
+## Fenced Code Block — Single Structural Unit
+
+A fenced code block is treated as one paragraph. Lines that look like
+headings inside the body are opaque — they must not fire heading or
+block-start rules. The closing fence is the end of the block, not the
+start of a new one, so the inevitable non-blank line above it must not
+fire missing-blank-before-block.
+
+```python
+# This comment line resembles a level-1 heading but is code.
+### def looks_like_heading(): pass
+x = 1
+```
+
+## Fenced Code Block — Inner Discipline Still Applies
+
+Code blocks aren't a free zone for blank-line noise. Multiple sequential
+blank lines inside the body must still be flagged for consolidation, and
+the body must not begin or end with a blank line.
+
+```text
+first body line
+
+
+second body line after two blanks
+```
+
+```text
+
+leading blank above this line
+```
+
+```text
+trailing blank below this line
+
+```
 
 ## End
