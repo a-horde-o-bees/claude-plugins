@@ -166,6 +166,28 @@ def _blockquote_prefix_len(line: str) -> int:
     return i
 
 
+def _frontmatter_end_index(lines: list[str]) -> int:
+    """Return the index AFTER the closing `---` of YAML frontmatter, or 0 if absent.
+
+    Frontmatter is the YAML block fenced by `---` lines that some tools
+    (e.g. Claude Code's skill loader) parse separately from the markdown
+    body. Its content is not markdown — characters like `<`, `>`, `{`, `}`
+    in YAML values are not subject to the literal-character rule, and
+    blank-line discipline does not apply.
+
+    Recognized only when the very first line is exactly `---`. Returns the
+    index of the line *after* the closing fence so callers can skip lines
+    `[0, end)`. Unclosed openers return 0 — refusing to swallow the entire
+    body if the closer is missing.
+    """
+    if not lines or lines[0].rstrip() != "---":
+        return 0
+    for i in range(1, len(lines)):
+        if lines[i].rstrip() == "---":
+            return i + 1
+    return 0
+
+
 _HTML_TAG_CHARS = set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
 
@@ -208,13 +230,18 @@ def _html_tag_spans(line: str) -> list[tuple[int, int]]:
 def scan_literal_chars(path: Path, strict: bool = False) -> list[Violation]:
     """Return LITERAL-rule violations (unprotected target chars) found in path."""
     text = path.read_text(encoding="utf-8", errors="replace")
+    lines = text.splitlines()
     targets = STRICT_TARGETS if strict else LAX_TARGETS
+    fm_end = _frontmatter_end_index(lines)
     in_fence = False
     fence_char: str | None = None
     fence_len = 0
     violations: list[Violation] = []
 
-    for lineno, line in enumerate(text.splitlines(), start=1):
+    for lineno, line in enumerate(lines, start=1):
+        if lineno - 1 < fm_end:
+            continue
+
         next_fence, next_char, next_len = _fence_state_update(
             line, in_fence, fence_char, fence_len
         )
@@ -295,82 +322,107 @@ def _is_heading(line: str) -> bool:
     return False
 
 
-def _is_fenced_code_start(line: str) -> bool:
-    stripped = line.lstrip(" ")
-    if len(line) - len(stripped) >= 4:
-        return False
-    return stripped.startswith("```") or stripped.startswith("~~~")
+@dataclass(frozen=True)
+class _LineState:
+    """Per-line metadata used by every blank-line pass.
 
+    A fenced code block is treated as one structural unit: block-boundary
+    rules (heading-needs-blank, missing-blank-before-block) don't peek
+    inside, and the fence *opener* is the only line that participates as
+    a block-start. Frontmatter is fully opaque to the markdown rule set.
 
-def _is_block_start_that_needs_blank_before(line: str) -> bool:
-    """Return True when this line begins a block element that requires a
-    blank line above (unless the file starts here).
-
-    Scope: headings and fenced-code fences. Tables and thematic breaks
-    are out of scope for v1 — add incrementally as the need is proven.
+    Pass-internal rules — multi-blank and the fence-boundary checks —
+    explicitly DO look inside fenced bodies, so the consumer chooses
+    which flags to honor.
     """
-    return _is_heading(line) or _is_fenced_code_start(line)
+
+    in_frontmatter: bool
+    in_fence_body: bool
+    is_fence_open: bool
+    is_fence_close: bool
+
+    @property
+    def is_structurally_opaque(self) -> bool:
+        """True when block-boundary rules must not fire on this line.
+
+        Includes frontmatter, fence interior body, and the fence closer
+        (which ends an existing block rather than starting a new one).
+        Does NOT include the fence opener — that line IS a block start.
+        """
+        return self.in_frontmatter or self.in_fence_body or self.is_fence_close
 
 
-def scan_blank_lines(path: Path) -> list[Violation]:
-    """Return violations for the four blank-line discipline rules:
-
-      Markdown - blank line in continuous list           blank line between same-level list items
-      Markdown - missing blank line before block   block element (heading, fence) with no blank above
-      Markdown - missing blank line after heading  heading with no blank line after
-      Markdown - multiple sequential blank lines      second (or later) blank in a row
-    """
-    text = path.read_text(encoding="utf-8", errors="replace")
-    lines = text.splitlines()
-    violations: list[Violation] = []
-
-    # Fence state — don't apply rules inside fenced code.
+def _line_states(lines: list[str], fm_end: int) -> list[_LineState]:
+    """Compute structural metadata for every line in one pass."""
+    states: list[_LineState] = []
     in_fence = False
     fence_char: str | None = None
     fence_len = 0
-
-    # Cache: per-line metadata
-    # blank[i] = is line i blank?
-    blanks = [line.strip() == "" for line in lines]
-
-    # Markdown - blank line in continuous list detection
-    # Track: last non-blank line index that was a list item at indent X.
-    # When we encounter a new list item at the same indent X after
-    # intervening blank(s), flag each blank in between.
-    #
-    # Interruption exemption: a heading or blockquote between same-indent
-    # items (with blank lines around it, as those blocks require) is a
-    # legitimate continuation pattern — resets tracking so the blank
-    # lines bracketing the interruption are not flagged.
-    last_list_item_indent: int | None = None
-    blanks_pending: list[int] = []  # 1-indexed line numbers
-
     for idx, line in enumerate(lines):
-        lineno = idx + 1
-        # fence toggle update (blank-line rules suspend inside fences)
+        in_frontmatter = idx < fm_end
         next_fence, next_char, next_len = _fence_state_update(
             line, in_fence, fence_char, fence_len
         )
-        if next_fence != in_fence:
-            in_fence, fence_char, fence_len = next_fence, next_char, next_len
+        is_fence_open = (not in_fence) and next_fence
+        is_fence_close = in_fence and (not next_fence)
+        in_fence_body = in_fence and not is_fence_close
+        states.append(
+            _LineState(
+                in_frontmatter=in_frontmatter,
+                in_fence_body=in_fence_body,
+                is_fence_open=is_fence_open,
+                is_fence_close=is_fence_close,
+            )
+        )
+        in_fence, fence_char, fence_len = next_fence, next_char, next_len
+    return states
+
+
+def scan_blank_lines(path: Path) -> list[Violation]:
+    """Return violations for the blank-line discipline rules:
+
+      Markdown - blank line in continuous list      blank line between same-level list items
+      Markdown - missing blank line before block    block element (heading, fence) with no blank above
+      Markdown - missing blank line after heading   heading with no blank line after
+      Markdown - multiple sequential blank lines    second (or later) blank in a row
+      Markdown - blank line at start of fenced block  blank line immediately after the opening fence
+      Markdown - blank line at end of fenced block    blank line immediately before the closing fence
+
+    YAML frontmatter is fully opaque — no markdown rule fires inside.
+    Fenced code blocks are treated as one structural unit by the
+    block-boundary rules (no heading or block-start firing on or inside),
+    but their interior is still subject to multi-blank consolidation, and
+    they have their own boundary rules forbidding leading and trailing
+    blank lines.
+    """
+    text = path.read_text(encoding="utf-8", errors="replace")
+    lines = text.splitlines()
+    fm_end = _frontmatter_end_index(lines)
+    line_states = _line_states(lines, fm_end)
+    blanks = [line.strip() == "" for line in lines]
+    violations: list[Violation] = []
+
+    # Pass 1 — Markdown - blank line in continuous list.
+    #
+    # Track: last non-blank line index that was a list item at indent X.
+    # When we encounter a new list item at the same indent X after
+    # intervening blank(s), flag each blank in between. Headings and
+    # blockquotes between same-indent items legitimately interrupt
+    # the list (their bracketing blanks are required by other rules)
+    # — reset tracking so they aren't flagged.
+    last_list_item_indent: int | None = None
+    blanks_pending: list[int] = []  # 1-indexed line numbers
+    for idx, line in enumerate(lines):
+        if line_states[idx].is_structurally_opaque:
             last_list_item_indent = None
             blanks_pending = []
             continue
-        if in_fence:
-            continue
-
         if blanks[idx]:
-            blanks_pending.append(lineno)
+            blanks_pending.append(idx + 1)
             continue
 
         is_item, indent = _classify_list_item(line)
-
-        # Markdown - blank line in continuous list: blank(s) between two list items at same indent
-        if (
-            is_item
-            and last_list_item_indent == indent
-            and blanks_pending
-        ):
+        if is_item and last_list_item_indent == indent and blanks_pending:
             for blank_line in blanks_pending:
                 violations.append(
                     Violation(
@@ -382,34 +434,22 @@ def scan_blank_lines(path: Path) -> list[Violation]:
                         rule="Markdown - blank line in continuous list",
                     )
                 )
-
-        # Interruption: a heading or blockquote line between items breaks
-        # list continuity for purposes of the blank-in-list rule. The
-        # blanks that must surround these blocks are legitimate, not
-        # violations, so reset tracking rather than pair across them.
         if _is_heading(line) or _blockquote_prefix_len(line) > 0:
             last_list_item_indent = None
             blanks_pending = []
             continue
-
         last_list_item_indent = indent if is_item else None
         blanks_pending = []
 
-    # Markdown - multiple sequential blank lines: second blank in a row (and each subsequent blank)
-    in_fence = False
-    fence_char = None
-    fence_len = 0
+    # Pass 2 — Markdown - multiple sequential blank lines.
+    #
+    # Frontmatter is opaque (YAML, not markdown). Fenced bodies are
+    # NOT opaque — runs of blank lines inside code are noise the same
+    # as runs of blank lines in prose. Fence toggle lines are non-blank,
+    # so prev_blank resets naturally at fence boundaries.
     prev_blank = False
     for idx, line in enumerate(lines):
-        lineno = idx + 1
-        next_fence, next_char, next_len = _fence_state_update(
-            line, in_fence, fence_char, fence_len
-        )
-        if next_fence != in_fence:
-            in_fence, fence_char, fence_len = next_fence, next_char, next_len
-            prev_blank = False
-            continue
-        if in_fence:
+        if line_states[idx].in_frontmatter:
             prev_blank = False
             continue
         is_blank = blanks[idx]
@@ -417,7 +457,7 @@ def scan_blank_lines(path: Path) -> list[Violation]:
             violations.append(
                 Violation(
                     path=path,
-                    line=lineno,
+                    line=idx + 1,
                     col=1,
                     char=None,
                     context=line,
@@ -426,17 +466,22 @@ def scan_blank_lines(path: Path) -> list[Violation]:
             )
         prev_blank = is_blank
 
-    # Markdown - missing blank line before block: block start with non-blank immediately above
+    # Pass 3 — Markdown - missing blank line before block.
+    #
+    # Block starts: a heading line that's outside frontmatter and
+    # outside a fenced block, or a fence-opener line. A fence-closer
+    # is opaque (end of an existing block, not the start of a new
+    # one), so the inevitable "non-blank line above the closer"
+    # situation does not fire.
     for idx in range(1, len(lines)):
+        state = line_states[idx]
         line = lines[idx]
-        if not _is_block_start_that_needs_blank_before(line):
+        is_block_start = state.is_fence_open or (
+            _is_heading(line) and not state.is_structurally_opaque
+        )
+        if not is_block_start:
             continue
-        prev = lines[idx - 1]
-        if prev.strip() != "":
-            # fence check — if we're inside a fence, skip
-            # (we won't bother replaying the full fence state here; the
-            #  check is overly conservative if a fence happens to enclose
-            #  this line, but such cases are rare for our content.)
+        if lines[idx - 1].strip() != "":
             violations.append(
                 Violation(
                     path=path,
@@ -448,12 +493,14 @@ def scan_blank_lines(path: Path) -> list[Violation]:
                 )
             )
 
-    # Markdown - missing blank line after heading: heading followed by non-blank content
+    # Pass 4 — Markdown - missing blank line after heading.
     for idx in range(len(lines) - 1):
+        state = line_states[idx]
+        if state.is_structurally_opaque:
+            continue
         if not _is_heading(lines[idx]):
             continue
-        next_line = lines[idx + 1]
-        if next_line.strip() != "":
+        if lines[idx + 1].strip() != "":
             violations.append(
                 Violation(
                     path=path,
@@ -465,6 +512,35 @@ def scan_blank_lines(path: Path) -> list[Violation]:
                 )
             )
 
+    # Pass 5 — Fenced-block leading and trailing blank lines.
+    #
+    # A code block's body should not begin or end with a blank line.
+    # Flag the offending blank itself (so the autofix can delete it
+    # by line number); context shows the fence toggle for orientation.
+    for idx, state in enumerate(line_states):
+        if state.is_fence_open and idx + 1 < len(lines) and blanks[idx + 1]:
+            violations.append(
+                Violation(
+                    path=path,
+                    line=idx + 2,
+                    col=1,
+                    char=None,
+                    context=lines[idx],
+                    rule="Markdown - blank line at start of fenced block",
+                )
+            )
+        if state.is_fence_close and idx > 0 and blanks[idx - 1]:
+            violations.append(
+                Violation(
+                    path=path,
+                    line=idx,
+                    col=1,
+                    char=None,
+                    context=lines[idx],
+                    rule="Markdown - blank line at end of fenced block",
+                )
+            )
+
     return violations
 
 
@@ -473,14 +549,24 @@ def scan_file(path: Path, strict: bool = False) -> list[Violation]:
     return scan_literal_chars(path, strict=strict) + scan_blank_lines(path)
 
 
+_DELETE_BLANK_RULES = frozenset({
+    "Markdown - blank line in continuous list",
+    "Markdown - multiple sequential blank lines",
+    "Markdown - blank line at start of fenced block",
+    "Markdown - blank line at end of fenced block",
+})
+
+
 def fix_blank_lines(path: Path, max_iterations: int = 5) -> int:
     """Auto-fix blank-line discipline violations in place.
 
     Applies deterministic fixes:
-      Markdown - blank line in continuous list         → delete the offending blank line
-      Markdown - multiple sequential blank lines    → delete the extra blank(s), leaving one
-      Markdown - missing blank line before block → insert blank line before the block
-      Markdown - missing blank line after heading → insert blank line after the heading
+      Markdown - blank line in continuous list          → delete the offending blank line
+      Markdown - multiple sequential blank lines        → delete the extra blank(s), leaving one
+      Markdown - blank line at start of fenced block    → delete the leading blank inside the fence
+      Markdown - blank line at end of fenced block      → delete the trailing blank inside the fence
+      Markdown - missing blank line before block        → insert blank line before the block
+      Markdown - missing blank line after heading       → insert blank line after the heading
 
     Iterates until stable or max_iterations hit. Returns the number of
     distinct edits applied across all iterations.
@@ -500,7 +586,7 @@ def fix_blank_lines(path: Path, max_iterations: int = 5) -> int:
         insert_before: set[int] = set()
         insert_after: set[int] = set()
         for v in violations:
-            if v.rule in ("Markdown - blank line in continuous list", "Markdown - multiple sequential blank lines"):
+            if v.rule in _DELETE_BLANK_RULES:
                 delete.add(v.line)
             elif v.rule == "Markdown - missing blank line before block":
                 insert_before.add(v.line)
