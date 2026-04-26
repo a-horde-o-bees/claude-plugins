@@ -75,6 +75,7 @@
         "Bash(uv remove:*)",
         "Bash(uv lock:*)",
         "Bash(uv pip:*)",
+        "Bash(uv venv:*)",
         "Bash(uvx:*)",
         "Bash(pip:*)",
         "Bash(pip3:*)",
