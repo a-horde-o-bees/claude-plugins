@@ -59,7 +59,7 @@ An alignment audit has four phases:
 1. **Authored** when a pattern doc first lands (or significantly refreshes). Every purpose gets classified. Gaps become action items.
 2. **Working** — Open items are scheduled (commit, refactor, idea log). As they close, they move from Open to Resolved. Research may refresh the pattern doc; re-audit the affected purposes.
 3. **Graduated** — when the Open list is empty and the repo's alignment is stable, the Chosen-path content extracts into a standards doc (see *Standards vs audit*). The audit's comparative structure (match symbols, gap fields) falls away; the commitments remain.
-4. **Retired** — once the standards doc has absorbed the audit's content and the roadmap has absorbed any remaining outstanding items, the audit file is removed. Git history preserves the comparison trail; the standards doc carries the commitments forward.
+4. **Retired** — once the standards doc has absorbed the audit's content and `TASKS.md` has absorbed any remaining outstanding items, the audit file is removed. Git history preserves the comparison trail; the standards doc carries the commitments forward.
 
 ## Standards vs audit
 
@@ -67,7 +67,7 @@ An audit answers "where do we diverge, and what do we do about each divergence?"
 
 A standards doc answers "what do we do?" It's structured as commitment — Standard + Why. It evolves only when the commitment changes.
 
-The audit graduates into the standards doc by lifting every ✓ and ⟁ Chosen-path bullet into a Standard. The match symbols drop away. The Why lines come from the ⟁ justifications and the pattern doc's rationale. Open items don't graduate — they migrate to the roadmap as scheduled work.
+The audit graduates into the standards doc by lifting every ✓ and ⟁ Chosen-path bullet into a Standard. The match symbols drop away. The Why lines come from the ⟁ justifications and the pattern doc's rationale. Open items don't graduate — they migrate to `TASKS.md` as scheduled work.
 
 Keep both docs simultaneously when the repo is still settling; retire the audit once standards are stable. Trying to maintain a single doc that does both jobs produces a doc that serves neither well — the comparison fields clutter the commitment statement, and the commitment statement crowds out the comparison detail.
 

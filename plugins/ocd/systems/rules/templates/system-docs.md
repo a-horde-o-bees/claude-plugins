@@ -32,8 +32,9 @@ All-caps filenames signal entry points at a system boundary — docs a reader sh
 
 **All-caps — entry points:**
 
-- Three-document-model docs at every system boundary: `README.md`, `ARCHITECTURE.md`, `CLAUDE.md`, `SKILL.md`
-- Project-root community-health and planning conventions: `LICENSE`, `CHANGELOG.md`, `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, `ROADMAP.md`, `MARKETPLACE-STANDARDS.md`
+Prescribed by this rule (per *Required Documents* above) — the three-document model at every system boundary: `README.md`, `ARCHITECTURE.md`, `CLAUDE.md` / `SKILL.md`.
+
+Other entry-point files at project root follow the same case convention when a project chooses to include them. Their presence is not prescribed here; they're listed for case clarity. Examples: `LICENSE`, `CHANGELOG.md`, `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, `MARKETPLACE-STANDARDS.md`, and project-planning files such as `ROADMAP.md` (aspirational direction) or `TASKS.md` (operational next-actions).
 
 **Lowercase — content within a structure:**
 

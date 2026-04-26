@@ -1,8 +1,13 @@
-# Roadmap
+# Tasks
 
-Synthesis of outstanding work across the project. Pulls from idea logs, sandbox branches, friction/problem logs, and `purpose-map/state.md`. Organized by theme for prioritization; individual entries link to the canonical source file that owns the detail.
+Project-scoped task list — outstanding work synthesized across the project, organized by theme for prioritization. Operational, not aspirational: every entry maps to a concrete next-action and graduates out as work lands.
 
-This doc is not an exhaustive tracker — the idea logs under `logs/idea/` and each sandbox branch's `SANDBOX-TASKS.md` (read via `/ocd:sandbox tasks`) hold full context. The roadmap is the scan-once view.
+Scope boundaries — sibling docs that overlap but each own a distinct slice:
+
+- **This file (`TASKS.md`)** — project-scoped, scan-once view of what's open across the whole repo. Pulls from the docs below.
+- **`SANDBOX-TASKS.md` (per sandbox branch)** — branch-scoped task list seeded by `/ocd:sandbox new` and `/ocd:sandbox pack`; read via `/ocd:sandbox tasks`; cleared on unpack so it never lands on main.
+- **`logs/idea/<title>.md`** — full context for any task listed here; the idea log owns the detail, this file is a pointer.
+- **`purpose-map/state.md`** — observed gaps from sandbox-exercise findings; items graduate into this file as scheduled work.
 
 ## High priority
 
