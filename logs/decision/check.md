@@ -102,3 +102,36 @@ Seed patterns:
 - **Enables:** `--show-allowed` flag surfaces the suppressed entries so the allowlist itself stays reviewable — no silent exemptions
 - **Constrains:** rule is AST-only, so two-line laundering (`here = Path(__file__).parent; root = here.parent`) catches the first line but not the second. Accepted: the first line already flags, so the laundering is cosmetic
 - **Constrains:** `.parents[N]` with non-constant N (`.parents[some_var]`) still matches because the subscript's value chain is what's checked, not the index value. `dirname` with bare import name relies on identifier — an unrelated `dirname` function would false-positive if chained to `__file__`; in practice, `os.path.dirname` is the only dirname in use
+
+## Markdown dimension: frontmatter and fenced-code-block opacity
+
+### Context
+
+The literal-character and blank-line rules originally treated every line identically. In practice that meant SKILL.md frontmatter (where `argument-hint: "<verb1 | verb2>"` is the prescribed PFN shape) was flagged on the trailing `>`, and fenced code blocks fired blank-line discipline rules on their interior content. Closing fence lines got classified as block-starts that needed blank lines above; `### foo` inside a code block fired the missing-blank-after-heading rule. Real discipline gaps in templates, rules, and skill files were drowning in detector false positives.
+
+### Options Considered
+
+**Backtick-protect the offending characters at the source** — would suppress the LITERAL rule's hits but cannot solve the structural false-firings (closing-fence-as-block-start), and backticking inside YAML values corrupts what Claude Code displays in the autocomplete. Rejected — symptom-level workaround.
+
+**Update the markdown convention to forbid YAML frontmatter and inner code blocks with these patterns** — would push the work onto every skill author and require ongoing convention maintenance. Rejected — the convention should describe what's correct, not encode the linter's limitations.
+
+**Fix the detector** — make YAML frontmatter opaque to all rules; treat fenced code blocks as a single structural unit (block-boundary rules don't peek inside; fence opener is the only line that participates as a block-start). Accepted.
+
+### Decision
+
+`_markdown.py` adds:
+
+- **`_frontmatter_end_index`** — recognizes `---`-fenced YAML frontmatter at file start; both literal-character scan and blank-line passes skip the contained line range.
+- **`_LineState`** dataclass — per-line flags for `in_frontmatter`, `in_fence_body`, `is_fence_open`, `is_fence_close`, plus an `is_structurally_opaque` derived view used by block-boundary rules.
+- **Fence opener distinction** — `is_fence_open` is structurally visible (block-start needing blank above); `is_fence_close` and `in_fence_body` are opaque to block-start detection.
+
+Two rules deliberately pierce fence opacity:
+
+- **Markdown - multiple sequential blank lines** — runs of 2+ blank lines fire inside fenced bodies too. Code-block noise is noise.
+- **Markdown - blank line at start of fenced block** / **Markdown - blank line at end of fenced block** — new rules forbidding leading/trailing blanks inside the fence body. Auto-fixable (delete) like the other blank-line rules.
+
+### Consequences
+
+- **Enables:** every SKILL.md across the project clears its frontmatter false positives without source changes; templates with fenced ASCII diagrams stop spuriously firing block-discipline rules
+- **Enables:** the discipline floor for code blocks now matches prose — multi-blank consolidation everywhere, no leading/trailing blanks in fenced bodies, autofix handles all four blank-line rules uniformly
+- **Constrains:** the project's custom rule set has grown beyond what any single community linter (PyMarkdownLnt, markdownlint-cli2) covers — these specific behaviors are not in the standard `MD###` registry. Adoption of a community linter would layer under our custom rules, not replace them. See `logs/idea/Expand check with community linter dimensions.md`
