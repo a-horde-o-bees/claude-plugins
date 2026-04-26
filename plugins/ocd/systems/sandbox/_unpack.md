@@ -1,6 +1,6 @@
 # Unpack
 
-Integrate a `sandbox/<feature>` branch into main via a pull request, then delete the branch local + remote and remove the sibling worktree if present. The branch must already be rebased against current `origin/main` — unpack is mechanically dumb and does not itself reintegrate; run `/sandbox update {feature-id}` first. Idempotent when the branch is already gone.
+Integrate a `sandbox/<feature>` branch into main via a pull request and end with no traces of the sandbox — `SANDBOX-TASKS.md` cleared in a final commit before the PR opens, local + remote branch deleted on merge, sibling worktree removed once the merge lands. The branch must already be rebased against current `origin/main` — unpack is mechanically dumb and does not itself reintegrate; run `/sandbox update {feature-id}` first. Idempotent when the branch is already gone.
 
 `gh pr create` opens a PR, required status checks gate the merge, `gh pr merge --merge --delete-branch` lands it with a merge commit. All git operations target explicit paths via `git -C`, so unpack runs from main or from any sibling worktree.
 
