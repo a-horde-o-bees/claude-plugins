@@ -6,7 +6,7 @@ Create a new log entry under the appropriate type.
 
 1. Determine log type from context using the log-routing rule
 2. Read `logs/{type}/_template.md`
-3. {title} = descriptive title for the entry
+3. `{title}` = descriptive title for the entry
 4. Create `logs/{type}/{title}.md`:
     1. `# {title}`
     2. `## Purpose` — what this entry captures

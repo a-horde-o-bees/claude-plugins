@@ -4,6 +4,7 @@ addopts = "--import-mode=importlib"
 testpaths = [
     "systems/setup",
     "systems/governance",
+    "systems/log",
     "systems/navigator",
     "systems/pdf",
     "systems/permissions",

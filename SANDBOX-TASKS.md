@@ -36,16 +36,12 @@ Extend the existing `/log` skill with a `research` subcommand so any project usi
 
 ## Pending — Required for unpack
 
-- [ ] Add `systems/log` to the `testpaths` list in `tests/plugins/ocd/pyproject.toml` so the plugin test suite auto-discovers the new tests instead of requiring an explicit path argument
-- [ ] Decision-log entry under `logs/decision/log.md` (or a new `decisions/log/research-skill-extension.md`):
-  - Why extend `/log` rather than create a new top-level skill — research is "log analysis," fits the system that already governs the corpora
-  - Why empty `__init__.py` files persist in the test subtree — importlib mode + regular-package shadowing
-  - Why `--subject` + `--dir` mutually-exclusive locator — `--subject` honors the `logs/research/<name>/samples/` convention; `--dir` for ad-hoc paths
-  - YAGNI: this sandbox explicitly excludes retrofit engine, work-queue/log CSV management, and migration-manifest tooling — those land when Phase B defines their actual needs
-- [ ] Final lint pass on touched files:
-  - `ocd-run check python plugins/ocd/systems/log/`
-  - `ocd-run check markdown plugins/ocd/systems/log/`
-- [ ] Verify the log system's deployment contract still works (`init()` / `status()` in `_init.py`) with the new `__init__.py` and `__main__.py` co-existing alongside `_init.py` — run the dormancy check or a manual init/status invocation
+- [x] Add `systems/log` to the `testpaths` list in `tests/plugins/ocd/pyproject.toml` so the plugin test suite auto-discovers the new tests instead of requiring an explicit path argument
+- [x] Decision-log entry — `logs/decision/log.md` covers all four points (skill extension over top-level, mutually exclusive locator, empty test `__init__.py` shadowing, YAGNI scope)
+- [x] Final lint pass on touched files:
+  - `ocd-run check python plugins/ocd/systems/log/` — clean
+  - `ocd-run check markdown plugins/ocd/systems/log/` — clean. While running this, the markdown detector itself was fixed to skip YAML frontmatter and to treat fenced code blocks as one structural unit (frontmatter and fence interiors are now opaque to literal-character and blank-line rules); seven false-alarm hits in pre-existing files dropped out as a result, and the remaining sandbox-introduced PFN `{var}` placeholders were backticked
+- [x] Verify the log system's deployment contract still works (`init()` / `status()` in `_init.py`) with the new `__init__.py` and `__main__.py` co-existing alongside `_init.py` — `setup init` and `setup status` both report log templates and rules as `current`; `check dormancy` passes for the log system
 
 ## Pending — Optional / nice-to-have
 
@@ -54,9 +50,23 @@ Extend the existing `/log` skill with a `research` subcommand so any project usi
 
 ## Out of scope (post-unpack work)
 
-- **Phase A research corpus retrofit** — task #16. Use these tools + the `context-aware-iteration` pattern to restructure MCP and claude-marketplace samples and gather observations. Pre-measure → baseline spawn → calibrated iteration → accumulated per-section observations.
-- **Phase B master template design** — human + analytical. Use `count-sections` / `consolidate` plus the observations from Phase A to write `_TEMPLATE.md` prose descriptions. Output: master template + migration manifest (may be empty).
-- **Phase C/D retrofit engine** — task #15. Generic retrofit script (likely under `plugins/ocd/systems/log/research/_retrofit.py`). Built only if Phase B's migration manifest requires structural transformation beyond "add missing headings in template order."
+The `logs/research/` corpus refactor — restructuring samples, designing master templates, building the migration retrofit — is intentionally deferred to post-unpack, not omitted. Reasoning: ship the foundation (skill extension, `sample_tools` primitives) before running it against the live corpora. Mixing both in one sandbox would risk unpacking unrunnable infrastructure if the retrofit work hits friction; running the retrofit before the foundation lands means relying on tooling that hasn't been merged or tested.
+
+The phased sequence:
+
+- **Phase A research corpus retrofit** — restructure MCP and claude-marketplace samples and gather observations. Uses the `context-aware-iteration` pattern + `sample_tools` primitives shipped by this sandbox. Pre-measure → baseline spawn → calibrated iteration → accumulated per-section observations.
+- **Phase B master template design** — human + analytical. Use `count-sections` / `consolidate` plus the observations from Phase A to write `_TEMPLATE.md` prose descriptions. Output: master template + migration manifest (may be empty if no structural changes are needed).
+- **Phase C/D retrofit engine** — generic retrofit script (likely under `plugins/ocd/systems/log/research/_retrofit.py`). Built only if Phase B's migration manifest requires structural transformation beyond "add missing headings in template order." This phase **also retires** `logs/research/mcp/scripts/_retrofit_samples_to_template.py` — the old corpus-specific retrofit (hardcoded section list, fixed `pitfalls observed:` bullet) that lives on main today. It's acknowledged as obsolete and gets deleted as part of Phase C/D, not as part of this sandbox.
+
+### Tracking handoff after unpack
+
+Phase A and Phase C/D were tracked in the originating session's task list (where this sandbox was authored). That tracker doesn't survive the unpack. When the sandbox closes, give the post-unpack phases a durable home:
+
+- Promote each phase to a `logs/idea/` entry on main (or to `logs/decision/` if scope is concrete enough to commit to an approach)
+- OR add as ROADMAP entries
+- OR open issues in the project's external tracker
+
+Whichever fits the project's workflow — but the post-unpack phases need a location future sessions can find without depending on the sandbox-author's task tracker.
 
 ## Unpack checklist
 
