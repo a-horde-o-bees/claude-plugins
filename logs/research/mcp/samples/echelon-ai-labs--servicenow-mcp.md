@@ -1,52 +1,125 @@
-# echelon-ai-labs/servicenow-mcp
+# Sample
 
 ## Identification
-- url: https://github.com/echelon-ai-labs/servicenow-mcp
-- stars: 241
-- last-commit (date or relative): not captured
-- license: MIT
-- default branch: main
-- one-line purpose: ServiceNow MCP server — 60+ tools across incidents, service catalog, change requests, agile, workflows, knowledge bases; stdio and SSE ship as separate console scripts.
+
+### url
+
+https://github.com/echelon-ai-labs/servicenow-mcp
+
+### stars
+
+241
+
+### last-commit (date or relative)
+
+not captured
+
+### license
+
+MIT
+
+### default branch
+
+main
+
+### one-line purpose
+
+ServiceNow MCP server — 60+ tools across incidents, service catalog, change requests, agile, workflows, knowledge bases; stdio and SSE ship as separate console scripts.
 
 ## 1. Language and runtime
-- language(s) + version constraints: Python 99.4%; requires Python 3.11 or higher
-- framework/SDK in use: raw `mcp` Python SDK; Starlette for SSE transport
-- pitfalls observed:
-  - Python 3.11 floor — a touch more modern than awslabs' 3.10
+
+### language(s) + version constraints
+
+Python 99.4%; requires Python 3.11 or higher
+
+### framework/SDK in use
+
+raw `mcp` Python SDK; Starlette for SSE transport
+
+### pitfalls observed
+
+- Python 3.11 floor — a touch more modern than awslabs' 3.10
 
 ## 2. Transport
-- supported transports: **stdio** (standard mode) and **Server-Sent Events (SSE)** via a web server
-- how selected: separate console script (`servicenow-mcp-sse`) vs stdio CLI module (`python -m servicenow_mcp.cli`)
-- pitfalls observed: none noted in this repo
+
+### supported transports
+
+**stdio** (standard mode) and **Server-Sent Events (SSE)** via a web server
+
+### how selected
+
+separate console script (`servicenow-mcp-sse`) vs stdio CLI module (`python -m servicenow_mcp.cli`)
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 3. Distribution
-- every mechanism observed: clone + `pip install -e .`; Docker (Dockerfile present)
-- published package name(s): not captured from README
-- install commands shown in README:
-  - `git clone ... && python -m venv .venv && pip install -e .`
-- pitfalls observed:
-  - what couldn't be determined: exact pyproject dependencies, console-script vs entry-point details, CI presence, test framework specifics, Docker image publication, OAuth specifics
+
+### every mechanism observed
+
+clone + `pip install -e .`; Docker (Dockerfile present)
+
+### published package name(s)
+
+not captured from README
+
+### install commands shown in README
+
+- `git clone ... && python -m venv .venv && pip install -e .`
+
+### pitfalls observed
+
+- what couldn't be determined: exact pyproject dependencies, console-script vs entry-point details, CI presence, test framework specifics, Docker image publication, OAuth specifics
 
 ## 4. Entry point / launch
-- command(s) users/hosts run:
-  - stdio: `python -m servicenow_mcp.cli`
-  - SSE: `servicenow-mcp-sse --instance-url=... --username=... --password=...`
-- wrapper scripts, launchers, stubs: separate console script for SSE mode with CLI args
-- pitfalls observed: none noted in this repo
+
+### command(s) users/hosts run
+
+- stdio: `python -m servicenow_mcp.cli`
+- SSE: `servicenow-mcp-sse --instance-url=... --username=... --password=...`
+
+### wrapper scripts, launchers, stubs
+
+separate console script for SSE mode with CLI args
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 5. Configuration surface
-- how config reaches the server: CLI args (SSE mode) or env vars (both modes) — `SERVICENOW_INSTANCE_URL`, `SERVICENOW_USERNAME`, `SERVICENOW_PASSWORD`, `SERVICENOW_AUTH_TYPE`
-- pitfalls observed:
-  - **Three auth mechanisms** in one server (Basic, OAuth, API Key) — selector is `SERVICENOW_AUTH_TYPE` env var
+
+### how config reaches the server
+
+CLI args (SSE mode) or env vars (both modes) — `SERVICENOW_INSTANCE_URL`, `SERVICENOW_USERNAME`, `SERVICENOW_PASSWORD`, `SERVICENOW_AUTH_TYPE`
+
+### pitfalls observed
+
+- **Three auth mechanisms** in one server (Basic, OAuth, API Key) — selector is `SERVICENOW_AUTH_TYPE` env var
 
 ## 6. Authentication
-- flow: **three methods** — Basic Auth (username/password), OAuth (client credentials), API Key
-- where credentials come from: CLI args or env vars; `SERVICENOW_AUTH_TYPE` selects mechanism
-- pitfalls observed: none noted in this repo
+
+### flow
+
+**three methods** — Basic Auth (username/password), OAuth (client credentials), API Key
+
+### where credentials come from
+
+CLI args or env vars; `SERVICENOW_AUTH_TYPE` selects mechanism
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 7. Multi-tenancy
-- single-user / per-request tenant / workspace-keyed / not applicable / other: single ServiceNow instance per deployment (via env/URL)
-- pitfalls observed: none noted in this repo
+
+### single-user / per-request tenant / workspace-keyed / not applicable / other
+
+single ServiceNow instance per deployment (via env/URL)
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 8. Capabilities exposed
 - tools / resources / prompts / sampling / roots / logging / other: **60+ tools** across:

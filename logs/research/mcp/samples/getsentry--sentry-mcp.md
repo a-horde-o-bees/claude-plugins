@@ -1,4 +1,4 @@
-# getsentry/sentry-mcp
+# Sample
 
 ## Identification
 - url: https://github.com/getsentry/sentry-mcp
@@ -64,9 +64,14 @@ For each host encountered — Claude Desktop, Claude Code, Cursor, Windsurf, Cli
 - pitfalls observed: none noted in this repo
 
 ## 11. Claude Code plugin wrapper
-- presence and shape (.claude-plugin/plugin.json, .mcp.json at repo root, full plugin layout, not present, other): Both present — `.claude-plugin/` directory and `.mcp.json` at repo root. Full Claude plugin wrapper shipped in-repo.
-- pitfalls observed:
-  - `.claude-plugin/` wrapper shipped in-repo — the server vends itself as a Claude plugin, not just a raw MCP binary.
+
+### presence and shape
+
+Both present — `.claude-plugin/` directory and `.mcp.json` at repo root. Full Claude plugin wrapper shipped in-repo.
+
+### pitfalls observed
+
+- `.claude-plugin/` wrapper shipped in-repo — the server vends itself as a Claude plugin, not just a raw MCP binary.
 
 ## 12. Tests
 - presence, framework, location, notable patterns: `pnpm test` (unit); `pnpm eval` (evaluations/scenario tests). MCP Inspector used for local testing.

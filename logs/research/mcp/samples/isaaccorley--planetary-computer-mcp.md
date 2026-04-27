@@ -1,4 +1,4 @@
-# isaaccorley/planetary-computer-mcp
+# Sample
 
 ## Identification
 - url: https://github.com/isaaccorley/planetary-computer-mcp
@@ -58,8 +58,14 @@ For each host: form + location
 - pitfalls observed: none noted in this repo
 
 ## 11. Claude Code plugin wrapper
-- presence and shape: none observed; VS Code extension is a parallel host integration
-- pitfalls observed: none noted in this repo
+
+### presence and shape
+
+none observed; VS Code extension is a parallel host integration
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 12. Tests
 - presence, framework, location, notable patterns: pytest via `uv run pytest`; `tests/` directory

@@ -1,4 +1,4 @@
-# samuelgursky/davinci-resolve-mcp
+# Sample
 
 ## Identification
 - url: https://github.com/samuelgursky/davinci-resolve-mcp
@@ -62,8 +62,14 @@
 - pitfalls observed: none noted in this repo
 
 ## 11. Claude Code plugin wrapper
-- presence and shape: Not explicitly observed within extracted content
-- pitfalls observed: none noted in this repo
+
+### presence and shape
+
+Not explicitly observed within extracted content
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 12. Tests
 - presence, framework, location, notable patterns: 5-phase suite — read-only, destructive, media, AI/ML, advanced. 319/324 methods live-tested (98.5%); 319/319 pass rate claimed
@@ -94,7 +100,11 @@
 - Universal installer that writes per-client configs (10 clients) is unusually ambitious for a single-purpose MCP
 
 ## Platform requirements
-- OS: macOS, Windows, Linux
+
+### OS
+
+macOS, Windows, Linux
+
 - DaVinci Resolve Studio 18.5+ (free edition unsupported)
 - Python 3.10-3.12
 - Resolve must be running locally

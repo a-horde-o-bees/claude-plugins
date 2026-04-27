@@ -1,4 +1,4 @@
-# korotovsky/slack-mcp-server
+# Sample
 
 ## Identification
 - url: https://github.com/korotovsky/slack-mcp-server
@@ -58,7 +58,10 @@
 
 ## 11. Claude Code plugin wrapper
 - not present
-- pitfalls observed: none noted in this repo
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 12. Tests
 - not documented

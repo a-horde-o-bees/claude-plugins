@@ -1,4 +1,4 @@
-# mahdin75/gis-mcp
+# Sample
 
 ## Identification
 - url: https://github.com/mahdin75/gis-mcp
@@ -59,8 +59,14 @@ For each host: form + location
 - pitfalls observed: none noted in this repo
 
 ## 11. Claude Code plugin wrapper
-- presence and shape: none observed
-- pitfalls observed: none noted in this repo
+
+### presence and shape
+
+none observed
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 12. Tests
 - presence, framework, location, notable patterns: pytest with coverage and async support (in `test` extra); `tests/` directory

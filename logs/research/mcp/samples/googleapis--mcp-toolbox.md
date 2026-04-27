@@ -1,4 +1,4 @@
-# googleapis/mcp-toolbox
+# Sample
 
 ## Identification
 - url: https://github.com/googleapis/mcp-toolbox
@@ -68,8 +68,14 @@ For each host encountered — Claude Desktop, Claude Code, Cursor, Windsurf, Cli
 - pitfalls observed: none noted in this repo
 
 ## 11. Claude Code plugin wrapper
-- presence and shape (.claude-plugin/plugin.json, .mcp.json at repo root, full plugin layout, not present, other): Not observed. `gemini-extension.json` is the only host-specific config file shipped.
-- pitfalls observed: none noted in this repo
+
+### presence and shape
+
+Not observed. `gemini-extension.json` is the only host-specific config file shipped.
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 12. Tests
 - presence, framework, location, notable patterns: `/tests` directory. Go testing conventions implied.

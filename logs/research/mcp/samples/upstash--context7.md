@@ -1,4 +1,4 @@
-# upstash/context7
+# Sample
 
 ## Identification
 - url: https://github.com/upstash/context7
@@ -61,8 +61,10 @@
 
 ## 11. Claude Code plugin wrapper
 - present; `.claude-plugin/marketplace.json` (marketplace metadata only, not full plugin.json)
-- pitfalls observed:
-  - `.claude-plugin/marketplace.json` (not `plugin.json`) — a marketplace-style integration separate from a plugin-wrapper install
+
+### pitfalls observed
+
+- `.claude-plugin/marketplace.json` (not `plugin.json`) — a marketplace-style integration separate from a plugin-wrapper install
 
 ## 12. Tests
 - present; monorepo test suite (`npm run test` in workspace)

@@ -1,4 +1,4 @@
-# sooperset/mcp-atlassian
+# Sample
 
 ## Identification
 - url: https://github.com/sooperset/mcp-atlassian
@@ -58,8 +58,14 @@
 - pitfalls observed: none noted in this repo
 
 ## 11. Claude Code plugin wrapper
-- presence and shape: Not explicitly observed
-- pitfalls observed: none noted in this repo
+
+### presence and shape
+
+Not explicitly observed
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 12. Tests
 - presence, framework, location, notable patterns: Comprehensive test suite in `tests/` directory

@@ -1,4 +1,4 @@
-# opensearch-project/opensearch-mcp-server-py
+# Sample
 
 ## Identification
 - url: https://github.com/opensearch-project/opensearch-mcp-server-py
@@ -59,8 +59,14 @@ For each host: form + location
 - pitfalls observed: none noted in this repo
 
 ## 11. Claude Code plugin wrapper
-- presence and shape: not observed
-- pitfalls observed: none noted in this repo
+
+### presence and shape
+
+not observed
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 12. Tests
 - presence, framework, location, notable patterns: `tests/` and `integration_tests/` directories present

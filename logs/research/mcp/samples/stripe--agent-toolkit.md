@@ -1,4 +1,4 @@
-# stripe/agent-toolkit
+# Sample
 
 ## Identification
 - url: https://github.com/stripe/agent-toolkit
@@ -66,9 +66,14 @@ For each host encountered — Claude Desktop, Claude Code, Cursor, Windsurf, Cli
 - pitfalls observed: none noted in this repo
 
 ## 11. Claude Code plugin wrapper
-- presence and shape (.claude-plugin/plugin.json, .mcp.json at repo root, full plugin layout, not present, other): `.claude-plugin/` directory present at repo root. No `.mcp.json` noted.
-- pitfalls observed:
-  - Contents of `.claude-plugin/plugin.json` (full plugin layout vs minimal).
+
+### presence and shape
+
+`.claude-plugin/` directory present at repo root. No `.mcp.json` noted.
+
+### pitfalls observed
+
+- Contents of `.claude-plugin/plugin.json` (full plugin layout vs minimal).
 
 ## 12. Tests
 - presence, framework, location, notable patterns: Not deeply extracted. `.github/` present suggests CI-driven testing.

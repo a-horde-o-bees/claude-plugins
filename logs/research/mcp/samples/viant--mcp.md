@@ -1,4 +1,4 @@
-# viant/mcp
+# Sample
 
 ## Identification
 - url: https://github.com/viant/mcp
@@ -57,8 +57,14 @@
 - pitfalls observed: none noted in this repo
 
 ## 11. Claude Code plugin wrapper
-- presence and shape: Not present; this is a library/SDK for building MCP applications
-- pitfalls observed: none noted in this repo
+
+### presence and shape
+
+Not present; this is a library/SDK for building MCP applications
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 12. Tests
 - presence, framework, location, notable patterns: Go stdlib testing; test files include `client.go` (client tests) and `server.go` (server tests) patterns; GitHub repository includes examples directory

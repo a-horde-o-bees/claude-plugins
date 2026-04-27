@@ -1,4 +1,4 @@
-# supabase-community/supabase-mcp
+# Sample
 
 ## Identification
 - url: https://github.com/supabase-community/supabase-mcp
@@ -72,8 +72,14 @@
 - pitfalls observed: none noted in this repo
 
 ## 11. Claude Code plugin wrapper
-- presence and shape: Not explicitly observed; "Claude" is referenced as a host but wrapper layout not extracted
-- pitfalls observed: none noted in this repo
+
+### presence and shape
+
+Not explicitly observed; "Claude" is referenced as a host but wrapper layout not extracted
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 12. Tests
 - presence, framework, location, notable patterns: Not fully extracted — biome.json config implies linting toolchain; specific test framework not identified in extracted content

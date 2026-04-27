@@ -1,4 +1,4 @@
-# reminia/zendesk-mcp-server
+# Sample
 
 ## Identification
 - url: https://github.com/reminia/zendesk-mcp-server
@@ -59,8 +59,14 @@
 - pitfalls observed: none noted in this repo
 
 ## 11. Claude Code plugin wrapper
-- presence and shape: none
-- pitfalls observed: none noted in this repo
+
+### presence and shape
+
+none
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 12. Tests
 - presence, framework, location, notable patterns: tests/ directory likely present but not captured

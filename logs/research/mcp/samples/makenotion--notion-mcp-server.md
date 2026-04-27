@@ -1,4 +1,4 @@
-# makenotion/notion-mcp-server
+# Sample
 
 ## Identification
 - url: https://github.com/makenotion/notion-mcp-server
@@ -61,7 +61,10 @@
 
 ## 11. Claude Code plugin wrapper
 - not present
-- pitfalls observed: none noted in this repo
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 12. Tests
 - present; Vitest (`npm test`, `npm run test:watch`, `npm run test:coverage`); `NODE_ENV=test`; coverage reports

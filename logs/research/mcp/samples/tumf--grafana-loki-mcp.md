@@ -1,4 +1,4 @@
-# tumf/grafana-loki-mcp
+# Sample
 
 ## Identification
 - url: https://github.com/tumf/grafana-loki-mcp
@@ -57,8 +57,14 @@ For each host: form + location
 - pitfalls observed: none noted in this repo
 
 ## 11. Claude Code plugin wrapper
-- presence and shape: not observed
-- pitfalls observed: none noted in this repo
+
+### presence and shape
+
+not observed
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 12. Tests
 - presence, framework, location, notable patterns: pytest with coverage reporting

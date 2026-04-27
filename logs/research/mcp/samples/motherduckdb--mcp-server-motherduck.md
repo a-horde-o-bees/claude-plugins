@@ -1,4 +1,4 @@
-# motherduckdb/mcp-server-motherduck
+# Sample
 
 ## Identification
 - url: https://github.com/motherduckdb/mcp-server-motherduck
@@ -61,8 +61,14 @@
 - pitfalls observed: none noted in this repo
 
 ## 11. Claude Code plugin wrapper
-- presence and shape: .claude-plugin wrapper mentioned as present with dedicated CLI commands
-- pitfalls observed: none noted in this repo
+
+### presence and shape
+
+.claude-plugin wrapper mentioned as present with dedicated CLI commands
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 12. Tests
 - presence, framework, location, notable patterns: Present; pytest (8.0+) with pytest-asyncio (0.24+); location: tests/ directory

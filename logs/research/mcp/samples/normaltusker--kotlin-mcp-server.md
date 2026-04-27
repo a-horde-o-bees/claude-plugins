@@ -1,4 +1,4 @@
-# normaltusker/kotlin-mcp-server
+# Sample
 
 ## Identification
 - url: https://github.com/normaltusker/kotlin-mcp-server
@@ -62,8 +62,14 @@
 - pitfalls observed: none noted in this repo
 
 ## 11. Claude Code plugin wrapper
-- presence and shape: Not present; this is a standalone server with IDE integration configs auto-generated
-- pitfalls observed: none noted in this repo
+
+### presence and shape
+
+Not present; this is a standalone server with IDE integration configs auto-generated
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 12. Tests
 - presence, framework, location, notable patterns: Testing framework configured in `pyproject.toml` (pytest, pytest_asyncio); test files excluded from coverage metrics; MyPy strict type checking enforced

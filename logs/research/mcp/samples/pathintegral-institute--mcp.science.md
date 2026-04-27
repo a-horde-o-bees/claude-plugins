@@ -1,4 +1,4 @@
-# pathintegral-institute/mcp.science
+# Sample
 
 ## Identification
 - url: https://github.com/pathintegral-institute/mcp.science
@@ -59,8 +59,14 @@
 - pitfalls observed: none noted in this repo
 
 ## 11. Claude Code plugin wrapper
-- presence and shape: Not present; collection of independent PyPI servers
-- pitfalls observed: none noted in this repo
+
+### presence and shape
+
+Not present; collection of independent PyPI servers
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 12. Tests
 - presence, framework, location, notable patterns: Not documented in provided content

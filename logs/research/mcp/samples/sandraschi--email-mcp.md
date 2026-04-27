@@ -1,4 +1,4 @@
-# sandraschi/email-mcp
+# Sample
 
 ## Identification
 - url: https://github.com/sandraschi/email-mcp
@@ -61,8 +61,14 @@
 - pitfalls observed: none noted in this repo
 
 ## 11. Claude Code plugin wrapper
-- presence and shape: Not explicitly observed — MCPB bundle targets Claude Desktop, not Claude Code plugin layout
-- pitfalls observed: none noted in this repo
+
+### presence and shape
+
+Not explicitly observed — MCPB bundle targets Claude Desktop, not Claude Code plugin layout
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 12. Tests
 - presence, framework, location, notable patterns: pytest (`pytest.ini` at root); `tests/` directory; multi-Python CI matrix (3.10/3.11/3.12)

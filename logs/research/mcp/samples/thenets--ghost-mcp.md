@@ -1,4 +1,4 @@
-# thenets/ghost-mcp
+# Sample
 
 ## Identification
 - url: https://github.com/thenets/ghost-mcp
@@ -59,8 +59,14 @@
 - pitfalls observed: none noted in this repo
 
 ## 11. Claude Code plugin wrapper
-- presence and shape: none
-- pitfalls observed: none noted in this repo
+
+### presence and shape
+
+none
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 12. Tests
 - presence, framework, location, notable patterns: `make test`, `make test-connection`; GitHub Actions workflows directory present

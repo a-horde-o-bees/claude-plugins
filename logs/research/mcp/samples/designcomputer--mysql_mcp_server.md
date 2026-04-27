@@ -1,86 +1,222 @@
-# designcomputer/mysql_mcp_server
+# Sample
 
 ## Identification
-- url: https://github.com/designcomputer/mysql_mcp_server
-- stars: 1.2k
-- last-commit (date or relative): v0.2.2 released April 18, 2025
-- license: MIT
-- default branch: main
-- one-line purpose: MySQL MCP server — exposes tables as MCP resources and executes SQL via tools; least-privilege user guidance built in.
+
+### url
+
+https://github.com/designcomputer/mysql_mcp_server
+
+### stars
+
+1.2k
+
+### last-commit (date or relative)
+
+v0.2.2 released April 18, 2025
+
+### license
+
+MIT
+
+### default branch
+
+main
+
+### one-line purpose
+
+MySQL MCP server — exposes tables as MCP resources and executes SQL via tools; least-privilege user guidance built in.
 
 ## 1. Language and runtime
-- language(s) + version constraints: Python (93.2%), Dockerfile (6.8%); version not stated in fetched content
-- framework/SDK in use: Anthropic MCP Python SDK
-- pitfalls observed: none noted in this repo
+
+### language(s) + version constraints
+
+Python (93.2%), Dockerfile (6.8%); version not stated in fetched content
+
+### framework/SDK in use
+
+Anthropic MCP Python SDK
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 2. Transport
-- supported transports: stdio
-- how selected (flag, env, separate entry, auto-detect, etc.): Implicit — only stdio documented; README describes it as "stdio-based protocol server rather than standalone application"
-- pitfalls observed: none noted in this repo
+
+### supported transports
+
+stdio
+
+### how selected (flag, env, separate entry, auto-detect, etc.)
+
+Implicit — only stdio documented; README describes it as "stdio-based protocol server rather than standalone application"
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 3. Distribution
-- every mechanism observed: PyPI, Smithery installer, pip
-- published package name(s): mysql-mcp-server
-- install commands shown in README: `pip install mysql-mcp-server`; `npx -y @smithery/cli install mysql-mcp-server --client claude`
-- pitfalls observed: none noted in this repo
+
+### every mechanism observed
+
+PyPI, Smithery installer, pip
+
+### published package name(s)
+
+mysql-mcp-server
+
+### install commands shown in README
+
+`pip install mysql-mcp-server`; `npx -y @smithery/cli install mysql-mcp-server --client claude`
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 4. Entry point / launch
-- command(s) users/hosts run: Via `uv` or `uvx` package runners — README explicitly discourages `python ...` direct invocation, framing the server strictly as an MCP-protocol bridge for hosts
-- wrapper scripts, launchers, stubs: Dockerfile
-- pitfalls observed: none noted in this repo
+
+### command(s) users/hosts run
+
+Via `uv` or `uvx` package runners — README explicitly discourages `python ...` direct invocation, framing the server strictly as an MCP-protocol bridge for hosts
+
+### wrapper scripts, launchers, stubs
+
+Dockerfile
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 5. Configuration surface
-- how config reaches the server: Environment variables — `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_USER`, `MYSQL_PASSWORD`, `MYSQL_DATABASE`
-- pitfalls observed: none noted in this repo
+
+### how config reaches the server
+
+Environment variables — `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_USER`, `MYSQL_PASSWORD`, `MYSQL_DATABASE`
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 6. Authentication
-- flow: MySQL username/password
-- where credentials come from: Environment variables; README emphasizes "never commit" credentials and restricting to minimum-permission DB users
-- pitfalls observed: none noted in this repo
+
+### flow
+
+MySQL username/password
+
+### where credentials come from
+
+Environment variables; README emphasizes "never commit" credentials and restricting to minimum-permission DB users
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 7. Multi-tenancy
-- single-user / per-request tenant / workspace-keyed / not applicable / other: Single database connection per server; no per-request tenancy
-- pitfalls observed: none noted in this repo
+
+### single-user / per-request tenant / workspace-keyed / not applicable / other
+
+Single database connection per server; no per-request tenancy
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 8. Capabilities exposed
-- tools / resources / prompts / sampling / roots / logging / other: Resources — MySQL tables listed as resources, table contents readable. Tools — SQL query execution with error handling. Logging mentioned as "comprehensive."
-- pitfalls observed: none noted in this repo
+
+### tools / resources / prompts / sampling / roots / logging / other
+
+Resources — MySQL tables listed as resources, table contents readable. Tools — SQL query execution with error handling. Logging mentioned as "comprehensive."
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 9. Observability
-- logging destination + format, metrics, tracing, debug flags: Described as "comprehensive logging"; specifics not surfaced
-- pitfalls observed:
-  - Logging format and destination not specified
+
+### logging destination + format, metrics, tracing, debug flags
+
+Described as "comprehensive logging"; specifics not surfaced
+
+### pitfalls observed
+
+- Logging format and destination not specified
 
 ## 10. Host integrations shown in README or repo
-- Claude Desktop: `claude_desktop_config.json` example
-- VS Code: `mcp.json` example
-- Other editors/CLIs: Not enumerated
-- pitfalls observed: none noted in this repo
+
+### Claude Desktop
+
+`claude_desktop_config.json` example
+
+### VS Code
+
+`mcp.json` example
+
+### Other editors/CLIs
+
+Not enumerated
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 11. Claude Code plugin wrapper
-- presence and shape: Not present
-- pitfalls observed: none noted in this repo
+
+### presence and shape
+
+Not present
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 12. Tests
-- presence, framework, location, notable patterns: pytest-based (`pytest.ini`, `requirements-dev.txt`); `tests/` directory
-- pitfalls observed: none noted in this repo
+
+### presence, framework, location, notable patterns
+
+pytest-based (`pytest.ini`, `requirements-dev.txt`); `tests/` directory
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 13. CI
-- presence, system, triggers, what it runs: GitHub Actions (test.yml badge); specifics not extracted
-- pitfalls observed:
-  - CI workflow contents not extracted
+
+### presence, system, triggers, what it runs
+
+GitHub Actions (test.yml badge); specifics not extracted
+
+### pitfalls observed
+
+- CI workflow contents not extracted
 
 ## 14. Container / packaging artifacts
-- Dockerfile, docker-compose, Helm, systemd, brew formula, etc.: Dockerfile present
-- pitfalls observed: none noted in this repo
+
+### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+
+Dockerfile present
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 15. Example client / developer ergonomics
-- MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs: MCP Inspector debugging support referenced; JSON config examples for hosts
-- pitfalls observed: none noted in this repo
+
+### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+
+MCP Inspector debugging support referenced; JSON config examples for hosts
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 16. Repo layout
-- single-package / monorepo / vendored / other: Single-package Python — `src/mysql_mcp_server/`, `tests/`, `.github/workflows/`, pyproject.toml
-- pitfalls observed: none noted in this repo
+
+### single-package / monorepo / vendored / other
+
+Single-package Python — `src/mysql_mcp_server/`, `tests/`, `.github/workflows/`, pyproject.toml
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 17. Notable structural choices
 - Exposes tables as MCP resources (not only tools) — one of the few DB MCP servers to use the resource surface

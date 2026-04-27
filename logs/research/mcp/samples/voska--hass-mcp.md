@@ -1,4 +1,4 @@
-# voska/hass-mcp
+# Sample
 
 ## Identification
 - url: https://github.com/voska/hass-mcp
@@ -59,8 +59,14 @@
 - pitfalls observed: none noted in this repo
 
 ## 11. Claude Code plugin wrapper
-- presence and shape: none shown
-- pitfalls observed: none noted in this repo
+
+### presence and shape
+
+none shown
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 12. Tests
 - presence, framework, location, notable patterns: pytest mentioned; GitHub Actions workflow directory present

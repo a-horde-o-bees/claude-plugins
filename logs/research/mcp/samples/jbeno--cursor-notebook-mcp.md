@@ -1,4 +1,4 @@
-# jbeno/cursor-notebook-mcp
+# Sample
 
 ## Identification
 - url: https://github.com/jbeno/cursor-notebook-mcp
@@ -57,8 +57,14 @@ For each host: form + location
 - pitfalls observed: none noted in this repo
 
 ## 11. Claude Code plugin wrapper
-- presence and shape: none observed; optimized for Cursor specifically
-- pitfalls observed: none noted in this repo
+
+### presence and shape
+
+none observed; optimized for Cursor specifically
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 12. Tests
 - presence, framework, location, notable patterns: pytest + pytest-asyncio + pytest-cov + pytest-timeout; `tests/` directory; `test_plan.md` with scenario-based test documentation; cross-platform test runners

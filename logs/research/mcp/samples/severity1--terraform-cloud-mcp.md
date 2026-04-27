@@ -1,4 +1,4 @@
-# severity1/terraform-cloud-mcp
+# Sample
 
 ## Identification
 - url: https://github.com/severity1/terraform-cloud-mcp
@@ -58,8 +58,14 @@ For each host: form + location
 - pitfalls observed: none noted in this repo
 
 ## 11. Claude Code plugin wrapper
-- presence and shape: not observed (standard `claude mcp add` CLI usage, not a plugin marketplace wrapper)
-- pitfalls observed: none noted in this repo
+
+### presence and shape
+
+not observed (standard `claude mcp add` CLI usage, not a plugin marketplace wrapper)
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 12. Tests
 - presence, framework, location, notable patterns: not surfaced in fetched content

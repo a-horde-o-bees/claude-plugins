@@ -1,4 +1,4 @@
-# misbahsy/video-audio-mcp
+# Sample
 
 ## Identification
 - url: https://github.com/misbahsy/video-audio-mcp
@@ -61,8 +61,14 @@ Not enumerated
 - pitfalls observed: none noted in this repo
 
 ## 11. Claude Code plugin wrapper
-- presence and shape: none
-- pitfalls observed: none noted in this repo
+
+### presence and shape
+
+none
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 12. Tests
 - presence, framework, location, notable patterns: pytest test suite in `tests/` — 30+ functions tested; `pytest` declared as a runtime dep (unusual — it should be a dev dep)

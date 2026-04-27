@@ -1,4 +1,4 @@
-# paypal/paypal-mcp-server
+# Sample
 
 ## Identification
 - url: https://github.com/paypal/paypal-mcp-server
@@ -58,8 +58,14 @@
 - pitfalls observed: none noted in this repo
 
 ## 11. Claude Code plugin wrapper
-- presence and shape: Not observed — no `.claude-plugin` directory surfaced in research
-- pitfalls observed: none noted in this repo
+
+### presence and shape
+
+Not observed — no `.claude-plugin` directory surfaced in research
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 12. Tests
 - presence, framework, location, notable patterns: Jest configured; specific test layout not extracted within budget

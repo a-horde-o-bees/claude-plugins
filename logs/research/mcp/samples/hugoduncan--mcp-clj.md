@@ -1,4 +1,4 @@
-# hugoduncan/mcp-clj
+# Sample
 
 ## Identification
 - url: https://github.com/hugoduncan/mcp-clj
@@ -58,8 +58,14 @@
 - pitfalls observed: none noted in this repo
 
 ## 11. Claude Code plugin wrapper
-- presence and shape: Not present; server-only implementation
-- pitfalls observed: none noted in this repo
+
+### presence and shape
+
+Not present; server-only implementation
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 12. Tests
 - presence, framework, location, notable patterns: Test configuration via `tests.edn`; testing investigation notes present; clj-kondo linting configuration for code quality

@@ -1,4 +1,4 @@
-# mark3labs/mcp-go
+# Sample
 
 ## Identification
 - url: https://github.com/mark3labs/mcp-go
@@ -57,8 +57,14 @@
 - pitfalls observed: none noted in this repo
 
 ## 11. Claude Code plugin wrapper
-- presence and shape: Not present; this is an SDK for building servers, not a server itself
-- pitfalls observed: none noted in this repo
+
+### presence and shape
+
+Not present; this is an SDK for building servers, not a server itself
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 12. Tests
 - presence, framework, location, notable patterns: Test framework present (Go stdlib testing); located in `*_test.go` files and `e2e/` directory; patterns include end-to-end tests and unit tests for core functionality

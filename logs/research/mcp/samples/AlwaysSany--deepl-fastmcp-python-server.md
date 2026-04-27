@@ -1,85 +1,213 @@
-# AlwaysSany/deepl-fastmcp-python-server
+# Sample
 
 ## Identification
-- url: https://github.com/AlwaysSany/deepl-fastmcp-python-server
-- stars: 4
-- last-commit (date or relative): not captured
-- license: MIT
-- default branch: main
-- one-line purpose: DeepL translation MCP server — translate, rephrase, batch-translate documents; detect language; keep translation history and usage analytics locally.
+
+### url
+
+https://github.com/AlwaysSany/deepl-fastmcp-python-server
+
+### stars
+
+4
+
+### last-commit (date or relative)
+
+not captured
+
+### license
+
+MIT
+
+### default branch
+
+main
+
+### one-line purpose
+
+DeepL translation MCP server — translate, rephrase, batch-translate documents; detect language; keep translation history and usage analytics locally.
 
 ## 1. Language and runtime
-- language(s) + version constraints: Python 97.3%; `.python-version` present, `runtime.txt` references Python 3.13.3
-- framework/SDK in use: FastMCP (likely 2.x given standalone-package install)
-- pitfalls observed:
+
+### language(s) + version constraints
+
+Python 97.3%; `.python-version` present, `runtime.txt` references Python 3.13.3
+
+### framework/SDK in use
+
+FastMCP (likely 2.x given standalone-package install)
+
+### pitfalls observed
+
   - Python 3.13.3 floor in `runtime.txt` — aggressive modern-Python target
 
 ## 2. Transport
-- supported transports: stdio (default); SSE (Server-Sent Events); Streamable HTTP — all three selectable at launch
-- how selected: `--transport stdio|sse|http` CLI flag; `--host`, `--port` args
-- pitfalls observed: none noted in this repo
+
+### supported transports
+
+stdio (default); SSE (Server-Sent Events); Streamable HTTP — all three selectable at launch
+
+### how selected
+
+`--transport stdio|sse|http` CLI flag; `--host`, `--port` args
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 3. Distribution
-- every mechanism observed: clone + `uv sync`; Docker (Dockerfile + docker-compose.yml)
-- published package name(s): no PyPI publication documented
-- install commands shown in README:
+
+### every mechanism observed
+
+clone + `uv sync`; Docker (Dockerfile + docker-compose.yml)
+
+### published package name(s)
+
+no PyPI publication documented
+
+### install commands shown in README
+
   - `git clone ... && cd ... && uv sync`
   - Docker / compose (compose file present)
-- pitfalls observed: none noted in this repo
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 4. Entry point / launch
-- command(s) users/hosts run: `uv run python main.py --transport stdio`
-- wrapper scripts, launchers, stubs: bare `main.py` script with CLI arg handling
-- pitfalls observed: none noted in this repo
+
+### command(s) users/hosts run
+
+`uv run python main.py --transport stdio`
+
+### wrapper scripts, launchers, stubs
+
+bare `main.py` script with CLI arg handling
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 5. Configuration surface
-- how config reaches the server: env vars — `DEEPL_AUTH_KEY` (required), `DEEPL_SERVER_URL` (optional, defaults to `https://api-free.deepl.com`); transport + host/port via CLI args
-- pitfalls observed: none noted in this repo
+
+### how config reaches the server
+
+env vars — `DEEPL_AUTH_KEY` (required), `DEEPL_SERVER_URL` (optional, defaults to `https://api-free.deepl.com`); transport + host/port via CLI args
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 6. Authentication
-- flow: DeepL API key
-- where credentials come from: `DEEPL_AUTH_KEY` env var
-- pitfalls observed: none noted in this repo
+
+### flow
+
+DeepL API key
+
+### where credentials come from
+
+`DEEPL_AUTH_KEY` env var
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 7. Multi-tenancy
-- single-user / per-request tenant / workspace-keyed / not applicable / other: not addressed — likely single-user (single API key per deployment)
-- pitfalls observed: none noted in this repo
+
+### single-user / per-request tenant / workspace-keyed / not applicable / other
+
+not addressed — likely single-user (single API key per deployment)
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 8. Capabilities exposed
-- tools / resources / prompts / sampling / roots / logging / other: tools — 7 primary: `translate_text`, `rephrase_text`, `batch_translate`, `translate_document`, `detect_language`, `get_translation_history`, `analyze_usage_patterns`
-- pitfalls observed: none noted in this repo
+
+### tools / resources / prompts / sampling / roots / logging / other
+
+tools — 7 primary: `translate_text`, `rephrase_text`, `batch_translate`, `translate_document`, `detect_language`, `get_translation_history`, `analyze_usage_patterns`
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 9. Observability
-- logging destination + format, metrics, tracing, debug flags: not captured
-- pitfalls observed: none noted in this repo
+
+### logging destination + format, metrics, tracing, debug flags
+
+not captured
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 10. Host integrations shown in README or repo
+
 Not captured per host in extract
-- pitfalls observed: none noted in this repo
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 11. Claude Code plugin wrapper
-- presence and shape: none
-- pitfalls observed: none noted in this repo
+
+### presence and shape
+
+none
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 12. Tests
-- presence, framework, location, notable patterns: `/tests` directory present; CI details not captured
-- pitfalls observed: none noted in this repo
+
+### presence, framework, location, notable patterns
+
+`/tests` directory present; CI details not captured
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 13. CI
-- presence, system, triggers, what it runs: not captured
-- pitfalls observed: none noted in this repo
+
+### presence, system, triggers, what it runs
+
+not captured
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 14. Container / packaging artifacts
-- Dockerfile, docker-compose, Helm, systemd, brew formula, etc.: Dockerfile + docker-compose.yml — supports containerized multi-transport deployment
-- pitfalls observed: none noted in this repo
+
+### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+
+Dockerfile + docker-compose.yml — supports containerized multi-transport deployment
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 15. Example client / developer ergonomics
-- MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs: CLI arg design for transport/host/port selection
-- pitfalls observed: none noted in this repo
+
+### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+
+CLI arg design for transport/host/port selection
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 16. Repo layout
-- single-package / monorepo / vendored / other: single-package (`main.py` at root); no installable console script
-- pitfalls observed: none noted in this repo
+
+### single-package / monorepo / vendored / other
+
+single-package (`main.py` at root); no installable console script
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 17. Notable structural choices
 - **Three-transport support** (stdio, SSE, Streamable HTTP) all in one binary, CLI-flag selectable — one of the most complete transport surfaces observed among small community servers
@@ -133,4 +261,7 @@ Not captured per host in extract
 - Script-only server + Docker — a "dev-tier" distribution for a library with a lot of transport flexibility
 
 ## 20. Gaps
-- what couldn't be determined: pyproject details, license placement, test framework specifics, whether Streamable HTTP uses MCP's new transport spec or a local variant, how translation history is persisted
+
+### what couldn't be determined
+
+pyproject details, license placement, test framework specifics, whether Streamable HTTP uses MCP's new transport spec or a local variant, how translation history is persisted

@@ -1,4 +1,4 @@
-# microsoft/playwright-mcp
+# Sample
 
 ## Identification
 - url: https://github.com/microsoft/playwright-mcp
@@ -74,8 +74,14 @@ For each host encountered — Claude Desktop, Claude Code, Cursor, Windsurf, Cli
 - pitfalls observed: none noted in this repo
 
 ## 11. Claude Code plugin wrapper
-- presence and shape (.claude-plugin/plugin.json, .mcp.json at repo root, full plugin layout, not present, other): Not observed in fetched view.
-- pitfalls observed: none noted in this repo
+
+### presence and shape
+
+Not observed in fetched view.
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 12. Tests
 - presence, framework, location, notable patterns: `.github/workflows` present. Test setup not deeply extracted; Playwright's own test harness likely used given the project heritage.

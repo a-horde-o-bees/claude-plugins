@@ -1,4 +1,4 @@
-# executeautomation/mcp-playwright
+# Sample
 
 ## Identification
 - url: https://github.com/executeautomation/mcp-playwright

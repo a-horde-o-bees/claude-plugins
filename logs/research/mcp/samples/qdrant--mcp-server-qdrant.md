@@ -1,4 +1,4 @@
-# qdrant/mcp-server-qdrant
+# Sample
 
 ## Identification
 - url: https://github.com/qdrant/mcp-server-qdrant
@@ -59,8 +59,14 @@ For each host: form + location
 - pitfalls observed: none noted in this repo
 
 ## 11. Claude Code plugin wrapper
-- presence and shape: none observed
-- pitfalls observed: none noted in this repo
+
+### presence and shape
+
+none observed
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 12. Tests
 - presence, framework, location, notable patterns: pytest ≥8.3.3 with pytest-asyncio (auto mode); tests under `tests/`; default test collection uses in-memory Qdrant

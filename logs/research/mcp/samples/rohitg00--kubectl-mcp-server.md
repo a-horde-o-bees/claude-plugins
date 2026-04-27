@@ -1,4 +1,4 @@
-# rohitg00/kubectl-mcp-server
+# Sample
 
 ## Identification
 - url: https://github.com/rohitg00/kubectl-mcp-server
@@ -58,8 +58,14 @@ For each host: form + location
 - pitfalls observed: none noted in this repo
 
 ## 11. Claude Code plugin wrapper
-- presence and shape: not observed
-- pitfalls observed: none noted in this repo
+
+### presence and shape
+
+not observed
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 12. Tests
 - presence, framework, location, notable patterns: 234+ passing tests, pytest-based; unit + integration + server-initialization suites

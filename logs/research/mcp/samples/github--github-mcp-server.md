@@ -1,4 +1,4 @@
-# github/github-mcp-server
+# Sample
 
 ## Identification
 - url: https://github.com/github/github-mcp-server
@@ -66,8 +66,14 @@ For each host encountered — Claude Desktop, Claude Code, Cursor, Windsurf, Cli
 - pitfalls observed: none noted in this repo
 
 ## 11. Claude Code plugin wrapper
-- presence and shape (.claude-plugin/plugin.json, .mcp.json at repo root, full plugin layout, not present, other): Not observed; host integration via external `claude_desktop_config.json` snippets rather than an in-repo plugin.
-- pitfalls observed: none noted in this repo
+
+### presence and shape
+
+Not observed; host integration via external `claude_desktop_config.json` snippets rather than an in-repo plugin.
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 12. Tests
 - presence, framework, location, notable patterns: End-to-end test suite in `e2e/`. GitHub Actions CI. `.golangci.yml` for linting.

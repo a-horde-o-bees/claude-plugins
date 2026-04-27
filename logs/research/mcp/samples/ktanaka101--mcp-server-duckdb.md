@@ -1,4 +1,4 @@
-# ktanaka101/mcp-server-duckdb
+# Sample
 
 ## Identification
 - url: https://github.com/ktanaka101/mcp-server-duckdb
@@ -58,8 +58,14 @@
 - pitfalls observed: none noted in this repo
 
 ## 11. Claude Code plugin wrapper
-- presence and shape: Not present
-- pitfalls observed: none noted in this repo
+
+### presence and shape
+
+Not present
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 12. Tests
 - presence, framework, location, notable patterns: `tests/` directory present; framework not specified within fetch budget

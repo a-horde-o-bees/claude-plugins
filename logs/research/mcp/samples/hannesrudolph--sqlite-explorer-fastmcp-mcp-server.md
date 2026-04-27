@@ -1,4 +1,4 @@
-# hannesrudolph/sqlite-explorer-fastmcp-mcp-server
+# Sample
 
 ## Identification
 - url: https://github.com/hannesrudolph/sqlite-explorer-fastmcp-mcp-server
@@ -57,8 +57,14 @@
 - pitfalls observed: none noted in this repo
 
 ## 11. Claude Code plugin wrapper
-- presence and shape: Not present — no `.claude-plugin` directory or Claude Code specific wiring observed
-- pitfalls observed: none noted in this repo
+
+### presence and shape
+
+Not present — no `.claude-plugin` directory or Claude Code specific wiring observed
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 12. Tests
 - presence, framework, location, notable patterns: No tests observed in repo

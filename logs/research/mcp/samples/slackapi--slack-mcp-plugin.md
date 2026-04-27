@@ -1,4 +1,4 @@
-# slackapi/slack-mcp-plugin
+# Sample
 
 ## Identification
 - url: https://github.com/slackapi/slack-mcp-plugin
@@ -58,7 +58,10 @@
 
 ## 11. Claude Code plugin wrapper
 - not present; remote HTTP service (the repo is config-only)
-- pitfalls observed: none noted in this repo
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 12. Tests
 - not applicable (config-only repo)

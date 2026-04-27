@@ -1,4 +1,4 @@
-# zilliztech/mcp-server-milvus
+# Sample
 
 ## Identification
 - url: https://github.com/zilliztech/mcp-server-milvus
@@ -58,8 +58,14 @@ For each host: form + location
 - pitfalls observed: none noted in this repo
 
 ## 11. Claude Code plugin wrapper
-- presence and shape: none observed
-- pitfalls observed: none noted in this repo
+
+### presence and shape
+
+none observed
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 12. Tests
 - presence, framework, location, notable patterns: no explicit test suite visible in README (no dedicated test directory surfaced)

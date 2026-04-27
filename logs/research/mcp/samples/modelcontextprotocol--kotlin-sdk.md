@@ -1,4 +1,4 @@
-# modelcontextprotocol/kotlin-sdk
+# Sample
 
 ## Identification
 - url: https://github.com/modelcontextprotocol/kotlin-sdk
@@ -58,8 +58,14 @@
 - pitfalls observed: none noted in this repo
 
 ## 11. Claude Code plugin wrapper
-- presence and shape: Not present; this is an SDK for building servers/clients, not a server itself
-- pitfalls observed: none noted in this repo
+
+### presence and shape
+
+Not present; this is an SDK for building servers/clients, not a server itself
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 12. Tests
 - presence, framework, location, notable patterns: Comprehensive testing infrastructure: `kotlin-sdk-testing` module, integration tests, conformance tests, test utilities in `test-utils/`; Knit properties for code snippet testing

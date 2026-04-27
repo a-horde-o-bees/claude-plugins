@@ -1,4 +1,4 @@
-# geropl/linear-mcp-go
+# Sample
 
 ## Identification
 - url: https://github.com/geropl/linear-mcp-go
@@ -64,8 +64,14 @@
 - pitfalls observed: none noted in this repo
 
 ## 11. Claude Code plugin wrapper
-- presence and shape: Not observed
-- pitfalls observed: none noted in this repo
+
+### presence and shape
+
+Not observed
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 12. Tests
 - presence, framework, location, notable patterns: go-vcr for recorded HTTP interactions; cassettes checked into `testdata/`; live test workspace `linear.app/linear-mcp-go-test` for re-recording; separate flags for re-record (`-record=true`) and write-op recording (`-recordWrites=true`)

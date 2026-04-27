@@ -1,86 +1,219 @@
-# ClickHouse/mcp-clickhouse
+# Sample
 
 ## Identification
-- url: https://github.com/ClickHouse/mcp-clickhouse
-- stars: 757
-- last-commit (date or relative): 71 commits on main; specific date not surfaced
-- license: Apache-2.0
-- default branch: main
-- one-line purpose: ClickHouse MCP server — run SQL, list databases/tables, and query an embedded chDB engine against ClickHouse clusters.
+
+### url
+
+https://github.com/ClickHouse/mcp-clickhouse
+
+### stars
+
+757
+
+### last-commit (date or relative)
+
+71 commits on main; specific date not surfaced
+
+### license
+
+Apache-2.0
+
+### default branch
+
+main
+
+### one-line purpose
+
+ClickHouse MCP server — run SQL, list databases/tables, and query an embedded chDB engine against ClickHouse clusters.
 
 ## 1. Language and runtime
-- language(s) + version constraints: Python (98.7%); uv-managed
-- framework/SDK in use: FastMCP (MCP Server SDK)
-- pitfalls observed: none noted in this repo
+
+### language(s) + version constraints
+
+Python (98.7%); uv-managed
+
+### framework/SDK in use
+
+FastMCP (MCP Server SDK)
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 2. Transport
-- supported transports: stdio (default), HTTP, SSE
-- how selected (flag, env, separate entry, auto-detect, etc.): `CLICKHOUSE_MCP_SERVER_TRANSPORT` env var (stdio/http/sse)
-- pitfalls observed: none noted in this repo
+
+### supported transports
+
+stdio (default), HTTP, SSE
+
+### how selected (flag, env, separate entry, auto-detect, etc.)
+
+`CLICKHOUSE_MCP_SERVER_TRANSPORT` env var (stdio/http/sse)
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 3. Distribution
-- every mechanism observed: PyPI (`mcp-clickhouse`, `mcp-clickhouse[chdb]` extra), Docker
-- published package name(s): mcp-clickhouse
-- install commands shown in README: `pip install mcp-clickhouse`; `pip install 'mcp-clickhouse[chdb]'`
-- pitfalls observed: none noted in this repo
+
+### every mechanism observed
+
+PyPI (`mcp-clickhouse`, `mcp-clickhouse[chdb]` extra), Docker
+
+### published package name(s)
+
+mcp-clickhouse
+
+### install commands shown in README
+
+`pip install mcp-clickhouse`; `pip install 'mcp-clickhouse[chdb]'`
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 4. Entry point / launch
-- command(s) users/hosts run: `mcp-clickhouse` script or `python3 -m mcp_clickhouse.main`
-- wrapper scripts, launchers, stubs: Dockerfile; `test-services/` Docker Compose for local dev
-- pitfalls observed: none noted in this repo
+
+### command(s) users/hosts run
+
+`mcp-clickhouse` script or `python3 -m mcp_clickhouse.main`
+
+### wrapper scripts, launchers, stubs
+
+Dockerfile; `test-services/` Docker Compose for local dev
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 5. Configuration surface
-- how config reaches the server: Environment variables — `CLICKHOUSE_HOST`, `CLICKHOUSE_USER`, `CLICKHOUSE_PASSWORD` (required); `CLICKHOUSE_SECURE`, `CLICKHOUSE_VERIFY` (TLS); `CLICKHOUSE_MCP_SERVER_TRANSPORT`; `CLICKHOUSE_ALLOW_WRITE_ACCESS`, `CLICKHOUSE_ALLOW_DROP`; `CLICKHOUSE_MCP_AUTH_TOKEN`, `CLICKHOUSE_MCP_AUTH_DISABLED`; `CHDB_ENABLED`, `CHDB_DATA_PATH`; `MCP_MIDDLEWARE_MODULE`. `fastmcp.json` for FastMCP-level config.
-- pitfalls observed: none noted in this repo
+
+### how config reaches the server
+
+Environment variables — `CLICKHOUSE_HOST`, `CLICKHOUSE_USER`, `CLICKHOUSE_PASSWORD` (required); `CLICKHOUSE_SECURE`, `CLICKHOUSE_VERIFY` (TLS); `CLICKHOUSE_MCP_SERVER_TRANSPORT`; `CLICKHOUSE_ALLOW_WRITE_ACCESS`, `CLICKHOUSE_ALLOW_DROP`; `CLICKHOUSE_MCP_AUTH_TOKEN`, `CLICKHOUSE_MCP_AUTH_DISABLED`; `CHDB_ENABLED`, `CHDB_DATA_PATH`; `MCP_MIDDLEWARE_MODULE`. `fastmcp.json` for FastMCP-level config.
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 6. Authentication
-- flow: stdio — none. HTTP/SSE — bearer token required (generated via `uuidgen` or `openssl`). Dev override via `CLICKHOUSE_MCP_AUTH_DISABLED=true`.
-- where credentials come from: `CLICKHOUSE_MCP_AUTH_TOKEN` env var; ClickHouse credentials also via env vars
-- pitfalls observed: none noted in this repo
+
+### flow
+
+stdio — none. HTTP/SSE — bearer token required (generated via `uuidgen` or `openssl`). Dev override via `CLICKHOUSE_MCP_AUTH_DISABLED=true`.
+
+### where credentials come from
+
+`CLICKHOUSE_MCP_AUTH_TOKEN` env var; ClickHouse credentials also via env vars
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 7. Multi-tenancy
-- single-user / per-request tenant / workspace-keyed / not applicable / other: Per-request tenant possible — custom middleware can override connection settings per request via `CLIENT_CONFIG_OVERRIDES_KEY` in context state
-- pitfalls observed:
+
+### single-user / per-request tenant / workspace-keyed / not applicable / other
+
+Per-request tenant possible — custom middleware can override connection settings per request via `CLIENT_CONFIG_OVERRIDES_KEY` in context state
+
+### pitfalls observed
+
   - Per-request connection overrides via middleware-managed context state — closest thing to multi-tenancy among DB MCP servers
 
 ## 8. Capabilities exposed
-- tools / resources / prompts / sampling / roots / logging / other: Tools — `run_query` (SQL), `list_databases`, `list_tables` (paginated, filterable), `run_chdb_select_query` (against embedded chDB). Resources/prompts not listed explicitly.
-- pitfalls observed: none noted in this repo
+
+### tools / resources / prompts / sampling / roots / logging / other
+
+Tools — `run_query` (SQL), `list_databases`, `list_tables` (paginated, filterable), `run_chdb_select_query` (against embedded chDB). Resources/prompts not listed explicitly.
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 9. Observability
-- logging destination + format, metrics, tracing, debug flags: Example middleware (`example_middleware.py`) demonstrates request logging, tool-call tracking, performance measurement
-- pitfalls observed: none noted in this repo
+
+### logging destination + format, metrics, tracing, debug flags
+
+Example middleware (`example_middleware.py`) demonstrates request logging, tool-call tracking, performance measurement
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 10. Host integrations shown in README or repo
-- Claude Desktop: Standard MCP config expected
-- Other editors/CLIs: Not enumerated in fetched content
+
+### Claude Desktop
+
+Standard MCP config expected
+
+### Other editors/CLIs
+
+Not enumerated in fetched content
 - Integration details less emphasized than the runtime config surface
-- pitfalls observed: none noted in this repo
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 11. Claude Code plugin wrapper
-- presence and shape: Not present
-- pitfalls observed: none noted in this repo
+
+### presence and shape
+
+Not present
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 12. Tests
-- presence, framework, location, notable patterns: pytest; tests under `tests/` with separate suites for ClickHouse (`test_tool.py`) and chDB (`test_chdb_tool.py`); `test-services/` Docker Compose spins up a ClickHouse instance for integration tests
-- pitfalls observed: none noted in this repo
+
+### presence, framework, location, notable patterns
+
+pytest; tests under `tests/` with separate suites for ClickHouse (`test_tool.py`) and chDB (`test_chdb_tool.py`); `test-services/` Docker Compose spins up a ClickHouse instance for integration tests
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 13. CI
-- presence, system, triggers, what it runs: GitHub Actions in `.github/workflows/`; specifics not extracted
-- pitfalls observed:
+
+### presence, system, triggers, what it runs
+
+GitHub Actions in `.github/workflows/`; specifics not extracted
+
+### pitfalls observed
+
   - CI workflow specifics not extracted
 
 ## 14. Container / packaging artifacts
-- Dockerfile, docker-compose, Helm, systemd, brew formula, etc.: Dockerfile; `test-services/` Docker Compose for local test infra
-- pitfalls observed: none noted in this repo
+
+### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+
+Dockerfile; `test-services/` Docker Compose for local test infra
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 15. Example client / developer ergonomics
-- MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs: `example_middleware.py`, `test-services/`, `fastmcp.json`
-- pitfalls observed: none noted in this repo
+
+### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+
+`example_middleware.py`, `test-services/`, `fastmcp.json`
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 16. Repo layout
-- single-package / monorepo / vendored / other: Single-package Python — `mcp_clickhouse/`, `tests/`, `test-services/`, `.github/workflows/`, `fastmcp.json`, `pyproject.toml`
-- pitfalls observed: none noted in this repo
+
+### single-package / monorepo / vendored / other
+
+Single-package Python — `mcp_clickhouse/`, `tests/`, `test-services/`, `.github/workflows/`, `fastmcp.json`, `pyproject.toml`
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 17. Notable structural choices
 - Dual-engine — standalone ClickHouse client and embedded chDB engine can run together

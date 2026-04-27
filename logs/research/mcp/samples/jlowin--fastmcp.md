@@ -1,4 +1,4 @@
-# jlowin/fastmcp
+# Sample
 
 ## Identification
 - url: https://github.com/jlowin/fastmcp
@@ -66,8 +66,14 @@
 - pitfalls observed: none noted in this repo
 
 ## 11. Claude Code plugin wrapper
-- presence and shape: Not applicable — framework level
-- pitfalls observed: none noted in this repo
+
+### presence and shape
+
+Not applicable — framework level
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 12. Tests
 - presence, framework, location, notable patterns: pytest; tests in `/tests` directory

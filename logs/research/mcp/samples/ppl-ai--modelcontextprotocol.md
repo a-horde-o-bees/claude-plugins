@@ -1,4 +1,4 @@
-# ppl-ai/modelcontextprotocol
+# Sample
 
 ## Identification
 - url: https://github.com/ppl-ai/modelcontextprotocol
@@ -64,8 +64,14 @@ Note: The user brief referenced `perplexityai/modelcontextprotocol`. The resolve
 - pitfalls observed: none noted in this repo
 
 ## 11. Claude Code plugin wrapper
-- presence and shape: Not explicitly observed within extracted content
-- pitfalls observed: none noted in this repo
+
+### presence and shape
+
+Not explicitly observed within extracted content
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 12. Tests
 - presence, framework, location, notable patterns: vitest configured; specific layout not extracted

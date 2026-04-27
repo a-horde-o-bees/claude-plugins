@@ -1,4 +1,4 @@
-# labeveryday/mcp_pdf_reader
+# Sample
 
 ## Identification
 - url: https://github.com/labeveryday/mcp_pdf_reader
@@ -60,8 +60,14 @@ Not captured explicitly per host
 - pitfalls observed: none noted in this repo
 
 ## 11. Claude Code plugin wrapper
-- presence and shape: none
-- pitfalls observed: none noted in this repo
+
+### presence and shape
+
+none
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 12. Tests
 - presence, framework, location, notable patterns: no CI/CD or test files mentioned in README

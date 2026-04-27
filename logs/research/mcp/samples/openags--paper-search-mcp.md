@@ -1,4 +1,4 @@
-# openags/paper-search-mcp
+# Sample
 
 ## Identification
 - url: https://github.com/openags/paper-search-mcp
@@ -58,8 +58,14 @@ For each host: form + location
 - pitfalls observed: none noted in this repo
 
 ## 11. Claude Code plugin wrapper
-- presence and shape: `claude-code/` directory contains Claude Code skill files — explicit skill-layer integration rather than just host-config JSON
-- pitfalls observed: none noted in this repo
+
+### presence and shape
+
+`claude-code/` directory contains Claude Code skill files — explicit skill-layer integration rather than just host-config JSON
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 12. Tests
 - presence, framework, location, notable patterns: `tests/` directory; end-to-end regression tests mentioned

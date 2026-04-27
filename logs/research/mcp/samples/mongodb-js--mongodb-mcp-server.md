@@ -1,4 +1,4 @@
-# mongodb-js/mongodb-mcp-server
+# Sample
 
 ## Identification
 - url: https://github.com/mongodb-js/mongodb-mcp-server
@@ -59,8 +59,14 @@
 - pitfalls observed: none noted in this repo
 
 ## 11. Claude Code plugin wrapper
-- presence and shape: Not present
-- pitfalls observed: none noted in this repo
+
+### presence and shape
+
+Not present
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 12. Tests
 - presence, framework, location, notable patterns: Vitest (`vitest.config.ts`); tests under `/tests`

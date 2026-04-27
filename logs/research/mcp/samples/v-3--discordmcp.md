@@ -1,4 +1,4 @@
-# v-3/discordmcp
+# Sample
 
 ## Identification
 - url: https://github.com/v-3/discordmcp
@@ -60,8 +60,14 @@
 - pitfalls observed: none noted in this repo
 
 ## 11. Claude Code plugin wrapper
-- presence and shape: Not observed
-- pitfalls observed: none noted in this repo
+
+### presence and shape
+
+Not observed
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 12. Tests
 - presence, framework, location, notable patterns: Not observed — no test framework documented

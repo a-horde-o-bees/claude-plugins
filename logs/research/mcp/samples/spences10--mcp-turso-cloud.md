@@ -1,4 +1,4 @@
-# spences10/mcp-turso-cloud
+# Sample
 
 ## Identification
 - url: https://github.com/spences10/mcp-turso-cloud
@@ -59,8 +59,14 @@
 - pitfalls observed: none noted in this repo
 
 ## 11. Claude Code plugin wrapper
-- presence and shape: Not present
-- pitfalls observed: none noted in this repo
+
+### presence and shape
+
+Not present
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 12. Tests
 - presence, framework, location, notable patterns: Not documented; no test framework visible in content fetched

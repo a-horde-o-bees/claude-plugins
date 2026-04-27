@@ -1,4 +1,4 @@
-# twolven/mcp-server-puppeteer-py
+# Sample
 
 ## Identification
 - url: https://github.com/twolven/mcp-server-puppeteer-py
@@ -55,8 +55,14 @@
 - pitfalls observed: none noted in this repo
 
 ## 11. Claude Code plugin wrapper
-- presence and shape: Not present — no `.claude-plugin` directory observed
-- pitfalls observed: none noted in this repo
+
+### presence and shape
+
+Not present — no `.claude-plugin` directory observed
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 12. Tests
 - presence, framework, location, notable patterns: Not observed — no tests/ directory surfaced

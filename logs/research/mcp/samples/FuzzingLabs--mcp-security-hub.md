@@ -1,88 +1,221 @@
-# FuzzingLabs/mcp-security-hub
+# Sample
 
 ## Identification
-- url: https://github.com/FuzzingLabs/mcp-security-hub
-- stars: 527
-- last-commit (date or relative): active on master (specific date not surfaced)
-- license: MIT
-- default branch: master
-- one-line purpose: Security toolchain MCP monorepo — 38 containerized MCP servers each wrapping one security tool (Nmap, Ghidra, Nuclei, SQLMap, Hashcat, etc.).
+
+### url
+
+https://github.com/FuzzingLabs/mcp-security-hub
+
+### stars
+
+527
+
+### last-commit (date or relative)
+
+active on master (specific date not surfaced)
+
+### license
+
+MIT
+
+### default branch
+
+master
+
+### one-line purpose
+
+Security toolchain MCP monorepo — 38 containerized MCP servers each wrapping one security tool (Nmap, Ghidra, Nuclei, SQLMap, Hashcat, etc.).
 
 ## 1. Language and runtime
-- language(s) + version constraints: Python 80.0%; version not explicitly surfaced
-- framework/SDK in use: custom Python MCP implementations (not FastMCP, not the official Python SDK wrappers) wrapping external security CLI tools (Nmap, Ghidra, Nuclei, SQLMap, Hashcat, etc.)
-- pitfalls observed: none noted in this repo
+
+### language(s) + version constraints
+
+Python 80.0%; version not explicitly surfaced
+
+### framework/SDK in use
+
+custom Python MCP implementations (not FastMCP, not the official Python SDK wrappers) wrapping external security CLI tools (Nmap, Ghidra, Nuclei, SQLMap, Hashcat, etc.)
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 2. Transport
-- supported transports: stdio (Docker container-based)
-- how selected: default
-- pitfalls observed: none noted in this repo
+
+### supported transports
+
+stdio (Docker container-based)
+
+### how selected
+
+default
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 3. Distribution
-- every mechanism observed: Docker images per tool; Docker Compose for orchestration; direct image execution
-- published package name(s): per-tool Docker images (exact registry not surfaced)
-- install commands shown in README: Docker Compose + volume mounts; individual `docker run` invocations
-- pitfalls observed:
+
+### every mechanism observed
+
+Docker images per tool; Docker Compose for orchestration; direct image execution
+
+### published package name(s)
+
+per-tool Docker images (exact registry not surfaced)
+
+### install commands shown in README
+
+Docker Compose + volume mounts; individual `docker run` invocations
+
+### pitfalls observed
+
   - Docker-only distribution; no PyPI publishing
   - what couldn't be determined: exact MCP JSON-RPC implementation approach per server, whether any servers share code, published registry for the Docker images, last-commit date
 
 ## 4. Entry point / launch
-- command(s) users/hosts run: Docker container entrypoints per-tool; `.mcp.json` or `claude_desktop_config.json` pointing at `docker run ...`
-- wrapper scripts, launchers, stubs: `Dockerfile.template` as scaffold for new tools
-- pitfalls observed: none noted in this repo
+
+### command(s) users/hosts run
+
+Docker container entrypoints per-tool; `.mcp.json` or `claude_desktop_config.json` pointing at `docker run ...`
+
+### wrapper scripts, launchers, stubs
+
+`Dockerfile.template` as scaffold for new tools
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 5. Configuration surface
-- how config reaches the server: volume mounts (read-only by default), environment variables, container args
-- pitfalls observed: none noted in this repo
+
+### how config reaches the server
+
+volume mounts (read-only by default), environment variables, container args
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 6. Authentication
-- flow: depends per tool (API keys for Nuclei templates, none for Nmap, etc.)
-- where credentials come from: environment variables injected via container env
-- pitfalls observed: none noted in this repo
+
+### flow
+
+depends per tool (API keys for Nuclei templates, none for Nmap, etc.)
+
+### where credentials come from
+
+environment variables injected via container env
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 7. Multi-tenancy
-- single-user / per-request tenant / workspace-keyed / not applicable / other: single-user per container; one container per tool
-- pitfalls observed: none noted in this repo
+
+### single-user / per-request tenant / workspace-keyed / not applicable / other
+
+single-user per container; one container per tool
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 8. Capabilities exposed
-- tools / resources / prompts / sampling / roots / logging / other: 38 separate MCP servers, each wrapping one security tool (Nmap port scanning, Shodan device search, Nuclei vulnerability templates, SQLMap SQLi detection, Hashcat cracking, Ghidra reverse engineering, etc.)
-- pitfalls observed: none noted in this repo
+
+### tools / resources / prompts / sampling / roots / logging / other
+
+38 separate MCP servers, each wrapping one security tool (Nmap port scanning, Shodan device search, Nuclei vulnerability templates, SQLMap SQLi detection, Hashcat cracking, Ghidra reverse engineering, etc.)
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 9. Observability
-- logging destination + format, metrics, tracing, debug flags: health-check scripts per container; Trivy vulnerability scanning in CI pipeline
-- pitfalls observed: none noted in this repo
+
+### logging destination + format, metrics, tracing, debug flags
+
+health-check scripts per container; Trivy vulnerability scanning in CI pipeline
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 10. Host integrations shown in README or repo
 For each host: form + location
-- Claude Desktop: JSON `mcpServers` entry per security tool
-- Claude Code: project-level `.mcp.json` with per-tool entries
-- pitfalls observed: none noted in this repo
+
+### Claude Desktop
+
+JSON `mcpServers` entry per security tool
+
+### Claude Code
+
+project-level `.mcp.json` with per-tool entries
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 11. Claude Code plugin wrapper
-- presence and shape: not observed (though `.mcp.json` is the project-level MCP config consumed by Claude Code)
-- pitfalls observed: none noted in this repo
+
+### presence and shape
+
+not observed (though `.mcp.json` is the project-level MCP config consumed by Claude Code)
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 12. Tests
-- presence, framework, location, notable patterns: pytest (pytest.ini present); `tests/test_mcp_servers.py`
-- pitfalls observed: none noted in this repo
+
+### presence, framework, location, notable patterns
+
+pytest (pytest.ini present); `tests/test_mcp_servers.py`
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 13. CI
-- presence, system, triggers, what it runs: GitHub Actions — builds + security scanning (Trivy) + tests
-- pitfalls observed:
+
+### presence, system, triggers, what it runs
+
+GitHub Actions — builds + security scanning (Trivy) + tests
+
+### pitfalls observed
+
   - Trivy scanning in CI as part of the build pipeline
   - decision dimensions this repo reveals: - "monorepo of micro-MCP-servers" as an architectural pattern — each server is one container, one tool, one security boundary - hardened-b...
 
 ## 14. Container / packaging artifacts
-- Dockerfile, docker-compose, Helm, systemd, brew formula, etc.: Dockerfile per tool + `Dockerfile.template`; docker-compose for orchestration
-- pitfalls observed: none noted in this repo
+
+### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+
+Dockerfile per tool + `Dockerfile.template`; docker-compose for orchestration
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 15. Example client / developer ergonomics
-- MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs: `Dockerfile.template` + sample claude_desktop_config.json entries; health-check scripts
-- pitfalls observed: none noted in this repo
+
+### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+
+`Dockerfile.template` + sample claude_desktop_config.json entries; health-check scripts
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 16. Repo layout
-- single-package / monorepo / vendored / other: monorepo — 38 tool subdirectories, each a standalone MCP server with its own Dockerfile, Python script(s), and tests
-- pitfalls observed: none noted in this repo
+
+### single-package / monorepo / vendored / other
+
+monorepo — 38 tool subdirectories, each a standalone MCP server with its own Dockerfile, Python script(s), and tests
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 17. Notable structural choices
 - monorepo-of-servers rather than one server with many tools: each security tool gets its own MCP server, own Dockerfile, own container — composability at the deployment layer instead of the tool layer
@@ -141,4 +274,7 @@ For each host: form + location
     - Python packaging concerns deferred entirely to Docker layer
 
 ## 20. Gaps
-- what couldn't be determined: exact MCP JSON-RPC implementation approach per server, whether any servers share code, published registry for the Docker images, last-commit date
+
+### what couldn't be determined
+
+exact MCP JSON-RPC implementation approach per server, whether any servers share code, published registry for the Docker images, last-commit date

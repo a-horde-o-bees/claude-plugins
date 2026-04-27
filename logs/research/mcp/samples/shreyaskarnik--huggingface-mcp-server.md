@@ -1,4 +1,4 @@
-# shreyaskarnik/huggingface-mcp-server
+# Sample
 
 ## Identification
 - url: https://github.com/shreyaskarnik/huggingface-mcp-server
@@ -59,8 +59,14 @@ For each host: form + location
 - pitfalls observed: none noted in this repo
 
 ## 11. Claude Code plugin wrapper
-- presence and shape: none observed
-- pitfalls observed: none noted in this repo
+
+### presence and shape
+
+none observed
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 12. Tests
 - presence, framework, location, notable patterns: not mentioned in README

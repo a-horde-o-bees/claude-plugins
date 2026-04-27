@@ -1,4 +1,4 @@
-# rust-mcp-stack/rust-mcp-filesystem
+# Sample
 
 ## Identification
 - url: https://github.com/rust-mcp-stack/rust-mcp-filesystem
@@ -59,8 +59,14 @@
 - pitfalls observed: none noted in this repo
 
 ## 11. Claude Code plugin wrapper
-- presence and shape: Not present; this is a standalone server, not a plugin
-- pitfalls observed: none noted in this repo
+
+### presence and shape
+
+Not present; this is a standalone server, not a plugin
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 12. Tests
 - presence, framework, location, notable patterns: Test framework present; testing configured via `cargo-nextest`; located in `tests/` directory

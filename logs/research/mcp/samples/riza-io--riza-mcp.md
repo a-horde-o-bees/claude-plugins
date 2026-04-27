@@ -1,4 +1,4 @@
-# riza-io/riza-mcp
+# Sample
 
 ## Identification
 - url: https://github.com/riza-io/riza-mcp
@@ -57,8 +57,14 @@
 - pitfalls observed: none noted in this repo
 
 ## 11. Claude Code plugin wrapper
-- presence and shape: Not present; configuration-based integration only
-- pitfalls observed: none noted in this repo
+
+### presence and shape
+
+Not present; configuration-based integration only
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 12. Tests
 - presence, framework, location, notable patterns: Not documented in provided content

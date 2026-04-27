@@ -1,4 +1,4 @@
-# idosal/git-mcp
+# Sample
 
 ## Identification
 - url: https://github.com/idosal/git-mcp
@@ -57,7 +57,10 @@
 
 ## 11. Claude Code plugin wrapper
 - not present; uses MCP protocol
-- pitfalls observed: none noted in this repo
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 12. Tests
 - present; Playwright E2E (`playwright.config.ts`), Vitest units (`vitest.config.ts`), `npm run test`

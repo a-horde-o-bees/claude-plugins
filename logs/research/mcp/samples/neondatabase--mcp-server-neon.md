@@ -1,4 +1,4 @@
-# neondatabase/mcp-server-neon
+# Sample
 
 ## Identification
 - url: https://github.com/neondatabase/mcp-server-neon
@@ -59,8 +59,14 @@
 - pitfalls observed: none noted in this repo
 
 ## 11. Claude Code plugin wrapper
-- presence and shape: `.claude/skills/` skill definitions present in the repo — Claude Code skill wiring rather than a plugin manifest
-- pitfalls observed: none noted in this repo
+
+### presence and shape
+
+`.claude/skills/` skill definitions present in the repo — Claude Code skill wiring rather than a plugin manifest
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 12. Tests
 - presence, framework, location, notable patterns: Pyramid — unit (pure logic), integration (tool contracts), E2E (MCP protocol with real clients), web E2E (Playwright, ephemeral DB). `pnpm run test`

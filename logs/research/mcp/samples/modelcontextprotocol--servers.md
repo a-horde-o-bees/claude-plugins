@@ -1,4 +1,4 @@
-# modelcontextprotocol/servers
+# Sample
 
 ## Identification
 - url: https://github.com/modelcontextprotocol/servers
@@ -63,8 +63,14 @@ For each host encountered — Claude Desktop, Claude Code, Cursor, Windsurf, Cli
 - pitfalls observed: none noted in this repo
 
 ## 11. Claude Code plugin wrapper
-- presence and shape (.claude-plugin/plugin.json, .mcp.json at repo root, full plugin layout, not present, other): `.mcp.json` present at repo root (mentioned by repo listing). No `.claude-plugin/` directory.
-- pitfalls observed: none noted in this repo
+
+### presence and shape
+
+`.mcp.json` present at repo root (mentioned by repo listing). No `.claude-plugin/` directory.
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 12. Tests
 - presence, framework, location, notable patterns: `.github/` workflows present but per-server test infrastructure not prominent in individual READMEs; each server is small enough that test infrastructure is minimal/per-package.
