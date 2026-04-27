@@ -22,7 +22,7 @@ A skill or workflow that:
 - Detects when a governor changes after a dependent was locked down, invalidating the dependent
 - Drives the re-walkthrough workflow in dependency order
 
-This naturally fits the purpose-map evaluation workflow — the dependency DAG is already there, and purpose-map already tracks validated status on entities. But locked-down is finer-grained than validated: a validated component's governance might still need re-walking after a foundation changes.
+This naturally fits the needs-map evaluation workflow — the dependency DAG is already there, and needs-map already tracks validated status on entities. But locked-down is finer-grained than validated: a validated component's governance might still need re-walking after a foundation changes.
 
 Could be implemented as:
 

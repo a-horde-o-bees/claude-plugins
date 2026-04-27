@@ -1,6 +1,7 @@
 """Shared fixtures for integration tests."""
 
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
@@ -24,6 +25,23 @@ def _git_root() -> Path:
         check=True,
     )
     return Path(result.stdout.strip()).resolve()
+
+
+def _install_project_root_on_syspath() -> None:
+    """Make project-root `tools/` importable for integration tests.
+
+    `tools/` is the canonical home for vendored always-on primitives
+    (`tools.environment`, `tools.errors`, `tools.db`). Tests that
+    exercise these helpers without going through a plugin's venv need
+    project root on sys.path; otherwise `from tools import db` fails
+    at collection time.
+    """
+    root = _git_root()
+    if str(root) not in sys.path:
+        sys.path.insert(0, str(root))
+
+
+_install_project_root_on_syspath()
 
 
 @pytest.fixture(scope="session")

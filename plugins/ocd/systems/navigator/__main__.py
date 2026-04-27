@@ -162,6 +162,18 @@ def _dispatch_ready(args: argparse.Namespace) -> None:
         sys.exit(1)
 
 
+def _dispatch_reset(_args: argparse.Namespace) -> None:
+    """Backup and rebuild the navigator database — explicit destructive verb."""
+    result = reset()
+    for entry in result["files"]:
+        if entry["before"] == entry["after"]:
+            print(f"{entry['path']}: {entry['after']}")
+        else:
+            print(f"{entry['path']}: {entry['before']} → {entry['after']}")
+    for extra in result["extra"]:
+        print(f"{extra['label']}: {extra['value']}")
+
+
 def _dispatch_list_skills(_args: argparse.Namespace) -> None:
     skills = skills_list()
     if not skills:
@@ -469,6 +481,21 @@ def build_parser() -> argparse.ArgumentParser:
         parents=[db_parent],
     )
     ready_p.set_defaults(_dispatch=_dispatch_ready)
+
+    reset_p = commands.add_parser(
+        "reset",
+        help="Backup, wipe, and rebuild the navigator database",
+        description=(
+            "Explicit destructive verb. Always backs up the live DB to a\n"
+            "timestamped sibling, wipes, and rebuilds the empty schema.\n"
+            "Use when starting fresh regardless of schema state.\n"
+            "\n"
+            "Differs from `init --force`, which is surgical — only wipes\n"
+            "the DB when schema is divergent."
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    reset_p.set_defaults(_dispatch=_dispatch_reset)
 
     ls_p = commands.add_parser(
         "list-skills",

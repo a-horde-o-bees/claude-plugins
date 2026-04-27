@@ -112,7 +112,7 @@ claude-plugins/
 │   ├── conventions/             — deployed convention files (tracked; rectified by scripts/auto_init.py)
 │   ├── skills/                  — project-local dev skills (checkpoint)
 │   ├── hooks/                   — project-level pre-commit guards
-│   ├── ocd/                     — ocd plugin project data (navigator db, enabled-systems.json)
+│   ├── ocd/                     — ocd plugin project data (navigator db, needs-map db, enabled-systems.json)
 │   └── settings.json            — project-level permission patterns
 ├── bin/
 │   └── project-run              — project-level dispatcher into tools/ modules
@@ -122,6 +122,5 @@ claude-plugins/
 ├── scripts/                     — shared development scripts (auto_init, release, manifest validator, test delegator)
 ├── tests/                       — project-level integration tests (dev-only)
 ├── logs/                        — project log entries (decisions, friction, problems, ideas)
-├── research/                    — external research notes (dev-only)
-└── purpose-map/                 — methodology tooling for live-invention audits (dev-only)
+└── research/                    — external research notes (dev-only)
 ```

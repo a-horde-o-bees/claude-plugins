@@ -5,6 +5,11 @@ path_pattern_sources tables), deploy navigator-owned rule files, and
 report DB health. Governance (rules, conventions, dependency graph) is
 owned by the separate governance skill and initialized there.
 
+The schema-aware init contract is owned by `tools.db.rectify`; this
+module declares where the DB lives and what schema it should have, then
+composes that helper alongside the file-deploy helpers
+(`setup.deploy_files`, `setup.deploy_paths_csv`).
+
 Interface contract: init() and status() return
 {"files": [...], "extra": [...]}.
 """
@@ -13,13 +18,11 @@ import sqlite3
 from pathlib import Path
 
 from systems import setup
+from tools import db as dbtools
 from tools import environment
 from tools.errors import NotReadyError
 
 from . import _db
-
-
-EXPECTED_TABLES = {"paths", "path_patterns", "path_pattern_sources", "config"}
 
 
 def _plugin_name() -> str:
@@ -38,6 +41,11 @@ def _db_path() -> Path:
 
 def _db_rel_path() -> str:
     return f".claude/{_plugin_name()}/navigator/navigator.db"
+
+
+def _build_schema(target_path: str) -> None:
+    """Build navigator's canonical schema at target_path."""
+    _db.init_db(target_path)
 
 
 def _rules_src_dir() -> Path:
@@ -59,29 +67,9 @@ def _rules_rel_prefix() -> str:
 
 
 def ready(db_path: Path | None = None) -> bool:
-    """Return True when the navigator database exists and has the full schema.
-
-    Zero-arg form resolves the DB location via plugin helpers
-    (CLAUDE_PROJECT_DIR). Pass an explicit path when checking a non-default
-    location — tests, MCP server startup with DB_PATH override. Validates
-    schema subset, not just file existence — a present DB with divergent
-    schema counts as not ready.
-    """
+    """Return True when the navigator database structurally matches expected."""
     target = db_path if db_path is not None else _db_path()
-    if not target.exists():
-        return False
-    try:
-        conn = _db.get_connection(str(target))
-        actual_tables = {
-            row[0]
-            for row in conn.execute(
-                "SELECT name FROM sqlite_master WHERE type='table'",
-            ).fetchall()
-        }
-        conn.close()
-        return EXPECTED_TABLES.issubset(actual_tables)
-    except sqlite3.Error:
-        return False
+    return target.exists() and dbtools.matches_expected(target, _build_schema)
 
 
 def ensure_ready(db_path: Path | None = None) -> None:
@@ -98,55 +86,36 @@ def _status_extra() -> list[dict]:
 
     if not db_path.exists():
         return [{"label": "overall status", "value": "not initialized"}]
+    if not ready(db_path):
+        return [{"label": "overall status", "value": "error — divergent schema"}]
 
     try:
         conn = _db.get_connection(str(db_path))
-
-        actual_tables = {
-            row[0]
-            for row in conn.execute(
-                "SELECT name FROM sqlite_master WHERE type='table'",
-            ).fetchall()
-        }
-        if not EXPECTED_TABLES.issubset(actual_tables):
-            conn.close()
-            return [{"label": "overall status", "value": "error \u2014 divergent schema"}]
-
         total = conn.execute(
             "SELECT COUNT(*) as c FROM paths",
         ).fetchone()["c"]
-
         undescribed = conn.execute(
             "SELECT COUNT(*) as c FROM paths WHERE purpose IS NULL",
         ).fetchone()["c"]
-
         stale = conn.execute(
             "SELECT COUNT(*) as c FROM paths WHERE stale = 1",
         ).fetchone()["c"]
-
         conn.close()
-
         return [
             {
                 "label": "overall status",
                 "value": (
-                    f"operational \u2014 {total} paths, "
+                    f"operational — {total} paths, "
                     f"{undescribed} undescribed, {stale} stale"
                 ),
             },
         ]
-
     except sqlite3.Error as e:
-        return [{"label": "overall status", "value": f"error \u2014 {e}"}]
+        return [{"label": "overall status", "value": f"error — {e}"}]
 
 
 def _deploy_rules(force: bool) -> list[dict]:
-    """Deploy navigator-owned rule files to the plugin's rule corpus.
-
-    Navigator's rule lives with navigator's init rather than the plugin-wide
-    rules pool so the prescription only reaches the agent once navigator is
-    actually deployed — see System Dormancy in the project architecture.
-    """
+    """Deploy navigator-owned rule files to the plugin's rule corpus."""
     rel = _rules_rel_prefix()
     results = setup.deploy_files(
         src_dir=_rules_src_dir(),
@@ -180,31 +149,10 @@ def _rule_status_entries() -> list[dict]:
 
 
 def init(force: bool = False) -> dict:
-    """Initialize the navigator database, deploy paths.csv, and deploy rules.
-
-    Captures the DB's state before any mutation so the reported transition
-    reflects what the user saw, not the intermediate wipe state. A
-    force-rebuild of an existing DB emits `current → reinstalled`; a
-    fresh install emits `absent → current`. paths.csv deploys alongside
-    the DB so the navigator scan can aggregate navigator's own declared
-    artifacts into path_patterns on first walk. Rule files deploy to the
-    plugin's rule corpus so navigator-specific guidance is only present
-    when navigator is operational.
-    """
-    db = _db_path()
-    rel_path = _db_rel_path()
-
-    existed_before = db.exists()
-    before = "current" if existed_before else "absent"
-
-    if force and existed_before:
-        db.unlink()
-
-    _db.init_db(str(db))
-
-    after = "reinstalled" if existed_before and force else "current"
-
-    files = [{"path": rel_path, "before": before, "after": after}]
+    """Rectify navigator infrastructure to current templates and schema."""
+    files = dbtools.rectify(
+        _db_path(), _build_schema, _db_rel_path(), force=force,
+    )
 
     paths_entry = setup.deploy_paths_csv(
         environment.get_plugin_root(),
@@ -216,9 +164,28 @@ def init(force: bool = False) -> dict:
         files.append(paths_entry)
 
     files.extend(_deploy_rules(force))
+    return {"files": files, "extra": _status_extra()}
 
-    extra = _status_extra()
-    return {"files": files, "extra": extra}
+
+def reset() -> dict:
+    """Backup, wipe, and rebuild the navigator database.
+
+    File-deploy paths (paths.csv + rules) run with force=True for full
+    rectification alongside the destructive DB rebuild.
+    """
+    files = dbtools.reset_db(_db_path(), _build_schema, _db_rel_path())
+
+    paths_entry = setup.deploy_paths_csv(
+        environment.get_plugin_root(),
+        environment.get_project_dir(),
+        "navigator",
+        force=True,
+    )
+    if paths_entry is not None:
+        files.append(paths_entry)
+
+    files.extend(_deploy_rules(True))
+    return {"files": files, "extra": _status_extra()}
 
 
 def status() -> dict:
@@ -226,9 +193,13 @@ def status() -> dict:
     db = _db_path()
     rel_path = _db_rel_path()
 
-    state = "current" if db.exists() else "absent"
+    if not db.exists():
+        state = "absent"
+    elif ready(db):
+        state = "current"
+    else:
+        state = "divergent"
+
     files = [{"path": rel_path, "before": state, "after": state}]
     files.extend(_rule_status_entries())
-
-    extra = _status_extra()
-    return {"files": files, "extra": extra}
+    return {"files": files, "extra": _status_extra()}

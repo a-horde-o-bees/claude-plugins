@@ -7,7 +7,6 @@ Scope boundaries — sibling docs that overlap but each own a distinct slice:
 - **This file (`TASKS.md`)** — project-scoped, scan-once view of what's open across the whole repo. Pulls from the docs below.
 - **`SANDBOX-TASKS.md` (per sandbox branch)** — branch-scoped task list seeded by `/ocd:sandbox new` and `/ocd:sandbox pack`; read via `/ocd:sandbox tasks`; cleared on unpack so it never lands on main.
 - **`logs/idea/<title>.md`** — full context for any task listed here; the idea log owns the detail, this file is a pointer.
-- **`purpose-map/state.md`** — observed gaps from sandbox-exercise findings; items graduate into this file as scheduled work.
 
 ## High priority
 
@@ -31,7 +30,7 @@ Four features packed off main onto sandbox branches. Each carries its own `SANDB
 
 ## Skill surface polish
 
-Quality-of-life improvements to existing shipped skills. Mix of items from `purpose-map/state.md` sandbox-exercise findings and newer idea logs.
+Quality-of-life improvements to existing shipped skills. Mix of older sandbox-exercise findings and newer idea logs.
 
 - **Skill description framing polish on `/ocd:pdf` and `/ocd:navigator`** — sharpen toward explicit "when to use" trigger-verb framing. [idea log](logs/idea/Skill%20description%20framing%20polish.md)
 - **`/ocd:log <bogus-type>` validation** — skill routes to `_add.md` without checking whether the type exists under `logs/`. Add pre-dispatch validation.
@@ -48,7 +47,6 @@ Work that improves the machinery agents operate through.
 
 - **`ocd:init-python-project` skill** ⭐ priority:high — scaffold a fresh Python project with this repo's dev-infra patterns; sync templates via the propagation hook so they stay byte-equal to the canonical sources. [plan-init-project.md](plan-init-project.md)
 - **Standard system init + propagate internal resolution** ⭐ priority:high — collapse per-system `_init.py` boilerplate into `framework.standard_init()` (auto-deploys templates, rules, conventions, paths.csv); drop redundant args from `framework.deploy_paths_csv`. [idea log](logs/idea/Standard%20system%20init%20%2B%20propagate%20internal%20resolution.md)
-- **DB-init schema-compare-only** — wrap DB init with a schema-comparison gate so unconditional wipe-and-rebuild only fires on schema drift. Eliminates the per-checkpoint navigator.db derivative commit when nothing meaningful changed. Likely subsumed by standard_init's DB-init helper. [idea log](logs/idea/DB-init%20schema-compare-only.md)
 - **Callable-surface coverage crawler** — automate the `rules/testing.md` Callable Surface Coverage bar as a `/ocd:check` dimension. Walks the repo, lists every callable, confirms each has a test reference. [idea log](logs/idea/Callable-surface%20coverage%20crawler.md)
 - **Check dimension — import-time state dependency** — catch systems with implicit cwd assumptions at import time. [idea log](logs/idea/Check%20dimension%20—%20import-time%20state%20dependency.md)
 - **Expand check with community linter dimensions** — layer shellcheck, ruff, PyMarkdownLnt, and typos under `/ocd:check` as additional dimensions wrapping their findings into the unified `Violation` report. Project-specific rules stay; community rules add breadth. Adoption order: shellcheck → ruff → PyMarkdownLnt → typos. [idea log](logs/idea/Expand%20check%20with%20community%20linter%20dimensions.md)
@@ -84,8 +82,7 @@ Work that shapes how rules, conventions, and cross-plugin interactions evolve.
 Tools and disciplines for how work gets done across the project.
 
 - **Agent-synthesized CHANGELOG at release time** ⭐ priority:high — `/ocd:git release` verb that crawls git log, synthesizes Keep-a-Changelog entries with cross-commit deconfliction, tags + pushes. Replaces manual `[Unreleased]` curation. [idea log](logs/idea/Agent-synthesized%20CHANGELOG%20at%20release%20time.md)
-- **Purpose-map as reusable analysis tool** — the failure-mode framing / need-rationale split / reactive refinement methodology is potentially applicable beyond component auditing (migration validation, general "does this contribute?" analysis). [idea log](logs/idea/Purpose-map%20as%20reusable%20analysis%20tool.md)
-- **Audit-governance inversion technique from purpose-map** — reuse the unmet-test discipline as an audit mechanism. [idea log](logs/idea/Audit-governance%20inversion%20technique%20from%20purpose-map.md)
+- **needs-map forward-looking work** — reusable failure-mode-framing methodology, audit-governance inversion technique, stale-component cleanup. [idea log](logs/idea/needs-map.md)
 - **Audit-testing skill for test infrastructure quality** — audit skill focused on test infrastructure rather than production code. [idea log](logs/idea/Audit-testing%20skill%20for%20test%20infrastructure%20quality.md)
 - **honesty-as-paramount-design-principle** — proposed design principle (epistemic honesty / admit-what-you-don't-know). [idea log](logs/idea/honesty-as-paramount-design-principle.md)
 - **workflow-rule-prefer-explicit-commands-over-loops** — proposed workflow rule. [idea log](logs/idea/workflow-rule-prefer-explicit-commands-over-loops.md)
@@ -98,7 +95,7 @@ Captured discipline gaps and concrete defects.
 - **`auto_approval` misses if-case-function splitting** — splitter in auto_approval can fail to decompose certain bash compound shapes (shell-function definitions with if-cases inside). [friction log](logs/friction/auto_approval%20misses%20if-case-function%20splitting.md)
 - No open entries under `logs/problem/` at the moment.
 
-## Non-blocking concerns (from `purpose-map/state.md`)
+## Non-blocking concerns
 
 Surfaced during earlier work; intentionally kept from promoting to action items until they become painful.
 
