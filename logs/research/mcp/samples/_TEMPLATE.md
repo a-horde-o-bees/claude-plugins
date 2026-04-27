@@ -6,51 +6,21 @@ log-role: reference
 
 Per-repo evidence for an MCP server. The literal level-1 heading is `# Sample` — uniform across every file in this directory so heading-tree tooling can aggregate cross-sample by chain key. The repo identity lives in the Identification section's `### url`, not in the heading.
 
-## How the template is consumed
+The prose between this heading and the `---` separator below is **for the agent reading the template**, not template structure. Only the headings *after* the separator transfer to samples (when the sample needs them).
 
-This template describes the **shape** of a sample through its heading tree. An agent reading the template learns:
+**How the template is consumed.** This template describes the *shape* of a sample through its heading tree. An agent reading the template learns which sections exist as canonical homes for which kinds of evidence, the canonical sub-purposes under each closed-set section (the `###` headings under each `##`), the open-enumeration sections where any sub-purpose name is allowed (slot is content-driven), and the freeform sections where no `###` headings appear at all (slot accepts paragraphs or bullets). Only the headings transfer from template to samples; descriptive prose under each heading in this template is for the agent, not for samples to copy. The heading tree is the single source of truth — there is no frontmatter declaration of structure that mirrors the headings.
 
-- Which sections exist as canonical homes for which kinds of evidence
-- The canonical sub-purposes under each closed-set section (the `###` headings under each `##`)
-- The open-enumeration sections where any sub-purpose name is allowed (the slot is content-driven)
-- The freeform sections where no `###` headings appear at all (the slot accepts paragraphs or bullets)
+**Section optionality.** Every section is optional. A sample includes only the sections relevant to its repo; sections that would have nothing to say are omitted entirely. Sub-purposes within a section are also optional; populate the ones the source supports, omit the rest. Heading order in samples should follow the order in this template — order is the only structural property carried by sequence; section numbering is not used.
 
-Only the headings transfer from template to samples. Descriptive prose under each heading in this template is **for the agent reading the template**, not for samples to copy. Samples replace the prose with concrete evidence about the repo.
+**Sub-purpose vocabulary.** Sub-purposes use the canonical labels from this template's heading tree. Under a closed-set section, a non-canonical sub-purpose heading is a compliance violation — fix the sample (merge into the canonical vocabulary) or escalate to a template revision. Open-enumeration sections (Host integrations) accept any sub-purpose name; the template's `### <placeholder>` marker declares the slot but the canonical vocabulary is content-driven. Compliance tooling surfaces every name used as the "canonicalization workspace," not a violation list.
 
-The heading tree is the single source of truth. There is no frontmatter declaration of structure that mirrors the headings — heading text under each section determines compliance, and `consolidate_section` / `count_sections` walk the same tree.
+**Pitfalls discipline.** `### pitfalls observed` is optional within every section that lists it. Populate only when there is a real, section-specific pitfall worth surfacing. Empty pitfalls headings ("none noted in this repo") are not canonical — omit the heading. Generic gaps and "what couldn't be determined" notes belong in `## Gaps`.
 
-## Section optionality
+**Where never-before-seen content goes.** When the source has content that doesn't fit any template section, the agent does *not* invent a new section. The two freeform catch-alls handle this: `## Notable structural choices` for distinctive facts about *this* sample that don't fit a labeled section; `## Unanticipated axes observed` for design dimensions or axes the original research framework didn't anticipate (explicitly the slot for "this is a new concept worth flagging"). Cross-sample analysis later spots clusters in those sections — recurring observations across multiple samples become candidate new sections in a future template revision. The feedback loop runs at template-revision time, not at sample-recording time, so the agent recording samples is never blocked by the template's current vocabulary. `## Gaps` is for *unknowns about the repo*, not for unaccommodated content patterns — Gaps describes information we couldn't extract; Notable structural choices / Unanticipated axes describe information we *did* extract that doesn't fit elsewhere.
 
-Every section is optional. A sample includes only the sections relevant to its repo; sections that would have nothing to say are omitted entirely. Sub-purposes within a section are also optional; populate the ones the source supports, omit the rest.
+**Conditional sections.** `## Python-specific` is conditional — present only when the repo's primary language is Python. Other languages omit the section entirely; do not adapt sub-purposes for other ecosystems.
 
-Heading order in samples should follow the order in this template. Order is the only structural property carried by sequence; section numbering is not used.
-
-## Sub-purpose vocabulary
-
-Sub-purposes use the canonical labels from this template's heading tree. Under a closed-set section, a non-canonical sub-purpose heading is a compliance violation — fix the sample (merge into the canonical vocabulary) or escalate to a template revision.
-
-Open-enumeration sections (Host integrations) accept any sub-purpose name; the template's `### <example>` placeholder marks the slot but the canonical vocabulary is content-driven. Compliance tooling will surface every name used as an "outlier" candidate for review — that surface is *the canonicalization workspace*, not a violation list.
-
-`### pitfalls observed` is optional within every section that lists it. Populate only when there is a real, section-specific pitfall worth surfacing. Empty pitfalls headings ("none noted in this repo") are not canonical — omit the heading. Generic gaps and "what couldn't be determined" notes belong in `## Gaps`.
-
-## Where never-before-seen content goes
-
-When the source has content that doesn't fit any template section, the agent does **not** invent a new section. The two freeform catch-alls handle this:
-
-- **`## Notable structural choices`** — distinctive facts about *this* sample that don't fit a labeled section
-- **`## Unanticipated axes observed`** — design dimensions or axes the original research framework didn't anticipate; explicitly the slot for "this is a new concept worth flagging"
-
-Cross-sample analysis later spots clusters in those sections — recurring observations across multiple samples become candidate new sections in a future template revision. The feedback loop runs at template-revision time, not at sample-recording time, so the agent recording samples is never blocked by the template's current vocabulary.
-
-`## Gaps` is for **unknowns about the repo** ("what couldn't be determined within research budget"), not for unaccommodated content patterns. Don't conflate the two — Gaps describes information we couldn't extract; Notable structural choices / Unanticipated axes describe information we *did* extract that doesn't fit elsewhere.
-
-## Conditional sections
-
-`## Python-specific` is conditional — present only when the repo's primary language is Python. Other languages omit the section entirely; do not adapt sub-purposes for other ecosystems.
-
-## Filename convention
-
-`<owner>--<repo>.md` (double-hyphen separator). Not-found / unresolvable records go to `_missing--<best-guess>.md` with a brief note.
+**Filename convention.** `<owner>--<repo>.md` (double-hyphen separator). Not-found / unresolvable records go to `_missing--<best-guess>.md` with a brief note.
 
 ---
 

@@ -18,6 +18,7 @@ import argparse
 import sys
 from pathlib import Path
 
+from .research._compliance import compliance_summary
 from .research._sample_tools import (
     DuplicateHeadingError,
     check_no_duplicate_headings,
@@ -94,6 +95,53 @@ def _dispatch_research_consolidate(args: argparse.Namespace) -> int:
     return 0
 
 
+def _dispatch_research_compliance(args: argparse.Namespace) -> int:
+    """Compare every sample under a directory against a template; print violations."""
+    samples_dir = _resolve_samples_dir(args)
+    if not samples_dir.is_dir():
+        print(f"Samples directory not found: {samples_dir}", file=sys.stderr)
+        return 1
+    template_path = Path(args.template).resolve() if args.template else samples_dir / "_TEMPLATE.md"
+    if not template_path.is_file():
+        print(f"Template not found: {template_path}", file=sys.stderr)
+        return 1
+
+    summary = compliance_summary(samples_dir, template_path)
+    clean = sum(1 for r in summary.reports if r.is_clean)
+    total = len(summary.reports)
+    print(f"Samples: {total}    Clean: {clean}    With outliers: {total - clean}")
+    print(f"Template: {template_path}")
+    print()
+
+    if summary.outlier_counts:
+        sorted_outliers = sorted(summary.outlier_counts.items(), key=lambda kv: -len(kv[1]))
+        print("Outliers — chain keys present in samples but not in template:")
+        for chain_key, files in sorted_outliers:
+            print(f"  {len(files):3d}  {chain_key}")
+            if args.show_files:
+                for f in files:
+                    print(f"         {f.name}")
+        print()
+    else:
+        print("No outliers across the corpus.\n")
+
+    order_violations = [(r, v) for r in summary.reports for v in r.out_of_order]
+    if order_violations:
+        print("Order violations:")
+        for report, violation in order_violations:
+            print(f"  {report.sample_path.name}: '{violation.heading}' should come after "
+                  f"'{violation.expected_after}', not '{violation.appears_after}'")
+        print()
+
+    if args.show_missing and summary.missing_counts:
+        print("Missing template chain keys (informational — sections are optional):")
+        sorted_missing = sorted(summary.missing_counts.items(), key=lambda kv: -kv[1])
+        for chain_key, count in sorted_missing:
+            print(f"  {count:3d}  {chain_key}")
+
+    return 0 if not summary.outlier_counts and not order_violations else 1
+
+
 def _add_samples_location_args(p: argparse.ArgumentParser) -> None:
     """Attach `--subject NAME` / `--dir PATH` as a mutually exclusive group.
 
@@ -138,8 +186,9 @@ def build_parser() -> argparse.ArgumentParser:
             "  check           Verify a markdown file has no sibling-duplicate headings\n"
             "  count-sections  Print chain-key coverage across a samples directory\n"
             "  consolidate     Print per-sample content under a given chain key\n"
+            "  compliance      Diff every sample against the subject's _TEMPLATE.md\n"
             "\n"
-            "Samples-directory locators (count-sections, consolidate):\n"
+            "Samples-directory locators (count-sections, consolidate, compliance):\n"
             "  --subject <name>    CWD/logs/research/<name>/samples/\n"
             "  --dir <path>        Explicit directory path\n"
             "\n"
@@ -148,7 +197,10 @@ def build_parser() -> argparse.ArgumentParser:
             "  log research count-sections --subject <name>\n"
             "  log research count-sections --dir <path>\n"
             "  log research consolidate --chain <key> --subject <name>\n"
-            "  log research consolidate --chain <key> --dir <path>"
+            "  log research consolidate --chain <key> --dir <path>\n"
+            "  log research compliance --subject <name>\n"
+            "  log research compliance --subject <name> --show-missing --show-files\n"
+            "  log research compliance --dir <path> --template <template-path>"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
@@ -179,6 +231,27 @@ def build_parser() -> argparse.ArgumentParser:
         help="Chain key like 'Transport > Configuration' (` > ` separator)",
     )
     r_consolidate.set_defaults(_dispatch=_dispatch_research_consolidate)
+
+    r_compliance = rsub.add_parser(
+        "compliance",
+        help="Diff every sample under a directory against a template; report outliers",
+    )
+    _add_samples_location_args(r_compliance)
+    r_compliance.add_argument(
+        "--template",
+        help="Path to template markdown (default: <samples-dir>/_TEMPLATE.md)",
+    )
+    r_compliance.add_argument(
+        "--show-missing",
+        action="store_true",
+        help="Also list template chain keys missing across the corpus (informational)",
+    )
+    r_compliance.add_argument(
+        "--show-files",
+        action="store_true",
+        help="List the sample filenames where each outlier appears",
+    )
+    r_compliance.set_defaults(_dispatch=_dispatch_research_compliance)
 
     return parser
 
