@@ -1,0 +1,98 @@
+files_processed:
+  - path: logs/research/mcp/samples/chroma-core--chroma-mcp.md
+    level1_normalized: false
+    bullets_converted: 0
+  - path: logs/research/mcp/samples/ckreiling--mcp-server-docker.md
+    level1_normalized: false
+    bullets_converted: 0
+  - path: logs/research/mcp/samples/cloudflare--mcp-server-cloudflare.md
+    level1_normalized: false
+    bullets_converted: 0
+  - path: logs/research/mcp/samples/crystaldba--postgres-mcp.md
+    level1_normalized: false
+    bullets_converted: 0
+  - path: logs/research/mcp/samples/datalayer--earthdata-mcp-server.md
+    level1_normalized: false
+    bullets_converted: 0
+  - path: logs/research/mcp/samples/datalayer--jupyter-mcp-server.md
+    level1_normalized: false
+    bullets_converted: 0
+  - path: logs/research/mcp/samples/designcomputer--mysql_mcp_server.md
+    level1_normalized: false
+    bullets_converted: 0
+  - path: logs/research/mcp/samples/duolingo--slack-mcp.md
+    level1_normalized: false
+    bullets_converted: 0
+  - path: logs/research/mcp/samples/echelon-ai-labs--servicenow-mcp.md
+    level1_normalized: false
+    bullets_converted: 15
+  - path: logs/research/mcp/samples/executeautomation--mcp-playwright.md
+    level1_normalized: false
+    bullets_converted: 41
+  - path: logs/research/mcp/samples/feiskyer--mcp-kubernetes-server.md
+    level1_normalized: false
+    bullets_converted: 41
+  - path: logs/research/mcp/samples/geropl--linear-mcp-go.md
+    level1_normalized: false
+    bullets_converted: 41
+  - path: logs/research/mcp/samples/getsentry--sentry-mcp.md
+    level1_normalized: false
+    bullets_converted: 41
+  - path: logs/research/mcp/samples/github--github-mcp-server.md
+    level1_normalized: false
+    bullets_converted: 41
+  - path: logs/research/mcp/samples/googleapis--mcp-toolbox.md
+    level1_normalized: false
+    bullets_converted: 41
+  - path: logs/research/mcp/samples/hannesrudolph--sqlite-explorer-fastmcp-mcp-server.md
+    level1_normalized: false
+    bullets_converted: 43
+
+section_observations:
+  - subject: mcp
+    section: "10. Host integrations shown in README or repo"
+    samples_in_batch: 16
+    sub_purposes:
+      Claude Desktop: 7
+      Cursor: 2
+      Claude Code: 2
+      Other editors/CLIs: 2
+      pitfalls observed: 16
+    anomalies:
+      - "Heterogeneous host names across samples — sub-purposes do not converge to a stable set"
+      - "Many samples list multiple hosts as plain bullets rather than a sub-purpose per host (executeautomation, feiskyer, geropl, getsentry, github, googleapis)"
+  - subject: mcp
+    section: "17. Notable structural choices"
+    samples_in_batch: 16
+    anomalies:
+      - "Section consists of plain bullets with no name:content structure across all samples — no convertible sub-purposes"
+  - subject: mcp
+    section: "18. Unanticipated axes observed"
+    samples_in_batch: 16
+    sub_purposes:
+      "decision dimensions this repo reveals": 4
+    anomalies:
+      - "Most samples present section 18 as plain bullets without a sub-purpose; only chroma, datalayer-earthdata, datalayer-jupyter, feiskyer use the 'decision dimensions this repo reveals' subhead"
+  - subject: mcp
+    section: "19. Python-specific"
+    samples_in_batch: 10
+    sub_purposes:
+      "SDK / framework variant": 10
+      "Python version floor": 10
+      Packaging: 10
+      "Entry point": 10
+      "Install workflow expected of end users": 10
+      "Async and tool signatures": 10
+      "Type / schema strategy": 10
+      Testing: 10
+      "Dev ergonomics": 10
+      "Notable Python-specific choices": 10
+    anomalies:
+      - "Section 19 absent from non-Python samples (cloudflare TS, executeautomation TS, geropl Go, getsentry TS, github Go, googleapis Go); present in 10 of 16"
+  - subject: mcp
+    section: "20. Gaps"
+    samples_in_batch: 16
+    sub_purposes:
+      "what couldn't be determined": 3
+    anomalies:
+      - "Most samples present section 20 as plain bullets; only ckreiling, feiskyer, echelon use the 'what couldn't be determined' subhead"

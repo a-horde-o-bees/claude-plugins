@@ -1,26 +1,65 @@
 # Sample
 
 ## Identification
-- url: https://github.com/labeveryday/mcp_pdf_reader
-- stars: 12
-- last-commit (date or relative): not captured
-- license: MIT
-- default branch: main
-- one-line purpose: PDF reader MCP server — PDF extraction + OCR; bare-script server.
+### url
+
+https://github.com/labeveryday/mcp_pdf_reader
+
+### stars
+
+12
+
+### last-commit (date or relative)
+
+not captured
+
+### license
+
+MIT
+
+### default branch
+
+main
+
+### one-line purpose
+
+PDF reader MCP server — PDF extraction + OCR; bare-script server.
 
 ## 1. Language and runtime
-- language(s) + version constraints: Python 100%; version from `.python-version` file (specific version not captured)
-- framework/SDK in use: FastMCP (marketed as "Modern MCP server framework")
-- pitfalls observed: none noted in this repo
+### language(s) + version constraints
+
+Python 100%; version from `.python-version` file (specific version not captured)
+
+### framework/SDK in use
+
+FastMCP (marketed as "Modern MCP server framework")
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 2. Transport
-- supported transports: stdio
-- how selected: default
-- pitfalls observed: none noted in this repo
+### supported transports
+
+stdio
+
+### how selected
+
+default
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 3. Distribution
-- every mechanism observed: source-only (clone + install); no PyPI publication documented
-- published package name(s): none documented
+### every mechanism observed
+
+source-only (clone + install); no PyPI publication documented
+
+### published package name(s)
+
+none documented
+
 - install commands shown in README:
   - `uv sync`
   - `pip install fastmcp PyMuPDF pytesseract Pillow`
@@ -30,34 +69,73 @@
   - what couldn't be determined: exact stars/commit date, tool count, whether there's a MANIFEST.in or setup.py, PyPI status, test presence, license file presence
 
 ## 4. Entry point / launch
-- command(s) users/hosts run: `uv run python pdf_reader_server.py`; `python pdf_reader_server.py`
-- wrapper scripts, launchers, stubs: bare script `pdf_reader_server.py` — no console script
-- pitfalls observed: none noted in this repo
+### command(s) users/hosts run
+
+`uv run python pdf_reader_server.py`; `python pdf_reader_server.py`
+
+### wrapper scripts, launchers, stubs
+
+bare script `pdf_reader_server.py` — no console script
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 5. Configuration surface
-- how config reaches the server: environment / system-level Tesseract install; no runtime config surface documented
-- pitfalls observed: none noted in this repo
+### how config reaches the server
+
+environment / system-level Tesseract install; no runtime config surface documented
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 6. Authentication
-- flow: none — local file processing
-- where credentials come from: N/A
-- pitfalls observed: none noted in this repo
+### flow
+
+none — local file processing
+
+### where credentials come from
+
+N/A
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 7. Multi-tenancy
-- single-user / per-request tenant / workspace-keyed / not applicable / other: not applicable — purely local file operations
-- pitfalls observed: none noted in this repo
+### single-user / per-request tenant / workspace-keyed / not applicable / other
+
+not applicable — purely local file operations
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 8. Capabilities exposed
-- tools / resources / prompts / sampling / roots / logging / other: tools for PDF text extraction, PDF image extraction, OCR text recognition within images
-- pitfalls observed: none noted in this repo
+### tools / resources / prompts / sampling / roots / logging / other
+
+tools for PDF text extraction, PDF image extraction, OCR text recognition within images
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 9. Observability
-- logging destination + format, metrics, tracing, debug flags: not documented
-- pitfalls observed: none noted in this repo
+### logging destination + format, metrics, tracing, debug flags
+
+not documented
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 10. Host integrations shown in README or repo
 Not captured explicitly per host
-- pitfalls observed: none noted in this repo
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 11. Claude Code plugin wrapper
 
@@ -70,24 +148,49 @@ none
 none noted in this repo
 
 ## 12. Tests
-- presence, framework, location, notable patterns: no CI/CD or test files mentioned in README
-- pitfalls observed: none noted in this repo
+### presence, framework, location, notable patterns
+
+no CI/CD or test files mentioned in README
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 13. CI
-- presence, system, triggers, what it runs: none documented
-- pitfalls observed: none noted in this repo
+### presence, system, triggers, what it runs
+
+none documented
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 14. Container / packaging artifacts
-- Dockerfile, docker-compose, Helm, systemd, brew formula, etc.: none mentioned
-- pitfalls observed: none noted in this repo
+### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+
+none mentioned
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 15. Example client / developer ergonomics
-- MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs: none captured
-- pitfalls observed: none noted in this repo
+### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+
+none captured
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 16. Repo layout
-- single-package / monorepo / vendored / other: single-file server (`pdf_reader_server.py`)
-- pitfalls observed: none noted in this repo
+### single-package / monorepo / vendored / other
+
+single-file server (`pdf_reader_server.py`)
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 17. Notable structural choices
 - **Bare-script entry point** — no `pyproject.toml` `[project.scripts]` entry; server is literally `python pdf_reader_server.py`
@@ -140,4 +243,6 @@ none noted in this repo
 - Bare-script server pattern demonstrates FastMCP 2.x's low-ceremony surface
 
 ## 20. Gaps
-- what couldn't be determined: exact stars/commit date, tool count, whether there's a MANIFEST.in or setup.py, PyPI status, test presence, license file presence
+### what couldn't be determined
+
+exact stars/commit date, tool count, whether there's a MANIFEST.in or setup.py, PyPI status, test presence, license file presence

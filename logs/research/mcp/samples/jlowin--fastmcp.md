@@ -1,48 +1,118 @@
 # Sample
 
 ## Identification
-- url: https://github.com/jlowin/fastmcp
-- stars: 24.7k
-- last-commit (date or relative): v3.2.4 released Apr 14, 2026
-- license: Apache-2.0
-- default branch: main
-- one-line purpose: FastMCP Python framework (not a server) — decorator-driven SDK absorbed into the official MCP Python SDK; anchors Python MCP repo-layout defaults.
+### url
+
+https://github.com/jlowin/fastmcp
+
+### stars
+
+24.7k
+
+### last-commit (date or relative)
+
+v3.2.4 released Apr 14, 2026
+
+### license
+
+Apache-2.0
+
+### default branch
+
+main
+
+### one-line purpose
+
+FastMCP Python framework (not a server) — decorator-driven SDK absorbed into the official MCP Python SDK; anchors Python MCP repo-layout defaults.
 
 **Framework, not server.** FastMCP is a Python SDK for building MCP servers and clients — not itself a deployable MCP server. Listed here as a structural reference for Python MCP ecosystem defaults (repo layout, entry points, testing) per task brief.
 
 ## 1. Language and runtime
-- language(s) + version constraints: Python 100%; specific Python minimum not extracted within budget (3.10+ is typical for modern FastMCP)
-- framework/SDK in use: This IS the framework — wraps the official MCP Python SDK with a decorator-based API. Incorporated into the official MCP Python SDK in 2024
-- pitfalls observed: none noted in this repo
+### language(s) + version constraints
+
+Python 100%; specific Python minimum not extracted within budget (3.10+ is typical for modern FastMCP)
+
+### framework/SDK in use
+
+This IS the framework — wraps the official MCP Python SDK with a decorator-based API. Incorporated into the official MCP Python SDK in 2024
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 2. Transport
-- supported transports: stdio and HTTP (the framework supports both; servers built on FastMCP choose per-deployment)
-- how selected (flag, env, separate entry, auto-detect, etc.): Via `mcp.run()` call signature in the consuming server's code
-- pitfalls observed: none noted in this repo
+### supported transports
+
+stdio and HTTP (the framework supports both; servers built on FastMCP choose per-deployment)
+
+### how selected (flag, env, separate entry, auto-detect, etc.)
+
+Via `mcp.run()` call signature in the consuming server's code
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 3. Distribution
-- every mechanism observed: PyPI
-- published package name(s): fastmcp
-- install commands shown in README: `uv pip install fastmcp`
-- pitfalls observed: none noted in this repo
+### every mechanism observed
+
+PyPI
+
+### published package name(s)
+
+fastmcp
+
+### install commands shown in README
+
+`uv pip install fastmcp`
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 4. Entry point / launch
-- command(s) users/hosts run: Not applicable — consumers write their own servers; FastMCP provides the runtime. Consumer script calls `mcp.run()` as entry
-- wrapper scripts, launchers, stubs: Framework-level; consumers write entry points
-- pitfalls observed: none noted in this repo
+### command(s) users/hosts run
+
+Not applicable — consumers write their own servers; FastMCP provides the runtime. Consumer script calls `mcp.run()` as entry
+
+### wrapper scripts, launchers, stubs
+
+Framework-level; consumers write entry points
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 5. Configuration surface
-- how config reaches the server: Framework API — consumers wire their own config. FastMCP itself is configured programmatically via decorators and constructor args
-- pitfalls observed: none noted in this repo
+### how config reaches the server
+
+Framework API — consumers wire their own config. FastMCP itself is configured programmatically via decorators and constructor args
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 6. Authentication
-- flow: Not applicable at framework level — consumers implement auth per server. Framework supports middleware patterns for auth layering
-- where credentials come from: Consumer-defined
-- pitfalls observed: none noted in this repo
+### flow
+
+Not applicable at framework level — consumers implement auth per server. Framework supports middleware patterns for auth layering
+
+### where credentials come from
+
+Consumer-defined
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 7. Multi-tenancy
-- single-user / per-request tenant / workspace-keyed / not applicable / other: Framework supports arbitrary tenancy patterns — consumer decides. HTTP transport enables multi-client shared deployments
-- pitfalls observed: none noted in this repo
+### single-user / per-request tenant / workspace-keyed / not applicable / other
+
+Framework supports arbitrary tenancy patterns — consumer decides. HTTP transport enables multi-client shared deployments
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 8. Capabilities exposed
 - tools / resources / prompts / sampling / roots / logging / other:
@@ -55,15 +125,26 @@
         return a + b
     ```
   - Resources and prompts similarly declared via decorators
-- pitfalls observed: none noted in this repo
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 9. Observability
-- logging destination + format, metrics, tracing, debug flags: Framework-level logging utilities; consumers configure destinations
-- pitfalls observed: none noted in this repo
+### logging destination + format, metrics, tracing, debug flags
+
+Framework-level logging utilities; consumers configure destinations
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 10. Host integrations shown in README or repo
 - Not applicable — framework is host-agnostic; the servers built on it target Claude Desktop, Cursor, Windsurf, etc.
-- pitfalls observed: none noted in this repo
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 11. Claude Code plugin wrapper
 
@@ -76,24 +157,49 @@ Not applicable — framework level
 none noted in this repo
 
 ## 12. Tests
-- presence, framework, location, notable patterns: pytest; tests in `/tests` directory
-- pitfalls observed: none noted in this repo
+### presence, framework, location, notable patterns
+
+pytest; tests in `/tests` directory
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 13. CI
-- presence, system, triggers, what it runs: GitHub Actions — `run-tests.yml` workflow identified
-- pitfalls observed: none noted in this repo
+### presence, system, triggers, what it runs
+
+GitHub Actions — `run-tests.yml` workflow identified
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 14. Container / packaging artifacts
-- Dockerfile, docker-compose, Helm, systemd, brew formula, etc.: Not observed at framework level; consumers containerize their own servers
-- pitfalls observed: none noted in this repo
+### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+
+Not observed at framework level; consumers containerize their own servers
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 15. Example client / developer ergonomics
-- MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs: `/examples` directory; `/docs` directory; `llms.txt` format for LLM-consumable docs; community Discord; docs at gofastmcp.com
-- pitfalls observed: none noted in this repo
+### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+
+`/examples` directory; `/docs` directory; `llms.txt` format for LLM-consumable docs; community Discord; docs at gofastmcp.com
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 16. Repo layout
-- single-package / monorepo / vendored / other: Single-package Python project with `src/fastmcp/` layout (src-layout, uses uv); separate `/examples`, `/docs`, `/tests`; `pyproject.toml` + `uv.lock`
-- pitfalls observed: none noted in this repo
+### single-package / monorepo / vendored / other
+
+Single-package Python project with `src/fastmcp/` layout (src-layout, uses uv); separate `/examples`, `/docs`, `/tests`; `pyproject.toml` + `uv.lock`
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 17. Notable structural choices
 - **Framework status** — not a server; this file is present to anchor the reference layout that many Python MCP servers adopt
