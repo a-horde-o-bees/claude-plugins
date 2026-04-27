@@ -26,7 +26,7 @@ main
 
 Riza code-interpreter MCP server — sandboxed code execution tool.
 
-## 1. Language and runtime
+## Language and runtime
 
 ### language(s) + version constraints
 
@@ -36,11 +36,7 @@ JavaScript (72.2%), TypeScript (27.8%); Node.js runtime required.
 
 Anthropic's Model Context Protocol (MCP) specification.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 2. Transport
+## Transport
 
 ### supported transports
 
@@ -50,11 +46,7 @@ Not explicitly specified in provided content; inferred as stdio or HTTP based on
 
 Standard MCP transport selection; details not documented.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 3. Distribution
+## Distribution
 
 ### every mechanism observed
 
@@ -68,11 +60,7 @@ NPM package registry, npx command.
 
 `npx @riza-io/riza-mcp` (assumed from npm distribution pattern).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 4. Entry point / launch
+## Entry point / launch
 
 ### command(s) users/hosts run
 
@@ -82,21 +70,13 @@ Configured through Claude Desktop or adapted for other MCP clients via command-l
 
 None documented.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 5. Configuration surface
+## Configuration surface
 
 ### how config reaches the server
 
 JSON configuration file (Claude Desktop format); environment variables for API credentials.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 6. Authentication
+## Authentication
 
 ### flow
 
@@ -106,41 +86,25 @@ API key authentication via environment variable.
 
 Riza API key set via `RIZA_API_KEY` environment variable; "Get a free Riza API key in your Riza Dashboard".
 
-### pitfalls observed
-
-none noted in this repo
-
-## 7. Multi-tenancy
+## Multi-tenancy
 
 ### tenancy model
 
 Single-user per API key; multi-user via separate API keys.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 8. Capabilities exposed
+## Capabilities exposed
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
 Six primary tools: `create_tool` (save code as reusable tools), `fetch_tool` (retrieve saved tools with source code), `execute_tool` (run saved tools securely), `edit_tool` (modify existing tools), `list_tools` (view available tools), `execute_code` (run arbitrary code without saving).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 9. Observability
+## Observability
 
 ### logging destination + format, metrics, tracing, debug flags
 
 No observability features documented.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 10. Host integrations shown in README or repo
+## Host integrations shown in README or repo
 
 ### Claude Desktop
 
@@ -154,78 +118,50 @@ Not explicitly documented.
 
 Adaptable for any MCP client.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 11. Claude Code plugin wrapper
+## Claude Code plugin wrapper
 
 ### presence and shape
 
 Not present; configuration-based integration only.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 12. Tests
+## Tests
 
 ### presence, framework, location, notable patterns
 
 Not documented in provided content.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 13. CI
+## CI
 
 ### presence, system, triggers, what it runs
 
 Not documented in provided content.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 14. Container / packaging artifacts
+## Container / packaging artifacts
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 Not documented in provided content.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 15. Example client / developer ergonomics
+## Example client / developer ergonomics
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
 Claude Desktop JSON configuration example; six documented tools with clear semantics.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 16. Repo layout
+## Repo layout
 
 ### single-package / monorepo / vendored / other
 
 Single server package with minimal structure: README.md, `/typescript/` directory containing implementation.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 17. Notable structural choices
+## Notable structural choices
 
 Wraps Riza code interpreter API as MCP tools. Code execution patterns: `create_tool` (save), `execute_tool` (run saved), `execute_code` (run arbitrary without saving). Minimal repository structure suggests newer/actively developed project. Isolated code execution emphasis (Riza's core value proposition).
 
-## 18. Unanticipated axes observed
+## Unanticipated axes observed
 
 Code interpreter service integration pattern (not data/tool aggregation like other MCP servers). Separate patterns for saved vs. arbitrary code execution. Tool editing capability (`edit_tool`) unusual for MCP servers.
 
-## 20. Gaps
+## Gaps
 
 Transports not explicitly documented. License not specified in provided content. Test patterns not documented. CI/CD configuration not examined. Last commit date not confirmed. No information on TypeScript/JavaScript version constraints.

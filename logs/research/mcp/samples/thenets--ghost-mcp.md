@@ -26,7 +26,7 @@ main
 
 Ghost blog CMS MCP server — dual Content + Admin API coverage with JWT auto-renewal; Docker Compose local stack provided.
 
-## 1. Language and runtime
+## Language and runtime
 
 ### language(s) + version constraints
 
@@ -36,11 +36,7 @@ Python 92.5%; Python 3.10+ required.
 
 FastMCP 2.12.3 (explicit version in README).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 2. Transport
+## Transport
 
 ### supported transports
 
@@ -50,11 +46,7 @@ stdio (implied by `uvx` invocation).
 
 default
 
-### pitfalls observed
-
-none noted in this repo
-
-## 3. Distribution
+## Distribution
 
 ### every mechanism observed
 
@@ -68,11 +60,7 @@ PyPI `ghost-mcp` (via `uvx ghost-mcp`); clone + `make run`; Docker Compose for t
 
 `uvx ghost-mcp`
 
-### pitfalls observed
-
-none noted in this repo
-
-## 4. Entry point / launch
+## Entry point / launch
 
 ### command(s) users/hosts run
 
@@ -82,21 +70,13 @@ none noted in this repo
 
 `src/ghost_mcp/server.py` is the entry point.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 5. Configuration surface
+## Configuration surface
 
 ### how config reaches the server
 
 env vars — `GHOST_URL` and Ghost API keys (Content API and/or Admin API); env-var selection drives which API surface is active.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 6. Authentication
+## Authentication
 
 ### flow
 
@@ -106,91 +86,55 @@ Content API: query-parameter authentication with 26-character hex API keys. Admi
 
 Ghost API keys provisioned through Ghost admin; passed via env vars.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 7. Multi-tenancy
+## Multi-tenancy
 
 ### tenancy model
 
 single Ghost blog per instance (one `GHOST_URL`).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 8. Capabilities exposed
+## Capabilities exposed
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
 15+ tools across: Content API: 10 read-only (posts, pages, tags, authors, settings, site info, search). Admin API: 6 read/write (create/update/delete posts/pages/tags). Utility: connection check.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 9. Observability
+## Observability
 
 ### logging destination + format, metrics, tracing, debug flags
 
 not captured
 
-### pitfalls observed
-
-none noted in this repo
-
-## 10. Host integrations shown in README or repo
+## Host integrations shown in README or repo
 
 ### Claude Desktop
 
 standard MCP client config pattern with `uvx ghost-mcp` + env vars.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 11. Claude Code plugin wrapper
+## Claude Code plugin wrapper
 
 ### presence and shape
 
 none
 
-### pitfalls observed
-
-none noted in this repo
-
-## 12. Tests
+## Tests
 
 ### presence, framework, location, notable patterns
 
 `make test`, `make test-connection`; GitHub Actions workflows directory present.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 13. CI
+## CI
 
 ### presence, system, triggers, what it runs
 
 GitHub Actions (workflows present, details not extracted).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 14. Container / packaging artifacts
+## Container / packaging artifacts
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 full Docker Compose setup with Ghost 5.x + MySQL 8.0 — for end-to-end local testing, not server deployment. Includes health checks and volume persistence.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 15. Example client / developer ergonomics
+## Example client / developer ergonomics
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
@@ -200,17 +144,13 @@ Makefile targets (`make run`, `make dev`, `make test`, `make test-connection`); 
 
 Makefile-first workflow — targets for run/dev/test/connection-check.
 
-## 16. Repo layout
+## Repo layout
 
 ### single-package / monorepo / vendored / other
 
 single-package (`src/ghost_mcp/`).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 17. Notable structural choices
+## Notable structural choices
 
 Dual-API design — Content API (read-only, query-param auth) and Admin API (read/write, JWT) exposed through distinct tool groups within one server.
 
@@ -222,7 +162,7 @@ Makefile-first workflow — targets for run/dev/test/connection-check.
 
 FastMCP version pinned explicitly to 2.12.3 — a precise pin signals version-awareness.
 
-## 18. Unanticipated axes observed
+## Unanticipated axes observed
 
 Server-managed token rotation — most MCP servers assume static creds; this one refreshes JWTs every 5 minutes. Auth mechanics live in the server rather than the LLM or user.
 
@@ -232,7 +172,7 @@ Dual-API architecture split — some SaaS platforms have read and write as separ
 
 Very low star count (1) with a very complete repo structure — suggests a recent or under-advertised but thoughtfully-built project.
 
-## 19. Python-specific
+## Python-specific
 
 ### SDK / framework variant
 
@@ -274,6 +214,6 @@ Makefile + Docker Compose for a full CMS test stack.
 
 Explicit FastMCP version pin (2.12.3) — conservative. async/await mentioned as an implementation feature in README.
 
-## 20. Gaps
+## Gaps
 
 what couldn't be determined: exact pyproject content, stars-update timing, CI workflow details, test framework, license file (README says MIT).

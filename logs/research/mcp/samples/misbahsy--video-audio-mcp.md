@@ -26,7 +26,7 @@ main
 
 Video/audio processing MCP server — 30+ ffmpeg-backed tools for media conversion and manipulation.
 
-## 1. Language and runtime
+## Language and runtime
 
 ### language(s) + version constraints
 
@@ -40,7 +40,7 @@ raw `mcp[cli]>=1.9.0` + `ffmpeg-python>=0.2.0`
 
 Python 3.13 floor — aggressive, like hass-mcp.
 
-## 2. Transport
+## Transport
 
 ### supported transports
 
@@ -50,11 +50,7 @@ stdio
 
 default
 
-### pitfalls observed
-
-none noted in this repo
-
-## 3. Distribution
+## Distribution
 
 ### every mechanism observed
 
@@ -72,7 +68,7 @@ project name in pyproject is `video-edit-mcp` — presumably not on PyPI (no ins
 
 pyproject project-name vs repo-name drift — `video-edit-mcp` (pyproject) versus `video-audio-mcp` (repo).
 
-## 4. Entry point / launch
+## Entry point / launch
 
 ### command(s) users/hosts run
 
@@ -82,21 +78,13 @@ pyproject project-name vs repo-name drift — `video-edit-mcp` (pyproject) versu
 
 bare script `server.py`
 
-### pitfalls observed
-
-none noted in this repo
-
-## 5. Configuration surface
+## Configuration surface
 
 ### how config reaches the server
 
 env-level ffmpeg binary availability; no documented runtime config
 
-### pitfalls observed
-
-none noted in this repo
-
-## 6. Authentication
+## Authentication
 
 ### flow
 
@@ -106,69 +94,41 @@ none — local media processing
 
 N/A
 
-### pitfalls observed
-
-none noted in this repo
-
-## 7. Multi-tenancy
+## Multi-tenancy
 
 ### tenancy model
 
 not applicable — local file operations
 
-### pitfalls observed
-
-none noted in this repo
-
-## 8. Capabilities exposed
+## Capabilities exposed
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
 30+ tools covering: Video — format conversion, trimming, resolution scaling, codec changes, overlays. Audio — format conversion, bitrate/sample rate adjustment, channel configuration. Creative — text overlays, watermarks, subtitles, transitions. Advanced — concatenation, B-roll insertion, silence removal.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 9. Observability
+## Observability
 
 ### logging destination + format, metrics, tracing, debug flags
 
 not captured
 
-### pitfalls observed
-
-none noted in this repo
-
-## 10. Host integrations shown in README or repo
+## Host integrations shown in README or repo
 
 Not enumerated.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 11. Claude Code plugin wrapper
+## Claude Code plugin wrapper
 
 ### presence and shape
 
 none
 
-### pitfalls observed
-
-none noted in this repo
-
-## 12. Tests
+## Tests
 
 ### presence, framework, location, notable patterns
 
 pytest test suite in `tests/` — 30+ functions tested; `pytest` declared as a runtime dep (unusual — it should be a dev dep)
 
-### pitfalls observed
-
-none noted in this repo
-
-## 13. CI
+## CI
 
 ### presence, system, triggers, what it runs
 
@@ -178,45 +138,33 @@ README includes a GitHub Actions example with FFmpeg install step — pattern is
 
 System-tool dependency (ffmpeg) — requires out-of-band install; README's GitHub Actions example includes an explicit `apt-get install ffmpeg` step.
 
-## 14. Container / packaging artifacts
+## Container / packaging artifacts
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 none captured
 
-### pitfalls observed
-
-none noted in this repo
-
-## 15. Example client / developer ergonomics
+## Example client / developer ergonomics
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
 GitHub Actions YAML example in README
 
-### pitfalls observed
-
-none noted in this repo
-
-## 16. Repo layout
+## Repo layout
 
 ### single-package / monorepo / vendored / other
 
 single-file server (`server.py`)
 
-### pitfalls observed
-
-none noted in this repo
-
-## 17. Notable structural choices
+## Notable structural choices
 
 System-tool dependency (ffmpeg) — requires out-of-band install; README's GitHub Actions example includes an explicit `apt-get install ffmpeg` step. `ffmpeg-python` library wraps ffmpeg CLI via Python; alternative approaches wrap ffmpeg directly via subprocess or call `pyav`. `pytest` in runtime deps — probably an oversight; tests shouldn't require installing pytest for users running the server. Python 3.13 floor — aggressive, like hass-mcp. Project name in `pyproject.toml` (`video-edit-mcp`) differs from repo name (`video-audio-mcp`) — mild naming inconsistency.
 
-## 18. Unanticipated axes observed
+## Unanticipated axes observed
 
 System-binary dependency as a distribution concern — ffmpeg must be on PATH; CI docs include install step; similar constraint exists for Tesseract in PDF OCR servers. Forms a server class "system-dep servers" where Docker distribution is the only self-contained option. Tool-count density — 30+ tools for file processing from a 6-commit repo; shows how quickly an FFmpeg wrapper can scale via codegen-like uniformity. pyproject project-name vs repo-name drift — an axis for "what is the authoritative identifier?" — PyPI name, repo name, console-script name can all diverge.
 
-## 19. Python-specific
+## Python-specific
 
 ### SDK / framework variant
 
@@ -258,6 +206,6 @@ documented GitHub Actions pattern
 
 `pytest` declared as a runtime dep — likely a mistake or a side-effect of listing all deps uniformly. Uses `pillow` — suggests thumbnail/frame capture features in addition to pure ffmpeg ops. Python 3.13 floor on a 6-commit repo — tracking bleeding-edge Python.
 
-## 20. Gaps
+## Gaps
 
 Exact stars date, console-script presence (pyproject omitted `[project.scripts]`), actual build backend, whether CI is real or only documented as a pattern, confirmation of FastMCP-in-SDK vs standalone.

@@ -26,7 +26,7 @@ main
 
 Hugging Face Hub MCP server — all three MCP surfaces (tools + resources + prompts) with a custom `hf://` URI scheme.
 
-## 1. Language and runtime
+## Language and runtime
 
 ### language(s) + version constraints
 
@@ -40,7 +40,7 @@ raw `mcp` Python SDK (not FastMCP).
 
 Exact `.python-version` content not read.
 
-## 2. Transport
+## Transport
 
 ### supported transports
 
@@ -50,11 +50,7 @@ stdio (MCP default).
 
 stdio-only
 
-### pitfalls observed
-
-none noted in this repo
-
-## 3. Distribution
+## Distribution
 
 ### every mechanism observed
 
@@ -72,7 +68,7 @@ not confirmed on PyPI; Smithery as primary distribution.
 
 Whether PyPI publication exists not confirmed.
 
-## 4. Entry point / launch
+## Entry point / launch
 
 ### command(s) users/hosts run
 
@@ -82,21 +78,13 @@ Whether PyPI publication exists not confirmed.
 
 single script `huggingface_mcp_server.py`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 5. Configuration surface
+## Configuration surface
 
 ### how config reaches the server
 
 environment variables — `HF_TOKEN` optional.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 6. Authentication
+## Authentication
 
 ### flow
 
@@ -106,41 +94,25 @@ optional bearer token.
 
 `HF_TOKEN` env var (for higher rate limits and private-repo access).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 7. Multi-tenancy
+## Multi-tenancy
 
 ### tenancy model
 
 single-user
 
-### pitfalls observed
-
-none noted in this repo
-
-## 8. Capabilities exposed
+## Capabilities exposed
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
 tools — search/info on models, datasets, spaces, papers, collections; prompts — `compare-models`, `summarize-paper`; resources — custom `hf://` URI scheme.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 9. Observability
+## Observability
 
 ### logging destination + format, metrics, tracing, debug flags
 
 not documented
 
-### pitfalls observed
-
-none noted in this repo
-
-## 10. Host integrations shown in README or repo
+## Host integrations shown in README or repo
 
 ### Claude Desktop
 
@@ -150,79 +122,51 @@ macOS/Windows config paths.
 
 registered
 
-### pitfalls observed
-
-none noted in this repo
-
-## 11. Claude Code plugin wrapper
+## Claude Code plugin wrapper
 
 ### presence and shape
 
 none observed
 
-### pitfalls observed
-
-none noted in this repo
-
-## 12. Tests
+## Tests
 
 ### presence, framework, location, notable patterns
 
 not mentioned in README.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 13. CI
+## CI
 
 ### presence, system, triggers, what it runs
 
 not evident
 
-### pitfalls observed
-
-none noted in this repo
-
-## 14. Container / packaging artifacts
+## Container / packaging artifacts
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 Dockerfile present.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 15. Example client / developer ergonomics
+## Example client / developer ergonomics
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
 Claude Desktop JSON snippet.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 16. Repo layout
+## Repo layout
 
 ### single-package / monorepo / vendored / other
 
 flat — main server file at root; `src/huggingface/` for helpers.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 17. Notable structural choices
+## Notable structural choices
 
 Read-only-only stance: README explicitly scopes to read-only access. Custom `hf://` URI scheme exposed via MCP resources — one of few Python servers that use MCP's resource surface and prompts, not just tools. Two MCP prompts shipped (`compare-models`, `summarize-paper`) — demonstrates MCP prompt feature rather than tool-only.
 
-## 18. Unanticipated axes observed
+## Unanticipated axes observed
 
 Using all three MCP surfaces (tools + resources + prompts) in a single server, when most Python servers stick to tools only; explicit read-only contract as a security surface.
 
-## 19. Python-specific
+## Python-specific
 
 ### SDK / framework variant
 
@@ -264,6 +208,6 @@ MCP CLI via `mcp[cli]` implied.
 
 Single-file server kept at repo root rather than packaged — common "hackable" pattern for community MCP servers. Exposes MCP prompts — an underused MCP capability across the Python ecosystem.
 
-## 20. Gaps
+## Gaps
 
 Whether PyPI publication exists not confirmed. Exact `.python-version` content not read. CI presence not verified.

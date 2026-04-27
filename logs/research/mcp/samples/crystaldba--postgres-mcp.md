@@ -26,7 +26,7 @@ main
 
 PostgreSQL performance-tuning MCP server — SQL execution plus deterministic index optimization (hypopg simulation, Pareto selection, workload compression) and health analysis.
 
-## 1. Language and runtime
+## Language and runtime
 
 ### language(s) + version constraints
 
@@ -36,11 +36,7 @@ Python (98.4%); uv-managed.
 
 Anthropic MCP Python tooling; psycopg3 (async), pglast (SQL parsing), hypopg (index simulation), pg_stat_statements.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 2. Transport
+## Transport
 
 ### supported transports
 
@@ -50,11 +46,7 @@ stdio (default), SSE.
 
 `--transport=sse` flag.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 3. Distribution
+## Distribution
 
 ### every mechanism observed
 
@@ -68,11 +60,7 @@ postgres-mcp.
 
 `pipx install postgres-mcp`; `uv pip install postgres-mcp`; `docker pull crystaldba/postgres-mcp`; `uv run postgres-mcp <connection-string>`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 4. Entry point / launch
+## Entry point / launch
 
 ### command(s) users/hosts run
 
@@ -82,21 +70,13 @@ none noted in this repo
 
 Dockerfile; devenv.* files for reproducible env.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 5. Configuration surface
+## Configuration surface
 
 ### how config reaches the server
 
 `DATABASE_URI` environment variable; CLI flags `--access-mode` (unrestricted/restricted) and `--transport`; MCP client JSON configs (Claude Desktop, Cursor, Windsurf, Goose, Qodo Gen).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 6. Authentication
+## Authentication
 
 ### flow
 
@@ -106,41 +86,25 @@ PostgreSQL URI credentials; no additional auth layer; read-only mode enforced in
 
 `DATABASE_URI` env var.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 7. Multi-tenancy
+## Multi-tenancy
 
 ### tenancy model
 
 Single database connection per server instance; SSE transport lets multiple clients share one process but not separate tenancies.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 8. Capabilities exposed
+## Capabilities exposed
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
 Tools only (deliberate design choice per README) — `list_schemas`, `list_objects`, `get_object_details`, `execute_sql`, `explain_query`, `get_top_queries`, `analyze_workload_indexes`, `analyze_query_indexes`, `analyze_db_health`. No resources/prompts because "the MCP client ecosystem has widespread support for MCP tools."
 
-### pitfalls observed
-
-none noted in this repo
-
-## 9. Observability
+## Observability
 
 ### logging destination + format, metrics, tracing, debug flags
 
 Not explicitly documented within budget.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 10. Host integrations shown in README or repo
+## Host integrations shown in README or repo
 
 ### Claude Desktop
 
@@ -166,79 +130,51 @@ Config example provided.
 
 AWS RDS, Azure SQL, Google Cloud SQL explicitly supported.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 11. Claude Code plugin wrapper
+## Claude Code plugin wrapper
 
 ### presence and shape
 
 Not present.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 12. Tests
+## Tests
 
 ### presence, framework, location, notable patterns
 
 Tests under `/tests`; README notes use of "AI-generated adversarial workloads".
 
-### pitfalls observed
-
-none noted in this repo
-
-## 13. CI
+## CI
 
 ### presence, system, triggers, what it runs
 
 GitHub Actions workflows in `.github/workflows/`; specifics not extracted.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 14. Container / packaging artifacts
+## Container / packaging artifacts
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 Dockerfile auto-remaps host address (localhost → host.docker.internal on macOS/Windows, 172.17.0.1 on Linux).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 15. Example client / developer ergonomics
+## Example client / developer ergonomics
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
 `examples/` directory (e.g., movie-app.md); devenv files for reproducible environments.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 16. Repo layout
+## Repo layout
 
 ### single-package / monorepo / vendored / other
 
 Single-package Python — `src/postgres_mcp/`, `tests/`, `examples/`, `.github/workflows/`, Dockerfile, pyproject.toml.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 17. Notable structural choices
+## Notable structural choices
 
 Deterministic optimization algorithms (greedy search, adapted from Microsoft Anytime) rather than LLM-driven index recommendation. Read-only enforcement via SQL parsing with pglast — rejects COMMIT/ROLLBACK in restricted mode. Hypothetical indexing via hypopg extension — simulates index impact without creating real indexes. Workload compression normalizes queries to shrink index-search space. Pareto-front cost-benefit balancing between performance gains and storage overhead. Optional OpenAI API integration for experimental LLM-based index tuning.
 
-## 18. Unanticipated axes observed
+## Unanticipated axes observed
 
 Embedded performance-tuning intelligence (workload analysis, hypothetical indexing, Pareto selection) goes far beyond typical SQL-execution MCP servers. Host-address auto-remapping in Docker image — quality-of-life packaging rarely seen. Explicit rationale for "tools only, no resources/prompts" based on client ecosystem observations.
 
-## 19. Python-specific
+## Python-specific
 
 ### SDK / framework variant
 
@@ -280,6 +216,6 @@ devenv files mentioned in README for reproducible environments. ruff + pyright p
 
 Chooses raw `mcp` SDK over FastMCP despite FastMCP's convenience — suggests deliberate use of low-level hooks for custom tool gating (access modes, SQL parsing via pglast). `src/` layout with explicit `pythonpath` — less common in MCP-server sample. Python 3.12 floor — allows `TypeAliasType` and other 3.12 typing features. Exact version pinning of dev tooling (pyright, ruff) is unusually strict for this sample.
 
-## 20. Gaps
+## Gaps
 
 Logging/observability specifics not surfaced. Exact CI workflows not enumerated. Relationship to commercial Crystal DBA offering not explored.

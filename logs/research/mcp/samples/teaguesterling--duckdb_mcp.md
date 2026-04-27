@@ -26,7 +26,7 @@ main
 
 DuckDB-embedded MCP server — implemented as a DuckDB extension invoked from SQL, rather than a standalone process.
 
-## 1. Language and runtime
+## Language and runtime
 
 ### language(s) + version constraints
 
@@ -36,11 +36,7 @@ C++ (73.7%), Shell (13.1%), Python (10.6%), small TS/JS/HTML. Built as a DuckDB 
 
 Custom implementation of MCP as a native DuckDB extension; CMake build.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 2. Transport
+## Transport
 
 ### supported transports
 
@@ -50,11 +46,7 @@ stdio, HTTP (server mode with token auth), MCP client (connects to external MCP 
 
 `PRAGMA mcp_server_start(...)` selects server mode and transport parameters from SQL.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 3. Distribution
+## Distribution
 
 ### every mechanism observed
 
@@ -68,11 +60,7 @@ None observed.
 
 `make` (build from source).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 4. Entry point / launch
+## Entry point / launch
 
 ### command(s) users/hosts run
 
@@ -82,21 +70,13 @@ Users issue SQL `PRAGMA mcp_server_start()`, `PRAGMA mcp_publish_tool(...)`, and
 
 Example configs under `/examples`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 5. Configuration surface
+## Configuration surface
 
 ### how config reaches the server
 
 SQL PRAGMA calls with parameters (name, description, SQL template, properties, required fields, output format). JSON config file for HTTP/token settings.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 6. Authentication
+## Authentication
 
 ### flow
 
@@ -106,31 +86,19 @@ Bearer-token authentication in HTTP server mode.
 
 JSON configuration file.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 7. Multi-tenancy
+## Multi-tenancy
 
 ### tenancy model
 
 Single-instance server keyed to the DuckDB database; no per-request tenant handling documented.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 8. Capabilities exposed
+## Capabilities exposed
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
 Built-in tools for query execution, table/schema description, listing, database introspection, export, DDL. Custom parameterized SQL queries publishable as tools via `mcp_publish_tool`. Output format per-tool (JSON/Markdown/CSV).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 9. Observability
+## Observability
 
 ### logging destination + format, metrics, tracing, debug flags
 
@@ -140,7 +108,7 @@ Not detailed in README within budget; HTTP `/health` endpoint provides liveness.
 
 Observability/logging specifics not surfaced.
 
-## 10. Host integrations shown in README or repo
+## Host integrations shown in README or repo
 
 ### Claude Desktop
 
@@ -150,31 +118,19 @@ Configuration via `.mcp.json` in project root.
 
 Not explicitly enumerated.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 11. Claude Code plugin wrapper
+## Claude Code plugin wrapper
 
 ### presence and shape
 
 Not present.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 12. Tests
+## Tests
 
 ### presence, framework, location, notable patterns
 
 Tests under `/test`; `make test` command.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 13. CI
+## CI
 
 ### presence, system, triggers, what it runs
 
@@ -184,37 +140,25 @@ GitHub Actions workflows present in `.github/workflows`; specifics not extracted
 
 CI workflow details not extracted.
 
-## 14. Container / packaging artifacts
+## Container / packaging artifacts
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 None observed.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 15. Example client / developer ergonomics
+## Example client / developer ergonomics
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
 `make test` target; 6+ ready-to-use configs under `/examples`; ReadTheDocs documentation.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 16. Repo layout
+## Repo layout
 
 ### single-package / monorepo / vendored / other
 
 Single-package DuckDB extension — `src/`, `examples/`, `test/`, CMake-based, with separate security audit docs.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 17. Notable structural choices
+## Notable structural choices
 
 Native DuckDB extension rather than a standalone process — MCP surface is reachable via SQL PRAGMAs.
 
@@ -224,12 +168,12 @@ Per-tool output format is an explicit token-efficiency knob.
 
 `PRAGMA mcp_publish_tool` makes SQL templates first-class discoverable tools.
 
-## 18. Unanticipated axes observed
+## Unanticipated axes observed
 
 MCP-as-SQL-extension blurs database and tool-registry roles — unusual architecture.
 
 `ATTACH`-style client semantics lets SQL queries span multiple MCP-exposed data sources.
 
-## 20. Gaps
+## Gaps
 
 Observability/logging specifics not surfaced. CI workflow details not extracted. No container or binary distribution observed — source-only build.

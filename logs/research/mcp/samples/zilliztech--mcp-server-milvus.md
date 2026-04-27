@@ -26,7 +26,7 @@ main
 
 Milvus vector-DB MCP server — env-over-CLI precedence; launched from source tree via `uv run`.
 
-## 1. Language and runtime
+## Language and runtime
 
 ### language(s) + version constraints
 
@@ -36,11 +36,7 @@ Python, `requires-python >= 3.10`.
 
 FastMCP 2.x (`fastmcp >= 2.14.1`).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 2. Transport
+## Transport
 
 ### supported transports
 
@@ -50,11 +46,7 @@ stdio (default), SSE.
 
 CLI flag / env var; README shows separate JSON configs for each mode.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 3. Distribution
+## Distribution
 
 ### every mechanism observed
 
@@ -68,11 +60,7 @@ source clone + `uv run`; PyPI package available (`mcp-server-milvus` implied by 
 
 `uv run src/mcp_server_milvus/server.py --milvus-uri http://localhost:19530`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 4. Entry point / launch
+## Entry point / launch
 
 ### command(s) users/hosts run
 
@@ -82,11 +70,7 @@ none noted in this repo
 
 none observed.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 5. Configuration surface
+## Configuration surface
 
 ### how config reaches the server
 
@@ -96,7 +80,7 @@ none noted in this repo
 
 `.env` explicitly given priority over CLI args — inverse of the more common "CLI overrides env" order; likely a bias toward reproducible host-config-driven deployments.
 
-## 6. Authentication
+## Authentication
 
 ### flow
 
@@ -106,41 +90,25 @@ optional token.
 
 `MILVUS_TOKEN` env var.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 7. Multi-tenancy
+## Multi-tenancy
 
 ### tenancy model
 
 single-user — server bound to one Milvus URI/DB.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 8. Capabilities exposed
+## Capabilities exposed
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
 ~15 tools — text search, vector search, hybrid search, similarity search, query, collection CRUD (list/create/load/release/info), insert, delete.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 9. Observability
+## Observability
 
 ### logging destination + format, metrics, tracing, debug flags
 
 FastMCP-standard logging; no explicit metrics/tracing.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 10. Host integrations shown in README or repo
+## Host integrations shown in README or repo
 
 ### Claude Desktop
 
@@ -150,31 +118,19 @@ JSON config snippets (stdio and SSE variants).
 
 `.cursor/` directory present; dedicated JSON snippet.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 11. Claude Code plugin wrapper
+## Claude Code plugin wrapper
 
 ### presence and shape
 
 none observed
 
-### pitfalls observed
-
-none noted in this repo
-
-## 12. Tests
+## Tests
 
 ### presence, framework, location, notable patterns
 
 no explicit test suite visible in README (no dedicated test directory surfaced).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 13. CI
+## CI
 
 ### presence, system, triggers, what it runs
 
@@ -184,47 +140,35 @@ none observed in surfaced content.
 
 CI workflow presence unverified.
 
-## 14. Container / packaging artifacts
+## Container / packaging artifacts
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 none observed.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 15. Example client / developer ergonomics
+## Example client / developer ergonomics
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
 Claude Desktop and Cursor JSON snippets; `.env` example.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 16. Repo layout
+## Repo layout
 
 ### single-package / monorepo / vendored / other
 
 single-package (`src/mcp_server_milvus/`).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 17. Notable structural choices
+## Notable structural choices
 
 `.env` explicitly given priority over CLI args — inverse of the more common "CLI overrides env" order; likely a bias toward reproducible host-config-driven deployments.
 
 Uses `click` for CLI arg parsing despite FastMCP providing its own `fastmcp` CLI — server is launched via a plain Python entry point rather than via FastMCP's launcher.
 
-## 18. Unanticipated axes observed
+## Unanticipated axes observed
 
 env-vs-CLI precedence is a real axis — most servers do CLI > env; this repo does env > CLI.
 
-## 19. Python-specific
+## Python-specific
 
 ### SDK / framework variant
 
@@ -266,6 +210,6 @@ ruff pinned in project deps (unusual — most projects put ruff in dev-only extr
 
 `ruff` in project-level dependencies rather than a dev extra — blurs lint tooling into runtime install, adding weight for end users. Source-tree `uv run` is the primary launch method; unusual for a vendor-official MCP server.
 
-## 20. Gaps
+## Gaps
 
 No Docker artifacts despite Milvus typically being consumed containerized. Test suite presence/absence not conclusively verified from the root. CI workflow presence unverified.

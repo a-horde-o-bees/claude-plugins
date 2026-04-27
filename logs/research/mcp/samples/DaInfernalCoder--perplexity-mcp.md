@@ -26,7 +26,7 @@ main
 
 Perplexity search MCP server — exposes `search`, `reason`, `deep_research` tools with auto-complexity routing to Sonar Pro / Sonar Reasoning / Sonar Deep Research.
 
-## 1. Language and runtime
+## Language and runtime
 
 ### language(s) + version constraints
 
@@ -36,11 +36,7 @@ JavaScript (94.7%), Dockerfile (5.3%); Node.js required.
 
 MCP SDK, Anthropic Claude Agent SDK.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 2. Transport
+## Transport
 
 ### supported transports
 
@@ -50,11 +46,7 @@ HTTP (inferred from Anthropic Agent SDK usage).
 
 not explicitly documented
 
-### pitfalls observed
-
-none noted in this repo
-
-## 3. Distribution
+## Distribution
 
 ### every mechanism observed
 
@@ -68,11 +60,7 @@ npx (recommended), source clone.
 
 `npx -y perplexity-mcp` (recommended) or git clone + `npm install`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 4. Entry point / launch
+## Entry point / launch
 
 ### command(s) users/hosts run
 
@@ -82,21 +70,13 @@ none noted in this repo
 
 none documented; direct npx invocation.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 5. Configuration surface
+## Configuration surface
 
 ### how config reaches the server
 
 `.env` file, CLI args (`--api-key`), `--cwd` parameter for .env path.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 6. Authentication
+## Authentication
 
 ### flow
 
@@ -106,120 +86,76 @@ API key (PERPLEXITY_API_KEY). Priority: CLI arg > env var > .env file.
 
 CLI, environment, or `.env`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 7. Multi-tenancy
+## Multi-tenancy
 
 ### tenancy model
 
 per-request context; assumes single-agent invocation.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 8. Capabilities exposed
+## Capabilities exposed
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
 Tools: `search` (Sonar Pro), `reason` (Sonar Reasoning Pro), `deep_research` (Sonar Deep Research). Optional `force_model` parameter to override auto-complexity detection.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 9. Observability
+## Observability
 
 ### logging destination + format, metrics, tracing, debug flags
 
 not documented
 
-### pitfalls observed
-
-none noted in this repo
-
-## 10. Host integrations shown in README or repo
+## Host integrations shown in README or repo
 
 MCP config files mentioned in generic terms; specifics not detailed.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 11. Claude Code plugin wrapper
+## Claude Code plugin wrapper
 
 ### presence and shape
 
 not present
 
-### pitfalls observed
-
-none noted in this repo
-
-## 12. Tests
+## Tests
 
 ### presence, framework, location, notable patterns
 
 not documented
 
-### pitfalls observed
-
-none noted in this repo
-
-## 13. CI
+## CI
 
 ### presence, system, triggers, what it runs
 
 not documented
 
-### pitfalls observed
-
-none noted in this repo
-
-## 14. Container / packaging artifacts
+## Container / packaging artifacts
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 Dockerfile present (multi-stage Node.js 18-Alpine).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 15. Example client / developer ergonomics
+## Example client / developer ergonomics
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
 npx invocation simplicity emphasized; sample configuration in README.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 16. Repo layout
+## Repo layout
 
 ### single-package / monorepo / vendored / other
 
 single-package; dirs include `src/`, `examples/`, `memory-bank/`, `.roo/`; config files include `package.json`, `tsconfig.json`, `smithery.yaml`, `Dockerfile`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 17. Notable structural choices
+## Notable structural choices
 
 - hackathon-winning design (1st @ Cline Hackathon)
 - auto-complexity detection routes requests to the appropriate model
 - direct npx distribution simplifies adoption
 - chat history context preservation
 
-## 18. Unanticipated axes observed
+## Unanticipated axes observed
 
 - tool selection by query-complexity heuristic instead of explicit tool naming (one logical action, three backend models)
 - Smithery registry integration — an axis in its own right (discovery/distribution via Smithery)
 
-## 20. Gaps
+## Gaps
 
 CI/testing strategy not documented. Logging configuration not specified. Host integration details beyond MCP config unclear.

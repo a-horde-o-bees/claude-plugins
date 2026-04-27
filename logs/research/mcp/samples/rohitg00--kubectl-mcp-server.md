@@ -26,7 +26,7 @@ main
 
 kubectl MCP server — 253 tools covering the Kubernetes surface; dual Python/npm distribution; optional OAuth 2.1.
 
-## 1. Language and runtime
+## Language and runtime
 
 ### language(s) + version constraints
 
@@ -36,11 +36,7 @@ Python (81.2%), TypeScript (17.0%), Shell (0.8%); Python 3.9+.
 
 FastMCP (references to FastMCP in configuration; also uses the underlying MCP Python SDK).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 2. Transport
+## Transport
 
 ### supported transports
 
@@ -50,11 +46,7 @@ stdio (default), SSE, streamable-http, HTTP.
 
 CLI flags / environment variables; host/port configurable (default 0.0.0.0:8000 for HTTP modes).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 3. Distribution
+## Distribution
 
 ### every mechanism observed
 
@@ -72,7 +64,7 @@ kubectl-mcp-server (PyPI), kubectl-mcp-server (npm).
 
 Distributed via both PyPI and npm so npm-only hosts can still install without Python packaging knowledge.
 
-## 4. Entry point / launch
+## Entry point / launch
 
 ### command(s) users/hosts run
 
@@ -82,21 +74,13 @@ Distributed via both PyPI and npm so npm-only hosts can still install without Py
 
 npm wrapper that invokes the Python package; Docker image entrypoint; optional `[ui]` extra for dashboards.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 5. Configuration surface
+## Configuration surface
 
 ### how config reaches the server
 
 Environment variables (`KUBECONFIG`, `MCP_DEBUG`, `MCP_LOG_FILE`, `MCP_BROWSER_ENABLED`, `MCP_BROWSER_PROVIDER`, `MCP_AUTH_*`) plus CLI flags (`--disable-destructive`, transport/host/port options); consumes the kubeconfig file at `~/.kube/config`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 6. Authentication
+## Authentication
 
 ### flow
 
@@ -106,41 +90,25 @@ kubeconfig-based for Kubernetes API; optional OAuth 2.1 layer (RFC 9728) for the
 
 kubeconfig file; OAuth issuer/audience/JWKS via `MCP_AUTH_ENABLED`, `MCP_AUTH_ISSUER`, `MCP_AUTH_AUDIENCE` env vars.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 7. Multi-tenancy
+## Multi-tenancy
 
 ### tenancy model
 
 Single-user per process; optional OAuth layer suggests tenant support but documented as single kubeconfig context per server.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 8. Capabilities exposed
+## Capabilities exposed
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
 253 tools across ~20 categories (pods, deployments, namespaces, services, storage, security, Helm, cost, browser automation); 8 resources; 8 prompts; 6 interactive dashboards (UI extra); 26 browser automation tools (optional).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 9. Observability
+## Observability
 
 ### logging destination + format, metrics, tracing, debug flags
 
 `MCP_DEBUG` + `MCP_LOG_FILE` environment toggles; no metrics/tracing documented.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 10. Host integrations shown in README or repo
+## Host integrations shown in README or repo
 
 ### Claude Desktop
 
@@ -150,79 +118,51 @@ JSON `mcpServers` entry.
 
 JSON `mcpServers` entry (same shape).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 11. Claude Code plugin wrapper
+## Claude Code plugin wrapper
 
 ### presence and shape
 
 not observed
 
-### pitfalls observed
-
-none noted in this repo
-
-## 12. Tests
+## Tests
 
 ### presence, framework, location, notable patterns
 
 234+ passing tests, pytest-based; unit + integration + server-initialization suites.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 13. CI
+## CI
 
 ### presence, system, triggers, what it runs
 
 GitHub Actions workflows under `.github/`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 14. Container / packaging artifacts
+## Container / packaging artifacts
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 Dockerfile and Docker Hub image published.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 15. Example client / developer ergonomics
+## Example client / developer ergonomics
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
 JSON `mcpServers` sample configs for multiple clients; `--disable-destructive` safety flag; optional `[ui]` extra for dashboards.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 16. Repo layout
+## Repo layout
 
 ### single-package / monorepo / vendored / other
 
 Single-package Python library with npm publisher wrapper; modular submodules per resource kind (pods.py, deployments.py, helm.py, etc.), separate `resources/` and `prompts/` dirs.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 17. Notable structural choices
+## Notable structural choices
 
 Exposes very large surface area (253 tools) partitioned by Kubernetes resource kind. Ships a dedicated browser-automation sub-feature gated on `MCP_BROWSER_ENABLED`. Distributed via both PyPI and npm so npm-only hosts can still install without Python packaging knowledge. OAuth 2.1 option layered on top of stdio/HTTP transports.
 
-## 18. Unanticipated axes observed
+## Unanticipated axes observed
 
 Dual-ecosystem publishing (Python + npm) for a single Python server. Optional-extra-gated feature bundles (`[ui]` enables dashboards; browser automation separate). RFC 9728 OAuth bolt-on for an otherwise local stdio server.
 
-## 19. Python-specific
+## Python-specific
 
 ### SDK / framework variant
 
@@ -264,6 +204,6 @@ not surfaced
 
 Uses `setup.py` (older setuptools convention) rather than modern pyproject-only layout. CNCF Landscape listing noted in README.
 
-## 20. Gaps
+## Gaps
 
 Exact Python entry-point file path, requires-python metadata from pyproject, FastMCP major version pin, async-vs-sync tool signatures, last-commit date, Dockerfile base image.

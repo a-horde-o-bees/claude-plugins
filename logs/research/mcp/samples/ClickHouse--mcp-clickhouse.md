@@ -26,7 +26,7 @@ main
 
 ClickHouse MCP server — run SQL, list databases/tables, and query an embedded chDB engine against ClickHouse clusters.
 
-## 1. Language and runtime
+## Language and runtime
 
 ### language(s) + version constraints
 
@@ -36,11 +36,7 @@ Python (98.7%); uv-managed.
 
 FastMCP (MCP Server SDK)
 
-### pitfalls observed
-
-none noted in this repo
-
-## 2. Transport
+## Transport
 
 ### supported transports
 
@@ -50,11 +46,7 @@ stdio (default), HTTP, SSE.
 
 `CLICKHOUSE_MCP_SERVER_TRANSPORT` env var (stdio/http/sse).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 3. Distribution
+## Distribution
 
 ### every mechanism observed
 
@@ -68,11 +60,7 @@ mcp-clickhouse
 
 `pip install mcp-clickhouse`; `pip install 'mcp-clickhouse[chdb]'`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 4. Entry point / launch
+## Entry point / launch
 
 ### command(s) users/hosts run
 
@@ -82,21 +70,13 @@ none noted in this repo
 
 Dockerfile; `test-services/` Docker Compose for local dev.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 5. Configuration surface
+## Configuration surface
 
 ### how config reaches the server
 
 Environment variables — `CLICKHOUSE_HOST`, `CLICKHOUSE_USER`, `CLICKHOUSE_PASSWORD` (required); `CLICKHOUSE_SECURE`, `CLICKHOUSE_VERIFY` (TLS); `CLICKHOUSE_MCP_SERVER_TRANSPORT`; `CLICKHOUSE_ALLOW_WRITE_ACCESS`, `CLICKHOUSE_ALLOW_DROP`; `CLICKHOUSE_MCP_AUTH_TOKEN`, `CLICKHOUSE_MCP_AUTH_DISABLED`; `CHDB_ENABLED`, `CHDB_DATA_PATH`; `MCP_MIDDLEWARE_MODULE`. `fastmcp.json` for FastMCP-level config.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 6. Authentication
+## Authentication
 
 ### flow
 
@@ -106,41 +86,25 @@ stdio — none. HTTP/SSE — bearer token required (generated via `uuidgen` or `
 
 `CLICKHOUSE_MCP_AUTH_TOKEN` env var; ClickHouse credentials also via env vars.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 7. Multi-tenancy
+## Multi-tenancy
 
 ### tenancy model
 
 Per-request tenant possible — custom middleware can override connection settings per request via `CLIENT_CONFIG_OVERRIDES_KEY` in context state.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 8. Capabilities exposed
+## Capabilities exposed
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
 Tools — `run_query` (SQL), `list_databases`, `list_tables` (paginated, filterable), `run_chdb_select_query` (against embedded chDB). Resources/prompts not listed explicitly.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 9. Observability
+## Observability
 
 ### logging destination + format, metrics, tracing, debug flags
 
 Example middleware (`example_middleware.py`) demonstrates request logging, tool-call tracking, performance measurement.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 10. Host integrations shown in README or repo
+## Host integrations shown in README or repo
 
 ### Claude Desktop
 
@@ -150,71 +114,43 @@ Standard MCP config expected.
 
 Not enumerated in fetched content. Integration details less emphasized than the runtime config surface.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 11. Claude Code plugin wrapper
+## Claude Code plugin wrapper
 
 ### presence and shape
 
 Not present.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 12. Tests
+## Tests
 
 ### presence, framework, location, notable patterns
 
 pytest; tests under `tests/` with separate suites for ClickHouse (`test_tool.py`) and chDB (`test_chdb_tool.py`); `test-services/` Docker Compose spins up a ClickHouse instance for integration tests.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 13. CI
+## CI
 
 ### presence, system, triggers, what it runs
 
 GitHub Actions in `.github/workflows/`; specifics not extracted.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 14. Container / packaging artifacts
+## Container / packaging artifacts
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 Dockerfile; `test-services/` Docker Compose for local test infra.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 15. Example client / developer ergonomics
+## Example client / developer ergonomics
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
 `example_middleware.py`, `test-services/`, `fastmcp.json`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 16. Repo layout
+## Repo layout
 
 ### single-package / monorepo / vendored / other
 
 Single-package Python — `mcp_clickhouse/`, `tests/`, `test-services/`, `.github/workflows/`, `fastmcp.json`, `pyproject.toml`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 17. Notable structural choices
+## Notable structural choices
 
 - Dual-engine — standalone ClickHouse client and embedded chDB engine can run together
 - Progressive trust: `CLICKHOUSE_ALLOW_WRITE_ACCESS` plus a separate `CLICKHOUSE_ALLOW_DROP` gate destructive operations in two steps
@@ -223,13 +159,13 @@ none noted in this repo
 - Per-request connection overrides via middleware-managed context state — closest thing to multi-tenancy among DB MCP servers
 - Paginated/filtered `list_tables` — deliberate scalability axis absent from smaller servers
 
-## 18. Unanticipated axes observed
+## Unanticipated axes observed
 
 - Middleware plugin system intercepting MCP protocol events is an unusual architectural axis — most MCP servers expose no such extension point
 - Two-flag destructive-operation gating (`WRITE_ACCESS` + `DROP`) is more granular than typical read-only toggles
 - Dual-engine chDB integration collapses "embedded analytics" and "server-backed analytics" into one MCP surface
 
-## 19. Python-specific
+## Python-specific
 
 ### SDK / framework variant
 
@@ -272,6 +208,6 @@ pytest + pytest-asyncio in dev extras. Fixture style uses Docker Compose-backed 
 - Middleware plugin slot — `MCP_MIDDLEWARE_MODULE` env var loads a user-authored Python module that intercepts FastMCP protocol events
 - Optional extra `[chdb]` swaps in embedded chDB engine — cleanly separates the two analytics backends via Python extras
 
-## 20. Gaps
+## Gaps
 
 Last commit date not directly surfaced. CI workflow specifics not extracted. Host-integration (Claude Desktop/Cursor/VS Code) examples less prominent than runtime config in the README.

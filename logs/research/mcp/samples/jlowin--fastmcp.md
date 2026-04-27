@@ -26,7 +26,7 @@ main
 
 FastMCP Python framework (not a server) — decorator-driven SDK absorbed into the official MCP Python SDK; anchors Python MCP repo-layout defaults.
 
-## 1. Language and runtime
+## Language and runtime
 
 ### language(s) + version constraints
 
@@ -36,11 +36,7 @@ Python 100%; specific Python minimum not extracted within budget (3.10+ is typic
 
 This IS the framework — wraps the official MCP Python SDK with a decorator-based API. Incorporated into the official MCP Python SDK in 2024.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 2. Transport
+## Transport
 
 ### supported transports
 
@@ -50,11 +46,7 @@ stdio and HTTP (the framework supports both; servers built on FastMCP choose per
 
 Via `mcp.run()` call signature in the consuming server's code
 
-### pitfalls observed
-
-none noted in this repo
-
-## 3. Distribution
+## Distribution
 
 ### every mechanism observed
 
@@ -68,11 +60,7 @@ fastmcp
 
 `uv pip install fastmcp`
 
-### pitfalls observed
-
-none noted in this repo
-
-## 4. Entry point / launch
+## Entry point / launch
 
 ### command(s) users/hosts run
 
@@ -82,21 +70,13 @@ Not applicable — consumers write their own servers; FastMCP provides the runti
 
 Framework-level; consumers write entry points.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 5. Configuration surface
+## Configuration surface
 
 ### how config reaches the server
 
 Framework API — consumers wire their own config. FastMCP itself is configured programmatically via decorators and constructor args.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 6. Authentication
+## Authentication
 
 ### flow
 
@@ -106,21 +86,13 @@ Not applicable at framework level — consumers implement auth per server. Frame
 
 Consumer-defined
 
-### pitfalls observed
-
-none noted in this repo
-
-## 7. Multi-tenancy
+## Multi-tenancy
 
 ### tenancy model
 
 Framework supports arbitrary tenancy patterns — consumer decides. HTTP transport enables multi-client shared deployments.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 8. Capabilities exposed
+## Capabilities exposed
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
@@ -135,97 +107,61 @@ def add(a: int, b: int) -> int:
 
 Resources and prompts similarly declared via decorators.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 9. Observability
+## Observability
 
 ### logging destination + format, metrics, tracing, debug flags
 
 Framework-level logging utilities; consumers configure destinations.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 10. Host integrations shown in README or repo
+## Host integrations shown in README or repo
 
 Not applicable — framework is host-agnostic; the servers built on it target Claude Desktop, Cursor, Windsurf, etc.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 11. Claude Code plugin wrapper
+## Claude Code plugin wrapper
 
 ### presence and shape
 
 Not applicable — framework level
 
-### pitfalls observed
-
-none noted in this repo
-
-## 12. Tests
+## Tests
 
 ### presence, framework, location, notable patterns
 
 pytest; tests in `/tests` directory.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 13. CI
+## CI
 
 ### presence, system, triggers, what it runs
 
 GitHub Actions — `run-tests.yml` workflow identified.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 14. Container / packaging artifacts
+## Container / packaging artifacts
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 Not observed at framework level; consumers containerize their own servers.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 15. Example client / developer ergonomics
+## Example client / developer ergonomics
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
 `/examples` directory; `/docs` directory; `llms.txt` format for LLM-consumable docs; community Discord; docs at gofastmcp.com.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 16. Repo layout
+## Repo layout
 
 ### single-package / monorepo / vendored / other
 
 Single-package Python project with `src/fastmcp/` layout (src-layout, uses uv); separate `/examples`, `/docs`, `/tests`; `pyproject.toml` + `uv.lock`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 17. Notable structural choices
+## Notable structural choices
 
 Framework status — not a server; this file is present to anchor the reference layout that many Python MCP servers adopt. Decorator-based API for tools/resources/prompts is the "Pythonic" framing compared to raw SDK boilerplate. Three-pillar model (Servers, Clients, Apps) — Apps is distinctive; it positions FastMCP beyond just server-side framing into interactive UI territory. Claims to power "70% of MCP servers across all languages" — market self-assessment, worth noting as a signal of ecosystem centrality. Absorbed into the official MCP Python SDK in 2024 — the framework is de facto the canonical Python MCP authoring path. Src-layout (`src/fastmcp/`) with uv lockfile is the modern Python packaging default — reference pattern for other Python MCP servers in this research.
 
-## 18. Unanticipated axes observed
+## Unanticipated axes observed
 
 `llms.txt` documentation format signals design-for-AI-consumption — docs meant to be read by LLMs building on the framework, not just humans. The "Apps" pillar extends MCP into UI territory — a structural choice beyond the standard tool/resource/prompt triad. Framework is a consumer of itself — many FastMCP-built servers surveyed elsewhere in this research (motherduckdb, etc.) import it.
 
-## 19. Python-specific
+## Python-specific
 
 ### SDK / framework variant
 
@@ -267,6 +203,6 @@ pytest + pytest-asyncio + pytest-cov + pytest-env + pytest-flakefinder + pytest-
 
 Very broad optional-dependencies surface: `anthropic`, `azure`, `gemini`, `openai`, `apps`, `code-mode`, `tasks` — each opt-in, avoiding bloat on core install. `ty` (Astral's type checker) + `pyright`-style strictness, adopting newer tooling ahead of the ecosystem. `pytest-flakefinder` + `pytest-retry` + `pytest-xdist` — test flake hunting and parallelism built in; heavier investment than any server in the sample. Core deps include `authlib`, `python-multipart`, `uvicorn`, `websockets` — the framework ships the HTTP-transport stack, consumers do not add it. `griffelib`, `inline-snapshot`, `pytest-examples` — docs are test-verified.
 
-## 20. Gaps
+## Gaps
 
 Specific CI matrix (versions, OS) not extracted. Whether FastMCP's "Apps" pillar requires host-side UI support and which hosts implement it is not confirmed.

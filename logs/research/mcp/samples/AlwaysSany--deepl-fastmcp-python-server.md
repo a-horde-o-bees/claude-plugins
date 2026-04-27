@@ -26,7 +26,7 @@ main
 
 DeepL translation MCP server — translate, rephrase, batch-translate documents; detect language; keep translation history and usage analytics locally.
 
-## 1. Language and runtime
+## Language and runtime
 
 ### language(s) + version constraints
 
@@ -36,11 +36,7 @@ Python 97.3%; `.python-version` present, `runtime.txt` references Python 3.13.3.
 
 FastMCP (likely 2.x given standalone-package install).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 2. Transport
+## Transport
 
 ### supported transports
 
@@ -50,11 +46,7 @@ stdio (default); SSE (Server-Sent Events); Streamable HTTP — all three selecta
 
 `--transport stdio|sse|http` CLI flag; `--host`, `--port` args.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 3. Distribution
+## Distribution
 
 ### every mechanism observed
 
@@ -68,11 +60,7 @@ no PyPI publication documented
 
 `git clone ... && cd ... && uv sync`; Docker / compose (compose file present).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 4. Entry point / launch
+## Entry point / launch
 
 ### command(s) users/hosts run
 
@@ -82,21 +70,13 @@ none noted in this repo
 
 bare `main.py` script with CLI arg handling
 
-### pitfalls observed
-
-none noted in this repo
-
-## 5. Configuration surface
+## Configuration surface
 
 ### how config reaches the server
 
 env vars — `DEEPL_AUTH_KEY` (required), `DEEPL_SERVER_URL` (optional, defaults to `https://api-free.deepl.com`); transport + host/port via CLI args.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 6. Authentication
+## Authentication
 
 ### flow
 
@@ -106,109 +86,65 @@ DeepL API key
 
 `DEEPL_AUTH_KEY` env var
 
-### pitfalls observed
-
-none noted in this repo
-
-## 7. Multi-tenancy
+## Multi-tenancy
 
 ### tenancy model
 
 not addressed — likely single-user (single API key per deployment).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 8. Capabilities exposed
+## Capabilities exposed
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
 tools — 7 primary: `translate_text`, `rephrase_text`, `batch_translate`, `translate_document`, `detect_language`, `get_translation_history`, `analyze_usage_patterns`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 9. Observability
+## Observability
 
 ### logging destination + format, metrics, tracing, debug flags
 
 not captured
 
-### pitfalls observed
-
-none noted in this repo
-
-## 10. Host integrations shown in README or repo
+## Host integrations shown in README or repo
 
 Not captured per host in extract.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 11. Claude Code plugin wrapper
+## Claude Code plugin wrapper
 
 ### presence and shape
 
 none
 
-### pitfalls observed
-
-none noted in this repo
-
-## 12. Tests
+## Tests
 
 ### presence, framework, location, notable patterns
 
 `/tests` directory present; CI details not captured.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 13. CI
+## CI
 
 ### presence, system, triggers, what it runs
 
 not captured
 
-### pitfalls observed
-
-none noted in this repo
-
-## 14. Container / packaging artifacts
+## Container / packaging artifacts
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 Dockerfile + docker-compose.yml — supports containerized multi-transport deployment.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 15. Example client / developer ergonomics
+## Example client / developer ergonomics
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
 CLI arg design for transport/host/port selection.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 16. Repo layout
+## Repo layout
 
 ### single-package / monorepo / vendored / other
 
 single-package (`main.py` at root); no installable console script.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 17. Notable structural choices
+## Notable structural choices
 
 - Three-transport support (stdio, SSE, Streamable HTTP) all in one binary, CLI-flag selectable — one of the most complete transport surfaces observed among small community servers
 - Bare-script entry like `labeveryday/mcp_pdf_reader`, but with CLI arg handling built in — a middle tier between "script + no args" and "console-script + click"
@@ -216,13 +152,13 @@ none noted in this repo
 - Python 3.13.3 floor in `runtime.txt` — aggressive modern-Python target
 - History and analytics tools — `get_translation_history`, `analyze_usage_patterns` suggest local persistence of past calls, unusual for a translation server
 
-## 18. Unanticipated axes observed
+## Unanticipated axes observed
 
 - Transport polyglot — stdio + SSE + streamable-http in one binary reveals a design axis where a small community server exceeds the transport breadth of some vendor-authored servers
 - History persistence inside an MCP server — most MCP servers are stateless; a translation history implies a local store (DB? file?) not typical of the sample
 - Analytics-as-tool — `analyze_usage_patterns` exposes aggregated self-observations back to the LLM, suggesting a reflection-style capability
 
-## 19. Python-specific
+## Python-specific
 
 ### SDK / framework variant
 
@@ -265,6 +201,6 @@ docker-compose for multi-transport dev
 - Python 3.13.3 specific pin in `runtime.txt` — finer-grained than typical `>=3.12` constraints
 - Script-only server + Docker — a "dev-tier" distribution for a library with a lot of transport flexibility
 
-## 20. Gaps
+## Gaps
 
 pyproject details, license placement, test framework specifics, whether Streamable HTTP uses MCP's new transport spec or a local variant, how translation history is persisted.

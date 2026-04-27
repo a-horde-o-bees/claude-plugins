@@ -26,7 +26,7 @@ main
 
 OpenSearch MCP server — YAML config, category-based tool gating; project-governed (not vendor-authored).
 
-## 1. Language and runtime
+## Language and runtime
 
 ### language(s) + version constraints
 
@@ -36,11 +36,7 @@ Python 100%; version not explicitly surfaced.
 
 Raw MCP Python SDK (Anthropic's Claude Agent SDK reference).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 2. Transport
+## Transport
 
 ### supported transports
 
@@ -50,11 +46,7 @@ stdio, SSE, streamable-http.
 
 CLI / config choice.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 3. Distribution
+## Distribution
 
 ### every mechanism observed
 
@@ -68,11 +60,7 @@ PyPI via pip.
 
 `pip install opensearch-mcp-server-py`
 
-### pitfalls observed
-
-none noted in this repo
-
-## 4. Entry point / launch
+## Entry point / launch
 
 ### command(s) users/hosts run
 
@@ -82,21 +70,13 @@ Console script (name inferred but not surfaced).
 
 Not surfaced.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 5. Configuration surface
+## Configuration surface
 
 ### how config reaches the server
 
 YAML config file (`example_config.yml` present) plus environment variables `OPENSEARCH_DISABLED_CATEGORIES` and `OPENSEARCH_ENABLED_CATEGORIES` for tool filtering; CLI arguments for further customization.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 6. Authentication
+## Authentication
 
 ### flow
 
@@ -106,41 +86,25 @@ Basic auth, IAM roles (for AWS OpenSearch Service), header-based auth, mTLS.
 
 Config file or environment.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 7. Multi-tenancy
+## Multi-tenancy
 
 ### tenancy model
 
 Single-user per process; multiple auth schemes for different deployment targets.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 8. Capabilities exposed
+## Capabilities exposed
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
 40+ tools — 9 core (enabled by default), 10 additional analysis (disabled by default), 21 Search Relevance Workbench (under `search_relevance` category), 2 Skills tools.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 9. Observability
+## Observability
 
 ### logging destination + format, metrics, tracing, debug flags
 
 Configuration available; specifics not surfaced.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 10. Host integrations shown in README or repo
+## Host integrations shown in README or repo
 
 ### Claude Desktop
 
@@ -150,79 +114,51 @@ JSON `mcpServers` entry.
 
 Integration supported (per README).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 11. Claude Code plugin wrapper
+## Claude Code plugin wrapper
 
 ### presence and shape
 
 Not observed.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 12. Tests
+## Tests
 
 ### presence, framework, location, notable patterns
 
 `tests/` and `integration_tests/` directories present.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 13. CI
+## CI
 
 ### presence, system, triggers, what it runs
 
 GitHub Actions (`.github/`).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 14. Container / packaging artifacts
+## Container / packaging artifacts
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 No Dockerfile in repo (notable absence).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 15. Example client / developer ergonomics
+## Example client / developer ergonomics
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
 `example_config.yml`, `DEVELOPER_GUIDE.md`, `USER_GUIDE.md`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 16. Repo layout
+## Repo layout
 
 ### single-package / monorepo / vendored / other
 
 Single package under `src/`; separate `tests/` and `integration_tests/`; `docs/`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 17. Notable structural choices
+## Notable structural choices
 
 YAML config file as primary configuration surface (rarer than env-var-only in the MCP ecosystem). Category-based enable/disable tool gating via env vars — lets operators prune the 40-tool surface to just the core 9. Multiple auth schemes (basic, IAM, header, mTLS) in one binary — covers self-hosted, managed AWS, and mutual-TLS deployments. Separate `integration_tests/` directory distinct from unit `tests/` — suggests against-real-OpenSearch validation.
 
-## 18. Unanticipated axes observed
+## Unanticipated axes observed
 
 Enabled vs disabled tool categories as the capability-gating unit (category-level on/off, not per-tool). YAML-first configuration rather than env-var-first. Vendor/project-maintained Apache-licensed server with formal docs split (DEVELOPER_GUIDE + USER_GUIDE).
 
-## 19. Python-specific
+## Python-specific
 
 ### SDK / framework variant
 
@@ -264,6 +200,6 @@ Modern Python type hints inferred. Schema auto-derived vs hand-authored: not sur
 
 Project-governed (OpenSearch project) Python MCP server — contrasts with community single-maintainer repos. `uv.lock` committed alongside pyproject for reproducible dev envs. No Dockerfile suggests the project expects pip/uv-based installs over container distribution.
 
-## 20. Gaps
+## Gaps
 
 Exact console-script name, `requires-python` pin, async/sync behavior, test framework, last-commit date before v0.9.0, Dockerfile existence (notable if absent).

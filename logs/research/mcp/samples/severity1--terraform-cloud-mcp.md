@@ -26,7 +26,7 @@ main
 
 Terraform Cloud MCP server — FastMCP + Pydantic; dual safety flags (read-only, enable-delete).
 
-## 1. Language and runtime
+## Language and runtime
 
 ### language(s) + version constraints
 
@@ -36,11 +36,7 @@ Python; Python 3.12+.
 
 FastMCP (Python).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 2. Transport
+## Transport
 
 ### supported transports
 
@@ -50,11 +46,7 @@ stdio (standard MCP protocol).
 
 default transport; no explicit network mode documented.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 3. Distribution
+## Distribution
 
 ### every mechanism observed
 
@@ -68,11 +60,7 @@ local install via `uv`, Docker container, Claude Code CLI integration.
 
 via `uv` package manager; Docker container; Claude Code CLI `claude mcp add`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 4. Entry point / launch
+## Entry point / launch
 
 ### command(s) users/hosts run
 
@@ -82,21 +70,13 @@ none noted in this repo
 
 Dockerfile for containerized deployment.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 5. Configuration surface
+## Configuration surface
 
 ### how config reaches the server
 
 Environment variables — `TFC_TOKEN` (required), `TFC_ADDRESS`, `ENABLE_DELETE_TOOLS`, `READ_ONLY_TOOLS`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 6. Authentication
+## Authentication
 
 ### flow
 
@@ -106,41 +86,25 @@ Terraform Cloud API token.
 
 `TFC_TOKEN` environment variable.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 7. Multi-tenancy
+## Multi-tenancy
 
 ### tenancy model
 
 single-user per process (single API token); workspace/organization scope handled per tool call.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 8. Capabilities exposed
+## Capabilities exposed
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
 50+ tools across account, workspace, run, plan, apply, project, organization, cost estimation, assessment results, state versions, variables.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 9. Observability
+## Observability
 
 ### logging destination + format, metrics, tracing, debug flags
 
 debug logging enabled by default; format/destination not surfaced.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 10. Host integrations shown in README or repo
+## Host integrations shown in README or repo
 
 ### Claude Code CLI
 
@@ -158,79 +122,51 @@ JSON `mcpServers` entry.
 
 JSON `mcpServers` entry.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 11. Claude Code plugin wrapper
+## Claude Code plugin wrapper
 
 ### presence and shape
 
 not observed (standard `claude mcp add` CLI usage, not a plugin marketplace wrapper).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 12. Tests
+## Tests
 
 ### presence, framework, location, notable patterns
 
 not surfaced in fetched content.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 13. CI
+## CI
 
 ### presence, system, triggers, what it runs
 
 GitHub Actions configured.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 14. Container / packaging artifacts
+## Container / packaging artifacts
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 Dockerfile included.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 15. Example client / developer ergonomics
+## Example client / developer ergonomics
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
 ruff/black formatters and mypy type checking referenced; domain-specific module structure.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 16. Repo layout
+## Repo layout
 
 ### single-package / monorepo / vendored / other
 
 single-package; domain-per-module layout (account, workspace, run, plan, etc.).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 17. Notable structural choices
+## Notable structural choices
 
 Two-dimensional safety gating: `READ_ONLY_TOOLS` + separate `ENABLE_DELETE_TOOLS` rather than a single "write mode" flag. async/await throughout the server; FastMCP + Pydantic for schema.
 
-## 18. Unanticipated axes observed
+## Unanticipated axes observed
 
 Orthogonal read-only and enable-delete flags (delete is more dangerous than write and gets its own toggle). Domain-per-module decomposition for a REST-API-wrapping MCP server.
 
-## 19. Python-specific
+## Python-specific
 
 ### SDK / framework variant
 
@@ -272,6 +208,6 @@ ruff + black + mypy toolchain.
 
 mypy integration suggests stricter typing discipline than most community MCP servers. Two-axis safety switching (`READ_ONLY_TOOLS` and `ENABLE_DELETE_TOOLS`).
 
-## 20. Gaps
+## Gaps
 
 Test framework details, exact requires-python pin, logging destination, console script path in pyproject, last-commit date.

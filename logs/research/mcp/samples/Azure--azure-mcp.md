@@ -26,7 +26,7 @@ main (read-only)
 
 TBD — repo archived; technical surface redirected to microsoft/mcp.
 
-## 1. Language and runtime
+## Language and runtime
 
 ### language(s) + version constraints
 
@@ -36,11 +36,7 @@ C# (78.6%)
 
 .NET-based MCP server (inherited by successor)
 
-### pitfalls observed
-
-none noted in this repo
-
-## 2. Transport
+## Transport
 
 ### supported transports
 
@@ -50,11 +46,7 @@ Not extracted — README body only shows archival notice in the raw view.
 
 Not extracted (see successor).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 3. Distribution
+## Distribution
 
 ### every mechanism observed
 
@@ -68,11 +60,7 @@ Not extracted from archived surface.
 
 Redirects to successor.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 4. Entry point / launch
+## Entry point / launch
 
 ### command(s) users/hosts run
 
@@ -82,21 +70,13 @@ Not extracted — see successor microsoft/mcp Azure.Mcp.Server.
 
 Not extracted.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 5. Configuration surface
+## Configuration surface
 
 ### how config reaches the server
 
 Not extracted.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 6. Authentication
+## Authentication
 
 ### flow
 
@@ -106,118 +86,74 @@ Not extracted from archived repo; Azure credential chain via DefaultAzureCredent
 
 Not extracted.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 7. Multi-tenancy
+## Multi-tenancy
 
 ### tenancy model
 
 Not extracted.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 8. Capabilities exposed
+## Capabilities exposed
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
 Not extracted from archival surface.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 9. Observability
+## Observability
 
 ### logging destination + format, metrics, tracing, debug flags
 
 Not extracted.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 10. Host integrations shown in README or repo
+## Host integrations shown in README or repo
 
 Not extracted from archival surface. Successor microsoft/mcp documents VS Code, Visual Studio 2022, IntelliJ IDEA, Eclipse, VS Code Insiders.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 11. Claude Code plugin wrapper
+## Claude Code plugin wrapper
 
 ### presence and shape
 
 Not observed in directory listing of archived repo.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 12. Tests
+## Tests
 
 ### presence, framework, location, notable patterns
 
 Not extracted.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 13. CI
+## CI
 
 ### presence, system, triggers, what it runs
 
 Not extracted.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 14. Container / packaging artifacts
+## Container / packaging artifacts
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 Dockerfile present.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 15. Example client / developer ergonomics
+## Example client / developer ergonomics
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
 Not extracted.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 16. Repo layout
+## Repo layout
 
 ### single-package / monorepo / vendored / other
 
 Not extracted from archival surface. In the successor, this code became the `Azure.Mcp.Server` component under `microsoft/mcp/servers/`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 17. Notable structural choices
+## Notable structural choices
 
 Archived with redirect to microsoft/mcp. The consolidation collapsed a per-domain repo into an umbrella Microsoft MCP monorepo that also hosts Fabric.Mcp.Server and shared C# tooling.
 
-## 18. Unanticipated axes observed
+## Unanticipated axes observed
 
 - Two-stage archival (code freeze ~Aug 2025 per README body; formal GitHub archival Feb 2026) — the gap is itself a decision signal: the repo ran in "read-only maintenance" mode for months before being archived at the org level, suggesting the redirect had to stabilize first.
 - Umbrella-repo consolidation pattern — an org moving from per-service MCP repos into a single company-wide MCP monorepo with shared C# core (the inverse of awslabs/mcp's per-service PyPI package strategy).
 
-## 20. Gaps
+## Gaps
 
 Whole technical surface (transports, install commands, config, auth, tests, CI, capabilities) — archived repo's README only carries the archival notice; reconstructing technical details requires fetching successor content at github.com/microsoft/mcp/tree/main/servers/Azure.Mcp.Server. Exact reason for the 4+ month gap between README-declared archival (Aug 2025) and GitHub archival flag (Feb 2026) — commit history might clarify.
 

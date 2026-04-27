@@ -26,7 +26,7 @@ main
 
 Go MCP SDK (Viant) — framework for building MCP servers in Go.
 
-## 1. Language and runtime
+## Language and runtime
 
 ### language(s) + version constraints
 
@@ -36,11 +36,7 @@ Go (no explicit version constraint specified).
 
 Anthropic's Model Context Protocol (MCP); JSON-RPC 2.0 communication base.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 2. Transport
+## Transport
 
 ### supported transports
 
@@ -50,11 +46,7 @@ HTTP/SSE (Server-Sent Events), Streamable HTTP, Stdio.
 
 Configurable via functional options: `WithStreamableURI()`, `WithSSEURI()`, `WithSSEMessageURI()`; separate entry points `stdioSrv.ListenAndServe()` and `srv.HTTP()`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 3. Distribution
+## Distribution
 
 ### every mechanism observed
 
@@ -68,11 +60,7 @@ github.com/viant/mcp (Go module).
 
 `go get github.com/viant/mcp`
 
-### pitfalls observed
-
-none noted in this repo
-
-## 4. Entry point / launch
+## Entry point / launch
 
 ### command(s) users/hosts run
 
@@ -82,21 +70,13 @@ Stdio: `stdioSrv.ListenAndServe()`, HTTP/SSE: `srv.HTTP(context.Background(), ":
 
 Bridge binary available as standalone alternative to embedding Go package.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 5. Configuration surface
+## Configuration surface
 
 ### how config reaches the server
 
 Functional options pattern: transport-specific URI paths (`WithStreamableURI`, `WithSSEURI`, `WithSSEMessageURI`), root redirect routing (`WithRootRedirect`).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 6. Authentication
+## Authentication
 
 ### flow
 
@@ -106,41 +86,25 @@ OAuth2/OIDC support with two modes: global resource protection via bearer tokens
 
 OAuth2/OIDC discovery; bearer tokens in Authorization header.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 7. Multi-tenancy
+## Multi-tenancy
 
 ### tenancy model
 
 Per-request via bearer token; OAuth2 discovery enables per-request tenant identification.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 8. Capabilities exposed
+## Capabilities exposed
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
 Server: resource management, prompting, tool invocation, subscriptions, logging, progress reporting, request cancellation. Client: roots, sampling, elicitation.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 9. Observability
+## Observability
 
 ### logging destination + format, metrics, tracing, debug flags
 
 `Logging()` method for setting log levels; Progress reporting and request cancellation capabilities.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 10. Host integrations shown in README or repo
+## Host integrations shown in README or repo
 
 ### Claude Desktop
 
@@ -154,71 +118,43 @@ Not documented.
 
 No host-specific integration documentation.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 11. Claude Code plugin wrapper
+## Claude Code plugin wrapper
 
 ### presence and shape
 
 Not present; this is a library/SDK for building MCP applications.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 12. Tests
+## Tests
 
 ### presence, framework, location, notable patterns
 
 Go stdlib testing; test files include `client.go` (client tests) and `server.go` (server tests) patterns; GitHub repository includes examples directory.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 13. CI
+## CI
 
 ### presence, system, triggers, what it runs
 
 GitHub Actions configured; typical Go project structure implies test and lint workflows.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 14. Container / packaging artifacts
+## Container / packaging artifacts
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 Not documented in provided content.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 15. Example client / developer ergonomics
+## Example client / developer ergonomics
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
 Example code available in `/example` directory demonstrating server implementation, authentication/authorization, client usage, and bridge binary.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 16. Repo layout
+## Repo layout
 
 ### single-package / monorepo / vendored / other
 
 Single-package library; structure: root-level `client.go`, `server.go`, `doc.go`; subdirectories for `/bridge`, `/client`, `/server`, `/internal`, `/docs`, `/example`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 17. Notable structural choices
+## Notable structural choices
 
 Bridge binary provides standalone MCP-to-tool bridging without requiring Go embedding.
 
@@ -228,12 +164,12 @@ Separate client and server implementations with clear API boundaries.
 
 Fine-grained resource/tool control is experimental but acknowledged.
 
-## 18. Unanticipated axes observed
+## Unanticipated axes observed
 
 OAuth2 automatic token acquisition on 401 response is an unusual client-side feature for MCP servers.
 
 Fine-grained authorization (experimental) suggests multi-user workspace scenarios being designed for.
 
-## 20. Gaps
+## Gaps
 
 Specific Go version constraints not documented. CI/CD workflows not fully examined. Docker containerization patterns not documented. Language version tested in CI not confirmed.

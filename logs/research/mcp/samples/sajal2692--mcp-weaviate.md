@@ -26,7 +26,7 @@ main
 
 Weaviate vector-DB MCP server — tenancy passed as a tool argument (per-call), not server config.
 
-## 1. Language and runtime
+## Language and runtime
 
 ### language(s) + version constraints
 
@@ -36,11 +36,7 @@ Python 100%; version via `.python-version`.
 
 FastMCP (exact version pin not surfaced).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 2. Transport
+## Transport
 
 ### supported transports
 
@@ -50,11 +46,7 @@ stdio (default), streamable-http.
 
 CLI argument / env config.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 3. Distribution
+## Distribution
 
 ### every mechanism observed
 
@@ -68,11 +60,7 @@ PyPI via uvx (`uvx mcp-weaviate`).
 
 `uvx mcp-weaviate --help`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 4. Entry point / launch
+## Entry point / launch
 
 ### command(s) users/hosts run
 
@@ -82,21 +70,13 @@ none noted in this repo
 
 entry at `src.main`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 5. Configuration surface
+## Configuration surface
 
 ### how config reaches the server
 
 Environment variables for API keys and Weaviate connection parameters.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 6. Authentication
+## Authentication
 
 ### flow
 
@@ -106,11 +86,7 @@ API keys for embedding providers and Weaviate Cloud.
 
 OpenAI / Cohere (optional) / WCS API keys via env vars.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 7. Multi-tenancy
+## Multi-tenancy
 
 ### tenancy model
 
@@ -120,105 +96,69 @@ Multi-tenancy supported — README explicitly calls out multi-tenancy as a featu
 
 First-class multi-tenancy in tool signatures — rare across Python MCP servers which typically treat tenancy as external config.
 
-## 8. Capabilities exposed
+## Capabilities exposed
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
 11 tools — connection checks, schema info, collection listing, object retrieval, semantic/keyword/hybrid search (with per-tenant variants).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 9. Observability
+## Observability
 
 ### logging destination + format, metrics, tracing, debug flags
 
 not surfaced
 
-### pitfalls observed
-
-none noted in this repo
-
-## 10. Host integrations shown in README or repo
+## Host integrations shown in README or repo
 
 ### Claude Desktop
 
 implied via `uvx` command pattern.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 11. Claude Code plugin wrapper
+## Claude Code plugin wrapper
 
 ### presence and shape
 
 none observed
 
-### pitfalls observed
-
-none noted in this repo
-
-## 12. Tests
+## Tests
 
 ### presence, framework, location, notable patterns
 
 pytest via `uv run pytest`; `tests/` directory.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 13. CI
+## CI
 
 ### presence, system, triggers, what it runs
 
 GitHub Actions workflow present.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 14. Container / packaging artifacts
+## Container / packaging artifacts
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 none observed
 
-### pitfalls observed
-
-none noted in this repo
-
-## 15. Example client / developer ergonomics
+## Example client / developer ergonomics
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
 `uv run ruff check`, `uv run mypy`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 16. Repo layout
+## Repo layout
 
 ### single-package / monorepo / vendored / other
 
 single-package (`src/`).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 17. Notable structural choices
+## Notable structural choices
 
 First-class multi-tenancy in tool signatures — rare across Python MCP servers which typically treat tenancy as external config. Supports two embedding providers (OpenAI, Cohere) with Cohere as optional — graceful degradation if Cohere key absent.
 
-## 18. Unanticipated axes observed
+## Unanticipated axes observed
 
 Exposing per-tenant search tools as a first-class MCP concept — tenancy becomes an argument, not a server-config dimension.
 
-## 19. Python-specific
+## Python-specific
 
 ### SDK / framework variant
 
@@ -260,6 +200,6 @@ ruff + mypy as separate `uv run` commands.
 
 Source entry uses `src.main` style rather than a package name — suggests `src/` is an implicit package root, which requires src-layout support in the build backend.
 
-## 20. Gaps
+## Gaps
 
 Exact FastMCP version pin not read. Python floor not confirmed. No pyproject.toml content verified.

@@ -26,7 +26,7 @@ main
 
 AWS Labs MCP monorepo — 40+ per-service MCP servers packaged as namespace-prefixed PyPI packages (`awslabs.*`); preview aggregator bundles SOPs + CloudTrail audit.
 
-## 1. Language and runtime
+## Language and runtime
 
 ### language(s) + version constraints
 
@@ -36,7 +36,7 @@ Python. Version constraints not extracted within budget; `pyproject.toml` per se
 
 FastMCP (inferred from `FASTMCP_LOG_LEVEL` env var convention).
 
-## 2. Transport
+## Transport
 
 ### supported transports
 
@@ -46,7 +46,7 @@ stdio only (per repo notice). SSE was removed on 2025-05-26; "Streamable HTTP" p
 
 Not selectable — stdio is the single shipping mode.
 
-## 3. Distribution
+## Distribution
 
 ### every mechanism observed
 
@@ -60,7 +60,7 @@ PyPI + uvx; Docker images; source install from GitHub. No npm/Homebrew/binary re
 
 `uvx awslabs.aws-documentation-mcp-server@latest` (canonical shown example); Docker variants per-server.
 
-## 4. Entry point / launch
+## Entry point / launch
 
 ### command(s) users/hosts run
 
@@ -70,13 +70,13 @@ PyPI + uvx; Docker images; source install from GitHub. No npm/Homebrew/binary re
 
 Per-server entry; no umbrella launcher. `aws-mcp-server` (in preview) positioned as an aggregated entry point.
 
-## 5. Configuration surface
+## Configuration surface
 
 ### how config reaches the server
 
 Env-var-centric: `AWS_PROFILE`, `AWS_REGION`, per-service vars (e.g., `BEDROCK_KB_RERANKING_ENABLED`), and `FASTMCP_LOG_LEVEL`. Host config passes these via the host's `env` block.
 
-## 6. Authentication
+## Authentication
 
 ### flow
 
@@ -86,25 +86,25 @@ AWS standard credential chain — delegates to `AWS_PROFILE`, AWS SSO, instance 
 
 `~/.aws/credentials`, `~/.aws/config`, env vars, or instance metadata — whatever the AWS SDK chain resolves.
 
-## 7. Multi-tenancy
+## Multi-tenancy
 
 ### tenancy model
 
 Single-user per process; tenancy effectively equals the active AWS profile/region at launch.
 
-## 8. Capabilities exposed
+## Capabilities exposed
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
 Tools per service. The preview `AWS MCP Server` additionally bundles "pre-built Agent SOPs" (structured operating procedures) and CloudTrail audit integration.
 
-## 9. Observability
+## Observability
 
 ### logging destination + format, metrics, tracing, debug flags
 
 `FASTMCP_LOG_LEVEL` env var; CloudTrail audit logging called out for the preview aggregated server. No tracing/metrics documented at this layer.
 
-## 10. Host integrations shown in README or repo
+## Host integrations shown in README or repo
 
 ### Kiro
 
@@ -134,43 +134,43 @@ One-click install button.
 
 Not surfaced as a named integration target in the overview, though stdio JSON snippets are implicit per-server.
 
-## 11. Claude Code plugin wrapper
+## Claude Code plugin wrapper
 
 ### presence and shape
 
 Not observed in top-level listing. Host integration is via one-click button text rather than a shipped plugin wrapper.
 
-## 12. Tests
+## Tests
 
 ### presence, framework, location, notable patterns
 
 Tests present per-server. Codecov badge present → coverage tracked. Specific framework not extracted.
 
-## 13. CI
+## CI
 
 ### presence, system, triggers, what it runs
 
 GitHub Actions (`.github/workflows`). `.ruff.toml` (lint), `.pre-commit-config.yaml` (hooks), `.secrets.baseline` (secret scan), OSSF Scorecard present.
 
-## 14. Container / packaging artifacts
+## Container / packaging artifacts
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 Dockerfile per server (multiple). `.devcontainer/` configuration at root for dev workflow.
 
-## 15. Example client / developer ergonomics
+## Example client / developer ergonomics
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
 Per-server READMEs; one-click install URLs are the canonical ergonomic path. Devcontainer for contributors.
 
-## 16. Repo layout
+## Repo layout
 
 ### single-package / monorepo / vendored / other
 
 Monorepo. `src/<service>/` directory per server, 40+ servers. Central dev config at repo root.
 
-## 17. Notable structural choices
+## Notable structural choices
 
 Wholesale SSE removal with a bridge to future Streamable HTTP — deliberate transport-narrowing rather than maintaining both during transition.
 
@@ -180,7 +180,7 @@ One-click install buttons per host as a primary README surface — shifts the co
 
 Preview-tier "aggregated" server (AWS MCP Server) bundling SOPs — suggests a direction where per-service servers become composable primitives under a curated orchestrator.
 
-## 18. Unanticipated axes observed
+## Unanticipated axes observed
 
 Deprecation and removal as a versioning signal: SSE removal dated and documented in-repo rather than behind a changelog.
 
@@ -188,7 +188,7 @@ Deprecation and removal as a versioning signal: SSE removal dated and documented
 
 One-click install URL protocol — integration surface that bypasses JSON entirely for supported hosts.
 
-## 19. Python-specific
+## Python-specific
 
 ### SDK / framework variant
 
@@ -236,6 +236,6 @@ Namespace-prefixed PyPI packages (`awslabs.*`) and matching dotted console scrip
 
 Central dev tooling at root (ruff, pre-commit, secrets-baseline) with per-server pyproject for deps — classic uv workspace layout (though not confirmed as `[tool.uv.workspace]`).
 
-## 20. Gaps
+## Gaps
 
 Exact last-commit date — not surfaced in fetched view. Whether any single server opts out of stdio-only (e.g. a hosted variant). Full enumeration of the 40+ servers with domain tags. Whether root pyproject.toml declares `[tool.uv.workspace]` (not inspected).

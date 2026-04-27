@@ -26,7 +26,7 @@ main
 
 PostgreSQL read-only MCP server — exposes tables and schema as resources and runs read-only SQL queries over stdio or Streamable HTTP.
 
-## 1. Language and runtime
+## Language and runtime
 
 ### language(s) + version constraints
 
@@ -36,11 +36,7 @@ TypeScript (71.8%), JavaScript, Node.js; a `pyproject.toml` is also present sugg
 
 Anthropic MCP TypeScript SDK (StreamableHTTPServerTransport, StdioServerTransport).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 2. Transport
+## Transport
 
 ### supported transports
 
@@ -50,11 +46,7 @@ HTTP (streamable) and stdio.
 
 Positional subcommand — `npx @ahmedmustahid/postgres-mcp-server` (HTTP default) vs `npx @ahmedmustahid/postgres-mcp-server stdio`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 3. Distribution
+## Distribution
 
 ### every mechanism observed
 
@@ -68,11 +60,7 @@ npm (npx), Docker, Podman.
 
 `npx @ahmedmustahid/postgres-mcp-server`; `npx @ahmedmustahid/postgres-mcp-server stdio`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 4. Entry point / launch
+## Entry point / launch
 
 ### command(s) users/hosts run
 
@@ -82,21 +70,13 @@ none noted in this repo
 
 Dockerfile and docker-compose.yml; Makefile.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 5. Configuration surface
+## Configuration surface
 
 ### how config reaches the server
 
 Environment variables via `.env` — `POSTGRES_USERNAME`, `POSTGRES_PASSWORD`, `POSTGRES_HOST`, `POSTGRES_DATABASE`, `POSTGRES_URL`, `PORT` (default 3000), `HOST`, `NODE_ENV`, `CORS_ORIGIN`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 6. Authentication
+## Authentication
 
 ### flow
 
@@ -106,41 +86,25 @@ Standard PostgreSQL authentication via credentials in env vars.
 
 `.env` file / environment variables.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 7. Multi-tenancy
+## Multi-tenancy
 
 ### tenancy model
 
 Single database per server; HTTP transport supports stateful sessions but not per-request tenant switching.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 8. Capabilities exposed
+## Capabilities exposed
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
 Resources — "Database Tables" (public-schema listing), "Database Schema" (column info). Tool — read-only SQL query execution.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 9. Observability
+## Observability
 
 ### logging destination + format, metrics, tracing, debug flags
 
 `--verbose` flag available.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 10. Host integrations shown in README or repo
+## Host integrations shown in README or repo
 
 ### Claude Desktop
 
@@ -154,78 +118,50 @@ Explicitly referenced.
 
 Not mentioned.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 11. Claude Code plugin wrapper
+## Claude Code plugin wrapper
 
 ### presence and shape
 
 Not present.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 12. Tests
+## Tests
 
 ### presence, framework, location, notable patterns
 
 Not detailed in README within budget.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 13. CI
+## CI
 
 ### presence, system, triggers, what it runs
 
 Not detailed in README within budget.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 14. Container / packaging artifacts
+## Container / packaging artifacts
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 Dockerfile and docker-compose.yml present; Podman also called out.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 15. Example client / developer ergonomics
+## Example client / developer ergonomics
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
 Makefile present; Claude Desktop config example; "Show sales table from last year" example query.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 16. Repo layout
+## Repo layout
 
 ### single-package / monorepo / vendored / other
 
 Mixed single-package — primarily Node/TS (`src/`, `package.json`) with a sibling `pyproject.toml` and `images/` directory.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 17. Notable structural choices
+## Notable structural choices
 
 Dual transport (HTTP streamable + stdio) in one package with subcommand selection. Graceful shutdown and error handling highlighted in README. Presence of both `package.json` and `pyproject.toml` in a TS-majority repo is unusual — possibly a parallel Python variant or docs-generation tool.
 
-## 18. Unanticipated axes observed
+## Unanticipated axes observed
 
 CORS origin configuration surfaces at the MCP layer, which is HTTP-transport-specific and rare. Explicit HTTP session statefulness as a design axis.
 
-## 20. Gaps
+## Gaps
 
 Last-commit date not surfaced. Tests and CI details not extracted within budget. Purpose of `pyproject.toml` in a TS-dominant repo not explained in README.

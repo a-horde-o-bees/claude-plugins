@@ -26,7 +26,7 @@ main
 
 AWS resources MCP server — exposes a single AST-sandboxed `exec boto3` tool (code-as-tool) rather than enumerating each AWS API.
 
-## 1. Language and runtime
+## Language and runtime
 
 ### language(s) + version constraints
 
@@ -36,11 +36,7 @@ Python 95.7%; Python version not explicitly surfaced.
 
 raw MCP Python SDK (boto3-based).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 2. Transport
+## Transport
 
 ### supported transports
 
@@ -50,11 +46,7 @@ stdio.
 
 default MCP transport.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 3. Distribution
+## Distribution
 
 ### every mechanism observed
 
@@ -72,7 +64,7 @@ mcp-server-aws-resources (Docker); smithery registry entry.
 
 multi-arch Docker images (including arm/v7) for broader platform coverage.
 
-## 4. Entry point / launch
+## Entry point / launch
 
 ### command(s) users/hosts run
 
@@ -82,21 +74,13 @@ multi-arch Docker images (including arm/v7) for broader platform coverage.
 
 Dockerfile; Smithery CLI.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 5. Configuration surface
+## Configuration surface
 
 ### how config reaches the server
 
 environment variables injected into the Docker command in Claude Desktop config; or AWS profile path mounted into container.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 6. Authentication
+## Authentication
 
 ### flow
 
@@ -106,41 +90,25 @@ AWS credentials via `AWS_ACCESS_KEY_ID` + `AWS_SECRET_ACCESS_KEY` (+ optional `A
 
 host env / mounted AWS credentials file.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 7. Multi-tenancy
+## Multi-tenancy
 
 ### tenancy model
 
 single-user per process (one AWS credential set).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 8. Capabilities exposed
+## Capabilities exposed
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
 single "run boto3 code" tool with AST validation sandboxing; exposes a dynamic AWS-resources resource.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 9. Observability
+## Observability
 
 ### logging destination + format, metrics, tracing, debug flags
 
 not explicitly documented.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 10. Host integrations shown in README or repo
+## Host integrations shown in README or repo
 
 ### Claude Desktop
 
@@ -150,79 +118,51 @@ JSON `mcpServers` Docker command with env injection or AWS profile mount.
 
 CLI-installable via `@smithery/cli install`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 11. Claude Code plugin wrapper
+## Claude Code plugin wrapper
 
 ### presence and shape
 
 not observed.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 12. Tests
+## Tests
 
 ### presence, framework, location, notable patterns
 
 not detailed in README excerpt.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 13. CI
+## CI
 
 ### presence, system, triggers, what it runs
 
 GitHub Actions directory present.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 14. Container / packaging artifacts
+## Container / packaging artifacts
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 Dockerfile; multi-arch images published (linux/amd64, arm64, arm/v7).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 15. Example client / developer ergonomics
+## Example client / developer ergonomics
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
 Smithery install path; Docker one-liner.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 16. Repo layout
+## Repo layout
 
 ### single-package / monorepo / vendored / other
 
 single package under `src/mcp_server_aws_resources/`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 17. Notable structural choices
+## Notable structural choices
 
 Exposes a single "execute arbitrary boto3 Python" tool rather than enumerating AWS APIs — AST validator + allowlist of imports (boto3, operator, json, datetime, pytz, dateutil, re, time) is the sandboxing mechanism. Multi-arch Docker images (including arm/v7) for broader platform coverage.
 
-## 18. Unanticipated axes observed
+## Unanticipated axes observed
 
 "Code-as-tool" architecture: one flexible code-execution tool with AST sandbox versus N hand-enumerated per-API tools. Smithery CLI as a distribution vector alongside Docker and source.
 
-## 19. Python-specific
+## Python-specific
 
 ### SDK / framework variant
 
@@ -264,6 +204,6 @@ not surfaced.
 
 AST validation for user-supplied Python is rare among MCP servers; treats AWS API as "run this Python snippet" rather than "call this named tool". Allowed-imports allowlist baked into the sandbox.
 
-## 20. Gaps
+## Gaps
 
 Python version floor, test presence, last-commit date, console script name, schema strategy details could not be determined.

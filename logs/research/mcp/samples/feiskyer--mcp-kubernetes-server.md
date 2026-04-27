@@ -26,7 +26,7 @@ main
 
 Kubernetes MCP server — four-way verb disable flags (read/write/delete/exec) for fine-grained capability gating.
 
-## 1. Language and runtime
+## Language and runtime
 
 ### language(s) + version constraints
 
@@ -36,11 +36,7 @@ Python 99.7%; Python 3.11+.
 
 raw MCP Python SDK (Anthropic's Claude Agent SDK wrapper around the MCP protocol).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 2. Transport
+## Transport
 
 ### supported transports
 
@@ -50,11 +46,7 @@ stdio (default), SSE, streamable-http.
 
 CLI flag `--transport`, plus `--host` and `--port` for network modes.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 3. Distribution
+## Distribution
 
 ### every mechanism observed
 
@@ -68,11 +60,7 @@ mcp-kubernetes-server
 
 `uvx mcp-kubernetes-server`; docker from ghcr.io.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 4. Entry point / launch
+## Entry point / launch
 
 ### command(s) users/hosts run
 
@@ -82,21 +70,13 @@ none noted in this repo
 
 Dockerfile.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 5. Configuration surface
+## Configuration surface
 
 ### how config reaches the server
 
 environment variable `KUBECONFIG`; CLI flags `--disable-kubectl`, `--disable-helm`, `--disable-write`, `--disable-delete`, `--transport`, `--host`, `--port`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 6. Authentication
+## Authentication
 
 ### flow
 
@@ -106,41 +86,25 @@ delegates to kubeconfig credentials; permissions check via kubectl's auth subsys
 
 kubeconfig file.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 7. Multi-tenancy
+## Multi-tenancy
 
 ### tenancy model
 
 single-user per process (single kubeconfig context).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 8. Capabilities exposed
+## Capabilities exposed
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
 50+ tools across command execution (kubectl, helm), read-only queries, write operations (create/apply), delete operations, rollout/scaling.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 9. Observability
+## Observability
 
 ### logging destination + format, metrics, tracing, debug flags
 
 not surfaced in README.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 10. Host integrations shown in README or repo
+## Host integrations shown in README or repo
 
 ### Claude Desktop
 
@@ -158,79 +122,51 @@ JSON `mcpServers` entry.
 
 JSON `mcpServers` entry.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 11. Claude Code plugin wrapper
+## Claude Code plugin wrapper
 
 ### presence and shape
 
 not observed.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 12. Tests
+## Tests
 
 ### presence, framework, location, notable patterns
 
 GitHub Actions `build.yml` suggests CI-driven tests; framework not surfaced.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 13. CI
+## CI
 
 ### presence, system, triggers, what it runs
 
 GitHub Actions (`build.yml`).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 14. Container / packaging artifacts
+## Container / packaging artifacts
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 Dockerfile present; ghcr.io image.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 15. Example client / developer ergonomics
+## Example client / developer ergonomics
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
 not surfaced in README excerpt.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 16. Repo layout
+## Repo layout
 
 ### single-package / monorepo / vendored / other
 
 single package under `src/mcp_kubernetes_server/`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 17. Notable structural choices
+## Notable structural choices
 
 Granular per-capability CLI toggles (`--disable-kubectl`, `--disable-helm`, `--disable-write`, `--disable-delete`) instead of a single read-only/full switch. Apache-2.0 license (rarer for independent-maintainer MCP servers, which skew MIT).
 
-## 18. Unanticipated axes observed
+## Unanticipated axes observed
 
 Per-verb enable/disable as an argument surface pattern (kubectl vs helm vs write vs delete split into four independent flags).
 
-## 19. Python-specific
+## Python-specific
 
 ### SDK / framework variant
 
@@ -272,6 +208,6 @@ not surfaced.
 
 Sync subprocess wrapping rather than using the kubernetes-client async Python library. Four-way verb disable flags is a denial-ish denominator for capability gating.
 
-## 20. Gaps
+## Gaps
 
 specific schema strategy, test framework, logging destination, async behavior, last-commit date after v0.1.11.

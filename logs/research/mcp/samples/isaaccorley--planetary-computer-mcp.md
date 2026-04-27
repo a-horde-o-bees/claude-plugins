@@ -26,7 +26,7 @@ main
 
 Microsoft Planetary Computer / NASA STAC MCP server — queries geospatial/earth data catalogs; co-located TypeScript VS Code extension.
 
-## 1. Language and runtime
+## Language and runtime
 
 ### language(s) + version constraints
 
@@ -36,11 +36,7 @@ Python 87.5%, TypeScript 11.3% (VS Code extension); Python version via `.python-
 
 raw `mcp` SDK (Anthropic MCP Python implementation) — README phrasing suggests Claude Agent SDK / MCP rather than FastMCP.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 2. Transport
+## Transport
 
 ### supported transports
 
@@ -50,11 +46,7 @@ stdio (MCP default).
 
 stdio-only implicit.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 3. Distribution
+## Distribution
 
 ### every mechanism observed
 
@@ -72,7 +64,7 @@ not confirmed on PyPI; repo distributed as-clone.
 
 Whether the repo publishes to PyPI or is distribution-as-source-only not confirmed.
 
-## 4. Entry point / launch
+## Entry point / launch
 
 ### command(s) users/hosts run
 
@@ -82,21 +74,13 @@ Whether the repo publishes to PyPI or is distribution-as-source-only not confirm
 
 VS Code extension under `vscode-extension/`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 5. Configuration surface
+## Configuration surface
 
 ### how config reaches the server
 
 function-call parameters + environment; specifics not documented.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 6. Authentication
+## Authentication
 
 ### flow
 
@@ -106,41 +90,25 @@ none at MCP layer.
 
 Planetary Computer STAC API is publicly accessible.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 7. Multi-tenancy
+## Multi-tenancy
 
 ### tenancy model
 
 single-user.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 8. Capabilities exposed
+## Capabilities exposed
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
 2 tools — `download_data` (unified raster/DEM/climate data), `download_geometries` (vector/building data); automatic geocoding and natural-language dataset detection.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 9. Observability
+## Observability
 
 ### logging destination + format, metrics, tracing, debug flags
 
 not documented.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 10. Host integrations shown in README or repo
+## Host integrations shown in README or repo
 
 ### VS Code
 
@@ -150,79 +118,51 @@ dedicated extension in `vscode-extension/` directory.
 
 implied via `python -m` command pattern.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 11. Claude Code plugin wrapper
+## Claude Code plugin wrapper
 
 ### presence and shape
 
 none observed; VS Code extension is a parallel host integration.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 12. Tests
+## Tests
 
 ### presence, framework, location, notable patterns
 
 pytest via `uv run pytest`; `tests/` directory.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 13. CI
+## CI
 
 ### presence, system, triggers, what it runs
 
 GitHub Actions configured.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 14. Container / packaging artifacts
+## Container / packaging artifacts
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 not observed.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 15. Example client / developer ergonomics
+## Example client / developer ergonomics
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
 `uv run pre-commit run --all-files` for checks.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 16. Repo layout
+## Repo layout
 
 ### single-package / monorepo / vendored / other
 
 monorepo-ish — `src/` with `core/`, `tools/`, `server.py`, plus parallel `vscode-extension/` (TypeScript) subproject.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 17. Notable structural choices
+## Notable structural choices
 
 Ships a VS Code extension alongside the MCP server — parallel non-MCP integration path in the same repo. Supports multi-format outputs (GeoTIFF, GeoParquet, Zarr) — uncommon in MCP servers; implies large-file handling. Generates visualizations for LLM analysis — the server synthesizes images for the model to interpret.
 
-## 18. Unanticipated axes observed
+## Unanticipated axes observed
 
 Co-located VS Code extension (TypeScript) with the Python MCP server — mixed-language repo to cover editor integration outside MCP; LLM-targeted visualization generation (not just data retrieval) as a deliberate design choice.
 
-## 19. Python-specific
+## Python-specific
 
 ### SDK / framework variant
 
@@ -264,6 +204,6 @@ pre-commit via `uv run pre-commit run --all-files`.
 
 `python -m module.server` launch pattern — module-level invocation rather than console script. Raw MCP SDK in 2026 — many newer servers have migrated to FastMCP; this one stays on the lower-level SDK.
 
-## 20. Gaps
+## Gaps
 
 Exact pyproject contents and version pins not read. Whether the repo publishes to PyPI or is distribution-as-source-only not confirmed. Auth/config specifics beyond "no auth" not surfaced.

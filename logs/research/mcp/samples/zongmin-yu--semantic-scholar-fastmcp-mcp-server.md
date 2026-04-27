@@ -26,7 +26,7 @@ main
 
 Semantic Scholar MCP server — dual-protocol MCP (stdio) + HTTP REST in the same process; FastMCP-backed.
 
-## 1. Language and runtime
+## Language and runtime
 
 ### language(s) + version constraints
 
@@ -36,11 +36,7 @@ Python 3.10+.
 
 FastMCP.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 2. Transport
+## Transport
 
 ### supported transports
 
@@ -50,11 +46,7 @@ stdio (MCP default); HTTP bridge on port 8000 (bundled in-process).
 
 stdio primary; HTTP bridge toggled via env var (`SEMANTIC_SCHOLAR_ENABLE_HTTP_BRIDGE`).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 3. Distribution
+## Distribution
 
 ### every mechanism observed
 
@@ -68,11 +60,7 @@ PyPI (`pip install semantic-scholar-fastmcp`), uvx, Docker (+ docker-compose).
 
 `pip install semantic-scholar-fastmcp`, `uvx semantic-scholar-fastmcp`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 4. Entry point / launch
+## Entry point / launch
 
 ### command(s) users/hosts run
 
@@ -82,21 +70,13 @@ none noted in this repo
 
 docker-compose orchestration shipped.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 5. Configuration surface
+## Configuration surface
 
 ### how config reaches the server
 
 environment variables — `SEMANTIC_SCHOLAR_API_KEY`, `SEMANTIC_SCHOLAR_ENABLE_HTTP_BRIDGE`, `SEMANTIC_SCHOLAR_HTTP_BRIDGE_HOST`, `SEMANTIC_SCHOLAR_HTTP_BRIDGE_PORT`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 6. Authentication
+## Authentication
 
 ### flow
 
@@ -106,41 +86,25 @@ optional API key.
 
 `SEMANTIC_SCHOLAR_API_KEY` env var (higher rate limits).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 7. Multi-tenancy
+## Multi-tenancy
 
 ### tenancy model
 
 single-user.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 8. Capabilities exposed
+## Capabilities exposed
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
 16 tools — 8 paper search/discovery, 2 citation analysis, 4 author info, 2 recommendation.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 9. Observability
+## Observability
 
 ### logging destination + format, metrics, tracing, debug flags
 
 not surfaced
 
-### pitfalls observed
-
-none noted in this repo
-
-## 10. Host integrations shown in README or repo
+## Host integrations shown in README or repo
 
 ### Claude Desktop
 
@@ -150,71 +114,43 @@ JSON config snippet (uvx command).
 
 serves on 0.0.0.0:8000 for non-MCP consumers.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 11. Claude Code plugin wrapper
+## Claude Code plugin wrapper
 
 ### presence and shape
 
 none observed
 
-### pitfalls observed
-
-none noted in this repo
-
-## 12. Tests
+## Tests
 
 ### presence, framework, location, notable patterns
 
 `tests/` directory; framework not detailed.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 13. CI
+## CI
 
 ### presence, system, triggers, what it runs
 
 GitHub Actions in `.github/`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 14. Container / packaging artifacts
+## Container / packaging artifacts
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 Dockerfile and docker-compose.yml present.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 15. Example client / developer ergonomics
+## Example client / developer ergonomics
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
 `[dev]` optional extra.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 16. Repo layout
+## Repo layout
 
 ### single-package / monorepo / vendored / other
 
 single-package (`semantic_scholar/` with `server.py`, `mcp.py`, `config.py`, utility modules).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 17. Notable structural choices
+## Notable structural choices
 
 Bundles an HTTP bridge alongside the MCP protocol — the same server process exposes both MCP tools and a generic HTTP endpoint (port 8000), enabled by default.
 
@@ -222,11 +158,11 @@ Bundles an HTTP bridge alongside the MCP protocol — the same server process ex
 
 Separate `mcp.py` and `server.py` files — likely splits MCP-protocol surface from HTTP/business-logic surface.
 
-## 18. Unanticipated axes observed
+## Unanticipated axes observed
 
 dual protocol exposure (MCP stdio + HTTP REST) in a single process, rather than picking one — the HTTP bridge is on by default, making this usable by non-MCP clients out of the box. This is a distinct pattern from "pick a transport" (which is still one protocol); this server serves two protocols simultaneously.
 
-## 19. Python-specific
+## Python-specific
 
 ### SDK / framework variant
 
@@ -268,6 +204,6 @@ Pydantic via FastMCP.
 
 In-process HTTP bridge is interesting — suggests FastMCP's `streamable-http` transport is not being used; instead, a custom bridge layer lives alongside.
 
-## 20. Gaps
+## Gaps
 
 HTTP bridge internals not inspected (is it `streamable-http`, `sse`, or a custom FastAPI app?). Version pins for FastMCP not surfaced. Lock file convention not confirmed.

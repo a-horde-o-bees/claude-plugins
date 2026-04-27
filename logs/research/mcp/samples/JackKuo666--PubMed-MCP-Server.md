@@ -26,7 +26,7 @@ main
 
 PubMed research-paper MCP server — keyword and advanced search, metadata retrieval, PDF download, and deep paper analysis.
 
-## 1. Language and runtime
+## Language and runtime
 
 ### language(s) + version constraints
 
@@ -36,11 +36,7 @@ Python, 3.10+ (`.python-version` file).
 
 FastMCP (explicitly named in README).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 2. Transport
+## Transport
 
 ### supported transports
 
@@ -50,11 +46,7 @@ stdio (standard MCP server default).
 
 stdio-only implicit; README only shows Claude Desktop integration.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 3. Distribution
+## Distribution
 
 ### every mechanism observed
 
@@ -68,11 +60,7 @@ Not published to PyPI at time of research (no `pip install pubmed-mcp-server` sh
 
 `git clone ... && pip install -r requirements.txt`; Smithery.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 4. Entry point / launch
+## Entry point / launch
 
 ### command(s) users/hosts run
 
@@ -82,21 +70,13 @@ none noted in this repo
 
 `smithery.yaml` for Smithery install.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 5. Configuration surface
+## Configuration surface
 
 ### how config reaches the server
 
 Claude Desktop `claude_desktop_config.json` command/args — absolute path to `pubmed_server.py`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 6. Authentication
+## Authentication
 
 ### flow
 
@@ -106,41 +86,25 @@ None.
 
 N/A — anonymous PubMed web access.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 7. Multi-tenancy
+## Multi-tenancy
 
 ### tenancy model
 
 single-user
 
-### pitfalls observed
-
-none noted in this repo
-
-## 8. Capabilities exposed
+## Capabilities exposed
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
 5 tools — `search_pubmed_key_words`, `search_pubmed_advanced`, `get_pubmed_article_metadata`, `download_pubmed_pdf`, `deep_paper_analysis`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 9. Observability
+## Observability
 
 ### logging destination + format, metrics, tracing, debug flags
 
 Standard `logging` module.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 10. Host integrations shown in README or repo
+## Host integrations shown in README or repo
 
 ### Claude Desktop
 
@@ -154,79 +118,51 @@ Dedicated example.
 
 `smithery.yaml` in repo root.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 11. Claude Code plugin wrapper
+## Claude Code plugin wrapper
 
 ### presence and shape
 
 None observed (despite "MseeP.ai Security Assessment Badge" shown on README).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 12. Tests
+## Tests
 
 ### presence, framework, location, notable patterns
 
 No tests observed.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 13. CI
+## CI
 
 ### presence, system, triggers, what it runs
 
 `.github/` directory present; no workflow details surfaced.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 14. Container / packaging artifacts
+## Container / packaging artifacts
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 Dockerfile present.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 15. Example client / developer ergonomics
+## Example client / developer ergonomics
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
 Claude Desktop / Cline snippets; `smithery.yaml`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 16. Repo layout
+## Repo layout
 
 ### single-package / monorepo / vendored / other
 
 Bare-script style — `pubmed_server.py` and `pubmed_web_search.py` at repo root; `pyproject.toml` and `requirements.txt` side by side.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 17. Notable structural choices
+## Notable structural choices
 
 Keeps both `pyproject.toml` and `requirements.txt` — redundant manifest; suggests the repo was bootstrapped from a requirements-driven template. Bare-script top-level layout rather than `src/<pkg>/` — lightweight but harder to package for PyPI.
 
-## 18. Unanticipated axes observed
+## Unanticipated axes observed
 
 MCP server distributed via Smithery without ever being published to PyPI — the package manager path is optional when Smithery handles install.
 
-## 19. Python-specific
+## Python-specific
 
 ### SDK / framework variant
 
@@ -268,6 +204,6 @@ None explicit.
 
 No PyPI publication, no console script — repository is distributed as code to clone, not as a package. Duplicate manifest files (`pyproject.toml` + `requirements.txt`) — unusual split.
 
-## 20. Gaps
+## Gaps
 
 Exact FastMCP version pin not surfaced. Whether `pyproject.toml` defines any console scripts not confirmed. CI workflow content not read.

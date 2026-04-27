@@ -26,7 +26,7 @@ main
 
 ClickUp task-management MCP server — 28 tools covering task CRUD, discovery, assignments, bulk ops, time tracking, analytics, and user management.
 
-## 1. Language and runtime
+## Language and runtime
 
 ### language(s) + version constraints
 
@@ -36,11 +36,7 @@ Python 100%; `requires-python = ">=3.10"`.
 
 raw `mcp>=0.1.0` (very old pin) + `click` for CLI wrapping.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 2. Transport
+## Transport
 
 ### supported transports
 
@@ -50,11 +46,7 @@ stdio (default MCP transport implied).
 
 default
 
-### pitfalls observed
-
-none noted in this repo
-
-## 3. Distribution
+## Distribution
 
 ### every mechanism observed
 
@@ -68,11 +60,7 @@ no PyPI publication documented
 
 `uvx --from git+https://github.com/DiversioTeam/clickup-mcp clickup-mcp`; `uv run clickup-mcp`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 4. Entry point / launch
+## Entry point / launch
 
 ### command(s) users/hosts run
 
@@ -82,21 +70,13 @@ none noted in this repo
 
 console script `clickup-mcp` → `clickup_mcp.__main__:main`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 5. Configuration surface
+## Configuration surface
 
 ### how config reaches the server
 
 Persistent config via `platformdirs` — API key stored via `set-api-key` subcommand. Env var alternative: `CLICKUP_MCP_API_KEY`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 6. Authentication
+## Authentication
 
 ### flow
 
@@ -106,109 +86,65 @@ ClickUp personal API token (generated from Settings → Apps → API).
 
 either `set-api-key` subcommand (persisted via `platformdirs`) or `CLICKUP_MCP_API_KEY` env var.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 7. Multi-tenancy
+## Multi-tenancy
 
 ### tenancy model
 
 single workspace per API key; personal-token scope.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 8. Capabilities exposed
+## Capabilities exposed
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
 28 tools covering task management, discovery, assignments, navigation, bulk operations, time tracking, analytics, user management.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 9. Observability
+## Observability
 
 ### logging destination + format, metrics, tracing, debug flags
 
 `--debug` flag; `rich` used for formatted output.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 10. Host integrations shown in README or repo
+## Host integrations shown in README or repo
 
 Not captured per host in extract.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 11. Claude Code plugin wrapper
+## Claude Code plugin wrapper
 
 ### presence and shape
 
 none
 
-### pitfalls observed
-
-none noted in this repo
-
-## 12. Tests
+## Tests
 
 ### presence, framework, location, notable patterns
 
 62 pytest tests; pytest + pytest-asyncio + pytest-cov in dev deps.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 13. CI
+## CI
 
 ### presence, system, triggers, what it runs
 
 GitHub Actions CI workflow present.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 14. Container / packaging artifacts
+## Container / packaging artifacts
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 not mentioned
 
-### pitfalls observed
-
-none noted in this repo
-
-## 15. Example client / developer ergonomics
+## Example client / developer ergonomics
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
 `set-api-key`, `check-config`, `test-connection` subcommands — strong CLI ergonomics for setup.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 16. Repo layout
+## Repo layout
 
 ### single-package / monorepo / vendored / other
 
 single-package (`clickup_mcp/` with `__main__.py`).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 17. Notable structural choices
+## Notable structural choices
 
 - `platformdirs`-based persistent config — API key stored in OS-appropriate config dir (`~/.config/` / `%APPDATA%` / etc.) via `set-api-key` subcommand; unlike the dominant "env var only" pattern
 - Management subcommands on the MCP binary (`set-api-key`, `check-config`, `test-connection`) — the MCP server command doubles as a config CLI, echoing patterns like `kubectl config`
@@ -217,14 +153,14 @@ none noted in this repo
 - Install-from-git — `uvx --from git+...` as the primary install path, no PyPI
 - 62 pytest tests on a 3-star repo — well above average test density for its popularity tier
 
-## 18. Unanticipated axes observed
+## Unanticipated axes observed
 
 - MCP-server binary as a management CLI — the same console script handles both the server protocol and a separate CLI for configuration. A richer pattern than one-binary-one-purpose
 - OS-native config persistence via `platformdirs` — competes with `.env` files and env vars; reveals three distinct credential-storage conventions in the sample
 - `uvx --from git+...` as a distribution channel — bypasses PyPI entirely; the git URL becomes the effective package index
 - Test-density vs popularity skew — low stars with high test count suggests an internal/team project published without a marketing push; star counts should not be read as a proxy for engineering quality
 
-## 19. Python-specific
+## Python-specific
 
 ### SDK / framework variant
 
@@ -269,6 +205,6 @@ ruff + mypy + subcommand CLI (`set-api-key`, `check-config`, `test-connection`).
 - `rich` + `click` for a polished CLI layer on top of the MCP server
 - Very loose `mcp>=0.1.0` pin — unusual; most projects pin much tighter
 
-## 20. Gaps
+## Gaps
 
 Docker presence, exact mcp SDK patterns, whether the server uses resources/prompts primitives, update cadence.

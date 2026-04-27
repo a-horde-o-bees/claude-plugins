@@ -26,7 +26,7 @@ main
 
 AWS Bedrock knowledge-base MCP server — boto3-direct KB discovery, NL querying, data-source filtering, and region/permission-gated reranking; tag-scoped access.
 
-## 1. Language and runtime
+## Language and runtime
 
 ### language(s) + version constraints
 
@@ -36,7 +36,7 @@ Python `>=3.10`.
 
 raw `mcp[cli]>=1.23.0` — no fastmcp.
 
-## 2. Transport
+## Transport
 
 ### supported transports
 
@@ -46,7 +46,7 @@ stdio.
 
 Default; not configurable from README.
 
-## 3. Distribution
+## Distribution
 
 ### every mechanism observed
 
@@ -62,7 +62,7 @@ PyPI `awslabs.bedrock-kb-retrieval-mcp-server`; `uvx`; Windows `.exe`; Docker.
 - `uv tool run --from awslabs.bedrock-kb-retrieval-mcp-server@latest awslabs.bedrock-kb-retrieval-mcp-server.exe`
 - `docker build -t awslabs/bedrock-kb-retrieval-mcp-server .`
 
-## 4. Entry point / launch
+## Entry point / launch
 
 ### command(s) users/hosts run
 
@@ -72,13 +72,13 @@ PyPI `awslabs.bedrock-kb-retrieval-mcp-server`; `uvx`; Windows `.exe`; Docker.
 
 Console script → `awslabs.bedrock_kb_retrieval_mcp_server.server:main`.
 
-## 5. Configuration surface
+## Configuration surface
 
 ### how config reaches the server
 
 Env vars — `AWS_PROFILE`, `AWS_REGION`, `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY`/`AWS_SESSION_TOKEN`, `KB_INCLUSION_TAG_KEY`.
 
-## 6. Authentication
+## Authentication
 
 ### flow
 
@@ -88,65 +88,65 @@ AWS credential chain via configured profile or direct env credentials (including
 
 Standard AWS resolution.
 
-## 7. Multi-tenancy
+## Multi-tenancy
 
 ### tenancy model
 
 Single-user per deployment; knowledge-base scoping via AWS tag (`mcp-multirag-kb=true` by default, overridable via `KB_INCLUSION_TAG_KEY`).
 
-## 8. Capabilities exposed
+## Capabilities exposed
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
 Tools — knowledge-base discovery, data-source listing, natural-language KB querying, result filtering by data source, result reranking (region/permission-gated).
 
-## 9. Observability
+## Observability
 
 ### logging destination + format, metrics, tracing, debug flags
 
 `loguru`.
 
-## 10. Host integrations shown in README or repo
+## Host integrations shown in README or repo
 
 Aggregated in parent monorepo.
 
-## 11. Claude Code plugin wrapper
+## Claude Code plugin wrapper
 
 ### presence and shape
 
 None.
 
-## 12. Tests
+## Tests
 
 ### presence, framework, location, notable patterns
 
 Not captured from README.
 
-## 13. CI
+## CI
 
 ### presence, system, triggers, what it runs
 
 Parent monorepo.
 
-## 14. Container / packaging artifacts
+## Container / packaging artifacts
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 Dockerfile.
 
-## 15. Example client / developer ergonomics
+## Example client / developer ergonomics
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
 Not captured.
 
-## 16. Repo layout
+## Repo layout
 
 ### single-package / monorepo / vendored / other
 
 Sub-package in awslabs/mcp.
 
-## 17. Notable structural choices
+## Notable structural choices
 
 Uses boto3 directly (`boto3>=1.37.24`) — no AWS CLI wrapping, unlike the aws-api sibling.
 
@@ -156,7 +156,7 @@ Extremely lean dependency set: 4 runtime deps (boto3, loguru, mcp, pydantic).
 
 Reranking is conditional on region and IAM permissions — feature gate via capability probing.
 
-## 18. Unanticipated axes observed
+## Unanticipated axes observed
 
 Tag-driven resource scoping as an MCP pattern — AWS tags become the access-control boundary for which KBs the server can see. A novel solution to "too many resources in the account" without building app-level access control.
 
@@ -164,7 +164,7 @@ Capability-probing at start — reranking only exposed when region + perms allow
 
 boto3-direct vs CLI-wrap split inside the same monorepo — two design styles coexist; this sub-server represents the "thin SDK wrapper" style.
 
-## 19. Python-specific
+## Python-specific
 
 ### SDK / framework variant
 
@@ -208,6 +208,6 @@ One of the leanest Python MCP server dep sets observed (4 runtime deps).
 
 No httpx — boto3 owns all network I/O, which keeps the stack consistent with AWS SDK conventions.
 
-## 20. Gaps
+## Gaps
 
 Async/sync pattern in handlers, specific reranker API used, tag-filter implementation details, test presence.

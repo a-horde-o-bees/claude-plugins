@@ -26,7 +26,7 @@ main
 
 Stripe agent toolkit — MCP server plus host-specific wrappers; ships `.claude-plugin/` and `.cursor-plugin/` side by side.
 
-## 1. Language and runtime
+## Language and runtime
 
 ### language(s) + version constraints
 
@@ -36,11 +36,7 @@ TypeScript (51.9%) with substantial Python co-primary. Dual-language repo.
 
 Stripe's own SDKs (Node, Python); Vercel AI SDK integration; MCP components as a third pillar.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 2. Transport
+## Transport
 
 ### supported transports
 
@@ -50,11 +46,7 @@ Stdio via `@stripe/mcp` (local); remote hosted endpoint at `https://mcp.stripe.c
 
 Install-target split — `npx @stripe/mcp` for stdio, the hosted URL for remote/OAuth.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 3. Distribution
+## Distribution
 
 ### every mechanism observed
 
@@ -72,7 +64,7 @@ Python: `pip install stripe-agent-toolkit`. TypeScript: `npm install @stripe/age
 
 Cross-ecosystem packaging: Python and TypeScript published from the same repo with parallel naming (`stripe-agent-toolkit` vs `@stripe/agent-toolkit`).
 
-## 4. Entry point / launch
+## Entry point / launch
 
 ### command(s) users/hosts run
 
@@ -82,11 +74,7 @@ Cross-ecosystem packaging: Python and TypeScript published from the same repo wi
 
 `@stripe/mcp` is the stdio entry; `@stripe/agent-toolkit` is the broader SDK.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 5. Configuration surface
+## Configuration surface
 
 ### how config reaches the server
 
@@ -96,7 +84,7 @@ none noted in this repo
 
 Exact env-var config surface vs CLI flags not extracted.
 
-## 6. Authentication
+## Authentication
 
 ### flow
 
@@ -106,41 +94,25 @@ Static Stripe secret keys (recommend Restricted API Keys — RAK) for stdio; OAu
 
 Stripe dashboard generates secret keys / RAKs; OAuth flow for hosted consumption.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 7. Multi-tenancy
+## Multi-tenancy
 
 ### tenancy model
 
 Single-account per process for stdio (one API key → one Stripe account); per-user OAuth for the hosted endpoint (each user authorizes their own Stripe account).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 8. Capabilities exposed
+## Capabilities exposed
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
 Tools exposing Stripe API surface (payments, customers, etc.). Specific tool enumeration not extracted.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 9. Observability
+## Observability
 
 ### logging destination + format, metrics, tracing, debug flags
 
 Not explicitly documented in README view.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 10. Host integrations shown in README or repo
+## Host integrations shown in README or repo
 
 ### Claude Desktop
 
@@ -154,11 +126,7 @@ none noted in this repo
 
 stdio via `npx @stripe/mcp` applies universally through host JSON config.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 11. Claude Code plugin wrapper
+## Claude Code plugin wrapper
 
 ### presence and shape
 
@@ -168,17 +136,13 @@ none noted in this repo
 
 Contents of `.claude-plugin/plugin.json` (full plugin layout vs minimal) not extracted.
 
-## 12. Tests
+## Tests
 
 ### presence, framework, location, notable patterns
 
 Not deeply extracted. `.github/` present suggests CI-driven testing.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 13. CI
+## CI
 
 ### presence, system, triggers, what it runs
 
@@ -188,37 +152,25 @@ GitHub Actions present; specifics not extracted.
 
 CI workflow specifics not extracted.
 
-## 14. Container / packaging artifacts
+## Container / packaging artifacts
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 Not explicitly documented in README view.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 15. Example client / developer ergonomics
+## Example client / developer ergonomics
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
 Dual-ecosystem SDKs (Node + Python) alongside MCP. Restricted API Key guidance is a security-ergonomics feature.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 16. Repo layout
+## Repo layout
 
 ### single-package / monorepo / vendored / other
 
 Monorepo. Multiple SDK packages coexist: `@stripe/agent-toolkit` (Python + TS), `@stripe/ai-sdk` (Vercel integration), `@stripe/token-meter` (native SDK billing), and `@stripe/mcp` (MCP component). `.claude-plugin/` and `.cursor-plugin/` ship alongside code.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 17. Notable structural choices
+## Notable structural choices
 
 MCP as one of several agent-integration surfaces: the repo is explicitly an "agent-toolkit" housing Vercel-AI, SDK-billing, and MCP side-by-side. MCP is a peer, not the product.
 
@@ -230,7 +182,7 @@ Restricted API Key guidance elevated in docs — security posture as a first-cla
 
 Hosted remote + local stdio duality, similar pattern to sentry-mcp and cloudflare.
 
-## 18. Unanticipated axes observed
+## Unanticipated axes observed
 
 Multi-surface agent tooling: one repo ships SDKs, AI-framework integrations, billing primitives, and MCP — MCP treated as an integration channel among peers rather than the whole product.
 
@@ -238,6 +190,6 @@ Per-host plugin wrappers as shipped artifacts (`.cursor-plugin/` in addition to 
 
 Credential-scoping as guidance (RAK) — vendor-specific security ergonomics documented alongside install.
 
-## 20. Gaps
+## Gaps
 
 Last-commit date not extracted. Specific tool list not extracted. CI workflow specifics not extracted. Whether Dockerfile is present not extracted. Contents of `.claude-plugin/plugin.json` (full plugin layout vs minimal) not extracted. Exact env-var config surface vs CLI flags not extracted.

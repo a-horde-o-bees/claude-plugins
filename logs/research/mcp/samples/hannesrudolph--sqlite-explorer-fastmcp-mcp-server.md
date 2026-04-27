@@ -26,7 +26,7 @@ main
 
 SQLite explorer MCP server — single script installed via `fastmcp install`; pre-`pyproject.toml`-era layout pinned to FastMCP 0.4.1.
 
-## 1. Language and runtime
+## Language and runtime
 
 ### language(s) + version constraints
 
@@ -36,11 +36,7 @@ Python (100% of repo), Python 3.6+.
 
 FastMCP.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 2. Transport
+## Transport
 
 ### supported transports
 
@@ -50,11 +46,7 @@ stdio (default for FastMCP-installed servers).
 
 Implicit — FastMCP CLI installer wires stdio transport; no explicit flag documented.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 3. Distribution
+## Distribution
 
 ### every mechanism observed
 
@@ -68,11 +60,7 @@ None — unpublished repo-only server.
 
 `fastmcp install sqlite_explorer.py --name "SQLite Explorer" -e SQLITE_DB_PATH=/path/to/db`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 4. Entry point / launch
+## Entry point / launch
 
 ### command(s) users/hosts run
 
@@ -82,21 +70,13 @@ none noted in this repo
 
 Single-file `sqlite_explorer.py` script; no additional launcher.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 5. Configuration surface
+## Configuration surface
 
 ### how config reaches the server
 
 Environment variable `SQLITE_DB_PATH` (required); no CLI flags or config files documented.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 6. Authentication
+## Authentication
 
 ### flow
 
@@ -106,41 +86,25 @@ None — local SQLite file access, no credentials.
 
 Not applicable for local SQLite.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 7. Multi-tenancy
+## Multi-tenancy
 
 ### tenancy model
 
 Single-user, single-database — one SQLite file per server instance pinned via env var.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 8. Capabilities exposed
+## Capabilities exposed
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
 Tools only — `read_query` (SELECT with validation and row limits), `list_tables`, `describe_table`. No resources, prompts, sampling, or roots.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 9. Observability
+## Observability
 
 ### logging destination + format, metrics, tracing, debug flags
 
 None documented; README notes "progress output suppression for clean JSON responses" as a deliberate behavior.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 10. Host integrations shown in README or repo
+## Host integrations shown in README or repo
 
 ### Claude Desktop
 
@@ -154,79 +118,51 @@ Manual MCP configuration example provided.
 
 Not mentioned.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 11. Claude Code plugin wrapper
+## Claude Code plugin wrapper
 
 ### presence and shape
 
 Not present — no `.claude-plugin` directory or Claude Code specific wiring observed.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 12. Tests
+## Tests
 
 ### presence, framework, location, notable patterns
 
 No tests observed in repo.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 13. CI
+## CI
 
 ### presence, system, triggers, what it runs
 
 No `.github/workflows` observed.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 14. Container / packaging artifacts
+## Container / packaging artifacts
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 None observed.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 15. Example client / developer ergonomics
+## Example client / developer ergonomics
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
 Sample Cline VSCode JSON config shown; FastMCP CLI install as the primary dev ergonomic.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 16. Repo layout
+## Repo layout
 
 ### single-package / monorepo / vendored / other
 
 Single-file script with requirements and docs — minimal single-package layout.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 17. Notable structural choices
+## Notable structural choices
 
 Single-file server script (`sqlite_explorer.py`) keeps the surface tiny. Read-only posture enforced at the tool layer (query validation + row caps), not DB-level. Minimal dependency: FastMCP only.
 
-## 18. Unanticipated axes observed
+## Unanticipated axes observed
 
 Docs explicitly flag "progress output suppression" as a design concern, reflecting stdio-protocol cleanliness pressure.
 
-## 19. Python-specific
+## Python-specific
 
 ### SDK / framework variant
 
@@ -268,6 +204,6 @@ None.
 
 Pre-`pyproject.toml`-era layout: `requirements.txt` + single script + no packaging. Pinned to FastMCP 0.4.1 — significantly behind the 2.x/3.x current frontier; reference case for "how the FastMCP ecosystem looked before the 2.0 split". `fastmcp install` registers the server with Claude Desktop directly — demonstrates FastMCP's own CLI install mechanism, distinct from `uvx` or manual config-editing.
 
-## 20. Gaps
+## Gaps
 
 Exact license file contents not confirmed within budget. Commit date/last-commit metadata not surfaced from landing page. No CI, tests, or container artifacts to inspect.

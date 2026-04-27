@@ -26,7 +26,7 @@ master
 
 Rust MCP implementation library (archived Feb 2026) — server/client scaffolding, CLI stub generation, mock transport for testing.
 
-## 1. Language and runtime
+## Language and runtime
 
 ### language(s) + version constraints
 
@@ -36,11 +36,7 @@ Rust (no explicit MSRV specified).
 
 Anthropic's Model Context Protocol (MCP) specification.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 2. Transport
+## Transport
 
 ### supported transports
 
@@ -50,11 +46,7 @@ Stdio, SSE (Server-Sent Events); WebSocket planned but not yet implemented.
 
 Selected via project generator at creation time: `mcpr generate-project --transport [stdio|sse]`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 3. Distribution
+## Distribution
 
 ### every mechanism observed
 
@@ -68,11 +60,7 @@ mcpr (crate).
 
 `cargo add mcpr = "0.2.3"` (library); `cargo install mcpr` (CLI tools).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 4. Entry point / launch
+## Entry point / launch
 
 ### command(s) users/hosts run
 
@@ -82,21 +70,13 @@ Generated executables in `target/debug/` for both client and server; launch via 
 
 Project scaffolding via `mcpr generate-project --name [name]`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 5. Configuration surface
+## Configuration surface
 
 ### how config reaches the server
 
 ServerConfig builder pattern with methods like `.with_name()`, `.with_version()`, `.with_tool()`; tool parameter schemas defined as JSON objects with properties and required field arrays.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 6. Authentication
+## Authentication
 
 ### flow
 
@@ -106,41 +86,25 @@ No explicit authentication mechanisms documented.
 
 Not applicable; transport-layer security implied for production SSE deployments.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 7. Multi-tenancy
+## Multi-tenancy
 
 ### tenancy model
 
 Not applicable; library provides schema and transport abstractions but not multi-tenancy features.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 8. Capabilities exposed
+## Capabilities exposed
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
 Tool registration and invocation, server initialization handshake with protocol version negotiation, client-server disconnection handling, interactive and one-shot operational modes.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 9. Observability
+## Observability
 
 ### logging destination + format, metrics, tracing, debug flags
 
 No explicit observability features documented.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 10. Host integrations shown in README or repo
+## Host integrations shown in README or repo
 
 ### Claude Desktop
 
@@ -154,78 +118,50 @@ Not documented.
 
 No host-specific integrations.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 11. Claude Code plugin wrapper
+## Claude Code plugin wrapper
 
 ### presence and shape
 
 Not present.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 12. Tests
+## Tests
 
 ### presence, framework, location, notable patterns
 
 Mock transport implementations for testing; testing patterns for both stdio and SSE transports documented.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 13. CI
+## CI
 
 ### presence, system, triggers, what it runs
 
 GitHub Actions configured in `.github/` directory.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 14. Container / packaging artifacts
+## Container / packaging artifacts
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 Not documented.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 15. Example client / developer ergonomics
+## Example client / developer ergonomics
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
 Project scaffolding via `mcpr generate-project`; example demonstrates GitHub repository interactions via complete client-server implementation.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 16. Repo layout
+## Repo layout
 
 ### single-package / monorepo / vendored / other
 
 Single Rust library package; structure: `/src/` (core library), `/examples/` (example code); comprehensive documentation: `README.md`, `MCP.md`, `CHANGELOG.md`, `CONTRIBUTING.md`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 17. Notable structural choices
+## Notable structural choices
 
 Project generation command reduces boilerplate for new MCP implementations. Mock transport for testing enables fast, offline development. CLI tools included for server/client stub generation.
 
-## 18. Unanticipated axes observed
+## Unanticipated axes observed
 
 Two-phase version negotiation in server initialization handshake. Repository archived as of Feb 2026 but still functional; unclear if superceded by newer Rust MCP implementations.
 
-## 20. Gaps
+## Gaps
 
 Repository is archived; no active development. WebSocket transport not implemented (marked as planned). Minimal observability features. Specific Rust version constraints not documented (could be found in Cargo.toml). Critical SSE transport issues in v0.2.0 (yanked); v0.2.3+ recommended but version landscape unclear from available content.

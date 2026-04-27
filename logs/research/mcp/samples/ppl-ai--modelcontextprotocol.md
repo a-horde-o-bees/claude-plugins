@@ -26,7 +26,7 @@ main
 
 Perplexity MCP server (official, org slug differs from brand) — search-augmented answering. The user brief referenced `perplexityai/modelcontextprotocol`; the resolved canonical repo is `ppl-ai/modelcontextprotocol` (Perplexity AI's GitHub org uses the `ppl-ai` slug).
 
-## 1. Language and runtime
+## Language and runtime
 
 ### language(s) + version constraints
 
@@ -36,11 +36,7 @@ TypeScript (95.2%); Node.js runtime.
 
 Model Context Protocol TypeScript SDK.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 2. Transport
+## Transport
 
 ### supported transports
 
@@ -50,11 +46,7 @@ stdio (default); HTTP server deployment also supported.
 
 HTTP mode uses `PORT` and `BIND_ADDRESS` env vars plus CORS support; otherwise stdio.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 3. Distribution
+## Distribution
 
 ### every mechanism observed
 
@@ -68,11 +60,7 @@ npm package with quick-install badges; Dockerfile included for containerized dep
 
 `npx -y @perplexity-ai/mcp-server`
 
-### pitfalls observed
-
-none noted in this repo
-
-## 4. Entry point / launch
+## Entry point / launch
 
 ### command(s) users/hosts run
 
@@ -82,21 +70,13 @@ none noted in this repo
 
 npm bin entry; quick-install badges for Cursor, VS Code, Claude Desktop, Kiro, Windsurf.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 5. Configuration surface
+## Configuration surface
 
 ### how config reaches the server
 
 Environment variables dominate — `PERPLEXITY_API_KEY` (required), `PERPLEXITY_TIMEOUT_MS` (default 300000ms), `PERPLEXITY_BASE_URL`, `PORT`, `BIND_ADDRESS`, proxy configuration.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 6. Authentication
+## Authentication
 
 ### flow
 
@@ -106,41 +86,25 @@ Static API key via `PERPLEXITY_API_KEY` env var.
 
 User obtains key from Perplexity API Portal.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 7. Multi-tenancy
+## Multi-tenancy
 
 ### tenancy model
 
 Single-user — API key is process-scoped; per-request tenancy is Perplexity-account-level.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 8. Capabilities exposed
+## Capabilities exposed
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
 Four tools — `perplexity_search` (web search via Search API), `perplexity_ask` (conversational AI with sonar-pro model), `perplexity_research` (deep research via sonar-deep-research), `perplexity_reason` (advanced reasoning via sonar-reasoning-pro).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 9. Observability
+## Observability
 
 ### logging destination + format, metrics, tracing, debug flags
 
 Log level controlled via `PERPLEXITY_LOG_LEVEL` env var; destination not explicitly extracted.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 10. Host integrations shown in README or repo
+## Host integrations shown in README or repo
 
 ### Cursor
 
@@ -162,78 +126,50 @@ Quick-install badge.
 
 Quick-install badge.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 11. Claude Code plugin wrapper
+## Claude Code plugin wrapper
 
 ### presence and shape
 
 Not explicitly observed within extracted content.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 12. Tests
+## Tests
 
 ### presence, framework, location, notable patterns
 
 vitest configured; specific layout not extracted.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 13. CI
+## CI
 
 ### presence, system, triggers, what it runs
 
 GitHub Actions workflows present; specific jobs not extracted.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 14. Container / packaging artifacts
+## Container / packaging artifacts
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 Dockerfile included.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 15. Example client / developer ergonomics
+## Example client / developer ergonomics
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
 Per-host quick-install badges in README; HTTP mode with CORS for shared deployments.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 16. Repo layout
+## Repo layout
 
 ### single-package / monorepo / vendored / other
 
 Single-package TypeScript project; source in `/src`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 17. Notable structural choices
+## Notable structural choices
 
 Optional `strip_thinking` parameter removes reasoning tags from Perplexity output — token-saving feature that gives caller control over output verbosity. Proxy configuration layering — `PERPLEXITY_PROXY` takes priority over standard `HTTPS_PROXY`/`HTTP_PROXY`, so the Perplexity-specific proxy overrides system-wide settings. Four-tool surface aligns with Perplexity's product tiers (search, ask, research, reason) — tool boundaries mirror Perplexity model variants rather than low-level API endpoints. HTTP mode plus CORS enables shared-server deployments where multiple clients hit one process.
 
-## 18. Unanticipated axes observed
+## Unanticipated axes observed
 
 First-party vendor MCP where the tool surface maps 1:1 to product/model offerings — a cleaner pattern than low-level REST wrapping. Proxy hierarchy recognizes corporate/enterprise environments where a specific proxy needs to override system defaults.
 
-## 20. Gaps
+## Gaps
 
 Last commit date and release cadence not confirmed. Whether HTTP mode supports authentication beyond env-var key (e.g., per-request API keys) not extracted. Exact tool argument schemas not extracted within budget.

@@ -26,7 +26,7 @@ main
 
 MotherDuck/DuckDB MCP server — query MotherDuck cloud and local DuckDB from one binary.
 
-## 1. Language and runtime
+## Language and runtime
 
 ### language(s) + version constraints
 
@@ -36,11 +36,7 @@ Python >=3.10.
 
 fastmcp (>=2.14,<3), Anthropic MCP SDK.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 2. Transport
+## Transport
 
 ### supported transports
 
@@ -50,11 +46,7 @@ stdio (default), HTTP.
 
 Via configuration in client-specific settings (Claude Desktop, VS Code, etc.).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 3. Distribution
+## Distribution
 
 ### every mechanism observed
 
@@ -68,11 +60,7 @@ PyPI (`mcp-server-motherduck`), uvx, MCP Bundle (`.mcpb`), GitHub releases.
 
 `uvx mcp-server-motherduck --db-path :memory: --read-write --allow-switch-databases`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 4. Entry point / launch
+## Entry point / launch
 
 ### command(s) users/hosts run
 
@@ -82,21 +70,13 @@ none noted in this repo
 
 Entry point configured in `pyproject.toml` as CLI tool invocation.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 5. Configuration surface
+## Configuration surface
 
 ### how config reaches the server
 
 CLI arguments for flags, environment variables for credentials (`motherduck_token`, AWS credentials).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 6. Authentication
+## Authentication
 
 ### flow
 
@@ -106,41 +86,25 @@ Static token via `motherduck_token` environment variable or `--motherduck-token`
 
 Environment variables, CLI arguments.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 7. Multi-tenancy
+## Multi-tenancy
 
 ### tenancy model
 
 Single-user with ability to switch databases via `--allow-switch-databases` flag.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 8. Capabilities exposed
+## Capabilities exposed
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
 SQL query execution (read/write modes), database listing, table listing, column inspection, database switching, support for local files, S3, MotherDuck, in-memory databases.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 9. Observability
+## Observability
 
 ### logging destination + format, metrics, tracing, debug flags
 
 Not explicitly documented; development includes pytest with asyncio support.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 10. Host integrations shown in README or repo
+## Host integrations shown in README or repo
 
 ### Claude Desktop
 
@@ -166,79 +130,51 @@ Supported.
 
 Supported.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 11. Claude Code plugin wrapper
+## Claude Code plugin wrapper
 
 ### presence and shape
 
 `.claude-plugin` wrapper mentioned as present with dedicated CLI commands.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 12. Tests
+## Tests
 
 ### presence, framework, location, notable patterns
 
 Present; pytest (8.0+) with pytest-asyncio (0.24+); location: `tests/` directory.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 13. CI
+## CI
 
 ### presence, system, triggers, what it runs
 
 `.github/` directory present; specific workflow details not extracted within budget.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 14. Container / packaging artifacts
+## Container / packaging artifacts
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 Not observed; uv-based Python packaging preferred.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 15. Example client / developer ergonomics
+## Example client / developer ergonomics
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
 Makefile present; sample configurations for Claude Desktop integration.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 16. Repo layout
+## Repo layout
 
 ### single-package / monorepo / vendored / other
 
 Single-package Python project with `src/`, `tests/`, `pyproject.toml`, `uv.lock`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 17. Notable structural choices
+## Notable structural choices
 
 Uses fastmcp framework for rapid development. Supports local and cloud databases (MotherDuck) with S3 integration. Read-write mode flag allows toggling safety posture. `.mcpbignore` file suggests bundling mechanism.
 
-## 18. Unanticipated axes observed
+## Unanticipated axes observed
 
 Database switching as feature flag suggests multi-database workflows. Explicit read/write mode control separates safety postures.
 
-## 19. Python-specific
+## Python-specific
 
 ### SDK / framework variant
 
@@ -280,6 +216,6 @@ Makefile present. `.mcpbignore` file — suggests MCP bundle (`.mcpb`) packaging
 
 `.mcpb` bundle distribution is a Python-ecosystem-specific packaging path (MCP bundles for Claude Desktop drag-and-drop), observed in only a handful of repos. Pinned FastMCP major with tight lower bound (`>=2.14,<3`) — keeps breaking-change surface bounded.
 
-## 20. Gaps
+## Gaps
 
 Exact CI/CD setup and triggers (requires `.github/workflows` inspection). Logging destination and format (requires code inspection). Complete test coverage strategy (requires test file inspection).

@@ -26,7 +26,7 @@ master
 
 Read-only Slack MCP server — 5 tools (messages, thread replies, search, users, channels); HTTP-only with per-user OAuth 2.1.
 
-## 1. Language and runtime
+## Language and runtime
 
 ### language(s) + version constraints
 
@@ -36,11 +36,7 @@ Python 3.10+.
 
 Anthropic's Claude Agent SDK with Model Context Protocol (MCP).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 2. Transport
+## Transport
 
 ### supported transports
 
@@ -50,11 +46,7 @@ HTTP (via `http://localhost:8001/mcp`).
 
 HTTP transport only; listening on port 8001.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 3. Distribution
+## Distribution
 
 ### every mechanism observed
 
@@ -72,7 +64,7 @@ Not published to PyPI; source-only distribution.
 
 Containerization as primary distribution (not Homebrew, npm, Cargo). Docker image size optimizations not detailed.
 
-## 4. Entry point / launch
+## Entry point / launch
 
 ### command(s) users/hosts run
 
@@ -82,21 +74,13 @@ Containerization as primary distribution (not Homebrew, npm, Cargo). Docker imag
 
 None documented.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 5. Configuration surface
+## Configuration surface
 
 ### how config reaches the server
 
 Environment variables: `SLACK_CLIENT_ID`, `SLACK_CLIENT_SECRET`, `SLACK_MCP_BASE_URI`, `SLACK_EXTERNAL_URL`, `SLACK_MCP_PORT`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 6. Authentication
+## Authentication
 
 ### flow
 
@@ -106,41 +90,25 @@ OAuth 2.1; "when your MCP client first connects. Your client will open a browser
 
 Slack OAuth 2.1 flow; credentials managed via `SLACK_CLIENT_ID`, `SLACK_CLIENT_SECRET` environment variables.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 7. Multi-tenancy
+## Multi-tenancy
 
 ### tenancy model
 
 Per-request tenant via OAuth 2.1; multi-user support via separate OAuth tokens per user.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 8. Capabilities exposed
+## Capabilities exposed
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
 Five read-only tools: retrieve channel messages, thread replies, search messages, list users, enumerate channels; advanced search filtering.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 9. Observability
+## Observability
 
 ### logging destination + format, metrics, tracing, debug flags
 
 Testing framework (pytest) included; no explicit monitoring, logging, or metrics documentation.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 10. Host integrations shown in README or repo
+## Host integrations shown in README or repo
 
 ### Claude Desktop
 
@@ -154,79 +122,51 @@ Not documented.
 
 Docker deployment documented for production.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 11. Claude Code plugin wrapper
+## Claude Code plugin wrapper
 
 ### presence and shape
 
 Not present; this is a standalone server.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 12. Tests
+## Tests
 
 ### presence, framework, location, notable patterns
 
 pytest framework configured; test files exist but specific patterns not detailed in provided content.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 13. CI
+## CI
 
 ### presence, system, triggers, what it runs
 
 Not explicitly documented; testing framework present suggests GitHub Actions or similar.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 14. Container / packaging artifacts
+## Container / packaging artifacts
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 Dockerfile present; uses Python 3.11-slim base; environment variables: `NO_COLOR=1`, `CI=true`, `TERM=dumb`; port 8001 exposed; startup via `uv run python main.py`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 15. Example client / developer ergonomics
+## Example client / developer ergonomics
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
 Five documented tools with clear parameters; Dockerfile example for containerized deployment; environment variable configuration.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 16. Repo layout
+## Repo layout
 
 ### single-package / monorepo / vendored / other
 
 Single-package server; root: `main.py` (entry point), `Dockerfile`, `pyproject.toml`, `uv.lock`, `.gitignore`; structure implies minimal additional files.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 17. Notable structural choices
+## Notable structural choices
 
 Read-only Slack integration (no write capabilities). OAuth 2.1 per-user multi-user support. HTTP transport only (no stdio or SSE). Containerization-first deployment (Docker primary). Minimal tool set (5 tools) for focused read-only access.
 
-## 18. Unanticipated axes observed
+## Unanticipated axes observed
 
 Read-only MCP server pattern (vs. full bidirectional servers). Per-user OAuth 2.1 multi-user support in single server instance. Containerization as primary distribution (not Homebrew, npm, Cargo).
 
-## 19. Python-specific
+## Python-specific
 
 ### SDK / framework variant
 
@@ -268,6 +208,6 @@ ruff in dev extra. Dockerfile-first workflow; ngrok required for OAuth callback 
 
 Setuptools backend (minority in the Python sample; hatchling dominant). Module entry `main:main` (top-level, no package) — unusual; most servers use a nested package module path. Docker-only distribution (no PyPI) — inverts the typical Python packaging path; container as the only artifact. `uv run python main.py` rather than the console script — indicates entry point not the primary run path.
 
-## 20. Gaps
+## Gaps
 
 Specific test patterns and coverage not documented. CI/CD configuration not examined. Docker image size optimizations not detailed. Specific Slack API version constraints not mentioned.

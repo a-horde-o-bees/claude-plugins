@@ -26,7 +26,7 @@ main
 
 Puppeteer (Python) MCP server — legacy setup.py-only packaging; Python 3.8+ floor.
 
-## 1. Language and runtime
+## Language and runtime
 
 ### language(s) + version constraints
 
@@ -36,11 +36,7 @@ Python (100%); Python 3.8+.
 
 Model Context Protocol SDK (Python); Playwright as browser engine (despite "puppeteer" in name — README notes Playwright is the Python equivalent).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 2. Transport
+## Transport
 
 ### supported transports
 
@@ -50,11 +46,7 @@ stdio.
 
 Stdio implicit — launched as a module via `python puppeteer.py` and wired into Claude Desktop's stdio JSON config.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 3. Distribution
+## Distribution
 
 ### every mechanism observed
 
@@ -68,11 +60,7 @@ None observed.
 
 `pip install -r requirements.txt` and `playwright install` for browsers.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 4. Entry point / launch
+## Entry point / launch
 
 ### command(s) users/hosts run
 
@@ -82,21 +70,13 @@ none noted in this repo
 
 Single-file entry — `puppeteer.py` at repo root.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 5. Configuration surface
+## Configuration surface
 
 ### how config reaches the server
 
 CLI args / environment not documented in detail; per-tool parameters control behavior (timeouts, screenshot targets).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 6. Authentication
+## Authentication
 
 ### flow
 
@@ -106,111 +86,67 @@ Not applicable — browser automation against public web.
 
 Not applicable.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 7. Multi-tenancy
+## Multi-tenancy
 
 ### tenancy model
 
 Single-user — one browser per process.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 8. Capabilities exposed
+## Capabilities exposed
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
 Five tools — `puppeteer_navigate` (URL navigation with timeouts), `puppeteer_screenshot` (full-page or element), `puppeteer_click` (DOM interaction), `puppeteer_fill` (form input), `puppeteer_evaluate` (arbitrary JS execution in page).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 9. Observability
+## Observability
 
 ### logging destination + format, metrics, tracing, debug flags
 
 "Detailed error handling and logging" claimed by README; destination not specified — likely stderr.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 10. Host integrations shown in README or repo
+## Host integrations shown in README or repo
 
 ### Claude Desktop
 
 JSON config example shown.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 11. Claude Code plugin wrapper
+## Claude Code plugin wrapper
 
 ### presence and shape
 
 Not present — no `.claude-plugin` directory observed.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 12. Tests
+## Tests
 
 ### presence, framework, location, notable patterns
 
 Not observed — no tests/ directory surfaced.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 13. CI
+## CI
 
 ### presence, system, triggers, what it runs
 
 Not observed — no `.github/workflows` surfaced.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 14. Container / packaging artifacts
+## Container / packaging artifacts
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 Not observed.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 15. Example client / developer ergonomics
+## Example client / developer ergonomics
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
 Claude Desktop sample config; `requirements.txt` for Python deps.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 16. Repo layout
+## Repo layout
 
 ### single-package / monorepo / vendored / other
 
 Single-file script repo — `puppeteer.py` plus `requirements.txt`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 17. Notable structural choices
+## Notable structural choices
 
 Deliberately non-headless browser mode for easier debugging — a design choice that trades production efficiency for interactive visibility during development.
 
@@ -218,13 +154,13 @@ In-memory base64-encoded screenshot storage — screenshots flow through MCP res
 
 Name ("puppeteer-py") reflects user-facing tool concept; implementation actually wraps Playwright. This is a terminology-vs-implementation asymmetry worth noting.
 
-## 18. Unanticipated axes observed
+## Unanticipated axes observed
 
 Minimal surface — only 5 tools — contrasts with larger browser servers (executeautomation/mcp-playwright's richer surface). Useful as a reference minimum viable browser MCP.
 
 Apache-2.0 on a single-maintainer experimental repo; permissive license choice for community adoption.
 
-## 19. Python-specific
+## Python-specific
 
 ### SDK / framework variant
 
@@ -266,6 +202,6 @@ None beyond `requirements.txt`.
 
 Pre-modern packaging: `setup.py` + `requirements.txt` with no `pyproject.toml`. Python 3.8+ floor is the lowest in the Python sample — reflects the older `setup.py`-era layout. Inconsistent entry point — the README entry (`python puppeteer.py`) doesn't match setup.py's declared console script, indicating neither was tested against PyPI. Bare `python` in Claude Desktop config — fragile (relies on system PATH, specific venv activation).
 
-## 20. Gaps
+## Gaps
 
 Last commit date not extracted. Whether Python stdout is protected from log pollution (important for stdio JSON-RPC correctness) — not stated. No tests reduces confidence in tool behavior across browser-engine updates.

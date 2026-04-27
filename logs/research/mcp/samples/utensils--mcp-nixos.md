@@ -26,7 +26,7 @@ main
 
 nixpkgs package-manager MCP server — exposes only 2 tools as a deliberate token-efficiency strategy despite Nix's huge surface.
 
-## 1. Language and runtime
+## Language and runtime
 
 ### language(s) + version constraints
 
@@ -36,11 +36,7 @@ Python 74.3%, TypeScript 22.7%, Nix 1.3%; Python 3.11+.
 
 FastMCP (implied by env-var configuration naming `MCP_NIXOS_*` and standard FastMCP options).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 2. Transport
+## Transport
 
 ### supported transports
 
@@ -50,11 +46,7 @@ stdio (default), HTTP, Docker-wrapped.
 
 environment variables — `MCP_NIXOS_TRANSPORT`, `MCP_NIXOS_HOST`, `MCP_NIXOS_PORT`, `MCP_NIXOS_PATH`, `MCP_NIXOS_STATELESS_HTTP`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 3. Distribution
+## Distribution
 
 ### every mechanism observed
 
@@ -72,7 +64,7 @@ mcp-nixos (PyPI); `ghcr.io/utensils/mcp-nixos`.
 
 declarative install path via nixpkgs is rare for MCP servers.
 
-## 4. Entry point / launch
+## Entry point / launch
 
 ### command(s) users/hosts run
 
@@ -82,21 +74,13 @@ declarative install path via nixpkgs is rare for MCP servers.
 
 Nix flake (available via `nix develop`); `nix run` via github: URL.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 5. Configuration surface
+## Configuration surface
 
 ### how config reaches the server
 
 environment variables for HTTP transport — `MCP_NIXOS_TRANSPORT`, `MCP_NIXOS_HOST`, `MCP_NIXOS_PORT`, `MCP_NIXOS_PATH`, `MCP_NIXOS_STATELESS_HTTP`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 6. Authentication
+## Authentication
 
 ### flow
 
@@ -106,41 +90,25 @@ no explicit authentication; relies on public NixOS endpoints.
 
 N/A.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 7. Multi-tenancy
+## Multi-tenancy
 
 ### tenancy model
 
 stateless HTTP option supports shared deployment (stateless → multi-user capable).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 8. Capabilities exposed
+## Capabilities exposed
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
 two primary tools — `nix()` (unified query, ~1,030 tokens) and `nix_versions()` (package version history).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 9. Observability
+## Observability
 
 ### logging destination + format, metrics, tracing, debug flags
 
 not explicitly detailed
 
-### pitfalls observed
-
-none noted in this repo
-
-## 10. Host integrations shown in README or repo
+## Host integrations shown in README or repo
 
 ### Claude Desktop
 
@@ -150,71 +118,43 @@ JSON `mcpServers` entry (via uvx or Docker).
 
 declarative config entry available in nixpkgs.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 11. Claude Code plugin wrapper
+## Claude Code plugin wrapper
 
 ### presence and shape
 
 not observed
 
-### pitfalls observed
-
-none noted in this repo
-
-## 12. Tests
+## Tests
 
 ### presence, framework, location, notable patterns
 
 pytest-based.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 13. CI
+## CI
 
 ### presence, system, triggers, what it runs
 
 GitHub Actions (badge referenced); CodeRabbit reviews.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 14. Container / packaging artifacts
+## Container / packaging artifacts
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 Docker image on ghcr.io; Nix flake for nix-native install; declarative NixOS/Home Manager module.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 15. Example client / developer ergonomics
+## Example client / developer ergonomics
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
 `nix develop` shell; ruff/mypy toolchain.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 16. Repo layout
+## Repo layout
 
 ### single-package / monorepo / vendored / other
 
 single package with Python core + TypeScript (likely docs or companion UI).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 17. Notable structural choices
+## Notable structural choices
 
 intentionally collapses the tool surface to two tools: a single unified `nix()` query (~1,030 tokens) and a `nix_versions()` helper — contrasts sharply with 50–250-tool servers in the same domain.
 
@@ -222,7 +162,7 @@ supports stateless HTTP mode for shared/multi-user deployments.
 
 declarative install path via nixpkgs is rare for MCP servers.
 
-## 18. Unanticipated axes observed
+## Unanticipated axes observed
 
 deliberate token-efficiency focus on the MCP tool surface (few, broad tools vs many narrow ones).
 
@@ -230,7 +170,7 @@ stateless-HTTP transport flag separates cacheable deployments from stateful ones
 
 declarative-config distribution (nixpkgs) as a first-class install channel.
 
-## 19. Python-specific
+## Python-specific
 
 ### SDK / framework variant
 
@@ -272,6 +212,6 @@ pytest. Fixture style not surfaced.
 
 two-tool API as a token-efficiency strategy. `nix develop` shell for dev environment is more reproducible than virtualenvs. Declarative install via nixpkgs is unique among MCP servers.
 
-## 20. Gaps
+## Gaps
 
 what couldn't be determined: FastMCP major version pin, async behavior, Python entry-point path in pyproject, logging destination.

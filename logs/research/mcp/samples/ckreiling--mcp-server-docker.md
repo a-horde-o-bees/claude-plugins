@@ -26,7 +26,7 @@ main
 
 Docker Engine MCP server — 28+ tools for containers/images/networks/volumes plus MCP resources for stats/logs and MCP prompts for docker-compose workflows.
 
-## 1. Language and runtime
+## Language and runtime
 
 ### language(s) + version constraints
 
@@ -36,11 +36,7 @@ Python; version pinned via `.python-version` file (specific value not surfaced).
 
 MCP protocol via Python SDK (FastMCP not explicitly surfaced); uses Docker SDK for Python for container operations.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 2. Transport
+## Transport
 
 ### supported transports
 
@@ -50,11 +46,7 @@ stdio.
 
 default; no network transport documented.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 3. Distribution
+## Distribution
 
 ### every mechanism observed
 
@@ -68,11 +60,7 @@ mcp-server-docker.
 
 `uvx mcp-server-docker`; Docker image; clone + manual.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 4. Entry point / launch
+## Entry point / launch
 
 ### command(s) users/hosts run
 
@@ -82,21 +70,13 @@ none noted in this repo
 
 Dockerfile.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 5. Configuration surface
+## Configuration surface
 
 ### how config reaches the server
 
 environment variables — `DOCKER_HOST` for remote Docker daemons; Claude Desktop JSON config.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 6. Authentication
+## Authentication
 
 ### flow
 
@@ -106,119 +86,75 @@ Docker SDK `from_env()` discovery; supports SSH-based auth for remote Docker dae
 
 local Docker socket or `DOCKER_HOST` env (SSH url supported).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 7. Multi-tenancy
+## Multi-tenancy
 
 ### tenancy model
 
 single-user per process (one Docker daemon connection).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 8. Capabilities exposed
+## Capabilities exposed
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
 28+ tools (containers, images, networks, volumes); resources for container stats and logs; prompts for natural-language docker-compose workflow.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 9. Observability
+## Observability
 
 ### logging destination + format, metrics, tracing, debug flags
 
 not surfaced in README.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 10. Host integrations shown in README or repo
+## Host integrations shown in README or repo
 
 ### Claude Desktop
 
 JSON `mcpServers` entry (documented as primary integration).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 11. Claude Code plugin wrapper
+## Claude Code plugin wrapper
 
 ### presence and shape
 
 not observed.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 12. Tests
+## Tests
 
 ### presence, framework, location, notable patterns
 
 not mentioned in README.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 13. CI
+## CI
 
 ### presence, system, triggers, what it runs
 
 GitHub Actions referenced; specifics not surfaced.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 14. Container / packaging artifacts
+## Container / packaging artifacts
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 Dockerfile present.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 15. Example client / developer ergonomics
+## Example client / developer ergonomics
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
 Devbox-based dev environment.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 16. Repo layout
+## Repo layout
 
 ### single-package / monorepo / vendored / other
 
 single package under `src/mcp_server_docker/`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 17. Notable structural choices
+## Notable structural choices
 
 Exposes MCP prompts for docker-compose workflow (natural-language → multi-step action), which is a capability most cloud/infra servers skip. Remote-daemon access over SSH is a first-class supported path, not just local socket.
 
-## 18. Unanticipated axes observed
+## Unanticipated axes observed
 
 Using MCP prompts as orchestration primitives rather than just tools (docker-compose workflow prompt). Devbox for reproducible dev environments (rarer than direnv/asdf).
 
-## 19. Python-specific
+## Python-specific
 
 ### SDK / framework variant
 
@@ -260,6 +196,6 @@ Devbox.
 
 GPL-3.0 license is unusual for MCP servers (ecosystem skews MIT/Apache). Advertises prompts as a first-class capability alongside tools.
 
-## 20. Gaps
+## Gaps
 
 exact Python version pin, async/sync behavior, test presence, schema strategy, last-commit date could not be determined.

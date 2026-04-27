@@ -26,7 +26,7 @@ main
 
 Perplexity MCP server (TypeScript) — `perplexity_search` and `perplexity_deep_research` tools with optional JWT/OAuth on HTTP transport.
 
-## 1. Language and runtime
+## Language and runtime
 
 ### language(s) + version constraints
 
@@ -36,11 +36,7 @@ TypeScript ^5.8.3; Node.js >=18.0.0.
 
 MCP SDK ^1.15.0, Hono (HTTP transport), Zod validation.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 2. Transport
+## Transport
 
 ### supported transports
 
@@ -50,11 +46,7 @@ stdio (default), HTTP (configurable host 127.0.0.1, port 3010).
 
 environment config, validated via Zod.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 3. Distribution
+## Distribution
 
 ### every mechanism observed
 
@@ -68,11 +60,7 @@ not found on npm registry.
 
 `git clone`, `npm install`, `npm run build`, `npm start`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 4. Entry point / launch
+## Entry point / launch
 
 ### command(s) users/hosts run
 
@@ -82,21 +70,13 @@ none noted in this repo
 
 npm build script compiles TS to `dist/`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 5. Configuration surface
+## Configuration surface
 
 ### how config reaches the server
 
 `.env` file validated by Zod; transport type and logging level configurable.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 6. Authentication
+## Authentication
 
 ### flow
 
@@ -106,118 +86,74 @@ API key (PERPLEXITY_API_KEY) plus optional JWT or OAuth 2.1 for HTTP transport.
 
 environment variable, CLI args, or `.env` file.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 7. Multi-tenancy
+## Multi-tenancy
 
 ### tenancy model
 
 per-user single instance; JWT/OAuth enables multi-client support in HTTP mode.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 8. Capabilities exposed
+## Capabilities exposed
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
 `perplexity_search` (fast search-augmented), `perplexity_deep_research` (multi-source exhaustive).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 9. Observability
+## Observability
 
 ### logging destination + format, metrics, tracing, debug flags
 
 structured, configurable with file rotation (centralized utilities).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 10. Host integrations shown in README or repo
+## Host integrations shown in README or repo
 
 ### Cline
 
 MCP client config documented.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 11. Claude Code plugin wrapper
+## Claude Code plugin wrapper
 
 ### presence and shape
 
 not present; MCP server designed for compatible clients.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 12. Tests
+## Tests
 
 ### presence, framework, location, notable patterns
 
 present; `npm test` runs TypeScript noEmit type checks.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 13. CI
+## CI
 
 ### presence, system, triggers, what it runs
 
 not explicitly documented in README; `.github/` present.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 14. Container / packaging artifacts
+## Container / packaging artifacts
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 Dockerfile present (multi-stage Node.js 18-Alpine build).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 15. Example client / developer ergonomics
+## Example client / developer ergonomics
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
 clone + build pattern; sample config in README.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 16. Repo layout
+## Repo layout
 
 ### single-package / monorepo / vendored / other
 
 single-package Node.js/TS; dirs: `.github/`, `src/`, `docs/`; config files: `package.json`, `tsconfig.json`, `Dockerfile`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 17. Notable structural choices
+## Notable structural choices
 
 Clean separation of stdio/HTTP transports via Hono. Structured logging with file rotation for production. Zod schema validation for config. Multi-stage Docker for optimized image.
 
-## 18. Unanticipated axes observed
+## Unanticipated axes observed
 
 Optional JWT/OAuth for HTTP mode (multi-client support in a typically single-user server). Auto-complexity detection for tool selection.
 
-## 20. Gaps
+## Gaps
 
 Exact last commit date inferred from pushed_at (July 22, 2025); no changelog. CI/CD strategy not documented. Published npm package name not found — source-only distribution.

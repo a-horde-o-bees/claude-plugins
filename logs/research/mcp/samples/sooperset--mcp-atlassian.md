@@ -26,7 +26,7 @@ main
 
 Atlassian Jira/Confluence MCP server — community-canonical server carrying both `mcp` and `fastmcp` packages simultaneously.
 
-## 1. Language and runtime
+## Language and runtime
 
 ### language(s) + version constraints
 
@@ -36,11 +36,7 @@ Python (99.3%); specific min Python not extracted within budget.
 
 Model Context Protocol Python SDK; Anthropic Claude Agent SDK conventions referenced.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 2. Transport
+## Transport
 
 ### supported transports
 
@@ -50,11 +46,7 @@ SSE (Server-Sent Events) primary; HTTP support mentioned.
 
 Not extracted in detail — likely env-var or subcommand driven given Python+uvx pattern.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 3. Distribution
+## Distribution
 
 ### every mechanism observed
 
@@ -68,11 +60,7 @@ PyPI (`mcp-atlassian`), Docker (Dockerfile present), source install, `uvx` execu
 
 `uvx mcp-atlassian`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 4. Entry point / launch
+## Entry point / launch
 
 ### command(s) users/hosts run
 
@@ -82,21 +70,13 @@ none noted in this repo
 
 PyPI entry point; docker image.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 5. Configuration surface
+## Configuration surface
 
 ### how config reaches the server
 
 Environment variables for Atlassian connection — Cloud: `JIRA_URL`, `JIRA_USERNAME`, `JIRA_API_TOKEN`, `CONFLUENCE_URL`, `CONFLUENCE_USERNAME`, `CONFLUENCE_API_TOKEN`; Server/Data Center: `JIRA_PERSONAL_TOKEN`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 6. Authentication
+## Authentication
 
 ### flow
 
@@ -106,41 +86,25 @@ Cloud uses email + API token; Server/Data Center uses Personal Access Token; OAu
 
 Atlassian-managed API tokens; PATs for on-prem.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 7. Multi-tenancy
+## Multi-tenancy
 
 ### tenancy model
 
 Instance-keyed — one Atlassian site (URL + credentials) per process. No per-request tenant switching observed.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 8. Capabilities exposed
+## Capabilities exposed
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
 72 tools spanning Jira (search, issue CRUD, transitions, comments) and Confluence (search, page CRUD, comments). Supports both Cloud and on-prem (Confluence v6.0+, Jira v8.14+).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 9. Observability
+## Observability
 
 ### logging destination + format, metrics, tracing, debug flags
 
 Not extracted within budget.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 10. Host integrations shown in README or repo
+## Host integrations shown in README or repo
 
 ### Claude Desktop
 
@@ -150,79 +114,51 @@ Supported.
 
 Supported.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 11. Claude Code plugin wrapper
+## Claude Code plugin wrapper
 
 ### presence and shape
 
 Not explicitly observed.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 12. Tests
+## Tests
 
 ### presence, framework, location, notable patterns
 
 Comprehensive test suite in `tests/` directory.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 13. CI
+## CI
 
 ### presence, system, triggers, what it runs
 
 GitHub Actions tests workflow present.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 14. Container / packaging artifacts
+## Container / packaging artifacts
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 Dockerfile present.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 15. Example client / developer ergonomics
+## Example client / developer ergonomics
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
 `.devcontainer/` for dev environment; pre-commit hooks; `llms.txt` docs.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 16. Repo layout
+## Repo layout
 
 ### single-package / monorepo / vendored / other
 
 Single-package Python project with test + devcontainer + docs.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 17. Notable structural choices
+## Notable structural choices
 
 Dual-deployment support (Cloud + Server/Data Center) with explicit version floors — Confluence v6.0+, Jira v8.14+ — signals deliberate enterprise-compatibility work. 72-tool surface is large; no explicit tool-group selector flag surfaced in this research window (contrast with PayPal's `--tools=all` or Supabase's `features`). Community-owned canonical — 5k stars on a non-vendor repo for Atlassian suggests Atlassian has not shipped a first-party MCP and this is the de facto standard. 171 open issues + 91 PRs indicates active maintenance but also backlog pressure at scale.
 
-## 18. Unanticipated axes observed
+## Unanticipated axes observed
 
 Enterprise-scale support (on-prem Data Center plus Cloud) in a community MCP — a level of deployment-mode coverage uncommon outside first-party vendors. `llms.txt` presence signals design-for-AI-consumption documentation pattern.
 
-## 19. Python-specific
+## Python-specific
 
 ### SDK / framework variant
 
@@ -264,6 +200,6 @@ pytest + pytest-cov + pytest-asyncio + pytest-anyio. Custom pytest markers: `int
 
 Dual SDK (raw `mcp` + `fastmcp`) — likely historical: project predates FastMCP and migrated partially. Test markers split by deployment topology (`dc_e2e` vs `cloud_e2e`) — encodes the on-prem/cloud matrix into the test suite rather than just CI config. Both `black` and `ruff` in dev — redundant; `ruff format` typically replaces black in modern Python projects.
 
-## 20. Gaps
+## Gaps
 
 Tool-scoping mechanism (if any) — how users reduce 72 tools to a working subset not extracted. Exact OAuth 2.0 flow mechanics for Cloud. Whether the server supports simultaneously Jira + Confluence or requires separate launches. Transport selection mechanism details.

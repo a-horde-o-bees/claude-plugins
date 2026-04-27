@@ -26,7 +26,7 @@ main
 
 PayPal payments MCP server — JavaScript/npx distribution; OAuth 2.0 auth.
 
-## 1. Language and runtime
+## Language and runtime
 
 ### language(s) + version constraints
 
@@ -36,11 +36,7 @@ JavaScript (75.7%), TypeScript (15.8%), Shell (8.5%); Node.js 18+.
 
 Model Context Protocol SDK (standard MCP TypeScript SDK, implied by npm package layout and MCP conventions).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 2. Transport
+## Transport
 
 ### supported transports
 
@@ -50,11 +46,7 @@ stdio.
 
 Stdio is the default; launched via `npx` and connected through host MCP config.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 3. Distribution
+## Distribution
 
 ### every mechanism observed
 
@@ -68,11 +60,7 @@ npm package, npx direct execution, Claude Desktop configuration-file integration
 
 `npx -y @paypal/mcp --tools=all`
 
-### pitfalls observed
-
-none noted in this repo
-
-## 4. Entry point / launch
+## Entry point / launch
 
 ### command(s) users/hosts run
 
@@ -82,21 +70,13 @@ none noted in this repo
 
 npm `bin` entry invoked via npx; Shell files present (8.5% of repo) suggest auxiliary scripts.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 5. Configuration surface
+## Configuration surface
 
 ### how config reaches the server
 
 Environment variables for credentials and environment selection; CLI flags for tool selection and token override.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 6. Authentication
+## Authentication
 
 ### flow
 
@@ -110,37 +90,25 @@ OAuth2 client credentials — bearer token generated, valid 3-8 hours (sandbox) 
 
 Token lifetimes (3-8 hours sandbox, 8 hours production) mean long-lived sessions need refresh handling; not clear from surface whether server refreshes automatically or expects caller to rotate.
 
-## 7. Multi-tenancy
+## Multi-tenancy
 
 ### tenancy model
 
 Single-merchant — token is process-scoped to one PayPal merchant account. No per-request tenancy or multi-merchant switching observed.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 8. Capabilities exposed
+## Capabilities exposed
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
 30+ tools grouped by domain — Invoices (7), Payments & Refunds (5), Dispute Management (3), Shipment Tracking (2), Catalog Management (4), Subscription Management (8), Transaction Reporting (1). `--tools=all` selects full surface; selective subsets likely supported via the same flag.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 9. Observability
+## Observability
 
 ### logging destination + format, metrics, tracing, debug flags
 
 Not explicitly documented within extracted content.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 10. Host integrations shown in README or repo
+## Host integrations shown in README or repo
 
 ### Claude Desktop
 
@@ -154,78 +122,50 @@ Supported.
 
 Supported.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 11. Claude Code plugin wrapper
+## Claude Code plugin wrapper
 
 ### presence and shape
 
 Not observed — no `.claude-plugin` directory surfaced in research.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 12. Tests
+## Tests
 
 ### presence, framework, location, notable patterns
 
 Jest configured; specific test layout not extracted within budget.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 13. CI
+## CI
 
 ### presence, system, triggers, what it runs
 
 GitHub Actions `.github/workflows` directory present; specific workflows not extracted within budget.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 14. Container / packaging artifacts
+## Container / packaging artifacts
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 Not observed within extracted content.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 15. Example client / developer ergonomics
+## Example client / developer ergonomics
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
 ESLint config; Jest; Claude Desktop and Cursor sample configs in README.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 16. Repo layout
+## Repo layout
 
 ### single-package / monorepo / vendored / other
 
 Single-package Node.js project; mixed JS/TS (JS majority) with Shell auxiliary scripts.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 17. Notable structural choices
+## Notable structural choices
 
 Modular `--tools` selection lets users opt into sub-surfaces rather than exposing 30+ tools unconditionally — reduces prompt-window noise for users who only need invoicing or subscriptions. Sandbox/production are explicit env-var branches, not separate entry points — a single binary routes based on `PAYPAL_ENVIRONMENT`. First-party PayPal ownership — Apache-2.0, paypal-org namespace — makes this the canonical PayPal MCP despite modest star count.
 
-## 18. Unanticipated axes observed
+## Unanticipated axes observed
 
 Low star count (9) for a first-party vendor release suggests either early days or limited announcement; worth monitoring as a case of "official but unpromoted" servers. The `--tools` opt-in pattern is an example of capability scoping at launch time — a structural choice worth noting for MCPs with large tool surfaces.
 
-## 20. Gaps
+## Gaps
 
 Whether token auto-refresh is implemented or delegated to caller. CI workflow specifics and test coverage layout. Exact list of tools within each category (only counts observed). Whether HTTP transport is planned or stdio-only is intentional.

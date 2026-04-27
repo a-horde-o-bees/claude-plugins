@@ -26,7 +26,7 @@ main
 
 FHIR healthcare MCP server — embedded RAG stack (llama-index + huggingface + pinecone); in-server encrypted credential vault for PHI handling.
 
-## 1. Language and runtime
+## Language and runtime
 
 ### language(s) + version constraints
 
@@ -36,11 +36,7 @@ Python 97%; `requires-python = ">=3.12"`.
 
 FastMCP (standalone `fastmcp` package).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 2. Transport
+## Transport
 
 ### supported transports
 
@@ -50,11 +46,7 @@ stdio, http, https — selected via `TRANSPORT_MODE` env var.
 
 environment variable
 
-### pitfalls observed
-
-none noted in this repo
-
-## 3. Distribution
+## Distribution
 
 ### every mechanism observed
 
@@ -68,11 +60,7 @@ no PyPI publication documented
 
 `make build` or `make uv`
 
-### pitfalls observed
-
-none noted in this repo
-
-## 4. Entry point / launch
+## Entry point / launch
 
 ### command(s) users/hosts run
 
@@ -82,21 +70,13 @@ none noted in this repo
 
 console script `start` → `start:main` (via pyproject).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 5. Configuration surface
+## Configuration surface
 
 ### how config reaches the server
 
 `TRANSPORT_MODE` env var; FHIR backend URL + OAuth2 client ID/secret; optional encryption master key for sensitive fields.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 6. Authentication
+## Authentication
 
 ### flow
 
@@ -106,91 +86,55 @@ OAuth2 client-credentials against the FHIR server; FHIR servers like Medplum men
 
 environment variables; the server also supports "encrypted credential storage with optional master key-based encryption for sensitive fields" — a server-internal credential vault.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 7. Multi-tenancy
+## Multi-tenancy
 
 ### tenancy model
 
 not addressed
 
-### pitfalls observed
-
-none noted in this repo
-
-## 8. Capabilities exposed
+## Capabilities exposed
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
 14+ tools across FHIR resources (Patient, Observation, Condition, Medication, etc.), document management, LOINC terminology lookup.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 9. Observability
+## Observability
 
 ### logging destination + format, metrics, tracing, debug flags
 
 not captured
 
-### pitfalls observed
-
-none noted in this repo
-
-## 10. Host integrations shown in README or repo
+## Host integrations shown in README or repo
 
 ### Claude Desktop
 
 configured via `claude_desktop_config.json` example with Docker or uv launcher.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 11. Claude Code plugin wrapper
+## Claude Code plugin wrapper
 
 ### presence and shape
 
 none
 
-### pitfalls observed
-
-none noted in this repo
-
-## 12. Tests
+## Tests
 
 ### presence, framework, location, notable patterns
 
 pytest + pytest-asyncio + pytest-cov declared in dev deps; `.github` present.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 13. CI
+## CI
 
 ### presence, system, triggers, what it runs
 
 GitHub Actions present.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 14. Container / packaging artifacts
+## Container / packaging artifacts
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 Dockerfile + docker-compose.yml; volume mounting documented.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 15. Example client / developer ergonomics
+## Example client / developer ergonomics
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
@@ -200,17 +144,13 @@ Makefile — `make build`, `make uv` as primary workflow entry. Uses `pre-commit
 
 Makefile-driven workflow — `make build`, `make uv`, `make test-connection`; common in data-ops projects but rare in MCP servers.
 
-## 16. Repo layout
+## Repo layout
 
 ### single-package / monorepo / vendored / other
 
 single-package with `app/` module (build backend is `uv_build` with `module-name = "app"`).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 17. Notable structural choices
+## Notable structural choices
 
 Three transport modes (stdio / http / https) selected via env var — among the richest transport surfaces in the sample.
 
@@ -224,7 +164,7 @@ LLM-assisted retrieval stack — depends on `llama-index` + `huggingface` embedd
 
 Makefile-driven workflow — `make build`, `make uv`, `make test-connection`; common in data-ops projects but rare in MCP servers.
 
-## 18. Unanticipated axes observed
+## Unanticipated axes observed
 
 In-server RAG pipeline — the server embeds an embedding + vector-store + document-parsing stack inside an MCP server. Most MCP servers expose tools that call upstream RAG services; this one hosts the RAG itself. A server-boundary-blurring pattern.
 
@@ -236,7 +176,7 @@ Transport-mode env-var switch pattern for stdio/http/https — different from `a
 
 Healthcare-specific terminology service integration (LOINC) — the server bridges a domain-specific terminology ontology, a pattern that would reappear in legal (Westlaw taxonomies), education (curriculum standards), and finance (ticker/ISIN conventions).
 
-## 19. Python-specific
+## Python-specific
 
 ### SDK / framework variant
 
@@ -278,6 +218,6 @@ Makefile + pre-commit + ruff + ty (type checker alternative to mypy).
 
 Heavy RAG stack: `llama-index`, `huggingface` embeddings, `pinecone`, `sentence-transformers`, `pymupdf`. `cryptography` + `passlib` for credential encryption. `fastapi` pulled in alongside `fastmcp` — likely for the HTTP transport surface. `greenlet` as a dep hints at sync/async bridging (SQLAlchemy-style patterns). `ty` type-checker (a newer alternative to `mypy`) — a small leading-edge signal.
 
-## 20. Gaps
+## Gaps
 
 what couldn't be determined: exact stars update time, complete tool surface, how the encryption master key is provisioned in practice, whether RAG components are optional or always active, LOINC terminology source.

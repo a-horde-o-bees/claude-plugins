@@ -26,7 +26,7 @@ main
 
 OpenAPI-driven MCP server — dynamically generates MCP tools, resources, and prompts from one or more OpenAPI specs at server start; multi-spec composition supported.
 
-## 1. Language and runtime
+## Language and runtime
 
 ### language(s) + version constraints
 
@@ -36,7 +36,7 @@ Python `>=3.10`.
 
 FastMCP 2.x (`fastmcp>=3.2.2,<4`).
 
-## 2. Transport
+## Transport
 
 ### supported transports
 
@@ -46,7 +46,7 @@ stdio.
 
 Not configurable per README.
 
-## 3. Distribution
+## Distribution
 
 ### every mechanism observed
 
@@ -63,7 +63,7 @@ PyPI with optional extras (`[yaml]`, `[prometheus]`, `[all]`).
 - `pip install "awslabs.openapi-mcp-server[prometheus]"`
 - `pip install "awslabs.openapi-mcp-server[all]"`
 
-## 4. Entry point / launch
+## Entry point / launch
 
 ### command(s) users/hosts run
 
@@ -73,13 +73,13 @@ PyPI with optional extras (`[yaml]`, `[prometheus]`, `[all]`).
 
 Console script → `awslabs.openapi_mcp_server.server:main`.
 
-## 5. Configuration surface
+## Configuration surface
 
 ### how config reaches the server
 
 CLI args (`--api-name`, `--api-url`, `--spec-url`, `--additional-specs`, `--include-tags`, `--exclude-tags`) and env vars; auth configured per-spec via CLI or env.
 
-## 6. Authentication
+## Authentication
 
 ### flow
 
@@ -89,65 +89,65 @@ Per-API auth — Basic, Bearer Token, API Key (header/query/cookie), AWS Cognito
 
 CLI args or env vars; different APIs in a multi-spec composition can use different auth configs.
 
-## 7. Multi-tenancy
+## Multi-tenancy
 
 ### tenancy model
 
 Multi-spec composition — one server can host tools from multiple OpenAPI specs via `--additional-specs`, each with its own HTTP client and auth.
 
-## 8. Capabilities exposed
+## Capabilities exposed
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
 Dynamically generated tools + resources + prompts — GET with query params becomes a tool (for LLM-friendly search); other GETs become resources; mutating operations become tools; operation-specific prompts and API doc prompts auto-generated.
 
-## 9. Observability
+## Observability
 
 ### logging destination + format, metrics, tracing, debug flags
 
 `loguru`; optional Prometheus metrics via `[prometheus]` extra.
 
-## 10. Host integrations shown in README or repo
+## Host integrations shown in README or repo
 
 Aggregated in parent monorepo.
 
-## 11. Claude Code plugin wrapper
+## Claude Code plugin wrapper
 
 ### presence and shape
 
 None.
 
-## 12. Tests
+## Tests
 
 ### presence, framework, location, notable patterns
 
 Not captured.
 
-## 13. CI
+## CI
 
 ### presence, system, triggers, what it runs
 
 Parent monorepo.
 
-## 14. Container / packaging artifacts
+## Container / packaging artifacts
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 Not explicitly captured at sub-server level.
 
-## 15. Example client / developer ergonomics
+## Example client / developer ergonomics
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
 CLI shape is itself the developer ergonomic — one command per spec to mount.
 
-## 16. Repo layout
+## Repo layout
 
 ### single-package / monorepo / vendored / other
 
 Sub-package in awslabs/mcp.
 
-## 17. Notable structural choices
+## Notable structural choices
 
 Dynamic tool generation from OpenAPI specs — no hand-authored tool definitions; tools materialize at server start from the parsed spec.
 
@@ -165,7 +165,7 @@ Depends on both `fastmcp` and `boto3` (for Cognito auth) — boto3 is used beyon
 
 Version number in pyproject.toml was `0.9223372036854775807.9223372036854775807` — looks like an automated-release sentinel (int64 max), not a human-chosen version.
 
-## 18. Unanticipated axes observed
+## Unanticipated axes observed
 
 Spec-driven vs code-driven tool surface — a major design axis. Most MCP servers hand-author tool functions; this one generates them. Implications for docs drift (spec is source of truth), testing (every spec change is a contract change), and LLM behavior (tool descriptions come from OpenAPI `description` fields, quality varies).
 
@@ -177,7 +177,7 @@ Auth as per-spec, not per-server — each mounted spec has its own credential co
 
 Prompts generated per-operation alongside tools — uses MCP prompts primitive more deeply than most servers.
 
-## 19. Python-specific
+## Python-specific
 
 ### SDK / framework variant
 
@@ -229,6 +229,6 @@ CLI composition; `prance` for spec parsing.
 
 Caret-pinned upper bounds (`,<4`, `,<1`) throughout — stricter compatibility stance than typical Python projects.
 
-## 20. Gaps
+## Gaps
 
 Whether the `uvicorn` dep indicates an undocumented HTTP transport, test coverage, actual runtime spec-caching strategy, how the "prompt generation" materializes (auto from OpenAPI tags?).

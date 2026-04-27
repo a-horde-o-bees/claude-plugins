@@ -26,7 +26,7 @@ main
 
 Pandas DataFrame analysis MCP server — blacklist-sandboxed pandas code execution for data exploration.
 
-## 1. Language and runtime
+## Language and runtime
 
 ### language(s) + version constraints
 
@@ -36,11 +36,7 @@ Python (84.6%), HTML (15.4%); Python 3.10+
 
 FastMCP (`fastmcp >= 1.0.0`) — suggests FastMCP 1.x era or the built-in `mcp.server.fastmcp` submodule
 
-### pitfalls observed
-
-none noted in this repo
-
-## 2. Transport
+## Transport
 
 ### supported transports
 
@@ -50,11 +46,7 @@ stdio (MCP default)
 
 stdio only (no alternate transport documented)
 
-### pitfalls observed
-
-none noted in this repo
-
-## 3. Distribution
+## Distribution
 
 ### every mechanism observed
 
@@ -72,7 +64,7 @@ source clone + `pip install -r requirements.txt`; `uvx pandas-mcp-cli` hinted
 
 Whether `pandas-mcp-cli` is actually a published PyPI package not verified.
 
-## 4. Entry point / launch
+## Entry point / launch
 
 ### command(s) users/hosts run
 
@@ -82,21 +74,13 @@ Whether `pandas-mcp-cli` is actually a published PyPI package not verified.
 
 `server.py` and `cli.py` at repo root
 
-### pitfalls observed
-
-none noted in this repo
-
-## 5. Configuration surface
+## Configuration surface
 
 ### how config reaches the server
 
 optional `.env` file with `.env.example` template
 
-### pitfalls observed
-
-none noted in this repo
-
-## 6. Authentication
+## Authentication
 
 ### flow
 
@@ -106,119 +90,75 @@ none
 
 N/A
 
-### pitfalls observed
-
-none noted in this repo
-
-## 7. Multi-tenancy
+## Multi-tenancy
 
 ### tenancy model
 
 single-user; operates on user-supplied CSV/data paths per call
 
-### pitfalls observed
-
-none noted in this repo
-
-## 8. Capabilities exposed
+## Capabilities exposed
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
 4 tools — `read_metadata_tool` (file structure), `interpret_column_data` (column value patterns), `run_pandas_code_tool` (sandboxed pandas execution), `generate_chartjs_tool` (interactive chart generation)
 
-### pitfalls observed
-
-none noted in this repo
-
-## 9. Observability
+## Observability
 
 ### logging destination + format, metrics, tracing, debug flags
 
 logs written to `./logs/`; chart outputs to `./charts/` — both file-system based
 
-### pitfalls observed
-
-none noted in this repo
-
-## 10. Host integrations shown in README or repo
+## Host integrations shown in README or repo
 
 ### Claude Desktop
 
 Windows/macOS/Linux config paths documented with command/args form
 
-### pitfalls observed
-
-none noted in this repo
-
-## 11. Claude Code plugin wrapper
+## Claude Code plugin wrapper
 
 ### presence and shape
 
 none observed
 
-### pitfalls observed
-
-none noted in this repo
-
-## 12. Tests
+## Tests
 
 ### presence, framework, location, notable patterns
 
 `test_metadata.py`, `test_execution.py`, `test_generate_barchart.py` at root — pytest-style but located at top level
 
-### pitfalls observed
-
-none noted in this repo
-
-## 13. CI
+## CI
 
 ### presence, system, triggers, what it runs
 
 none mentioned
 
-### pitfalls observed
-
-none noted in this repo
-
-## 14. Container / packaging artifacts
+## Container / packaging artifacts
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 none mentioned
 
-### pitfalls observed
-
-none noted in this repo
-
-## 15. Example client / developer ergonomics
+## Example client / developer ergonomics
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
 `.env.example`; per-OS Claude Desktop paths
 
-### pitfalls observed
-
-none noted in this repo
-
-## 16. Repo layout
+## Repo layout
 
 ### single-package / monorepo / vendored / other
 
 flat layout — `/core` subdirectory (metadata, execution, visualization, chart_generators); scripts at root
 
-### pitfalls observed
-
-none noted in this repo
-
-## 17. Notable structural choices
+## Notable structural choices
 
 Security posture: "sandboxed pandas execution" via blacklist filtering of malicious operations — string-level denylist is a known-fragile approach versus process isolation or restricted exec. Generates HTML with Chart.js and writes to `./charts/` — chart artifacts persist on disk; MCP client has to read the file path. Uses `psutil` in core deps — likely for memory/CPU budgeting of user-submitted code.
 
-## 18. Unanticipated axes observed
+## Unanticipated axes observed
 
 Persistent file-system output as the tool return channel (return a path, not data) for visualizations. Blacklist-based sandboxing for arbitrary pandas code execution — a fundamentally different trust model than pure read-only tool servers.
 
-## 19. Python-specific
+## Python-specific
 
 ### SDK / framework variant
 
@@ -260,6 +200,6 @@ not surfaced
 
 `psutil` as a core dep — used for resource accounting around the pandas sandbox. `chardet>=5.0.0` in core — auto-detects CSV encoding, a frequent real-world pain point. Tests at repo root rather than `tests/` directory — nonstandard location.
 
-## 20. Gaps
+## Gaps
 
 Whether `pandas-mcp-cli` is actually a published PyPI package not verified. License/CI/Docker absence vs just not documented not determined. Exact dependency pin list beyond pandas/fastmcp/chardet/psutil not read.

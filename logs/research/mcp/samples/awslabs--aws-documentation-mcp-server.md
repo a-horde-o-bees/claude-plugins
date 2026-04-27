@@ -26,7 +26,7 @@ main
 
 AWS documentation MCP server — fetches and converts AWS docs to markdown; partition-scoped tools differ between global AWS and China partitions.
 
-## 1. Language and runtime
+## Language and runtime
 
 ### language(s) + version constraints
 
@@ -36,7 +36,7 @@ Python `>=3.10`.
 
 raw `mcp[cli]>=1.23.0` — no fastmcp dependency.
 
-## 2. Transport
+## Transport
 
 ### supported transports
 
@@ -46,7 +46,7 @@ stdio primary; Docker runs stdio inside a container.
 
 Default stdio; Docker wrapping is a distribution choice, not a transport change.
 
-## 3. Distribution
+## Distribution
 
 ### every mechanism observed
 
@@ -62,7 +62,7 @@ PyPI (`awslabs.aws-documentation-mcp-server`); `uvx`; Windows `.exe` via `uv too
 - `uv tool run --from awslabs.aws-documentation-mcp-server@latest awslabs.aws-documentation-mcp-server.exe` (Windows)
 - `docker build -t mcp/aws-documentation .`
 
-## 4. Entry point / launch
+## Entry point / launch
 
 ### command(s) users/hosts run
 
@@ -72,13 +72,13 @@ PyPI (`awslabs.aws-documentation-mcp-server`); `uvx`; Windows `.exe` via `uv too
 
 `awslabs.aws-documentation-mcp-server` → `awslabs.aws_documentation_mcp_server.server:main`; Windows `.exe` variant.
 
-## 5. Configuration surface
+## Configuration surface
 
 ### how config reaches the server
 
 Minimal — User-Agent via env var for corporate proxies; partition selection (global vs China) likely env-configured.
 
-## 6. Authentication
+## Authentication
 
 ### flow
 
@@ -88,65 +88,65 @@ None required — fetches public AWS documentation.
 
 N/A.
 
-## 7. Multi-tenancy
+## Multi-tenancy
 
 ### tenancy model
 
 Not applicable — stateless read-only fetching of public docs; any number of instances can run without conflict.
 
-## 8. Capabilities exposed
+## Capabilities exposed
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
 Tools — `read_documentation` (URL → markdown), `search_documentation` (global partition only), `read_sections`, `recommend`, `get_available_services` (China partition only).
 
-## 9. Observability
+## Observability
 
 ### logging destination + format, metrics, tracing, debug flags
 
 `loguru` for structured logging.
 
-## 10. Host integrations shown in README or repo
+## Host integrations shown in README or repo
 
 Host-specific configs covered in parent monorepo catalog, not sub-server README.
 
-## 11. Claude Code plugin wrapper
+## Claude Code plugin wrapper
 
 ### presence and shape
 
 None at sub-server level.
 
-## 12. Tests
+## Tests
 
 ### presence, framework, location, notable patterns
 
 pytest with `--cov --cov-branch`; live integration test flag `--run-live` gates tests that hit real AWS docs.
 
-## 13. CI
+## CI
 
 ### presence, system, triggers, what it runs
 
 Parent monorepo CI; details not extracted per sub-server.
 
-## 14. Container / packaging artifacts
+## Container / packaging artifacts
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 Dockerfile present; no compose.
 
-## 15. Example client / developer ergonomics
+## Example client / developer ergonomics
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
 `--run-live` pytest flag for integration; no Inspector launcher.
 
-## 16. Repo layout
+## Repo layout
 
 ### single-package / monorepo / vendored / other
 
 Sub-package in awslabs/mcp monorepo.
 
-## 17. Notable structural choices
+## Notable structural choices
 
 Pure read-only documentation bridge — no AWS credentials, no mutation.
 
@@ -158,7 +158,7 @@ Uses `httpx` (async HTTP) + User-Agent handling for corporate firewalls that blo
 
 No framework above raw `mcp` SDK — the server is deliberately minimal.
 
-## 18. Unanticipated axes observed
+## Unanticipated axes observed
 
 Partition-scoped tool surface — same binary exposes different tools depending on which AWS partition is targeted (global vs cn-*); most servers expose a single fixed tool set.
 
@@ -168,7 +168,7 @@ Corporate proxy support as a first-class concern — User-Agent override baked i
 
 Partition-variant Windows `.exe` entry via `uv tool run` — Windows distribution pattern documented explicitly.
 
-## 19. Python-specific
+## Python-specific
 
 ### SDK / framework variant
 
@@ -214,6 +214,6 @@ Minimalist dependency set (6 runtime deps) compared to AWS-API sibling's 13+ —
 
 `beautifulsoup4` for selective HTML parsing.
 
-## 20. Gaps
+## Gaps
 
 Exact tool handler signatures, whether async is used throughout, specifics of the corporate-proxy User-Agent logic, partition-switching mechanism.

@@ -26,7 +26,7 @@ master
 
 Qdrant vector-DB MCP server — collection management and semantic search; official-vendor FastMCP 2.x build.
 
-## 1. Language and runtime
+## Language and runtime
 
 ### language(s) + version constraints
 
@@ -36,11 +36,7 @@ Python, `requires-python >= 3.10`.
 
 FastMCP 2.x (pinned at `fastmcp == 2.7.0`).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 2. Transport
+## Transport
 
 ### supported transports
 
@@ -50,11 +46,7 @@ stdio (default), sse, streamable-http.
 
 FastMCP environment variables / command invocation; README documents picking transport explicitly.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 3. Distribution
+## Distribution
 
 ### every mechanism observed
 
@@ -68,11 +60,7 @@ PyPI (uvx), Docker image, Smithery one-click, manual host config.
 
 `uvx mcp-server-qdrant`, Docker build, Smithery.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 4. Entry point / launch
+## Entry point / launch
 
 ### command(s) users/hosts run
 
@@ -82,21 +70,13 @@ none noted in this repo
 
 None observed; FastMCP `fastmcp dev src/mcp_server_qdrant/server.py` for Inspector.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 5. Configuration surface
+## Configuration surface
 
 ### how config reaches the server
 
 Environment variables only (CLI args deprecated). `QDRANT_URL`, `QDRANT_LOCAL_PATH`, `QDRANT_API_KEY`, `COLLECTION_NAME`, `EMBEDDING_MODEL`, `EMBEDDING_PROVIDER`, plus FastMCP host/port/log envs.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 6. Authentication
+## Authentication
 
 ### flow
 
@@ -106,41 +86,25 @@ API key.
 
 `QDRANT_API_KEY` env var (used by qdrant-client against Qdrant Cloud or remote).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 7. Multi-tenancy
+## Multi-tenancy
 
 ### tenancy model
 
 Single-user — server bound to one Qdrant instance and one default collection per process.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 8. Capabilities exposed
+## Capabilities exposed
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
 Two tools — `qdrant-store` (persist with optional metadata/collection), `qdrant-find` (semantic retrieval).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 9. Observability
+## Observability
 
 ### logging destination + format, metrics, tracing, debug flags
 
 FastMCP-standard logging via env config; no bespoke metrics/tracing observed.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 10. Host integrations shown in README or repo
+## Host integrations shown in README or repo
 
 ### Claude Desktop
 
@@ -154,79 +118,51 @@ JSON snippet with `uvx` command.
 
 One-click install for Claude Desktop.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 11. Claude Code plugin wrapper
+## Claude Code plugin wrapper
 
 ### presence and shape
 
 none observed
 
-### pitfalls observed
-
-none noted in this repo
-
-## 12. Tests
+## Tests
 
 ### presence, framework, location, notable patterns
 
 pytest >=8.3.3 with pytest-asyncio (auto mode); tests under `tests/`; default test collection uses in-memory Qdrant.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 13. CI
+## CI
 
 ### presence, system, triggers, what it runs
 
 GitHub Actions in `.github/workflows/` (lint/type-check/test + release).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 14. Container / packaging artifacts
+## Container / packaging artifacts
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 Dockerfile present.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 15. Example client / developer ergonomics
+## Example client / developer ergonomics
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
 `fastmcp dev` invocation documented; Claude/Cursor/Windsurf sample JSON configs.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 16. Repo layout
+## Repo layout
 
 ### single-package / monorepo / vendored / other
 
 single-package (`src/mcp_server_qdrant/`).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 17. Notable structural choices
+## Notable structural choices
 
 Pydantic 2 range pinned `>=2.10.6,<2.12.0` — tight version window to track FastMCP compatibility. `fastembed` used for local-default embeddings, eliminating need for an embedding API key to get started.
 
-## 18. Unanticipated axes observed
+## Unanticipated axes observed
 
 Embedding model/provider decoupled from storage backend via two envs (`EMBEDDING_MODEL`, `EMBEDDING_PROVIDER`); local-path mode vs remote Qdrant as a single env toggle.
 
-## 19. Python-specific
+## Python-specific
 
 ### SDK / framework variant
 
@@ -268,6 +204,6 @@ pytest + pytest-asyncio; in-memory Qdrant client fixture.
 
 Uses `fastembed` (ONNX-backed embedding lib from Qdrant) so default install has no API-key requirement. Exact-pin on FastMCP (`==2.7.0`) rather than range — suggests sensitivity to FastMCP API drift.
 
-## 20. Gaps
+## Gaps
 
 Exact `.python-version` content (e.g. 3.11 vs 3.12) not read. Whether `uv.lock` is committed not confirmed. Specific GitHub Actions workflow names not inspected.

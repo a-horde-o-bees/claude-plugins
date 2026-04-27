@@ -26,7 +26,7 @@ main
 
 GitHub MCP server (Go) — repo/issue/PR tooling with OAuth and PAT auth modes.
 
-## 1. Language and runtime
+## Language and runtime
 
 ### language(s) + version constraints
 
@@ -36,11 +36,7 @@ Go (96.1%). Version in `go.mod` (not explicitly extracted).
 
 Custom Go MCP implementation; `server.json` declares MCP capability.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 2. Transport
+## Transport
 
 ### supported transports
 
@@ -50,11 +46,7 @@ stdio (local binary), HTTP (remote server at `api.githubcopilot.com`), and Docke
 
 Subcommand — `github-mcp-server stdio` selects stdio transport. Remote mode is a separately-hosted service consumed via its URL.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 3. Distribution
+## Distribution
 
 ### every mechanism observed
 
@@ -72,7 +64,7 @@ GHCR image `ghcr.io/github/github-mcp-server`.
 
 GHCR as primary distribution — `docker run` is the canonical install path, not `go install`.
 
-## 4. Entry point / launch
+## Entry point / launch
 
 ### command(s) users/hosts run
 
@@ -82,21 +74,13 @@ GHCR as primary distribution — `docker run` is the canonical install path, not
 
 `cmd/github-mcp-server/` main package.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 5. Configuration surface
+## Configuration surface
 
 ### how config reaches the server
 
 Env vars and CLI flags in parallel. Env: `GITHUB_PERSONAL_ACCESS_TOKEN`, `GITHUB_HOST` (Enterprise), `GITHUB_TOOLSETS`, `GITHUB_TOOLS`, `GITHUB_READ_ONLY`, `GITHUB_INSIDERS`. Flags: `--toolsets`, `--tools`, `--read-only`, `--lockdown-mode`, `--dynamic-toolsets`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 6. Authentication
+## Authentication
 
 ### flow
 
@@ -106,41 +90,25 @@ GitHub Personal Access Token (PAT) for local/stdio mode; OAuth for the remote ho
 
 Env var `GITHUB_PERSONAL_ACCESS_TOKEN` for PAT; OAuth flow handled by hosts (VS Code 1.101+ has native support).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 7. Multi-tenancy
+## Multi-tenancy
 
 ### tenancy model
 
 Single-user per process for stdio (one PAT, one identity). Remote server supports per-user OAuth so effectively per-user in hosted mode.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 8. Capabilities exposed
+## Capabilities exposed
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
 ~100+ tools across 20+ toolsets (repos, issues, pull_requests, actions, etc.). Granular toolset/tool gating via flags. Read-only mode available. Lockdown-mode filters public repo content. Dynamic toolsets allow runtime discovery.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 9. Observability
+## Observability
 
 ### logging destination + format, metrics, tracing, debug flags
 
 Not explicitly documented in fetched view; likely stderr per Go-binary convention.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 10. Host integrations shown in README or repo
+## Host integrations shown in README or repo
 
 ### VS Code
 
@@ -166,31 +134,19 @@ Docker-based config w/ PAT env injection.
 
 ships editor configuration samples.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 11. Claude Code plugin wrapper
+## Claude Code plugin wrapper
 
 ### presence and shape
 
 Not observed; host integration via external `claude_desktop_config.json` snippets rather than an in-repo plugin.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 12. Tests
+## Tests
 
 ### presence, framework, location, notable patterns
 
 End-to-end test suite in `e2e/`. GitHub Actions CI. `.golangci.yml` for linting.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 13. CI
+## CI
 
 ### presence, system, triggers, what it runs
 
@@ -200,44 +156,32 @@ GitHub Actions workflows present. Specific workflow contents not enumerated with
 
 Specific CI workflow contents.
 
-## 14. Container / packaging artifacts
+## Container / packaging artifacts
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 Multi-platform Dockerfile. No compose/Helm/brew observed.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 15. Example client / developer ergonomics
+## Example client / developer ergonomics
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
 `.vscode/` samples; Docker is the canonical quick-start.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 16. Repo layout
+## Repo layout
 
 ### single-package / monorepo / vendored / other
 
 Single Go module rooted at `cmd/github-mcp-server` with supporting packages. `server.json` at root.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 17. Notable structural choices
+## Notable structural choices
 
 Dual-mode transport via subcommand (`stdio`) plus separate hosted remote service — the server binary and the remote endpoint are separate products sharing a capability surface. Toolset gating as a first-class feature: 20+ toolsets, independently toggleable via `--toolsets`/`GITHUB_TOOLSETS`. Dynamic toolsets allow runtime discovery, changing the tool catalog mid-session. Lockdown mode for content filtering on public repos — a safety envelope for agent traversal of untrusted content. GHCR as primary distribution — `docker run` is the canonical install path, not `go install`.
 
-## 18. Unanticipated axes observed
+## Unanticipated axes observed
 
 Tool-catalog mutability: `--dynamic-toolsets` exposes runtime-discoverable tools rather than a fixed catalog at startup, which affects how hosts cache tool listings. Per-feature "modes": `--read-only`, `--lockdown-mode`, `--insiders` act as behavior envelopes rather than capability toggles, separating policy from toolset selection. Hosted + local hybrid: official remote MCP endpoint operated by GitHub alongside the self-run stdio binary — distribution strategy not just code-as-download.
 
-## 20. Gaps
+## Gaps
 
 Exact Go version in `go.mod`. Specific CI workflow contents. Whether `server.json` is consumed by MCP clients beyond identifying capability, or is purely metadata.

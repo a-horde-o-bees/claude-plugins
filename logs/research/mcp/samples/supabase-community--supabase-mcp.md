@@ -26,7 +26,7 @@ main
 
 Supabase MCP server — HTTP-only transport with OAuth 2.1.
 
-## 1. Language and runtime
+## Language and runtime
 
 ### language(s) + version constraints
 
@@ -36,11 +36,7 @@ TypeScript (99.5%); Node.js runtime.
 
 Model Context Protocol TypeScript SDK; Supabase JS/management SDKs.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 2. Transport
+## Transport
 
 ### supported transports
 
@@ -50,11 +46,7 @@ HTTP (primary — streaming HTTP MCP endpoint).
 
 HTTP is the canonical mode. Managed endpoint: `https://mcp.supabase.com/mcp`. Local: `http://localhost:54321/mcp` (via Supabase CLI). Self-hosted supported. Configuration via URL query parameters rather than CLI flags.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 3. Distribution
+## Distribution
 
 ### every mechanism observed
 
@@ -68,11 +60,7 @@ npm package; managed HTTP endpoint (no install required for cloud usage); Supaba
 
 For self-host via npm; for cloud usage, clients just point to the HTTPS URL.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 4. Entry point / launch
+## Entry point / launch
 
 ### command(s) users/hosts run
 
@@ -82,21 +70,13 @@ Cloud: configure MCP client to hit `https://mcp.supabase.com/mcp?project_ref=...
 
 URL-configuration driven rather than CLI-flag driven.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 5. Configuration surface
+## Configuration surface
 
 ### how config reaches the server
 
 URL query parameters — `project_ref` (scope to a specific Supabase project), `read_only` (restrict to read-only operations), `features` (enable/disable tool groups).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 6. Authentication
+## Authentication
 
 ### flow
 
@@ -106,41 +86,25 @@ OAuth 2.1 — automatic prompt during client setup.
 
 Browser-based OAuth consent; tokens managed by MCP client/host.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 7. Multi-tenancy
+## Multi-tenancy
 
 ### tenancy model
 
 Workspace/project-keyed — `project_ref` URL parameter scopes each connection. OAuth identity × project ref combination defines the tenant boundary per session.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 8. Capabilities exposed
+## Capabilities exposed
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
 Tools grouped by feature category: 1) Account management (projects, organizations); 2) Documentation search; 3) Database operations (SQL, migrations, schema); 4) Debugging (logs, advisors); 5) Development (URLs, API keys, TypeScript generation); 6) Edge Functions (list, deploy); 7) Branching (experimental, paid-plan feature); 8) Storage (disabled by default).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 9. Observability
+## Observability
 
 ### logging destination + format, metrics, tracing, debug flags
 
 Not explicitly extracted within budget.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 10. Host integrations shown in README or repo
+## Host integrations shown in README or repo
 
 ### Cursor
 
@@ -158,71 +122,43 @@ Listed as a supported host.
 
 Native MCP client integration via `createToolSchemas()` export.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 11. Claude Code plugin wrapper
+## Claude Code plugin wrapper
 
 ### presence and shape
 
 Not explicitly observed; "Claude" is referenced as a host but wrapper layout not extracted.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 12. Tests
+## Tests
 
 ### presence, framework, location, notable patterns
 
 Not fully extracted — biome.json config implies linting toolchain; specific test framework not identified in extracted content.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 13. CI
+## CI
 
 ### presence, system, triggers, what it runs
 
 GitHub Actions `.github/workflows` present; 32 releases on GitHub Releases.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 14. Container / packaging artifacts
+## Container / packaging artifacts
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 No Dockerfile in main repo; self-hosted Supabase deployment documented separately. Managed cloud endpoint reduces need for containerization.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 15. Example client / developer ergonomics
+## Example client / developer ergonomics
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
 `mise.toml` for dev environment; `createToolSchemas()` SDK export for Vercel AI SDK integration with TypeScript type inference.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 16. Repo layout
+## Repo layout
 
 ### single-package / monorepo / vendored / other
 
 Monorepo — `/packages` (core packages), `/docs`, `/supabase` (Supabase config), `.github/workflows`, `mise.toml`, `pnpm-workspace.yaml`, pnpm-managed.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 17. Notable structural choices
+## Notable structural choices
 
 HTTP-first, managed-cloud-first — defaults to a hosted endpoint rather than local stdio process. Users can run locally or self-host but the primary path is cloud-managed.
 
@@ -240,7 +176,7 @@ Vercel AI SDK native hook via exported tool schemas — first-class non-Claude i
 
 Branching as paid/experimental — explicit plan-tier gating surfaced through tool groups.
 
-## 18. Unanticipated axes observed
+## Unanticipated axes observed
 
 Managed-MCP-as-a-service model — Supabase offers the MCP endpoint as part of their cloud product; this is a different distribution stance from stdio-only servers. Structural reference for any vendor with existing SaaS infrastructure.
 
@@ -248,6 +184,6 @@ OAuth 2.1 suggests the MCP protocol's auth story is maturing past static keys; S
 
 `createToolSchemas()` export doubles the repo as an SDK — consumers can use Supabase's schema definitions without routing through MCP, a composability choice.
 
-## 20. Gaps
+## Gaps
 
 Self-hosted launch command and entry point not fully extracted. Exact test framework not identified. Last commit beyond v0.7.0 release date not confirmed. Dockerfile absence is explicit; container strategy relies on Supabase's own infra.

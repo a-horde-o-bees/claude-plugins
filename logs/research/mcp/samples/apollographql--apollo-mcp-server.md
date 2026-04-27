@@ -26,7 +26,7 @@ main
 
 Apollo GraphQL MCP server (Rust) — generates MCP tools from configured GraphQL operation definitions; tool catalog is declarative config, not code.
 
-## 1. Language and runtime
+## Language and runtime
 
 ### language(s) + version constraints
 
@@ -36,7 +36,7 @@ Rust (98.7%). Cargo-managed; `Cargo.toml` present.
 
 Rust MCP implementation; Apollo GraphQL ecosystem.
 
-## 2. Transport
+## Transport
 
 ### supported transports
 
@@ -46,7 +46,7 @@ Not explicitly extracted in fetched view; README points to external docs for con
 
 Via configuration file referenced as "config file reference" on Apollo docs.
 
-## 3. Distribution
+## Distribution
 
 ### every mechanism observed
 
@@ -60,7 +60,7 @@ Cargo crate (name aligned with repo); Docker image (per GitHub release-container
 
 Not directly enumerated in the fetched view (README redirects to user guide for full usage).
 
-## 4. Entry point / launch
+## Entry point / launch
 
 ### command(s) users/hosts run
 
@@ -70,13 +70,13 @@ Server binary pointed at a GraphQL endpoint + operation definitions + config fil
 
 Not extracted.
 
-## 5. Configuration surface
+## Configuration surface
 
 ### how config reaches the server
 
 Config file is the documented primary mechanism, pointing at (1) a GraphQL endpoint to expose, (2) operation definitions for MCP tools, (3) a configuration file itself. Format not extracted (likely YAML or TOML given Apollo/Rust conventions).
 
-## 6. Authentication
+## Authentication
 
 ### flow
 
@@ -86,25 +86,25 @@ Not extracted; likely per-GraphQL-endpoint auth via headers configured in the co
 
 Not extracted.
 
-## 7. Multi-tenancy
+## Multi-tenancy
 
 ### tenancy model
 
 Not extracted.
 
-## 8. Capabilities exposed
+## Capabilities exposed
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
 Tools generated from GraphQL operation definitions — each configured operation becomes an MCP tool. Unusual capability source: tool surface is defined by the operator's GraphQL operations, not baked into the server.
 
-## 9. Observability
+## Observability
 
 ### logging destination + format, metrics, tracing, debug flags
 
 Not extracted.
 
-## 10. Host integrations shown in README or repo
+## Host integrations shown in README or repo
 
 ### Claude
 
@@ -118,43 +118,43 @@ Compatibility noted.
 
 README targets generic "AI model/LLM client".
 
-## 11. Claude Code plugin wrapper
+## Claude Code plugin wrapper
 
 ### presence and shape
 
 `.claude` directory + `CLAUDE.md` at repo root — operational Claude docs. `.claude-plugin/` presence not explicitly confirmed; the `.claude` directory may be Claude Code's workspace config rather than a plugin wrapper.
 
-## 12. Tests
+## Tests
 
 ### presence, framework, location, notable patterns
 
 End-to-end testing directory (`/e2e/mcp-server-tester`). Codecov integration.
 
-## 13. CI
+## CI
 
 ### presence, system, triggers, what it runs
 
 GitHub Actions — CI workflow, release-binaries workflow, release-container workflow.
 
-## 14. Container / packaging artifacts
+## Container / packaging artifacts
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 Docker container built via release-container workflow.
 
-## 15. Example client / developer ergonomics
+## Example client / developer ergonomics
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
 `/examples` directory contains configuration examples. MCP Inspector compatibility called out.
 
-## 16. Repo layout
+## Repo layout
 
 ### single-package / monorepo / vendored / other
 
 Single Rust crate with `/examples`, `/e2e/mcp-server-tester`, `Cargo.toml`, `.claude` directory, `CLAUDE.md`.
 
-## 17. Notable structural choices
+## Notable structural choices
 
 Operation-driven tool surface: MCP tools are derived from GraphQL operation definitions supplied at config time, not hardcoded. The server is a generic adapter over any Apollo/GraphQL endpoint — operators shape the tool catalog by choosing which operations to expose.
 
@@ -164,7 +164,7 @@ Dedicated `mcp-server-tester` e2e harness — suggests protocol-conformance test
 
 `.claude/` + `CLAUDE.md` in-repo — indicates Claude-assisted development is an authoring surface for contributors.
 
-## 18. Unanticipated axes observed
+## Unanticipated axes observed
 
 GraphQL-as-schema-source-of-truth for MCP tools: tool definitions live as GraphQL operations, not as MCP tool declarations. Reduces tool authoring to operation authoring — a rare capability-sourcing pattern.
 
@@ -172,6 +172,6 @@ Protocol-conformance e2e tester as a first-class component (`mcp-server-tester` 
 
 Rust for MCP servers — adds a distribution channel (crates.io, binaries, Docker) different from the TS/Python/Go norm.
 
-## 20. Gaps
+## Gaps
 
 Specific transport(s) supported (stdio vs streamable-HTTP) — README redirects to external docs. Config file format (YAML? TOML?). Authentication approach at the MCP layer vs upstream GraphQL. Actual install command shown to users. Whether `.claude-plugin/plugin.json` exists or whether `.claude/` is just Claude Code workspace state. `Cargo.toml` contents — dependencies and minimum Rust version.

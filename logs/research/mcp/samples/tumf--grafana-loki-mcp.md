@@ -26,7 +26,7 @@ main
 
 Grafana Loki log-query MCP server — multi-format output (text/JSON/markdown) for LogQL queries.
 
-## 1. Language and runtime
+## Language and runtime
 
 ### language(s) + version constraints
 
@@ -36,11 +36,7 @@ Python 93.2%; Python 3.10+.
 
 FastMCP.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 2. Transport
+## Transport
 
 ### supported transports
 
@@ -50,11 +46,7 @@ stdio, SSE.
 
 CLI flag / default.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 3. Distribution
+## Distribution
 
 ### every mechanism observed
 
@@ -68,11 +60,7 @@ grafana-loki-mcp.
 
 `pip install grafana-loki-mcp`; `uvx grafana-loki-mcp`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 4. Entry point / launch
+## Entry point / launch
 
 ### command(s) users/hosts run
 
@@ -82,21 +70,13 @@ none noted in this repo
 
 pre-commit hooks configured.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 5. Configuration surface
+## Configuration surface
 
 ### how config reaches the server
 
 environment variables `GRAFANA_URL` and `GRAFANA_API_KEY`, or CLI flags `-u` and `-k`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 6. Authentication
+## Authentication
 
 ### flow
 
@@ -106,111 +86,67 @@ Grafana API key.
 
 `GRAFANA_API_KEY` env or `-k` CLI arg.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 7. Multi-tenancy
+## Multi-tenancy
 
 ### tenancy model
 
 single-user per process (one Grafana instance / API key).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 8. Capabilities exposed
+## Capabilities exposed
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
 Loki log querying via Grafana API; label name/value retrieval; time-range-configurable log retrieval; multi-format output (text, JSON, markdown).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 9. Observability
+## Observability
 
 ### logging destination + format, metrics, tracing, debug flags
 
 not surfaced
 
-### pitfalls observed
-
-none noted in this repo
-
-## 10. Host integrations shown in README or repo
+## Host integrations shown in README or repo
 
 ### Claude Desktop / MCP clients
 
 JSON `mcpServers` entry specifying command, arguments, credentials.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 11. Claude Code plugin wrapper
+## Claude Code plugin wrapper
 
 ### presence and shape
 
 not observed
 
-### pitfalls observed
-
-none noted in this repo
-
-## 12. Tests
+## Tests
 
 ### presence, framework, location, notable patterns
 
 pytest with coverage reporting.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 13. CI
+## CI
 
 ### presence, system, triggers, what it runs
 
 GitHub Actions workflows + pre-commit hooks.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 14. Container / packaging artifacts
+## Container / packaging artifacts
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 no Docker support mentioned.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 15. Example client / developer ergonomics
+## Example client / developer ergonomics
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
 ruff + black + mypy toolchain; pre-commit hooks.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 16. Repo layout
+## Repo layout
 
 ### single-package / monorepo / vendored / other
 
 single package.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 17. Notable structural choices
+## Notable structural choices
 
 Takes Grafana's Loki API as an intermediary rather than Loki directly, making the MCP server usable for anyone with Grafana Cloud or a Grafana-fronted Loki without dealing with Loki auth separately.
 
@@ -218,13 +154,13 @@ Multi-format output (text / JSON / markdown) for log results — rarer among MCP
 
 Accepts both CLI flags and env vars for URL/API-key, which keeps stdio-launch config flexible.
 
-## 18. Unanticipated axes observed
+## Unanticipated axes observed
 
 Output format as a tool parameter (text/JSON/markdown) — a documentation/UX dimension most MCP servers skip.
 
 Grafana-as-proxy architecture for Loki access (piggybacks on existing auth).
 
-## 19. Python-specific
+## Python-specific
 
 ### SDK / framework variant
 
@@ -266,6 +202,6 @@ ruff + black + mypy + pre-commit.
 
 pre-commit hook configuration shipped alongside tool — discipline-first repo. Coverage reporting in pytest config.
 
-## 20. Gaps
+## Gaps
 
 what couldn't be determined: FastMCP major version pin, exact async patterns, logging destination, last-commit date, Docker support (absent per README).

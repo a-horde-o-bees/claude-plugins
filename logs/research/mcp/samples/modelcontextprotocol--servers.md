@@ -26,7 +26,7 @@ main
 
 Official MCP reference-servers monorepo — Python (git, fetch, time) deliberately use raw `mcp` SDK rather than FastMCP; TypeScript reference servers alongside.
 
-## 1. Language and runtime
+## Language and runtime
 
 ### language(s) + version constraints
 
@@ -36,11 +36,7 @@ TypeScript ~69%, Python ~19%, JavaScript ~10%. Per-server: TS servers ship via n
 
 Official `@modelcontextprotocol/sdk` (TypeScript) and `mcp` Python SDK (server-fetch, server-git use the Python SDK exposed as `mcp-server-*` modules).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 2. Transport
+## Transport
 
 ### supported transports
 
@@ -50,11 +46,7 @@ stdio across all reference servers; individual servers do not document non-stdio
 
 Not exposed — each reference server starts in stdio mode when launched by its entry command; no transport flag.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 3. Distribution
+## Distribution
 
 ### every mechanism observed
 
@@ -68,11 +60,7 @@ npm + npx (TS servers), PyPI + pip + uvx (Python servers), Docker images under `
 
 `npx -y @modelcontextprotocol/server-memory`, `uvx mcp-server-git`, `pip install mcp-server-git`, `docker run -i --rm --mount type=bind,src=/path,dst=/projects mcp/filesystem /projects`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 4. Entry point / launch
+## Entry point / launch
 
 ### command(s) users/hosts run
 
@@ -82,21 +70,13 @@ TS — `npx -y @modelcontextprotocol/server-<name>` with positional args (filesy
 
 None — package entry points are the launcher. Dockerfile per server provides alt launch.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 5. Configuration surface
+## Configuration surface
 
 ### how config reaches the server
 
 Mix of positional CLI args (filesystem paths), flag CLI args (`--repository`, `--user-agent`, `--ignore-robots-txt`, `--proxy-url`), and a small number of env vars (e.g. `PYTHONIOENCODING=utf-8` noted for Windows in fetch). Filesystem additionally supports MCP Roots protocol for dynamic directory updates from the host.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 6. Authentication
+## Authentication
 
 ### flow
 
@@ -106,41 +86,25 @@ None across the reference servers. Filesystem gates access via directory allowli
 
 N/A.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 7. Multi-tenancy
+## Multi-tenancy
 
 ### tenancy model
 
 Single-user local process per host session.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 8. Capabilities exposed
+## Capabilities exposed
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
 Tools across the board. Filesystem: 13 tools (9 read + 4 write). Git: 12 tools. Fetch: 1 `fetch` tool. Filesystem additionally implements MCP Roots protocol. Resources and prompts not prominent in the individual READMEs consulted.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 9. Observability
+## Observability
 
 ### logging destination + format, metrics, tracing, debug flags
 
 Not documented at the reference-server level. Each server logs to stderr per SDK default.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 10. Host integrations shown in README or repo
+## Host integrations shown in README or repo
 
 ### Claude Desktop
 
@@ -162,79 +126,51 @@ Mentioned (git README).
 
 Generic listing of "clients that support MCP" in top-level README without per-tool snippets.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 11. Claude Code plugin wrapper
+## Claude Code plugin wrapper
 
 ### presence and shape
 
 `.mcp.json` present at repo root (mentioned by repo listing). No `.claude-plugin/` directory.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 12. Tests
+## Tests
 
 ### presence, framework, location, notable patterns
 
 `.github/` workflows present but per-server test infrastructure not prominent in individual READMEs; each server is small enough that test infrastructure is minimal/per-package.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 13. CI
+## CI
 
 ### presence, system, triggers, what it runs
 
 GitHub Actions present under `.github/workflows`. Specific workflows not fully enumerated within budget.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 14. Container / packaging artifacts
+## Container / packaging artifacts
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 Per-server Dockerfile (e.g. `src/filesystem/Dockerfile`, `src/git/Dockerfile`, `src/fetch/Dockerfile`). Images published to Docker Hub as `mcp/<server-name>`. No Helm, compose, or brew formula observed.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 15. Example client / developer ergonomics
+## Example client / developer ergonomics
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
 Each server README includes copy-paste JSON snippets for Claude Desktop and often VS Code. Top-level `package.json`/`package-lock.json` suggests centralized lint/build tooling; individual servers buildable in isolation.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 16. Repo layout
+## Repo layout
 
 ### single-package / monorepo / vendored / other
 
 Monorepo. `src/<server>/` per reference server (Everything, Fetch, Filesystem, Git, Memory, Sequential Thinking, Time). Archived servers moved out to a sibling `servers-archived` repo. Root has shared `package.json`, `tsconfig.json`, `.npmrc`; Python servers are self-contained Python packages inside the same directory tree.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 17. Notable structural choices
+## Notable structural choices
 
 Heterogeneous per-server implementations: TS and Python live side-by-side with independent package manifests. No forced uniformity — each server README documents its own install path (npx vs uvx vs pip vs Docker). Per-server Dockerfile with published `mcp/<name>` image — a consistent convention across servers even though language stack differs. Filesystem takes the unusual step of implementing MCP Roots — the only reference server consulted that interacts with the protocol's client-provided root-directory mechanism. Active vs archived split enforced by repository: archived servers physically moved out rather than flagged in-place, keeping the monorepo reference-set curated. License mixed: existing code stays MIT; new contributions land under Apache-2.0 — a deliberate relicensing-forward strategy rather than a relicense of existing material.
 
-## 18. Unanticipated axes observed
+## Unanticipated axes observed
 
 Cross-language monorepo convention: TS and Python as first-class peers in one repo, each with its own distribution channel (npm vs PyPI) and its own Docker image, rather than a single-language monorepo. Forces readers/hosts to handle multiple runtime stacks. Relicensing via contribution gate: dual-license strategy (MIT existing / Apache-2.0 new) as a migration mechanism without touching prior commits. Reference vs hosted split: repo is positioned as a showcase/reference set, not a product; archived content is physically excised to keep the demonstration sharp.
 
-## 19. Python-specific
+## Python-specific
 
 ### SDK / framework variant
 
@@ -276,6 +212,6 @@ pyright + ruff pinned across servers (pyright>=1.1.389, ruff>=0.7.3). Each Pytho
 
 These are canonical reference Python MCP servers using the raw `mcp` SDK — demonstrate the "pre-FastMCP" authoring style. Consistent per-server pyproject.toml layout — hatchling + uv + raw mcp SDK + pyright + ruff + pytest. Python and TypeScript peers in one monorepo, each using its own distribution (PyPI vs npm) and its own Docker image. Reference-quality Python servers deliberately NOT using FastMCP — suggests the reference set prioritizes low-level SDK coverage over developer convenience.
 
-## 20. Gaps
+## Gaps
 
 Exact last-commit date (only the release tag 2026.1.26 was visible). Specific CI workflow contents (what tests/lints run per server) — would need `.github/workflows/*.yml` fetches. Whether any server supports non-stdio transports — not called out in the three READMEs (filesystem, git, fetch) checked. Full enumeration of published npm and PyPI packages for all seven servers — budget covered three in depth.

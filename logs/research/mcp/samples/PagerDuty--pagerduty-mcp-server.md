@@ -26,7 +26,7 @@ main
 
 PagerDuty incident-management MCP server — 65+ tools across incidents, schedules, services, event orchestrations, teams, status pages, and change events.
 
-## 1. Language and runtime
+## Language and runtime
 
 ### language(s) + version constraints
 
@@ -36,11 +36,7 @@ Python; version pinned via `.tool-versions` (asdf).
 
 raw MCP Python SDK (not FastMCP per README).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 2. Transport
+## Transport
 
 ### supported transports
 
@@ -50,11 +46,7 @@ stdio
 
 default; Dockerfile exposes stdio transport.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 3. Distribution
+## Distribution
 
 ### every mechanism observed
 
@@ -68,11 +60,7 @@ pagerduty-mcp (per uvx invocation).
 
 `uvx pagerduty-mcp`; `uv sync`; Docker.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 4. Entry point / launch
+## Entry point / launch
 
 ### command(s) users/hosts run
 
@@ -82,21 +70,13 @@ none noted in this repo
 
 Dockerfile; uv dev workflow.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 5. Configuration surface
+## Configuration surface
 
 ### how config reaches the server
 
 Environment variables — `PAGERDUTY_USER_API_KEY`, `PAGERDUTY_API_HOST`; CLI flag `--enable-write-tools`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 6. Authentication
+## Authentication
 
 ### flow
 
@@ -106,41 +86,25 @@ PagerDuty User API Token.
 
 `PAGERDUTY_USER_API_KEY` env; token obtained via PagerDuty account settings → API Access.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 7. Multi-tenancy
+## Multi-tenancy
 
 ### tenancy model
 
 single-user per process (one user token).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 8. Capabilities exposed
+## Capabilities exposed
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
 65+ tools across incidents, schedules, services, event orchestrations, teams, status pages, change events.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 9. Observability
+## Observability
 
 ### logging destination + format, metrics, tracing, debug flags
 
 Not explicitly detailed.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 10. Host integrations shown in README or repo
+## Host integrations shown in README or repo
 
 ### Claude Desktop
 
@@ -150,79 +114,51 @@ JSON `mcpServers` entry with `env` block for API key + API host.
 
 JSON `mcpServers` entry (generic).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 11. Claude Code plugin wrapper
+## Claude Code plugin wrapper
 
 ### presence and shape
 
 Not observed.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 12. Tests
+## Tests
 
 ### presence, framework, location, notable patterns
 
 `tests/` directory present; Bedrock test result files referenced.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 13. CI
+## CI
 
 ### presence, system, triggers, what it runs
 
 GitHub Actions (`.github/`).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 14. Container / packaging artifacts
+## Container / packaging artifacts
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 Dockerfile with stdio transport.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 15. Example client / developer ergonomics
+## Example client / developer ergonomics
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
 `scripts/` directory; `website/` directory (likely docs site).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 16. Repo layout
+## Repo layout
 
 ### single-package / monorepo / vendored / other
 
 Single package under `pagerduty_mcp/`; `tests/`, `scripts/`, `website/`, `.github/`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 17. Notable structural choices
+## Notable structural choices
 
 Read-only-by-default — write tools gated behind `--enable-write-tools` CLI flag. Both Poetry (`poetry.lock` present) and uv workflows supported. Ships a docs website alongside the server. Bedrock test result files suggest validation against Amazon Bedrock agents.
 
-## 18. Unanticipated axes observed
+## Unanticipated axes observed
 
 Decision dimensions this repo reveals: dual packaging workflow support (Poetry + uv) in one repo; cross-platform agent validation (Bedrock test artifacts); vendor-authored, Apache-licensed rather than individual-maintainer MIT.
 
-## 19. Python-specific
+## Python-specific
 
 ### SDK / framework variant
 
@@ -264,6 +200,6 @@ Not surfaced explicitly; tests directory present. Fixture style not surfaced.
 
 asdf-based Python version pinning is rarer than uv-native or `.python-version`. Vendor-maintained (official PagerDuty repo), giving long-term maintenance signal.
 
-## 20. Gaps
+## Gaps
 
 What couldn't be determined: exact Python version pin, async-vs-sync tool patterns, console script name, last-commit date, test framework details.

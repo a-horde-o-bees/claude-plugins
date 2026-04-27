@@ -26,7 +26,7 @@ main
 
 scikit-learn MCP server — model-training and inference tools against local datasets.
 
-## 1. Language and runtime
+## Language and runtime
 
 ### language(s) + version constraints
 
@@ -40,7 +40,7 @@ raw `mcp` Python SDK (not FastMCP).
 
 Python version floor not surfaced.
 
-## 2. Transport
+## Transport
 
 ### supported transports
 
@@ -50,11 +50,7 @@ stdio (MCP default).
 
 stdio-only
 
-### pitfalls observed
-
-none noted in this repo
-
-## 3. Distribution
+## Distribution
 
 ### every mechanism observed
 
@@ -72,7 +68,7 @@ not confirmed on PyPI.
 
 Whether PyPI publication exists not confirmed.
 
-## 4. Entry point / launch
+## Entry point / launch
 
 ### command(s) users/hosts run
 
@@ -82,21 +78,13 @@ Whether PyPI publication exists not confirmed.
 
 Makefile targets present (1 line in Makefile language).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 5. Configuration surface
+## Configuration surface
 
 ### how config reaches the server
 
 MCP server JSON config (command/args) — no env-based config documented.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 6. Authentication
+## Authentication
 
 ### flow
 
@@ -106,119 +94,75 @@ none
 
 N/A — operates on local data/models.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 7. Multi-tenancy
+## Multi-tenancy
 
 ### tenancy model
 
 single-user
 
-### pitfalls observed
-
-none noted in this repo
-
-## 8. Capabilities exposed
+## Capabilities exposed
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
 tools for model training/evaluation, dataset handling, preprocessing, feature engineering, model persistence, cross-validation, hyperparameter tuning.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 9. Observability
+## Observability
 
 ### logging destination + format, metrics, tracing, debug flags
 
 not documented
 
-### pitfalls observed
-
-none noted in this repo
-
-## 10. Host integrations shown in README or repo
+## Host integrations shown in README or repo
 
 ### Claude Desktop
 
 JSON command/args snippet using `uv --directory=... run`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 11. Claude Code plugin wrapper
+## Claude Code plugin wrapper
 
 ### presence and shape
 
 none observed
 
-### pitfalls observed
-
-none noted in this repo
-
-## 12. Tests
+## Tests
 
 ### presence, framework, location, notable patterns
 
 pytest (`pytest -s -v tests/`); `tests/` directory.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 13. CI
+## CI
 
 ### presence, system, triggers, what it runs
 
 GitHub Actions infra present (details not surfaced).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 14. Container / packaging artifacts
+## Container / packaging artifacts
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 not observed
 
-### pitfalls observed
-
-none noted in this repo
-
-## 15. Example client / developer ergonomics
+## Example client / developer ergonomics
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
 Makefile for developer commands.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 16. Repo layout
+## Repo layout
 
 ### single-package / monorepo / vendored / other
 
 single-package (`src/mcp_server_scikit_learn/`).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 17. Notable structural choices
+## Notable structural choices
 
 Scopes scikit-learn around MCP: model lifecycle (train → eval → persist) becomes a tool surface rather than a notebook flow. Uses `uv --directory=...` in host config — unusual path-anchored invocation; implies no pip-installed console script for end users. `.[dev]` install pattern — dev tools via PEP 621 optional deps, not a separate requirements-dev file.
 
-## 18. Unanticipated axes observed
+## Unanticipated axes observed
 
 Exposing an ML training pipeline over MCP raises a state-lifecycle question (where do trained models persist? who owns them?) that the tool surface implicitly answers via `model_persistence` tools.
 
-## 19. Python-specific
+## Python-specific
 
 ### SDK / framework variant
 
@@ -260,6 +204,6 @@ Makefile present.
 
 sync tool signatures likely throughout — sklearn is sync and wrapping it async would introduce threads; staying sync is the right call for this domain. `uv --directory=<path>` in host config rather than `uvx <package>` — suggests the package isn't meant for pip-install-everywhere distribution, more for developer-installed local runs.
 
-## 20. Gaps
+## Gaps
 
 Python version floor not surfaced. Whether PyPI publication exists not confirmed. Docker absence appears intentional but not stated.

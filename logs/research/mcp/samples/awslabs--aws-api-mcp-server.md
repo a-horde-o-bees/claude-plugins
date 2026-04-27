@@ -26,7 +26,7 @@ main
 
 AWS API MCP server — wraps the AWS CLI with `call_aws`, `suggest_aws_commands`, and an experimental `get_execution_plan` for NL-to-CLI guidance.
 
-## 1. Language and runtime
+## Language and runtime
 
 ### language(s) + version constraints
 
@@ -36,7 +36,7 @@ Python `>=3.10`.
 
 FastMCP 2.x (`fastmcp>=3.0.1`) alongside raw `mcp>=1.23.0` — both are declared dependencies.
 
-## 2. Transport
+## Transport
 
 ### supported transports
 
@@ -46,7 +46,7 @@ stdio (default, single-user); streamable-http (with optional OAuth).
 
 CLI / environment flag; OAuth configured via issuer + JWKS endpoints.
 
-## 3. Distribution
+## Distribution
 
 ### every mechanism observed
 
@@ -62,7 +62,7 @@ PyPI package `awslabs.aws-api-mcp-server`; `uvx` invocation; `pip install`; Dock
 - `pip install awslabs.aws-api-mcp-server`
 - Docker pull from public ECR
 
-## 4. Entry point / launch
+## Entry point / launch
 
 ### command(s) users/hosts run
 
@@ -72,13 +72,13 @@ PyPI package `awslabs.aws-api-mcp-server`; `uvx` invocation; `pip install`; Dock
 
 Console script `awslabs.aws-api-mcp-server` → `awslabs.aws_api_mcp_server.server:main`.
 
-## 5. Configuration surface
+## Configuration surface
 
 ### how config reaches the server
 
 Environment variables (`AWS_PROFILE`, `AWS_REGION`, transport mode, OAuth endpoints, feature flags for experimental tools); CLI flags; Docker `-e` env injection for containerized runs.
 
-## 6. Authentication
+## Authentication
 
 ### flow
 
@@ -88,65 +88,65 @@ stdio mode — AWS credential chain (profile or env); streamable-http — option
 
 Standard AWS credential resolution (env vars, `~/.aws/credentials`, profile).
 
-## 7. Multi-tenancy
+## Multi-tenancy
 
 ### tenancy model
 
 Single-user only — README explicitly states "NOT designed for multi-tenant environments". Each instance requires dedicated credentials and working directory.
 
-## 8. Capabilities exposed
+## Capabilities exposed
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
 Tools only — `call_aws` (executes validated AWS CLI commands), `suggest_aws_commands` (NL → CLI mapping), `get_execution_plan` (experimental, feature-flagged).
 
-## 9. Observability
+## Observability
 
 ### logging destination + format, metrics, tracing, debug flags
 
 `python-json-logger` + `loguru` dependencies imply structured JSON logging; specifics not extracted.
 
-## 10. Host integrations shown in README or repo
+## Host integrations shown in README or repo
 
 Not enumerated per host in the sub-server README — parent monorepo aggregates host examples.
 
-## 11. Claude Code plugin wrapper
+## Claude Code plugin wrapper
 
 ### presence and shape
 
 None at sub-server level; awslabs publishes via the MCP server catalog only.
 
-## 12. Tests
+## Tests
 
 ### presence, framework, location, notable patterns
 
 pytest + pytest-asyncio + pytest-cov + pytest-mock declared as dev deps.
 
-## 13. CI
+## CI
 
 ### presence, system, triggers, what it runs
 
 Parent monorepo runs GitHub Actions; sub-server-specific CI config not extracted.
 
-## 14. Container / packaging artifacts
+## Container / packaging artifacts
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 Dockerfile present; images published to AWS public ECR.
 
-## 15. Example client / developer ergonomics
+## Example client / developer ergonomics
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
 `pre-commit`, `commitizen`, `ruff`, `pyright` in dev deps — implies enforced commit convention and type-checking.
 
-## 16. Repo layout
+## Repo layout
 
 ### single-package / monorepo / vendored / other
 
 Sub-package inside the awslabs/mcp monorepo under `src/aws-api-mcp-server/`; self-contained `pyproject.toml` per sub-server.
 
-## 17. Notable structural choices
+## Notable structural choices
 
 Wraps the AWS CLI (not boto3) — ships `awscli==1.44.81` as a pinned direct dependency and invokes CLI commands on behalf of the LLM.
 
@@ -158,7 +158,7 @@ Pinning to a specific awscli version (1.44.81 exact) is unusual — suggests CLI
 
 Read/write guard via feature flag (`get_execution_plan` experimental).
 
-## 18. Unanticipated axes observed
+## Unanticipated axes observed
 
 Sub-server as a first-class Python package — every monorepo sub-server has its own `pyproject.toml`, console script, and PyPI release, so consumers install one sub-server without pulling the rest.
 
@@ -168,7 +168,7 @@ Explicit anti-multi-tenancy statement — not just silence; the README documents
 
 Optional OAuth on streamable-http with configurable issuer/JWKS — a richer auth story than most Python MCP servers, which typically bypass auth and rely on the stdio channel.
 
-## 19. Python-specific
+## Python-specific
 
 ### SDK / framework variant
 
@@ -216,6 +216,6 @@ Mixes `loguru` and `python-json-logger` — dual logging paths.
 
 `setuptools>=69.0.0` as a runtime dep (unusual for a hatchling-built package) — suggests setuptools-style entry-point resolution used at runtime.
 
-## 20. Gaps
+## Gaps
 
 Exact console-script implementation details, async vs sync tool signatures without reading source, whether OAuth validation is real JWT verification or a stub, exact sub-server CI config (inherits from monorepo), Docker image tagging scheme.

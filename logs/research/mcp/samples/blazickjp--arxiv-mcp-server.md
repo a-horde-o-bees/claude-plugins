@@ -26,7 +26,7 @@ main
 
 arXiv research MCP server — 6 tools (search, download, read, list, semantic search, citation graph) plus research-workflow prompts; ships MCP + Codex plugin + Claude Code skills in one repo.
 
-## 1. Language and runtime
+## Language and runtime
 
 ### language(s) + version constraints
 
@@ -36,11 +36,7 @@ Python 99.2%; Python 3.11+.
 
 raw `mcp` Python SDK (not FastMCP).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 2. Transport
+## Transport
 
 ### supported transports
 
@@ -50,11 +46,7 @@ stdio (via `uv` / `uvx`).
 
 stdio only.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 3. Distribution
+## Distribution
 
 ### every mechanism observed
 
@@ -68,11 +60,7 @@ PyPI via `uv tool install`, uvx, Docker, source.
 
 `uv tool install arxiv-mcp-server`; `uv tool install 'arxiv-mcp-server[pdf]'`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 4. Entry point / launch
+## Entry point / launch
 
 ### command(s) users/hosts run
 
@@ -82,21 +70,13 @@ none noted in this repo
 
 none.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 5. Configuration surface
+## Configuration surface
 
 ### how config reaches the server
 
 CLI flags (`--storage-path`) and env vars (`ARXIV_STORAGE_PATH`).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 6. Authentication
+## Authentication
 
 ### flow
 
@@ -106,41 +86,25 @@ none.
 
 N/A — arXiv public API; rate limit enforced locally (3-second minimum).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 7. Multi-tenancy
+## Multi-tenancy
 
 ### tenancy model
 
 single-user; local paper storage is per-instance.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 8. Capabilities exposed
+## Capabilities exposed
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
 6 tools — search, download, read, list stored, semantic search, citation graph; **prompts** for research analysis and literature review workflows.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 9. Observability
+## Observability
 
 ### logging destination + format, metrics, tracing, debug flags
 
 not surfaced; MCP-standard logging.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 10. Host integrations shown in README or repo
+## Host integrations shown in README or repo
 
 ### Claude Desktop
 
@@ -154,79 +118,51 @@ JSON config with uvx command.
 
 `skills/` directory suggests parallel skill artifacts.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 11. Claude Code plugin wrapper
+## Claude Code plugin wrapper
 
 ### presence and shape
 
 `skills/` directory present — explicit Claude Code skill wrapper co-located.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 12. Tests
+## Tests
 
 ### presence, framework, location, notable patterns
 
 pytest (`python -m pytest`); `tests/` directory.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 13. CI
+## CI
 
 ### presence, system, triggers, what it runs
 
 GitHub Actions `tests.yml` workflow with badge.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 14. Container / packaging artifacts
+## Container / packaging artifacts
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 Dockerfile present.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 15. Example client / developer ergonomics
+## Example client / developer ergonomics
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
 Claude Desktop JSON; uvx-style invocation.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 16. Repo layout
+## Repo layout
 
 ### single-package / monorepo / vendored / other
 
 single-package (`src/arxiv_mcp_server/`) + `skills/` + `.codex-plugin/`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 17. Notable structural choices
+## Notable structural choices
 
 Ships integration artifacts for three different host ecosystems in one repo: standard MCP (`src/`), Codex (`.codex-plugin/`), Claude Code skills (`skills/`). Optional `[pdf]` extra — separates core arXiv client from heavier PDF processing deps. Built-in 3-second rate-limit enforcement — reflects arXiv's rate-limit guidance at the client layer.
 
-## 18. Unanticipated axes observed
+## Unanticipated axes observed
 
 One server, three host-native plugin wrappers — the MCP server is the core, but Codex and Claude Code each get dedicated sibling integrations rather than expecting hosts to generically consume the MCP surface. "Research prompts" as a shipped artifact (not just tools) — leveraging MCP prompt primitives.
 
-## 19. Python-specific
+## Python-specific
 
 ### SDK / framework variant
 
@@ -268,6 +204,6 @@ not surfaced.
 
 Python 3.11+ floor (higher than most MCP servers which target 3.10) — suggests use of newer typing / exception-group features. PDF processing gated behind an extra, not a core dep — install stays slim for users who only need metadata.
 
-## 20. Gaps
+## Gaps
 
 Exact `mcp` SDK version pin not read. Contents of `skills/` directory (Claude Code wrapper shape) not inspected. `.codex-plugin/` manifest format not inspected.

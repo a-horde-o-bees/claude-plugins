@@ -26,7 +26,7 @@ main
 
 MySQL MCP server — exposes tables as MCP resources and executes SQL via tools; least-privilege user guidance built in.
 
-## 1. Language and runtime
+## Language and runtime
 
 ### language(s) + version constraints
 
@@ -36,11 +36,7 @@ Python (93.2%), Dockerfile (6.8%); Python version floor declared as `>=3.11` in 
 
 Anthropic MCP Python SDK (raw `mcp>=1.0.0`; not fastmcp).
 
-### pitfalls observed
-
-none noted in this repo
-
-## 2. Transport
+## Transport
 
 ### supported transports
 
@@ -50,11 +46,7 @@ stdio.
 
 Implicit — only stdio is documented; README describes it as "stdio-based protocol server rather than standalone application".
 
-### pitfalls observed
-
-none noted in this repo
-
-## 3. Distribution
+## Distribution
 
 ### every mechanism observed
 
@@ -68,11 +60,7 @@ PyPI, Smithery installer, pip.
 
 `pip install mysql-mcp-server`; `npx -y @smithery/cli install mysql-mcp-server --client claude`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 4. Entry point / launch
+## Entry point / launch
 
 ### command(s) users/hosts run
 
@@ -82,21 +70,13 @@ Via `uv` or `uvx` package runners. README explicitly discourages `python ...` di
 
 Dockerfile.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 5. Configuration surface
+## Configuration surface
 
 ### how config reaches the server
 
 Environment variables — `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_USER`, `MYSQL_PASSWORD`, `MYSQL_DATABASE`.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 6. Authentication
+## Authentication
 
 ### flow
 
@@ -106,41 +86,25 @@ MySQL username/password.
 
 Environment variables. README emphasizes "never commit" credentials and restricting to minimum-permission DB users.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 7. Multi-tenancy
+## Multi-tenancy
 
 ### tenancy model
 
 Single database connection per server; no per-request tenancy.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 8. Capabilities exposed
+## Capabilities exposed
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
 Resources — MySQL tables listed as resources, table contents readable. Tools — SQL query execution with error handling. Logging mentioned as "comprehensive."
 
-### pitfalls observed
-
-none noted in this repo
-
-## 9. Observability
+## Observability
 
 ### logging destination + format, metrics, tracing, debug flags
 
 Described as "comprehensive logging"; specifics not surfaced.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 10. Host integrations shown in README or repo
+## Host integrations shown in README or repo
 
 ### Claude Desktop
 
@@ -154,79 +118,51 @@ none noted in this repo
 
 Not enumerated.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 11. Claude Code plugin wrapper
+## Claude Code plugin wrapper
 
 ### presence and shape
 
 Not present.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 12. Tests
+## Tests
 
 ### presence, framework, location, notable patterns
 
 pytest-based (`pytest.ini`, `requirements-dev.txt`); `tests/` directory.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 13. CI
+## CI
 
 ### presence, system, triggers, what it runs
 
 GitHub Actions (test.yml badge); workflow specifics not extracted.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 14. Container / packaging artifacts
+## Container / packaging artifacts
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 Dockerfile present.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 15. Example client / developer ergonomics
+## Example client / developer ergonomics
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
 MCP Inspector debugging support referenced; JSON config examples for hosts.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 16. Repo layout
+## Repo layout
 
 ### single-package / monorepo / vendored / other
 
 Single-package Python — `src/mysql_mcp_server/`, `tests/`, `.github/workflows/`, pyproject.toml.
 
-### pitfalls observed
-
-none noted in this repo
-
-## 17. Notable structural choices
+## Notable structural choices
 
 Exposes tables as MCP resources (not only tools) — one of the few DB MCP servers to use the resource surface. README explicitly frames direct Python invocation as incorrect usage, enforcing the "protocol bridge" mental model. Security guidance is baked into the README (least-privilege user, never commit credentials).
 
-## 18. Unanticipated axes observed
+## Unanticipated axes observed
 
 Resources-as-tables pattern is rare — most DB MCP servers expose everything through tools. README's emphasis on non-direct invocation is an explicit agent-posture choice.
 
-## 19. Python-specific
+## Python-specific
 
 ### SDK / framework variant
 
@@ -268,6 +204,6 @@ Not observed beyond test config and Smithery CLI integration.
 
 Requirements split across `pyproject.toml` + `pytest.ini` + `requirements-dev.txt` — older Python project layout; most newer projects in the corpus consolidate into pyproject.toml. Python 3.11 floor is higher than most — likely driven by the MySQL connector or a typing feature.
 
-## 20. Gaps
+## Gaps
 
 Last commit date only inferred from v0.2.2 release. Logging format and destination not specified. CI workflow contents not extracted.
