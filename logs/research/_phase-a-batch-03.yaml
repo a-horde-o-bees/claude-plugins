@@ -1,0 +1,371 @@
+files_processed:
+  - path: logs/research/mcp/samples/exa-labs--exa-mcp-server.md
+    level1_normalized: true
+    bullets_converted: 36
+  - path: logs/research/mcp/samples/conikeec--mcpr.md
+    level1_normalized: true
+    bullets_converted: 39
+  - path: logs/research/mcp/samples/docker--hub-mcp.md
+    level1_normalized: true
+    bullets_converted: 40
+  - path: logs/research/mcp/samples/GLips--Figma-Context-MCP.md
+    level1_normalized: true
+    bullets_converted: 38
+  - path: logs/research/claude-marketplace/samples/anthropics--life-sciences.md
+    level1_normalized: true
+    bullets_converted: 95
+  - path: logs/research/claude-marketplace/samples/a3lem--my-claude-plugins.md
+    level1_normalized: true
+    bullets_converted: 95
+  - path: logs/research/claude-marketplace/samples/anthropics--knowledge-work-plugins.md
+    level1_normalized: true
+    bullets_converted: 100
+
+section_observations:
+  - subject: mcp
+    section: Identification
+    samples_in_batch: 4
+    sub_purposes:
+      url: 4
+      stars: 4
+      "last-commit": 1
+      "last-commit (date or relative)": 3
+      license: 4
+      "default branch": 4
+      "one-line purpose": 4
+  - subject: mcp
+    section: 1. Language and runtime
+    samples_in_batch: 4
+    sub_purposes:
+      "language(s) + version constraints": 4
+      "framework/SDK in use": 4
+      "pitfalls observed": 4
+  - subject: mcp
+    section: 2. Transport
+    samples_in_batch: 4
+    sub_purposes:
+      "supported transports": 4
+      "how selected": 1
+      "how selected (flag, env, separate entry, auto-detect, etc.)": 3
+      "pitfalls observed": 4
+  - subject: mcp
+    section: 3. Distribution
+    samples_in_batch: 4
+    sub_purposes:
+      "every mechanism observed": 3
+      "every mechanism observed (PyPI, npm, uvx, npx, Docker, Homebrew, Cargo, Go install, GitHub release binary, source-only, or other)": 1
+      "published package name(s)": 4
+      "install commands shown in README": 4
+      "pitfalls observed": 4
+  - subject: mcp
+    section: 4. Entry point / launch
+    samples_in_batch: 4
+    sub_purposes:
+      "command(s) users/hosts run": 4
+      "wrapper scripts": 1
+      "wrapper scripts, launchers, stubs": 3
+      "pitfalls observed": 4
+  - subject: mcp
+    section: 5. Configuration surface
+    samples_in_batch: 4
+    sub_purposes:
+      "how config reaches the server": 3
+      "how config reaches the server (env vars, CLI args, config file w/ path + format, stdin prompt, OS keyring, host-passed params, combinations)": 1
+      "pitfalls observed": 4
+    anomalies:
+      - "Sub-purpose label varies between bare 'how config reaches the server' and a long parenthetical-enumerated form"
+  - subject: mcp
+    section: 6. Authentication
+    samples_in_batch: 4
+    sub_purposes:
+      flow: 3
+      "flow (static token, OAuth w/ description, per-request header, none, other)": 1
+      "where credentials come from": 4
+      "pitfalls observed": 4
+  - subject: mcp
+    section: 7. Multi-tenancy
+    samples_in_batch: 4
+    sub_purposes:
+      "single-user / per-request tenant / workspace-keyed / not applicable / other": 3
+      "pitfalls observed": 4
+    anomalies:
+      - "exa-labs file has only a leading bullet without a key prefix; converted to a plain bullet, not a sub-heading"
+  - subject: mcp
+    section: 8. Capabilities exposed
+    samples_in_batch: 4
+    sub_purposes:
+      tools: 1
+      "specialized skills directory": 1
+      "tools / resources / prompts / sampling / roots / logging / other": 3
+      "pitfalls observed": 4
+  - subject: mcp
+    section: 9. Observability
+    samples_in_batch: 4
+    sub_purposes:
+      logging: 1
+      "logging destination + format, metrics, tracing, debug flags": 3
+      "pitfalls observed": 4
+  - subject: mcp
+    section: 10. Host integrations shown in README or repo
+    samples_in_batch: 4
+    sub_purposes:
+      "Claude Desktop": 1
+      "Claude Code": 1
+      "Other": 1
+      form: 1
+      "pitfalls observed": 4
+    anomalies:
+      - "exa-labs, GLips: section opens with bare bullets (host names) before any keyed sub-purposes; bare bullets retained as bullets"
+      - "docker--hub-mcp opens with a long prose paragraph followed by `Host: value` bullets; converted three host-specific entries"
+  - subject: mcp
+    section: 11. Claude Code plugin wrapper
+    samples_in_batch: 4
+    sub_purposes:
+      "presence and shape": 1
+      "presence and shape (.claude-plugin/plugin.json, .mcp.json at repo root, full plugin layout, not present, other)": 1
+      "pitfalls observed": 4
+    anomalies:
+      - "exa-labs and GLips have prose-only single bullet without a 'key:' label — left as bullet"
+  - subject: mcp
+    section: 12. Tests
+    samples_in_batch: 4
+    sub_purposes:
+      "presence, framework, location, notable patterns": 2
+      "pitfalls observed": 4
+  - subject: mcp
+    section: 13. CI
+    samples_in_batch: 4
+    sub_purposes:
+      "presence, system, triggers, what it runs": 2
+      "pitfalls observed": 4
+  - subject: mcp
+    section: 14. Container / packaging artifacts
+    samples_in_batch: 4
+    sub_purposes:
+      "Dockerfile, docker-compose, Helm, systemd, brew formula, etc.": 2
+      "pitfalls observed": 4
+  - subject: mcp
+    section: 15. Example client / developer ergonomics
+    samples_in_batch: 4
+    sub_purposes:
+      "MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs": 3
+      "pitfalls observed": 4
+  - subject: mcp
+    section: 16. Repo layout
+    samples_in_batch: 4
+    sub_purposes:
+      "single-package / monorepo / vendored / other — describe what's there": 2
+      "single-package / monorepo / vendored / other": 1
+      dirs: 1
+      config: 1
+      "integration configs": 1
+      "pitfalls observed": 4
+  - subject: mcp
+    section: 17. Notable structural choices
+    samples_in_batch: 4
+  - subject: mcp
+    section: 18. Unanticipated axes observed
+    samples_in_batch: 4
+  - subject: mcp
+    section: 20. Gaps
+    samples_in_batch: 4
+    anomalies:
+      - "Section number jumps from 18 to 20 — section 19 missing across all four mcp samples"
+  - subject: claude-marketplace
+    section: Identification
+    samples_in_batch: 3
+    sub_purposes:
+      URL: 3
+      Stars: 3
+      "Last commit date": 3
+      "Default branch": 3
+      License: 3
+      "Sample origin": 3
+      "One-line purpose": 3
+  - subject: claude-marketplace
+    section: 1. Marketplace discoverability
+    samples_in_batch: 3
+    sub_purposes:
+      "Manifest layout": 3
+      "Marketplace-level metadata": 3
+      "`metadata.pluginRoot`": 3
+      "Per-plugin discoverability": 3
+      "`$schema`": 3
+      "Reserved-name collision": 3
+      "Pitfalls observed": 3
+  - subject: claude-marketplace
+    section: 2. Plugin source binding
+    samples_in_batch: 3
+    sub_purposes:
+      "Source format(s) observed": 3
+      "`strict` field": 3
+      "`skills` override on marketplace entry": 3
+      "Version authority": 3
+      "Pitfalls observed": 3
+  - subject: claude-marketplace
+    section: 3. Channel distribution
+    samples_in_batch: 3
+    sub_purposes:
+      "Channel mechanism": 3
+      "Channel-pinning artifacts": 3
+      "Pitfalls observed": 3
+  - subject: claude-marketplace
+    section: 4. Version control and release cadence
+    samples_in_batch: 3
+    sub_purposes:
+      "Default branch name": 3
+      "Tag placement": 3
+      "Release branching": 3
+      "Pre-release suffixes": 3
+      "Dev-counter scheme": 3
+      "Pre-commit version bump": 3
+      "Pitfalls observed": 3
+  - subject: claude-marketplace
+    section: 5. Plugin-component registration
+    samples_in_batch: 3
+    sub_purposes:
+      "Reference style in plugin.json": 3
+      "Components observed": 3
+      "Agent frontmatter fields used": 3
+      "Agent tools syntax": 3
+      "Pitfalls observed": 3
+  - subject: claude-marketplace
+    section: 6. Dependency installation
+    samples_in_batch: 3
+    sub_purposes:
+      "Applicable": 3
+      "Dep manifest format": 3
+      "Install location": 3
+      "Install script location": 3
+      "Change detection": 3
+      "Retry-next-session invariant": 3
+      "Failure signaling": 3
+      "Runtime variant": 3
+      "Alternative approaches": 3
+      "Version-mismatch handling": 3
+      "Pitfalls observed": 3
+  - subject: claude-marketplace
+    section: 7. Bin-wrapped CLI distribution
+    samples_in_batch: 3
+    sub_purposes:
+      "Applicable": 3
+      "`bin/` files": 3
+      "Shebang convention": 3
+      "Runtime resolution": 3
+      "Venv handling (Python)": 3
+      "Platform support": 3
+      "Permissions": 3
+      "SessionStart relationship": 3
+      "Pitfalls observed": 3
+  - subject: claude-marketplace
+    section: 8. User configuration
+    samples_in_batch: 3
+    sub_purposes:
+      "`userConfig` present": 3
+      "Field count": 3
+      "`sensitive: true` usage": 3
+      "Schema richness": 3
+      "Reference in config substitution": 3
+      "Pitfalls observed": 3
+  - subject: claude-marketplace
+    section: 9. Tool-use enforcement
+    samples_in_batch: 3
+    sub_purposes:
+      "PreToolUse hooks": 3
+      "PostToolUse hooks": 3
+      "PermissionRequest/PermissionDenied hooks": 3
+      "Output convention": 3
+      "Failure posture": 3
+      "Top-level try/catch wrapping": 3
+      "Pitfalls observed": 3
+  - subject: claude-marketplace
+    section: 10. Session context loading
+    samples_in_batch: 3
+    sub_purposes:
+      "SessionStart used for context": 3
+      "UserPromptSubmit for context": 3
+      "`hookSpecificOutput.additionalContext` observed": 3
+      "SessionStart matcher": 3
+      "Pitfalls observed": 3
+  - subject: claude-marketplace
+    section: 11. Live monitoring and notifications
+    samples_in_batch: 3
+    sub_purposes:
+      "`monitors.json` present": 3
+      "Monitor count + purposes": 3
+      "`when` values used": 3
+      "Version-floor declaration": 3
+      "Pitfalls observed": 3
+  - subject: claude-marketplace
+    section: 12. Plugin-to-plugin dependencies
+    samples_in_batch: 3
+    sub_purposes:
+      "`dependencies` field present": 3
+      "Entries": 3
+      "`{plugin-name}--v{version}` tag format observed": 3
+      "Pitfalls observed": 3
+  - subject: claude-marketplace
+    section: 13. Testing and CI
+    samples_in_batch: 3
+    sub_purposes:
+      "Test framework": 3
+      "Tests location": 3
+      "Pytest config location": 3
+      "Python dep manifest for tests": 3
+      "CI present": 3
+      "CI file(s)": 3
+      "CI triggers": 3
+      "CI does": 3
+      "Matrix": 3
+      "Action pinning": 3
+      "Caching": 3
+      "Test runner invocation": 3
+      "Pitfalls observed": 3
+  - subject: claude-marketplace
+    section: 14. Release automation
+    samples_in_batch: 3
+    sub_purposes:
+      "`release.yml` (or equivalent) present": 3
+      "Release trigger": 3
+      "Automation shape": 3
+      "Tag-sanity gates": 3
+      "Release creation mechanism": 3
+      "Draft releases": 3
+      "CHANGELOG parsing": 3
+      "Pitfalls observed": 3
+  - subject: claude-marketplace
+    section: 15. Marketplace validation
+    samples_in_batch: 3
+    sub_purposes:
+      "Validation workflow present": 3
+      "Validator": 3
+      "Trigger": 3
+      "Frontmatter validation": 3
+      "Hooks.json validation": 3
+      "Pitfalls observed": 3
+  - subject: claude-marketplace
+    section: 16. Documentation
+    samples_in_batch: 3
+    sub_purposes:
+      "`README.md` at repo root": 3
+      "`README.md` per plugin": 3
+      "`CHANGELOG.md`": 3
+      "`architecture.md`": 3
+      "`CLAUDE.md`": 3
+      "`AGENTS.md`": 1
+      "`CONNECTORS.md`": 1
+      "`CONTRIBUTING.md`": 1
+      "Community health files": 3
+      "LICENSE": 3
+      "Badges / status indicators": 3
+      "Pitfalls observed": 3
+  - subject: claude-marketplace
+    section: 17. Novel axes
+    samples_in_batch: 3
+    anomalies:
+      - "Sub-purpose names in this section are descriptive prose phrases, not short labels — a few are very long (>80 chars)"
+  - subject: claude-marketplace
+    section: 18. Gaps
+    samples_in_batch: 3
+    anomalies:
+      - "anthropics--life-sciences and anthropics--knowledge-work-plugins '18. Gaps' sections were already plain bullets without 'Name: content' colons — no sub-headings created in those files for this section; sub-purposes shown reflect only a3lem--my-claude-plugins which used bolded-name colon form"

@@ -1,0 +1,176 @@
+files_processed:
+  - path: logs/research/mcp/samples/cyanheads--perplexity-mcp-server.md
+    level1_normalized: true
+    bullets_converted: 18
+  - path: logs/research/mcp/samples/DaInfernalCoder--perplexity-mcp.md
+    level1_normalized: true
+    bullets_converted: 19
+  - path: logs/research/mcp/samples/elastic--mcp-server-elasticsearch.md
+    level1_normalized: true
+    bullets_converted: 22
+  - path: logs/research/mcp/samples/cyanheads--git-mcp-server.md
+    level1_normalized: true
+    bullets_converted: 22
+  - path: logs/research/mcp/samples/ahmedmustahid--postgres-mcp-server.md
+    level1_normalized: true
+    bullets_converted: 30
+
+section_observations:
+  - subject: mcp
+    section: Identification
+    samples_in_batch: 5
+    sub_purposes:
+      url: 5
+      stars: 5
+      last-commit: 4
+      "last-commit (date or relative)": 1
+      license: 5
+      default branch: 5
+      one-line purpose: 5
+  - subject: mcp
+    section: 1. Language and runtime
+    samples_in_batch: 5
+    sub_purposes:
+      "language(s) + version constraints": 5
+      framework/SDK in use: 5
+      pitfalls observed: 5
+  - subject: mcp
+    section: 2. Transport
+    samples_in_batch: 5
+    sub_purposes:
+      supported transports: 5
+      how selected: 4
+      "how selected (flag, env, separate entry, auto-detect, etc.)": 1
+      pitfalls observed: 5
+  - subject: mcp
+    section: 3. Distribution
+    samples_in_batch: 5
+    sub_purposes:
+      every mechanism observed: 5
+      "published package name(s)": 5
+      install commands shown in README: 5
+      pitfalls observed: 5
+  - subject: mcp
+    section: 4. Entry point / launch
+    samples_in_batch: 5
+    sub_purposes:
+      "command(s) users/hosts run": 5
+      wrapper scripts: 3
+      "wrapper scripts, launchers, stubs": 1
+      pitfalls observed: 5
+  - subject: mcp
+    section: 5. Configuration surface
+    samples_in_batch: 5
+    sub_purposes:
+      how config reaches the server: 5
+      pitfalls observed: 5
+  - subject: mcp
+    section: 6. Authentication
+    samples_in_batch: 5
+    sub_purposes:
+      flow: 5
+      where credentials come from: 5
+      pitfalls observed: 5
+  - subject: mcp
+    section: 7. Multi-tenancy
+    samples_in_batch: 5
+    sub_purposes:
+      "single-user / per-request tenant / workspace-keyed / not applicable / other": 1
+      pitfalls observed: 5
+    anomalies:
+      - "4 of 5 samples have multi-tenancy content as a plain bullet without a field-name colon prefix; only ahmedmustahid uses the verbose template field-name"
+  - subject: mcp
+    section: 8. Capabilities exposed
+    samples_in_batch: 5
+    sub_purposes:
+      tools: 4
+      resources: 2
+      prompts: 1
+      "tools / resources / prompts / sampling / roots / logging / other": 1
+      pitfalls observed: 5
+  - subject: mcp
+    section: 9. Observability
+    samples_in_batch: 5
+    sub_purposes:
+      logging: 3
+      "logging destination + format, metrics, tracing, debug flags": 1
+      pitfalls observed: 5
+    anomalies:
+      - "elastic sample uses 'logging' as field but content is container-level; one sample (ahmedmustahid) uses verbose template label"
+  - subject: mcp
+    section: 10. Host integrations shown in README or repo
+    samples_in_batch: 5
+    sub_purposes:
+      Claude Desktop: 1
+      MCP Inspector: 1
+      Other editors/CLIs: 1
+      pitfalls observed: 5
+    anomalies:
+      - "4 of 5 samples list integrations as plain bullets without field-name colon shape; only ahmedmustahid uses bolded sub-fields"
+  - subject: mcp
+    section: 11. Claude Code plugin wrapper
+    samples_in_batch: 5
+    sub_purposes:
+      presence and shape: 1
+      pitfalls observed: 5
+    anomalies:
+      - "4 of 5 samples have a single plain bullet ('not present'); only ahmedmustahid uses field-name shape"
+  - subject: mcp
+    section: 12. Tests
+    samples_in_batch: 5
+    sub_purposes:
+      "presence, framework, location, notable patterns": 1
+      pitfalls observed: 5
+    anomalies:
+      - "4 of 5 samples report status as plain bullet without field-name shape"
+  - subject: mcp
+    section: 13. CI
+    samples_in_batch: 5
+    sub_purposes:
+      "presence, system, triggers, what it runs": 1
+      pitfalls observed: 5
+    anomalies:
+      - "4 of 5 samples report CI status as plain bullet without field-name shape"
+  - subject: mcp
+    section: 14. Container / packaging artifacts
+    samples_in_batch: 5
+    sub_purposes:
+      "Dockerfile, docker-compose, Helm, systemd, brew formula, etc.": 1
+      pitfalls observed: 5
+    anomalies:
+      - "4 of 5 samples list artifacts as plain bullets; only ahmedmustahid uses verbose field-name"
+  - subject: mcp
+    section: 15. Example client / developer ergonomics
+    samples_in_batch: 5
+    sub_purposes:
+      "MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs": 1
+      pitfalls observed: 5
+    anomalies:
+      - "4 of 5 samples list ergonomics as plain bullets; only ahmedmustahid uses verbose field-name"
+  - subject: mcp
+    section: 16. Repo layout
+    samples_in_batch: 5
+    sub_purposes:
+      dirs: 3
+      config: 3
+      additional: 1
+      "single-package / monorepo / vendored / other": 1
+      pitfalls observed: 5
+    anomalies:
+      - "elastic sample includes an 'additional' field absent from other samples"
+  - subject: mcp
+    section: 17. Notable structural choices
+    samples_in_batch: 4
+    anomalies:
+      - "section uses unstructured bullets across all 4 samples that have it; ahmedmustahid lacks a 'pitfalls observed' subsection here"
+  - subject: mcp
+    section: 18. Unanticipated axes observed
+    samples_in_batch: 4
+    anomalies:
+      - "section uses unstructured bullets across samples; ahmedmustahid lacks a 'pitfalls observed' subsection here"
+  - subject: mcp
+    section: 20. Gaps
+    samples_in_batch: 4
+    anomalies:
+      - "section number jumps from 18 to 20 (no 19) across all samples — template skip rather than per-file anomaly"
+      - "ahmedmustahid sample lacks section 17, 18, 20 'pitfalls observed' subsection — discrepancy"
