@@ -30,19 +30,9 @@ The research log type's _samples-template currently describes the per-sample sha
 
 - **Per-section observation accumulation.** Phase A discovered that the highest-value output of a sample-restructure run is not the cleaned files alone — it's the *per-section semantic observations* (proposed canonical labels, shape, common description, outliers, issues) that drive consolidated.md template design. Worth documenting as part of how research subjects evolve.
 
-## Proposed as a new pattern
+## Extracted as a pattern (live)
 
-**Sample-corpus retrofit.** This Phase A workflow is a distinct pattern worth its own entry, separate from context-aware-iteration. The combination of:
-
-- Single-subject batches (cross-subject mixing breaks per-section sample-count denominators)
-- Read-understand-rewrite (not regex transform — produces shallow observations otherwise)
-- Iterative instruction refinement between batches (canonical-label list, dedup rules, contamination handling — discovered during the run, threaded forward)
-- Per-batch semantic observations YAML (not just commit messages)
-- Final verification sweep against late-batch instruction additions
-
-…is a recurring shape for "we need to retrofit a sample corpus to a new structure while learning what the new structure should be." Distinct from a one-shot regex sweep. Distinct from a fresh research wave (this isn't gathering new samples — it's reshaping existing ones). Belongs as a sibling pattern to `mass-rename` and `context-aware-iteration`.
-
-Candidate filename: `logs/patterns/sample-corpus-retrofit.md`.
+- **Sample-corpus retrofit** — `logs/patterns/sample-corpus-retrofit.md`. Captures the read-understand-rewrite-accumulate workflow with iterative instruction refinement and verification sweep. Composes with `context-aware-iteration` for batch sizing. Distinct from `mass-rename` (mechanical, fully-specified target).
 
 ## Proposed for research-migration sandbox tasks (lifecycle hand-off)
 

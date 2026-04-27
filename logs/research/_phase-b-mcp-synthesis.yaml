@@ -1,0 +1,1180 @@
+subject: mcp
+files_processed:
+- AlwaysSany--deepl-fastmcp-python-server.md
+- Azure--azure-mcp.md
+- ClickHouse--mcp-clickhouse.md
+- DaInfernalCoder--perplexity-mcp.md
+- DiversioTeam--clickup-mcp.md
+- FuzzingLabs--mcp-security-hub.md
+- GLips--Figma-Context-MCP.md
+- HenkDz--postgresql-mcp-server.md
+- JackKuo666--PubMed-MCP-Server.md
+- PagerDuty--pagerduty-mcp-server.md
+- ahmedmustahid--postgres-mcp-server.md
+- alexei-led--k8s-mcp-server.md
+- alpacahq--alpaca-mcp-server.md
+- apollographql--apollo-mcp-server.md
+- awslabs--aws-api-mcp-server.md
+- awslabs--aws-documentation-mcp-server.md
+- awslabs--bedrock-kb-retrieval-mcp-server.md
+- awslabs--mcp-lambda-handler.md
+- awslabs--mcp.md
+- awslabs--openapi-mcp-server.md
+- baryhuang--mcp-server-aws-resources-python.md
+- bhauman--clojure-mcp.md
+- blazickjp--arxiv-mcp-server.md
+- chroma-core--chroma-mcp.md
+- ckreiling--mcp-server-docker.md
+- cloudflare--mcp-server-cloudflare.md
+- conikeec--mcpr.md
+- crystaldba--postgres-mcp.md
+- cyanheads--git-mcp-server.md
+- cyanheads--perplexity-mcp-server.md
+- datalayer--earthdata-mcp-server.md
+- datalayer--jupyter-mcp-server.md
+- designcomputer--mysql_mcp_server.md
+- docker--hub-mcp.md
+- duolingo--slack-mcp.md
+- echelon-ai-labs--servicenow-mcp.md
+- elastic--mcp-server-elasticsearch.md
+- exa-labs--exa-mcp-server.md
+- executeautomation--mcp-playwright.md
+- feiskyer--mcp-kubernetes-server.md
+- geropl--linear-mcp-go.md
+- getsentry--sentry-mcp.md
+- github--github-mcp-server.md
+- googleapis--mcp-toolbox.md
+- hannesrudolph--sqlite-explorer-fastmcp-mcp-server.md
+- hugoduncan--mcp-clj.md
+- idosal--git-mcp.md
+- isaaccorley--planetary-computer-mcp.md
+- jbeno--cursor-notebook-mcp.md
+- jlowin--fastmcp.md
+- jparkerweb--mcp-sqlite.md
+- korotovsky--slack-mcp-server.md
+- ktanaka101--mcp-server-duckdb.md
+- labeveryday--mcp_pdf_reader.md
+- lanbaoshen--mcp-jenkins.md
+- mahdin75--gis-mcp.md
+- makenotion--notion-mcp-server.md
+- mark3labs--mcp-go.md
+- marlonluo2018--pandas-mcp-server.md
+- metoro-io--mcp-golang.md
+- microsoft--playwright-mcp.md
+- misbahsy--video-audio-mcp.md
+- modelcontextprotocol--kotlin-sdk.md
+- modelcontextprotocol--servers.md
+- mongodb-js--mongodb-mcp-server.md
+- motherduckdb--mcp-server-motherduck.md
+- mukul975--cve-mcp-server.md
+- neondatabase--mcp-server-neon.md
+- normaltusker--kotlin-mcp-server.md
+- openags--paper-search-mcp.md
+- opensearch-project--opensearch-mcp-server-py.md
+- pathintegral-institute--mcp.science.md
+- paypal--paypal-mcp-server.md
+- ppl-ai--modelcontextprotocol.md
+- pragmar--mcp-server-webcrawl.md
+- qdrant--mcp-server-qdrant.md
+- redis--mcp-redis.md
+- reminia--zendesk-mcp-server.md
+- riza-io--riza-mcp.md
+- rohitg00--kubectl-mcp-server.md
+- rust-mcp-stack--rust-mcp-filesystem.md
+- sajal2692--mcp-weaviate.md
+- samuelgursky--davinci-resolve-mcp.md
+- sandraschi--email-mcp.md
+- severity1--terraform-cloud-mcp.md
+- shibuiwilliam--mcp-server-scikit-learn.md
+- shreyaskarnik--huggingface-mcp-server.md
+- slackapi--slack-mcp-plugin.md
+- sooperset--mcp-atlassian.md
+- spences10--mcp-turso-cloud.md
+- stripe--agent-toolkit.md
+- supabase-community--supabase-mcp.md
+- teaguesterling--duckdb_mcp.md
+- the-momentum--fhir-mcp-server.md
+- thenets--ghost-mcp.md
+- tumf--grafana-loki-mcp.md
+- twolven--mcp-server-puppeteer-py.md
+- upstash--context7.md
+- utensils--mcp-nixos.md
+- v-3--discordmcp.md
+- viant--mcp.md
+- voska--hass-mcp.md
+- zilliztech--mcp-server-milvus.md
+- zongmin-yu--semantic-scholar-fastmcp-mcp-server.md
+files_processed_count: 104
+sections:
+  Identification:
+    total_samples: 104
+    sub_purposes_seen:
+      url: 104
+      stars: 104
+      last-commit: 104
+      license: 104
+      default branch: 104
+      one-line purpose: 104
+    shape_consensus:
+      closed-set: 10
+    common_descriptions:
+    - batch-01: Repo identity card — fixed metadata fields used for cross-sample correlation. Stable closed vocabulary across
+        the batch.
+    - batch-02: Identifies the upstream repo with provenance metadata (URL, stars, last-commit, license, default branch) and
+        a one-line purpose statement summarizing what the server does. Stable vocabulary across samples.
+    - batch-03: Stable identification block recording where the repo lives, its popularity/recency, license, default branch,
+        and a one-line purpose statement. Vocabulary is fixed across the batch.
+    - batch-04: Standard repo identification block — URL, stars, last-commit (often "not captured" for monorepo sub-paths),
+        license, default branch, and a one-line purpose statement summarizing what the server does.
+    - batch-05: Repository fingerprint — URL, popularity, recency, license, default branch, and a one-line purpose. Stable
+        closed-set vocabulary.
+    - batch-06: Stable identification block — URL, stars, last-commit, license, default branch, and one-line purpose. Acts
+        as the at-a-glance card before axis-by-axis analysis.
+    - batch-07: Stable identification block — every sample uses exactly the same six sub-purposes.
+    - batch-08: Stable repo-metadata header. Same six fields recur in every sample.
+    - batch-09: Stable six-field identification block on every sample.
+    - batch-10: Stable identification metadata block. Slots uniformly present.
+    outliers:
+    - sample: Azure--azure-mcp.md
+      why: archived repo — `last-commit` carries archival narrative rather than a date; `one-line purpose` is "TBD"
+      batch: batch-02
+    issues:
+    - batch-01: Source labels for last-commit varied ('last-commit' vs 'last-commit (date or relative)'); rewrite normalized
+        to 'last-commit'.
+    - batch-02: '`last-commit` field name varied in source (`last-commit (date or relative)`); normalized to canonical `last-commit`'
+    - batch-03: Source files used 'last-commit (date or relative)' as the heading text; canonicalized to 'last-commit'.
+    - batch-04: Source files used a longer label '### last-commit (date or relative)' which canonicalizes to '### last-commit';
+        rewrites consolidated.
+    - batch-06: Several samples carry parenthetical guidance in headings ('last-commit (date or relative)') as authoring scaffolding;
+        canonicalized to bare 'last-commit'.
+    - batch-07: stars values vary in style ('~158', '99', '24.7k', '1,500'); template should pick a canonical format
+    - batch-07: last-commit values vary between dates, version refs, and 'not captured'; template should accept either form
+    - batch-08: Several samples answer last-commit with a release tag ('v0.11.1', '2026.1.26') rather than a commit date;
+        the sub-purpose probably should be 'last-commit or last-release' to reflect the corpus' actual answer shape.
+    - batch-08: license values often combine two licenses ('Apache 2.0 (new) / MIT (existing)'); the field handles dual-license
+        repos in practice.
+    - batch-09: Most sources keep 'last-commit (date or relative)' parenthetical scaffolding in the heading; canonicalize
+        to bare 'last-commit'.
+    - batch-10: last-commit varies wildly between calendar dates, version+date pairs, activity descriptions ('103 commits'),
+        and 'not captured'; template should accept any of these forms
+  1. Language and runtime:
+    total_samples: 104
+    sub_purposes_seen:
+      language(s) + version constraints: 104
+      framework/SDK in use: 104
+      pitfalls observed: 97
+    shape_consensus:
+      closed-set: 10
+    common_descriptions:
+    - batch-01: Names the implementation language(s), version floor or edition, and the MCP SDK / framework variant the server
+        is built on. Stable across the batch.
+    - batch-02: Captures the primary language(s) and any version constraints, plus the MCP framework or SDK variant in use
+        (raw `mcp` SDK, FastMCP 1.x/2.x, language-specific SDKs). Pitfalls slot rarely populated.
+    - batch-03: Captures the implementation language(s), version-floor pin, and which MCP SDK/framework is used (raw mcp Python
+        SDK, FastMCP 1.x/2.x, TypeScript SDK, or hand-rolled). Pitfalls are usually 'none noted' but occasionally absorb a
+        'what couldn't be determined' list.
+    - batch-04: Captures language choice plus version floor (Python `>=3.10` dominates this batch; one Rust outlier) and which
+        MCP SDK or framework variant is used (raw `mcp`, FastMCP 1.x/2.x/3.x, or custom). Two stable sub-purposes.
+    - batch-05: Languages used (often with GitHub-detected percentages), runtime version floor, and the framework or SDK driving
+        the server.
+    - batch-06: Implementation language(s) with version-floor constraints and the MCP framework or SDK choice. Pitfalls slot
+        most often empty; when populated, points at unusual version floors or version-constraint omissions.
+    - batch-07: Records primary language + version floor and the MCP framework or SDK variant. Pitfalls slot mostly empty
+        except where version floor itself is the concern.
+    - batch-08: 'Captures the runtime stack: primary language and version floor, plus what MCP SDK or framework the server
+        builds on.'
+    - batch-09: Identifies the primary language(s) plus minimum version, and the MCP framework/SDK variant.
+    - batch-10: Identifies primary language(s), version constraints, MCP SDK/framework variant.
+    outliers:
+    - sample: apollographql--apollo-mcp-server.md
+      why: Rust + Cargo (only non-Python sample in batch); framework field is generic ("Rust MCP implementation; Apollo GraphQL
+        ecosystem")
+      batch: batch-04
+    - sample: awslabs--mcp-lambda-handler.md
+      why: Custom — does not depend on `mcp` or `fastmcp`; framework variant is "custom"
+      batch: batch-04
+    - sample: misbahsy--video-audio-mcp.md
+      why: pitfall actually populated — Python 3.13 floor flagged as aggressive
+      batch: batch-07
+    issues:
+    - batch-02: '`pitfalls observed` is `none noted in this repo` in 4 of 5 samples — consider folding into the section''s
+        primary content or making it conditional'
+    - batch-03: 'Pitfalls in this section sometimes carry gap-style content (''what couldn''t be determined: ...'') instead
+        of true pitfalls — overlap with section 20.'
+    - batch-04: pitfalls observed in section 1 was 'none noted' for 6/7 samples and a duplicate of section-20 Gaps in 1/7
+        — strong candidate for folding pitfalls into a section-level Notes or omitting entirely.
+    - batch-05: section-1 'pitfalls observed' frequently restates section-20 Gaps; 5/12 in this batch dedup'd to 'none noted'.
+        Slot becomes near-empty after dedup — consider whether section 1 needs its own pitfalls slot
+    - batch-09: '''pitfalls observed'' is empty in most samples for this section; consider whether section 1 needs the slot
+        at all.'
+    - batch-10: pitfalls observed appears 14/14 but fires non-empty in only 1 sample; consider folding into structural-choices
+        section or making explicitly optional
+  2. Transport:
+    total_samples: 104
+    sub_purposes_seen:
+      supported transports: 104
+      how selected: 104
+      pitfalls observed: 97
+    shape_consensus:
+      closed-set: 10
+    common_descriptions:
+    - batch-01: Which MCP transports (stdio, HTTP/streamable-HTTP, SSE) the server supports and how a host picks one (CLI
+        flag, env, default-only, etc.). Stable shape across the batch.
+    - batch-02: Records which MCP transports the server supports (stdio, SSE, Streamable HTTP, custom) and the mechanism used
+        to select among them (CLI flag, env var, separate entry point, default-only). Most servers default to stdio; multi-transport
+        support varies.
+    - batch-03: Records which transports the server speaks (stdio is universal; many add streamable-http, some HTTP/SSE) and
+        the mechanism for selecting between them (CLI flag, env var, positional subcommand, or implicit/default).
+    - batch-04: 'Two sub-purposes: which transports the server supports (stdio dominant; streamable-http for HTTP-mode servers;
+        HTTP-via-API-Gateway for Lambda) and the mechanism for choosing between them (CLI flag, env var, config file, or "not
+        configurable / single mode").'
+    - batch-05: Which transports the server speaks (stdio dominates) and the mechanism that selects among them.
+    - batch-06: Which transports the server supports (stdio, HTTP/SSE, streamable-http, in-memory) and how it selects between
+        them — CLI flag, separate console script, separate subcommand, env var, or implicit default.
+    - batch-07: Lists supported MCP transports (stdio, SSE, HTTP, streamable-http) and how the active transport is selected.
+    - batch-08: Names the transports the server speaks (stdio, HTTP/SSE, streamable-http, WebSocket, ChannelTransport) and
+        how one is chosen.
+    - batch-09: Names the MCP transports the server speaks (stdio dominant; SSE, streamable-http, http appear in larger servers;
+        one HTTP-only remote service).
+    - batch-10: Lists transports the server supports and the selection mechanism.
+    outliers:
+    - sample: Azure--azure-mcp.md
+      why: not extracted — archived
+      batch: batch-02
+    - sample: DaInfernalCoder--perplexity-mcp.md
+      why: transport selection inferred from SDK use, not documented
+      batch: batch-02
+    - sample: ahmedmustahid--postgres-mcp-server.md
+      why: Transport selected via positional subcommand rather than flag/env — only sample in batch using this pattern.
+      batch: batch-03
+    - sample: awslabs--mcp-lambda-handler.md
+      why: Pure HTTP via API Gateway; no stdio path at all
+      batch: batch-04
+    - sample: apollographql--apollo-mcp-server.md
+      why: Transports not extracted from README (redirected to external docs)
+      batch: batch-04
+    - sample: bhauman--clojure-mcp.md
+      why: uses nREPL as transport — REPL-as-transport unusual
+      batch: batch-05
+    - sample: cloudflare--mcp-server-cloudflare.md
+      why: transports selected by URL path on same Worker (/mcp vs /sse)
+      batch: batch-05
+    issues:
+    - batch-02: '`how selected` parenthetical examples in source labels were stripped to canonical short form'
+    - batch-06: '''how selected'' source labels are highly variable (parenthesized lists like ''flag, env, separate entry,
+        auto-detect''); canonicalize to bare ''how selected''.'
+    - batch-09: Several samples use 'inferred stdio' when not explicitly documented — consider canonical phrasing.
+  3. Distribution:
+    total_samples: 104
+    sub_purposes_seen:
+      every mechanism observed: 104
+      published package name(s): 104
+      install commands shown in README: 104
+      pitfalls observed: 97
+    shape_consensus:
+      closed-set: 10
+    common_descriptions:
+    - batch-01: Enumerates the distribution channels (PyPI, npm, Docker, Homebrew, go install, GitHub release, etc.), the
+        package name(s) under each, and the install commands the README actually shows. Strong predictor of cross-ecosystem
+        reach.
+    - batch-02: Enumerates how end users obtain the server (PyPI, npm, uvx, npx, Docker, source clone, install-from-git, Smithery),
+        the published package names where applicable, and the README's recommended install commands. Pitfalls slot occasionally
+        records design observations rather than warnings.
+    - batch-03: Enumerates distribution channels (PyPI/uvx, npm/npx, Docker registries, Smithery, source clone), names the
+        canonical published package, and quotes the README install one-liner.
+    - batch-04: Three stable sub-purposes — list of every distribution channel observed (PyPI, uvx, Docker, source build,
+        Cargo, GitHub releases), the canonical published package name(s), and the install commands surfaced in the README.
+        PyPI + uvx + Docker triad dominates Python samples.
+    - batch-05: 'How the server is distributed: registry channels, runner shims, Docker images, source-only paths.'
+    - batch-06: Inventory of distribution channels (PyPI/uvx, npm/npx, Docker/GHCR, GitHub release binaries, source clone,
+        hosted SaaS endpoints, Smithery, mcp-get) along with package name(s) and install commands shown to users. Pitfalls
+        in this section frequently restate Gaps; consider folding.
+    - batch-07: Captures distribution channels, package names, and install one-liners. Pitfalls slot is the most contaminated
+        across the batch.
+    - batch-08: 'Inventory of how the server is shipped: PyPI/uvx, npm/npx, Docker images, MCP Bundles (.mcpb), source-only,
+        hosted service.'
+    - batch-09: Enumerates every distribution channel, package name(s), and install one-liner(s).
+    - batch-10: Catalogs every distribution channel, package names, install commands.
+    outliers:
+    - sample: DiversioTeam--clickup-mcp.md
+      why: install-from-git via uvx; no PyPI publication; pitfalls slot used to flag distribution-pattern observations
+      batch: batch-02
+    - sample: cloudflare--mcp-server-cloudflare.md
+      why: remote-only — no installable artifact
+      batch: batch-05
+    - sample: cyanheads--perplexity-mcp-server.md
+      why: no published npm package; source-clone-only
+      batch: batch-05
+    issues:
+    - batch-01: '''every mechanism observed'' source headings carried long parenthesized variants (''(PyPI, npm, uvx, npx,
+        ...)'') — canonical short form preserved facts and shed the catalogue.'
+    - batch-02: '`pitfalls observed` is sometimes used as an observation slot for the section''s content (DiversioTeam, DaInfernalCoder,
+        Azure) rather than for actual pitfalls — vocabulary mismatch with the field name'
+    - batch-03: When a server is not published to a package manager (PubMed, FuzzingLabs), this is signal — preserved as 'not
+        published to PyPI at time of research' / 'no PyPI publishing'.
+    - batch-04: pitfalls observed in section 3 frequently contained content belonging to other sections (axis observations
+        duplicating section 18, or 'what couldn't be determined' content duplicating section 20). Three of the seven samples
+        needed relocations from this slot — strong signal that 'pitfalls observed' is being misused as overflow for cross-section
+        notes.
+    - batch-07: section 3 pitfalls slot acts as a magnet for cross-section contamination — ~4 of 14 samples had it carrying
+        section 17 (notable choices) or section 20 (gaps) content
+    - batch-09: When unpublished or remote-only, 'published package name(s)' carries language like 'not published / remote-only
+        / Smithery as primary'. Worth a canonical 'distribution status' axis.
+  4. Entry point / launch:
+    total_samples: 104
+    sub_purposes_seen:
+      command(s) users/hosts run: 104
+      wrapper scripts, launchers, stubs: 104
+      pitfalls observed: 97
+    shape_consensus:
+      closed-set: 10
+    common_descriptions:
+    - batch-01: The exact command a host or user invokes to launch the server, plus any wrapper scripts (Docker entrypoints,
+        npm shims, uvx invocations) interposed between the host and the binary.
+    - batch-02: Captures the launch command users or hosts invoke (console script, npx, uvx, bare `python main.py`, etc.)
+        and any wrapper scripts, launchers, or stubs (Dockerfiles, dev-compose files, console-script entry points). Pitfalls
+        rarely populated.
+    - batch-03: The exact command users or MCP hosts invoke (uvx X / npx X / docker run X / python -m X) plus any wrapper
+        layer (console-script entry, Dockerfile, Makefile, smithery.yaml).
+    - batch-04: Two sub-purposes — the actual command(s) users or hosts run to launch the server, and any wrapper scripts,
+        console-script entries, launchers, or stubs that wrap that command. For Python servers a `[project.scripts]` console
+        script + `module:main` is the recurring shape.
+    - batch-05: The exact command end users invoke (console script, npx/bunx/uvx, npm script, Clojure tool alias, generated
+        binary) and any wrapper layer.
+    - batch-06: Literal commands a user or host invokes to launch the server, plus wrapper scripts, launchers, stubs, or setup
+        subcommands. Pitfalls almost always 'none'.
+    - batch-07: Captures user-/host-facing launch command and any wrapper scripts. Pitfalls slot universally empty.
+    - batch-08: Names the actual command users or host configs run and any auxiliary launchers.
+    - batch-09: Actual command users put in their MCP host config, plus any wrapper scripts/launchers/stubs.
+    - batch-10: Captures exact launch command and any wrapper script/stub.
+    outliers:
+    - sample: awslabs--mcp-lambda-handler.md
+      why: Library, not a server — 'command' is N/A; entry point is a Lambda handler that imports and delegates
+      batch: batch-04
+    issues: []
+  5. Configuration surface:
+    total_samples: 104
+    sub_purposes_seen:
+      how config reaches the server: 104
+      pitfalls observed: 97
+    shape_consensus:
+      closed-set: 10
+    common_descriptions:
+    - batch-01: How configuration is delivered — env vars, CLI flags, YAML/JSON config files, host-passed params, or combinations.
+        The MySQL and Elasticsearch samples are env-var-driven; the toolbox sample uses a YAML manifest with hot reload.
+    - batch-02: Describes how runtime configuration reaches the server — env vars, CLI args, `.env` files, OS-native config
+        dirs (`platformdirs`), persistent state, FastMCP config files. Three distinct credential-storage conventions surface
+        across the batch (env vars, `.env`, OS config dir).
+    - batch-03: How configuration arrives at runtime — env vars, CLI flags, .env, JSON config files, host-injected env blocks,
+        mounted credential files, optional per-tool enablement configs.
+    - batch-04: Single sub-purpose describing the channels through which configuration reaches the server — env vars, CLI
+        args, config files, and combinations. Env-var-first is the dominant Python pattern (especially for AWS-credentialed
+        servers); config-file-only appears in the Rust/Apollo sample.
+    - batch-05: How configuration arrives — env vars dominant; CLI args, .env, host JSON config, framework-specific configs
+        as variants.
+    - batch-06: How configuration enters the process — env vars, CLI flags, JSON config files, host-passed parameters, combinations
+        — with actual variable and flag names enumerated.
+    - batch-07: How config reaches the server. Originals frequently carried meta-instruction text in the heading; stripped.
+    - batch-08: 'Mechanisms by which configuration enters the server: env vars, CLI flags, JSON/YAML config files, .env, host-passed
+        params, query-string params on hosted endpoints.'
+    - batch-09: 'How the server gets its configuration: env vars, CLI flags, .env, URI schemes, JSON host config, runtime
+        tool-call reconfiguration.'
+    - batch-10: Describes the configuration channel, often documenting precedence.
+    outliers:
+    - sample: DiversioTeam--clickup-mcp.md
+      why: uses `platformdirs`-based persistent config rather than the more common env-var pattern
+      batch: batch-02
+    issues:
+    - batch-02: Source labels carried parenthetical example lists (`env vars, CLI args, config file w/ path + format, ...`);
+        stripped to canonical short label
+    - batch-07: several samples retained meta-instruction scaffolding in headings
+  6. Authentication:
+    total_samples: 104
+    sub_purposes_seen:
+      flow: 104
+      where credentials come from: 104
+      pitfalls observed: 97
+    shape_consensus:
+      closed-set: 10
+    common_descriptions:
+    - batch-01: Auth model (static token, username/password, IAM/ADC, delegated, none) and the channel that delivers credentials
+        (env vars, config file, ambient cloud identity).
+    - batch-02: Captures the auth flow (static API key, bearer token, none, OAuth, transport-conditional) and where credentials
+        are sourced (env var, CLI arg, config file, persistent store, host-passed params). Most batch entries are static API
+        keys; ClickHouse is transport-conditional (none on stdio, bearer token on HTTP/SSE).
+    - batch-03: Auth mechanism (static API key/secret pair, connection-string credentials, OAuth, kubeconfig, none) and the
+        channel that delivers credentials (env var, flag, mounted file, embedded in DSN). OAuth is rare across the batch.
+    - batch-04: Two sub-purposes — auth flow (none, AWS credential chain, OAuth, API Gateway Authorizer, per-API mix) and
+        credential source (env, AWS profile, request headers, upstream authorizer). AWS credential chain dominates; API-Gateway-delegated
+        and per-API-mixed are notable variants.
+    - batch-05: Auth mechanism (none, API key, token, OAuth, JWT, vendor cloud creds, DB URI) and the channel that delivers
+        credentials.
+    - batch-06: Authentication mechanism (static token, API key, OAuth, kubeconfig delegation, none) and the source of credentials
+        (env var, dashboard-issued token, OAuth provider, kubeconfig file). Multiple-mechanism support (Basic + OAuth + API
+        Key) appears for enterprise SaaS targets.
+    - batch-07: Auth flow type and where credentials originate. Many local-file servers answer "none / N/A" — preserved verbatim
+        as signal.
+    - batch-08: Auth scheme and where credentials originate. Several samples answer 'not applicable'.
+    - batch-09: Auth model and credential source.
+    - batch-10: Captures auth flow and credential source.
+    outliers:
+    - sample: awslabs--aws-documentation-mcp-server.md
+      why: Auth flow is 'none required' — public docs fetch; credentials N/A
+      batch: batch-04
+    - sample: awslabs--openapi-mcp-server.md
+      why: Auth is per-spec (Basic, Bearer, API Key, AWS Cognito), each spec independent
+      batch: batch-04
+    - sample: cyanheads--git-mcp-server.md
+      why: tri-mode auth (none/jwt/oauth) selectable via env
+      batch: batch-05
+    - sample: cloudflare--mcp-server-cloudflare.md
+      why: OAuth-like flow on remote endpoints; mcp-remote handles handshake
+      batch: batch-05
+    issues: []
+  7. Multi-tenancy:
+    total_samples: 104
+    sub_purposes_seen:
+      tenancy model: 104
+      pitfalls observed: 97
+    shape_consensus:
+      closed-set: 10
+    common_descriptions:
+    - batch-01: Whether the server is single-tenant (one connection per process), per-request tenant-keyed, workspace-keyed,
+        or N/A. All three batch samples are single-tenant per process.
+    - batch-02: Describes the tenancy model — single-user, per-request tenant, workspace-keyed, not applicable. Most servers
+        are implicitly single-user (single API key per deployment); ClickHouse is the standout with per-request connection
+        overrides via middleware.
+    - batch-03: Whether the server is single-user per process, single-connection per instance, or supports per-request tenant
+        switching. Every sample in batch is single-user/single-connection; HTTP-transport variants explicitly note no per-request
+        switching.
+    - batch-04: Single sub-purpose describing the tenancy model — single-user (most common), per-request-tenant (Lambda model),
+        workspace/tag-keyed (tag-scoped KB access), multi-spec composition, or not-applicable (stateless public fetch). Several
+        samples include explicit anti-multi-tenancy statements.
+    - batch-05: Whether the server serves one user, per-request tenancy via auth token, workspace-keyed via base-dir restriction,
+        per-target via runtime switch, or N/A.
+    - batch-06: Tenancy posture — single-user, per-request tenant via OAuth, per-repository (parameterized URL), workspace-keyed,
+        or N/A. Hosted SaaS endpoints push toward per-user OAuth; stdio binaries default to single-user.
+    - batch-07: Single-user vs per-request tenant vs workspace-keyed vs not-applicable. Source headings typically used long
+        enumeration form; canonicalized to `tenancy model`.
+    - batch-08: Single-user vs single-merchant vs per-request-tenant via OAuth vs workspace-keyed vs not-applicable.
+    - batch-09: Single-user vs workspace-keyed (Slack OAuth) vs per-request tenant arguments (Weaviate, Turso). Often 'not
+        applicable' for local single-host servers.
+    - batch-10: States tenancy model. Most samples in batch are single-user.
+    outliers:
+    - sample: ClickHouse--mcp-clickhouse.md
+      why: per-request tenancy via middleware-managed context state — closest to multi-tenancy in the batch
+      batch: batch-02
+    - sample: awslabs--mcp-lambda-handler.md
+      why: Per-request tenant model with DynamoDB-backed session state — only one in batch with this shape
+      batch: batch-04
+    - sample: awslabs--openapi-mcp-server.md
+      why: Multi-spec composition rather than tenant model — semantically different axis ('many APIs in one server' vs 'many
+        users')
+      batch: batch-04
+    - sample: cloudflare--mcp-server-cloudflare.md
+      why: per-request tenancy keyed by bearer token
+      batch: batch-05
+    - sample: cyanheads--git-mcp-server.md
+      why: workspace-keyed via base-directory restriction
+      batch: batch-05
+    issues:
+    - batch-01: Source headings used long parenthesized variants ('single-user / per-request tenant / workspace-keyed / not
+        applicable / other'); canonicalized to 'tenancy model' which is shorter and still names the question. Elasticsearch
+        sample omitted the sub-heading entirely (just a bullet under the section); rewrite added the 'tenancy model' sub-heading
+        for consistency.
+    - batch-02: Source label `single-user / per-request tenant / workspace-keyed / not applicable / other` is an enumeration
+        of values, not a sub-purpose; consolidated to canonical `tenancy model`
+    - batch-02: DaInfernalCoder source had no `###` subheading at all — content directly under section heading; promoted to
+        canonical `tenancy model`
+    - batch-03: Source heading text was the long enumerated form ('single-user / per-request tenant / workspace-keyed / not
+        applicable / other'); canonicalized to 'tenancy model'.
+    - batch-04: Source labels were a long enumeration ('single-user / per-request tenant / workspace-keyed / not applicable
+        / other') — canonicalized to 'tenancy model'.
+    - batch-07: marlonluo2018--pandas-mcp-server originally used section 7 pitfalls slot to hold sections 17 and 18 content;
+        relocated
+    - batch-09: Source labels for this slot vary widely; canonicalize to 'tenancy model'.
+  8. Capabilities exposed:
+    total_samples: 104
+    sub_purposes_seen:
+      tools / resources / prompts / sampling / roots / logging / other: 104
+      pitfalls observed: 97
+    shape_consensus:
+      closed-set: 10
+    common_descriptions:
+    - batch-01: Inventory of MCP capability surfaces the server exposes — tool list, resources, prompts, sampling, roots,
+        logging — and which surfaces it deliberately uses. Most batch samples concentrate on tools; MySQL surfaces resources
+        too, toolbox surfaces prompts.
+    - batch-02: Lists the MCP primitives the server exposes — tool names with brief descriptions, plus mention of resources,
+        prompts, sampling, roots, logging where applicable. Tool counts vary widely (3 in Perplexity, 28 in ClickUp, 7 in
+        DeepL).
+    - batch-03: Inventory of MCP capability surface — tool count and grouping, presence of resources/prompts/sampling/roots/logging.
+        Most samples expose tools only; one (ahmedmustahid) also exposes resources. Tool counts vary widely (5 in PubMed to
+        65+ in PagerDuty).
+    - batch-04: Single sub-purpose enumerating which MCP primitives the server exposes and what each does at a high level.
+        Tools-only is the dominant pattern; openapi-mcp-server uniquely uses tools + resources + prompts; apollo and openapi
+        servers source their tool surface dynamically (from GraphQL ops or OpenAPI specs).
+    - batch-05: What MCP primitives the server exposes — tools dominant; minorities expose prompts (docker-compose workflow,
+        research analysis) or resources.
+    - batch-06: Catalog of MCP primitives exposed — typically tools (named, sometimes counted by toolset), occasionally first-class
+        skills or embedded-agent providers; resources/prompts/sampling/roots rarely appear. Tool count ranges 2–100+.
+    - batch-07: What MCP capability surfaces the server exposes. Tool counts range 1-92 in this batch; resources rare; prompts/sampling/roots
+        almost never present.
+    - batch-08: What MCP primitives the server exposes — almost always tools (1-60+), occasionally resources, rarely prompts/sampling/roots.
+    - batch-09: Inventory of MCP primitives — tools dominant; some additionally use resources (Zendesk KB, Hugging Face hf://),
+        prompts (Hugging Face, email-mcp), or sampling (email-mcp).
+    - batch-10: Enumerates MCP capability surface. Tool counts range 2–16+.
+    outliers: []
+    issues:
+    - batch-01: The canonical sub-purpose label is a long slash-list; in practice each sample fills it with a single-paragraph
+        description rather than enumerating per-surface. Template might benefit from per-surface sub-bullets if cross-sample
+        analysis wants to count resource/prompt support.
+    - batch-02: Section label uses a slash-list of primitive types as the field name; that's the canonical taxonomy from the
+        MCP spec, not a free-form sub-purpose
+    - batch-06: exa-labs added a 'specialized skills directory' sub-purpose; consolidated. Template should keep one canonical
+        sub-purpose.
+    - batch-09: Slash-list slot heading is verbose; canonical short would be 'capabilities inventory' but corpus uses slash-list.
+  9. Observability:
+    total_samples: 104
+    sub_purposes_seen:
+      logging destination + format, metrics, tracing, debug flags: 104
+      pitfalls observed: 97
+    shape_consensus:
+      closed-set: 10
+    common_descriptions:
+    - batch-01: Logging destination and format, metrics, tracing, debug flags. Across the batch, content is sparse — repos
+        surface logging only at the 'comprehensive logging' or 'standard stderr' level. Pitfalls section frequently captures
+        the gap.
+    - batch-02: Captures logging destinations and format, metrics, tracing, and debug flags. Most batch entries report "not
+        captured" or "not documented"; ClickHouse and ClickUp are the exceptions with documented `--debug` flags or middleware-based
+        logging examples.
+    - batch-03: Logging destination/format, metrics, tracing, debug flags. Frequently 'not surfaced' or 'not captured' across
+        the batch — observability is poorly documented in MCP server READMEs as a class.
+    - batch-04: Single sub-purpose covering logging libraries (loguru dominant in Python), structured-log formats, metrics
+        (Prometheus optional in one), tracing (X-Ray implicit in Lambda case), and debug flags (FASTMCP_LOG_LEVEL convention).
+        Often answered with library names and "specifics not extracted".
+    - batch-05: Logging output (stdout/stderr, file rotation, structured Pino/JSON), optional metrics/tracing (OTel in two),
+        debug flags. Many say 'not surfaced'.
+    - batch-06: Where logs go (stderr/file/none), what format, whether metrics/tracing exist, and any debug flags. Most samples
+        report 'not documented' or note stdio framing pressure forcing logs off stdout.
+    - batch-07: Logging, metrics, tracing, debug flags. Most samples answer "not surfaced" — observability consistently undeclared
+        in MCP server READMEs.
+    - batch-08: Logging destination/format, metrics, tracing, debug flags. Most answer 'not documented'; mongodb, cve-mcp,
+        neon document explicit observability stacks.
+    - batch-09: Logging destination, debug flags, metrics, tracing. Most samples report 'not documented'; outliers (email-mcp)
+        ship monitoring web dashboard.
+    - batch-10: Reports on logging, metrics, tracing, debug flags. Frequently 'not captured'.
+    outliers: []
+    issues:
+    - batch-01: Section is consistently thin across the batch; consider whether 'pitfalls observed' should fold into the primary
+        content (gap-as-content) since two of three samples either say 'none noted' or repeat 'not specified' in pitfalls.
+    - batch-03: Across the batch, this section is the most frequently 'not surfaced' — suggests README authors do not foreground
+        observability, or that the research phase deprioritized scraping it.
+    - batch-08: Several samples used the section-9 'pitfalls observed' slot to restate content already captured elsewhere;
+        deduped during rewrite.
+    - batch-09: Half the batch has no real content here. Consider whether 'observability' is worth keeping as a section or
+        could fold into section 5 when only a debug env var is documented.
+    - batch-10: Two samples (tumf, utensils) used pitfalls slot to dump section-20 Gap content; template should discourage
+        cross-section bleed
+  10. Host integrations shown in README or repo:
+    total_samples: 104
+    sub_purposes_seen:
+      pitfalls observed: 79
+      Claude Desktop: 61
+      Cursor: 28
+      Claude Code: 21
+      VS Code: 19
+      Cline: 10
+      Windsurf: 9
+      Other: 8
+      Other editors/CLIs: 6
+      Smithery: 6
+      Gemini CLI: 5
+      Codex: 4
+      Kiro: 4
+      Zed: 4
+      MCP Inspector: 2
+      Claude: 2
+      Goose: 2
+      Qodo Gen: 2
+      OpenCode: 2
+      Antigravity: 2
+      Warp: 2
+      Cursor IDE: 2
+      JetBrains IDEs: 2
+      Docker-based deployment: 1
+      Google Antigravity: 1
+      PyCharm: 1
+      Other MCP-enabled clients: 1
+      General MCP-compatible clients: 1
+      Cline with Amazon Bedrock: 1
+      generic AI client: 1
+      Cursor / other MCP clients: 1
+      Claude (Desktop implied): 1
+      Cloudflare AI Playground: 1
+      OpenAI Responses API: 1
+      nREPL: 1
+      Shadow-cljs: 1
+      Babashka/Basilisp/Scittle: 1
+      Git/Shell: 1
+      Cloud Postgres: 1
+      JupyterLab: 1
+      Other MCP clients: 1
+      Cloudflare Workers: 1
+      Docker Ask Gordon: 1
+      Docker: 1
+      v0 by Vercel: 1
+      Roo Code: 1
+      Cline (VS Code): 1
+      Highlight AI: 1
+      Augment Code: 1
+      Msty AI: 1
+      GitHub Copilot: 1
+      ChatGPT Copilot: 1
+      .vscode/: 1
+      VSCode: 1
+      VSCode Copilot Chat: 1
+      GitHub Copilot CLI: 1
+      JetBrains IDE: 1
+      Junie: 1
+      Copilot: 1
+      Factory: 1
+      LM Studio: 1
+      opencode: 1
+      Amp: 1
+      Enterprise Slack: 1
+      Metoro Kubernetes monitoring MCP server: 1
+      VS Code (Insiders): 1
+      Copilot CLI: 1
+      Codex CLI: 1
+      LangChain: 1
+      Zencoder: 1
+      VS Code + GitHub Copilot: 1
+      Vercel AI SDK: 1
+      OpenAI Code: 1
+      Other agents: 1
+      Other hosts: 1
+      NixOS/Home Manager: 1
+      Claude for Desktop: 1
+      HTTP bridge: 1
+      Claude Desktop / MCP clients: 1
+    shape_consensus:
+      open-enumeration: 10
+    common_descriptions:
+    - batch-01: Enumerates the hosts the README claims compatibility with, plus the form the integration takes (JSON config
+        snippet, plugin wrapper, shell command, deployment target). Vocabulary is genuinely unbounded across hosts; the elasticsearch
+        sample even includes a non-host item ('Docker-based deployment' as a deployment-target axis).
+    - batch-02: Documents per-host integration snippets and pointers (Claude Desktop, Claude Code, Cursor, VS Code, etc.)
+        when README enumerates them; otherwise records "not captured per host". Open-enumeration shape — the host vocabulary
+        is potentially large.
+    - batch-03: 'One ### per host the README documents. Claude Desktop is near-universal (7/8); Cursor common (4/8); long
+        tail of Cline, Smithery, VS Code, PyCharm, Gemini CLI, MCP Inspector, generic catch-all entries.'
+    - batch-04: Per-host enumeration of how each host configures or installs the server (one-click install button, JSON snippet,
+        in-repo plugin wrapper, docs link). Sub-server READMEs in the awslabs monorepo defer to the parent monorepo for host
+        examples; the umbrella awslabs/mcp README enumerates 7 hosts; apollo lists 3.
+    - batch-05: Per-host integrations called out in the repo. Claude Desktop dominant (9/12); recurring entries Cursor, Cline,
+        Claude Code, Smithery, vendor-specific.
+    - batch-06: One sub-heading per host integration documented in the repo. Open enumeration — host vocabulary is genuinely
+        unbounded; hosts proliferate quickly (15+ in exa-labs alone).
+    - batch-07: Open enumeration of hosts. One `### per host` is the right model. Vocabulary is unbounded — playwright-mcp
+        listed 19 hosts; correlations across batches suggest 30+ distinct host names will appear across the full corpus.
+    - batch-08: Per-host enumeration of integration evidence (JSON snippet, install badge, dedicated CLI, plugin wrapper).
+        Vocabulary genuinely open.
+    - batch-09: 'Per-host coverage: Claude Desktop, Claude Code, Cursor, VS Code, Windsurf, Smithery, Cline, Augment, Zed,
+        GitHub Copilot, OpenAI Agents SDK, WSL, Glama. Each gets `### <Host>` with a paragraph describing form (JSON snippet,
+        deeplink, registration command, MCPB drag-and-drop). Some collapse multiple hosts under one heading when the JSON
+        shape is identical.'
+    - batch-10: Lists host integrations. Claude Desktop dominates; Cursor, Windsurf, Vercel AI SDK, NixOS, etc. appear sporadically.
+        Some entries (HTTP bridge, NixOS/Home Manager) are not hosts at all but distribution channels.
+    outliers:
+    - sample: googleapis--mcp-toolbox.md
+      why: 'Source carried a meta-instruction paragraph (''For each host encountered ...'') describing the template''s intent
+        rather than concrete content; rewrite stripped the meta-instruction and surfaced the four hosts as ### blocks.'
+      batch: batch-01
+    - sample: elastic--mcp-server-elasticsearch.md
+      why: 'Listed ''Docker-based deployment (EC2, ECS, EKS)'' alongside hosts — that''s a deployment-target axis, not a host
+        integration. Preserved as a ### block but flag for consideration: should section 10 admit deployment targets, or is
+        that a different axis?'
+      batch: batch-01
+    - sample: ClickHouse--mcp-clickhouse.md
+      why: only sample with per-host `###` subheadings (Claude Desktop, Other editors/CLIs)
+      batch: batch-02
+    - sample: Azure--azure-mcp.md
+      why: source had a meta-instruction preamble paragraph ("For each host encountered ... record form ...") — stripped per
+        new rule
+      batch: batch-02
+    - sample: awslabs--aws-api-mcp-server.md
+      why: Sub-server defers to parent monorepo; no per-host enumeration in this file
+      batch: batch-04
+    - sample: awslabs--aws-documentation-mcp-server.md
+      why: Same — defers to parent
+      batch: batch-04
+    - sample: awslabs--bedrock-kb-retrieval-mcp-server.md
+      why: Same — defers to parent
+      batch: batch-04
+    - sample: awslabs--mcp-lambda-handler.md
+      why: Not a host-configured server; deployed as Lambda + API Gateway
+      batch: batch-04
+    - sample: awslabs--openapi-mcp-server.md
+      why: Same — defers to parent
+      batch: batch-04
+    - sample: echelon-ai-labs--servicenow-mcp.md
+      why: section content is 'Not captured per host' rather than per-host enumeration
+      batch: batch-06
+    - sample: exa-labs--exa-mcp-server.md
+      why: 13 host sub-headings — broadest enumeration in the batch
+      batch: batch-06
+    - sample: microsoft--playwright-mcp.md
+      why: 19 hosts listed — highest cardinality
+      batch: batch-07
+    - sample: korotovsky--slack-mcp-server.md
+      why: lists "Claude" rather than "Claude Desktop"/"Claude Code"; also "Enterprise Slack" which is a deployment flavor,
+        not a host
+      batch: batch-07
+    - sample: metoro-io--mcp-golang.md
+      why: lists "Metoro Kubernetes monitoring MCP server" as production reference, not a host
+      batch: batch-07
+    issues:
+    - batch-01: Section 10 mixes 'host integrations' (editor/agent clients) with 'deployment targets' (cloud platforms) in
+        the elasticsearch sample. Template should clarify whether deployment targets belong here or in section 14 (container/packaging)
+        / a new axis.
+    - batch-01: The mcp-toolbox source still contained the prompt-template instructions verbatim — this is a hint that other
+        samples may carry similar uncleaned scaffolding.
+    - batch-02: 4 of 5 samples don't enumerate hosts in the source — section may be empty more often than populated
+    - batch-02: Azure sample carried original prompt-template meta-instruction text in the section body; stripped
+    - batch-03: 'Genuinely unbounded vocabulary — modeling as ### per host is correct but expect many more host names across
+        the full corpus. Some samples used catch-all phrases (''Other editors/CLIs'', ''General MCP-compatible clients'')
+        which are anti-information; consider canonicalizing to a single ''Other'' bucket or omitting.'
+    - batch-04: Five of seven samples have empty section 10 (defer to parent or N/A) — section is genuinely open-enumeration,
+        but for monorepo sub-servers the section may be better expressed as a single 'aggregated in parent' note rather than
+        an enumeration.
+    - batch-04: Original source had a meta-instruction preamble paragraph ('For each host encountered…'); stripped per instructions
+        in 2 of 7 rewrites.
+    - batch-05: host names vary in format ('Claude Desktop' vs 'Claude (Desktop implied)' vs grouped 'Cursor / other MCP clients');
+        canonicalize to single host names
+    - batch-05: open vocabulary likely exceeds 30+ host names across the corpus; rare custom hosts (Cloudflare AI Playground,
+        nREPL, JupyterLab) appear
+    - batch-06: Cursor vs Cursor IDE, Cline vs Cline (VS Code), Other vs Other editors/CLIs — host names need normalization
+        for cross-sample aggregation.
+    - batch-06: Some sources used a single freeform bullet ('- Claude Desktop, Cursor, ...') rather than per-host headings;
+        rewrites split into per-host headings.
+    - batch-07: host vocabulary is unbounded; canonicalization (Claude vs Claude Desktop vs Claude Code) needed
+    - batch-07: some `###` host entries are not actually hosts (Enterprise Slack flavor, production-reference servers); template
+        guidance should require a per-entry test 'is this a host integration?'
+    - batch-07: for SDK/framework samples, the section is appropriately answered 'not applicable' — keep that as a valid emission
+    - batch-08: Host names are not normalized — 'Cursor' vs 'Cursor IDE'; 'VS Code', 'VS Code (Insiders)', 'VS Code + GitHub
+        Copilot'. Template should specify canonical host names.
+    - batch-08: Several samples (paypal, ppl-ai, pragmar) presented hosts as flat bullets rather than per-host '### name'
+        subheadings; rewrite expanded them.
+    - batch-09: 'Host vocabulary genuinely unbounded; ### per host correct. Expect 15+ host names across full corpus.'
+    - batch-09: Some collapse N hosts under one heading ('Cursor, Windsurf, GitHub Copilot, 15+ other MCP clients'); template
+        should bless either pattern.
+    - batch-10: host vocabulary genuinely unbounded — 14+ distinct entries across 14 samples
+    - batch-10: Some entries are not hosts but distribution channels — template should clarify what qualifies
+  11. Claude Code plugin wrapper:
+    total_samples: 104
+    sub_purposes_seen:
+      presence and shape: 104
+      pitfalls observed: 97
+    shape_consensus:
+      closed-set: 10
+    common_descriptions:
+    - batch-01: Whether the repo ships a Claude Code plugin manifest / wrapper. None of the batch samples ship one — all three
+        answer 'not present'.
+    - batch-02: Records whether a `.claude-plugin/` wrapper or `.mcp.json` is present in the repo and its shape. Universally
+        `none` / `not present` in this batch.
+    - batch-03: Whether the repo ships a `.claude-plugin/` directory or other Claude Code plugin wrapper. None of the 8 samples
+        in this batch ship one — section is consistently 'not present' / 'not observed'.
+    - batch-04: Single sub-purpose — whether and how a Claude Code plugin wrapper is present (`.claude-plugin/plugin.json`,
+        `.mcp.json` at root, full plugin layout, or none). Only the apollo sample shows any in-repo Claude surface (`.claude/`
+        + `CLAUDE.md`); awslabs sub-servers all answer "none".
+    - batch-05: Whether the repo ships a Claude Code plugin wrapper. Almost universally absent (11/12); blazickjp/arxiv-mcp-server
+        has `skills/`.
+    - batch-06: Whether the repo ships an in-tree `.claude-plugin/` and/or `.mcp.json` wrapper. Most samples 'not present';
+        getsentry and exa-labs ship full wrappers, doubling as a notable structural choice.
+    - batch-07: Presence/shape of any Claude Code plugin wrapper. Across this batch every sample answers "not present" or
+        "not applicable" — no real wrappers found.
+    - batch-08: Most samples answer 'not present'; outliers (motherduckdb, neon, openags) ship Claude Code skill files in-tree.
+        First batch with non-zero positive content for this section.
+    - batch-09: Almost always 'none observed / not present'. One sample (slackapi/slack-mcp-plugin) is the inverse case —
+        configs-only repo with `.claude-plugin/` and `.cursor-plugin/`.
+    - batch-10: Records whether `.claude-plugin/` ships and its shape. Most absent; stripe and upstash ship something.
+    outliers: []
+    issues:
+    - batch-01: Across the batch, this section is uniformly negative; the section's value is in the negative answer (predictor
+        for wrapper-adoption) but the structure makes it look unfilled. Worth thinking about whether absence should remain
+        a full section or move to a single 'plugin wrapper' yes/no axis.
+    - batch-02: Sub-purpose answer is uniformly `none` across the batch — section may be a marker for absence rather than
+        rich content
+    - batch-03: 'Across the batch this section returns ''not present'' for every sample. Worth flagging: the section may be
+        doing little discriminative work and could fold into a presence-checklist instead of a full ### subsection.'
+    - batch-05: 11/12 report 'not present' — slot has near-zero positive content but the rare positive cases (arxiv-mcp-server)
+        signal cross-host plugin packaging
+    - batch-07: every sample in this batch answers 'not present' — section folding into a single boolean signal across the
+        corpus
+    - batch-09: '''presence and shape'' is ''none'' in 14/15. Section is near-no-op for non-Anthropic-shipped servers. Consider
+        folding into section 10 as a host entry rather than its own section.'
+  12. Tests:
+    total_samples: 104
+    sub_purposes_seen:
+      presence, framework, location, notable patterns: 104
+      pitfalls observed: 97
+    shape_consensus:
+      closed-set: 10
+    common_descriptions:
+    - batch-01: Presence of a test suite, framework (pytest / Go testing / Rust cargo test), location (`tests/`), and any
+        notable patterns. Detail varies — concrete framework named when surfaced, otherwise 'present' with implied conventions.
+    - batch-02: Captures presence of tests, framework used (pytest, pytest-asyncio, etc.), location in the repo, and notable
+        patterns (Docker-Compose-backed integration services, test-density observations).
+    - batch-03: Whether tests exist, the framework (pytest, pytest-asyncio, vitest), location (tests/ vs co-located), and
+        notable patterns (multi-layered suites, integration vs integrity tests). Often 'not surfaced within budget'.
+    - batch-04: Single sub-purpose summarizing test presence, framework (pytest + pytest-asyncio dominant), location (per-server
+        tests/), and notable patterns (custom `--run-live` markers, codecov, e2e harnesses).
+    - batch-05: Test framework (pytest dominant, Vitest/Bun in TS, mock transports in mcpr), presence of tests/, notable patterns.
+        Many 'not detailed'.
+    - batch-06: Tests presence, framework (pytest, Jest, Vitest, go-vcr, Playwright), test directory location, notable patterns
+        (cassette recording, evaluation harnesses).
+    - batch-07: Test presence, framework, location, notable patterns.
+    - batch-08: Test framework, location, notable patterns. Several samples answer 'not extracted'.
+    - batch-09: Test framework (pytest dominant, cargo-nextest for Rust, custom 5-phase live suite for DaVinci), location,
+        notable patterns.
+    - batch-10: Captures whether tests exist, framework, notable patterns.
+    outliers: []
+    issues: []
+  13. CI:
+    total_samples: 104
+    sub_purposes_seen:
+      presence, system, triggers, what it runs: 104
+      pitfalls observed: 97
+    shape_consensus:
+      closed-set: 10
+    common_descriptions:
+    - batch-01: CI system (GitHub Actions, Buildkite, both), triggers, and what the workflow runs. The elasticsearch sample
+        is the outlier with dual CI systems.
+    - batch-02: Records CI presence (most commonly GitHub Actions), triggers, and what it runs. Frequently "not captured"
+        or "not documented" in the batch.
+    - batch-03: Presence and system (predominantly GitHub Actions), triggers (PR, tag, schedule), and what jobs run (build,
+        test, security scanning). Frequently 'present but specifics not extracted within budget'.
+    - batch-04: Single sub-purpose — CI system (GitHub Actions universal in batch), triggers, and what it runs (build, test,
+        release-binaries, release-container, lint, secrets scan, OSSF Scorecard). Sub-server samples typically defer to "parent
+        monorepo".
+    - batch-05: CI system (GitHub Actions universal in batch), what jobs run, triggers. Specifics often 'not enumerated'.
+    - batch-06: CI system in use (GitHub Actions when present), triggers, and what the workflows run. Many samples confirm
+        .github/workflows exists without enumerating contents.
+    - batch-07: CI presence (typically GitHub Actions), workflow files, triggers, what the pipeline runs.
+    - batch-08: CI system (almost universally GitHub Actions when present), triggers, what jobs run. Few samples extract specific
+        workflow contents.
+    - batch-09: Whether GitHub Actions configured and what jobs run. Most report 'present' with limited detail.
+    - batch-10: Notes CI presence, trigger model, what it runs.
+    outliers: []
+    issues: []
+  14. Container / packaging artifacts:
+    total_samples: 104
+    sub_purposes_seen:
+      Dockerfile, docker-compose, Helm, systemd, brew formula, etc.: 104
+      pitfalls observed: 97
+    shape_consensus:
+      closed-set: 10
+    common_descriptions:
+    - batch-01: Containers, Helm charts, brew formulas, systemd units — non-language-package distribution artifacts. All three
+        samples ship a Dockerfile; toolbox additionally has Homebrew.
+    - batch-02: Lists container and packaging artifacts present (Dockerfile, docker-compose, Helm chart, systemd unit, brew
+        formula, etc.). Dockerfile presence is common; docker-compose is the differentiator for multi-transport servers.
+    - batch-03: Inventory of container/packaging artifacts in the repo — Dockerfile is near-universal, docker-compose appears
+        for multi-service, Helm/systemd/brew not seen in this batch.
+    - batch-04: Single sub-purpose enumerating containerization and packaging artifacts. Dockerfiles dominant; one Lambda-zip
+        case; no Helm/systemd/brew observed in this batch.
+    - batch-05: Container/packaging artifacts. Dockerfile dominant (10/12). Multi-arch publishing, Smithery YAML, multi-stage
+        builds notable.
+    - batch-06: Inventory of container and packaging artifacts. Dockerfile dominant; docker-compose, devcontainer, Cloudflare
+        Workers, brew formulas occasional.
+    - batch-07: Container and packaging artifacts. Frequently "none observed"; when populated, Dockerfile + docker-compose
+        are the dominant pair.
+    - batch-08: Container artifacts present. Half answer 'not observed'; the other half ship at least a Dockerfile.
+    - batch-09: Container and OS-packaging artifacts. Dockerfile dominant; multi-stage Rust, MCPB bundles, 'none observed'
+        all appear.
+    - batch-10: Lists container/packaging artifacts. Nix flakes appear once.
+    outliers: []
+    issues: []
+  15. Example client / developer ergonomics:
+    total_samples: 104
+    sub_purposes_seen:
+      MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs: 104
+      pitfalls observed: 97
+    shape_consensus:
+      closed-set: 10
+    common_descriptions:
+    - batch-01: Developer-facing affordances — MCP Inspector entry, curl stubs, make targets, dev scripts, sample host configs.
+        Often sparse; surfaces things like Makefiles, JSON config examples, docs-site infrastructure.
+    - batch-02: Records developer ergonomics — MCP Inspector launchers, curl stubs, make targets, dev scripts, sample configs,
+        management subcommands. Variable across samples; ClickUp's setup subcommands and ClickHouse's `fastmcp.json` are notable.
+    - batch-03: Developer-facing ergonomics — Makefiles, dev scripts, MCP Inspector launchers, sample host config snippets,
+        lint/format toolchains, docs sites.
+    - batch-04: Single sub-purpose covering whatever the repo offers for developer onboarding — Inspector launchers, sample
+        configs, dev-extras pip targets, devcontainer, pre-commit pipelines, custom pytest flags. Variable in content; consistent
+        in label.
+    - batch-05: Dev-experience artifacts — README JSON snippets, Makefile/devbox/devenv, MCP Inspector usage, scaffolding
+        generators (mcpr generate-project), or extensive docs.
+    - batch-06: Developer ergonomics — sample configs, MCP Inspector wiring, manual CLI testing flows, evaluation harnesses,
+        install-orchestration tools (Smithery, mcp-get, fastmcp install, setup subcommands).
+    - batch-07: Dev-experience artifacts (Inspector recipe, curl stubs, Makefile, example configs, examples/ directory).
+    - batch-08: MCP Inspector launchers, sample JSON configs, Makefiles, .env.example files, install badges, dedicated docs.
+    - batch-09: Inspector launchers (`fastmcp dev`), Makefile/Justfile, sample configs, devcontainers, formatter/type-checker
+        invocations.
+    - batch-10: Records dev ergonomics — Makefile, Inspector launchers, sample configs, lint/format toolchain, pre-commit
+        hooks.
+    outliers: []
+    issues: []
+  16. Repo layout:
+    total_samples: 104
+    sub_purposes_seen:
+      single-package / monorepo / vendored / other: 104
+      pitfalls observed: 97
+    shape_consensus:
+      closed-set: 10
+    common_descriptions:
+    - batch-01: Top-level repo organization (single-package vs monorepo vs vendored), key directories, and config files. All
+        three batch samples are single-package; the elasticsearch sample's source had additional sub-headings (`### dirs`,
+        `### config`, `### additional`) that the rewrite consolidated into the canonical paragraph.
+    - batch-02: Classifies the repo layout — single-package, monorepo, vendored, other — with brief description of dirs and
+        config files present. All batch samples are single-package.
+    - batch-03: Top-level repo shape — single-package is dominant; one monorepo (FuzzingLabs, 38 servers); occasional 'mixed'
+        (TS + pyproject.toml co-present in ahmedmustahid). Bare-script root layout (PubMed) is an antipattern flag.
+    - batch-04: Single sub-purpose categorizing repo shape — single-package, monorepo, sub-package within a monorepo, or other.
+        The awslabs samples are all sub-packages of one monorepo; the apollo sample is a single Rust crate.
+    - batch-05: Top-level repo shape. Single-package src/<pkg>/ dominates (10/12); cloudflare is the only Turbo monorepo.
+    - batch-06: Structural shape — single-package dominant, monorepo (pnpm workspaces, Turbo), Polylith, mixed-language repos
+        with parallel subprojects.
+    - batch-07: Repo organization category. Most samples are single-package.
+    - batch-08: Top-level repo organization. Notable variants — Hatch force-include monorepo (mcp.science), language-mixed
+        monorepo (modelcontextprotocol/servers).
+    - batch-09: High-level layout type. Single-package dominant; one config-only repo; one multi-directory repo with co-located
+        webapp + monitoring.
+    - batch-10: Classifies repo. Most single-package; stripe, supabase, upstash are monorepos.
+    outliers:
+    - sample: DaInfernalCoder--perplexity-mcp.md
+      why: source split layout into `### dirs` / `### config` non-canonical sub-headings; consolidated into canonical paragraph
+      batch: batch-02
+    issues:
+    - batch-01: Source for elastic sample used non-canonical sub-purposes ('### dirs', '### config', '### additional'). Consolidated
+        into the canonical 'single-package / monorepo / vendored / other' paragraph; consider whether the canonical label
+        should be split to admit dirs/config/additional as recurring sub-purposes if other samples do similar.
+    - batch-02: DaInfernalCoder source split section 16 into non-canonical `### dirs` / `### config` — consolidated per new
+        rule
+    - batch-05: two TS samples (cyanheads x2) split section 16 into '### dirs', '### config' — non-canonical; consolidated
+    - batch-06: Multiple samples split this section into 'dirs', 'config', 'integration configs' sub-purposes; consolidated.
+    - batch-07: korotovsky and makenotion originally split into `### dirs`/`### config`/`### additional`/`### documentation`
+        sub-headings — consolidated
+    - batch-10: upstash--context7 source split section 16 into dirs/config/additional/documentation sub-purposes; consolidated
+  17. Notable structural choices:
+    total_samples: 104
+    sub_purposes_seen: {}
+    shape_consensus:
+      freeform: 10
+    common_descriptions:
+    - batch-01: Freeform observations on what stood out structurally — distribution breadth, transport choice, configuration
+        model, lifecycle posture. All three samples used bullet lists in source; rewrites converted to paragraph prose per
+        instructions.
+    - batch-02: Freeform bulleted observations about what stood out structurally in the repo — design patterns, unusual choices,
+        distinguishing features. No fixed sub-purpose vocabulary.
+    - batch-03: Freeform paragraph capturing distinctive design choices that don't fit elsewhere — tool-consolidation strategies,
+        paper-mode-as-default, vendor vs community authorship, dev-tooling stack, distribution-channel mix. No fixed sub-purpose
+        vocabulary; content varies per repo.
+    - batch-04: Freeform paragraphs (originally bulleted) capturing what stood out about the sample's structure — pinning
+        conventions, dependency-set quirks, unusual frameworks, capability-source decisions, distribution choices. No fixed
+        sub-vocabulary; each sample lists 4-8 distinct observations.
+    - batch-05: 'Freeform observations about distinctive structural decisions — typically 2-6 standout choices: deployment
+        model, sandboxing, multi-mode binaries, capability rationale, unusual auth split.'
+    - batch-06: Freeform observations on distinctive structural decisions — distribution model, capability gating mechanism,
+        transport selection style, packaging-vs-source posture, license choice, dogfooding tells.
+    - batch-07: Freeform observations about distinctive design or structural choices. All 14 samples populate this; sources
+        vary between bulleted lists and prose.
+    - batch-08: Freeform commentary on what stands out about the repo's architecture or product choices.
+    - batch-09: Freeform prose listing 2–6 structural choices that stood out — version pins, dual-mode architectures, safety
+        flag schemes, multi-backend abstractions, packaging unusualness.
+    - batch-10: Freeform observations on structural decisions. Typically 3–8 paragraphs per sample.
+    outliers: []
+    issues:
+    - batch-01: All three source samples used bullet lists despite the section being freeform-by-spec. Consider whether the
+        template should explicitly permit bullets here — the bullet form actually works well for parallel observations like
+        'Rust', 'Docker-only', 'Buildkite + GHA', 'Makefile'.
+    - batch-03: Source files often used bullet lists; consolidated to paragraph form per instructions. Some bullets bled into
+        other sections' pitfalls in source — corrected during rewrite.
+    - batch-04: Sources used bulleted lists for this section; rewrites converted to short paragraphs with blank-line separators
+        per markdown.md ('paragraphs are single lines, blank line between elements'). One observation per paragraph reads
+        naturally.
+    - batch-05: this section is the dominant home for cross-section commentary that gets duplicated into section-1/3/7/9 pitfalls;
+        dedup rule pulled multiple bullets back here
+    - batch-09: Several samples emit 5+ bullets here; collapsing to a dense paragraph loses bullet boundaries. Consider whether
+        template should bless bulleted output here as the source's natural form.
+  18. Unanticipated axes observed:
+    total_samples: 104
+    sub_purposes_seen: {}
+    shape_consensus:
+      freeform: 10
+    common_descriptions:
+    - batch-01: Freeform observations on axes the researcher did not anticipate going in — implementation language, CI diversity,
+        lifecycle stage, declarative tool authoring, hot reload, cross-ecosystem shims. Each sample contributes 2-4 distinct
+        axis observations.
+    - batch-02: Freeform observations about design axes the sample reveals that weren't anticipated by the original section
+        taxonomy — emergent patterns, orthogonal concerns, design dimensions to fold back into future research.
+    - batch-03: Freeform observations about decision dimensions or design axes the repo reveals that the canonical section
+        list didn't anticipate — vendor-vs-community trust, paper-mode safety patterns, license unusualness, transport-specific
+        concerns (CORS), bundled-tooling axes, supply-chain rigor.
+    - batch-04: Freeform observations identifying design axes the sample-template authors didn't anticipate — e.g. tag-driven
+        access scoping, server-vs-server-framework, partition-scoped tool surfaces, spec-driven vs code-driven tools, capability
+        probing at start, deprecation as a versioning signal. Each sample yields 3-5 axis observations.
+    - batch-05: Freeform observations about design dimensions this repo surfaces beyond the prompt's anticipated axes — deployment
+        model, runtime support, tenancy boundary, capability primitive choice, auth layering.
+    - batch-06: Freeform observations naming axes the analyst noticed only after seeing this repo — vendor-specific companion
+        configs, capability gating models, deployment topologies, mixed-language repos, dogfooding evidence.
+    - batch-07: Freeform observations about decision dimensions or axes the sample reveals.
+    - batch-08: Decision dimensions the repo reveals that weren't anticipated — first-party-but-unpromoted servers, prompt-routines
+        as distribution surface, audit-log-as-capability, scope-based tool filtering via URL param, dispatcher monorepos.
+    - batch-09: Free-form prose noting axes/dimensions of MCP-server design space.
+    - batch-10: Surfaces design dimensions not anticipated — managed-MCP-as-a-service, dual protocol exposure, server-internal
+        credential vaults, declarative-config distribution.
+    outliers: []
+    issues:
+    - batch-01: 'Some sources tagged each item with an explicit ''axis: <name>'' suffix (elastic sample); others described
+        axes in prose (toolbox, mysql). Consider whether axes should be enumerable as `### <axis name>` per the canonical
+        instruction''s optional path.'
+    - batch-03: Several sources prefixed entries with 'decision dimensions this repo reveals:' boilerplate — kept where it
+        was the source's framing, since stripping it would lose the lens. Consider canonicalizing the framing.
+    - batch-04: High overlap between section-17 observations and section-18 axes in some samples (e.g. 'sub-server as first-class
+        Python package' appeared in section 18 of one file but as a section-3 pitfall in another) — template guidance could
+        clarify the distinction.
+    - batch-05: section 18 sometimes uses an inner '### decision dimensions this repo reveals' subheading — dropped per freeform
+        rule
+    - batch-06: isaaccorley split into a sub-purpose '### decision dimensions this repo reveals'; flattened to freeform per
+        canonical.
+    - batch-06: feiskyer used a bulleted enumeration prefixed 'decision dimensions this repo reveals:'; rewritten as paragraph.
+    - batch-07: korotovsky, lanbaoshen, microsoft used `### per-axis` subheads; spec says freeform unless source clearly enumerates
+        — folded into paragraph
+    - batch-09: Sources frequently use 'decision dimensions this repo reveals:' preamble — scaffolding from the original template;
+        strip and just render axes as paragraphs/bullets.
+  19. Python-specific:
+    total_samples: 68
+    sub_purposes_seen:
+      SDK / framework variant: 68
+      Python version floor: 68
+      Packaging: 68
+      Entry point: 68
+      Install workflow expected of end users: 68
+      Async and tool signatures: 68
+      Type / schema strategy: 68
+      Testing: 68
+      Dev ergonomics: 68
+      Notable Python-specific choices: 68
+    shape_consensus:
+      closed-set: 10
+    common_descriptions:
+    - batch-01: Python-only deep-dive — present only on Python repos. The mysql sample fills all 10 canonical sub-purposes;
+        elastic (Rust) and toolbox (Go) omit the section entirely.
+    - batch-02: Present only in Python repos. Captures Python-specific details — SDK variant (raw `mcp`, FastMCP 1.x/2.x),
+        version floor, packaging (build backend, lock file, version manager), entry point shape (console script vs `__main__.py`
+        vs bare script), install workflow, async patterns, type strategy, testing tooling, dev ergonomics, and notable Python
+        choices.
+    - batch-03: Python-only addendum capturing the SDK variant (raw mcp / FastMCP 1.x / FastMCP 2.x / custom), Python version
+        floor, packaging backend + lock + version-manager convention, entry-point shape, install one-liner, async patterns,
+        type/schema strategy, testing, dev tooling, and Python-specific design choices.
+    - batch-04: Python-only deep-dive section with 10 stable sub-purposes covering SDK variant, version floor, packaging (build
+        backend, lock file, version manager), entry point shape, install workflow, async/sync signatures, type/schema strategy,
+        testing setup, dev ergonomics, and notable Python-specific choices. Hatchling + uv + console-script + pydantic v2
+        is the dominant Python stack across this batch.
+    - batch-05: Python-only addendum. Absent in TS, Clojure, Rust repos. Hatchling + uv + console-script + pydantic-via-SDK
+        is the dominant stack.
+    - batch-06: Python-specific axes only present when language is Python. Strong canonical sub-purpose vocabulary; sub-purposes
+        match across all 7 Python samples.
+    - batch-07: Present only in Python samples — 9 of 14. Stable 10-sub-purpose vocabulary.
+    - batch-08: Python-only deep-dive. Absent from kotlin-sdk, mongodb-js, neondatabase, paypal, ppl-ai (TS/Kotlin/JS).
+    - batch-09: Detailed Python-ecosystem cross-section. Absent on TS/Rust servers (riza, rust-mcp-filesystem, slack-mcp-plugin).
+    - batch-10: Python-only block. Absent in TypeScript and Go samples.
+    outliers:
+    - sample: Azure--azure-mcp.md
+      why: section absent (C# repo)
+      batch: batch-02
+    - sample: DaInfernalCoder--perplexity-mcp.md
+      why: section absent (JavaScript repo)
+      batch: batch-02
+    - sample: alexei-led--k8s-mcp-server.md
+      why: Python 3.13+ floor — unusually high for April 2026 MCP server work; primary entry is Docker not a Python console
+        script.
+      batch: batch-03
+    - sample: FuzzingLabs--mcp-security-hub.md
+      why: Hand-rolled MCP impl, no unified pyproject; Python packaging deferred entirely to Docker layer per Dockerfile.
+      batch: batch-03
+    - sample: apollographql--apollo-mcp-server.md
+      why: Rust repo — section 19 absent (correct per instructions)
+      batch: batch-04
+    issues:
+    - batch-02: Source samples split each canonical sub-purpose into multiple bullet sub-items (e.g. 3 bullets under SDK/framework
+        variant for variant + version pin + import pattern); consolidated each canonical sub-purpose to a single paragraph
+        per the new rule
+    - batch-02: Section frequently includes `not captured` / `not extracted` answers within otherwise-populated sub-purposes
+        — keep verbatim per rule
+    - batch-03: Three samples in the batch (GLips, HenkDz, ahmedmustahid) are TypeScript-majority and correctly omit section
+        19 — reinforces that 19 is conditionally present, gated on language.
+    - batch-04: 'Many sub-purposes are answered with bulleted-list fragments containing the original criterion phrasing (''raw
+        `mcp` Python SDK / FastMCP 1.x / FastMCP 2.x / custom: …''); rewrite consolidates these into prose paragraphs. The
+        criterion-fragments-as-content pattern is endemic to this section across the batch.'
+    - batch-05: '''SDK / framework variant'' packs raw_mcp vs FastMCP version + version pin + lock-file presence into one
+        paragraph — consolidate_section may benefit from breaking into discrete fields for tabulation'
+    - batch-06: 'Source labels frequently include parenthesized authoring guidance (''SDK / framework variant: raw `mcp` Python
+        SDK / FastMCP 1.x / FastMCP 2.x / custom''); canonicalized to short labels.'
+    - batch-09: Several sub-purposes carry verbose enumeration scaffolding from the original template; rewrite collapses to
+        short canonical labels and prose answers.
+  20. Gaps:
+    total_samples: 104
+    sub_purposes_seen: {}
+    shape_consensus:
+      freeform: 10
+    common_descriptions:
+    - batch-01: Freeform list of what wasn't extracted — version specifics, workflow contents, transport coverage, formula
+        sources. Acts as a known-unknowns ledger per sample.
+    - batch-02: Freeform paragraph or bullet list of what the researcher couldn't determine from the available surface (README,
+        directory listing, etc.). Captures epistemic-humility signal — what's still unknown after the sample.
+    - batch-03: Freeform paragraph (or short bullet list in source) listing what could not be determined within the research
+        budget — typically last-commit dates, exact CI workflow content, schema/async details, observability mechanisms.
+    - batch-04: Freeform paragraph (sometimes bulleted) listing what couldn't be determined from the README/fetched view —
+        exact dates, file contents not opened, lock files not inspected, async/sync inferences not confirmed. Functions as
+        the "what would require deeper read" honesty signal.
+    - batch-05: 'Freeform list of what could not be determined: missing version pins, undocumented test/CI specifics, unread
+        sub-package contents, unverified release flow.'
+    - batch-06: Freeform list of facts the analyst could not confirm within research budget — license file content, last-commit
+        dates, exact tool counts, Docker publishing status, schema strategies, version pins.
+    - batch-07: Freeform paragraph listing what couldn't be determined within research budget. Frequent overlap with section
+        13 pitfalls (CI specifics) and section 3 pitfalls (distribution detail).
+    - batch-08: Freeform list of what couldn't be determined within research budget. 2-5 items typical.
+    - batch-09: Free-form list of what couldn't be determined within the research budget. 2–5 items typical.
+    - batch-10: Free-form list of what couldn't be determined from README/repo extraction.
+    outliers:
+    - sample: Azure--azure-mcp.md
+      why: section also carries a "Canonical successor" appendix beyond pure gaps; folded into the section body since no separate
+        canonical section exists for redirected/archived repos
+      batch: batch-02
+    issues:
+    - batch-01: Section overlaps in spirit with each section's 'pitfalls observed' subsection; some items repeat (e.g. mysql's
+        'CI workflow contents not extracted' appears both in §13 pitfalls and §20 gaps). Template should clarify whether 'pitfalls
+        observed' is the per-section gap and 20 is cross-cutting, or whether to consolidate.
+    - batch-02: Source `### what couldn't be determined` sub-heading is non-canonical and the section is freeform per canonical
+        spec; flattened to paragraphs
+    - batch-02: Azure sample uniquely needed to express a canonical-successor pointer; consider whether retired/archived repos
+        warrant a canonical extra section
+    - batch-03: Content here heavily overlaps with 'pitfalls observed' subheadings in earlier sections that include 'what
+        couldn't be determined' lists. Template might consolidate gaps into section 20 only and reserve 'pitfalls observed'
+        for actual cautions/anti-patterns.
+    - batch-04: Three samples used a `### what couldn't be determined` subheading; canonical form per instructions is freeform
+        with no `###` subheading. Rewrites strip the subheading and merge content into paragraph form.
+    - batch-04: 'Significant overlap between section-20 Gaps and ''pitfalls observed: …'' content in earlier sections of the
+        same file (especially section 3) — ''pitfalls observed'' frequently restates a Gap from section 20. Template should
+        consolidate.'
+    - batch-05: high overlap with section-N 'pitfalls observed' slots; new dedup rule clears most pitfalls slots in this batch
+        to 'none noted'
+    - batch-06: Section content overlaps heavily with per-section 'pitfalls observed' slots; consider folding pitfalls observations
+        into the section body and keeping Gaps as the single canonical 'unknowns' surface.
+    - batch-07: frequent duplication between section 20 Gaps and per-section pitfalls slots
+    - batch-08: Several samples had pitfalls slots elsewhere that duplicated Gaps content; deduplicated during rewrite — Gaps
+        is the canonical home for 'not extracted' notes.
+    - batch-09: Frequently restates content also placed in earlier 'pitfalls observed' slots; dedup rule applies.
+    - batch-10: Multiple samples duplicate Gap content into section-9 'pitfalls observed' slots; template should make Gaps
+        the single home
