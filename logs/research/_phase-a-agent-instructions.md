@@ -6,7 +6,9 @@ You are processing a batch of sample-file paths as part of Phase A of the resear
 
 For each path in the batch:
 
-1. **Read the file once.**
+> **Path discipline.** All paths in the batch are absolute paths. Pass them verbatim to Read, Edit, and Write. Do NOT interpret them as relative to cwd; do NOT translate or rewrite path prefixes. Cwd may be a different worktree on a different branch — relative-path interpretation would write to the wrong tree.
+
+1. **Read the file once** at the absolute path given.
 
 2. **Normalize level-1.** If the file's first heading line is `# <entity-id>` (any text other than `# Sample`), Edit it to `# Sample`. If already `# Sample`, skip.
 
