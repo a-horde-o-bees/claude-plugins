@@ -38,7 +38,7 @@ raw MCP Python SDK (not FastMCP per README).
 
 ### pitfalls observed
 
-What couldn't be determined: exact Python version pin, async-vs-sync tool patterns, console script name, last-commit date, test framework details.
+none noted in this repo
 
 ## 2. Transport
 
@@ -94,7 +94,7 @@ Environment variables — `PAGERDUTY_USER_API_KEY`, `PAGERDUTY_API_HOST`; CLI fl
 
 ### pitfalls observed
 
-Read-only-by-default — write tools gated behind `--enable-write-tools` CLI flag.
+none noted in this repo
 
 ## 6. Authentication
 

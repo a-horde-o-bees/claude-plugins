@@ -70,8 +70,7 @@ npx (recommended), source clone.
 
 ### pitfalls observed
 
-- direct npx distribution simplifies adoption
-- Smithery registry integration — an axis in its own right (discovery/distribution via Smithery)
+none noted in this repo
 
 ## 4. Entry point / launch
 
@@ -139,7 +138,7 @@ not documented
 
 ### pitfalls observed
 
-logging configuration not specified.
+none noted in this repo
 
 ## 10. Host integrations shown in README or repo
 

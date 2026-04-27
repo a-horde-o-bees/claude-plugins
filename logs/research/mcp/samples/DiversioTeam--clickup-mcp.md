@@ -70,9 +70,7 @@ no PyPI publication documented
 
 ### pitfalls observed
 
-- Install-from-git — `uvx --from git+...` as the primary install path, no PyPI
-- `uvx --from git+...` as a distribution channel — bypasses PyPI entirely; the git URL becomes the effective package index
-- Test-density vs popularity skew — low stars with high test count suggests an internal/team project published without a marketing push; star counts should not be read as a proxy for engineering quality
+none noted in this repo
 
 ## 4. Entry point / launch
 
@@ -96,8 +94,7 @@ Persistent config via `platformdirs` — API key stored via `set-api-key` subcom
 
 ### pitfalls observed
 
-- `platformdirs`-based persistent config — API key stored in OS-appropriate config dir (`~/.config/` / `%APPDATA%` / etc.) via `set-api-key` subcommand; unlike the dominant "env var only" pattern
-- OS-native config persistence via `platformdirs` — competes with `.env` files and env vars; reveals three distinct credential-storage conventions in the sample
+none noted in this repo
 
 ## 6. Authentication
 

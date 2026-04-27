@@ -118,7 +118,7 @@ Per-request tenant possible — custom middleware can override connection settin
 
 ### pitfalls observed
 
-Per-request connection overrides via middleware-managed context state — closest thing to multi-tenancy among DB MCP servers.
+none noted in this repo
 
 ## 8. Capabilities exposed
 
@@ -182,7 +182,7 @@ GitHub Actions in `.github/workflows/`; specifics not extracted.
 
 ### pitfalls observed
 
-CI workflow specifics not extracted.
+none noted in this repo
 
 ## 14. Container / packaging artifacts
 

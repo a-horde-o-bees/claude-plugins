@@ -70,7 +70,7 @@ Not published to PyPI at time of research (no `pip install pubmed-mcp-server` sh
 
 ### pitfalls observed
 
-Bare-script top-level layout rather than `src/<pkg>/` — lightweight but harder to package for PyPI. MCP server distributed via Smithery without ever being published to PyPI — the package manager path is optional when Smithery handles install.
+none noted in this repo
 
 ## 4. Entry point / launch
 
@@ -186,7 +186,7 @@ none noted in this repo
 
 ### pitfalls observed
 
-CI workflow content not read.
+none noted in this repo
 
 ## 14. Container / packaging artifacts
 

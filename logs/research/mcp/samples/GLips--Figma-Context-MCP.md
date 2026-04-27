@@ -38,7 +38,7 @@ Model Context Protocol SDK (the canonical `@modelcontextprotocol/sdk` typescript
 
 ### pitfalls observed
 
-Exact Node engines constraint, precise CI workflow triggers, and logging format not confirmed within budget.
+none noted in this repo
 
 ## 2. Transport
 
@@ -70,7 +70,7 @@ figma-developer-mcp
 
 ### pitfalls observed
 
-pnpm + lefthook + ESLint + Prettier signals an opinionated dev environment; consumers building plugins on top should expect pnpm workflows.
+none noted in this repo
 
 ## 4. Entry point / launch
 

@@ -94,7 +94,7 @@ Environment variables — `K8S_CONTEXT`, `K8S_NAMESPACE`, `K8S_MCP_TIMEOUT`, sec
 
 ### pitfalls observed
 
-Decision dimensions this repo reveals: pinning to a very recent Python (3.13+) as a floor; security-mode configuration as an environment variable rather than a CLI flag; bundling multiple cluster tooling behind a single MCP surface.
+none noted in this repo
 
 ## 6. Authentication
 

@@ -4,7 +4,15 @@ Lessons surfaced while running the read-understand-rewrite-accumulate workflow o
 
 ## Already integrated (live)
 
-- **Trailing-window ratio in context-aware-iteration.** Lifetime average lags when costs trend (here: dropping ~15% per batch as instruction-set caching kicks in). Added "Ratio estimator" section to `logs/patterns/context-aware-iteration.md` and updated Phase N to allow trailing-N alongside lifetime average. Anti-pattern added: "Anchoring forever to early-batch costs."
+- **Trailing-window ratio in context-aware-iteration.** Lifetime average lags when costs trend (here: dropping ~15% per batch as instruction-set caching kicks in). Updated `logs/patterns/context-aware-iteration.md`: trailing-N is now the default SOP for ratio estimation; lifetime average is reserved for diagnosis. Added Token-exhaustion handling and Anomaly-exclusion sections. Spawn-log schema now includes `anomaly` and `notes` columns.
+
+## Observed inconsistencies in the produced corpus
+
+- **Batch 4 dropped `### pitfalls observed` subheadings entirely** for 7 awslabs/apollographql files when the slot was "none noted" or a duplicate of section 20. The other 97 files keep the empty subhead with "none noted in this repo". The batch-4 form is technically more accurate (no empty subsections) but breaks structural consistency. Phase B template design should pick one form as canonical:
+    - **Form A — keep the subheading with "none noted":** uniform structure, simpler `consolidate_section` aggregation, but every closed-set section ships a 16-section pitfall scaffold even when 95% of cells are empty.
+    - **Form B — omit the subheading when there's no pitfall:** denser, but requires `consolidate_section` to handle two distinct shapes per section.
+
+  16 file-level fixes across 23 verified files removed within-file Gaps duplication; 0 cross-section relocations were needed (the rule was a candidate for fixes that didn't exist in this corpus).
 
 ## Proposed for context-aware-iteration
 

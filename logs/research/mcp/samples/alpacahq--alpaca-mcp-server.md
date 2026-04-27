@@ -70,7 +70,7 @@ PyPI (`alpaca-mcp-server`); `uvx`; Docker (`docker build -t mcp/alpaca:latest .`
 
 ### pitfalls observed
 
-Official vendor-published server — published by Alpaca itself; operates as their canonical MCP entry.
+none noted in this repo
 
 ## 4. Entry point / launch
 
@@ -118,7 +118,7 @@ single-user per key pair.
 
 ### pitfalls observed
 
-Paper-mode-as-default — mutation-capable MCP server with a sandbox default; a safety pattern other trading/finance servers should emulate.
+none noted in this repo
 
 ## 8. Capabilities exposed
 

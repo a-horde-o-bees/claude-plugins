@@ -70,7 +70,7 @@ Redirects to successor.
 
 ### pitfalls observed
 
-Umbrella-repo consolidation pattern — an org moving from per-service MCP repos into a single company-wide MCP monorepo with shared C# core (the inverse of awslabs/mcp's per-service PyPI package strategy).
+none noted in this repo
 
 ## 4. Entry point / launch
 

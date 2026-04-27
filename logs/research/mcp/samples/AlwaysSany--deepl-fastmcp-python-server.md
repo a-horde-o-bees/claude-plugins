@@ -38,7 +38,7 @@ FastMCP (likely 2.x given standalone-package install).
 
 ### pitfalls observed
 
-Python 3.13.3 floor in `runtime.txt` — aggressive modern-Python target.
+none noted in this repo
 
 ## 2. Transport
 

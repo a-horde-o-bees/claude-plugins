@@ -70,9 +70,7 @@ Each of the five distribution mechanisms above is shown.
 
 ### pitfalls observed
 
-- Five distribution channels (binary, Docker, go install, Homebrew, npm shim) — unusually broad; implies cross-ecosystem discoverability is a deliberate goal
-- NPM shim (`@toolbox-sdk/server`) wrapping a Go binary — cross-ecosystem glue that lets node-oriented hosts run a Go server by name
-- Homebrew formula source (tap or core) not specified
+none noted in this repo
 
 ## 4. Entry point / launch
 

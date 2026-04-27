@@ -38,7 +38,7 @@ Rust (94.3%); Rust 2024 edition. Exact Rust version not specified in `Cargo.toml
 
 ### pitfalls observed
 
-- exact Rust version not specified in `Cargo.toml` (only edition)
+none noted in this repo
 
 ## 2. Transport
 
@@ -186,7 +186,7 @@ Present; both `.github/` (GitHub Actions) and `.buildkite/` (Buildkite pipeline)
 
 ### pitfalls observed
 
-- Buildkite CI alongside GitHub Actions — CI system diversity beyond GitHub-only
+none noted in this repo
 
 ## 14. Container / packaging artifacts
 

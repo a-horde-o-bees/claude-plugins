@@ -70,7 +70,7 @@ Docker Compose + volume mounts; individual `docker run` invocations.
 
 ### pitfalls observed
 
-Docker-only distribution; no PyPI publishing.
+none noted in this repo
 
 ## 4. Entry point / launch
 
@@ -182,7 +182,7 @@ GitHub Actions — builds + security scanning (Trivy) + tests.
 
 ### pitfalls observed
 
-Trivy scanning in CI as part of the build pipeline.
+none noted in this repo
 
 ## 14. Container / packaging artifacts
 

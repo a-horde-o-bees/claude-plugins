@@ -138,7 +138,7 @@ Not surfaced in README within budget.
 
 ### pitfalls observed
 
-Logging/observability details not surfaced.
+none noted in this repo
 
 ## 10. Host integrations shown in README or repo
 

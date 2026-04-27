@@ -138,7 +138,7 @@ Described as "comprehensive logging"; specifics not surfaced.
 
 ### pitfalls observed
 
-- Logging format and destination not specified
+none noted in this repo
 
 ## 10. Host integrations shown in README or repo
 
@@ -186,7 +186,7 @@ GitHub Actions (test.yml badge); workflow specifics not extracted.
 
 ### pitfalls observed
 
-- CI workflow contents not extracted
+none noted in this repo
 
 ## 14. Container / packaging artifacts
 
