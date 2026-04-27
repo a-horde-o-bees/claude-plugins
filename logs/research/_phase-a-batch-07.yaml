@@ -1,117 +1,206 @@
 files_processed:
-  - {path: logs/research/mcp/samples/hugoduncan--mcp-clj.md, level1_normalized: false, bullets_converted: 25}
-  - {path: logs/research/mcp/samples/idosal--git-mcp.md, level1_normalized: false, bullets_converted: 24}
-  - {path: logs/research/mcp/samples/isaaccorley--planetary-computer-mcp.md, level1_normalized: false, bullets_converted: 43}
-  - {path: logs/research/mcp/samples/jbeno--cursor-notebook-mcp.md, level1_normalized: false, bullets_converted: 44}
-  - {path: logs/research/mcp/samples/jlowin--fastmcp.md, level1_normalized: false, bullets_converted: 40}
-  - {path: logs/research/mcp/samples/jparkerweb--mcp-sqlite.md, level1_normalized: false, bullets_converted: 42}
-  - {path: logs/research/mcp/samples/korotovsky--slack-mcp-server.md, level1_normalized: false, bullets_converted: 42}
-  - {path: logs/research/mcp/samples/ktanaka101--mcp-server-duckdb.md, level1_normalized: false, bullets_converted: 43}
-  - {path: logs/research/mcp/samples/labeveryday--mcp_pdf_reader.md, level1_normalized: false, bullets_converted: 40}
-  - {path: logs/research/mcp/samples/lanbaoshen--mcp-jenkins.md, level1_normalized: false, bullets_converted: 45}
-  - {path: logs/research/mcp/samples/mahdin75--gis-mcp.md, level1_normalized: false, bullets_converted: 44}
-  - {path: logs/research/mcp/samples/makenotion--notion-mcp-server.md, level1_normalized: false, bullets_converted: 39}
-  - {path: logs/research/mcp/samples/mark3labs--mcp-go.md, level1_normalized: false, bullets_converted: 44}
-  - {path: logs/research/mcp/samples/marlonluo2018--pandas-mcp-server.md, level1_normalized: false, bullets_converted: 42}
-  - {path: logs/research/mcp/samples/metoro-io--mcp-golang.md, level1_normalized: false, bullets_converted: 43}
-  - {path: logs/research/mcp/samples/microsoft--playwright-mcp.md, level1_normalized: false, bullets_converted: 42}
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/jbeno--cursor-notebook-mcp.md
+    notes: section 7 sub-purpose was a long enumerated list; consolidated to canonical "tenancy model"
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/jlowin--fastmcp.md
+    notes: framework not server — many sections answer "not applicable" but kept verbatim per spec; section 8 source used a bullet list with code block, preserved as paragraph + code block
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/jparkerweb--mcp-sqlite.md
+    notes: section 19 absent in source; section 3 had pitfall content nested inside install commands list, relocated
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/korotovsky--slack-mcp-server.md
+    notes: section 16 source split into dirs/config/additional sub-purposes, consolidated; section 18 source used `### per-axis` headings, rewritten as paragraph; section 13 pitfall duplicated section 20 Gap; section 15 pitfall was content not pitfall — relocated
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/ktanaka101--mcp-server-duckdb.md
+    notes: section 3 pitfall ("No container or Homebrew artifacts observed") duplicates section 20 — kept in pitfall slot since specifically a distribution observation
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/labeveryday--mcp_pdf_reader.md
+    notes: section 3 pitfalls source contained heavy contamination — section-17 content (no formal packaging) and section-20 Gap content. Relocated section-17 content, kept "No PyPI publication" as actual pitfall
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/lanbaoshen--mcp-jenkins.md
+    notes: section 1 pitfalls in source was Gap-style content — relocated to section 20; section 18 source used `### decision dimensions this repo reveals` heading — replaced with paragraph
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/mahdin75--gis-mcp.md
+    notes: section 3 pitfalls held section-20 Gap content — relocated
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/makenotion--notion-mcp-server.md
+    notes: TypeScript — no section 19; section 10 source split host integrations bullets without `### per host` form — rewritten with `### per host`; section 16 source split into dirs/config/documentation, consolidated
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/mark3labs--mcp-go.md
+    notes: Go SDK — no section 19; section 20 source had `### Source could be examined` heading — folded into freeform paragraph per spec
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/marlonluo2018--pandas-mcp-server.md
+    notes: section 7 pitfalls in source contained section-17 Security posture and section-18 axis content — relocated; section 17 source used `### Security posture` subheading — rewritten as paragraph
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/metoro-io--mcp-golang.md
+    notes: Go SDK — no section 19. Section 10 third item ("Other" with Metoro Kubernetes) — recast as own `### Metoro Kubernetes monitoring MCP server` host entry per open-enumeration spec
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/microsoft--playwright-mcp.md
+    notes: TypeScript — no section 19. Section 10 listed 19 hosts in single bullet — rewrote each as `### per host`; section 17 had `### Programmatic embedding as first-class` and section 18 had `### Embeddability` inline subheads — folded into paragraphs; section 5 source meta-instruction stripped
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/misbahsy--video-audio-mcp.md
+    notes: section 1 pitfall "Python 3.13 floor — aggressive" duplicated section 17 — kept in 1 since pitfall is the right slot, also kept in 17
 
 section_observations:
   - subject: mcp
     section: Identification
-    samples_in_batch: 16
-    sub_purposes: {url: 16, stars: 16, license: 16, "default branch": 16, "one-line purpose": 16, "last-commit (date or relative)": 13, "last-commit": 3}
-    anomalies: ["two label variants for last-commit field — '(date or relative)' suffix on 13 samples vs bare 'last-commit' on 3 (idosal, korotovsky, makenotion)"]
+    samples_in_batch: 14
+    sub_purposes_seen: {url: 14, stars: 14, last-commit: 14, license: 14, default branch: 14, one-line purpose: 14}
+    shape: closed-set
+    common_description: |
+      Stable identification block — every sample uses exactly the same six sub-purposes.
+    issues:
+      - "stars values vary in style ('~158', '99', '24.7k', '1,500'); template should pick a canonical format"
+      - "last-commit values vary between dates, version refs, and 'not captured'; template should accept either form"
   - subject: mcp
     section: 1. Language and runtime
-    samples_in_batch: 16
-    sub_purposes: {"language(s) + version constraints": 16, "framework/SDK in use": 16, "pitfalls observed": 15}
+    samples_in_batch: 14
+    sub_purposes_seen: {"language(s) + version constraints": 14, "framework/SDK in use": 14, pitfalls observed: 14}
+    shape: closed-set
+    common_description: |
+      Records primary language + version floor and the MCP framework or SDK variant. Pitfalls slot mostly empty except where version floor itself is the concern.
+    outliers:
+      - sample: misbahsy--video-audio-mcp.md
+        why: pitfall actually populated — Python 3.13 floor flagged as aggressive
   - subject: mcp
     section: 2. Transport
-    samples_in_batch: 16
-    sub_purposes: {"supported transports": 16, "pitfalls observed": 16, "how selected": 10, "how selected (flag, env, separate entry, auto-detect, etc.)": 6}
-    anomalies: ["label drift on 'how selected' sub-purpose — short form (10 samples) and long parenthesized form (6 samples) both present"]
+    samples_in_batch: 14
+    sub_purposes_seen: {"supported transports": 14, how selected: 14, pitfalls observed: 14}
+    shape: closed-set
+    common_description: |
+      Lists supported MCP transports (stdio, SSE, HTTP, streamable-http) and how the active transport is selected.
   - subject: mcp
     section: 3. Distribution
-    samples_in_batch: 16
-    sub_purposes: {"every mechanism observed": 15, "published package name(s)": 16, "install commands shown in README": 14, "pitfalls observed": 10, "every mechanism observed (PyPI, npm, uvx, npx, Docker, Homebrew, Cargo, Go install, GitHub release binary, source-only, or other)": 1}
-    anomalies: ["multiple samples have stray '- pitfalls observed:' bullets remain unconverted because section already had ### subheadings (idempotency block)", "labeveryday: 'install commands shown in README' kept as bullet because section already had ### headings"]
+    samples_in_batch: 14
+    sub_purposes_seen: {"every mechanism observed": 14, "published package name(s)": 14, install commands shown in README: 14, pitfalls observed: 14}
+    shape: closed-set
+    common_description: |
+      Captures distribution channels, package names, and install one-liners. Pitfalls slot is the most contaminated across the batch.
+    issues:
+      - "section 3 pitfalls slot acts as a magnet for cross-section contamination — ~4 of 14 samples had it carrying section 17 (notable choices) or section 20 (gaps) content"
   - subject: mcp
     section: 4. Entry point / launch
-    samples_in_batch: 16
-    sub_purposes: {"command(s) users/hosts run": 16, "wrapper scripts, launchers, stubs": 13, "wrapper scripts": 3, "pitfalls observed": 16}
-    anomalies: ["label drift on wrapper-scripts sub-purpose — full form on 13 vs short 'wrapper scripts' on 3 (idosal, korotovsky, makenotion)"]
+    samples_in_batch: 14
+    sub_purposes_seen: {"command(s) users/hosts run": 14, "wrapper scripts, launchers, stubs": 14, pitfalls observed: 14}
+    shape: closed-set
+    common_description: |
+      Captures user-/host-facing launch command and any wrapper scripts. Pitfalls slot universally empty.
   - subject: mcp
     section: 5. Configuration surface
-    samples_in_batch: 16
-    sub_purposes: {"how config reaches the server": 15, "how config reaches the server (env vars, CLI args, config file w/ path + format, stdin prompt, OS keyring, host-passed params, combinations)": 1, "pitfalls observed": 16}
+    samples_in_batch: 14
+    sub_purposes_seen: {how config reaches the server: 14, pitfalls observed: 14}
+    shape: closed-set
+    common_description: |
+      How config reaches the server. Originals frequently carried meta-instruction text in the heading; stripped.
+    issues:
+      - "several samples retained meta-instruction scaffolding in headings"
   - subject: mcp
     section: 6. Authentication
-    samples_in_batch: 16
-    sub_purposes: {"flow": 15, "where credentials come from": 16, "pitfalls observed": 16, "flow (static token, OAuth w/ description, per-request header, none, other)": 1}
+    samples_in_batch: 14
+    sub_purposes_seen: {flow: 14, where credentials come from: 14, pitfalls observed: 14}
+    shape: closed-set
+    common_description: |
+      Auth flow type and where credentials originate. Many local-file servers answer "none / N/A" — preserved verbatim as signal.
   - subject: mcp
     section: 7. Multi-tenancy
-    samples_in_batch: 16
-    sub_purposes: {"single-user / per-request tenant / workspace-keyed / not applicable / other": 13, "pitfalls observed": 15}
-    anomalies: ["idosal, korotovsky, makenotion: section has plain bullets without colon (no labeled sub-purpose), so no level-3 heading was created"]
+    samples_in_batch: 14
+    sub_purposes_seen: {tenancy model: 14, pitfalls observed: 14}
+    shape: closed-set
+    common_description: |
+      Single-user vs per-request tenant vs workspace-keyed vs not-applicable. Source headings typically used long enumeration form; canonicalized to `tenancy model`.
+    issues:
+      - "marlonluo2018--pandas-mcp-server originally used section 7 pitfalls slot to hold sections 17 and 18 content; relocated"
   - subject: mcp
     section: 8. Capabilities exposed
-    samples_in_batch: 16
-    sub_purposes: {"tools / resources / prompts / sampling / roots / logging / other": 12, "tools": 3, "resources": 1, "pitfalls observed": 16}
-    anomalies: ["korotovsky: split into separate 'tools' and 'resources' subheadings", "idosal, makenotion: only 'tools' subheading", "jlowin: capability bullet has multi-line content with embedded code block — current regex cannot capture multi-line content"]
+    samples_in_batch: 14
+    sub_purposes_seen: {"tools / resources / prompts / sampling / roots / logging / other": 14, pitfalls observed: 14}
+    shape: closed-set
+    common_description: |
+      What MCP capability surfaces the server exposes. Tool counts range 1-92 in this batch; resources rare; prompts/sampling/roots almost never present.
   - subject: mcp
     section: 9. Observability
-    samples_in_batch: 16
-    sub_purposes: {"logging destination + format, metrics, tracing, debug flags": 13, "logging": 1, "pitfalls observed": 16}
-    anomalies: ["korotovsky: short label 'logging' instead of canonical", "idosal, makenotion: section opens with plain bullet so value has no subheading"]
+    samples_in_batch: 14
+    sub_purposes_seen: {"logging destination + format, metrics, tracing, debug flags": 14, pitfalls observed: 14}
+    shape: closed-set
+    common_description: |
+      Logging, metrics, tracing, debug flags. Most samples answer "not surfaced" — observability consistently undeclared in MCP server READMEs.
   - subject: mcp
     section: 10. Host integrations shown in README or repo
-    samples_in_batch: 16
-    sub_purposes: {"Claude Desktop": 9, "Claude Code": 3, "Other": 3, "Cursor": 3, "Smithery": 2, "VS Code": 1, "VSCode": 1, "Other editors/CLIs": 1, "JetBrains IDE": 1, "VSCode Copilot Chat": 1, "form": 1, "Form": 1, "pitfalls observed": 16}
-    anomalies: ["host enumeration is highly variable", "case drift: 'VS Code' (jbeno) vs 'VSCode' (jparkerweb)", "case drift: 'form' vs 'Form'"]
+    samples_in_batch: 14
+    sub_purposes_seen: {"Claude Desktop": 8, "Claude Code": 3, Cursor: 5, "VS Code": 3, VSCode: 1, "VSCode Copilot Chat": 1, Smithery: 2, Zed: 1, "GitHub Copilot CLI": 1, "JetBrains IDE": 1, Windsurf: 1, Cline: 1, Goose: 1, Junie: 1, Copilot: 1, Factory: 1, "Gemini CLI": 1, "LM Studio": 1, Kiro: 1, opencode: 1, "Qodo Gen": 1, Warp: 1, Codex: 1, Antigravity: 1, Amp: 1, Claude: 1, "Enterprise Slack": 1, "Metoro Kubernetes monitoring MCP server": 1, pitfalls observed: 14}
+    shape: open-enumeration
+    common_description: |
+      Open enumeration of hosts. One `### per host` is the right model. Vocabulary is unbounded — playwright-mcp listed 19 hosts; correlations across batches suggest 30+ distinct host names will appear across the full corpus.
+    outliers:
+      - sample: microsoft--playwright-mcp.md
+        why: 19 hosts listed — highest cardinality
+      - sample: korotovsky--slack-mcp-server.md
+        why: lists "Claude" rather than "Claude Desktop"/"Claude Code"; also "Enterprise Slack" which is a deployment flavor, not a host
+      - sample: metoro-io--mcp-golang.md
+        why: lists "Metoro Kubernetes monitoring MCP server" as production reference, not a host
+    issues:
+      - "host vocabulary is unbounded; canonicalization (Claude vs Claude Desktop vs Claude Code) needed"
+      - "some `###` host entries are not actually hosts (Enterprise Slack flavor, production-reference servers); template guidance should require a per-entry test 'is this a host integration?'"
+      - "for SDK/framework samples, the section is appropriately answered 'not applicable' — keep that as a valid emission"
   - subject: mcp
     section: 11. Claude Code plugin wrapper
-    samples_in_batch: 16
-    sub_purposes: {"presence and shape": 13, "pitfalls observed": 16}
-    anomalies: ["idosal, korotovsky, makenotion: opens with plain bullet rather than 'presence and shape' subheading"]
+    samples_in_batch: 14
+    sub_purposes_seen: {presence and shape: 14, pitfalls observed: 14}
+    shape: closed-set
+    common_description: |
+      Presence/shape of any Claude Code plugin wrapper. Across this batch every sample answers "not present" or "not applicable" — no real wrappers found.
+    issues:
+      - "every sample in this batch answers 'not present' — section folding into a single boolean signal across the corpus"
   - subject: mcp
     section: 12. Tests
-    samples_in_batch: 16
-    sub_purposes: {"presence, framework, location, notable patterns": 13, "pitfalls observed": 16}
+    samples_in_batch: 14
+    sub_purposes_seen: {"presence, framework, location, notable patterns": 14, pitfalls observed: 14}
+    shape: closed-set
+    common_description: |
+      Test presence, framework, location, notable patterns.
   - subject: mcp
     section: 13. CI
-    samples_in_batch: 16
-    sub_purposes: {"presence, system, triggers, what it runs": 13, "pitfalls observed": 14}
+    samples_in_batch: 14
+    sub_purposes_seen: {"presence, system, triggers, what it runs": 14, pitfalls observed: 14}
+    shape: closed-set
+    common_description: |
+      CI presence (typically GitHub Actions), workflow files, triggers, what the pipeline runs.
   - subject: mcp
     section: 14. Container / packaging artifacts
-    samples_in_batch: 16
-    sub_purposes: {"Dockerfile, docker-compose, Helm, systemd, brew formula, etc.": 13, "pitfalls observed": 16}
+    samples_in_batch: 14
+    sub_purposes_seen: {"Dockerfile, docker-compose, Helm, systemd, brew formula, etc.": 14, pitfalls observed: 14}
+    shape: closed-set
+    common_description: |
+      Container and packaging artifacts. Frequently "none observed"; when populated, Dockerfile + docker-compose are the dominant pair.
   - subject: mcp
     section: 15. Example client / developer ergonomics
-    samples_in_batch: 16
-    sub_purposes: {"MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs": 13, "pitfalls observed": 15}
+    samples_in_batch: 14
+    sub_purposes_seen: {"MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs": 14, pitfalls observed: 14}
+    shape: closed-set
+    common_description: |
+      Dev-experience artifacts (Inspector recipe, curl stubs, Makefile, example configs, examples/ directory).
   - subject: mcp
     section: 16. Repo layout
-    samples_in_batch: 16
-    sub_purposes: {"single-package / monorepo / vendored / other": 9, "single-package / monorepo / vendored / other — describe what's there": 4, "dirs": 3, "config": 3, "additional": 1, "documentation": 1, "pitfalls observed": 16}
-    anomalies: ["label drift on shape sub-purpose; idosal, korotovsky, makenotion decompose into separate dirs/config/additional/documentation subheadings"]
+    samples_in_batch: 14
+    sub_purposes_seen: {"single-package / monorepo / vendored / other": 14, pitfalls observed: 14}
+    shape: closed-set
+    common_description: |
+      Repo organization category. Most samples are single-package.
+    issues:
+      - "korotovsky and makenotion originally split into `### dirs`/`### config`/`### additional`/`### documentation` sub-headings — consolidated"
   - subject: mcp
     section: 17. Notable structural choices
-    samples_in_batch: 16
-    sub_purposes: {"Minimal dependencies": 1, "Security posture": 1, "Programmatic embedding as first-class": 1}
-    anomalies: ["section is overwhelmingly flat bulleted lists — only 3 of 16 samples surface any subheading, each unique to its sample"]
+    samples_in_batch: 14
+    shape: freeform
+    common_description: |
+      Freeform observations about distinctive design or structural choices. All 14 samples populate this; sources vary between bulleted lists and prose.
   - subject: mcp
     section: 18. Unanticipated axes observed
-    samples_in_batch: 16
-    sub_purposes: {"decision dimensions this repo reveals": 5, "Embeddability": 1}
-    anomalies: ["korotovsky: three '— axis' bullets converted to long-form subheadings", "microsoft: 'Embeddability' as one-off subheading"]
+    samples_in_batch: 14
+    shape: freeform
+    common_description: |
+      Freeform observations about decision dimensions or axes the sample reveals.
+    issues:
+      - "korotovsky, lanbaoshen, microsoft used `### per-axis` subheads; spec says freeform unless source clearly enumerates — folded into paragraph"
   - subject: mcp
     section: 19. Python-specific
-    samples_in_batch: 8
-    sub_purposes: {"SDK / framework variant": 8, "Python version floor": 8, "Packaging": 8, "Entry point": 8, "Async and tool signatures": 8, "Type / schema strategy": 8, "Testing": 8, "Dev ergonomics": 8, "Notable Python-specific choices": 8, "Install workflow expected of end users": 7, "Install workflow expected of end users (of the framework)": 1}
-    anomalies: ["8 of 16 samples have section 19 (Python only)", "jlowin uses '(of the framework)' suffix"]
+    samples_in_batch: 9
+    sub_purposes_seen: {"SDK / framework variant": 9, "Python version floor": 9, "Packaging": 9, "Entry point": 9, "Install workflow expected of end users": 9, "Async and tool signatures": 9, "Type / schema strategy": 9, "Testing": 9, "Dev ergonomics": 9, "Notable Python-specific choices": 9}
+    shape: closed-set
+    common_description: |
+      Present only in Python samples — 9 of 14. Stable 10-sub-purpose vocabulary.
   - subject: mcp
     section: 20. Gaps
-    samples_in_batch: 16
-    sub_purposes: {"what couldn't be determined": 2, "Source could be examined": 1}
-    anomalies: ["section is predominantly flat bulleted lists", "mark3labs: 'Source could be examined' subheading is anomalous"]
+    samples_in_batch: 14
+    shape: freeform
+    common_description: |
+      Freeform paragraph listing what couldn't be determined within research budget. Frequent overlap with section 13 pitfalls (CI specifics) and section 3 pitfalls (distribution detail).
+    issues:
+      - "frequent duplication between section 20 Gaps and per-section pitfalls slots"

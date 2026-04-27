@@ -30,25 +30,25 @@ Elasticsearch MCP server (deprecated) — Rust; Docker-only distribution.
 
 ### language(s) + version constraints
 
-Rust (94.3%); Rust 2024 edition
+Rust (94.3%); Rust 2024 edition. Exact Rust version not specified in `Cargo.toml` (only edition).
 
 ### framework/SDK in use
 
-rmcp ^0.2.1 (Rust MCP SDK), tokio (async), axum (HTTP), elasticsearch ^9.0.0-alpha.1
+`rmcp ^0.2.1` (Rust MCP SDK), `tokio` (async), `axum` (HTTP), `elasticsearch ^9.0.0-alpha.1`.
 
 ### pitfalls observed
 
-- exact Rust version not specified in Cargo.toml (only edition)
+- exact Rust version not specified in `Cargo.toml` (only edition)
 
 ## 2. Transport
 
 ### supported transports
 
-stdio, streamable-HTTP; SSE deprecated
+stdio and streamable-HTTP. SSE is deprecated.
 
 ### how selected
 
-Docker environment or CLI args (`stdio` vs `http`)
+Docker environment or CLI args (`stdio` vs `http`).
 
 ### pitfalls observed
 
@@ -58,15 +58,15 @@ none noted in this repo
 
 ### every mechanism observed
 
-Docker container (`docker.elastic.co/mcp/elasticsearch`)
+Docker container only — `docker.elastic.co/mcp/elasticsearch`.
 
 ### published package name(s)
 
-Docker image via AWS Marketplace and Elastic's container registry
+Docker image distributed via AWS Marketplace and Elastic's container registry.
 
 ### install commands shown in README
 
-`docker run` with environment variables (`ES_URL`, `ES_API_KEY` or `ES_USERNAME`/`ES_PASSWORD`)
+`docker run` with environment variables (`ES_URL`, `ES_API_KEY` or `ES_USERNAME` / `ES_PASSWORD`).
 
 ### pitfalls observed
 
@@ -76,11 +76,11 @@ none noted in this repo
 
 ### command(s) users/hosts run
 
-`docker run ... stdio` or `docker run ... http`
+`docker run ... stdio` or `docker run ... http`.
 
-### wrapper scripts
+### wrapper scripts, launchers, stubs
 
-Docker entrypoint (implicit)
+Docker entrypoint (implicit).
 
 ### pitfalls observed
 
@@ -90,7 +90,7 @@ none noted in this repo
 
 ### how config reaches the server
 
-env vars — `ES_URL`, `ES_API_KEY` or `ES_USERNAME`+`ES_PASSWORD`, `ES_SSL_SKIP_VERIFY` (dev only)
+Environment variables — `ES_URL`, `ES_API_KEY` or `ES_USERNAME` + `ES_PASSWORD`, `ES_SSL_SKIP_VERIFY` (dev only).
 
 ### pitfalls observed
 
@@ -100,11 +100,11 @@ none noted in this repo
 
 ### flow
 
-`ES_API_KEY` or username/password for the Elasticsearch cluster
+`ES_API_KEY` or username/password against the Elasticsearch cluster.
 
 ### where credentials come from
 
-env vars passed to Docker container
+Environment variables passed into the Docker container.
 
 ### pitfalls observed
 
@@ -112,7 +112,9 @@ none noted in this repo
 
 ## 7. Multi-tenancy
 
-- single Elasticsearch cluster connection; per-client MCP connection in HTTP mode
+### tenancy model
+
+Single Elasticsearch cluster connection; per-client MCP connection in HTTP mode.
 
 ### pitfalls observed
 
@@ -120,13 +122,9 @@ none noted in this repo
 
 ## 8. Capabilities exposed
 
-### tools
+### tools / resources / prompts / sampling / roots / logging / other
 
-`list_indices`, `get_mappings`, `search`, `esql` (ES|QL execution), `get_shards`
-
-### resources
-
-not explicitly documented (cluster metadata assumed)
+Tools — `list_indices`, `get_mappings`, `search`, `esql` (ES|QL execution), `get_shards`. Resources not explicitly documented (cluster metadata assumed).
 
 ### pitfalls observed
 
@@ -134,9 +132,9 @@ none noted in this repo
 
 ## 9. Observability
 
-### logging
+### logging destination + format, metrics, tracing, debug flags
 
-container logs (stdout/stderr); health check at `/ping` (returns "pong")
+Container logs (stdout/stderr); health check at `/ping` (returns "pong").
 
 ### pitfalls observed
 
@@ -144,7 +142,17 @@ none noted in this repo
 
 ## 10. Host integrations shown in README or repo
 
-- Claude Desktop (assumed MCP compatible), Cursor (assumed MCP compatible), Docker-based deployment (EC2, ECS, EKS)
+### Claude Desktop
+
+Listed as MCP-compatible (assumed).
+
+### Cursor
+
+Listed as MCP-compatible (assumed).
+
+### Docker-based deployment
+
+EC2, ECS, EKS deployment targets called out.
 
 ### pitfalls observed
 
@@ -152,7 +160,9 @@ none noted in this repo
 
 ## 11. Claude Code plugin wrapper
 
-- not present
+### presence and shape
+
+Not present.
 
 ### pitfalls observed
 
@@ -160,7 +170,9 @@ none noted in this repo
 
 ## 12. Tests
 
-- present; `tests/` directory
+### presence, framework, location, notable patterns
+
+Present; `tests/` directory. Framework and patterns not documented.
 
 ### pitfalls observed
 
@@ -168,18 +180,19 @@ none noted in this repo
 
 ## 13. CI
 
-- present; `.github/` (GitHub Actions) AND `.buildkite/` (Buildkite pipeline)
+### presence, system, triggers, what it runs
+
+Present; both `.github/` (GitHub Actions) and `.buildkite/` (Buildkite pipeline) — multi-platform testing across two CI systems.
 
 ### pitfalls observed
 
-- Buildkite + GitHub Actions CI (multi-platform testing)
-- Buildkite CI alongside GitHub Actions — axis: CI system diversity (not just GitHub)
+- Buildkite CI alongside GitHub Actions — CI system diversity beyond GitHub-only
 
 ## 14. Container / packaging artifacts
 
-- Dockerfile (main), Dockerfile-8000 (alternative)
-- `.dockerignore`
-- multi-container deployment ready (EC2, ECS, EKS)
+### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+
+`Dockerfile` (main), `Dockerfile-8000` (alternative), `.dockerignore`. Multi-container deployment ready (EC2, ECS, EKS).
 
 ### pitfalls observed
 
@@ -187,46 +200,32 @@ none noted in this repo
 
 ## 15. Example client / developer ergonomics
 
-- Docker Compose examples (implied)
-- configuration examples via env vars
+### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+
+Docker Compose examples (implied), configuration examples via env vars, `Makefile` for build automation.
 
 ### pitfalls observed
 
-- Makefile for build automation
+none noted in this repo
 
 ## 16. Repo layout
 
-- single-package Rust project
+### single-package / monorepo / vendored / other
 
-### dirs
-
-`src/`, `tests/`, `docs/`, `scripts/`, `.buildkite/`, `.github/`
-
-### config
-
-`Cargo.toml`, `Cargo.lock`, `Makefile`, `rustfmt.toml`, `elastic-mcp.json5`
-
-### additional
-
-`catalog-info.yaml`, `renovate.json`
+Single-package Rust project. Directories: `src/`, `tests/`, `docs/`, `scripts/`, `.buildkite/`, `.github/`. Config: `Cargo.toml`, `Cargo.lock`, `Makefile`, `rustfmt.toml`, `elastic-mcp.json5`. Additional: `catalog-info.yaml`, `renovate.json`.
 
 ### pitfalls observed
 
 none noted in this repo
 
 ## 17. Notable structural choices
-- Rust implementation (performance, safety)
-- container-first distribution (Docker only)
-- Buildkite + GitHub Actions CI (multi-platform testing)
-- Makefile for build automation
-- explicit deprecation notice (superseded by Elastic Agent Builder in ES 9.2.0+)
+
+Rust implementation chosen for performance and safety. Container-first distribution — Docker is the only shipping channel. CI is split across Buildkite and GitHub Actions for multi-platform coverage. Build automation routed through a `Makefile`. README carries an explicit deprecation notice — the project is superseded by Elastic Agent Builder in ES 9.2.0+.
 
 ## 18. Unanticipated axes observed
-- Rust-native MCP server — rare axis value
-- Buildkite CI alongside GitHub Actions — axis: CI system diversity (not just GitHub)
-- explicit deprecation status in README (EOL, security updates only) — axis: declared lifecycle stage
+
+Rust-native MCP server — a rare axis value across the corpus. Buildkite CI alongside GitHub Actions — CI system diversity beyond the GitHub-only assumption. Explicit declared lifecycle stage in README (EOL, security updates only) — a deprecation-status axis most repos don't surface.
 
 ## 20. Gaps
-- exact Rust version not specified in Cargo.toml (only edition)
-- test coverage and patterns not documented
-- migration path to Elastic Agent Builder not detailed
+
+Exact Rust version is not specified in `Cargo.toml` (only edition). Test coverage and patterns are not documented. Migration path to Elastic Agent Builder is not detailed.

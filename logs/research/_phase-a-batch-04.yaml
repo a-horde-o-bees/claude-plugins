@@ -1,194 +1,222 @@
 files_processed:
-  - path: logs/research/mcp/samples/alexei-led--k8s-mcp-server.md
-    level1_normalized: true
-    bullets_converted: 41
-  - path: logs/research/mcp/samples/alpacahq--alpaca-mcp-server.md
-    level1_normalized: true
-    bullets_converted: 39
-  - path: logs/research/mcp/samples/apollographql--apollo-mcp-server.md
-    level1_normalized: true
-    bullets_converted: 38
-  - path: logs/research/mcp/samples/awslabs--aws-api-mcp-server.md
-    level1_normalized: true
-    bullets_converted: 41
-  - path: logs/research/mcp/samples/awslabs--aws-documentation-mcp-server.md
-    level1_normalized: true
-    bullets_converted: 40
-  - path: logs/research/mcp/samples/awslabs--bedrock-kb-retrieval-mcp-server.md
-    level1_normalized: true
-    bullets_converted: 40
-  - path: logs/research/mcp/samples/awslabs--mcp-lambda-handler.md
-    level1_normalized: true
-    bullets_converted: 40
-  - path: logs/research/mcp/samples/awslabs--mcp.md
-    level1_normalized: true
-    bullets_converted: 40
-  - path: logs/research/mcp/samples/awslabs--openapi-mcp-server.md
-    level1_normalized: true
-    bullets_converted: 40
-  - path: logs/research/mcp/samples/baryhuang--mcp-server-aws-resources-python.md
-    level1_normalized: true
-    bullets_converted: 41
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/apollographql--apollo-mcp-server.md
+    sections_present: [Identification, "1. Language and runtime", "2. Transport", "3. Distribution", "4. Entry point / launch", "5. Configuration surface", "6. Authentication", "7. Multi-tenancy", "8. Capabilities exposed", "9. Observability", "10. Host integrations shown in README or repo", "11. Claude Code plugin wrapper", "12. Tests", "13. CI", "14. Container / packaging artifacts", "15. Example client / developer ergonomics", "16. Repo layout", "17. Notable structural choices", "18. Unanticipated axes observed", "20. Gaps"]
+    notes: "Section 1 had a Cargo.toml note in pitfalls observed that was already restated in 20. Gaps; section 3 had install-command pitfalls duplicating Gaps. Both originals dropped (no real pitfall content); 'pitfalls observed: none noted' was the operative answer in those sections, and other gaps remained captured in section 20. No 19. Python-specific (Rust repo)."
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/awslabs--aws-api-mcp-server.md
+    sections_present: [Identification, "1. Language and runtime", "2. Transport", "3. Distribution", "4. Entry point / launch", "5. Configuration surface", "6. Authentication", "7. Multi-tenancy", "8. Capabilities exposed", "9. Observability", "10. Host integrations shown in README or repo", "11. Claude Code plugin wrapper", "12. Tests", "13. CI", "14. Container / packaging artifacts", "15. Example client / developer ergonomics", "16. Repo layout", "17. Notable structural choices", "18. Unanticipated axes observed", "19. Python-specific", "20. Gaps"]
+    notes: "Section 3 pitfalls observed contained two items that belong elsewhere: a 'sub-server as first-class Python package' axis (already present in section 18) and a 'what couldn't be determined' fragment (already present in section 20). Both relocated/dropped (no original section-3 pitfall remained); replaced with 'none noted in this repo' since no genuine distribution pitfall was captured. Section 7 pitfall about 'explicit anti-multi-tenancy statement' was a duplicate of section-18 axis; removed from section 7 (no real pitfall there) but kept in 18."
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/awslabs--aws-documentation-mcp-server.md
+    sections_present: [Identification, "1. Language and runtime", "2. Transport", "3. Distribution", "4. Entry point / launch", "5. Configuration surface", "6. Authentication", "7. Multi-tenancy", "8. Capabilities exposed", "9. Observability", "10. Host integrations shown in README or repo", "11. Claude Code plugin wrapper", "12. Tests", "13. CI", "14. Container / packaging artifacts", "15. Example client / developer ergonomics", "16. Repo layout", "17. Notable structural choices", "18. Unanticipated axes observed", "19. Python-specific", "20. Gaps"]
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/awslabs--bedrock-kb-retrieval-mcp-server.md
+    sections_present: [Identification, "1. Language and runtime", "2. Transport", "3. Distribution", "4. Entry point / launch", "5. Configuration surface", "6. Authentication", "7. Multi-tenancy", "8. Capabilities exposed", "9. Observability", "10. Host integrations shown in README or repo", "11. Claude Code plugin wrapper", "12. Tests", "13. CI", "14. Container / packaging artifacts", "15. Example client / developer ergonomics", "16. Repo layout", "17. Notable structural choices", "18. Unanticipated axes observed", "19. Python-specific", "20. Gaps"]
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/awslabs--mcp-lambda-handler.md
+    sections_present: [Identification, "1. Language and runtime", "2. Transport", "3. Distribution", "4. Entry point / launch", "5. Configuration surface", "6. Authentication", "7. Multi-tenancy", "8. Capabilities exposed", "9. Observability", "10. Host integrations shown in README or repo", "11. Claude Code plugin wrapper", "12. Tests", "13. CI", "14. Container / packaging artifacts", "15. Example client / developer ergonomics", "16. Repo layout", "17. Notable structural choices", "18. Unanticipated axes observed", "19. Python-specific", "20. Gaps"]
+    notes: "Sample is library/framework not standalone server — section 4 notes 'none' for command and section 11 'none — infrastructure'."
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/awslabs--mcp.md
+    sections_present: [Identification, "1. Language and runtime", "2. Transport", "3. Distribution", "4. Entry point / launch", "5. Configuration surface", "6. Authentication", "7. Multi-tenancy", "8. Capabilities exposed", "9. Observability", "10. Host integrations shown in README or repo", "11. Claude Code plugin wrapper", "12. Tests", "13. CI", "14. Container / packaging artifacts", "15. Example client / developer ergonomics", "16. Repo layout", "17. Notable structural choices", "18. Unanticipated axes observed", "19. Python-specific", "20. Gaps"]
+    notes: "Section 3 pitfalls observed contained an axis observation about namespace-prefixed PyPI packages — duplicated in section 17. Removed from section 3 (no genuine distribution pitfall captured); section 17 retains the observation."
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/awslabs--openapi-mcp-server.md
+    sections_present: [Identification, "1. Language and runtime", "2. Transport", "3. Distribution", "4. Entry point / launch", "5. Configuration surface", "6. Authentication", "7. Multi-tenancy", "8. Capabilities exposed", "9. Observability", "10. Host integrations shown in README or repo", "11. Claude Code plugin wrapper", "12. Tests", "13. CI", "14. Container / packaging artifacts", "15. Example client / developer ergonomics", "16. Repo layout", "17. Notable structural choices", "18. Unanticipated axes observed", "19. Python-specific", "20. Gaps"]
 
 section_observations:
   - subject: mcp
     section: Identification
-    samples_in_batch: 10
-    sub_purposes:
-      url: 10
-      stars: 10
-      "last-commit (date or relative)": 10
-      license: 10
-      "default branch": 10
-      "one-line purpose": 10
+    samples_in_batch: 7
+    sub_purposes_seen: {url: 7, stars: 7, last-commit: 7, license: 7, default branch: 7, one-line purpose: 7}
+    shape: closed-set
+    common_description: |
+      Standard repo identification block — URL, stars, last-commit (often "not captured" for monorepo sub-paths), license, default branch, and a one-line purpose statement summarizing what the server does.
+    issues:
+      - "Source files used a longer label '### last-commit (date or relative)' which canonicalizes to '### last-commit'; rewrites consolidated."
   - subject: mcp
-    section: 1. Language and runtime
-    samples_in_batch: 10
-    sub_purposes:
-      "language(s) + version constraints": 10
-      "framework/SDK in use": 10
-      "pitfalls observed": 10
+    section: "1. Language and runtime"
+    samples_in_batch: 7
+    sub_purposes_seen: {"language(s) + version constraints": 7, "framework/SDK in use": 7}
+    shape: closed-set
+    common_description: |
+      Captures language choice plus version floor (Python `>=3.10` dominates this batch; one Rust outlier) and which MCP SDK or framework variant is used (raw `mcp`, FastMCP 1.x/2.x/3.x, or custom). Two stable sub-purposes.
+    outliers:
+      - sample: apollographql--apollo-mcp-server.md
+        why: Rust + Cargo (only non-Python sample in batch); framework field is generic ("Rust MCP implementation; Apollo GraphQL ecosystem")
+      - sample: awslabs--mcp-lambda-handler.md
+        why: Custom — does not depend on `mcp` or `fastmcp`; framework variant is "custom"
+    issues:
+      - "pitfalls observed in section 1 was 'none noted' for 6/7 samples and a duplicate of section-20 Gaps in 1/7 — strong candidate for folding pitfalls into a section-level Notes or omitting entirely."
   - subject: mcp
-    section: 2. Transport
-    samples_in_batch: 10
-    sub_purposes:
-      "supported transports": 10
-      "how selected": 8
-      "how selected (flag, env, separate entry, auto-detect, etc.)": 2
-      "pitfalls observed": 10
+    section: "2. Transport"
+    samples_in_batch: 7
+    sub_purposes_seen: {supported transports: 7, how selected: 7}
+    shape: closed-set
+    common_description: |
+      Two sub-purposes: which transports the server supports (stdio dominant; streamable-http for HTTP-mode servers; HTTP-via-API-Gateway for Lambda) and the mechanism for choosing between them (CLI flag, env var, config file, or "not configurable / single mode").
+    outliers:
+      - sample: awslabs--mcp-lambda-handler.md
+        why: Pure HTTP via API Gateway; no stdio path at all
+      - sample: apollographql--apollo-mcp-server.md
+        why: Transports not extracted from README (redirected to external docs)
   - subject: mcp
-    section: 3. Distribution
-    samples_in_batch: 10
-    sub_purposes:
-      "every mechanism observed": 8
-      "every mechanism observed (PyPI, npm, uvx, npx, Docker, Homebrew, Cargo, Go install, GitHub release binary, source-only, or other)": 2
-      "published package name(s)": 10
-      "install commands shown in README": 10
-      "pitfalls observed": 10
+    section: "3. Distribution"
+    samples_in_batch: 7
+    sub_purposes_seen: {"every mechanism observed": 7, "published package name(s)": 7, "install commands shown in README": 7}
+    shape: closed-set
+    common_description: |
+      Three stable sub-purposes — list of every distribution channel observed (PyPI, uvx, Docker, source build, Cargo, GitHub releases), the canonical published package name(s), and the install commands surfaced in the README. PyPI + uvx + Docker triad dominates Python samples.
+    issues:
+      - "pitfalls observed in section 3 frequently contained content belonging to other sections (axis observations duplicating section 18, or 'what couldn't be determined' content duplicating section 20). Three of the seven samples needed relocations from this slot — strong signal that 'pitfalls observed' is being misused as overflow for cross-section notes."
   - subject: mcp
-    section: 4. Entry point / launch
-    samples_in_batch: 10
-    sub_purposes:
-      "command(s) users/hosts run": 10
-      "wrapper scripts, launchers, stubs": 10
-      "pitfalls observed": 10
+    section: "4. Entry point / launch"
+    samples_in_batch: 7
+    sub_purposes_seen: {"command(s) users/hosts run": 7, "wrapper scripts, launchers, stubs": 7}
+    shape: closed-set
+    common_description: |
+      Two sub-purposes — the actual command(s) users or hosts run to launch the server, and any wrapper scripts, console-script entries, launchers, or stubs that wrap that command. For Python servers a `[project.scripts]` console script + `module:main` is the recurring shape.
+    outliers:
+      - sample: awslabs--mcp-lambda-handler.md
+        why: "Library, not a server — 'command' is N/A; entry point is a Lambda handler that imports and delegates"
   - subject: mcp
-    section: 5. Configuration surface
-    samples_in_batch: 10
-    sub_purposes:
-      "how config reaches the server": 8
-      "how config reaches the server (env vars, CLI args, config file w/ path + format, stdin prompt, OS keyring, host-passed params, combinations)": 2
-      "pitfalls observed": 10
-    anomalies:
-      - "Sub-purpose name varies between short form and parenthetical-elaborated form across samples"
+    section: "5. Configuration surface"
+    samples_in_batch: 7
+    sub_purposes_seen: {how config reaches the server: 7}
+    shape: closed-set
+    common_description: |
+      Single sub-purpose describing the channels through which configuration reaches the server — env vars, CLI args, config files, and combinations. Env-var-first is the dominant Python pattern (especially for AWS-credentialed servers); config-file-only appears in the Rust/Apollo sample.
   - subject: mcp
-    section: 6. Authentication
-    samples_in_batch: 10
-    sub_purposes:
-      flow: 8
-      "flow (static token, OAuth w/ description, per-request header, none, other)": 2
-      "where credentials come from": 10
-      "pitfalls observed": 10
+    section: "6. Authentication"
+    samples_in_batch: 7
+    sub_purposes_seen: {flow: 7, where credentials come from: 7}
+    shape: closed-set
+    common_description: |
+      Two sub-purposes — auth flow (none, AWS credential chain, OAuth, API Gateway Authorizer, per-API mix) and credential source (env, AWS profile, request headers, upstream authorizer). AWS credential chain dominates; API-Gateway-delegated and per-API-mixed are notable variants.
+    outliers:
+      - sample: awslabs--aws-documentation-mcp-server.md
+        why: "Auth flow is 'none required' — public docs fetch; credentials N/A"
+      - sample: awslabs--openapi-mcp-server.md
+        why: Auth is per-spec (Basic, Bearer, API Key, AWS Cognito), each spec independent
   - subject: mcp
-    section: 7. Multi-tenancy
-    samples_in_batch: 10
-    sub_purposes:
-      "single-user / per-request tenant / workspace-keyed / not applicable / other": 10
-      "pitfalls observed": 10
+    section: "7. Multi-tenancy"
+    samples_in_batch: 7
+    sub_purposes_seen: {tenancy model: 7}
+    shape: closed-set
+    common_description: |
+      Single sub-purpose describing the tenancy model — single-user (most common), per-request-tenant (Lambda model), workspace/tag-keyed (tag-scoped KB access), multi-spec composition, or not-applicable (stateless public fetch). Several samples include explicit anti-multi-tenancy statements.
+    outliers:
+      - sample: awslabs--mcp-lambda-handler.md
+        why: Per-request tenant model with DynamoDB-backed session state — only one in batch with this shape
+      - sample: awslabs--openapi-mcp-server.md
+        why: "Multi-spec composition rather than tenant model — semantically different axis ('many APIs in one server' vs 'many users')"
+    issues:
+      - "Source labels were a long enumeration ('single-user / per-request tenant / workspace-keyed / not applicable / other') — canonicalized to 'tenancy model'."
   - subject: mcp
-    section: 8. Capabilities exposed
-    samples_in_batch: 10
-    sub_purposes:
-      "tools / resources / prompts / sampling / roots / logging / other": 10
-      "pitfalls observed": 10
+    section: "8. Capabilities exposed"
+    samples_in_batch: 7
+    sub_purposes_seen: {"tools / resources / prompts / sampling / roots / logging / other": 7}
+    shape: closed-set
+    common_description: |
+      Single sub-purpose enumerating which MCP primitives the server exposes and what each does at a high level. Tools-only is the dominant pattern; openapi-mcp-server uniquely uses tools + resources + prompts; apollo and openapi servers source their tool surface dynamically (from GraphQL ops or OpenAPI specs).
   - subject: mcp
-    section: 9. Observability
-    samples_in_batch: 10
-    sub_purposes:
-      "logging destination + format, metrics, tracing, debug flags": 10
-      "pitfalls observed": 10
+    section: "9. Observability"
+    samples_in_batch: 7
+    sub_purposes_seen: {"logging destination + format, metrics, tracing, debug flags": 7}
+    shape: closed-set
+    common_description: |
+      Single sub-purpose covering logging libraries (loguru dominant in Python), structured-log formats, metrics (Prometheus optional in one), tracing (X-Ray implicit in Lambda case), and debug flags (FASTMCP_LOG_LEVEL convention). Often answered with library names and "specifics not extracted".
   - subject: mcp
-    section: 10. Host integrations shown in README or repo
-    samples_in_batch: 10
-    sub_purposes:
-      "Claude Desktop": 2
-      "Smithery": 1
-      "pitfalls observed": 2
-    anomalies:
-      - "Section uses bullet-list-of-hosts pattern in 8 of 10 samples (no name:content shape) so not converted; 2 samples had host-named bullets converted to subheadings"
-      - "Multiple samples have a prose intro line ('For each host: form + location') before bullets — preserved as paragraph"
-      - "Several samples (awslabs sub-servers) say 'Aggregated in parent monorepo' or 'Not enumerated' as a single prose paragraph rather than structured per-host data"
+    section: "10. Host integrations shown in README or repo"
+    samples_in_batch: 7
+    sub_purposes_seen: {Kiro: 1, Cursor: 1, "VS Code": 1, "Cline with Amazon Bedrock": 1, Windsurf: 1, "Claude Code": 1, "Claude Desktop": 1, Claude: 1, "MCP Inspector": 1, "generic AI client": 1}
+    shape: open-enumeration
+    common_description: |
+      Per-host enumeration of how each host configures or installs the server (one-click install button, JSON snippet, in-repo plugin wrapper, docs link). Sub-server READMEs in the awslabs monorepo defer to the parent monorepo for host examples; the umbrella awslabs/mcp README enumerates 7 hosts; apollo lists 3.
+    outliers:
+      - sample: awslabs--aws-api-mcp-server.md
+        why: Sub-server defers to parent monorepo; no per-host enumeration in this file
+      - sample: awslabs--aws-documentation-mcp-server.md
+        why: Same — defers to parent
+      - sample: awslabs--bedrock-kb-retrieval-mcp-server.md
+        why: Same — defers to parent
+      - sample: awslabs--mcp-lambda-handler.md
+        why: Not a host-configured server; deployed as Lambda + API Gateway
+      - sample: awslabs--openapi-mcp-server.md
+        why: Same — defers to parent
+    issues:
+      - "Five of seven samples have empty section 10 (defer to parent or N/A) — section is genuinely open-enumeration, but for monorepo sub-servers the section may be better expressed as a single 'aggregated in parent' note rather than an enumeration."
+      - "Original source had a meta-instruction preamble paragraph ('For each host encountered…'); stripped per instructions in 2 of 7 rewrites."
   - subject: mcp
-    section: 11. Claude Code plugin wrapper
-    samples_in_batch: 10
-    sub_purposes:
-      "presence and shape": 9
-      "presence and shape (.claude-plugin/plugin.json, .mcp.json at repo root, full plugin layout, not present, other)": 1
-      "pitfalls observed": 10
+    section: "11. Claude Code plugin wrapper"
+    samples_in_batch: 7
+    sub_purposes_seen: {presence and shape: 7}
+    shape: closed-set
+    common_description: |
+      Single sub-purpose — whether and how a Claude Code plugin wrapper is present (`.claude-plugin/plugin.json`, `.mcp.json` at root, full plugin layout, or none). Only the apollo sample shows any in-repo Claude surface (`.claude/` + `CLAUDE.md`); awslabs sub-servers all answer "none".
   - subject: mcp
-    section: 12. Tests
-    samples_in_batch: 10
-    sub_purposes:
-      "presence, framework, location, notable patterns": 10
-      "pitfalls observed": 10
+    section: "12. Tests"
+    samples_in_batch: 7
+    sub_purposes_seen: {"presence, framework, location, notable patterns": 7}
+    shape: closed-set
+    common_description: |
+      Single sub-purpose summarizing test presence, framework (pytest + pytest-asyncio dominant), location (per-server tests/), and notable patterns (custom `--run-live` markers, codecov, e2e harnesses).
   - subject: mcp
-    section: 13. CI
-    samples_in_batch: 10
-    sub_purposes:
-      "presence, system, triggers, what it runs": 10
-      "pitfalls observed": 10
+    section: "13. CI"
+    samples_in_batch: 7
+    sub_purposes_seen: {"presence, system, triggers, what it runs": 7}
+    shape: closed-set
+    common_description: |
+      Single sub-purpose — CI system (GitHub Actions universal in batch), triggers, and what it runs (build, test, release-binaries, release-container, lint, secrets scan, OSSF Scorecard). Sub-server samples typically defer to "parent monorepo".
   - subject: mcp
-    section: 14. Container / packaging artifacts
-    samples_in_batch: 10
-    sub_purposes:
-      "Dockerfile, docker-compose, Helm, systemd, brew formula, etc.": 10
-      "pitfalls observed": 10
+    section: "14. Container / packaging artifacts"
+    samples_in_batch: 7
+    sub_purposes_seen: {"Dockerfile, docker-compose, Helm, systemd, brew formula, etc.": 7}
+    shape: closed-set
+    common_description: |
+      Single sub-purpose enumerating containerization and packaging artifacts. Dockerfiles dominant; one Lambda-zip case; no Helm/systemd/brew observed in this batch.
   - subject: mcp
-    section: 15. Example client / developer ergonomics
-    samples_in_batch: 10
-    sub_purposes:
-      "MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs": 10
-      "pitfalls observed": 10
+    section: "15. Example client / developer ergonomics"
+    samples_in_batch: 7
+    sub_purposes_seen: {"MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs": 7}
+    shape: closed-set
+    common_description: |
+      Single sub-purpose covering whatever the repo offers for developer onboarding — Inspector launchers, sample configs, dev-extras pip targets, devcontainer, pre-commit pipelines, custom pytest flags. Variable in content; consistent in label.
   - subject: mcp
-    section: 16. Repo layout
-    samples_in_batch: 10
-    sub_purposes:
-      "single-package / monorepo / vendored / other": 9
-      "single-package / monorepo / vendored / other — describe what's there": 2
-      "pitfalls observed": 10
+    section: "16. Repo layout"
+    samples_in_batch: 7
+    sub_purposes_seen: {"single-package / monorepo / vendored / other": 7}
+    shape: closed-set
+    common_description: |
+      Single sub-purpose categorizing repo shape — single-package, monorepo, sub-package within a monorepo, or other. The awslabs samples are all sub-packages of one monorepo; the apollo sample is a single Rust crate.
   - subject: mcp
-    section: 17. Notable structural choices
-    samples_in_batch: 10
-    anomalies:
-      - "Section is freeform bulleted observations (no name:content shape) — no conversion performed"
+    section: "17. Notable structural choices"
+    samples_in_batch: 7
+    shape: freeform
+    common_description: |
+      Freeform paragraphs (originally bulleted) capturing what stood out about the sample's structure — pinning conventions, dependency-set quirks, unusual frameworks, capability-source decisions, distribution choices. No fixed sub-vocabulary; each sample lists 4-8 distinct observations.
+    issues:
+      - "Sources used bulleted lists for this section; rewrites converted to short paragraphs with blank-line separators per markdown.md ('paragraphs are single lines, blank line between elements'). One observation per paragraph reads naturally."
   - subject: mcp
-    section: 18. Unanticipated axes observed
-    samples_in_batch: 10
-    anomalies:
-      - "Section is freeform bulleted observations (no name:content shape) — no conversion performed"
-      - "alexei-led--k8s-mcp-server.md and baryhuang--mcp-server-aws-resources-python.md use a 'decision dimensions this repo reveals:' label with nested bullets — preserved as nested-bullet structure, not subheading"
+    section: "18. Unanticipated axes observed"
+    samples_in_batch: 7
+    shape: freeform
+    common_description: |
+      Freeform observations identifying design axes the sample-template authors didn't anticipate — e.g. tag-driven access scoping, server-vs-server-framework, partition-scoped tool surfaces, spec-driven vs code-driven tools, capability probing at start, deprecation as a versioning signal. Each sample yields 3-5 axis observations.
+    issues:
+      - "High overlap between section-17 observations and section-18 axes in some samples (e.g. 'sub-server as first-class Python package' appeared in section 18 of one file but as a section-3 pitfall in another) — template guidance could clarify the distinction."
   - subject: mcp
-    section: 19. Python-specific
-    samples_in_batch: 10
-    sub_purposes:
-      "SDK / framework variant": 10
-      "Python version floor": 10
-      "Packaging": 10
-      "Entry point": 10
-      "Install workflow expected of end users": 10
-      "Async and tool signatures": 10
-      "Type / schema strategy": 9
-      "Testing": 10
-      "Dev ergonomics": 10
-      "Notable Python-specific choices": 10
-    anomalies:
-      - "Section already had level-3 subheadings in all 10 files — bullet conversion skipped per idempotency rule"
-      - "awslabs--mcp.md lacks 'Type / schema strategy' as a labeled subheading — content uses a flat bulleted list rather than name:content pattern"
+    section: "19. Python-specific"
+    samples_in_batch: 6
+    sub_purposes_seen: {"SDK / framework variant": 6, "Python version floor": 6, "Packaging": 6, "Entry point": 6, "Install workflow expected of end users": 6, "Async and tool signatures": 6, "Type / schema strategy": 6, "Testing": 6, "Dev ergonomics": 6, "Notable Python-specific choices": 6}
+    shape: closed-set
+    common_description: |
+      Python-only deep-dive section with 10 stable sub-purposes covering SDK variant, version floor, packaging (build backend, lock file, version manager), entry point shape, install workflow, async/sync signatures, type/schema strategy, testing setup, dev ergonomics, and notable Python-specific choices. Hatchling + uv + console-script + pydantic v2 is the dominant Python stack across this batch.
+    outliers:
+      - sample: apollographql--apollo-mcp-server.md
+        why: Rust repo — section 19 absent (correct per instructions)
+    issues:
+      - "Many sub-purposes are answered with bulleted-list fragments containing the original criterion phrasing ('raw `mcp` Python SDK / FastMCP 1.x / FastMCP 2.x / custom: …'); rewrite consolidates these into prose paragraphs. The criterion-fragments-as-content pattern is endemic to this section across the batch."
   - subject: mcp
-    section: 20. Gaps
-    samples_in_batch: 10
-    sub_purposes:
-      "what couldn't be determined": 8
-    anomalies:
-      - "apollographql--apollo-mcp-server.md and awslabs--mcp.md use a freeform bulleted list of gaps without a 'what couldn't be determined:' label — preserved as bullet list rather than subheading"
-      - "apollographql--apollo-mcp-server.md skips section 19 (Python-specific) entirely — Rust project; section 20 follows section 18 directly"
+    section: "20. Gaps"
+    samples_in_batch: 7
+    shape: freeform
+    common_description: |
+      Freeform paragraph (sometimes bulleted) listing what couldn't be determined from the README/fetched view — exact dates, file contents not opened, lock files not inspected, async/sync inferences not confirmed. Functions as the "what would require deeper read" honesty signal.
+    issues:
+      - "Three samples used a `### what couldn't be determined` subheading; canonical form per instructions is freeform with no `###` subheading. Rewrites strip the subheading and merge content into paragraph form."
+      - "Significant overlap between section-20 Gaps and 'pitfalls observed: …' content in earlier sections of the same file (especially section 3) — 'pitfalls observed' frequently restates a Gap from section 20. Template should consolidate."

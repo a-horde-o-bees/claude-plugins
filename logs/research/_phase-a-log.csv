@@ -1,10 +1,11 @@
-batch_id,spawned_at,items_count,total_measured_size,total_tokens,work_tokens,ratio,running_avg_ratio
-batch_00,2026-04-27T00:11:48Z,0,0,38724,0,,
-batch_01,2026-04-27T00:25:25Z,5,21308,95127,56403,2.647,2.647
-batch_02,2026-04-27T00:29:32Z,5,99768,103094,64370,0.645,0.998
-batch_03,2026-04-27T00:46:17Z,7,96295,127514,88790,0.922,0.964
-batch_04,2026-04-27T00:58:21Z,10,76545,115192,76468,0.999,0.973
-batch_05,2026-04-27T01:11:24Z,10,67403,120847,82123,1.218,1.019
-batch_06,2026-04-27T03:53:31Z,16,103989,150560,111836,1.075,1.030
-batch_07,2026-04-27T04:07:19Z,16,120000,172452,133728,1.114,1.045
-batch_08,2026-04-27T11:56:13Z,16,108000,172635,133911,1.240,1.069
+batch_id,spawned_at,items_count,total_measured_size,total_tokens,work_tokens,ratio,running_window_ratio,anomaly,notes
+batch_01,2026-04-27T13:00:00Z,3,18676,97283,58559,3.135,3.135,false,calibration — read-understand-rewrite-accumulate (first-batch tax baked in)
+batch_02,2026-04-27T13:30:00Z,5,33090,111380,73380,2.218,2.549,false,ratio dropped (cached prompt context)
+batch_03,2026-04-27T13:55:00Z,8,49893,127052,89052,1.785,2.174,false,ratio still dropping; cross-section content contamination noted
+batch_04,2026-04-27T14:30:00Z,7,56022,129492,91492,1.633,1.982,false,utilization 64.7%; picker too conservative — switching to trailing-3 window and dropping safety margin
+batch_05,2026-04-27T15:00:00Z,12,74974,154176,116176,1.549,1.640,false,utilization 77.1%; trailing-3 ratio 1.640
+batch_06,2026-04-27T15:30:00Z,13,79932,158771,120771,1.511,1.557,false,utilization 79.4%; ratio converging toward ~1.55
+batch_07,2026-04-27T16:10:00Z,14,87787,165338,127338,1.450,1.501,false,utilization 82.7%; ratio stable; trailing-3 SOP locked in
+batch_08,2026-04-27T16:50:00Z,13,93651,169178,131178,1.401,1.451,false,utilization 84.6%
+batch_09,2026-04-27T17:30:00Z,15,96587,169384,131384,1.360,1.402,false,utilization 84.7%
+batch_10,2026-04-27T18:10:00Z,14,88192,159272,121272,1.375,1.379,false,utilization 79.6%; final mcp batch — all 104 mcp samples processed

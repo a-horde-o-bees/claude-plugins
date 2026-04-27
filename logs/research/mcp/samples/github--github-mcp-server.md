@@ -10,7 +10,7 @@ https://github.com/github/github-mcp-server
 
 29.1k
 
-### last-commit (date or relative)
+### last-commit
 
 v1.0.0 released 2026-04-16
 
@@ -46,7 +46,7 @@ none noted in this repo
 
 stdio (local binary), HTTP (remote server at `api.githubcopilot.com`), and Docker as a packaging mode.
 
-### how selected (flag, env, separate entry, auto-detect, etc.)
+### how selected
 
 Subcommand — `github-mcp-server stdio` selects stdio transport. Remote mode is a separately-hosted service consumed via its URL.
 
@@ -56,7 +56,7 @@ none noted in this repo
 
 ## 3. Distribution
 
-### every mechanism observed (PyPI, npm, uvx, npx, Docker, Homebrew, Cargo, Go install, GitHub release binary, source-only, or other)
+### every mechanism observed
 
 Docker image (`ghcr.io/github/github-mcp-server`), GitHub release binaries (58 releases), `go build` from source. Official hosted remote endpoint available.
 
@@ -66,12 +66,11 @@ GHCR image `ghcr.io/github/github-mcp-server`.
 
 ### install commands shown in README
 
-- `docker run -i --rm -e GITHUB_PERSONAL_ACCESS_TOKEN=<token> ghcr.io/github/github-mcp-server`
-- `go build -o github-mcp-server ./cmd/github-mcp-server && ./github-mcp-server stdio`
+`docker run -i --rm -e GITHUB_PERSONAL_ACCESS_TOKEN=<token> ghcr.io/github/github-mcp-server`. `go build -o github-mcp-server ./cmd/github-mcp-server && ./github-mcp-server stdio`.
 
 ### pitfalls observed
 
-- GHCR as primary distribution — `docker run` is the canonical install path, not `go install`.
+GHCR as primary distribution — `docker run` is the canonical install path, not `go install`.
 
 ## 4. Entry point / launch
 
@@ -89,11 +88,9 @@ none noted in this repo
 
 ## 5. Configuration surface
 
-### how config reaches the server (env vars, CLI args, config file w/ path + format, stdin prompt, OS keyring, host-passed params, combinations)
+### how config reaches the server
 
-Env vars and CLI flags in parallel.
-  - Env: `GITHUB_PERSONAL_ACCESS_TOKEN`, `GITHUB_HOST` (Enterprise), `GITHUB_TOOLSETS`, `GITHUB_TOOLS`, `GITHUB_READ_ONLY`, `GITHUB_INSIDERS`
-  - Flags: `--toolsets`, `--tools`, `--read-only`, `--lockdown-mode`, `--dynamic-toolsets`
+Env vars and CLI flags in parallel. Env: `GITHUB_PERSONAL_ACCESS_TOKEN`, `GITHUB_HOST` (Enterprise), `GITHUB_TOOLSETS`, `GITHUB_TOOLS`, `GITHUB_READ_ONLY`, `GITHUB_INSIDERS`. Flags: `--toolsets`, `--tools`, `--read-only`, `--lockdown-mode`, `--dynamic-toolsets`.
 
 ### pitfalls observed
 
@@ -101,7 +98,7 @@ none noted in this repo
 
 ## 6. Authentication
 
-### flow (static token, OAuth w/ description, per-request header, none, other)
+### flow
 
 GitHub Personal Access Token (PAT) for local/stdio mode; OAuth for the remote hosted server.
 
@@ -115,7 +112,7 @@ none noted in this repo
 
 ## 7. Multi-tenancy
 
-### single-user / per-request tenant / workspace-keyed / not applicable / other
+### tenancy model
 
 Single-user per process for stdio (one PAT, one identity). Remote server supports per-user OAuth so effectively per-user in hosted mode.
 
@@ -145,13 +142,29 @@ none noted in this repo
 
 ## 10. Host integrations shown in README or repo
 
-For each host encountered — Claude Desktop, Claude Code, Cursor, Windsurf, Cline, Continue, Zed, VS Code, custom, any other — record form (JSON snippet, config path, shell command, plugin wrapper in-repo, docs link) and location (README section, separate docs file, shipped config file, etc.):
-- VS Code 1.101+: native MCP support; OAuth or PAT auth — README section
-- Claude Desktop: JSON snippet using Docker or local binary via `claude_desktop_config.json`
-- Cursor: Docker-based config w/ PAT env injection
-- Windsurf: Docker-based config w/ PAT env injection
-- JetBrains IDEs: Docker-based config w/ PAT env injection
-- `.vscode/` directory ships editor configuration samples
+### VS Code
+
+VS Code 1.101+: native MCP support; OAuth or PAT auth — README section.
+
+### Claude Desktop
+
+JSON snippet using Docker or local binary via `claude_desktop_config.json`.
+
+### Cursor
+
+Docker-based config w/ PAT env injection.
+
+### Windsurf
+
+Docker-based config w/ PAT env injection.
+
+### JetBrains IDEs
+
+Docker-based config w/ PAT env injection.
+
+### .vscode/
+
+ships editor configuration samples.
 
 ### pitfalls observed
 
@@ -185,7 +198,7 @@ GitHub Actions workflows present. Specific workflow contents not enumerated with
 
 ### pitfalls observed
 
-- Specific CI workflow contents.
+Specific CI workflow contents.
 
 ## 14. Container / packaging artifacts
 
@@ -209,7 +222,7 @@ none noted in this repo
 
 ## 16. Repo layout
 
-### single-package / monorepo / vendored / other — describe what's there
+### single-package / monorepo / vendored / other
 
 Single Go module rooted at `cmd/github-mcp-server` with supporting packages. `server.json` at root.
 
@@ -218,17 +231,13 @@ Single Go module rooted at `cmd/github-mcp-server` with supporting packages. `se
 none noted in this repo
 
 ## 17. Notable structural choices
-- Dual-mode transport via subcommand (`stdio`) plus separate hosted remote service — the server binary and the remote endpoint are separate products sharing a capability surface.
-- Toolset gating as a first-class feature: 20+ toolsets, independently toggleable via `--toolsets`/`GITHUB_TOOLSETS`. Dynamic toolsets allow runtime discovery, changing the tool catalog mid-session.
-- Lockdown mode for content filtering on public repos — a safety envelope for agent traversal of untrusted content.
-- GHCR as primary distribution — `docker run` is the canonical install path, not `go install`.
+
+Dual-mode transport via subcommand (`stdio`) plus separate hosted remote service — the server binary and the remote endpoint are separate products sharing a capability surface. Toolset gating as a first-class feature: 20+ toolsets, independently toggleable via `--toolsets`/`GITHUB_TOOLSETS`. Dynamic toolsets allow runtime discovery, changing the tool catalog mid-session. Lockdown mode for content filtering on public repos — a safety envelope for agent traversal of untrusted content. GHCR as primary distribution — `docker run` is the canonical install path, not `go install`.
 
 ## 18. Unanticipated axes observed
-- Tool-catalog mutability: `--dynamic-toolsets` exposes runtime-discoverable tools rather than a fixed catalog at startup, which affects how hosts cache tool listings.
-- Per-feature "modes": `--read-only`, `--lockdown-mode`, `--insiders` act as behavior envelopes rather than capability toggles, separating policy from toolset selection.
-- Hosted + local hybrid: official remote MCP endpoint operated by GitHub alongside the self-run stdio binary — distribution strategy not just code-as-download.
+
+Tool-catalog mutability: `--dynamic-toolsets` exposes runtime-discoverable tools rather than a fixed catalog at startup, which affects how hosts cache tool listings. Per-feature "modes": `--read-only`, `--lockdown-mode`, `--insiders` act as behavior envelopes rather than capability toggles, separating policy from toolset selection. Hosted + local hybrid: official remote MCP endpoint operated by GitHub alongside the self-run stdio binary — distribution strategy not just code-as-download.
 
 ## 20. Gaps
-- Exact Go version in `go.mod`.
-- Specific CI workflow contents.
-- Whether `server.json` is consumed by MCP clients beyond identifying capability, or is purely metadata.
+
+Exact Go version in `go.mod`. Specific CI workflow contents. Whether `server.json` is consumed by MCP clients beyond identifying capability, or is purely metadata.

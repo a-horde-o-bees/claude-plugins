@@ -10,7 +10,7 @@ https://github.com/docker/hub-mcp
 
 137
 
-### last-commit (date or relative)
+### last-commit
 
 Not explicitly extracted; active (7 open PRs noted)
 
@@ -44,9 +44,9 @@ none noted in this repo
 
 ### supported transports
 
-HTTP, stdio
+HTTP, stdio.
 
-### how selected (flag, env, separate entry, auto-detect, etc.)
+### how selected
 
 CLI flag `--transport=http|stdio`; `--port` sets HTTP port (default 3000).
 
@@ -56,7 +56,7 @@ none noted in this repo
 
 ## 3. Distribution
 
-### every mechanism observed (PyPI, npm, uvx, npx, Docker, Homebrew, Cargo, Go install, GitHub release binary, source-only, or other)
+### every mechanism observed
 
 npm package; Dockerfile present; source clone/build.
 
@@ -66,11 +66,11 @@ Not explicitly extracted from README; appears published to npm based on install 
 
 ### install commands shown in README
 
-  - `npm install && npm run build && npm start -- [--transport=http|stdio] [--port=3000]`
+`npm install && npm run build && npm start -- [--transport=http|stdio] [--port=3000]`
 
 ### pitfalls observed
 
-  - Exact npm package name if published.
+none noted in this repo
 
 ## 4. Entry point / launch
 
@@ -88,9 +88,9 @@ none noted in this repo
 
 ## 5. Configuration surface
 
-### how config reaches the server (env vars, CLI args, config file w/ path + format, stdin prompt, OS keyring, host-passed params, combinations)
+### how config reaches the server
 
-Env vars (`HUB_PAT_TOKEN`) + CLI args (`--transport`, `--port`, `--username`). `tools.json` and `tools.txt` ship tool definitions.
+Env vars (`HUB_PAT_TOKEN`) plus CLI args (`--transport`, `--port`, `--username`). `tools.json` and `tools.txt` ship tool definitions.
 
 ### pitfalls observed
 
@@ -98,7 +98,7 @@ none noted in this repo
 
 ## 6. Authentication
 
-### flow (static token, OAuth w/ description, per-request header, none, other)
+### flow
 
 Static Docker Hub Personal Access Token (PAT).
 
@@ -112,9 +112,9 @@ none noted in this repo
 
 ## 7. Multi-tenancy
 
-### single-user / per-request tenant / workspace-keyed / not applicable / other
+### tenancy model
 
-Single-user per process (one PAT + username).
+Single-user per process (one PAT plus username).
 
 ### pitfalls observed
 
@@ -142,19 +142,17 @@ none noted in this repo
 
 ## 10. Host integrations shown in README or repo
 
-For each host encountered — Claude Desktop, Claude Code, Cursor, Windsurf, Cline, Continue, Zed, VS Code, custom, any other — record form (JSON snippet, config path, shell command, plugin wrapper in-repo, docs link) and location (README section, separate docs file, shipped config file, etc.):
-
 ### Claude Desktop
 
-JSON snippet via `claude_desktop_config.json` (README section)
+JSON snippet via `claude_desktop_config.json` (README section).
 
 ### VS Code
 
-JSON snippet via User Settings JSON
+JSON snippet via User Settings JSON.
 
 ### Docker Ask Gordon
 
-`gordon-mcp.yml` config file
+`gordon-mcp.yml` config file.
 
 ### pitfalls observed
 
@@ -162,7 +160,7 @@ none noted in this repo
 
 ## 11. Claude Code plugin wrapper
 
-### presence and shape (.claude-plugin/plugin.json, .mcp.json at repo root, full plugin layout, not present, other)
+### presence and shape
 
 Not observed in root listing.
 
@@ -212,7 +210,7 @@ none noted in this repo
 
 ## 16. Repo layout
 
-### single-package / monorepo / vendored / other — describe what's there
+### single-package / monorepo / vendored / other
 
 Single-package TS project. `src/`, `Dockerfile`, `package.json`, `tsconfig.json`, `tools.json`, `tools.txt`, `eslint.config.mjs`.
 
@@ -222,19 +220,12 @@ none noted in this repo
 
 ## 17. Notable structural choices
 
-- Tools defined in a separate `tools.json` / `tools.txt` pair — declarative catalog rather than inline schemas in source.
-- First-party Docker "Ask Gordon" integration (`gordon-mcp.yml`) — repo targets Docker's own agent surface alongside generic MCP hosts.
-- Transport is a first-class CLI flag with an explicit default rather than separate entry-point commands (contrast with github-mcp-server's subcommand approach).
+Tools defined in a separate `tools.json` / `tools.txt` pair — declarative catalog rather than inline schemas in source. First-party Docker "Ask Gordon" integration (`gordon-mcp.yml`) — repo targets Docker's own agent surface alongside generic MCP hosts. Transport is a first-class CLI flag with an explicit default rather than separate entry-point commands (contrast with github-mcp-server's subcommand approach).
 
 ## 18. Unanticipated axes observed
 
-- Vendor-specific companion integration (`gordon-mcp.yml`) — MCP server pre-shaping its config for a first-party downstream tool, distinct from generic host config.
-- Tool catalog as data file (`tools.json`/`tools.txt`) rather than code — opens an authoring path that doesn't require TS expertise.
+Vendor-specific companion integration (`gordon-mcp.yml`) — MCP server pre-shaping its config for a first-party downstream tool, distinct from generic host config. Tool catalog as data file (`tools.json`/`tools.txt`) rather than code — opens an authoring path that doesn't require TS expertise.
 
 ## 20. Gaps
 
-- Last-commit date.
-- Exact npm package name if published.
-- Tool enumeration / total tool count.
-- Test framework and coverage.
-- Whether the HTTP transport is Streamable HTTP, SSE, or plain JSON-RPC-over-HTTP.
+Last-commit date. Exact npm package name if published. Tool enumeration / total tool count. Test framework and coverage. Whether the HTTP transport is Streamable HTTP, SSE, or plain JSON-RPC-over-HTTP.

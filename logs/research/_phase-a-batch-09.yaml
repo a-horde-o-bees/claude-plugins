@@ -1,0 +1,200 @@
+files_processed:
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/qdrant--mcp-server-qdrant.md
+    notes: "Section-1 pitfall fragment matched section-20 gap; replaced with 'none noted'. Renamed 'last-commit (date or relative)' to canonical 'last-commit'. Section 13 gap restated; replaced."
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/redis--mcp-redis.md
+    notes: "Section-3 pitfall ('uv-first Python tooling…') and section-5 pitfall ('CLI-first with env var fallback…') were content for section 17 (already present); both pitfalls slots replaced with 'none noted'."
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/reminia--zendesk-mcp-server.md
+    notes: "Source flat-bullet throughout; converted to canonical level-3 sub-purposes."
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/riza-io--riza-mcp.md
+    notes: "TypeScript/JS — no section 19. Section 10 had three host entries (Claude Desktop, Claude Code, Other); preserved."
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/rohitg00--kubectl-mcp-server.md
+    notes: "Section-3 pitfall about dual PyPI+npm distribution overlaps section 17; preserved per source intent (treated as packaging note, not structural sibling)."
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/rust-mcp-stack--rust-mcp-filesystem.md
+    notes: "Rust — no section 19. Sections 1 and 9 pitfalls duplicate section-20 gaps; left them in pitfalls (source phrased as 'observed during research')."
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/sajal2692--mcp-weaviate.md
+    notes: "Section-7 pitfalls had two bullets; first kept as genuine pitfall, second was duplicate of section-18 axis; dropped duplicate."
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/samuelgursky--davinci-resolve-mcp.md
+    notes: "Source had non-canonical 'Platform requirements' section between 17 and 18; folded into section 17. Section-1 pitfall had content for main field; replaced with 'none noted'. Section-7 pitfall content belonged in 17; relocated."
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/sandraschi--email-mcp.md
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/severity1--terraform-cloud-mcp.md
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/shibuiwilliam--mcp-server-scikit-learn.md
+    notes: "Sections 1 and 3 each carried a single bullet that was a section-20 gap restated; preserved per source intent."
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/shreyaskarnik--huggingface-mcp-server.md
+    notes: "Sections 1 and 3 pitfalls each restate a section-20 gap; preserved as the source put them there."
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/slackapi--slack-mcp-plugin.md
+    notes: "Remote service; no section 19. Section 7 was bullet-form with no labeled sub-purpose; assigned canonical 'tenancy model'. Section 10 collapsed two host bullets into ### per host."
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/sooperset--mcp-atlassian.md
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/spences10--mcp-turso-cloud.md
+    notes: "TypeScript — no section 19. Source had a top-of-file blockquote noting target resolution caveat; preserved as paragraph after Identification. Section 10 'Other editors/CLIs: Not mentioned' bullet was scaffolding; dropped."
+
+section_observations:
+  - subject: mcp
+    section: Identification
+    samples_in_batch: 15
+    sub_purposes_seen: {url: 15, stars: 15, last-commit: 15, license: 15, default branch: 15, one-line purpose: 15}
+    shape: closed-set
+    common_description: |
+      Stable six-field identification block on every sample.
+    issues:
+      - "Most sources keep 'last-commit (date or relative)' parenthetical scaffolding in the heading; canonicalize to bare 'last-commit'."
+  - subject: mcp
+    section: 1. Language and runtime
+    samples_in_batch: 15
+    sub_purposes_seen: {"language(s) + version constraints": 15, "framework/SDK in use": 15, "pitfalls observed": 15}
+    shape: closed-set
+    common_description: |
+      Identifies the primary language(s) plus minimum version, and the MCP framework/SDK variant.
+    issues:
+      - "'pitfalls observed' is empty in most samples for this section; consider whether section 1 needs the slot at all."
+  - subject: mcp
+    section: 2. Transport
+    samples_in_batch: 15
+    sub_purposes_seen: {"supported transports": 15, "how selected": 15, "pitfalls observed": 15}
+    shape: closed-set
+    common_description: |
+      Names the MCP transports the server speaks (stdio dominant; SSE, streamable-http, http appear in larger servers; one HTTP-only remote service).
+    issues:
+      - "Several samples use 'inferred stdio' when not explicitly documented — consider canonical phrasing."
+  - subject: mcp
+    section: 3. Distribution
+    samples_in_batch: 15
+    sub_purposes_seen: {"every mechanism observed": 15, "published package name(s)": 15, "install commands shown in README": 15, "pitfalls observed": 15}
+    shape: closed-set
+    common_description: |
+      Enumerates every distribution channel, package name(s), and install one-liner(s).
+    issues:
+      - "When unpublished or remote-only, 'published package name(s)' carries language like 'not published / remote-only / Smithery as primary'. Worth a canonical 'distribution status' axis."
+  - subject: mcp
+    section: 4. Entry point / launch
+    samples_in_batch: 15
+    sub_purposes_seen: {"command(s) users/hosts run": 15, "wrapper scripts, launchers, stubs": 15, "pitfalls observed": 15}
+    shape: closed-set
+    common_description: |
+      Actual command users put in their MCP host config, plus any wrapper scripts/launchers/stubs.
+  - subject: mcp
+    section: 5. Configuration surface
+    samples_in_batch: 15
+    sub_purposes_seen: {"how config reaches the server": 15, "pitfalls observed": 15}
+    shape: closed-set
+    common_description: |
+      How the server gets its configuration: env vars, CLI flags, .env, URI schemes, JSON host config, runtime tool-call reconfiguration.
+  - subject: mcp
+    section: 6. Authentication
+    samples_in_batch: 15
+    sub_purposes_seen: {"flow": 15, "where credentials come from": 15, "pitfalls observed": 15}
+    shape: closed-set
+    common_description: |
+      Auth model and credential source.
+  - subject: mcp
+    section: 7. Multi-tenancy
+    samples_in_batch: 15
+    sub_purposes_seen: {"tenancy model": 15, "pitfalls observed": 15}
+    shape: closed-set
+    common_description: |
+      Single-user vs workspace-keyed (Slack OAuth) vs per-request tenant arguments (Weaviate, Turso). Often 'not applicable' for local single-host servers.
+    issues:
+      - "Source labels for this slot vary widely; canonicalize to 'tenancy model'."
+  - subject: mcp
+    section: 8. Capabilities exposed
+    samples_in_batch: 15
+    sub_purposes_seen: {"tools / resources / prompts / sampling / roots / logging / other": 15, "pitfalls observed": 15}
+    shape: closed-set
+    common_description: |
+      Inventory of MCP primitives — tools dominant; some additionally use resources (Zendesk KB, Hugging Face hf://), prompts (Hugging Face, email-mcp), or sampling (email-mcp).
+    issues:
+      - "Slash-list slot heading is verbose; canonical short would be 'capabilities inventory' but corpus uses slash-list."
+  - subject: mcp
+    section: 9. Observability
+    samples_in_batch: 15
+    sub_purposes_seen: {"logging destination + format, metrics, tracing, debug flags": 15, "pitfalls observed": 15}
+    shape: closed-set
+    common_description: |
+      Logging destination, debug flags, metrics, tracing. Most samples report 'not documented'; outliers (email-mcp) ship monitoring web dashboard.
+    issues:
+      - "Half the batch has no real content here. Consider whether 'observability' is worth keeping as a section or could fold into section 5 when only a debug env var is documented."
+  - subject: mcp
+    section: 10. Host integrations shown in README or repo
+    samples_in_batch: 15
+    shape: open-enumeration
+    common_description: |
+      Per-host coverage: Claude Desktop, Claude Code, Cursor, VS Code, Windsurf, Smithery, Cline, Augment, Zed, GitHub Copilot, OpenAI Agents SDK, WSL, Glama. Each gets `### <Host>` with a paragraph describing form (JSON snippet, deeplink, registration command, MCPB drag-and-drop). Some collapse multiple hosts under one heading when the JSON shape is identical.
+    issues:
+      - "Host vocabulary genuinely unbounded; ### per host correct. Expect 15+ host names across full corpus."
+      - "Some collapse N hosts under one heading ('Cursor, Windsurf, GitHub Copilot, 15+ other MCP clients'); template should bless either pattern."
+  - subject: mcp
+    section: 11. Claude Code plugin wrapper
+    samples_in_batch: 15
+    sub_purposes_seen: {"presence and shape": 15, "pitfalls observed": 15}
+    shape: closed-set
+    common_description: |
+      Almost always 'none observed / not present'. One sample (slackapi/slack-mcp-plugin) is the inverse case — configs-only repo with `.claude-plugin/` and `.cursor-plugin/`.
+    issues:
+      - "'presence and shape' is 'none' in 14/15. Section is near-no-op for non-Anthropic-shipped servers. Consider folding into section 10 as a host entry rather than its own section."
+  - subject: mcp
+    section: 12. Tests
+    samples_in_batch: 15
+    sub_purposes_seen: {"presence, framework, location, notable patterns": 15, "pitfalls observed": 15}
+    shape: closed-set
+    common_description: |
+      Test framework (pytest dominant, cargo-nextest for Rust, custom 5-phase live suite for DaVinci), location, notable patterns.
+  - subject: mcp
+    section: 13. CI
+    samples_in_batch: 15
+    sub_purposes_seen: {"presence, system, triggers, what it runs": 15, "pitfalls observed": 15}
+    shape: closed-set
+    common_description: |
+      Whether GitHub Actions configured and what jobs run. Most report 'present' with limited detail.
+  - subject: mcp
+    section: 14. Container / packaging artifacts
+    samples_in_batch: 15
+    sub_purposes_seen: {"Dockerfile, docker-compose, Helm, systemd, brew formula, etc.": 15, "pitfalls observed": 15}
+    shape: closed-set
+    common_description: |
+      Container and OS-packaging artifacts. Dockerfile dominant; multi-stage Rust, MCPB bundles, 'none observed' all appear.
+  - subject: mcp
+    section: 15. Example client / developer ergonomics
+    samples_in_batch: 15
+    sub_purposes_seen: {"MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs": 15, "pitfalls observed": 15}
+    shape: closed-set
+    common_description: |
+      Inspector launchers (`fastmcp dev`), Makefile/Justfile, sample configs, devcontainers, formatter/type-checker invocations.
+  - subject: mcp
+    section: 16. Repo layout
+    samples_in_batch: 15
+    sub_purposes_seen: {"single-package / monorepo / vendored / other": 15, "pitfalls observed": 15}
+    shape: closed-set
+    common_description: |
+      High-level layout type. Single-package dominant; one config-only repo; one multi-directory repo with co-located webapp + monitoring.
+  - subject: mcp
+    section: 17. Notable structural choices
+    samples_in_batch: 15
+    shape: freeform
+    common_description: |
+      Freeform prose listing 2–6 structural choices that stood out — version pins, dual-mode architectures, safety flag schemes, multi-backend abstractions, packaging unusualness.
+    issues:
+      - "Several samples emit 5+ bullets here; collapsing to a dense paragraph loses bullet boundaries. Consider whether template should bless bulleted output here as the source's natural form."
+  - subject: mcp
+    section: 18. Unanticipated axes observed
+    samples_in_batch: 15
+    shape: freeform
+    common_description: |
+      Free-form prose noting axes/dimensions of MCP-server design space.
+    issues:
+      - "Sources frequently use 'decision dimensions this repo reveals:' preamble — scaffolding from the original template; strip and just render axes as paragraphs/bullets."
+  - subject: mcp
+    section: 19. Python-specific
+    samples_in_batch: 12
+    sub_purposes_seen: {"SDK / framework variant": 12, "Python version floor": 12, "Packaging": 12, "Entry point": 12, "Install workflow expected of end users": 12, "Async and tool signatures": 12, "Type / schema strategy": 12, "Testing": 12, "Dev ergonomics": 12, "Notable Python-specific choices": 12}
+    shape: closed-set
+    common_description: |
+      Detailed Python-ecosystem cross-section. Absent on TS/Rust servers (riza, rust-mcp-filesystem, slack-mcp-plugin).
+    issues:
+      - "Several sub-purposes carry verbose enumeration scaffolding from the original template; rewrite collapses to short canonical labels and prose answers."
+  - subject: mcp
+    section: 20. Gaps
+    samples_in_batch: 15
+    shape: freeform
+    common_description: |
+      Free-form list of what couldn't be determined within the research budget. 2–5 items typical.
+    issues:
+      - "Frequently restates content also placed in earlier 'pitfalls observed' slots; dedup rule applies."

@@ -10,9 +10,9 @@ https://github.com/ahmedmustahid/postgres-mcp-server
 
 30
 
-### last-commit (date or relative)
+### last-commit
 
-Not surfaced from landing page within budget
+Not surfaced from landing page within budget.
 
 ### license
 
@@ -30,11 +30,11 @@ PostgreSQL read-only MCP server — exposes tables and schema as resources and r
 
 ### language(s) + version constraints
 
-TypeScript (71.8%), JavaScript, Node.js; a `pyproject.toml` is also present suggesting a secondary Python surface
+TypeScript (71.8%), JavaScript, Node.js; a `pyproject.toml` is also present suggesting a secondary Python surface.
 
 ### framework/SDK in use
 
-Anthropic MCP TypeScript SDK (StreamableHTTPServerTransport, StdioServerTransport)
+Anthropic MCP TypeScript SDK (StreamableHTTPServerTransport, StdioServerTransport).
 
 ### pitfalls observed
 
@@ -44,11 +44,11 @@ none noted in this repo
 
 ### supported transports
 
-HTTP (streamable) and stdio
+HTTP (streamable) and stdio.
 
-### how selected (flag, env, separate entry, auto-detect, etc.)
+### how selected
 
-Positional subcommand — `npx @ahmedmustahid/postgres-mcp-server` (HTTP default) vs `npx @ahmedmustahid/postgres-mcp-server stdio`
+Positional subcommand — `npx @ahmedmustahid/postgres-mcp-server` (HTTP default) vs `npx @ahmedmustahid/postgres-mcp-server stdio`.
 
 ### pitfalls observed
 
@@ -58,7 +58,7 @@ none noted in this repo
 
 ### every mechanism observed
 
-npm (npx), Docker, Podman
+npm (npx), Docker, Podman.
 
 ### published package name(s)
 
@@ -66,7 +66,7 @@ npm (npx), Docker, Podman
 
 ### install commands shown in README
 
-`npx @ahmedmustahid/postgres-mcp-server`; `npx @ahmedmustahid/postgres-mcp-server stdio`
+`npx @ahmedmustahid/postgres-mcp-server`; `npx @ahmedmustahid/postgres-mcp-server stdio`.
 
 ### pitfalls observed
 
@@ -76,11 +76,11 @@ none noted in this repo
 
 ### command(s) users/hosts run
 
-`npx @ahmedmustahid/postgres-mcp-server [stdio]`
+`npx @ahmedmustahid/postgres-mcp-server [stdio]`.
 
 ### wrapper scripts, launchers, stubs
 
-Dockerfile and docker-compose.yml; Makefile
+Dockerfile and docker-compose.yml; Makefile.
 
 ### pitfalls observed
 
@@ -90,7 +90,7 @@ none noted in this repo
 
 ### how config reaches the server
 
-Environment variables via `.env` — `POSTGRES_USERNAME`, `POSTGRES_PASSWORD`, `POSTGRES_HOST`, `POSTGRES_DATABASE`, `POSTGRES_URL`, `PORT` (default 3000), `HOST`, `NODE_ENV`, `CORS_ORIGIN`
+Environment variables via `.env` — `POSTGRES_USERNAME`, `POSTGRES_PASSWORD`, `POSTGRES_HOST`, `POSTGRES_DATABASE`, `POSTGRES_URL`, `PORT` (default 3000), `HOST`, `NODE_ENV`, `CORS_ORIGIN`.
 
 ### pitfalls observed
 
@@ -100,11 +100,11 @@ none noted in this repo
 
 ### flow
 
-Standard PostgreSQL authentication via credentials in env vars
+Standard PostgreSQL authentication via credentials in env vars.
 
 ### where credentials come from
 
-`.env` file / environment variables
+`.env` file / environment variables.
 
 ### pitfalls observed
 
@@ -112,9 +112,9 @@ none noted in this repo
 
 ## 7. Multi-tenancy
 
-### single-user / per-request tenant / workspace-keyed / not applicable / other
+### tenancy model
 
-Single database per server; HTTP transport supports stateful sessions but not per-request tenant switching
+Single database per server; HTTP transport supports stateful sessions but not per-request tenant switching.
 
 ### pitfalls observed
 
@@ -134,7 +134,7 @@ none noted in this repo
 
 ### logging destination + format, metrics, tracing, debug flags
 
-`--verbose` flag available
+`--verbose` flag available.
 
 ### pitfalls observed
 
@@ -144,15 +144,15 @@ none noted in this repo
 
 ### Claude Desktop
 
-Supported with JSON config example
+Supported with JSON config example.
 
 ### MCP Inspector
 
-Explicitly referenced
+Explicitly referenced.
 
 ### Other editors/CLIs
 
-Not mentioned
+Not mentioned.
 
 ### pitfalls observed
 
@@ -162,7 +162,7 @@ none noted in this repo
 
 ### presence and shape
 
-Not present
+Not present.
 
 ### pitfalls observed
 
@@ -172,7 +172,7 @@ none noted in this repo
 
 ### presence, framework, location, notable patterns
 
-Not detailed in README within budget
+Not detailed in README within budget.
 
 ### pitfalls observed
 
@@ -182,7 +182,7 @@ none noted in this repo
 
 ### presence, system, triggers, what it runs
 
-Not detailed in README within budget
+Not detailed in README within budget.
 
 ### pitfalls observed
 
@@ -192,7 +192,7 @@ none noted in this repo
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
-Dockerfile and docker-compose.yml present; Podman also called out
+Dockerfile and docker-compose.yml present; Podman also called out.
 
 ### pitfalls observed
 
@@ -202,7 +202,7 @@ none noted in this repo
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
-Makefile present; Claude Desktop config example; "Show sales table from last year" example query
+Makefile present; Claude Desktop config example; "Show sales table from last year" example query.
 
 ### pitfalls observed
 
@@ -212,22 +212,20 @@ none noted in this repo
 
 ### single-package / monorepo / vendored / other
 
-Mixed single-package — primarily Node/TS (`src/`, `package.json`) with a sibling `pyproject.toml` and `images/` directory
+Mixed single-package — primarily Node/TS (`src/`, `package.json`) with a sibling `pyproject.toml` and `images/` directory.
 
 ### pitfalls observed
 
 none noted in this repo
 
 ## 17. Notable structural choices
-- Dual transport (HTTP streamable + stdio) in one package with subcommand selection
-- Graceful shutdown and error handling highlighted in README
-- Presence of both `package.json` and `pyproject.toml` in a TS-majority repo is unusual — possibly a parallel Python variant or docs-generation tool
+
+Dual transport (HTTP streamable + stdio) in one package with subcommand selection. Graceful shutdown and error handling highlighted in README. Presence of both `package.json` and `pyproject.toml` in a TS-majority repo is unusual — possibly a parallel Python variant or docs-generation tool.
 
 ## 18. Unanticipated axes observed
-- CORS origin configuration surfaces at the MCP layer, which is HTTP-transport-specific and rare
-- Explicit HTTP session statefulness as a design axis
+
+CORS origin configuration surfaces at the MCP layer, which is HTTP-transport-specific and rare. Explicit HTTP session statefulness as a design axis.
 
 ## 20. Gaps
-- Last-commit date not surfaced
-- Tests and CI details not extracted within budget
-- Purpose of `pyproject.toml` in a TS-dominant repo not explained in README
+
+Last-commit date not surfaced. Tests and CI details not extracted within budget. Purpose of `pyproject.toml` in a TS-dominant repo not explained in README.

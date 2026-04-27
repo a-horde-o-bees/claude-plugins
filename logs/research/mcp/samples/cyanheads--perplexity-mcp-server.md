@@ -30,11 +30,11 @@ Perplexity MCP server (TypeScript) — `perplexity_search` and `perplexity_deep_
 
 ### language(s) + version constraints
 
-TypeScript ^5.8.3; Node.js >=18.0.0
+TypeScript ^5.8.3; Node.js >=18.0.0.
 
 ### framework/SDK in use
 
-MCP SDK ^1.15.0, Hono (HTTP transport), Zod validation
+MCP SDK ^1.15.0, Hono (HTTP transport), Zod validation.
 
 ### pitfalls observed
 
@@ -44,11 +44,11 @@ none noted in this repo
 
 ### supported transports
 
-stdio (default), HTTP (configurable host 127.0.0.1, port 3010)
+stdio (default), HTTP (configurable host 127.0.0.1, port 3010).
 
 ### how selected
 
-environment config, validated via Zod
+environment config, validated via Zod.
 
 ### pitfalls observed
 
@@ -58,29 +58,29 @@ none noted in this repo
 
 ### every mechanism observed
 
-npm (source clone + build)
+npm (source clone + build).
 
 ### published package name(s)
 
-not found on npm registry
+not found on npm registry.
 
 ### install commands shown in README
 
-`git clone`, `npm install`, `npm run build`, `npm start`
+`git clone`, `npm install`, `npm run build`, `npm start`.
 
 ### pitfalls observed
 
-- published npm package name not found — source-only distribution
+none noted in this repo
 
 ## 4. Entry point / launch
 
 ### command(s) users/hosts run
 
-`npm start`
+`npm start`.
 
-### wrapper scripts
+### wrapper scripts, launchers, stubs
 
-npm build script compiles TS to `dist/`
+npm build script compiles TS to `dist/`.
 
 ### pitfalls observed
 
@@ -90,7 +90,7 @@ none noted in this repo
 
 ### how config reaches the server
 
-`.env` file validated by Zod; transport type and logging level configurable
+`.env` file validated by Zod; transport type and logging level configurable.
 
 ### pitfalls observed
 
@@ -100,11 +100,11 @@ none noted in this repo
 
 ### flow
 
-API key (PERPLEXITY_API_KEY) plus optional JWT or OAuth 2.1 for HTTP transport
+API key (PERPLEXITY_API_KEY) plus optional JWT or OAuth 2.1 for HTTP transport.
 
 ### where credentials come from
 
-environment variable, CLI args, or `.env` file
+environment variable, CLI args, or `.env` file.
 
 ### pitfalls observed
 
@@ -112,7 +112,9 @@ none noted in this repo
 
 ## 7. Multi-tenancy
 
-- per-user single instance; JWT/OAuth enables multi-client support in HTTP mode
+### tenancy model
+
+per-user single instance; JWT/OAuth enables multi-client support in HTTP mode.
 
 ### pitfalls observed
 
@@ -120,9 +122,9 @@ none noted in this repo
 
 ## 8. Capabilities exposed
 
-### tools
+### tools / resources / prompts / sampling / roots / logging / other
 
-`perplexity_search` (fast search-augmented), `perplexity_deep_research` (multi-source exhaustive)
+`perplexity_search` (fast search-augmented), `perplexity_deep_research` (multi-source exhaustive).
 
 ### pitfalls observed
 
@@ -130,17 +132,19 @@ none noted in this repo
 
 ## 9. Observability
 
-### logging
+### logging destination + format, metrics, tracing, debug flags
 
-structured, configurable with file rotation (centralized utilities)
+structured, configurable with file rotation (centralized utilities).
 
 ### pitfalls observed
 
-- structured logging with file rotation for production
+none noted in this repo
 
 ## 10. Host integrations shown in README or repo
 
-- Cline (MCP client config documented)
+### Cline
+
+MCP client config documented.
 
 ### pitfalls observed
 
@@ -148,7 +152,9 @@ none noted in this repo
 
 ## 11. Claude Code plugin wrapper
 
-- not present; MCP server designed for compatible clients
+### presence and shape
+
+not present; MCP server designed for compatible clients.
 
 ### pitfalls observed
 
@@ -156,7 +162,9 @@ none noted in this repo
 
 ## 12. Tests
 
-- present; `npm test` runs TypeScript noEmit type checks
+### presence, framework, location, notable patterns
+
+present; `npm test` runs TypeScript noEmit type checks.
 
 ### pitfalls observed
 
@@ -164,7 +172,9 @@ none noted in this repo
 
 ## 13. CI
 
-- not explicitly documented in README; `.github/` present
+### presence, system, triggers, what it runs
+
+not explicitly documented in README; `.github/` present.
 
 ### pitfalls observed
 
@@ -172,7 +182,9 @@ none noted in this repo
 
 ## 14. Container / packaging artifacts
 
-- Dockerfile present (multi-stage Node.js 18-Alpine build)
+### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+
+Dockerfile present (multi-stage Node.js 18-Alpine build).
 
 ### pitfalls observed
 
@@ -180,7 +192,9 @@ none noted in this repo
 
 ## 15. Example client / developer ergonomics
 
-- clone + build pattern; sample config in README
+### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+
+clone + build pattern; sample config in README.
 
 ### pitfalls observed
 
@@ -188,31 +202,22 @@ none noted in this repo
 
 ## 16. Repo layout
 
-- single-package Node.js/TS
+### single-package / monorepo / vendored / other
 
-### dirs
-
-`.github/`, `src/`, `docs/`
-
-### config
-
-`package.json`, `tsconfig.json`, `Dockerfile`
+single-package Node.js/TS; dirs: `.github/`, `src/`, `docs/`; config files: `package.json`, `tsconfig.json`, `Dockerfile`.
 
 ### pitfalls observed
 
 none noted in this repo
 
 ## 17. Notable structural choices
-- clean separation of stdio/HTTP transports via Hono
-- structured logging with file rotation for production
-- Zod schema validation for config
-- multi-stage Docker for optimized image
+
+Clean separation of stdio/HTTP transports via Hono. Structured logging with file rotation for production. Zod schema validation for config. Multi-stage Docker for optimized image.
 
 ## 18. Unanticipated axes observed
-- optional JWT/OAuth for HTTP mode (multi-client support in a typically single-user server)
-- auto-complexity detection for tool selection
+
+Optional JWT/OAuth for HTTP mode (multi-client support in a typically single-user server). Auto-complexity detection for tool selection.
 
 ## 20. Gaps
-- exact last commit date inferred from pushed_at (July 22, 2025); no changelog
-- CI/CD strategy not documented
-- published npm package name not found — source-only distribution
+
+Exact last commit date inferred from pushed_at (July 22, 2025); no changelog. CI/CD strategy not documented. Published npm package name not found — source-only distribution.

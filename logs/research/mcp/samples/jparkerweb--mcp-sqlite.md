@@ -1,6 +1,7 @@
 # Sample
 
 ## Identification
+
 ### url
 
 https://github.com/jparkerweb/mcp-sqlite
@@ -9,7 +10,7 @@ https://github.com/jparkerweb/mcp-sqlite
 
 99
 
-### last-commit (date or relative)
+### last-commit
 
 Not explicitly shown in GitHub UI
 
@@ -26,6 +27,7 @@ main
 SQLite MCP server — schema exploration and SQL execution.
 
 ## 1. Language and runtime
+
 ### language(s) + version constraints
 
 TypeScript/JavaScript, Node.js 14.0.0+
@@ -39,6 +41,7 @@ MCP SDK (@modelcontextprotocol/sdk ^1.12.1), sqlite3
 none noted in this repo
 
 ## 2. Transport
+
 ### supported transports
 
 stdio
@@ -52,6 +55,7 @@ Default, no transport selection mechanism documented
 none noted in this repo
 
 ## 3. Distribution
+
 ### every mechanism observed
 
 npm package (mcp-sqlite)
@@ -64,10 +68,12 @@ mcp-sqlite
 
 `npx -y mcp-sqlite <database-path>`
 
-- pitfalls observed:
-  - Direct npx invocation without intermediate config
+### pitfalls observed
+
+Direct npx invocation without intermediate config
 
 ## 4. Entry point / launch
+
 ### command(s) users/hosts run
 
 `npx -y mcp-sqlite <database-path>`
@@ -81,6 +87,7 @@ mcp-sqlite-server (CommonJS in package.json bin field)
 none noted in this repo
 
 ## 5. Configuration surface
+
 ### how config reaches the server
 
 Database path as CLI argument, IDE configuration via JSON
@@ -90,6 +97,7 @@ Database path as CLI argument, IDE configuration via JSON
 none noted in this repo
 
 ## 6. Authentication
+
 ### flow
 
 None specified
@@ -103,7 +111,8 @@ Not applicable
 none noted in this repo
 
 ## 7. Multi-tenancy
-### single-user / per-request tenant / workspace-keyed / not applicable / other
+
+### tenancy model
 
 Single-user per database instance
 
@@ -112,6 +121,7 @@ Single-user per database instance
 none noted in this repo
 
 ## 8. Capabilities exposed
+
 ### tools / resources / prompts / sampling / roots / logging / other
 
 Database introspection, CRUD operations, SQL query execution with parameterized queries
@@ -121,6 +131,7 @@ Database introspection, CRUD operations, SQL query execution with parameterized 
 none noted in this repo
 
 ## 9. Observability
+
 ### logging destination + format, metrics, tracing, debug flags
 
 MCP Inspector test script via npm test
@@ -130,6 +141,7 @@ MCP Inspector test script via npm test
 none noted in this repo
 
 ## 10. Host integrations shown in README or repo
+
 ### Cursor
 
 npx command
@@ -153,6 +165,7 @@ Not present in documentation
 none noted in this repo
 
 ## 12. Tests
+
 ### presence, framework, location, notable patterns
 
 Present; MCP Inspector framework; npm test script
@@ -162,6 +175,7 @@ Present; MCP Inspector framework; npm test script
 none noted in this repo
 
 ## 13. CI
+
 ### presence, system, triggers, what it runs
 
 Not documented
@@ -171,6 +185,7 @@ Not documented
 none noted in this repo
 
 ## 14. Container / packaging artifacts
+
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 Not observed
@@ -180,6 +195,7 @@ Not observed
 none noted in this repo
 
 ## 15. Example client / developer ergonomics
+
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
 MCP Inspector integrated as test; postinstall instructions
@@ -189,6 +205,7 @@ MCP Inspector integrated as test; postinstall instructions
 none noted in this repo
 
 ## 16. Repo layout
+
 ### single-package / monorepo / vendored / other
 
 Single npm package with package.json, README, bin entry
@@ -198,14 +215,13 @@ Single npm package with package.json, README, bin entry
 none noted in this repo
 
 ## 17. Notable structural choices
-- Minimal dependencies (sqlite3 + MCP SDK only)
-- Direct npx invocation without intermediate config
-- Parameterized query support for security
+
+Minimal dependencies (sqlite3 + MCP SDK only). Direct npx invocation without intermediate config. Parameterized query support for security.
 
 ## 18. Unanticipated axes observed
-- CRUD-first design rather than query-focused like some competitors
+
+CRUD-first design rather than query-focused like some competitors.
 
 ## 20. Gaps
-- Last commit date not displayed in GitHub UI
-- CI/CD system not documented
-- HTTP transport alternative not documented
+
+Last commit date not displayed in GitHub UI. CI/CD system not documented. HTTP transport alternative not documented.

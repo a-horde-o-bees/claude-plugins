@@ -10,9 +10,9 @@ https://github.com/GLips/Figma-Context-MCP
 
 14.4k
 
-### last-commit (date or relative)
+### last-commit
 
-Latest release v0.10.1, April 10, 2026
+Latest release v0.10.1, April 10, 2026.
 
 ### license
 
@@ -30,25 +30,25 @@ Figma design-context MCP server — parses Figma URLs and extracts layout/stylin
 
 ### language(s) + version constraints
 
-TypeScript (96.3%); Node.js runtime (implied — uses npx and pnpm); specific Node engines constraint not extracted within budget
+TypeScript (96.3%); Node.js runtime (implied — uses npx and pnpm); specific Node engines constraint not extracted within budget.
 
 ### framework/SDK in use
 
-Model Context Protocol SDK (the canonical `@modelcontextprotocol/sdk` typescript SDK); build via tsup
+Model Context Protocol SDK (the canonical `@modelcontextprotocol/sdk` typescript SDK); build via tsup.
 
 ### pitfalls observed
 
-  - Exact Node engines constraint, precise CI workflow triggers, and logging format not confirmed within budget
+Exact Node engines constraint, precise CI workflow triggers, and logging format not confirmed within budget.
 
 ## 2. Transport
 
 ### supported transports
 
-stdio; HTTP/SSE server mode also referenced (standalone server with PORT env var)
+stdio; HTTP/SSE server mode also referenced (standalone server with PORT env var).
 
-### how selected (flag, env, separate entry, auto-detect, etc.)
+### how selected
 
-`--stdio` CLI flag selects stdio; omission plus a `PORT` env var or port flag selects HTTP mode
+`--stdio` CLI flag selects stdio; omission plus a `PORT` env var or port flag selects HTTP mode.
 
 ### pitfalls observed
 
@@ -58,7 +58,7 @@ none noted in this repo
 
 ### every mechanism observed
 
-npm (primary), npx execution, Cursor IDE configuration snippets
+npm (primary), npx execution, Cursor IDE configuration snippets.
 
 ### published package name(s)
 
@@ -70,17 +70,17 @@ figma-developer-mcp
 
 ### pitfalls observed
 
-  - pnpm + lefthook + ESLint + Prettier signals an opinionated dev environment; consumers building plugins on top should expect pnpm workflows
+pnpm + lefthook + ESLint + Prettier signals an opinionated dev environment; consumers building plugins on top should expect pnpm workflows.
 
 ## 4. Entry point / launch
 
 ### command(s) users/hosts run
 
-`npx -y figma-developer-mcp --figma-api-key=YOUR-KEY --stdio` (macOS/Linux); Windows wraps in `cmd /c`
+`npx -y figma-developer-mcp --figma-api-key=YOUR-KEY --stdio` (macOS/Linux); Windows wraps in `cmd /c`.
 
 ### wrapper scripts, launchers, stubs
 
-npm `bin` entry; tsup-built CLI; no separate launcher scripts observed
+npm `bin` entry; tsup-built CLI; no separate launcher scripts observed.
 
 ### pitfalls observed
 
@@ -90,7 +90,7 @@ none noted in this repo
 
 ### how config reaches the server
 
-CLI flags (`--figma-api-key`, `--stdio`, port flag); environment variables (`FIGMA_API_KEY`, `PORT`); host-level JSON config file for MCP clients
+CLI flags (`--figma-api-key`, `--stdio`, port flag); environment variables (`FIGMA_API_KEY`, `PORT`); host-level JSON config file for MCP clients.
 
 ### pitfalls observed
 
@@ -100,11 +100,11 @@ none noted in this repo
 
 ### flow
 
-Static Figma personal access token supplied via CLI flag or environment variable; no OAuth flow
+Static Figma personal access token supplied via CLI flag or environment variable; no OAuth flow.
 
 ### where credentials come from
 
-User generates token via Figma's account token-management UI and passes it at launch
+User generates token via Figma's account token-management UI and passes it at launch.
 
 ### pitfalls observed
 
@@ -112,9 +112,9 @@ none noted in this repo
 
 ## 7. Multi-tenancy
 
-### single-user / per-request tenant / workspace-keyed / not applicable / other
+### tenancy model
 
-Single-user — token is process-scoped. A given launch serves one Figma identity; no per-request switching observed
+Single-user — token is process-scoped. A given launch serves one Figma identity; no per-request switching observed.
 
 ### pitfalls observed
 
@@ -124,7 +124,7 @@ none noted in this repo
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
-Tools for parsing Figma file/frame/group URLs, extracting layout and styling metadata, and contextualizing design data for code generation. Designed as the bridge that turns a Figma link into structured design context an AI coder can consume
+Tools for parsing Figma file/frame/group URLs, extracting layout and styling metadata, and contextualizing design data for code generation. Designed as the bridge that turns a Figma link into structured design context an AI coder can consume.
 
 ### pitfalls observed
 
@@ -134,7 +134,7 @@ none noted in this repo
 
 ### logging destination + format, metrics, tracing, debug flags
 
-Not explicitly extracted within budget — likely stderr logging in stdio mode, but not confirmed
+Not explicitly extracted within budget — likely stderr logging in stdio mode, but not confirmed.
 
 ### pitfalls observed
 
@@ -142,9 +142,17 @@ none noted in this repo
 
 ## 10. Host integrations shown in README or repo
 
-- Cursor IDE (primary target, featured prominently)
-- Claude Desktop (referenced via MCP JSON config)
-- General MCP-compatible clients via stdio
+### Cursor IDE
+
+Primary target, featured prominently.
+
+### Claude Desktop
+
+Referenced via MCP JSON config.
+
+### General MCP-compatible clients
+
+Via stdio.
 
 ### pitfalls observed
 
@@ -154,7 +162,7 @@ none noted in this repo
 
 ### presence and shape
 
-Not present — no `.claude-plugin` directory observed in repo layout
+Not present — no `.claude-plugin` directory observed in repo layout.
 
 ### pitfalls observed
 
@@ -164,7 +172,7 @@ none noted in this repo
 
 ### presence, framework, location, notable patterns
 
-Present — vitest configured; specific location/coverage not extracted within budget
+Present — vitest configured; specific location/coverage not extracted within budget.
 
 ### pitfalls observed
 
@@ -174,7 +182,7 @@ none noted in this repo
 
 ### presence, system, triggers, what it runs
 
-Present — GitHub Actions workflows exist; specific triggers and jobs not extracted within budget
+Present — GitHub Actions workflows exist; specific triggers and jobs not extracted within budget.
 
 ### pitfalls observed
 
@@ -184,7 +192,7 @@ none noted in this repo
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
-Not observed within budget
+Not observed within budget.
 
 ### pitfalls observed
 
@@ -194,7 +202,7 @@ none noted in this repo
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
-pnpm scripts for dev/build; lefthook for git hooks; ESLint + Prettier; sample Cursor and Claude Desktop configs in README
+pnpm scripts for dev/build; lefthook for git hooks; ESLint + Prettier; sample Cursor and Claude Desktop configs in README.
 
 ### pitfalls observed
 
@@ -204,7 +212,7 @@ none noted in this repo
 
 ### single-package / monorepo / vendored / other
 
-Single-package — `/src`, `/scripts`, tsconfig.json, eslint.config.js at root; pnpm-managed
+Single-package — `/src`, `/scripts`, tsconfig.json, eslint.config.js at root; pnpm-managed.
 
 ### pitfalls observed
 
@@ -212,16 +220,12 @@ none noted in this repo
 
 ## 17. Notable structural choices
 
-- TypeScript-heavy (96%) with tsup for build — typical modern TS CLI scaffolding
-- pnpm + lefthook + ESLint + Prettier signals an opinionated dev environment; consumers building plugins on top should expect pnpm workflows
-- The server's job is scope-narrow — it turns Figma URLs into structured context; it does not perform writes to Figma, which sidesteps OAuth scope-escalation concerns
+TypeScript-heavy (96%) with tsup for build — typical modern TS CLI scaffolding. pnpm + lefthook + ESLint + Prettier signals an opinionated dev environment; consumers building plugins on top should expect pnpm workflows. The server's job is scope-narrow — it turns Figma URLs into structured context; it does not perform writes to Figma, which sidesteps OAuth scope-escalation concerns.
 
 ## 18. Unanticipated axes observed
 
-- 14.4k stars and 1.1k forks make this the dominant community Figma MCP — effectively canonical despite being unofficial. No first-party figma-org repo was surfaced in this research window
-- Marketing framing "Give your coding agent access to your Figma data" positions it as a design-to-code accelerator rather than a general Figma CRUD server
+14.4k stars and 1.1k forks make this the dominant community Figma MCP — effectively canonical despite being unofficial. No first-party figma-org repo was surfaced in this research window. Marketing framing "Give your coding agent access to your Figma data" positions it as a design-to-code accelerator rather than a general Figma CRUD server.
 
 ## 20. Gaps
 
-- Exact Node engines constraint, precise CI workflow triggers, and logging format not confirmed within budget
-- Whether the repo intends a future HTTP-only mode (given PORT env var) or leaves HTTP secondary to stdio is not documented in the extracted content
+Exact Node engines constraint, precise CI workflow triggers, and logging format not confirmed within budget. Whether the repo intends a future HTTP-only mode (given PORT env var) or leaves HTTP secondary to stdio is not documented in the extracted content.

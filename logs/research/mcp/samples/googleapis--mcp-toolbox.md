@@ -10,9 +10,9 @@ https://github.com/googleapis/mcp-toolbox
 
 14.7k
 
-### last-commit (date or relative)
+### last-commit
 
-v1.1.0 released 2026-04-13; 1,798 total commits
+v1.1.0 released 2026-04-13; 1,798 total commits.
 
 ### license
 
@@ -46,7 +46,7 @@ none noted in this repo
 
 HTTP MCP server on port 5000 at `/mcp` endpoint. Stdio not explicitly documented in the fetched view — server appears HTTP-first.
 
-### how selected (flag, env, separate entry, auto-detect, etc.)
+### how selected
 
 HTTP is the default mode when the binary runs.
 
@@ -56,13 +56,9 @@ none noted in this repo
 
 ## 3. Distribution
 
-### every mechanism observed (PyPI, npm, uvx, npx, Docker, Homebrew, Cargo, Go install, GitHub release binary, source-only, or other)
+### every mechanism observed
 
-- GitHub release binaries (Linux AMD64, macOS ARM64/Intel, Windows AMD64)
-- Docker (`us-central1-docker.pkg.dev/database-toolbox/toolbox/toolbox:$VERSION`)
-- `go install github.com/googleapis/mcp-toolbox@v1.1.0`
-- Homebrew (`brew install mcp-toolbox`)
-- NPM shim: `npx @toolbox-sdk/server --config tools.yaml`
+GitHub release binaries (Linux AMD64, macOS ARM64/Intel, Windows AMD64); Docker (`us-central1-docker.pkg.dev/database-toolbox/toolbox/toolbox:$VERSION`); `go install github.com/googleapis/mcp-toolbox@v1.1.0`; Homebrew (`brew install mcp-toolbox`); NPM shim (`npx @toolbox-sdk/server --config tools.yaml`).
 
 ### published package name(s)
 
@@ -70,13 +66,13 @@ none noted in this repo
 
 ### install commands shown in README
 
-Each of the five above.
+Each of the five distribution mechanisms above is shown.
 
 ### pitfalls observed
 
-- Five distribution channels (binary, Docker, go install, Homebrew, npm shim) — unusually broad; implies cross-ecosystem discoverability is a deliberate goal.
-- NPM shim (`@toolbox-sdk/server`) wrapping a Go binary — cross-ecosystem glue that lets node-oriented hosts run a Go server by name.
-- Homebrew formula source (tap or core).
+- Five distribution channels (binary, Docker, go install, Homebrew, npm shim) — unusually broad; implies cross-ecosystem discoverability is a deliberate goal
+- NPM shim (`@toolbox-sdk/server`) wrapping a Go binary — cross-ecosystem glue that lets node-oriented hosts run a Go server by name
+- Homebrew formula source (tap or core) not specified
 
 ## 4. Entry point / launch
 
@@ -94,9 +90,9 @@ none noted in this repo
 
 ## 5. Configuration surface
 
-### how config reaches the server (env vars, CLI args, config file w/ path + format, stdin prompt, OS keyring, host-passed params, combinations)
+### how config reaches the server
 
-Primary: YAML manifest (`tools.yaml`) defining sources, tools, toolsets, and prompts. Dynamic reloading on by default (`--disable-reload` opts out). CLI flag `--config` points at the manifest.
+Primary: YAML manifest (`tools.yaml`) defining sources, tools, toolsets, and prompts. CLI flag `--config` points at the manifest. Dynamic reloading is on by default; `--disable-reload` opts out.
 
 ### pitfalls observed
 
@@ -104,9 +100,9 @@ none noted in this repo
 
 ## 6. Authentication
 
-### flow (static token, OAuth w/ description, per-request header, none, other)
+### flow
 
-Delegates to database auth schemes. Integrated authentication including IAM for Google Cloud, plus standard credentials for PostgreSQL, MySQL, SQL Server, Oracle, MongoDB, Redis, Elasticsearch, and others.
+Delegates to database auth schemes. Integrated authentication includes IAM for Google Cloud, plus standard credentials for PostgreSQL, MySQL, SQL Server, Oracle, MongoDB, Redis, Elasticsearch, and others.
 
 ### where credentials come from
 
@@ -118,7 +114,7 @@ none noted in this repo
 
 ## 7. Multi-tenancy
 
-### single-user / per-request tenant / workspace-keyed / not applicable / other
+### tenancy model
 
 Configuration is per-process; the manifest can declare multiple sources, effectively multi-database but not multi-user. HTTP endpoint serves any connected MCP client.
 
@@ -148,12 +144,21 @@ none noted in this repo
 
 ## 10. Host integrations shown in README or repo
 
-For each host encountered — Claude Desktop, Claude Code, Cursor, Windsurf, Cline, Continue, Zed, VS Code, custom, any other — record form (JSON snippet, config path, shell command, plugin wrapper in-repo, docs link) and location (README section, separate docs file, shipped config file, etc.):
-- Gemini CLI — first-party; a `gemini-extension.json` ships in-repo
-- Google Antigravity — listed as compatible client
-- Claude Code — listed as compatible client
-- Codex — listed as compatible client
-- README framing: "MCP-compatible IDE or client (e.g., Gemini CLI, Google Antigravity, Claude Code, Codex, etc.)"
+### Gemini CLI
+
+First-party integration; a `gemini-extension.json` ships in-repo.
+
+### Google Antigravity
+
+Listed as compatible client.
+
+### Claude Code
+
+Listed as compatible client.
+
+### Codex
+
+Listed as compatible client.
 
 ### pitfalls observed
 
@@ -183,7 +188,7 @@ none noted in this repo
 
 ### presence, system, triggers, what it runs
 
-`.ci/` + `.github/workflows/` directories. `.golangci.yaml` for lint.
+`.ci/` plus `.github/workflows/` directories. `.golangci.yaml` for lint.
 
 ### pitfalls observed
 
@@ -211,7 +216,7 @@ none noted in this repo
 
 ## 16. Repo layout
 
-### single-package / monorepo / vendored / other — describe what's there
+### single-package / monorepo / vendored / other
 
 Single Go module. Top-level: `/cmd`, `/docs`, `/internal`, `/tests`, `/.ci`, `/.github`, `/.hugo`, `/.gemini`. `.gitmodules` present (submodules used).
 
@@ -220,22 +225,13 @@ Single Go module. Top-level: `/cmd`, `/docs`, `/internal`, `/tests`, `/.ci`, `/.
 none noted in this repo
 
 ## 17. Notable structural choices
-- YAML manifest as the primary configuration surface. Sources, tools, toolsets, and prompts all live in `tools.yaml` — admin configures by editing YAML rather than by writing code.
-- Dynamic reloading by default — config changes propagate without restart; `--disable-reload` opts out. Unusual for MCP servers, which typically re-exec.
-- Multi-database abstraction: the same binary speaks to 8+ databases via `sources`. Tool authoring is declarative on top of that abstraction.
-- Five distribution channels (binary, Docker, go install, Homebrew, npm shim) — unusually broad; implies cross-ecosystem discoverability is a deliberate goal.
-- HTTP-first transport at `:5000/mcp` — diverges from the stdio-first convention common elsewhere.
-- Gemini-first integration: `gemini-extension.json` and `.gemini/` directory reflect the origin at Google; other hosts consume the generic HTTP endpoint.
+
+YAML manifest is the primary configuration surface — sources, tools, toolsets, and prompts all live in `tools.yaml`, so admins configure by editing YAML rather than writing code. Dynamic reloading is on by default — config changes propagate without restart, with `--disable-reload` as the opt-out — unusual for MCP servers, which typically re-exec. The same binary speaks to 8+ databases via the `sources` abstraction; tool authoring is declarative on top of that. Five distribution channels (binary, Docker, go install, Homebrew, npm shim) make cross-ecosystem discoverability a deliberate goal. HTTP-first transport at `:5000/mcp` diverges from the stdio-first convention common elsewhere. Gemini-first integration shows up as a `gemini-extension.json` and `.gemini/` directory, reflecting the project's origin at Google; other hosts consume the generic HTTP endpoint.
 
 ## 18. Unanticipated axes observed
-- Declarative tool authoring via YAML manifest — admins define tools without writing code, a different authoring surface from code-defined MCP servers.
-- Prompts as a first-class manifest concept alongside tools — most MCP servers concentrate on tools; this one surfaces the prompts capability too.
-- Hot reloading as a built-in — implies state that survives across configuration changes, a different lifecycle assumption.
-- NPM shim (`@toolbox-sdk/server`) wrapping a Go binary — cross-ecosystem glue that lets node-oriented hosts run a Go server by name.
+
+Declarative tool authoring via YAML manifest — admins define tools without writing code, a different authoring surface from code-defined MCP servers. Prompts as a first-class manifest concept alongside tools — most MCP servers concentrate on tools; this one surfaces the prompts capability too. Hot reloading as a built-in — implies state that survives across configuration changes, a different lifecycle assumption. NPM shim (`@toolbox-sdk/server`) wrapping a Go binary — cross-ecosystem glue that lets node-oriented hosts run a Go server by name.
 
 ## 20. Gaps
-- Exact Go version constraint in go.mod.
-- Whether stdio transport is supported (only HTTP at port 5000 was surfaced).
-- Full list of supported database sources beyond those named.
-- Homebrew formula source (tap or core).
-- Specific contents of `server.json`.
+
+Exact Go version constraint in `go.mod` not extracted. Whether stdio transport is supported is unclear (only HTTP at port 5000 was surfaced). Full list of supported database sources beyond those named is not enumerated. Homebrew formula source (tap or core) is unspecified. Specific contents of `server.json` are not extracted.

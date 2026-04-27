@@ -1,200 +1,208 @@
 files_processed:
-  - path: logs/research/mcp/samples/AlwaysSany--deepl-fastmcp-python-server.md
-    level1_normalized: true
-    bullets_converted: 44
-  - path: logs/research/mcp/samples/Azure--azure-mcp.md
-    level1_normalized: true
-    bullets_converted: 38
-  - path: logs/research/mcp/samples/ClickHouse--mcp-clickhouse.md
-    level1_normalized: true
-    bullets_converted: 41
-  - path: logs/research/mcp/samples/DiversioTeam--clickup-mcp.md
-    level1_normalized: true
-    bullets_converted: 38
-  - path: logs/research/mcp/samples/FuzzingLabs--mcp-security-hub.md
-    level1_normalized: true
-    bullets_converted: 41
-  - path: logs/research/mcp/samples/HenkDz--postgresql-mcp-server.md
-    level1_normalized: true
-    bullets_converted: 41
-  - path: logs/research/mcp/samples/JackKuo666--PubMed-MCP-Server.md
-    level1_normalized: true
-    bullets_converted: 41
-  - path: logs/research/mcp/samples/PagerDuty--pagerduty-mcp-server.md
-    level1_normalized: true
-    bullets_converted: 39
-  - path: logs/research/mcp/samples/bhauman--clojure-mcp.md
-    level1_normalized: true
-    bullets_converted: 39
-  - path: logs/research/mcp/samples/blazickjp--arxiv-mcp-server.md
-    level1_normalized: true
-    bullets_converted: 39
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/baryhuang--mcp-server-aws-resources-python.md
+    notes: "section 1 pitfalls duplicated section 20 gaps content — replaced with 'none noted in this repo'; section 3 pitfalls had cross-section contamination (one bullet was multi-arch structural choice already in section 17, another was a section-18 axis with a truncation marker) — relocated to sections 17/18; section 7 pitfalls duplicated section 17 sandbox commentary — replaced with 'none noted in this repo'"
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/bhauman--clojure-mcp.md
+    notes: "section 1 pitfalls duplicated section 20 gaps (Java version constraints) — replaced; section 7 pitfalls held a structural choice (sandbox example) duplicated in section 17 — replaced"
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/blazickjp--arxiv-mcp-server.md
+    notes: "section 1 pitfalls duplicated section 20 gaps (mcp SDK version pin) — replaced"
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/chroma-core--chroma-mcp.md
+    notes: "section 13 pitfalls duplicated section 20 gaps (GH Actions / release automation) — replaced"
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/ckreiling--mcp-server-docker.md
+    notes: "section 1 pitfalls duplicated section 20 gaps — replaced"
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/cloudflare--mcp-server-cloudflare.md
+    notes: "stripped meta-instruction scaffolding from section 10 preamble"
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/conikeec--mcpr.md
+    notes: "section 1 pitfalls duplicated section 20 gaps (Rust version) — replaced; no section 19 (Rust)"
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/crystaldba--postgres-mcp.md
+    notes: "section 3 pitfalls held a section-18 axis (Docker host-address auto-remap) — replaced; sections 9 and 13 pitfalls duplicated section 20 gaps — replaced; section 10 source had grouped hosts under one heading — split into one ### per host"
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/cyanheads--git-mcp-server.md
+    notes: "section 7 used non-canonical bullets only — added canonical 'tenancy model'; sections 7/9/13 pitfalls duplicated other sections — replaced; consolidated section 16 source-split (dirs/config); consolidated section 8 source-split (tools/resources/prompts); no section 19 (TypeScript)"
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/cyanheads--perplexity-mcp-server.md
+    notes: "section 7 used non-canonical bullets only — added canonical 'tenancy model'; sections 3 and 9 pitfalls duplicated other sections — replaced; consolidated section 16 source-split (dirs/config); no section 19 (TypeScript)"
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/datalayer--earthdata-mcp-server.md
+    notes: "section 3 pitfalls had two bullets: smithery.yaml duplicated section 17 (kept), CI/PyPI publishing duplicated section 20 — kept first, dropped second"
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/datalayer--jupyter-mcp-server.md
+    notes: "section 3 pitfalls held a structural-choice bullet (jupyter-mcp-tools companion) duplicated in section 17 — kept as it characterizes distribution"
 
 section_observations:
   - subject: mcp
     section: Identification
-    samples_in_batch: 10
-    sub_purposes:
-      url: 10
-      stars: 10
-      "last-commit (date or relative)": 10
-      license: 10
-      "default branch": 10
-      "one-line purpose": 10
+    samples_in_batch: 12
+    sub_purposes_seen: {url: 12, stars: 12, last-commit: 12, license: 12, default branch: 12, one-line purpose: 12}
+    shape: closed-set
+    common_description: |
+      Repository fingerprint — URL, popularity, recency, license, default branch, and a one-line purpose. Stable closed-set vocabulary.
   - subject: mcp
     section: 1. Language and runtime
-    samples_in_batch: 10
-    sub_purposes:
-      "language(s) + version constraints": 10
-      "framework/SDK in use": 10
-      "pitfalls observed": 10
+    samples_in_batch: 12
+    sub_purposes_seen: {"language(s) + version constraints": 12, "framework/SDK in use": 12, pitfalls observed: 12}
+    shape: closed-set
+    common_description: |
+      Languages used (often with GitHub-detected percentages), runtime version floor, and the framework or SDK driving the server.
+    issues:
+      - "section-1 'pitfalls observed' frequently restates section-20 Gaps; 5/12 in this batch dedup'd to 'none noted'. Slot becomes near-empty after dedup — consider whether section 1 needs its own pitfalls slot"
   - subject: mcp
     section: 2. Transport
-    samples_in_batch: 10
-    sub_purposes:
-      "supported transports": 10
-      "how selected": 6
-      "how selected (flag, env, separate entry, auto-detect, etc.)": 4
-      "pitfalls observed": 10
+    samples_in_batch: 12
+    sub_purposes_seen: {supported transports: 12, how selected: 12, pitfalls observed: 12}
+    shape: closed-set
+    common_description: |
+      Which transports the server speaks (stdio dominates) and the mechanism that selects among them.
+    outliers:
+      - sample: bhauman--clojure-mcp.md
+        why: "uses nREPL as transport — REPL-as-transport unusual"
+      - sample: cloudflare--mcp-server-cloudflare.md
+        why: "transports selected by URL path on same Worker (/mcp vs /sse)"
   - subject: mcp
     section: 3. Distribution
-    samples_in_batch: 10
-    sub_purposes:
-      "every mechanism observed": 9
-      "every mechanism observed (PyPI, npm, uvx, npx, Docker, Homebrew, Cargo, Go install, GitHub release binary, source-only, or other)": 1
-      "published package name(s)": 10
-      "install commands shown in README": 10
-      "pitfalls observed": 10
+    samples_in_batch: 12
+    sub_purposes_seen: {every mechanism observed: 12, "published package name(s)": 12, install commands shown in README: 12, pitfalls observed: 12}
+    shape: closed-set
+    common_description: |
+      How the server is distributed: registry channels, runner shims, Docker images, source-only paths.
+    outliers:
+      - sample: cloudflare--mcp-server-cloudflare.md
+        why: "remote-only — no installable artifact"
+      - sample: cyanheads--perplexity-mcp-server.md
+        why: "no published npm package; source-clone-only"
   - subject: mcp
     section: 4. Entry point / launch
-    samples_in_batch: 10
-    sub_purposes:
-      "command(s) users/hosts run": 10
-      "wrapper scripts, launchers, stubs": 10
-      "pitfalls observed": 10
+    samples_in_batch: 12
+    sub_purposes_seen: {"command(s) users/hosts run": 12, "wrapper scripts, launchers, stubs": 12, pitfalls observed: 12}
+    shape: closed-set
+    common_description: |
+      The exact command end users invoke (console script, npx/bunx/uvx, npm script, Clojure tool alias, generated binary) and any wrapper layer.
   - subject: mcp
     section: 5. Configuration surface
-    samples_in_batch: 10
-    sub_purposes:
-      "how config reaches the server": 9
-      "how config reaches the server (env vars, CLI args, config file w/ path + format, stdin prompt, OS keyring, host-passed params, combinations)": 1
-      "pitfalls observed": 10
+    samples_in_batch: 12
+    sub_purposes_seen: {how config reaches the server: 12, pitfalls observed: 12}
+    shape: closed-set
+    common_description: |
+      How configuration arrives — env vars dominant; CLI args, .env, host JSON config, framework-specific configs as variants.
   - subject: mcp
     section: 6. Authentication
-    samples_in_batch: 10
-    sub_purposes:
-      "flow": 9
-      "flow (static token, OAuth w/ description, per-request header, none, other)": 1
-      "where credentials come from": 10
-      "pitfalls observed": 10
+    samples_in_batch: 12
+    sub_purposes_seen: {flow: 12, where credentials come from: 12, pitfalls observed: 12}
+    shape: closed-set
+    common_description: |
+      Auth mechanism (none, API key, token, OAuth, JWT, vendor cloud creds, DB URI) and the channel that delivers credentials.
+    outliers:
+      - sample: cyanheads--git-mcp-server.md
+        why: "tri-mode auth (none/jwt/oauth) selectable via env"
+      - sample: cloudflare--mcp-server-cloudflare.md
+        why: "OAuth-like flow on remote endpoints; mcp-remote handles handshake"
   - subject: mcp
     section: 7. Multi-tenancy
-    samples_in_batch: 10
-    sub_purposes:
-      "single-user / per-request tenant / workspace-keyed / not applicable / other": 10
-      "pitfalls observed": 10
+    samples_in_batch: 12
+    sub_purposes_seen: {tenancy model: 12, pitfalls observed: 12}
+    shape: closed-set
+    common_description: |
+      Whether the server serves one user, per-request tenancy via auth token, workspace-keyed via base-dir restriction, per-target via runtime switch, or N/A.
+    outliers:
+      - sample: cloudflare--mcp-server-cloudflare.md
+        why: "per-request tenancy keyed by bearer token"
+      - sample: cyanheads--git-mcp-server.md
+        why: "workspace-keyed via base-directory restriction"
   - subject: mcp
     section: 8. Capabilities exposed
-    samples_in_batch: 10
-    sub_purposes:
-      "tools / resources / prompts / sampling / roots / logging / other": 10
-      "pitfalls observed": 10
+    samples_in_batch: 12
+    sub_purposes_seen: {"tools / resources / prompts / sampling / roots / logging / other": 12, pitfalls observed: 12}
+    shape: closed-set
+    common_description: |
+      What MCP primitives the server exposes — tools dominant; minorities expose prompts (docker-compose workflow, research analysis) or resources.
   - subject: mcp
     section: 9. Observability
-    samples_in_batch: 10
-    sub_purposes:
-      "logging destination + format, metrics, tracing, debug flags": 10
-      "pitfalls observed": 10
+    samples_in_batch: 12
+    sub_purposes_seen: {"logging destination + format, metrics, tracing, debug flags": 12, pitfalls observed: 12}
+    shape: closed-set
+    common_description: |
+      Logging output (stdout/stderr, file rotation, structured Pino/JSON), optional metrics/tracing (OTel in two), debug flags. Many say 'not surfaced'.
   - subject: mcp
     section: 10. Host integrations shown in README or repo
-    samples_in_batch: 10
-    sub_purposes:
-      "Claude Desktop": 6
-      "Claude Code": 3
-      "Cursor": 1
-      "Other editors/CLIs": 2
-      "Other MCP-enabled clients": 1
-      "Cline": 1
-      "Smithery": 1
-      "Codex": 1
-      "nREPL": 1
-      "Shadow-cljs": 1
-      "Babashka/Basilisp/Scittle": 1
-      "Git/Shell": 1
-      "pitfalls observed": 10
-    anomalies:
-      - "AlwaysSany, DiversioTeam: section opens with 'Not captured per host in extract' paragraph and only the pitfalls bullet"
-      - "Per-host bullets converted to subheadings — varies widely (6 distinct host names + several non-host categories)"
+    samples_in_batch: 12
+    sub_purposes_seen: {Claude Desktop: 9, Smithery: 1, Claude Code: 3, Codex: 1, "Cursor / other MCP clients": 1, Cursor: 2, Cline: 2, "Claude (Desktop implied)": 1, Cloudflare AI Playground: 1, OpenAI Responses API: 1, nREPL: 1, Shadow-cljs: 1, Babashka/Basilisp/Scittle: 1, Git/Shell: 1, Other: 1, Windsurf: 1, Goose: 1, Qodo Gen: 1, Cloud Postgres: 1, JupyterLab: 1, "Other MCP clients": 1, Cloudflare Workers: 1, pitfalls observed: 12}
+    shape: open-enumeration
+    common_description: |
+      Per-host integrations called out in the repo. Claude Desktop dominant (9/12); recurring entries Cursor, Cline, Claude Code, Smithery, vendor-specific.
+    issues:
+      - "host names vary in format ('Claude Desktop' vs 'Claude (Desktop implied)' vs grouped 'Cursor / other MCP clients'); canonicalize to single host names"
+      - "open vocabulary likely exceeds 30+ host names across the corpus; rare custom hosts (Cloudflare AI Playground, nREPL, JupyterLab) appear"
   - subject: mcp
     section: 11. Claude Code plugin wrapper
-    samples_in_batch: 10
-    sub_purposes:
-      "presence and shape": 9
-      "presence and shape (.claude-plugin/plugin.json, .mcp.json at repo root, full plugin layout, not present, other)": 1
-      "pitfalls observed": 10
+    samples_in_batch: 12
+    sub_purposes_seen: {presence and shape: 12, pitfalls observed: 12}
+    shape: closed-set
+    common_description: |
+      Whether the repo ships a Claude Code plugin wrapper. Almost universally absent (11/12); blazickjp/arxiv-mcp-server has `skills/`.
+    issues:
+      - "11/12 report 'not present' — slot has near-zero positive content but the rare positive cases (arxiv-mcp-server) signal cross-host plugin packaging"
   - subject: mcp
     section: 12. Tests
-    samples_in_batch: 10
-    sub_purposes:
-      "presence, framework, location, notable patterns": 10
-      "pitfalls observed": 10
+    samples_in_batch: 12
+    sub_purposes_seen: {"presence, framework, location, notable patterns": 12, pitfalls observed: 12}
+    shape: closed-set
+    common_description: |
+      Test framework (pytest dominant, Vitest/Bun in TS, mock transports in mcpr), presence of tests/, notable patterns. Many 'not detailed'.
   - subject: mcp
     section: 13. CI
-    samples_in_batch: 10
-    sub_purposes:
-      "presence, system, triggers, what it runs": 10
-      "pitfalls observed": 10
+    samples_in_batch: 12
+    sub_purposes_seen: {"presence, system, triggers, what it runs": 12, pitfalls observed: 12}
+    shape: closed-set
+    common_description: |
+      CI system (GitHub Actions universal in batch), what jobs run, triggers. Specifics often 'not enumerated'.
   - subject: mcp
     section: 14. Container / packaging artifacts
-    samples_in_batch: 10
-    sub_purposes:
-      "Dockerfile, docker-compose, Helm, systemd, brew formula, etc.": 10
-      "pitfalls observed": 10
+    samples_in_batch: 12
+    sub_purposes_seen: {"Dockerfile, docker-compose, Helm, systemd, brew formula, etc.": 12, pitfalls observed: 12}
+    shape: closed-set
+    common_description: |
+      Container/packaging artifacts. Dockerfile dominant (10/12). Multi-arch publishing, Smithery YAML, multi-stage builds notable.
   - subject: mcp
     section: 15. Example client / developer ergonomics
-    samples_in_batch: 10
-    sub_purposes:
-      "MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs": 10
-      "pitfalls observed": 10
+    samples_in_batch: 12
+    sub_purposes_seen: {"MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs": 12, pitfalls observed: 12}
+    shape: closed-set
+    common_description: |
+      Dev-experience artifacts — README JSON snippets, Makefile/devbox/devenv, MCP Inspector usage, scaffolding generators (mcpr generate-project), or extensive docs.
   - subject: mcp
     section: 16. Repo layout
-    samples_in_batch: 10
-    sub_purposes:
-      "single-package / monorepo / vendored / other": 8
-      "single-package / monorepo / vendored / other — describe what's there": 2
-      "pitfalls observed": 10
+    samples_in_batch: 12
+    sub_purposes_seen: {"single-package / monorepo / vendored / other": 12, pitfalls observed: 12}
+    shape: closed-set
+    common_description: |
+      Top-level repo shape. Single-package src/<pkg>/ dominates (10/12); cloudflare is the only Turbo monorepo.
+    issues:
+      - "two TS samples (cyanheads x2) split section 16 into '### dirs', '### config' — non-canonical; consolidated"
   - subject: mcp
     section: 17. Notable structural choices
-    samples_in_batch: 10
-    anomalies:
-      - "All 10 files: bullets use bold-with-em-dash form '- **Name** — content' or plain prose; no colon-bullets to convert; section left as bullet list"
+    samples_in_batch: 12
+    shape: freeform
+    common_description: |
+      Freeform observations about distinctive structural decisions — typically 2-6 standout choices: deployment model, sandboxing, multi-mode binaries, capability rationale, unusual auth split.
+    issues:
+      - "this section is the dominant home for cross-section commentary that gets duplicated into section-1/3/7/9 pitfalls; dedup rule pulled multiple bullets back here"
   - subject: mcp
     section: 18. Unanticipated axes observed
-    samples_in_batch: 10
-    anomalies:
-      - "All 10 files: bullets use em-dash form, no colon-bullets to convert"
+    samples_in_batch: 12
+    shape: freeform
+    common_description: |
+      Freeform observations about design dimensions this repo surfaces beyond the prompt's anticipated axes — deployment model, runtime support, tenancy boundary, capability primitive choice, auth layering.
+    issues:
+      - "section 18 sometimes uses an inner '### decision dimensions this repo reveals' subheading — dropped per freeform rule"
   - subject: mcp
     section: 19. Python-specific
-    samples_in_batch: 7
-    sub_purposes:
-      "SDK / framework variant": 7
-      "Python version floor": 7
-      "Packaging": 7
-      "Entry point": 7
-      "Install workflow expected of end users": 7
-      "Async and tool signatures": 7
-      "Type / schema strategy": 7
-      "Testing": 7
-      "Dev ergonomics": 7
-      "Notable Python-specific choices": 7
-    anomalies:
-      - "Section already had ### subheadings present — no conversion needed (idempotent skip)"
-      - "Absent in 3 files (Azure C#, HenkDz TypeScript, bhauman Clojure)"
+    samples_in_batch: 8
+    sub_purposes_seen: {"SDK / framework variant": 8, Python version floor: 8, Packaging: 8, Entry point: 8, Install workflow expected of end users: 8, Async and tool signatures: 8, Type / schema strategy: 8, Testing: 8, Dev ergonomics: 8, Notable Python-specific choices: 8}
+    shape: closed-set
+    common_description: |
+      Python-only addendum. Absent in TS, Clojure, Rust repos. Hatchling + uv + console-script + pydantic-via-SDK is the dominant stack.
+    issues:
+      - "'SDK / framework variant' packs raw_mcp vs FastMCP version + version pin + lock-file presence into one paragraph — consolidate_section may benefit from breaking into discrete fields for tabulation"
   - subject: mcp
     section: 20. Gaps
-    samples_in_batch: 10
-    sub_purposes:
-      "what couldn't be determined": 6
-    anomalies:
-      - "JackKuo666, ClickHouse, HenkDz, bhauman: bullets are unstructured (no 'name:' prefix), section left as bullet list"
-      - "Azure: bullets are unstructured prose (no name: prefix)"
+    samples_in_batch: 12
+    shape: freeform
+    common_description: |
+      Freeform list of what could not be determined: missing version pins, undocumented test/CI specifics, unread sub-package contents, unverified release flow.
+    issues:
+      - "high overlap with section-N 'pitfalls observed' slots; new dedup rule clears most pitfalls slots in this batch to 'none noted'"

@@ -1,6 +1,7 @@
 # Sample
 
 ## Identification
+
 ### url
 
 https://github.com/makenotion/notion-mcp-server
@@ -26,6 +27,7 @@ main
 Notion MCP server — Notion API wrapper; ships `CLAUDE.md` in the repo.
 
 ## 1. Language and runtime
+
 ### language(s) + version constraints
 
 TypeScript 5.8.2; Node.js (specified in scripts)
@@ -39,6 +41,7 @@ MCP SDK ^1.25.1, Express 4.21.2, axios 1.8.4, openapi-client-axios 7.5.5, Zod 3.
 none noted in this repo
 
 ## 2. Transport
+
 ### supported transports
 
 STDIO (default), Streamable HTTP (configurable port, default 8080)
@@ -52,6 +55,7 @@ CLI argument `--transport http [--port 8080]`
 none noted in this repo
 
 ## 3. Distribution
+
 ### every mechanism observed
 
 npm package (`@notionhq/notion-mcp-server`), Docker (`mcp/notion`), local build from source
@@ -69,11 +73,12 @@ npm package (`@notionhq/notion-mcp-server`), Docker (`mcp/notion`), local build 
 none noted in this repo
 
 ## 4. Entry point / launch
+
 ### command(s) users/hosts run
 
 `npx @notionhq/notion-mcp-server` and HTTP variant
 
-### wrapper scripts
+### wrapper scripts, launchers, stubs
 
 npm build (tsc + esbuild), npm dev (tsx watch)
 
@@ -82,6 +87,7 @@ npm build (tsc + esbuild), npm dev (tsx watch)
 none noted in this repo
 
 ## 5. Configuration surface
+
 ### how config reaches the server
 
 env var `NOTION_TOKEN` (recommended) or `OPENAPI_MCP_HEADERS`; Bearer token for HTTP; client config files (Claude Desktop, Cursor, Zed, GitHub Copilot CLI)
@@ -91,6 +97,7 @@ env var `NOTION_TOKEN` (recommended) or `OPENAPI_MCP_HEADERS`; Bearer token for 
 none noted in this repo
 
 ## 6. Authentication
+
 ### flow
 
 Notion API integration token (required)
@@ -104,14 +111,18 @@ Notion API integration token (required)
 none noted in this repo
 
 ## 7. Multi-tenancy
-- per-integration-token; HTTP transport supports multiple clients
+
+### tenancy model
+
+per-integration-token; HTTP transport supports multiple clients
 
 ### pitfalls observed
 
 none noted in this repo
 
 ## 8. Capabilities exposed
-### tools
+
+### tools / resources / prompts / sampling / roots / logging / other
 
 22 tools — page create/retrieve, database query, page move, commenting, content search
 
@@ -120,100 +131,105 @@ none noted in this repo
 none noted in this repo
 
 ## 9. Observability
-- not explicitly documented
+
+### logging destination + format, metrics, tracing, debug flags
+
+not explicitly documented
 
 ### pitfalls observed
 
-- logging/observability strategy not documented
+none noted in this repo
 
 ## 10. Host integrations shown in README or repo
-- Claude Desktop (`claude_desktop_config.json`)
-- Cursor (`.cursor/mcp.json`)
-- Zed (`settings.json`)
-- GitHub Copilot CLI (config documented)
 
-### form
+### Claude Desktop
 
-JSON config files, host-specific paths
+`claude_desktop_config.json`
+
+### Cursor
+
+`.cursor/mcp.json`
+
+### Zed
+
+`settings.json`
+
+### GitHub Copilot CLI
+
+config documented
 
 ### pitfalls observed
 
 none noted in this repo
 
 ## 11. Claude Code plugin wrapper
-- not present
+
+### presence and shape
+
+not present
 
 ### pitfalls observed
 
 none noted in this repo
 
 ## 12. Tests
-- present; Vitest (`npm test`, `npm run test:watch`, `npm run test:coverage`); `NODE_ENV=test`; coverage reports
+
+### presence, framework, location, notable patterns
+
+present; Vitest (`npm test`, `npm run test:watch`, `npm run test:coverage`); `NODE_ENV=test`; coverage reports
 
 ### pitfalls observed
 
 none noted in this repo
 
 ## 13. CI
-- present; GitHub Actions workflows; `npm run build`, `npm test` in pipeline
+
+### presence, system, triggers, what it runs
+
+present; GitHub Actions workflows; `npm run build`, `npm test` in pipeline
 
 ### pitfalls observed
 
 none noted in this repo
 
 ## 14. Container / packaging artifacts
-- Dockerfile (Node.js-based)
-- `docker-compose.yml`
-- official Docker Hub image (`mcp/notion`)
+
+### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+
+Dockerfile (Node.js-based); `docker-compose.yml`; official Docker Hub image (`mcp/notion`)
 
 ### pitfalls observed
 
 none noted in this repo
 
 ## 15. Example client / developer ergonomics
-- configuration examples for 4 host integrations
-- Docker installation documented
-- local symlink testing via `npm link` for Cursor
-- `CLAUDE.md` file (Claude-specific guidance)
+
+### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+
+configuration examples for 4 host integrations; Docker installation documented; local symlink testing via `npm link` for Cursor; `CLAUDE.md` file (Claude-specific guidance)
 
 ### pitfalls observed
 
 none noted in this repo
 
 ## 16. Repo layout
-- single-package, organized
 
-### dirs
+### single-package / monorepo / vendored / other
 
-`src/`, `docs/`, `scripts/`, `.github/`
-
-### config
-
-`package.json`, `tsconfig.json`, `vitest.config.ts`, `Dockerfile`, `docker-compose.yml`
-
-### documentation
-
-`CLAUDE.md`, `README.md`
+single-package, organized. Directories: `src/`, `docs/`, `scripts/`, `.github/`. Config: `package.json`, `tsconfig.json`, `vitest.config.ts`, `Dockerfile`, `docker-compose.yml`. Documentation: `CLAUDE.md`, `README.md`.
 
 ### pitfalls observed
 
 none noted in this repo
 
 ## 17. Notable structural choices
-- official Notion-authored MCP server (first-party)
-- comprehensive test coverage (Vitest with coverage)
-- multi-host integration examples (4 platforms)
-- Docker + docker-compose for containerized deployment
-- explicit `CLAUDE.md` in repo
+
+Official Notion-authored MCP server (first-party). Comprehensive test coverage (Vitest with coverage). Multi-host integration examples (4 platforms). Docker + docker-compose for containerized deployment. Explicit `CLAUDE.md` in repo.
 
 ## 18. Unanticipated axes observed
-- `CLAUDE.md` shipped in the repo itself (guidance for Claude when working in the repo) — axis: agent-facing meta-documentation inside a server repo
 
-### OpenAPI client generation (openapi-client-axios) — axis
-
-auto-derived tools from an OpenAPI spec vs hand-authored
+`CLAUDE.md` shipped in the repo itself (guidance for Claude when working in the repo) — axis: agent-facing meta-documentation inside a server repo. OpenAPI client generation (openapi-client-axios) — axis: auto-derived tools from an OpenAPI spec vs hand-authored.
 
 ## 20. Gaps
-- logging/observability strategy not documented
-- rate limiting and Notion API quota handling not detailed
-- V2.0 migration details not in README (changelog reference only)
+
+Logging/observability strategy not documented. Rate limiting and Notion API quota handling not detailed. V2.0 migration details not in README (changelog reference only).

@@ -10,9 +10,9 @@ https://github.com/designcomputer/mysql_mcp_server
 
 1.2k
 
-### last-commit (date or relative)
+### last-commit
 
-v0.2.2 released April 18, 2025
+v0.2.2 released April 18, 2025 (date inferred from release).
 
 ### license
 
@@ -30,11 +30,11 @@ MySQL MCP server — exposes tables as MCP resources and executes SQL via tools;
 
 ### language(s) + version constraints
 
-Python (93.2%), Dockerfile (6.8%); version not stated in fetched content
+Python (93.2%), Dockerfile (6.8%); Python version floor declared as `>=3.11` in pyproject.toml. Specific runtime version not stated in fetched README content.
 
 ### framework/SDK in use
 
-Anthropic MCP Python SDK
+Anthropic MCP Python SDK (raw `mcp>=1.0.0`; not fastmcp).
 
 ### pitfalls observed
 
@@ -44,11 +44,11 @@ none noted in this repo
 
 ### supported transports
 
-stdio
+stdio.
 
-### how selected (flag, env, separate entry, auto-detect, etc.)
+### how selected
 
-Implicit — only stdio documented; README describes it as "stdio-based protocol server rather than standalone application"
+Implicit — only stdio is documented; README describes it as "stdio-based protocol server rather than standalone application".
 
 ### pitfalls observed
 
@@ -58,15 +58,15 @@ none noted in this repo
 
 ### every mechanism observed
 
-PyPI, Smithery installer, pip
+PyPI, Smithery installer, pip.
 
 ### published package name(s)
 
-mysql-mcp-server
+`mysql-mcp-server`.
 
 ### install commands shown in README
 
-`pip install mysql-mcp-server`; `npx -y @smithery/cli install mysql-mcp-server --client claude`
+`pip install mysql-mcp-server`; `npx -y @smithery/cli install mysql-mcp-server --client claude`.
 
 ### pitfalls observed
 
@@ -76,11 +76,11 @@ none noted in this repo
 
 ### command(s) users/hosts run
 
-Via `uv` or `uvx` package runners — README explicitly discourages `python ...` direct invocation, framing the server strictly as an MCP-protocol bridge for hosts
+Via `uv` or `uvx` package runners. README explicitly discourages `python ...` direct invocation, framing the server strictly as an MCP-protocol bridge for hosts.
 
 ### wrapper scripts, launchers, stubs
 
-Dockerfile
+Dockerfile.
 
 ### pitfalls observed
 
@@ -90,7 +90,7 @@ none noted in this repo
 
 ### how config reaches the server
 
-Environment variables — `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_USER`, `MYSQL_PASSWORD`, `MYSQL_DATABASE`
+Environment variables — `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_USER`, `MYSQL_PASSWORD`, `MYSQL_DATABASE`.
 
 ### pitfalls observed
 
@@ -100,11 +100,11 @@ none noted in this repo
 
 ### flow
 
-MySQL username/password
+MySQL username/password.
 
 ### where credentials come from
 
-Environment variables; README emphasizes "never commit" credentials and restricting to minimum-permission DB users
+Environment variables. README emphasizes "never commit" credentials and restricting to minimum-permission DB users.
 
 ### pitfalls observed
 
@@ -112,9 +112,9 @@ none noted in this repo
 
 ## 7. Multi-tenancy
 
-### single-user / per-request tenant / workspace-keyed / not applicable / other
+### tenancy model
 
-Single database connection per server; no per-request tenancy
+Single database connection per server; no per-request tenancy.
 
 ### pitfalls observed
 
@@ -134,7 +134,7 @@ none noted in this repo
 
 ### logging destination + format, metrics, tracing, debug flags
 
-Described as "comprehensive logging"; specifics not surfaced
+Described as "comprehensive logging"; specifics not surfaced.
 
 ### pitfalls observed
 
@@ -144,15 +144,15 @@ Described as "comprehensive logging"; specifics not surfaced
 
 ### Claude Desktop
 
-`claude_desktop_config.json` example
+`claude_desktop_config.json` example.
 
 ### VS Code
 
-`mcp.json` example
+`mcp.json` example.
 
 ### Other editors/CLIs
 
-Not enumerated
+Not enumerated.
 
 ### pitfalls observed
 
@@ -162,7 +162,7 @@ none noted in this repo
 
 ### presence and shape
 
-Not present
+Not present.
 
 ### pitfalls observed
 
@@ -172,7 +172,7 @@ none noted in this repo
 
 ### presence, framework, location, notable patterns
 
-pytest-based (`pytest.ini`, `requirements-dev.txt`); `tests/` directory
+pytest-based (`pytest.ini`, `requirements-dev.txt`); `tests/` directory.
 
 ### pitfalls observed
 
@@ -182,7 +182,7 @@ none noted in this repo
 
 ### presence, system, triggers, what it runs
 
-GitHub Actions (test.yml badge); specifics not extracted
+GitHub Actions (test.yml badge); workflow specifics not extracted.
 
 ### pitfalls observed
 
@@ -192,7 +192,7 @@ GitHub Actions (test.yml badge); specifics not extracted
 
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
-Dockerfile present
+Dockerfile present.
 
 ### pitfalls observed
 
@@ -202,7 +202,7 @@ none noted in this repo
 
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
-MCP Inspector debugging support referenced; JSON config examples for hosts
+MCP Inspector debugging support referenced; JSON config examples for hosts.
 
 ### pitfalls observed
 
@@ -212,63 +212,62 @@ none noted in this repo
 
 ### single-package / monorepo / vendored / other
 
-Single-package Python — `src/mysql_mcp_server/`, `tests/`, `.github/workflows/`, pyproject.toml
+Single-package Python — `src/mysql_mcp_server/`, `tests/`, `.github/workflows/`, pyproject.toml.
 
 ### pitfalls observed
 
 none noted in this repo
 
 ## 17. Notable structural choices
-- Exposes tables as MCP resources (not only tools) — one of the few DB MCP servers to use the resource surface
-- README explicitly frames direct Python invocation as incorrect usage — enforces the "protocol bridge" mental model
-- Security guidance baked into README (least-privilege user, never commit credentials)
+
+Exposes tables as MCP resources (not only tools) — one of the few DB MCP servers to use the resource surface. README explicitly frames direct Python invocation as incorrect usage, enforcing the "protocol bridge" mental model. Security guidance is baked into the README (least-privilege user, never commit credentials).
 
 ## 18. Unanticipated axes observed
-- Resources-as-tables pattern is rare — most DB MCP servers expose everything through tools
-- README's emphasis on non-direct invocation is an explicit agent-posture choice
+
+Resources-as-tables pattern is rare — most DB MCP servers expose everything through tools. README's emphasis on non-direct invocation is an explicit agent-posture choice.
 
 ## 19. Python-specific
 
 ### SDK / framework variant
-- Raw `mcp` Python SDK — `mcp>=1.0.0`; no fastmcp
-- Import pattern: low-level MCP server API (inferred)
+
+Raw `mcp` Python SDK — `mcp>=1.0.0`; no fastmcp. Import pattern: low-level MCP server API (inferred).
 
 ### Python version floor
-- `requires-python = ">=3.11"` — higher than the sample's 3.10 mode
-- CI matrix not extracted
+
+`requires-python = ">=3.11"` — higher than the corpus's 3.10 mode. CI matrix not extracted.
 
 ### Packaging
-- build backend: `hatchling.build`
-- lock file: not explicitly noted in fetched content
-- version manager convention: README uses uv/uvx; `pytest.ini` + `requirements-dev.txt` coexist with pyproject.toml (dual-config)
+
+Build backend: `hatchling.build`. Lock file: not explicitly noted in fetched content. Version manager convention: README uses uv/uvx; `pytest.ini` + `requirements-dev.txt` coexist with pyproject.toml (dual-config).
 
 ### Entry point
-- `[project.scripts]`: `mysql_mcp_server = "mysql_mcp_server:main"`
-- README host-config snippets: `uv --directory /path/to/repo run mysql_mcp_server` (dev), `uvx --from mysql-mcp-server` (VS Code)
+
+`[project.scripts]`: `mysql_mcp_server = "mysql_mcp_server:main"`. README host-config snippets show `uv --directory /path/to/repo run mysql_mcp_server` (dev) and `uvx --from mysql-mcp-server` (VS Code).
 
 ### Install workflow expected of end users
-- `pip install mysql-mcp-server`, Smithery CLI for one-shot host setup, from-source with venv
-- README explicitly frames direct `python ...` invocation as incorrect
+
+`pip install mysql-mcp-server`, Smithery CLI for one-shot host setup, from-source with venv. README explicitly frames direct `python ...` invocation as incorrect.
 
 ### Async and tool signatures
-- pytest configured (pytest.ini); pytest-asyncio not confirmed in fetched content
-- Source-level sync/async not inspected
+
+pytest configured (`pytest.ini`); pytest-asyncio not confirmed in fetched content. Source-level sync/async not inspected.
 
 ### Type / schema strategy
-- Low-level MCP SDK — hand-authored schemas likely; uses both tool and resource surfaces
+
+Low-level MCP SDK — hand-authored schemas likely; uses both tool and resource surfaces.
 
 ### Testing
-- pytest via separate `pytest.ini` and `requirements-dev.txt` (legacy split; pyproject.toml does not carry dev extras)
-- tests/ directory
+
+pytest via separate `pytest.ini` and `requirements-dev.txt` (legacy split; pyproject.toml does not carry dev extras). `tests/` directory present.
 
 ### Dev ergonomics
-- Not observed beyond test config and Smithery CLI integration
+
+Not observed beyond test config and Smithery CLI integration.
 
 ### Notable Python-specific choices
-- Requirements split across `pyproject.toml` + `pytest.ini` + `requirements-dev.txt` — older Python project layout; most newer projects in the sample consolidate into pyproject.toml
-- Python 3.11 floor is higher than most — likely driven by MySQL connector or typing feature
+
+Requirements split across `pyproject.toml` + `pytest.ini` + `requirements-dev.txt` — older Python project layout; most newer projects in the corpus consolidate into pyproject.toml. Python 3.11 floor is higher than most — likely driven by the MySQL connector or a typing feature.
 
 ## 20. Gaps
-- Last commit date only inferred from v0.2.2 release
-- Logging format and destination not specified
-- CI workflow contents not extracted
+
+Last commit date only inferred from v0.2.2 release. Logging format and destination not specified. CI workflow contents not extracted.

@@ -1,229 +1,296 @@
 files_processed:
-  - path: logs/research/claude-marketplace/samples/anthropics--claude-plugins-community.md
-    level1_normalized: true
-    bullets_converted: 123
-  - path: logs/research/claude-marketplace/samples/anthropics--healthcare.md
-    level1_normalized: true
-    bullets_converted: 117
-  - path: logs/research/claude-marketplace/samples/ekadetov--llm-wiki.md
-    level1_normalized: true
-    bullets_converted: 131
-  - path: logs/research/claude-marketplace/samples/SankaiAI--ats-optimized-resume-agent-skill.md
-    level1_normalized: true
-    bullets_converted: 117
-  - path: logs/research/claude-marketplace/samples/anthropics--financial-services-plugins.md
-    level1_normalized: true
-    bullets_converted: 123
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/AlwaysSany--deepl-fastmcp-python-server.md
+    sections_present: ["Identification", "1. Language and runtime", "2. Transport", "3. Distribution", "4. Entry point / launch", "5. Configuration surface", "6. Authentication", "7. Multi-tenancy", "8. Capabilities exposed", "9. Observability", "10. Host integrations shown in README or repo", "11. Claude Code plugin wrapper", "12. Tests", "13. CI", "14. Container / packaging artifacts", "15. Example client / developer ergonomics", "16. Repo layout", "17. Notable structural choices", "18. Unanticipated axes observed", "19. Python-specific", "20. Gaps"]
+    notes: section 19 in source was split into many sub-bullets per canonical sub-purpose; consolidated to one paragraph per canonical sub-purpose
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/Azure--azure-mcp.md
+    sections_present: ["Identification", "1. Language and runtime", "2. Transport", "3. Distribution", "4. Entry point / launch", "5. Configuration surface", "6. Authentication", "7. Multi-tenancy", "8. Capabilities exposed", "9. Observability", "10. Host integrations shown in README or repo", "11. Claude Code plugin wrapper", "12. Tests", "13. CI", "14. Container / packaging artifacts", "15. Example client / developer ergonomics", "16. Repo layout", "17. Notable structural choices", "18. Unanticipated axes observed", "20. Gaps"]
+    notes: archived repo; most sections "Not extracted"; original carried meta-instruction preamble in section 10 (stripped); "Canonical successor" appendix folded into section 20
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/ClickHouse--mcp-clickhouse.md
+    sections_present: ["Identification", "1. Language and runtime", "2. Transport", "3. Distribution", "4. Entry point / launch", "5. Configuration surface", "6. Authentication", "7. Multi-tenancy", "8. Capabilities exposed", "9. Observability", "10. Host integrations shown in README or repo", "11. Claude Code plugin wrapper", "12. Tests", "13. CI", "14. Container / packaging artifacts", "15. Example client / developer ergonomics", "16. Repo layout", "17. Notable structural choices", "18. Unanticipated axes observed", "19. Python-specific", "20. Gaps"]
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/DaInfernalCoder--perplexity-mcp.md
+    sections_present: ["Identification", "1. Language and runtime", "2. Transport", "3. Distribution", "4. Entry point / launch", "5. Configuration surface", "6. Authentication", "7. Multi-tenancy", "8. Capabilities exposed", "9. Observability", "10. Host integrations shown in README or repo", "11. Claude Code plugin wrapper", "12. Tests", "13. CI", "14. Container / packaging artifacts", "15. Example client / developer ergonomics", "16. Repo layout", "17. Notable structural choices", "18. Unanticipated axes observed", "20. Gaps"]
+    notes: no section 19 (Python-specific) — JavaScript repo; section 16 in source was split into `### dirs` / `### config` (consolidated)
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/DiversioTeam--clickup-mcp.md
+    sections_present: ["Identification", "1. Language and runtime", "2. Transport", "3. Distribution", "4. Entry point / launch", "5. Configuration surface", "6. Authentication", "7. Multi-tenancy", "8. Capabilities exposed", "9. Observability", "10. Host integrations shown in README or repo", "11. Claude Code plugin wrapper", "12. Tests", "13. CI", "14. Container / packaging artifacts", "15. Example client / developer ergonomics", "16. Repo layout", "17. Notable structural choices", "18. Unanticipated axes observed", "19. Python-specific", "20. Gaps"]
 
 section_observations:
-  - subject: claude-marketplace
+  - subject: mcp
     section: Identification
     samples_in_batch: 5
-    sub_purposes:
-      URL: 5
-      Stars: 5
-      Last commit date: 5
-      Default branch: 5
-      License: 5
-      Sample origin: 5
-      One-line purpose: 5
-  - subject: claude-marketplace
-    section: 1. Marketplace discoverability
+    sub_purposes_seen:
+      url: 5
+      stars: 5
+      last-commit: 5
+      license: 5
+      default branch: 5
+      one-line purpose: 5
+    shape: closed-set
+    common_description: |
+      Identifies the upstream repo with provenance metadata (URL, stars, last-commit, license, default branch) and a one-line purpose statement summarizing what the server does. Stable vocabulary across samples.
+    outliers:
+      - sample: Azure--azure-mcp.md
+        why: archived repo — `last-commit` carries archival narrative rather than a date; `one-line purpose` is "TBD"
+    issues:
+      - "`last-commit` field name varied in source (`last-commit (date or relative)`); normalized to canonical `last-commit`"
+
+  - subject: mcp
+    section: 1. Language and runtime
     samples_in_batch: 5
-    sub_purposes:
-      Manifest layout: 5
-      Marketplace-level metadata: 5
-      "`metadata.pluginRoot`": 5
-      Per-plugin discoverability: 5
-      "`$schema`": 5
-      Reserved-name collision: 5
-      Pitfalls observed: 5
-  - subject: claude-marketplace
-    section: 2. Plugin source binding
+    sub_purposes_seen:
+      "language(s) + version constraints": 5
+      "framework/SDK in use": 5
+      "pitfalls observed": 5
+    shape: closed-set
+    common_description: |
+      Captures the primary language(s) and any version constraints, plus the MCP framework or SDK variant in use (raw `mcp` SDK, FastMCP 1.x/2.x, language-specific SDKs). Pitfalls slot rarely populated.
+    issues:
+      - "`pitfalls observed` is `none noted in this repo` in 4 of 5 samples — consider folding into the section's primary content or making it conditional"
+
+  - subject: mcp
+    section: 2. Transport
     samples_in_batch: 5
-    sub_purposes:
-      Source format(s) observed: 5
-      "`strict` field": 5
-      "`skills` override on marketplace entry": 5
-      Version authority: 5
-      Pitfalls observed: 5
-  - subject: claude-marketplace
-    section: 3. Channel distribution
+    sub_purposes_seen:
+      "supported transports": 5
+      "how selected": 5
+      "pitfalls observed": 5
+    shape: closed-set
+    common_description: |
+      Records which MCP transports the server supports (stdio, SSE, Streamable HTTP, custom) and the mechanism used to select among them (CLI flag, env var, separate entry point, default-only). Most servers default to stdio; multi-transport support varies.
+    outliers:
+      - sample: Azure--azure-mcp.md
+        why: not extracted — archived
+      - sample: DaInfernalCoder--perplexity-mcp.md
+        why: transport selection inferred from SDK use, not documented
+    issues:
+      - "`how selected` parenthetical examples in source labels were stripped to canonical short form"
+
+  - subject: mcp
+    section: 3. Distribution
     samples_in_batch: 5
-    sub_purposes:
-      Channel mechanism: 5
-      Channel-pinning artifacts: 5
-      Pitfalls observed: 5
-  - subject: claude-marketplace
-    section: 4. Version control and release cadence
+    sub_purposes_seen:
+      "every mechanism observed": 5
+      "published package name(s)": 5
+      "install commands shown in README": 5
+      "pitfalls observed": 5
+    shape: closed-set
+    common_description: |
+      Enumerates how end users obtain the server (PyPI, npm, uvx, npx, Docker, source clone, install-from-git, Smithery), the published package names where applicable, and the README's recommended install commands. Pitfalls slot occasionally records design observations rather than warnings.
+    outliers:
+      - sample: DiversioTeam--clickup-mcp.md
+        why: install-from-git via uvx; no PyPI publication; pitfalls slot used to flag distribution-pattern observations
+    issues:
+      - "`pitfalls observed` is sometimes used as an observation slot for the section's content (DiversioTeam, DaInfernalCoder, Azure) rather than for actual pitfalls — vocabulary mismatch with the field name"
+
+  - subject: mcp
+    section: 4. Entry point / launch
     samples_in_batch: 5
-    sub_purposes:
-      Default branch name: 5
-      Tag placement: 5
-      Release branching: 5
-      Pre-release suffixes: 5
-      Dev-counter scheme: 5
-      Pre-commit version bump: 5
-      Pitfalls observed: 5
-  - subject: claude-marketplace
-    section: 5. Plugin-component registration
+    sub_purposes_seen:
+      "command(s) users/hosts run": 5
+      "wrapper scripts, launchers, stubs": 5
+      "pitfalls observed": 5
+    shape: closed-set
+    common_description: |
+      Captures the launch command users or hosts invoke (console script, npx, uvx, bare `python main.py`, etc.) and any wrapper scripts, launchers, or stubs (Dockerfiles, dev-compose files, console-script entry points). Pitfalls rarely populated.
+
+  - subject: mcp
+    section: 5. Configuration surface
     samples_in_batch: 5
-    sub_purposes:
-      Reference style in plugin.json: 5
-      Components observed: 5
-      Agent frontmatter fields used: 5
-      Agent tools syntax: 5
-      Pitfalls observed: 5
-    anomalies:
-      - "Components observed sub-purpose body is a nested bullet list rather than prose in 3 of 5 files (anthropics--healthcare, ekadetov--llm-wiki, anthropics--financial-services-plugins) — preserved as indented bullets after conversion"
-  - subject: claude-marketplace
-    section: 6. Dependency installation
+    sub_purposes_seen:
+      "how config reaches the server": 5
+      "pitfalls observed": 5
+    shape: closed-set
+    common_description: |
+      Describes how runtime configuration reaches the server — env vars, CLI args, `.env` files, OS-native config dirs (`platformdirs`), persistent state, FastMCP config files. Three distinct credential-storage conventions surface across the batch (env vars, `.env`, OS config dir).
+    outliers:
+      - sample: DiversioTeam--clickup-mcp.md
+        why: uses `platformdirs`-based persistent config rather than the more common env-var pattern
+    issues:
+      - "Source labels carried parenthetical example lists (`env vars, CLI args, config file w/ path + format, ...`); stripped to canonical short label"
+
+  - subject: mcp
+    section: 6. Authentication
     samples_in_batch: 5
-    sub_purposes:
-      Applicable: 5
-      Dep manifest format: 5
-      Install location: 5
-      Install script location: 5
-      Change detection: 5
-      Retry-next-session invariant: 5
-      Failure signaling: 5
-      Runtime variant: 5
-      Alternative approaches: 5
-      Version-mismatch handling: 5
-      Pitfalls observed: 5
-    anomalies:
-      - "Install script location in SankaiAI--ats-optimized-resume-agent-skill carries trailing nested bullets (two-entry list) under the converted subheading"
-  - subject: claude-marketplace
-    section: 7. Bin-wrapped CLI distribution
+    sub_purposes_seen:
+      "flow": 5
+      "where credentials come from": 5
+      "pitfalls observed": 5
+    shape: closed-set
+    common_description: |
+      Captures the auth flow (static API key, bearer token, none, OAuth, transport-conditional) and where credentials are sourced (env var, CLI arg, config file, persistent store, host-passed params). Most batch entries are static API keys; ClickHouse is transport-conditional (none on stdio, bearer token on HTTP/SSE).
+
+  - subject: mcp
+    section: 7. Multi-tenancy
     samples_in_batch: 5
-    sub_purposes:
-      Applicable: 5
-      "`bin/` files": 5
-      Shebang convention: 5
-      Runtime resolution: 5
-      Venv handling (Python): 5
-      Platform support: 5
-      Permissions: 5
-      SessionStart relationship: 5
-      Pitfalls observed: 5
-    anomalies:
-      - "SankaiAI--ats-optimized-resume-agent-skill `bin/` files sub-purpose body is a nested bullet list (two entries) preserved under the heading"
-  - subject: claude-marketplace
-    section: 8. User configuration
+    sub_purposes_seen:
+      "tenancy model": 5
+      "pitfalls observed": 5
+    shape: closed-set
+    common_description: |
+      Describes the tenancy model — single-user, per-request tenant, workspace-keyed, not applicable. Most servers are implicitly single-user (single API key per deployment); ClickHouse is the standout with per-request connection overrides via middleware.
+    outliers:
+      - sample: ClickHouse--mcp-clickhouse.md
+        why: per-request tenancy via middleware-managed context state — closest to multi-tenancy in the batch
+    issues:
+      - "Source label `single-user / per-request tenant / workspace-keyed / not applicable / other` is an enumeration of values, not a sub-purpose; consolidated to canonical `tenancy model`"
+      - "DaInfernalCoder source had no `###` subheading at all — content directly under section heading; promoted to canonical `tenancy model`"
+
+  - subject: mcp
+    section: 8. Capabilities exposed
     samples_in_batch: 5
-    sub_purposes:
-      "`userConfig` present": 5
-      Field count: 5
-      "`sensitive: true` usage": 5
-      Schema richness: 5
-      Reference in config substitution: 5
-      Pitfalls observed: 5
-  - subject: claude-marketplace
-    section: 9. Tool-use enforcement
+    sub_purposes_seen:
+      "tools / resources / prompts / sampling / roots / logging / other": 5
+      "pitfalls observed": 5
+    shape: closed-set
+    common_description: |
+      Lists the MCP primitives the server exposes — tool names with brief descriptions, plus mention of resources, prompts, sampling, roots, logging where applicable. Tool counts vary widely (3 in Perplexity, 28 in ClickUp, 7 in DeepL).
+    issues:
+      - "Section label uses a slash-list of primitive types as the field name; that's the canonical taxonomy from the MCP spec, not a free-form sub-purpose"
+
+  - subject: mcp
+    section: 9. Observability
     samples_in_batch: 5
-    sub_purposes:
-      PreToolUse hooks: 5
-      PostToolUse hooks: 5
-      PermissionRequest/PermissionDenied hooks: 5
-      Output convention: 5
-      Failure posture: 5
-      Top-level try/catch wrapping: 5
-      Pitfalls observed: 5
-  - subject: claude-marketplace
-    section: 10. Session context loading
+    sub_purposes_seen:
+      "logging destination + format, metrics, tracing, debug flags": 5
+      "pitfalls observed": 5
+    shape: closed-set
+    common_description: |
+      Captures logging destinations and format, metrics, tracing, and debug flags. Most batch entries report "not captured" or "not documented"; ClickHouse and ClickUp are the exceptions with documented `--debug` flags or middleware-based logging examples.
+
+  - subject: mcp
+    section: 10. Host integrations shown in README or repo
     samples_in_batch: 5
-    sub_purposes:
-      SessionStart used for context: 5
-      UserPromptSubmit for context: 5
-      "`hookSpecificOutput.additionalContext` observed": 5
-      SessionStart matcher: 5
-      Pitfalls observed: 5
-  - subject: claude-marketplace
-    section: 11. Live monitoring and notifications
+    sub_purposes_seen:
+      "Claude Desktop": 1
+      "Other editors/CLIs": 1
+      "pitfalls observed": 5
+    shape: open-enumeration
+    common_description: |
+      Documents per-host integration snippets and pointers (Claude Desktop, Claude Code, Cursor, VS Code, etc.) when README enumerates them; otherwise records "not captured per host". Open-enumeration shape — the host vocabulary is potentially large.
+    outliers:
+      - sample: ClickHouse--mcp-clickhouse.md
+        why: only sample with per-host `###` subheadings (Claude Desktop, Other editors/CLIs)
+      - sample: Azure--azure-mcp.md
+        why: source had a meta-instruction preamble paragraph ("For each host encountered ... record form ...") — stripped per new rule
+    issues:
+      - "4 of 5 samples don't enumerate hosts in the source — section may be empty more often than populated"
+      - "Azure sample carried original prompt-template meta-instruction text in the section body; stripped"
+
+  - subject: mcp
+    section: 11. Claude Code plugin wrapper
     samples_in_batch: 5
-    sub_purposes:
-      "`monitors.json` present": 5
-      Monitor count + purposes: 5
-      "`when` values used": 5
-      Version-floor declaration: 5
-      Pitfalls observed: 5
-  - subject: claude-marketplace
-    section: 12. Plugin-to-plugin dependencies
+    sub_purposes_seen:
+      "presence and shape": 5
+      "pitfalls observed": 5
+    shape: closed-set
+    common_description: |
+      Records whether a `.claude-plugin/` wrapper or `.mcp.json` is present in the repo and its shape. Universally `none` / `not present` in this batch.
+    issues:
+      - "Sub-purpose answer is uniformly `none` across the batch — section may be a marker for absence rather than rich content"
+
+  - subject: mcp
+    section: 12. Tests
     samples_in_batch: 5
-    sub_purposes:
-      "`dependencies` field present": 5
-      Entries: 5
-      "`{plugin-name}--v{version}` tag format observed": 5
-      Pitfalls observed: 5
-  - subject: claude-marketplace
-    section: 13. Testing and CI
+    sub_purposes_seen:
+      "presence, framework, location, notable patterns": 5
+      "pitfalls observed": 5
+    shape: closed-set
+    common_description: |
+      Captures presence of tests, framework used (pytest, pytest-asyncio, etc.), location in the repo, and notable patterns (Docker-Compose-backed integration services, test-density observations).
+
+  - subject: mcp
+    section: 13. CI
     samples_in_batch: 5
-    sub_purposes:
-      Test framework: 5
-      Tests location: 5
-      Pytest config location: 5
-      Python dep manifest for tests: 5
-      CI present: 5
-      CI file(s): 5
-      CI triggers: 5
-      CI does: 5
-      Matrix: 5
-      Action pinning: 5
-      Caching: 5
-      Test runner invocation: 5
-      Pitfalls observed: 5
-    anomalies:
-      - "anthropics--healthcare CI triggers sub-purpose body is a nested bullet list (four workflow entries) preserved under the heading"
-  - subject: claude-marketplace
-    section: 14. Release automation
+    sub_purposes_seen:
+      "presence, system, triggers, what it runs": 5
+      "pitfalls observed": 5
+    shape: closed-set
+    common_description: |
+      Records CI presence (most commonly GitHub Actions), triggers, and what it runs. Frequently "not captured" or "not documented" in the batch.
+
+  - subject: mcp
+    section: 14. Container / packaging artifacts
     samples_in_batch: 5
-    sub_purposes:
-      "`release.yml` (or equivalent) present": 4
-      "`release.yml` present": 1
-      Release trigger: 5
-      Automation shape: 5
-      Tag-sanity gates: 5
-      Release creation mechanism: 5
-      Draft releases: 5
-      CHANGELOG parsing: 5
-      Pitfalls observed: 5
-    anomalies:
-      - "anthropics--healthcare uses sub-purpose name `release.yml present` while other 4 files use `release.yml (or equivalent) present` — naming variance for the same concept"
-  - subject: claude-marketplace
-    section: 15. Marketplace validation
+    sub_purposes_seen:
+      "Dockerfile, docker-compose, Helm, systemd, brew formula, etc.": 5
+      "pitfalls observed": 5
+    shape: closed-set
+    common_description: |
+      Lists container and packaging artifacts present (Dockerfile, docker-compose, Helm chart, systemd unit, brew formula, etc.). Dockerfile presence is common; docker-compose is the differentiator for multi-transport servers.
+
+  - subject: mcp
+    section: 15. Example client / developer ergonomics
     samples_in_batch: 5
-    sub_purposes:
-      Validation workflow present: 5
-      Validator: 5
-      Trigger: 5
-      Frontmatter validation: 5
-      Hooks.json validation: 5
-      Pitfalls observed: 5
-  - subject: claude-marketplace
-    section: 16. Documentation
+    sub_purposes_seen:
+      "MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs": 5
+      "pitfalls observed": 5
+    shape: closed-set
+    common_description: |
+      Records developer ergonomics — MCP Inspector launchers, curl stubs, make targets, dev scripts, sample configs, management subcommands. Variable across samples; ClickUp's setup subcommands and ClickHouse's `fastmcp.json` are notable.
+
+  - subject: mcp
+    section: 16. Repo layout
     samples_in_batch: 5
-    sub_purposes:
-      "`README.md` at repo root": 5
-      "`README.md` per plugin": 5
-      "`CHANGELOG.md`": 5
-      "`architecture.md`": 5
-      "`CLAUDE.md`": 5
-      Community health files: 5
-      LICENSE: 5
-      Badges / status indicators: 5
-      Additional document: 1
-      Pitfalls observed: 5
-    anomalies:
-      - "ekadetov--llm-wiki has an extra sub-purpose `Additional document` (covering WALKTHROUGH.md) not present in the other four samples"
-  - subject: claude-marketplace
-    section: 17. Novel axes
+    sub_purposes_seen:
+      "single-package / monorepo / vendored / other": 5
+      "pitfalls observed": 5
+    shape: closed-set
+    common_description: |
+      Classifies the repo layout — single-package, monorepo, vendored, other — with brief description of dirs and config files present. All batch samples are single-package.
+    outliers:
+      - sample: DaInfernalCoder--perplexity-mcp.md
+        why: source split layout into `### dirs` / `### config` non-canonical sub-headings; consolidated into canonical paragraph
+    issues:
+      - "DaInfernalCoder source split section 16 into non-canonical `### dirs` / `### config` — consolidated per new rule"
+
+  - subject: mcp
+    section: 17. Notable structural choices
     samples_in_batch: 5
-    sub_purposes: {}
-    anomalies:
-      - "Section contains no `- **Name**: content` bullets in any of the 5 files — content is a free-form bulleted list of pattern observations with bold inline lead-ins; no sub-purposes were converted"
-  - subject: claude-marketplace
-    section: 18. Gaps
+    shape: freeform
+    common_description: |
+      Freeform bulleted observations about what stood out structurally in the repo — design patterns, unusual choices, distinguishing features. No fixed sub-purpose vocabulary.
+
+  - subject: mcp
+    section: 18. Unanticipated axes observed
     samples_in_batch: 5
-    sub_purposes: {}
-    anomalies:
-      - "Section contains no `- **Name**: content` bullets in any of the 5 files — content is a flat bulleted list of gap statements; no sub-purposes were converted"
+    shape: freeform
+    common_description: |
+      Freeform observations about design axes the sample reveals that weren't anticipated by the original section taxonomy — emergent patterns, orthogonal concerns, design dimensions to fold back into future research.
+
+  - subject: mcp
+    section: 19. Python-specific
+    samples_in_batch: 3
+    sub_purposes_seen:
+      "SDK / framework variant": 3
+      "Python version floor": 3
+      "Packaging": 3
+      "Entry point": 3
+      "Install workflow expected of end users": 3
+      "Async and tool signatures": 3
+      "Type / schema strategy": 3
+      "Testing": 3
+      "Dev ergonomics": 3
+      "Notable Python-specific choices": 3
+    shape: closed-set
+    common_description: |
+      Present only in Python repos. Captures Python-specific details — SDK variant (raw `mcp`, FastMCP 1.x/2.x), version floor, packaging (build backend, lock file, version manager), entry point shape (console script vs `__main__.py` vs bare script), install workflow, async patterns, type strategy, testing tooling, dev ergonomics, and notable Python choices.
+    outliers:
+      - sample: Azure--azure-mcp.md
+        why: section absent (C# repo)
+      - sample: DaInfernalCoder--perplexity-mcp.md
+        why: section absent (JavaScript repo)
+    issues:
+      - "Source samples split each canonical sub-purpose into multiple bullet sub-items (e.g. 3 bullets under SDK/framework variant for variant + version pin + import pattern); consolidated each canonical sub-purpose to a single paragraph per the new rule"
+      - "Section frequently includes `not captured` / `not extracted` answers within otherwise-populated sub-purposes — keep verbatim per rule"
+
+  - subject: mcp
+    section: 20. Gaps
+    samples_in_batch: 5
+    shape: freeform
+    common_description: |
+      Freeform paragraph or bullet list of what the researcher couldn't determine from the available surface (README, directory listing, etc.). Captures epistemic-humility signal — what's still unknown after the sample.
+    outliers:
+      - sample: Azure--azure-mcp.md
+        why: section also carries a "Canonical successor" appendix beyond pure gaps; folded into the section body since no separate canonical section exists for redirected/archived repos
+    issues:
+      - "Source `### what couldn't be determined` sub-heading is non-canonical and the section is freeform per canonical spec; flattened to paragraphs"
+      - "Azure sample uniquely needed to express a canonical-successor pointer; consider whether retired/archived repos warrant a canonical extra section"

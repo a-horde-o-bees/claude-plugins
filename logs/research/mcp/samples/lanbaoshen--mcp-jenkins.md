@@ -1,6 +1,7 @@
 # Sample
 
 ## Identification
+
 ### url
 
 https://github.com/lanbaoshen/mcp-jenkins
@@ -9,7 +10,7 @@ https://github.com/lanbaoshen/mcp-jenkins
 
 115
 
-### last-commit (date or relative)
+### last-commit
 
 April 14, 2026 (v3.1.3)
 
@@ -26,6 +27,7 @@ master
 Jenkins CI MCP server — per-request credential headers enable multi-tenant HTTP mode.
 
 ## 1. Language and runtime
+
 ### language(s) + version constraints
 
 Python 82.4%; Python version not explicitly surfaced
@@ -34,10 +36,12 @@ Python 82.4%; Python version not explicitly surfaced
 
 raw MCP Python SDK (FastMCP not explicitly referenced)
 
-- pitfalls observed:
-  - what couldn't be determined: Python version floor, async/sync tool pattern, test framework, schema strategy, logging destination
+### pitfalls observed
+
+none noted in this repo
 
 ## 2. Transport
+
 ### supported transports
 
 stdio (default), sse, streamable-http (default port 9887)
@@ -51,6 +55,7 @@ CLI flag; host/port configurable
 none noted in this repo
 
 ## 3. Distribution
+
 ### every mechanism observed
 
 uvx, pip, Docker (ghcr.io)
@@ -68,6 +73,7 @@ mcp-jenkins
 none noted in this repo
 
 ## 4. Entry point / launch
+
 ### command(s) users/hosts run
 
 `mcp-jenkins` (console script)
@@ -81,6 +87,7 @@ Dockerfile under `/docker` (multi-platform)
 none noted in this repo
 
 ## 5. Configuration surface
+
 ### how config reaches the server
 
 CLI arguments for Jenkins URL, username, password, SSL verification, session singleton mode, read-only mode, transport selection with host/port; HTTP headers (`x-jenkins-url`, `x-jenkins-username`, `x-jenkins-password`) for per-request credential passthrough
@@ -90,6 +97,7 @@ CLI arguments for Jenkins URL, username, password, SSL verification, session sin
 none noted in this repo
 
 ## 6. Authentication
+
 ### flow
 
 Jenkins username + password (or API token)
@@ -103,7 +111,8 @@ CLI flags (static) or HTTP headers (per-request)
 none noted in this repo
 
 ## 7. Multi-tenancy
-### single-user / per-request tenant / workspace-keyed / not applicable / other
+
+### tenancy model
 
 per-request tenant supported — `x-jenkins-*` HTTP headers allow each MCP request to target a different Jenkins
 
@@ -112,6 +121,7 @@ per-request tenant supported — `x-jenkins-*` HTTP headers allow each MCP reque
 none noted in this repo
 
 ## 8. Capabilities exposed
+
 ### tools / resources / prompts / sampling / roots / logging / other
 
 24 tools covering job management, build operations, queue handling, node/view queries, console output retrieval
@@ -121,6 +131,7 @@ none noted in this repo
 none noted in this repo
 
 ## 9. Observability
+
 ### logging destination + format, metrics, tracing, debug flags
 
 not explicitly surfaced
@@ -130,7 +141,6 @@ not explicitly surfaced
 none noted in this repo
 
 ## 10. Host integrations shown in README or repo
-For each host: form + location
 
 ### JetBrains IDE
 
@@ -159,6 +169,7 @@ not observed
 none noted in this repo
 
 ## 12. Tests
+
 ### presence, framework, location, notable patterns
 
 `/tests/` directory present; framework not surfaced
@@ -168,6 +179,7 @@ none noted in this repo
 none noted in this repo
 
 ## 13. CI
+
 ### presence, system, triggers, what it runs
 
 GitHub Actions (`.github/`); codecov integration
@@ -177,6 +189,7 @@ GitHub Actions (`.github/`); codecov integration
 none noted in this repo
 
 ## 14. Container / packaging artifacts
+
 ### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
 
 Dockerfile under `/docker` with multi-platform builds
@@ -186,6 +199,7 @@ Dockerfile under `/docker` with multi-platform builds
 none noted in this repo
 
 ## 15. Example client / developer ergonomics
+
 ### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
 
 `.vscode/mcp.json` sample
@@ -195,6 +209,7 @@ none noted in this repo
 none noted in this repo
 
 ## 16. Repo layout
+
 ### single-package / monorepo / vendored / other
 
 single package; `/docker/`, `/tests/`, `.github/` directories
@@ -204,60 +219,55 @@ single package; `/docker/`, `/tests/`, `.github/` directories
 none noted in this repo
 
 ## 17. Notable structural choices
-- per-request credentials via HTTP headers — enables a single deployed server to serve multiple Jenkins instances from different tenants
-- session-singleton toggle — reuses one Jenkins client across tool calls for connection pooling
-- streamable-http default port (9887) is published, suggesting HTTP deployment is a first-class path
+
+Per-request credentials via HTTP headers — enables a single deployed server to serve multiple Jenkins instances from different tenants. Session-singleton toggle reuses one Jenkins client across tool calls for connection pooling. Streamable-http default port (9887) is published, suggesting HTTP deployment is a first-class path.
 
 ## 18. Unanticipated axes observed
-### decision dimensions this repo reveals
 
-  - per-request header-based credential passthrough (`x-jenkins-*`) turning what's usually a single-tenant stdio server into a multi-tenant HTTP service
-  - session singleton vs per-request session as a deliberate switch
+Per-request header-based credential passthrough (`x-jenkins-*`) turning what's usually a single-tenant stdio server into a multi-tenant HTTP service. Session singleton vs per-request session as a deliberate switch.
 
 ## 19. Python-specific
 
 ### SDK / framework variant
-- raw `mcp` Python SDK / FastMCP 1.x (via `mcp.server.fastmcp`) / FastMCP 2.x (via `fastmcp` package) / custom: raw MCP Python SDK (FastMCP not explicitly referenced)
-- version pin from pyproject.toml: not surfaced
-- import pattern observed: not surfaced
+
+raw MCP Python SDK (FastMCP not explicitly referenced). Version pin from pyproject.toml not surfaced. Import pattern not surfaced.
 
 ### Python version floor
-- `requires-python` value: not explicitly surfaced
+
+`requires-python` value not explicitly surfaced.
 
 ### Packaging
-- build backend: pyproject.toml (uv-based)
-- lock file present: not surfaced
-- version manager convention: uv
+
+Build backend: pyproject.toml (uv-based). Lock file presence not surfaced. Version manager convention: uv.
 
 ### Entry point
-- `[project.scripts]` console script / `__main__.py` module / bare script / other: console script `mcp-jenkins`
-- actual console-script name(s): `mcp-jenkins`
-- host-config snippet shape (uvx / uv run / pipx / python -m / absolute venv path): `uvx mcp-jenkins` or Docker
+
+console script `mcp-jenkins`. Actual console-script name: `mcp-jenkins`. Host-config snippet shape: `uvx mcp-jenkins` or Docker.
 
 ### Install workflow expected of end users
-- install form + one-liner from README: `uvx mcp-jenkins` or `pip install mcp-jenkins`
+
+`uvx mcp-jenkins` or `pip install mcp-jenkins`.
 
 ### Async and tool signatures
-- sync `def` or `async def`: not explicitly surfaced
-- asyncio/anyio usage: not surfaced
+
+not explicitly surfaced
 
 ### Type / schema strategy
-- Pydantic / dataclasses / TypedDict / raw dict / Annotated: not surfaced
-- schema auto-derived vs hand-authored: not surfaced
+
+not surfaced
 
 ### Testing
-- pytest / pytest-asyncio / unittest / none: tests directory present; framework not surfaced
-- fixture style: not surfaced
+
+tests directory present; framework not surfaced.
 
 ### Dev ergonomics
-- mcp dev / fastmcp dev / Inspector launcher / Makefile / Justfile / other: codecov integration in CI
+
+codecov integration in CI.
 
 ### Notable Python-specific choices
-- open bullets:
-    - dedicated `/docker/` subdirectory with multi-platform build artifacts
-    - JetBrains IDE integration is unusual — most MCP servers focus on Claude Desktop / Code / Cursor
+
+Dedicated `/docker/` subdirectory with multi-platform build artifacts. JetBrains IDE integration is unusual — most MCP servers focus on Claude Desktop / Code / Cursor.
 
 ## 20. Gaps
-### what couldn't be determined
 
-Python version floor, async/sync tool pattern, test framework, schema strategy, logging destination
+Python version floor, async/sync tool pattern, test framework, schema strategy, logging destination.

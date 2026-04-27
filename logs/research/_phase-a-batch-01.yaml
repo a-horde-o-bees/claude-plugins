@@ -1,176 +1,264 @@
 files_processed:
-  - path: logs/research/mcp/samples/cyanheads--perplexity-mcp-server.md
-    level1_normalized: true
-    bullets_converted: 18
-  - path: logs/research/mcp/samples/DaInfernalCoder--perplexity-mcp.md
-    level1_normalized: true
-    bullets_converted: 19
-  - path: logs/research/mcp/samples/elastic--mcp-server-elasticsearch.md
-    level1_normalized: true
-    bullets_converted: 22
-  - path: logs/research/mcp/samples/cyanheads--git-mcp-server.md
-    level1_normalized: true
-    bullets_converted: 22
-  - path: logs/research/mcp/samples/ahmedmustahid--postgres-mcp-server.md
-    level1_normalized: true
-    bullets_converted: 30
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/elastic--mcp-server-elasticsearch.md
+    sections_present: [Identification, "1. Language and runtime", "2. Transport", "3. Distribution", "4. Entry point / launch", "5. Configuration surface", "6. Authentication", "7. Multi-tenancy", "8. Capabilities exposed", "9. Observability", "10. Host integrations shown in README or repo", "11. Claude Code plugin wrapper", "12. Tests", "13. CI", "14. Container / packaging artifacts", "15. Example client / developer ergonomics", "16. Repo layout", "17. Notable structural choices", "18. Unanticipated axes observed", "20. Gaps"]
+    notes: Section 19 absent (Rust project, not Python). Section 17 lacked a blank line before its bullets in source — preserved as paragraphs in rewrite.
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/designcomputer--mysql_mcp_server.md
+    sections_present: [Identification, "1. Language and runtime", "2. Transport", "3. Distribution", "4. Entry point / launch", "5. Configuration surface", "6. Authentication", "7. Multi-tenancy", "8. Capabilities exposed", "9. Observability", "10. Host integrations shown in README or repo", "11. Claude Code plugin wrapper", "12. Tests", "13. CI", "14. Container / packaging artifacts", "15. Example client / developer ergonomics", "16. Repo layout", "17. Notable structural choices", "18. Unanticipated axes observed", "19. Python-specific", "20. Gaps"]
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/googleapis--mcp-toolbox.md
+    sections_present: [Identification, "1. Language and runtime", "2. Transport", "3. Distribution", "4. Entry point / launch", "5. Configuration surface", "6. Authentication", "7. Multi-tenancy", "8. Capabilities exposed", "9. Observability", "10. Host integrations shown in README or repo", "11. Claude Code plugin wrapper", "12. Tests", "13. CI", "14. Container / packaging artifacts", "15. Example client / developer ergonomics", "16. Repo layout", "17. Notable structural choices", "18. Unanticipated axes observed", "20. Gaps"]
+    notes: Section 10 originally carried a meta-instruction paragraph (the prompt template) that was preserved-as-intent but converted into per-host `###` blocks per canonical shape; section 19 absent (Go project).
 
 section_observations:
   - subject: mcp
     section: Identification
-    samples_in_batch: 5
-    sub_purposes:
-      url: 5
-      stars: 5
-      last-commit: 4
-      "last-commit (date or relative)": 1
-      license: 5
-      default branch: 5
-      one-line purpose: 5
+    samples_in_batch: 3
+    sub_purposes_seen:
+      url: 3
+      stars: 3
+      last-commit: 3
+      license: 3
+      default branch: 3
+      one-line purpose: 3
+    shape: closed-set
+    common_description: |
+      Repo identity card — fixed metadata fields used for cross-sample correlation. Stable closed vocabulary across the batch.
+    issues:
+      - "Source labels for last-commit varied ('last-commit' vs 'last-commit (date or relative)'); rewrite normalized to 'last-commit'."
+
   - subject: mcp
     section: 1. Language and runtime
-    samples_in_batch: 5
-    sub_purposes:
-      "language(s) + version constraints": 5
-      framework/SDK in use: 5
-      pitfalls observed: 5
+    samples_in_batch: 3
+    sub_purposes_seen:
+      "language(s) + version constraints": 3
+      "framework/SDK in use": 3
+      "pitfalls observed": 3
+    shape: closed-set
+    common_description: |
+      Names the implementation language(s), version floor or edition, and the MCP SDK / framework variant the server is built on. Stable across the batch.
+
   - subject: mcp
     section: 2. Transport
-    samples_in_batch: 5
-    sub_purposes:
-      supported transports: 5
-      how selected: 4
-      "how selected (flag, env, separate entry, auto-detect, etc.)": 1
-      pitfalls observed: 5
+    samples_in_batch: 3
+    sub_purposes_seen:
+      "supported transports": 3
+      "how selected": 3
+      "pitfalls observed": 3
+    shape: closed-set
+    common_description: |
+      Which MCP transports (stdio, HTTP/streamable-HTTP, SSE) the server supports and how a host picks one (CLI flag, env, default-only, etc.). Stable shape across the batch.
+
   - subject: mcp
     section: 3. Distribution
-    samples_in_batch: 5
-    sub_purposes:
-      every mechanism observed: 5
-      "published package name(s)": 5
-      install commands shown in README: 5
-      pitfalls observed: 5
+    samples_in_batch: 3
+    sub_purposes_seen:
+      "every mechanism observed": 3
+      "published package name(s)": 3
+      "install commands shown in README": 3
+      "pitfalls observed": 3
+    shape: closed-set
+    common_description: |
+      Enumerates the distribution channels (PyPI, npm, Docker, Homebrew, go install, GitHub release, etc.), the package name(s) under each, and the install commands the README actually shows. Strong predictor of cross-ecosystem reach.
+    issues:
+      - "'every mechanism observed' source headings carried long parenthesized variants ('(PyPI, npm, uvx, npx, ...)') — canonical short form preserved facts and shed the catalogue."
+
   - subject: mcp
     section: 4. Entry point / launch
-    samples_in_batch: 5
-    sub_purposes:
-      "command(s) users/hosts run": 5
-      wrapper scripts: 3
-      "wrapper scripts, launchers, stubs": 1
-      pitfalls observed: 5
+    samples_in_batch: 3
+    sub_purposes_seen:
+      "command(s) users/hosts run": 3
+      "wrapper scripts, launchers, stubs": 3
+      "pitfalls observed": 3
+    shape: closed-set
+    common_description: |
+      The exact command a host or user invokes to launch the server, plus any wrapper scripts (Docker entrypoints, npm shims, uvx invocations) interposed between the host and the binary.
+
   - subject: mcp
     section: 5. Configuration surface
-    samples_in_batch: 5
-    sub_purposes:
-      how config reaches the server: 5
-      pitfalls observed: 5
+    samples_in_batch: 3
+    sub_purposes_seen:
+      "how config reaches the server": 3
+      "pitfalls observed": 3
+    shape: closed-set
+    common_description: |
+      How configuration is delivered — env vars, CLI flags, YAML/JSON config files, host-passed params, or combinations. The MySQL and Elasticsearch samples are env-var-driven; the toolbox sample uses a YAML manifest with hot reload.
+
   - subject: mcp
     section: 6. Authentication
-    samples_in_batch: 5
-    sub_purposes:
-      flow: 5
-      where credentials come from: 5
-      pitfalls observed: 5
+    samples_in_batch: 3
+    sub_purposes_seen:
+      "flow": 3
+      "where credentials come from": 3
+      "pitfalls observed": 3
+    shape: closed-set
+    common_description: |
+      Auth model (static token, username/password, IAM/ADC, delegated, none) and the channel that delivers credentials (env vars, config file, ambient cloud identity).
+
   - subject: mcp
     section: 7. Multi-tenancy
-    samples_in_batch: 5
-    sub_purposes:
-      "single-user / per-request tenant / workspace-keyed / not applicable / other": 1
-      pitfalls observed: 5
-    anomalies:
-      - "4 of 5 samples have multi-tenancy content as a plain bullet without a field-name colon prefix; only ahmedmustahid uses the verbose template field-name"
+    samples_in_batch: 3
+    sub_purposes_seen:
+      "tenancy model": 3
+      "pitfalls observed": 3
+    shape: closed-set
+    common_description: |
+      Whether the server is single-tenant (one connection per process), per-request tenant-keyed, workspace-keyed, or N/A. All three batch samples are single-tenant per process.
+    issues:
+      - "Source headings used long parenthesized variants ('single-user / per-request tenant / workspace-keyed / not applicable / other'); canonicalized to 'tenancy model' which is shorter and still names the question. Elasticsearch sample omitted the sub-heading entirely (just a bullet under the section); rewrite added the 'tenancy model' sub-heading for consistency."
+
   - subject: mcp
     section: 8. Capabilities exposed
-    samples_in_batch: 5
-    sub_purposes:
-      tools: 4
-      resources: 2
-      prompts: 1
-      "tools / resources / prompts / sampling / roots / logging / other": 1
-      pitfalls observed: 5
+    samples_in_batch: 3
+    sub_purposes_seen:
+      "tools / resources / prompts / sampling / roots / logging / other": 3
+      "pitfalls observed": 3
+    shape: closed-set
+    common_description: |
+      Inventory of MCP capability surfaces the server exposes — tool list, resources, prompts, sampling, roots, logging — and which surfaces it deliberately uses. Most batch samples concentrate on tools; MySQL surfaces resources too, toolbox surfaces prompts.
+    issues:
+      - "The canonical sub-purpose label is a long slash-list; in practice each sample fills it with a single-paragraph description rather than enumerating per-surface. Template might benefit from per-surface sub-bullets if cross-sample analysis wants to count resource/prompt support."
+
   - subject: mcp
     section: 9. Observability
-    samples_in_batch: 5
-    sub_purposes:
-      logging: 3
-      "logging destination + format, metrics, tracing, debug flags": 1
-      pitfalls observed: 5
-    anomalies:
-      - "elastic sample uses 'logging' as field but content is container-level; one sample (ahmedmustahid) uses verbose template label"
+    samples_in_batch: 3
+    sub_purposes_seen:
+      "logging destination + format, metrics, tracing, debug flags": 3
+      "pitfalls observed": 3
+    shape: closed-set
+    common_description: |
+      Logging destination and format, metrics, tracing, debug flags. Across the batch, content is sparse — repos surface logging only at the 'comprehensive logging' or 'standard stderr' level. Pitfalls section frequently captures the gap.
+    issues:
+      - "Section is consistently thin across the batch; consider whether 'pitfalls observed' should fold into the primary content (gap-as-content) since two of three samples either say 'none noted' or repeat 'not specified' in pitfalls."
+
   - subject: mcp
     section: 10. Host integrations shown in README or repo
-    samples_in_batch: 5
-    sub_purposes:
-      Claude Desktop: 1
-      MCP Inspector: 1
-      Other editors/CLIs: 1
-      pitfalls observed: 5
-    anomalies:
-      - "4 of 5 samples list integrations as plain bullets without field-name colon shape; only ahmedmustahid uses bolded sub-fields"
+    samples_in_batch: 3
+    sub_purposes_seen:
+      "Claude Desktop": 2
+      "Cursor": 1
+      "Docker-based deployment": 1
+      "VS Code": 1
+      "Other editors/CLIs": 1
+      "Gemini CLI": 1
+      "Google Antigravity": 1
+      "Claude Code": 1
+      "Codex": 1
+    shape: open-enumeration
+    common_description: |
+      Enumerates the hosts the README claims compatibility with, plus the form the integration takes (JSON config snippet, plugin wrapper, shell command, deployment target). Vocabulary is genuinely unbounded across hosts; the elasticsearch sample even includes a non-host item ('Docker-based deployment' as a deployment-target axis).
+    outliers:
+      - sample: googleapis--mcp-toolbox.md
+        why: "Source carried a meta-instruction paragraph ('For each host encountered ...') describing the template's intent rather than concrete content; rewrite stripped the meta-instruction and surfaced the four hosts as ### blocks."
+      - sample: elastic--mcp-server-elasticsearch.md
+        why: "Listed 'Docker-based deployment (EC2, ECS, EKS)' alongside hosts — that's a deployment-target axis, not a host integration. Preserved as a ### block but flag for consideration: should section 10 admit deployment targets, or is that a different axis?"
+    issues:
+      - "Section 10 mixes 'host integrations' (editor/agent clients) with 'deployment targets' (cloud platforms) in the elasticsearch sample. Template should clarify whether deployment targets belong here or in section 14 (container/packaging) / a new axis."
+      - "The mcp-toolbox source still contained the prompt-template instructions verbatim — this is a hint that other samples may carry similar uncleaned scaffolding."
+
   - subject: mcp
     section: 11. Claude Code plugin wrapper
-    samples_in_batch: 5
-    sub_purposes:
-      presence and shape: 1
-      pitfalls observed: 5
-    anomalies:
-      - "4 of 5 samples have a single plain bullet ('not present'); only ahmedmustahid uses field-name shape"
+    samples_in_batch: 3
+    sub_purposes_seen:
+      "presence and shape": 3
+      "pitfalls observed": 3
+    shape: closed-set
+    common_description: |
+      Whether the repo ships a Claude Code plugin manifest / wrapper. None of the batch samples ship one — all three answer 'not present'.
+    issues:
+      - "Across the batch, this section is uniformly negative; the section's value is in the negative answer (predictor for wrapper-adoption) but the structure makes it look unfilled. Worth thinking about whether absence should remain a full section or move to a single 'plugin wrapper' yes/no axis."
+
   - subject: mcp
     section: 12. Tests
-    samples_in_batch: 5
-    sub_purposes:
-      "presence, framework, location, notable patterns": 1
-      pitfalls observed: 5
-    anomalies:
-      - "4 of 5 samples report status as plain bullet without field-name shape"
+    samples_in_batch: 3
+    sub_purposes_seen:
+      "presence, framework, location, notable patterns": 3
+      "pitfalls observed": 3
+    shape: closed-set
+    common_description: |
+      Presence of a test suite, framework (pytest / Go testing / Rust cargo test), location (`tests/`), and any notable patterns. Detail varies — concrete framework named when surfaced, otherwise 'present' with implied conventions.
+
   - subject: mcp
     section: 13. CI
-    samples_in_batch: 5
-    sub_purposes:
-      "presence, system, triggers, what it runs": 1
-      pitfalls observed: 5
-    anomalies:
-      - "4 of 5 samples report CI status as plain bullet without field-name shape"
+    samples_in_batch: 3
+    sub_purposes_seen:
+      "presence, system, triggers, what it runs": 3
+      "pitfalls observed": 3
+    shape: closed-set
+    common_description: |
+      CI system (GitHub Actions, Buildkite, both), triggers, and what the workflow runs. The elasticsearch sample is the outlier with dual CI systems.
+
   - subject: mcp
     section: 14. Container / packaging artifacts
-    samples_in_batch: 5
-    sub_purposes:
-      "Dockerfile, docker-compose, Helm, systemd, brew formula, etc.": 1
-      pitfalls observed: 5
-    anomalies:
-      - "4 of 5 samples list artifacts as plain bullets; only ahmedmustahid uses verbose field-name"
+    samples_in_batch: 3
+    sub_purposes_seen:
+      "Dockerfile, docker-compose, Helm, systemd, brew formula, etc.": 3
+      "pitfalls observed": 3
+    shape: closed-set
+    common_description: |
+      Containers, Helm charts, brew formulas, systemd units — non-language-package distribution artifacts. All three samples ship a Dockerfile; toolbox additionally has Homebrew.
+
   - subject: mcp
     section: 15. Example client / developer ergonomics
-    samples_in_batch: 5
-    sub_purposes:
-      "MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs": 1
-      pitfalls observed: 5
-    anomalies:
-      - "4 of 5 samples list ergonomics as plain bullets; only ahmedmustahid uses verbose field-name"
+    samples_in_batch: 3
+    sub_purposes_seen:
+      "MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs": 3
+      "pitfalls observed": 3
+    shape: closed-set
+    common_description: |
+      Developer-facing affordances — MCP Inspector entry, curl stubs, make targets, dev scripts, sample host configs. Often sparse; surfaces things like Makefiles, JSON config examples, docs-site infrastructure.
+
   - subject: mcp
     section: 16. Repo layout
-    samples_in_batch: 5
-    sub_purposes:
-      dirs: 3
-      config: 3
-      additional: 1
-      "single-package / monorepo / vendored / other": 1
-      pitfalls observed: 5
-    anomalies:
-      - "elastic sample includes an 'additional' field absent from other samples"
+    samples_in_batch: 3
+    sub_purposes_seen:
+      "single-package / monorepo / vendored / other": 3
+      "pitfalls observed": 3
+    shape: closed-set
+    common_description: |
+      Top-level repo organization (single-package vs monorepo vs vendored), key directories, and config files. All three batch samples are single-package; the elasticsearch sample's source had additional sub-headings (`### dirs`, `### config`, `### additional`) that the rewrite consolidated into the canonical paragraph.
+    issues:
+      - "Source for elastic sample used non-canonical sub-purposes ('### dirs', '### config', '### additional'). Consolidated into the canonical 'single-package / monorepo / vendored / other' paragraph; consider whether the canonical label should be split to admit dirs/config/additional as recurring sub-purposes if other samples do similar."
+
   - subject: mcp
     section: 17. Notable structural choices
-    samples_in_batch: 4
-    anomalies:
-      - "section uses unstructured bullets across all 4 samples that have it; ahmedmustahid lacks a 'pitfalls observed' subsection here"
+    samples_in_batch: 3
+    shape: freeform
+    common_description: |
+      Freeform observations on what stood out structurally — distribution breadth, transport choice, configuration model, lifecycle posture. All three samples used bullet lists in source; rewrites converted to paragraph prose per instructions.
+    issues:
+      - "All three source samples used bullet lists despite the section being freeform-by-spec. Consider whether the template should explicitly permit bullets here — the bullet form actually works well for parallel observations like 'Rust', 'Docker-only', 'Buildkite + GHA', 'Makefile'."
+
   - subject: mcp
     section: 18. Unanticipated axes observed
-    samples_in_batch: 4
-    anomalies:
-      - "section uses unstructured bullets across samples; ahmedmustahid lacks a 'pitfalls observed' subsection here"
+    samples_in_batch: 3
+    shape: freeform
+    common_description: |
+      Freeform observations on axes the researcher did not anticipate going in — implementation language, CI diversity, lifecycle stage, declarative tool authoring, hot reload, cross-ecosystem shims. Each sample contributes 2-4 distinct axis observations.
+    issues:
+      - "Some sources tagged each item with an explicit 'axis: <name>' suffix (elastic sample); others described axes in prose (toolbox, mysql). Consider whether axes should be enumerable as `### <axis name>` per the canonical instruction's optional path."
+
+  - subject: mcp
+    section: 19. Python-specific
+    samples_in_batch: 1
+    sub_purposes_seen:
+      "SDK / framework variant": 1
+      "Python version floor": 1
+      "Packaging": 1
+      "Entry point": 1
+      "Install workflow expected of end users": 1
+      "Async and tool signatures": 1
+      "Type / schema strategy": 1
+      "Testing": 1
+      "Dev ergonomics": 1
+      "Notable Python-specific choices": 1
+    shape: closed-set
+    common_description: |
+      Python-only deep-dive — present only on Python repos. The mysql sample fills all 10 canonical sub-purposes; elastic (Rust) and toolbox (Go) omit the section entirely.
+
   - subject: mcp
     section: 20. Gaps
-    samples_in_batch: 4
-    anomalies:
-      - "section number jumps from 18 to 20 (no 19) across all samples — template skip rather than per-file anomaly"
-      - "ahmedmustahid sample lacks section 17, 18, 20 'pitfalls observed' subsection — discrepancy"
+    samples_in_batch: 3
+    shape: freeform
+    common_description: |
+      Freeform list of what wasn't extracted — version specifics, workflow contents, transport coverage, formula sources. Acts as a known-unknowns ledger per sample.
+    issues:
+      - "Section overlaps in spirit with each section's 'pitfalls observed' subsection; some items repeat (e.g. mysql's 'CI workflow contents not extracted' appears both in §13 pitfalls and §20 gaps). Template should clarify whether 'pitfalls observed' is the per-section gap and 20 is cross-cutting, or whether to consolidate."

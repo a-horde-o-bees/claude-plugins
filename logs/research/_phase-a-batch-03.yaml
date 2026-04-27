@@ -1,371 +1,221 @@
 files_processed:
-  - path: logs/research/mcp/samples/exa-labs--exa-mcp-server.md
-    level1_normalized: true
-    bullets_converted: 36
-  - path: logs/research/mcp/samples/conikeec--mcpr.md
-    level1_normalized: true
-    bullets_converted: 39
-  - path: logs/research/mcp/samples/docker--hub-mcp.md
-    level1_normalized: true
-    bullets_converted: 40
-  - path: logs/research/mcp/samples/GLips--Figma-Context-MCP.md
-    level1_normalized: true
-    bullets_converted: 38
-  - path: logs/research/claude-marketplace/samples/anthropics--life-sciences.md
-    level1_normalized: true
-    bullets_converted: 95
-  - path: logs/research/claude-marketplace/samples/a3lem--my-claude-plugins.md
-    level1_normalized: true
-    bullets_converted: 95
-  - path: logs/research/claude-marketplace/samples/anthropics--knowledge-work-plugins.md
-    level1_normalized: true
-    bullets_converted: 100
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/FuzzingLabs--mcp-security-hub.md
+    sections_present: ["Identification", "1. Language and runtime", "2. Transport", "3. Distribution", "4. Entry point / launch", "5. Configuration surface", "6. Authentication", "7. Multi-tenancy", "8. Capabilities exposed", "9. Observability", "10. Host integrations shown in README or repo", "11. Claude Code plugin wrapper", "12. Tests", "13. CI", "14. Container / packaging artifacts", "15. Example client / developer ergonomics", "16. Repo layout", "17. Notable structural choices", "18. Unanticipated axes observed", "19. Python-specific", "20. Gaps"]
+    notes: Section 13 source had pitfalls block contaminated with section-18 axes content; lifted Trivy line as the pitfall and moved axes content to section 18.
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/GLips--Figma-Context-MCP.md
+    sections_present: ["Identification", "1. Language and runtime", "2. Transport", "3. Distribution", "4. Entry point / launch", "5. Configuration surface", "6. Authentication", "7. Multi-tenancy", "8. Capabilities exposed", "9. Observability", "10. Host integrations shown in README or repo", "11. Claude Code plugin wrapper", "12. Tests", "13. CI", "14. Container / packaging artifacts", "15. Example client / developer ergonomics", "16. Repo layout", "17. Notable structural choices", "18. Unanticipated axes observed", "20. Gaps"]
+    notes: TypeScript repo — no section 19. Section 10 was bulleted in source; converted to one ### per host.
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/HenkDz--postgresql-mcp-server.md
+    sections_present: ["Identification", "1. Language and runtime", "2. Transport", "3. Distribution", "4. Entry point / launch", "5. Configuration surface", "6. Authentication", "7. Multi-tenancy", "8. Capabilities exposed", "9. Observability", "10. Host integrations shown in README or repo", "11. Claude Code plugin wrapper", "12. Tests", "13. CI", "14. Container / packaging artifacts", "15. Example client / developer ergonomics", "16. Repo layout", "17. Notable structural choices", "18. Unanticipated axes observed", "20. Gaps"]
+    notes: TypeScript repo — no section 19.
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/JackKuo666--PubMed-MCP-Server.md
+    sections_present: ["Identification", "1. Language and runtime", "2. Transport", "3. Distribution", "4. Entry point / launch", "5. Configuration surface", "6. Authentication", "7. Multi-tenancy", "8. Capabilities exposed", "9. Observability", "10. Host integrations shown in README or repo", "11. Claude Code plugin wrapper", "12. Tests", "13. CI", "14. Container / packaging artifacts", "15. Example client / developer ergonomics", "16. Repo layout", "17. Notable structural choices", "18. Unanticipated axes observed", "19. Python-specific", "20. Gaps"]
+    notes: Section 3 pitfalls in source bundled section-17 layout commentary and section-18 axis content; split appropriately.
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/PagerDuty--pagerduty-mcp-server.md
+    sections_present: ["Identification", "1. Language and runtime", "2. Transport", "3. Distribution", "4. Entry point / launch", "5. Configuration surface", "6. Authentication", "7. Multi-tenancy", "8. Capabilities exposed", "9. Observability", "10. Host integrations shown in README or repo", "11. Claude Code plugin wrapper", "12. Tests", "13. CI", "14. Container / packaging artifacts", "15. Example client / developer ergonomics", "16. Repo layout", "17. Notable structural choices", "18. Unanticipated axes observed", "19. Python-specific", "20. Gaps"]
+    notes: Section 1 pitfalls held a gaps-style "what couldn't be determined" list; preserved as pitfalls per source.
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/ahmedmustahid--postgres-mcp-server.md
+    sections_present: ["Identification", "1. Language and runtime", "2. Transport", "3. Distribution", "4. Entry point / launch", "5. Configuration surface", "6. Authentication", "7. Multi-tenancy", "8. Capabilities exposed", "9. Observability", "10. Host integrations shown in README or repo", "11. Claude Code plugin wrapper", "12. Tests", "13. CI", "14. Container / packaging artifacts", "15. Example client / developer ergonomics", "16. Repo layout", "17. Notable structural choices", "18. Unanticipated axes observed", "20. Gaps"]
+    notes: TypeScript-majority repo — no section 19; pyproject.toml co-presence noted in section 1 and section 17.
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/alexei-led--k8s-mcp-server.md
+    sections_present: ["Identification", "1. Language and runtime", "2. Transport", "3. Distribution", "4. Entry point / launch", "5. Configuration surface", "6. Authentication", "7. Multi-tenancy", "8. Capabilities exposed", "9. Observability", "10. Host integrations shown in README or repo", "11. Claude Code plugin wrapper", "12. Tests", "13. CI", "14. Container / packaging artifacts", "15. Example client / developer ergonomics", "16. Repo layout", "17. Notable structural choices", "18. Unanticipated axes observed", "19. Python-specific", "20. Gaps"]
+    notes: Section 5 pitfalls were truncated in source ("bun..."); preserved verbatim text plus the resolved version from section 18.
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/alpacahq--alpaca-mcp-server.md
+    sections_present: ["Identification", "1. Language and runtime", "2. Transport", "3. Distribution", "4. Entry point / launch", "5. Configuration surface", "6. Authentication", "7. Multi-tenancy", "8. Capabilities exposed", "9. Observability", "10. Host integrations shown in README or repo", "11. Claude Code plugin wrapper", "12. Tests", "13. CI", "14. Container / packaging artifacts", "15. Example client / developer ergonomics", "16. Repo layout", "17. Notable structural choices", "18. Unanticipated axes observed", "19. Python-specific", "20. Gaps"]
+    notes: Source put section-17 content in section-3 and section-7 pitfalls; relocated to section 17/18 where they semantically belong while leaving stub "none noted" if unclear.
 
 section_observations:
   - subject: mcp
     section: Identification
-    samples_in_batch: 4
-    sub_purposes:
-      url: 4
-      stars: 4
-      "last-commit": 1
-      "last-commit (date or relative)": 3
-      license: 4
-      "default branch": 4
-      "one-line purpose": 4
+    samples_in_batch: 8
+    sub_purposes_seen: {url: 8, stars: 8, last-commit: 8, license: 8, default branch: 8, one-line purpose: 8}
+    shape: closed-set
+    common_description: |
+      Stable identification block recording where the repo lives, its popularity/recency, license, default branch, and a one-line purpose statement. Vocabulary is fixed across the batch.
+    issues:
+      - "Source files used 'last-commit (date or relative)' as the heading text; canonicalized to 'last-commit'."
+
   - subject: mcp
     section: 1. Language and runtime
-    samples_in_batch: 4
-    sub_purposes:
-      "language(s) + version constraints": 4
-      "framework/SDK in use": 4
-      "pitfalls observed": 4
+    samples_in_batch: 8
+    sub_purposes_seen: {"language(s) + version constraints": 8, "framework/SDK in use": 8, "pitfalls observed": 8}
+    shape: closed-set
+    common_description: |
+      Captures the implementation language(s), version-floor pin, and which MCP SDK/framework is used (raw mcp Python SDK, FastMCP 1.x/2.x, TypeScript SDK, or hand-rolled). Pitfalls are usually 'none noted' but occasionally absorb a 'what couldn't be determined' list.
+    issues:
+      - "Pitfalls in this section sometimes carry gap-style content ('what couldn't be determined: ...') instead of true pitfalls — overlap with section 20."
+
   - subject: mcp
     section: 2. Transport
-    samples_in_batch: 4
-    sub_purposes:
-      "supported transports": 4
-      "how selected": 1
-      "how selected (flag, env, separate entry, auto-detect, etc.)": 3
-      "pitfalls observed": 4
+    samples_in_batch: 8
+    sub_purposes_seen: {"supported transports": 8, "how selected": 8, "pitfalls observed": 8}
+    shape: closed-set
+    common_description: |
+      Records which transports the server speaks (stdio is universal; many add streamable-http, some HTTP/SSE) and the mechanism for selecting between them (CLI flag, env var, positional subcommand, or implicit/default).
+    outliers:
+      - sample: ahmedmustahid--postgres-mcp-server.md
+        why: Transport selected via positional subcommand rather than flag/env — only sample in batch using this pattern.
+
   - subject: mcp
     section: 3. Distribution
-    samples_in_batch: 4
-    sub_purposes:
-      "every mechanism observed": 3
-      "every mechanism observed (PyPI, npm, uvx, npx, Docker, Homebrew, Cargo, Go install, GitHub release binary, source-only, or other)": 1
-      "published package name(s)": 4
-      "install commands shown in README": 4
-      "pitfalls observed": 4
+    samples_in_batch: 8
+    sub_purposes_seen: {"every mechanism observed": 8, "published package name(s)": 8, "install commands shown in README": 8, "pitfalls observed": 8}
+    shape: closed-set
+    common_description: |
+      Enumerates distribution channels (PyPI/uvx, npm/npx, Docker registries, Smithery, source clone), names the canonical published package, and quotes the README install one-liner.
+    issues:
+      - "When a server is not published to a package manager (PubMed, FuzzingLabs), this is signal — preserved as 'not published to PyPI at time of research' / 'no PyPI publishing'."
+
   - subject: mcp
     section: 4. Entry point / launch
-    samples_in_batch: 4
-    sub_purposes:
-      "command(s) users/hosts run": 4
-      "wrapper scripts": 1
-      "wrapper scripts, launchers, stubs": 3
-      "pitfalls observed": 4
+    samples_in_batch: 8
+    sub_purposes_seen: {"command(s) users/hosts run": 8, "wrapper scripts, launchers, stubs": 8, "pitfalls observed": 8}
+    shape: closed-set
+    common_description: |
+      The exact command users or MCP hosts invoke (uvx X / npx X / docker run X / python -m X) plus any wrapper layer (console-script entry, Dockerfile, Makefile, smithery.yaml).
+
   - subject: mcp
     section: 5. Configuration surface
-    samples_in_batch: 4
-    sub_purposes:
-      "how config reaches the server": 3
-      "how config reaches the server (env vars, CLI args, config file w/ path + format, stdin prompt, OS keyring, host-passed params, combinations)": 1
-      "pitfalls observed": 4
-    anomalies:
-      - "Sub-purpose label varies between bare 'how config reaches the server' and a long parenthetical-enumerated form"
+    samples_in_batch: 8
+    sub_purposes_seen: {"how config reaches the server": 8, "pitfalls observed": 8}
+    shape: closed-set
+    common_description: |
+      How configuration arrives at runtime — env vars, CLI flags, .env, JSON config files, host-injected env blocks, mounted credential files, optional per-tool enablement configs.
+
   - subject: mcp
     section: 6. Authentication
-    samples_in_batch: 4
-    sub_purposes:
-      flow: 3
-      "flow (static token, OAuth w/ description, per-request header, none, other)": 1
-      "where credentials come from": 4
-      "pitfalls observed": 4
+    samples_in_batch: 8
+    sub_purposes_seen: {"flow": 8, "where credentials come from": 8, "pitfalls observed": 8}
+    shape: closed-set
+    common_description: |
+      Auth mechanism (static API key/secret pair, connection-string credentials, OAuth, kubeconfig, none) and the channel that delivers credentials (env var, flag, mounted file, embedded in DSN). OAuth is rare across the batch.
+
   - subject: mcp
     section: 7. Multi-tenancy
-    samples_in_batch: 4
-    sub_purposes:
-      "single-user / per-request tenant / workspace-keyed / not applicable / other": 3
-      "pitfalls observed": 4
-    anomalies:
-      - "exa-labs file has only a leading bullet without a key prefix; converted to a plain bullet, not a sub-heading"
+    samples_in_batch: 8
+    sub_purposes_seen: {"tenancy model": 8, "pitfalls observed": 8}
+    shape: closed-set
+    common_description: |
+      Whether the server is single-user per process, single-connection per instance, or supports per-request tenant switching. Every sample in batch is single-user/single-connection; HTTP-transport variants explicitly note no per-request switching.
+    issues:
+      - "Source heading text was the long enumerated form ('single-user / per-request tenant / workspace-keyed / not applicable / other'); canonicalized to 'tenancy model'."
+
   - subject: mcp
     section: 8. Capabilities exposed
-    samples_in_batch: 4
-    sub_purposes:
-      tools: 1
-      "specialized skills directory": 1
-      "tools / resources / prompts / sampling / roots / logging / other": 3
-      "pitfalls observed": 4
+    samples_in_batch: 8
+    sub_purposes_seen: {"tools / resources / prompts / sampling / roots / logging / other": 8, "pitfalls observed": 8}
+    shape: closed-set
+    common_description: |
+      Inventory of MCP capability surface — tool count and grouping, presence of resources/prompts/sampling/roots/logging. Most samples expose tools only; one (ahmedmustahid) also exposes resources. Tool counts vary widely (5 in PubMed to 65+ in PagerDuty).
+
   - subject: mcp
     section: 9. Observability
-    samples_in_batch: 4
-    sub_purposes:
-      logging: 1
-      "logging destination + format, metrics, tracing, debug flags": 3
-      "pitfalls observed": 4
+    samples_in_batch: 8
+    sub_purposes_seen: {"logging destination + format, metrics, tracing, debug flags": 8, "pitfalls observed": 8}
+    shape: closed-set
+    common_description: |
+      Logging destination/format, metrics, tracing, debug flags. Frequently 'not surfaced' or 'not captured' across the batch — observability is poorly documented in MCP server READMEs as a class.
+    issues:
+      - "Across the batch, this section is the most frequently 'not surfaced' — suggests README authors do not foreground observability, or that the research phase deprioritized scraping it."
+
   - subject: mcp
     section: 10. Host integrations shown in README or repo
-    samples_in_batch: 4
-    sub_purposes:
-      "Claude Desktop": 1
-      "Claude Code": 1
-      "Other": 1
-      form: 1
-      "pitfalls observed": 4
-    anomalies:
-      - "exa-labs, GLips: section opens with bare bullets (host names) before any keyed sub-purposes; bare bullets retained as bullets"
-      - "docker--hub-mcp opens with a long prose paragraph followed by `Host: value` bullets; converted three host-specific entries"
+    samples_in_batch: 8
+    sub_purposes_seen: {"Claude Desktop": 7, "Claude Code": 1, "Cursor": 4, "VS Code": 1, "PyCharm": 1, "Gemini CLI": 1, "Cline": 1, "Smithery": 1, "MCP Inspector": 1, "Other MCP-enabled clients": 1, "Other editors/CLIs": 2, "General MCP-compatible clients": 1, "pitfalls observed": 8}
+    shape: open-enumeration
+    common_description: |
+      One ### per host the README documents. Claude Desktop is near-universal (7/8); Cursor common (4/8); long tail of Cline, Smithery, VS Code, PyCharm, Gemini CLI, MCP Inspector, generic catch-all entries.
+    issues:
+      - "Genuinely unbounded vocabulary — modeling as ### per host is correct but expect many more host names across the full corpus. Some samples used catch-all phrases ('Other editors/CLIs', 'General MCP-compatible clients') which are anti-information; consider canonicalizing to a single 'Other' bucket or omitting."
+
   - subject: mcp
     section: 11. Claude Code plugin wrapper
-    samples_in_batch: 4
-    sub_purposes:
-      "presence and shape": 1
-      "presence and shape (.claude-plugin/plugin.json, .mcp.json at repo root, full plugin layout, not present, other)": 1
-      "pitfalls observed": 4
-    anomalies:
-      - "exa-labs and GLips have prose-only single bullet without a 'key:' label — left as bullet"
+    samples_in_batch: 8
+    sub_purposes_seen: {"presence and shape": 8, "pitfalls observed": 8}
+    shape: closed-set
+    common_description: |
+      Whether the repo ships a `.claude-plugin/` directory or other Claude Code plugin wrapper. None of the 8 samples in this batch ship one — section is consistently 'not present' / 'not observed'.
+    issues:
+      - "Across the batch this section returns 'not present' for every sample. Worth flagging: the section may be doing little discriminative work and could fold into a presence-checklist instead of a full ### subsection."
+
   - subject: mcp
     section: 12. Tests
-    samples_in_batch: 4
-    sub_purposes:
-      "presence, framework, location, notable patterns": 2
-      "pitfalls observed": 4
+    samples_in_batch: 8
+    sub_purposes_seen: {"presence, framework, location, notable patterns": 8, "pitfalls observed": 8}
+    shape: closed-set
+    common_description: |
+      Whether tests exist, the framework (pytest, pytest-asyncio, vitest), location (tests/ vs co-located), and notable patterns (multi-layered suites, integration vs integrity tests). Often 'not surfaced within budget'.
+
   - subject: mcp
     section: 13. CI
-    samples_in_batch: 4
-    sub_purposes:
-      "presence, system, triggers, what it runs": 2
-      "pitfalls observed": 4
+    samples_in_batch: 8
+    sub_purposes_seen: {"presence, system, triggers, what it runs": 8, "pitfalls observed": 8}
+    shape: closed-set
+    common_description: |
+      Presence and system (predominantly GitHub Actions), triggers (PR, tag, schedule), and what jobs run (build, test, security scanning). Frequently 'present but specifics not extracted within budget'.
+
   - subject: mcp
     section: 14. Container / packaging artifacts
-    samples_in_batch: 4
-    sub_purposes:
-      "Dockerfile, docker-compose, Helm, systemd, brew formula, etc.": 2
-      "pitfalls observed": 4
+    samples_in_batch: 8
+    sub_purposes_seen: {"Dockerfile, docker-compose, Helm, systemd, brew formula, etc.": 8, "pitfalls observed": 8}
+    shape: closed-set
+    common_description: |
+      Inventory of container/packaging artifacts in the repo — Dockerfile is near-universal, docker-compose appears for multi-service, Helm/systemd/brew not seen in this batch.
+
   - subject: mcp
     section: 15. Example client / developer ergonomics
-    samples_in_batch: 4
-    sub_purposes:
-      "MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs": 3
-      "pitfalls observed": 4
+    samples_in_batch: 8
+    sub_purposes_seen: {"MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs": 8, "pitfalls observed": 8}
+    shape: closed-set
+    common_description: |
+      Developer-facing ergonomics — Makefiles, dev scripts, MCP Inspector launchers, sample host config snippets, lint/format toolchains, docs sites.
+
   - subject: mcp
     section: 16. Repo layout
-    samples_in_batch: 4
-    sub_purposes:
-      "single-package / monorepo / vendored / other — describe what's there": 2
-      "single-package / monorepo / vendored / other": 1
-      dirs: 1
-      config: 1
-      "integration configs": 1
-      "pitfalls observed": 4
+    samples_in_batch: 8
+    sub_purposes_seen: {"single-package / monorepo / vendored / other": 8, "pitfalls observed": 8}
+    shape: closed-set
+    common_description: |
+      Top-level repo shape — single-package is dominant; one monorepo (FuzzingLabs, 38 servers); occasional 'mixed' (TS + pyproject.toml co-present in ahmedmustahid). Bare-script root layout (PubMed) is an antipattern flag.
+
   - subject: mcp
     section: 17. Notable structural choices
-    samples_in_batch: 4
+    samples_in_batch: 8
+    shape: freeform
+    common_description: |
+      Freeform paragraph capturing distinctive design choices that don't fit elsewhere — tool-consolidation strategies, paper-mode-as-default, vendor vs community authorship, dev-tooling stack, distribution-channel mix. No fixed sub-purpose vocabulary; content varies per repo.
+    issues:
+      - "Source files often used bullet lists; consolidated to paragraph form per instructions. Some bullets bled into other sections' pitfalls in source — corrected during rewrite."
+
   - subject: mcp
     section: 18. Unanticipated axes observed
-    samples_in_batch: 4
+    samples_in_batch: 8
+    shape: freeform
+    common_description: |
+      Freeform observations about decision dimensions or design axes the repo reveals that the canonical section list didn't anticipate — vendor-vs-community trust, paper-mode safety patterns, license unusualness, transport-specific concerns (CORS), bundled-tooling axes, supply-chain rigor.
+    issues:
+      - "Several sources prefixed entries with 'decision dimensions this repo reveals:' boilerplate — kept where it was the source's framing, since stripping it would lose the lens. Consider canonicalizing the framing."
+
+  - subject: mcp
+    section: 19. Python-specific
+    samples_in_batch: 5
+    sub_purposes_seen: {"SDK / framework variant": 5, "Python version floor": 5, "Packaging": 5, "Entry point": 5, "Install workflow expected of end users": 5, "Async and tool signatures": 5, "Type / schema strategy": 5, "Testing": 5, "Dev ergonomics": 5, "Notable Python-specific choices": 5}
+    shape: closed-set
+    common_description: |
+      Python-only addendum capturing the SDK variant (raw mcp / FastMCP 1.x / FastMCP 2.x / custom), Python version floor, packaging backend + lock + version-manager convention, entry-point shape, install one-liner, async patterns, type/schema strategy, testing, dev tooling, and Python-specific design choices.
+    outliers:
+      - sample: alexei-led--k8s-mcp-server.md
+        why: Python 3.13+ floor — unusually high for April 2026 MCP server work; primary entry is Docker not a Python console script.
+      - sample: FuzzingLabs--mcp-security-hub.md
+        why: Hand-rolled MCP impl, no unified pyproject; Python packaging deferred entirely to Docker layer per Dockerfile.
+    issues:
+      - "Three samples in the batch (GLips, HenkDz, ahmedmustahid) are TypeScript-majority and correctly omit section 19 — reinforces that 19 is conditionally present, gated on language."
+
   - subject: mcp
     section: 20. Gaps
-    samples_in_batch: 4
-    anomalies:
-      - "Section number jumps from 18 to 20 — section 19 missing across all four mcp samples"
-  - subject: claude-marketplace
-    section: Identification
-    samples_in_batch: 3
-    sub_purposes:
-      URL: 3
-      Stars: 3
-      "Last commit date": 3
-      "Default branch": 3
-      License: 3
-      "Sample origin": 3
-      "One-line purpose": 3
-  - subject: claude-marketplace
-    section: 1. Marketplace discoverability
-    samples_in_batch: 3
-    sub_purposes:
-      "Manifest layout": 3
-      "Marketplace-level metadata": 3
-      "`metadata.pluginRoot`": 3
-      "Per-plugin discoverability": 3
-      "`$schema`": 3
-      "Reserved-name collision": 3
-      "Pitfalls observed": 3
-  - subject: claude-marketplace
-    section: 2. Plugin source binding
-    samples_in_batch: 3
-    sub_purposes:
-      "Source format(s) observed": 3
-      "`strict` field": 3
-      "`skills` override on marketplace entry": 3
-      "Version authority": 3
-      "Pitfalls observed": 3
-  - subject: claude-marketplace
-    section: 3. Channel distribution
-    samples_in_batch: 3
-    sub_purposes:
-      "Channel mechanism": 3
-      "Channel-pinning artifacts": 3
-      "Pitfalls observed": 3
-  - subject: claude-marketplace
-    section: 4. Version control and release cadence
-    samples_in_batch: 3
-    sub_purposes:
-      "Default branch name": 3
-      "Tag placement": 3
-      "Release branching": 3
-      "Pre-release suffixes": 3
-      "Dev-counter scheme": 3
-      "Pre-commit version bump": 3
-      "Pitfalls observed": 3
-  - subject: claude-marketplace
-    section: 5. Plugin-component registration
-    samples_in_batch: 3
-    sub_purposes:
-      "Reference style in plugin.json": 3
-      "Components observed": 3
-      "Agent frontmatter fields used": 3
-      "Agent tools syntax": 3
-      "Pitfalls observed": 3
-  - subject: claude-marketplace
-    section: 6. Dependency installation
-    samples_in_batch: 3
-    sub_purposes:
-      "Applicable": 3
-      "Dep manifest format": 3
-      "Install location": 3
-      "Install script location": 3
-      "Change detection": 3
-      "Retry-next-session invariant": 3
-      "Failure signaling": 3
-      "Runtime variant": 3
-      "Alternative approaches": 3
-      "Version-mismatch handling": 3
-      "Pitfalls observed": 3
-  - subject: claude-marketplace
-    section: 7. Bin-wrapped CLI distribution
-    samples_in_batch: 3
-    sub_purposes:
-      "Applicable": 3
-      "`bin/` files": 3
-      "Shebang convention": 3
-      "Runtime resolution": 3
-      "Venv handling (Python)": 3
-      "Platform support": 3
-      "Permissions": 3
-      "SessionStart relationship": 3
-      "Pitfalls observed": 3
-  - subject: claude-marketplace
-    section: 8. User configuration
-    samples_in_batch: 3
-    sub_purposes:
-      "`userConfig` present": 3
-      "Field count": 3
-      "`sensitive: true` usage": 3
-      "Schema richness": 3
-      "Reference in config substitution": 3
-      "Pitfalls observed": 3
-  - subject: claude-marketplace
-    section: 9. Tool-use enforcement
-    samples_in_batch: 3
-    sub_purposes:
-      "PreToolUse hooks": 3
-      "PostToolUse hooks": 3
-      "PermissionRequest/PermissionDenied hooks": 3
-      "Output convention": 3
-      "Failure posture": 3
-      "Top-level try/catch wrapping": 3
-      "Pitfalls observed": 3
-  - subject: claude-marketplace
-    section: 10. Session context loading
-    samples_in_batch: 3
-    sub_purposes:
-      "SessionStart used for context": 3
-      "UserPromptSubmit for context": 3
-      "`hookSpecificOutput.additionalContext` observed": 3
-      "SessionStart matcher": 3
-      "Pitfalls observed": 3
-  - subject: claude-marketplace
-    section: 11. Live monitoring and notifications
-    samples_in_batch: 3
-    sub_purposes:
-      "`monitors.json` present": 3
-      "Monitor count + purposes": 3
-      "`when` values used": 3
-      "Version-floor declaration": 3
-      "Pitfalls observed": 3
-  - subject: claude-marketplace
-    section: 12. Plugin-to-plugin dependencies
-    samples_in_batch: 3
-    sub_purposes:
-      "`dependencies` field present": 3
-      "Entries": 3
-      "`{plugin-name}--v{version}` tag format observed": 3
-      "Pitfalls observed": 3
-  - subject: claude-marketplace
-    section: 13. Testing and CI
-    samples_in_batch: 3
-    sub_purposes:
-      "Test framework": 3
-      "Tests location": 3
-      "Pytest config location": 3
-      "Python dep manifest for tests": 3
-      "CI present": 3
-      "CI file(s)": 3
-      "CI triggers": 3
-      "CI does": 3
-      "Matrix": 3
-      "Action pinning": 3
-      "Caching": 3
-      "Test runner invocation": 3
-      "Pitfalls observed": 3
-  - subject: claude-marketplace
-    section: 14. Release automation
-    samples_in_batch: 3
-    sub_purposes:
-      "`release.yml` (or equivalent) present": 3
-      "Release trigger": 3
-      "Automation shape": 3
-      "Tag-sanity gates": 3
-      "Release creation mechanism": 3
-      "Draft releases": 3
-      "CHANGELOG parsing": 3
-      "Pitfalls observed": 3
-  - subject: claude-marketplace
-    section: 15. Marketplace validation
-    samples_in_batch: 3
-    sub_purposes:
-      "Validation workflow present": 3
-      "Validator": 3
-      "Trigger": 3
-      "Frontmatter validation": 3
-      "Hooks.json validation": 3
-      "Pitfalls observed": 3
-  - subject: claude-marketplace
-    section: 16. Documentation
-    samples_in_batch: 3
-    sub_purposes:
-      "`README.md` at repo root": 3
-      "`README.md` per plugin": 3
-      "`CHANGELOG.md`": 3
-      "`architecture.md`": 3
-      "`CLAUDE.md`": 3
-      "`AGENTS.md`": 1
-      "`CONNECTORS.md`": 1
-      "`CONTRIBUTING.md`": 1
-      "Community health files": 3
-      "LICENSE": 3
-      "Badges / status indicators": 3
-      "Pitfalls observed": 3
-  - subject: claude-marketplace
-    section: 17. Novel axes
-    samples_in_batch: 3
-    anomalies:
-      - "Sub-purpose names in this section are descriptive prose phrases, not short labels — a few are very long (>80 chars)"
-  - subject: claude-marketplace
-    section: 18. Gaps
-    samples_in_batch: 3
-    anomalies:
-      - "anthropics--life-sciences and anthropics--knowledge-work-plugins '18. Gaps' sections were already plain bullets without 'Name: content' colons — no sub-headings created in those files for this section; sub-purposes shown reflect only a3lem--my-claude-plugins which used bolded-name colon form"
+    samples_in_batch: 8
+    shape: freeform
+    common_description: |
+      Freeform paragraph (or short bullet list in source) listing what could not be determined within the research budget — typically last-commit dates, exact CI workflow content, schema/async details, observability mechanisms.
+    issues:
+      - "Content here heavily overlaps with 'pitfalls observed' subheadings in earlier sections that include 'what couldn't be determined' lists. Template might consolidate gaps into section 20 only and reserve 'pitfalls observed' for actual cautions/anti-patterns."

@@ -1,0 +1,182 @@
+files_processed:
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/modelcontextprotocol--kotlin-sdk.md
+    notes: "Section 9 originally had a duplicated pitfall ('Observability/logging patterns not detailed') that also appears in Gaps; deduped to 'none noted'."
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/modelcontextprotocol--servers.md
+    notes: "Section 3 pitfalls contained content from sections 17/18; relocated. Section 13 pitfall duplicated Gaps; deduped."
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/mongodb-js--mongodb-mcp-server.md
+    notes: "Section 13 pitfall duplicated section-20 Gaps; deduped."
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/motherduckdb--mcp-server-motherduck.md
+    notes: "Section 9 pitfall duplicated section-20 Gaps on logging destination; deduped."
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/mukul975--cve-mcp-server.md
+    notes: "Section 9 pitfall restated audit-log content from section's main body; deduped to 'none'."
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/neondatabase--mcp-server-neon.md
+    notes: "Section 3 pitfall duplicated section-20 Gaps on npm package name; deduped. Section 10 split a single 'Cline, Windsurf, Zed' line into per-host entries."
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/normaltusker--kotlin-mcp-server.md
+    notes: "Section 9 pitfall duplicated section-18 unanticipated-axes content; folded GDPR/HIPAA detail into section-9 main answer, set pitfall to 'none'."
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/openags--paper-search-mcp.md
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/opensearch-project--opensearch-mcp-server-py.md
+    notes: "Section 5 pitfall bullets were content for section 17/18 (YAML-config rarity, category gating); relocated."
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/pathintegral-institute--mcp.science.md
+    notes: "Section 3 pitfalls block contained content (versioning per server, uvx auto-install) that also appears in section 17; preserved verbatim per source intent."
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/paypal--paypal-mcp-server.md
+    notes: "Section 7 'pitfalls observed' actually contained section-6 token-lifetime content (truncated in source); relocated. Section 10 originally a flat bullet list; expanded to per-host '###'."
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/ppl-ai--modelcontextprotocol.md
+    notes: "Section 10 originally a flat bullet list; expanded to per-host '###'."
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/pragmar--mcp-server-webcrawl.md
+    notes: "Section 10 originally a flat bullet list; expanded to per-host '###'."
+
+section_observations:
+  - subject: mcp
+    section: Identification
+    samples_in_batch: 13
+    sub_purposes_seen: {url: 13, stars: 13, last-commit: 13, license: 13, default branch: 13, one-line purpose: 13}
+    shape: closed-set
+    common_description: |
+      Stable repo-metadata header. Same six fields recur in every sample.
+    issues:
+      - "Several samples answer last-commit with a release tag ('v0.11.1', '2026.1.26') rather than a commit date; the sub-purpose probably should be 'last-commit or last-release' to reflect the corpus' actual answer shape."
+      - "license values often combine two licenses ('Apache 2.0 (new) / MIT (existing)'); the field handles dual-license repos in practice."
+  - subject: mcp
+    section: 1. Language and runtime
+    samples_in_batch: 13
+    sub_purposes_seen: {"language(s) + version constraints": 13, "framework/SDK in use": 13, pitfalls observed: 13}
+    shape: closed-set
+    common_description: |
+      Captures the runtime stack: primary language and version floor, plus what MCP SDK or framework the server builds on.
+  - subject: mcp
+    section: 2. Transport
+    samples_in_batch: 13
+    sub_purposes_seen: {supported transports: 13, how selected: 13, pitfalls observed: 13}
+    shape: closed-set
+    common_description: |
+      Names the transports the server speaks (stdio, HTTP/SSE, streamable-http, WebSocket, ChannelTransport) and how one is chosen.
+  - subject: mcp
+    section: 3. Distribution
+    samples_in_batch: 13
+    sub_purposes_seen: {every mechanism observed: 13, "published package name(s)": 13, install commands shown in README: 13, pitfalls observed: 13}
+    shape: closed-set
+    common_description: |
+      Inventory of how the server is shipped: PyPI/uvx, npm/npx, Docker images, MCP Bundles (.mcpb), source-only, hosted service.
+  - subject: mcp
+    section: 4. Entry point / launch
+    samples_in_batch: 13
+    sub_purposes_seen: {"command(s) users/hosts run": 13, "wrapper scripts, launchers, stubs": 13, pitfalls observed: 13}
+    shape: closed-set
+    common_description: |
+      Names the actual command users or host configs run and any auxiliary launchers.
+  - subject: mcp
+    section: 5. Configuration surface
+    samples_in_batch: 13
+    sub_purposes_seen: {how config reaches the server: 13, pitfalls observed: 13}
+    shape: closed-set
+    common_description: |
+      Mechanisms by which configuration enters the server: env vars, CLI flags, JSON/YAML config files, .env, host-passed params, query-string params on hosted endpoints.
+  - subject: mcp
+    section: 6. Authentication
+    samples_in_batch: 13
+    sub_purposes_seen: {flow: 13, where credentials come from: 13, pitfalls observed: 13}
+    shape: closed-set
+    common_description: |
+      Auth scheme and where credentials originate. Several samples answer 'not applicable'.
+  - subject: mcp
+    section: 7. Multi-tenancy
+    samples_in_batch: 13
+    sub_purposes_seen: {tenancy model: 13, pitfalls observed: 13}
+    shape: closed-set
+    common_description: |
+      Single-user vs single-merchant vs per-request-tenant via OAuth vs workspace-keyed vs not-applicable.
+  - subject: mcp
+    section: 8. Capabilities exposed
+    samples_in_batch: 13
+    sub_purposes_seen: {"tools / resources / prompts / sampling / roots / logging / other": 13, pitfalls observed: 13}
+    shape: closed-set
+    common_description: |
+      What MCP primitives the server exposes — almost always tools (1-60+), occasionally resources, rarely prompts/sampling/roots.
+  - subject: mcp
+    section: 9. Observability
+    samples_in_batch: 13
+    sub_purposes_seen: {"logging destination + format, metrics, tracing, debug flags": 13, pitfalls observed: 13}
+    shape: closed-set
+    common_description: |
+      Logging destination/format, metrics, tracing, debug flags. Most answer 'not documented'; mongodb, cve-mcp, neon document explicit observability stacks.
+    issues:
+      - "Several samples used the section-9 'pitfalls observed' slot to restate content already captured elsewhere; deduped during rewrite."
+  - subject: mcp
+    section: 10. Host integrations shown in README or repo
+    samples_in_batch: 13
+    sub_purposes_seen: {"Claude Desktop": 11, "Claude Code": 6, Cursor: 7, "VS Code": 7, Smithery: 2, "JetBrains IDEs": 1, Cline: 2, Windsurf: 2, Zed: 2, Kiro: 1, "VS Code (Insiders)": 1, "Copilot CLI": 1, OpenCode: 1, "Codex CLI": 1, "Gemini CLI": 1, LangChain: 1, Zencoder: 1, "Cursor IDE": 1, "VS Code + GitHub Copilot": 1, Other: 4, pitfalls observed: 13}
+    shape: open-enumeration
+    common_description: |
+      Per-host enumeration of integration evidence (JSON snippet, install badge, dedicated CLI, plugin wrapper). Vocabulary genuinely open.
+    issues:
+      - "Host names are not normalized — 'Cursor' vs 'Cursor IDE'; 'VS Code', 'VS Code (Insiders)', 'VS Code + GitHub Copilot'. Template should specify canonical host names."
+      - "Several samples (paypal, ppl-ai, pragmar) presented hosts as flat bullets rather than per-host '### name' subheadings; rewrite expanded them."
+  - subject: mcp
+    section: 11. Claude Code plugin wrapper
+    samples_in_batch: 13
+    sub_purposes_seen: {presence and shape: 13, pitfalls observed: 13}
+    shape: closed-set
+    common_description: |
+      Most samples answer 'not present'; outliers (motherduckdb, neon, openags) ship Claude Code skill files in-tree. First batch with non-zero positive content for this section.
+  - subject: mcp
+    section: 12. Tests
+    samples_in_batch: 13
+    sub_purposes_seen: {"presence, framework, location, notable patterns": 13, pitfalls observed: 13}
+    shape: closed-set
+    common_description: |
+      Test framework, location, notable patterns. Several samples answer 'not extracted'.
+  - subject: mcp
+    section: 13. CI
+    samples_in_batch: 13
+    sub_purposes_seen: {"presence, system, triggers, what it runs": 13, pitfalls observed: 13}
+    shape: closed-set
+    common_description: |
+      CI system (almost universally GitHub Actions when present), triggers, what jobs run. Few samples extract specific workflow contents.
+  - subject: mcp
+    section: 14. Container / packaging artifacts
+    samples_in_batch: 13
+    sub_purposes_seen: {"Dockerfile, docker-compose, Helm, systemd, brew formula, etc.": 13, pitfalls observed: 13}
+    shape: closed-set
+    common_description: |
+      Container artifacts present. Half answer 'not observed'; the other half ship at least a Dockerfile.
+  - subject: mcp
+    section: 15. Example client / developer ergonomics
+    samples_in_batch: 13
+    sub_purposes_seen: {"MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs": 13, pitfalls observed: 13}
+    shape: closed-set
+    common_description: |
+      MCP Inspector launchers, sample JSON configs, Makefiles, .env.example files, install badges, dedicated docs.
+  - subject: mcp
+    section: 16. Repo layout
+    samples_in_batch: 13
+    sub_purposes_seen: {"single-package / monorepo / vendored / other": 13, pitfalls observed: 13}
+    shape: closed-set
+    common_description: |
+      Top-level repo organization. Notable variants — Hatch force-include monorepo (mcp.science), language-mixed monorepo (modelcontextprotocol/servers).
+  - subject: mcp
+    section: 17. Notable structural choices
+    samples_in_batch: 13
+    shape: freeform
+    common_description: |
+      Freeform commentary on what stands out about the repo's architecture or product choices.
+  - subject: mcp
+    section: 18. Unanticipated axes observed
+    samples_in_batch: 13
+    shape: freeform
+    common_description: |
+      Decision dimensions the repo reveals that weren't anticipated — first-party-but-unpromoted servers, prompt-routines as distribution surface, audit-log-as-capability, scope-based tool filtering via URL param, dispatcher monorepos.
+  - subject: mcp
+    section: 19. Python-specific
+    samples_in_batch: 9
+    sub_purposes_seen: {"SDK / framework variant": 9, Python version floor: 9, Packaging: 9, Entry point: 9, Install workflow expected of end users: 9, Async and tool signatures: 9, Type / schema strategy: 9, Testing: 9, Dev ergonomics: 9, Notable Python-specific choices: 9}
+    shape: closed-set
+    common_description: |
+      Python-only deep-dive. Absent from kotlin-sdk, mongodb-js, neondatabase, paypal, ppl-ai (TS/Kotlin/JS).
+  - subject: mcp
+    section: 20. Gaps
+    samples_in_batch: 13
+    shape: freeform
+    common_description: |
+      Freeform list of what couldn't be determined within research budget. 2-5 items typical.
+    issues:
+      - "Several samples had pitfalls slots elsewhere that duplicated Gaps content; deduplicated during rewrite — Gaps is the canonical home for 'not extracted' notes."

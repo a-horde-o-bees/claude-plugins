@@ -1,0 +1,181 @@
+files_processed:
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/stripe--agent-toolkit.md
+    notes: section-3 pitfall and section-13 pitfall content also appeared in section 20 Gaps; deduped pitfalls slots
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/supabase-community--supabase-mcp.md
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/teaguesterling--duckdb_mcp.md
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/the-momentum--fhir-mcp-server.md
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/thenets--ghost-mcp.md
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/tumf--grafana-loki-mcp.md
+    notes: section-9 pitfall restated section-20 Gap content; replaced with "none noted in this repo"
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/twolven--mcp-server-puppeteer-py.md
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/upstash--context7.md
+    notes: section-16 source split into dirs/config/additional sub-purposes; consolidated. section-3 and section-11 pitfalls restated content from section 17; preserved per existing context
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/utensils--mcp-nixos.md
+    notes: section-9 pitfall restated section-20 Gap content; replaced
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/v-3--discordmcp.md
+    notes: section-3 pitfalls restated section-17/18 content but kept since pitfall framing distinct
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/viant--mcp.md
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/voska--hass-mcp.md
+    notes: section-1 pitfalls duplicated content with section 17/18; preserved as pitfalls vs structural choices framing distinct
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/zilliztech--mcp-server-milvus.md
+    notes: section-5 pitfall and section-17 first item identical; preserved as section 17 elaborates rationale
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/zongmin-yu--semantic-scholar-fastmcp-mcp-server.md
+
+section_observations:
+  - subject: mcp
+    section: Identification
+    samples_in_batch: 14
+    sub_purposes_seen: {url: 14, stars: 14, last-commit: 14, license: 14, default branch: 14, one-line purpose: 14}
+    shape: closed-set
+    common_description: |
+      Stable identification metadata block. Slots uniformly present.
+    issues:
+      - "last-commit varies wildly between calendar dates, version+date pairs, activity descriptions ('103 commits'), and 'not captured'; template should accept any of these forms"
+  - subject: mcp
+    section: 1. Language and runtime
+    samples_in_batch: 14
+    sub_purposes_seen: {"language(s) + version constraints": 14, "framework/SDK in use": 14, pitfalls observed: 14}
+    shape: closed-set
+    common_description: |
+      Identifies primary language(s), version constraints, MCP SDK/framework variant.
+    issues:
+      - "pitfalls observed appears 14/14 but fires non-empty in only 1 sample; consider folding into structural-choices section or making explicitly optional"
+  - subject: mcp
+    section: 2. Transport
+    samples_in_batch: 14
+    sub_purposes_seen: {supported transports: 14, how selected: 14, pitfalls observed: 14}
+    shape: closed-set
+    common_description: |
+      Lists transports the server supports and the selection mechanism.
+  - subject: mcp
+    section: 3. Distribution
+    samples_in_batch: 14
+    sub_purposes_seen: {every mechanism observed: 14, "published package name(s)": 14, install commands shown in README: 14, pitfalls observed: 14}
+    shape: closed-set
+    common_description: |
+      Catalogs every distribution channel, package names, install commands.
+  - subject: mcp
+    section: 4. Entry point / launch
+    samples_in_batch: 14
+    sub_purposes_seen: {"command(s) users/hosts run": 14, "wrapper scripts, launchers, stubs": 14, pitfalls observed: 14}
+    shape: closed-set
+    common_description: |
+      Captures exact launch command and any wrapper script/stub.
+  - subject: mcp
+    section: 5. Configuration surface
+    samples_in_batch: 14
+    sub_purposes_seen: {"how config reaches the server": 14, pitfalls observed: 14}
+    shape: closed-set
+    common_description: |
+      Describes the configuration channel, often documenting precedence.
+  - subject: mcp
+    section: 6. Authentication
+    samples_in_batch: 14
+    sub_purposes_seen: {flow: 14, where credentials come from: 14, pitfalls observed: 14}
+    shape: closed-set
+    common_description: |
+      Captures auth flow and credential source.
+  - subject: mcp
+    section: 7. Multi-tenancy
+    samples_in_batch: 14
+    sub_purposes_seen: {tenancy model: 14, pitfalls observed: 14}
+    shape: closed-set
+    common_description: |
+      States tenancy model. Most samples in batch are single-user.
+  - subject: mcp
+    section: 8. Capabilities exposed
+    samples_in_batch: 14
+    sub_purposes_seen: {"tools / resources / prompts / sampling / roots / logging / other": 14, pitfalls observed: 14}
+    shape: closed-set
+    common_description: |
+      Enumerates MCP capability surface. Tool counts range 2–16+.
+  - subject: mcp
+    section: 9. Observability
+    samples_in_batch: 14
+    sub_purposes_seen: {"logging destination + format, metrics, tracing, debug flags": 14, pitfalls observed: 14}
+    shape: closed-set
+    common_description: |
+      Reports on logging, metrics, tracing, debug flags. Frequently 'not captured'.
+    issues:
+      - "Two samples (tumf, utensils) used pitfalls slot to dump section-20 Gap content; template should discourage cross-section bleed"
+  - subject: mcp
+    section: 10. Host integrations shown in README or repo
+    samples_in_batch: 14
+    sub_purposes_seen: {"Claude Desktop": 11, Cursor: 3, "Claude Code": 2, Windsurf: 1, "Vercel AI SDK": 1, "OpenAI Code": 1, "Other agents": 1, "Other hosts": 1, "Other editors/CLIs": 1, "NixOS/Home Manager": 1, "Claude for Desktop": 1, "HTTP bridge": 1, "Claude Desktop / MCP clients": 1, Other: 1, pitfalls observed: 14}
+    shape: open-enumeration
+    common_description: |
+      Lists host integrations. Claude Desktop dominates; Cursor, Windsurf, Vercel AI SDK, NixOS, etc. appear sporadically. Some entries (HTTP bridge, NixOS/Home Manager) are not hosts at all but distribution channels.
+    issues:
+      - "host vocabulary genuinely unbounded — 14+ distinct entries across 14 samples"
+      - "Some entries are not hosts but distribution channels — template should clarify what qualifies"
+  - subject: mcp
+    section: 11. Claude Code plugin wrapper
+    samples_in_batch: 14
+    sub_purposes_seen: {presence and shape: 14, pitfalls observed: 14}
+    shape: closed-set
+    common_description: |
+      Records whether `.claude-plugin/` ships and its shape. Most absent; stripe and upstash ship something.
+  - subject: mcp
+    section: 12. Tests
+    samples_in_batch: 14
+    sub_purposes_seen: {"presence, framework, location, notable patterns": 14, pitfalls observed: 14}
+    shape: closed-set
+    common_description: |
+      Captures whether tests exist, framework, notable patterns.
+  - subject: mcp
+    section: 13. CI
+    samples_in_batch: 14
+    sub_purposes_seen: {"presence, system, triggers, what it runs": 14, pitfalls observed: 14}
+    shape: closed-set
+    common_description: |
+      Notes CI presence, trigger model, what it runs.
+  - subject: mcp
+    section: 14. Container / packaging artifacts
+    samples_in_batch: 14
+    sub_purposes_seen: {"Dockerfile, docker-compose, Helm, systemd, brew formula, etc.": 14, pitfalls observed: 14}
+    shape: closed-set
+    common_description: |
+      Lists container/packaging artifacts. Nix flakes appear once.
+  - subject: mcp
+    section: 15. Example client / developer ergonomics
+    samples_in_batch: 14
+    sub_purposes_seen: {"MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs": 14, pitfalls observed: 14}
+    shape: closed-set
+    common_description: |
+      Records dev ergonomics — Makefile, Inspector launchers, sample configs, lint/format toolchain, pre-commit hooks.
+  - subject: mcp
+    section: 16. Repo layout
+    samples_in_batch: 14
+    sub_purposes_seen: {"single-package / monorepo / vendored / other": 14, pitfalls observed: 14}
+    shape: closed-set
+    common_description: |
+      Classifies repo. Most single-package; stripe, supabase, upstash are monorepos.
+    issues:
+      - "upstash--context7 source split section 16 into dirs/config/additional/documentation sub-purposes; consolidated"
+  - subject: mcp
+    section: 17. Notable structural choices
+    samples_in_batch: 14
+    shape: freeform
+    common_description: |
+      Freeform observations on structural decisions. Typically 3–8 paragraphs per sample.
+  - subject: mcp
+    section: 18. Unanticipated axes observed
+    samples_in_batch: 14
+    shape: freeform
+    common_description: |
+      Surfaces design dimensions not anticipated — managed-MCP-as-a-service, dual protocol exposure, server-internal credential vaults, declarative-config distribution.
+  - subject: mcp
+    section: 19. Python-specific
+    samples_in_batch: 8
+    sub_purposes_seen: {"SDK / framework variant": 8, "Python version floor": 8, Packaging: 8, "Entry point": 8, "Install workflow expected of end users": 8, "Async and tool signatures": 8, "Type / schema strategy": 8, Testing: 8, "Dev ergonomics": 8, "Notable Python-specific choices": 8}
+    shape: closed-set
+    common_description: |
+      Python-only block. Absent in TypeScript and Go samples.
+  - subject: mcp
+    section: 20. Gaps
+    samples_in_batch: 14
+    shape: freeform
+    common_description: |
+      Free-form list of what couldn't be determined from README/repo extraction.
+    issues:
+      - "Multiple samples duplicate Gap content into section-9 'pitfalls observed' slots; template should make Gaps the single home"

@@ -10,7 +10,7 @@ https://github.com/misbahsy/video-audio-mcp
 
 71
 
-### last-commit (date or relative)
+### last-commit
 
 not captured; repo shows "6 Commits" on main — small, possibly early-stage
 
@@ -38,7 +38,7 @@ raw `mcp[cli]>=1.9.0` + `ffmpeg-python>=0.2.0`
 
 ### pitfalls observed
 
-- **Python 3.13 floor** — aggressive, like hass-mcp
+Python 3.13 floor — aggressive, like hass-mcp.
 
 ## 2. Transport
 
@@ -70,7 +70,7 @@ project name in pyproject is `video-edit-mcp` — presumably not on PyPI (no ins
 
 ### pitfalls observed
 
-- **pyproject project-name vs repo-name drift** — an axis for "what is the authoritative identifier?" — PyPI name, repo name, console-script name can all diverge
+pyproject project-name vs repo-name drift — `video-edit-mcp` (pyproject) versus `video-audio-mcp` (repo).
 
 ## 4. Entry point / launch
 
@@ -112,7 +112,7 @@ none noted in this repo
 
 ## 7. Multi-tenancy
 
-### single-user / per-request tenant / workspace-keyed / not applicable / other
+### tenancy model
 
 not applicable — local file operations
 
@@ -124,12 +124,7 @@ none noted in this repo
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
-**30+ tools** covering:
-
-- Video: format conversion, trimming, resolution scaling, codec changes, overlays
-- Audio: format conversion, bitrate/sample rate adjustment, channel configuration
-- Creative: text overlays, watermarks, subtitles, transitions
-- Advanced: concatenation, B-roll insertion, silence removal
+30+ tools covering: Video — format conversion, trimming, resolution scaling, codec changes, overlays. Audio — format conversion, bitrate/sample rate adjustment, channel configuration. Creative — text overlays, watermarks, subtitles, transitions. Advanced — concatenation, B-roll insertion, silence removal.
 
 ### pitfalls observed
 
@@ -147,7 +142,7 @@ none noted in this repo
 
 ## 10. Host integrations shown in README or repo
 
-Not enumerated
+Not enumerated.
 
 ### pitfalls observed
 
@@ -181,7 +176,7 @@ README includes a GitHub Actions example with FFmpeg install step — pattern is
 
 ### pitfalls observed
 
-- **System-tool dependency (ffmpeg)** — requires out-of-band install; README's GitHub Actions example includes an explicit `apt-get install ffmpeg` step
+System-tool dependency (ffmpeg) — requires out-of-band install; README's GitHub Actions example includes an explicit `apt-get install ffmpeg` step.
 
 ## 14. Container / packaging artifacts
 
@@ -215,25 +210,17 @@ none noted in this repo
 
 ## 17. Notable structural choices
 
-- **System-tool dependency (ffmpeg)** — requires out-of-band install; README's GitHub Actions example includes an explicit `apt-get install ffmpeg` step
-- **`ffmpeg-python` library** — wraps ffmpeg CLI via Python; alternative approaches wrap ffmpeg directly via subprocess or call `pyav`
-- **`pytest` in runtime deps** — probably an oversight; tests shouldn't require installing pytest for users running the server
-- **Python 3.13 floor** — aggressive, like hass-mcp
-- Project name in `pyproject.toml` (`video-edit-mcp`) differs from repo name (`video-audio-mcp`) — mild naming inconsistency
+System-tool dependency (ffmpeg) — requires out-of-band install; README's GitHub Actions example includes an explicit `apt-get install ffmpeg` step. `ffmpeg-python` library wraps ffmpeg CLI via Python; alternative approaches wrap ffmpeg directly via subprocess or call `pyav`. `pytest` in runtime deps — probably an oversight; tests shouldn't require installing pytest for users running the server. Python 3.13 floor — aggressive, like hass-mcp. Project name in `pyproject.toml` (`video-edit-mcp`) differs from repo name (`video-audio-mcp`) — mild naming inconsistency.
 
 ## 18. Unanticipated axes observed
 
-- **System-binary dependency as a distribution concern** — ffmpeg must be on PATH; CI docs include install step; similar constraint exists for Tesseract in PDF OCR servers. Forms a server class "system-dep servers" where Docker distribution is the only self-contained option
-- **Tool-count density** — 30+ tools for file processing from a 6-commit repo; shows how quickly a FFmpeg wrapper can scale via codegen-like uniformity
-- **pyproject project-name vs repo-name drift** — an axis for "what is the authoritative identifier?" — PyPI name, repo name, console-script name can all diverge
+System-binary dependency as a distribution concern — ffmpeg must be on PATH; CI docs include install step; similar constraint exists for Tesseract in PDF OCR servers. Forms a server class "system-dep servers" where Docker distribution is the only self-contained option. Tool-count density — 30+ tools for file processing from a 6-commit repo; shows how quickly an FFmpeg wrapper can scale via codegen-like uniformity. pyproject project-name vs repo-name drift — an axis for "what is the authoritative identifier?" — PyPI name, repo name, console-script name can all diverge.
 
 ## 19. Python-specific
 
 ### SDK / framework variant
 
-- raw `mcp` Python SDK / FastMCP 1.x / FastMCP 2.x / custom: raw `mcp[cli]>=1.9.0` — `[cli]` extra installs FastMCP-style helpers; README says "Built with FastMCP framework" — likely FastMCP 1.x via the SDK, not the standalone 2.x
-- version pin from pyproject.toml: `mcp[cli]>=1.9.0`, `ffmpeg-python>=0.2.0`, `pillow>=11.2.1`, `pytest>=8.3.5`
-- import pattern observed: likely `from mcp.server.fastmcp import FastMCP` — the 1.x-in-SDK path
+raw `mcp[cli]>=1.9.0` — `[cli]` extra installs FastMCP-style helpers; README says "Built with FastMCP framework" — likely FastMCP 1.x via the SDK, not the standalone 2.x. Version pin from pyproject.toml: `mcp[cli]>=1.9.0`, `ffmpeg-python>=0.2.0`, `pillow>=11.2.1`, `pytest>=8.3.5`. Import pattern observed likely `from mcp.server.fastmcp import FastMCP` — the 1.x-in-SDK path.
 
 ### Python version floor
 
@@ -241,43 +228,36 @@ none noted in this repo
 
 ### Packaging
 
-- build backend: not extracted
-- lock file present: `uv.lock` implied
-- version manager convention: `uv`
+Build backend not extracted. Lock file: `uv.lock` implied. Version manager convention: `uv`.
 
 ### Entry point
 
-- `[project.scripts]` console script / `__main__.py` module / bare script / other: **bare script** (`server.py`)
-- actual console-script name(s): none
-- host-config snippet shape: `uv run server.py` — direct script invocation from an absolute path
+Bare script (`server.py`). No console-script names. Host-config snippet shape: `uv run server.py` — direct script invocation from an absolute path.
 
 ### Install workflow expected of end users
 
-install form + one-liner from README: `uv sync` (or `pip install -r requirements.txt`)
+`uv sync` (or `pip install -r requirements.txt`)
 
 ### Async and tool signatures
 
-sync `def` or `async def`: `ffmpeg-python` is sync — likely sync handlers
+`ffmpeg-python` is sync — likely sync handlers.
 
 ### Type / schema strategy
 
-Pydantic / dataclasses / TypedDict / raw dict / Annotated: FastMCP-1.x-auto-derived from type hints via the SDK
+FastMCP-1.x-auto-derived from type hints via the SDK.
 
 ### Testing
 
-- pytest / pytest-asyncio / unittest / none: pytest
-- fixture style: 30+ function-level tests
+pytest. Fixture style: 30+ function-level tests.
 
 ### Dev ergonomics
 
-mcp dev / fastmcp dev / Inspector launcher / Makefile / Justfile / other: documented GitHub Actions pattern
+documented GitHub Actions pattern
 
 ### Notable Python-specific choices
 
-- `pytest` declared as a runtime dep — likely a mistake or a side-effect of listing all deps uniformly
-- Uses `pillow` — suggests thumbnail/frame capture features in addition to pure ffmpeg ops
-- Python 3.13 floor on a 6-commit repo — tracking bleeding-edge Python
+`pytest` declared as a runtime dep — likely a mistake or a side-effect of listing all deps uniformly. Uses `pillow` — suggests thumbnail/frame capture features in addition to pure ffmpeg ops. Python 3.13 floor on a 6-commit repo — tracking bleeding-edge Python.
 
 ## 20. Gaps
 
-what couldn't be determined: exact stars date, console-script presence (pyproject omitted `[project.scripts]`), actual build backend, whether CI is real or only documented as a pattern, confirmation of FastMCP-in-SDK vs standalone
+Exact stars date, console-script presence (pyproject omitted `[project.scripts]`), actual build backend, whether CI is real or only documented as a pattern, confirmation of FastMCP-in-SDK vs standalone.

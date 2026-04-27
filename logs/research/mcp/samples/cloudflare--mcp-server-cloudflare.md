@@ -10,7 +10,7 @@ https://github.com/cloudflare/mcp-server-cloudflare
 
 3.6k
 
-### last-commit (date or relative)
+### last-commit
 
 `@repo/mcp-common@0.20.4` released 2026-03-31
 
@@ -46,7 +46,7 @@ none noted in this repo
 
 Streamable HTTP via `/mcp` endpoint (primary); SSE via `/sse` endpoint (deprecated).
 
-### how selected (flag, env, separate entry, auto-detect, etc.)
+### how selected
 
 URL path — the path (`/mcp` vs `/sse`) selects the transport on the same Worker.
 
@@ -56,7 +56,7 @@ none noted in this repo
 
 ## 3. Distribution
 
-### every mechanism observed (PyPI, npm, uvx, npx, Docker, Homebrew, Cargo, Go install, GitHub release binary, source-only, or other)
+### every mechanism observed
 
 Remote-only — all 14 servers run as Cloudflare Workers at public URLs (e.g. `https://observability.mcp.cloudflare.com/mcp`). End users install by pointing `mcp-remote` (npm) at the URL. No local binary, Docker, or npm install of the servers themselves.
 
@@ -90,7 +90,7 @@ none noted in this repo
 
 ## 5. Configuration surface
 
-### how config reaches the server (env vars, CLI args, config file w/ path + format, stdin prompt, OS keyring, host-passed params, combinations)
+### how config reaches the server
 
 Server-side: Wrangler config per Worker (`wrangler.toml`/`wrangler.jsonc`) controls deployment. Client-side: the host's MCP config holds only the URL. Authentication travels inline per-request.
 
@@ -100,7 +100,7 @@ none noted in this repo
 
 ## 6. Authentication
 
-### flow (static token, OAuth w/ description, per-request header, none, other)
+### flow
 
 Cloudflare API tokens with per-service scopes — created via Cloudflare dashboard and passed at auth time. OAuth-like flow documented for the hosted endpoints.
 
@@ -114,7 +114,7 @@ none noted in this repo
 
 ## 7. Multi-tenancy
 
-### single-user / per-request tenant / workspace-keyed / not applicable / other
+### tenancy model
 
 Per-request tenancy. Each Worker invocation is scoped by the bearer token → authenticated Cloudflare account. The same Worker serves any account that authenticates.
 
@@ -144,27 +144,25 @@ none noted in this repo
 
 ## 10. Host integrations shown in README or repo
 
-For each host encountered — Claude Desktop, Claude Code, Cursor, Windsurf, Cline, Continue, Zed, VS Code, custom, any other — record form (JSON snippet, config path, shell command, plugin wrapper in-repo, docs link) and location (README section, separate docs file, shipped config file, etc.):
-
 ### Cursor
 
-documented integration
+documented integration.
 
 ### Claude (Desktop implied)
 
-JSON snippet via `mcp-remote`
+JSON snippet via `mcp-remote`.
 
 ### Cloudflare AI Playground
 
-first-party integration
+first-party integration.
 
 ### OpenAI Responses API
 
-documented integration
+documented integration.
 
 ### Claude Code
 
-not explicitly documented (vs Claude Desktop); same JSON snippet pattern applies
+not explicitly documented (vs Claude Desktop); same JSON snippet pattern applies.
 
 ### pitfalls observed
 
@@ -172,7 +170,7 @@ none noted in this repo
 
 ## 11. Claude Code plugin wrapper
 
-### presence and shape (.claude-plugin/plugin.json, .mcp.json at repo root, full plugin layout, not present, other)
+### presence and shape
 
 Not observed in fetched view.
 
@@ -222,7 +220,7 @@ none noted in this repo
 
 ## 16. Repo layout
 
-### single-package / monorepo / vendored / other — describe what's there
+### single-package / monorepo / vendored / other
 
 Turbo/pnpm monorepo. 14 domain Workers as individual packages; shared `@repo/mcp-common` package abstracts common server concerns.
 
@@ -231,19 +229,13 @@ Turbo/pnpm monorepo. 14 domain Workers as individual packages; shared `@repo/mcp
 none noted in this repo
 
 ## 17. Notable structural choices
-- All-remote deployment model — the repo ships operational Workers, not installable binaries. Users never run the server code; they consume it as a URL. Opposite end of the spectrum from awslabs/mcp (local-only stdio).
-- `mcp-remote` as the stdio-to-streamable-HTTP bridge is the universal client shim; the repo itself never speaks stdio.
-- Two transport endpoints coexisting on the same Worker (`/mcp` streamable-HTTP, `/sse` deprecated) lets clients migrate at their own pace.
-- Shared `mcp-common` package: 14 domain servers factored into a shared scaffold + per-domain logic, mirroring Cloudflare's own platform composition patterns.
-- Paid-plan gating called out: some features require Workers paid plan — operational cost surfaces as a server capability axis.
+
+All-remote deployment model — the repo ships operational Workers, not installable binaries. Users never run the server code; they consume it as a URL. Opposite end of the spectrum from awslabs/mcp (local-only stdio). `mcp-remote` as the stdio-to-streamable-HTTP bridge is the universal client shim; the repo itself never speaks stdio. Two transport endpoints coexisting on the same Worker (`/mcp` streamable-HTTP, `/sse` deprecated) lets clients migrate at their own pace. Shared `mcp-common` package: 14 domain servers factored into a shared scaffold + per-domain logic, mirroring Cloudflare's own platform composition patterns. Paid-plan gating called out: some features require Workers paid plan — operational cost surfaces as a server capability axis.
 
 ## 18. Unanticipated axes observed
-- Hosting responsibility as a design axis: the server author operates the runtime, not the end user. Changes release concerns, auth model, and observability relative to locally-run servers.
-- Stdio emulation via shim on the client side rather than on the server — hosts still speak stdio because `mcp-remote` translates to HTTP.
-- Context-length mitigation guidance in README: chained-tool calls against high-cardinality Cloudflare data are called out as a context-window concern the client must manage.
+
+Hosting responsibility as a design axis: the server author operates the runtime, not the end user. Changes release concerns, auth model, and observability relative to locally-run servers. Stdio emulation via shim on the client side rather than on the server — hosts still speak stdio because `mcp-remote` translates to HTTP. Context-length mitigation guidance in README: chained-tool calls against high-cardinality Cloudflare data are called out as a context-window concern the client must manage.
 
 ## 20. Gaps
-- Exact last commit on `main` (release tag is known, raw commit date not).
-- Whether the 14 domain Workers expose consistent toolset-gating flags or each defines its own surface.
-- Specific OAuth flow details for token negotiation.
-- Whether a self-hostable variant is deployable from this repo (source ships, but docs focus on hosted URLs).
+
+Exact last commit on `main` (release tag is known, raw commit date not). Whether the 14 domain Workers expose consistent toolset-gating flags or each defines its own surface. Specific OAuth flow details for token negotiation. Whether a self-hostable variant is deployable from this repo (source ships, but docs focus on hosted URLs).

@@ -10,13 +10,13 @@ https://github.com/getsentry/sentry-mcp
 
 654
 
-### last-commit (date or relative)
+### last-commit
 
-963 commits on main; active (specific date not extracted)
+963 commits on main; active (specific date not extracted).
 
 ### license
 
-Specified in LICENSE.md (not extracted within budget)
+Specified in LICENSE.md (not extracted within budget).
 
 ### default branch
 
@@ -46,7 +46,7 @@ none noted in this repo
 
 HTTP (remote service `https://mcp.sentry.dev`); stdio (local, primarily for self-hosted Sentry deployments).
 
-### how selected (flag, env, separate entry, auto-detect, etc.)
+### how selected
 
 Remote vs local is a different install target — stdio install points `npx` at the package; remote pointed at `mcp.sentry.dev`.
 
@@ -56,7 +56,7 @@ none noted in this repo
 
 ## 3. Distribution
 
-### every mechanism observed (PyPI, npm, uvx, npx, Docker, Homebrew, Cargo, Go install, GitHub release binary, source-only, or other)
+### every mechanism observed
 
 npm; Claude Desktop plugin via marketplace. No Docker/binary noted in README view.
 
@@ -66,13 +66,11 @@ npm; Claude Desktop plugin via marketplace. No Docker/binary noted in README vie
 
 ### install commands shown in README
 
-- `npx @sentry/mcp-server@latest --access-token=sentry-user-token`
-- Claude Marketplace plugin install path
+`npx @sentry/mcp-server@latest --access-token=sentry-user-token`. Claude Marketplace plugin install path.
 
 ### pitfalls observed
 
-- Evaluation discipline baked into repo — `pnpm eval` as a peer of `pnpm test`.
-- Whether Docker image is published.
+Whether Docker image is published.
 
 ## 4. Entry point / launch
 
@@ -90,10 +88,9 @@ none noted in this repo
 
 ## 5. Configuration surface
 
-### how config reaches the server (env vars, CLI args, config file w/ path + format, stdin prompt, OS keyring, host-passed params, combinations)
+### how config reaches the server
 
-Primarily env vars; `.mcp.json` at repo root for MCP client configuration; CLI flag `--access-token` on the npx entry.
-  - Env: `SENTRY_ACCESS_TOKEN`, `EMBEDDED_AGENT_PROVIDER` ('openai' | 'anthropic'), `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `SENTRY_HOST` (self-hosted override), `MCP_DISABLE_SKILLS` (comma-separated).
+Primarily env vars; `.mcp.json` at repo root for MCP client configuration; CLI flag `--access-token` on the npx entry. Env: `SENTRY_ACCESS_TOKEN`, `EMBEDDED_AGENT_PROVIDER` ('openai' | 'anthropic'), `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `SENTRY_HOST` (self-hosted override), `MCP_DISABLE_SKILLS` (comma-separated).
 
 ### pitfalls observed
 
@@ -101,7 +98,7 @@ none noted in this repo
 
 ## 6. Authentication
 
-### flow (static token, OAuth w/ description, per-request header, none, other)
+### flow
 
 Static Sentry user auth tokens with scopes `org:read project:read project:write team:read team:write event:write`. OAuth App support for remote deployments.
 
@@ -115,7 +112,7 @@ none noted in this repo
 
 ## 7. Multi-tenancy
 
-### single-user / per-request tenant / workspace-keyed / not applicable / other
+### tenancy model
 
 Single-user per process (stdio); per-user OAuth on hosted endpoint.
 
@@ -127,9 +124,7 @@ none noted in this repo
 
 ### tools / resources / prompts / sampling / roots / logging / other
 
-Tools for Sentry issue/error/release workflows. "Skills" concept is first-class — `MCP_DISABLE_SKILLS` env var toggles skill subsets (skills live under `.agents/skills/`). The README positions this as "primarily designed for human-in-the-loop coding agents."
-
-Embedded agent provider (OpenAI or Anthropic) callable from within the server — implies the MCP server itself can invoke an LLM for aggregation/summarization beyond raw tool output.
+Tools for Sentry issue/error/release workflows. "Skills" concept is first-class — `MCP_DISABLE_SKILLS` env var toggles skill subsets (skills live under `.agents/skills/`). The README positions this as "primarily designed for human-in-the-loop coding agents." Embedded agent provider (OpenAI or Anthropic) callable from within the server — implies the MCP server itself can invoke an LLM for aggregation/summarization beyond raw tool output.
 
 ### pitfalls observed
 
@@ -147,10 +142,17 @@ none noted in this repo
 
 ## 10. Host integrations shown in README or repo
 
-For each host encountered — Claude Desktop, Claude Code, Cursor, Windsurf, Cline, Continue, Zed, VS Code, custom, any other — record form (JSON snippet, config path, shell command, plugin wrapper in-repo, docs link) and location (README section, separate docs file, shipped config file, etc.):
-- Claude Code — integration documented
-- Cursor — integration documented
-- Claude Desktop — as a marketplace plugin (distinct from raw JSON snippet)
+### Claude Code
+
+integration documented.
+
+### Cursor
+
+integration documented.
+
+### Claude Desktop
+
+as a marketplace plugin (distinct from raw JSON snippet).
 
 ### pitfalls observed
 
@@ -164,7 +166,7 @@ Both present — `.claude-plugin/` directory and `.mcp.json` at repo root. Full 
 
 ### pitfalls observed
 
-- `.claude-plugin/` wrapper shipped in-repo — the server vends itself as a Claude plugin, not just a raw MCP binary.
+`.claude-plugin/` wrapper shipped in-repo — the server vends itself as a Claude plugin, not just a raw MCP binary.
 
 ## 12. Tests
 
@@ -208,7 +210,7 @@ none noted in this repo
 
 ## 16. Repo layout
 
-### single-package / monorepo / vendored / other — describe what's there
+### single-package / monorepo / vendored / other
 
 Monorepo (pnpm workspaces + Turbo). Multiple packages under `/packages`. `.agents/skills/` for skill definitions. `.claude-plugin/` and `.mcp.json` at root.
 
@@ -217,21 +219,13 @@ Monorepo (pnpm workspaces + Turbo). Multiple packages under `/packages`. `.agent
 none noted in this repo
 
 ## 17. Notable structural choices
-- "Skills" as a first-class toggleable abstraction — `MCP_DISABLE_SKILLS` lets operators trim the behavioral surface per-deployment. Skills live in `.agents/skills/`, reflecting a structured agent-capability concept distinct from tools.
-- In-server LLM calls: `EMBEDDED_AGENT_PROVIDER` + provider-specific API keys let the MCP server invoke an LLM internally — unusual; most MCP servers are pure tool-callers.
-- Dual deployment: same code operates the hosted `mcp.sentry.dev` endpoint and the local self-hosted stdio install; `SENTRY_HOST` env var is the self-hosted pivot.
-- `.claude-plugin/` wrapper shipped in-repo — the server vends itself as a Claude plugin, not just a raw MCP binary.
-- Evaluation harness alongside unit tests — distinguishes behavioral regression from code regression.
+
+"Skills" as a first-class toggleable abstraction — `MCP_DISABLE_SKILLS` lets operators trim the behavioral surface per-deployment. Skills live in `.agents/skills/`, reflecting a structured agent-capability concept distinct from tools. In-server LLM calls: `EMBEDDED_AGENT_PROVIDER` + provider-specific API keys let the MCP server invoke an LLM internally — unusual; most MCP servers are pure tool-callers. Dual deployment: same code operates the hosted `mcp.sentry.dev` endpoint and the local self-hosted stdio install; `SENTRY_HOST` env var is the self-hosted pivot. `.claude-plugin/` wrapper shipped in-repo — the server vends itself as a Claude plugin, not just a raw MCP binary. Evaluation harness alongside unit tests — distinguishes behavioral regression from code regression.
 
 ## 18. Unanticipated axes observed
-- Server-internal LLM invocation as an architecture pattern — shifts some "agent" responsibility inside the MCP boundary.
-- Skills as a unit of capability bundling, separate from tools — a higher-level behavioral primitive.
-- In-repo Claude plugin wrapper — rare; most servers leave host integration to external config.
-- Evaluation discipline baked into repo — `pnpm eval` as a peer of `pnpm test`.
+
+Server-internal LLM invocation as an architecture pattern — shifts some "agent" responsibility inside the MCP boundary. Skills as a unit of capability bundling, separate from tools — a higher-level behavioral primitive. In-repo Claude plugin wrapper — rare; most servers leave host integration to external config. Evaluation discipline baked into repo — `pnpm eval` as a peer of `pnpm test`.
 
 ## 20. Gaps
-- License content (LICENSE.md not fetched).
-- Last-commit date.
-- Exact toolset enumeration.
-- Whether Docker image is published.
-- Specific OAuth App flow details for the hosted endpoint.
+
+License content (LICENSE.md not fetched). Last-commit date. Exact toolset enumeration. Whether Docker image is published. Specific OAuth App flow details for the hosted endpoint.

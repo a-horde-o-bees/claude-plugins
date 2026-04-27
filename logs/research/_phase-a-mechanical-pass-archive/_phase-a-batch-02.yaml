@@ -1,0 +1,229 @@
+files_processed:
+  - path: logs/research/claude-marketplace/samples/anthropics--claude-plugins-community.md
+    level1_normalized: true
+    bullets_converted: 123
+  - path: logs/research/claude-marketplace/samples/anthropics--healthcare.md
+    level1_normalized: true
+    bullets_converted: 117
+  - path: logs/research/claude-marketplace/samples/ekadetov--llm-wiki.md
+    level1_normalized: true
+    bullets_converted: 131
+  - path: logs/research/claude-marketplace/samples/SankaiAI--ats-optimized-resume-agent-skill.md
+    level1_normalized: true
+    bullets_converted: 117
+  - path: logs/research/claude-marketplace/samples/anthropics--financial-services-plugins.md
+    level1_normalized: true
+    bullets_converted: 123
+
+section_observations:
+  - subject: claude-marketplace
+    section: Identification
+    samples_in_batch: 5
+    sub_purposes:
+      URL: 5
+      Stars: 5
+      Last commit date: 5
+      Default branch: 5
+      License: 5
+      Sample origin: 5
+      One-line purpose: 5
+  - subject: claude-marketplace
+    section: 1. Marketplace discoverability
+    samples_in_batch: 5
+    sub_purposes:
+      Manifest layout: 5
+      Marketplace-level metadata: 5
+      "`metadata.pluginRoot`": 5
+      Per-plugin discoverability: 5
+      "`$schema`": 5
+      Reserved-name collision: 5
+      Pitfalls observed: 5
+  - subject: claude-marketplace
+    section: 2. Plugin source binding
+    samples_in_batch: 5
+    sub_purposes:
+      Source format(s) observed: 5
+      "`strict` field": 5
+      "`skills` override on marketplace entry": 5
+      Version authority: 5
+      Pitfalls observed: 5
+  - subject: claude-marketplace
+    section: 3. Channel distribution
+    samples_in_batch: 5
+    sub_purposes:
+      Channel mechanism: 5
+      Channel-pinning artifacts: 5
+      Pitfalls observed: 5
+  - subject: claude-marketplace
+    section: 4. Version control and release cadence
+    samples_in_batch: 5
+    sub_purposes:
+      Default branch name: 5
+      Tag placement: 5
+      Release branching: 5
+      Pre-release suffixes: 5
+      Dev-counter scheme: 5
+      Pre-commit version bump: 5
+      Pitfalls observed: 5
+  - subject: claude-marketplace
+    section: 5. Plugin-component registration
+    samples_in_batch: 5
+    sub_purposes:
+      Reference style in plugin.json: 5
+      Components observed: 5
+      Agent frontmatter fields used: 5
+      Agent tools syntax: 5
+      Pitfalls observed: 5
+    anomalies:
+      - "Components observed sub-purpose body is a nested bullet list rather than prose in 3 of 5 files (anthropics--healthcare, ekadetov--llm-wiki, anthropics--financial-services-plugins) — preserved as indented bullets after conversion"
+  - subject: claude-marketplace
+    section: 6. Dependency installation
+    samples_in_batch: 5
+    sub_purposes:
+      Applicable: 5
+      Dep manifest format: 5
+      Install location: 5
+      Install script location: 5
+      Change detection: 5
+      Retry-next-session invariant: 5
+      Failure signaling: 5
+      Runtime variant: 5
+      Alternative approaches: 5
+      Version-mismatch handling: 5
+      Pitfalls observed: 5
+    anomalies:
+      - "Install script location in SankaiAI--ats-optimized-resume-agent-skill carries trailing nested bullets (two-entry list) under the converted subheading"
+  - subject: claude-marketplace
+    section: 7. Bin-wrapped CLI distribution
+    samples_in_batch: 5
+    sub_purposes:
+      Applicable: 5
+      "`bin/` files": 5
+      Shebang convention: 5
+      Runtime resolution: 5
+      Venv handling (Python): 5
+      Platform support: 5
+      Permissions: 5
+      SessionStart relationship: 5
+      Pitfalls observed: 5
+    anomalies:
+      - "SankaiAI--ats-optimized-resume-agent-skill `bin/` files sub-purpose body is a nested bullet list (two entries) preserved under the heading"
+  - subject: claude-marketplace
+    section: 8. User configuration
+    samples_in_batch: 5
+    sub_purposes:
+      "`userConfig` present": 5
+      Field count: 5
+      "`sensitive: true` usage": 5
+      Schema richness: 5
+      Reference in config substitution: 5
+      Pitfalls observed: 5
+  - subject: claude-marketplace
+    section: 9. Tool-use enforcement
+    samples_in_batch: 5
+    sub_purposes:
+      PreToolUse hooks: 5
+      PostToolUse hooks: 5
+      PermissionRequest/PermissionDenied hooks: 5
+      Output convention: 5
+      Failure posture: 5
+      Top-level try/catch wrapping: 5
+      Pitfalls observed: 5
+  - subject: claude-marketplace
+    section: 10. Session context loading
+    samples_in_batch: 5
+    sub_purposes:
+      SessionStart used for context: 5
+      UserPromptSubmit for context: 5
+      "`hookSpecificOutput.additionalContext` observed": 5
+      SessionStart matcher: 5
+      Pitfalls observed: 5
+  - subject: claude-marketplace
+    section: 11. Live monitoring and notifications
+    samples_in_batch: 5
+    sub_purposes:
+      "`monitors.json` present": 5
+      Monitor count + purposes: 5
+      "`when` values used": 5
+      Version-floor declaration: 5
+      Pitfalls observed: 5
+  - subject: claude-marketplace
+    section: 12. Plugin-to-plugin dependencies
+    samples_in_batch: 5
+    sub_purposes:
+      "`dependencies` field present": 5
+      Entries: 5
+      "`{plugin-name}--v{version}` tag format observed": 5
+      Pitfalls observed: 5
+  - subject: claude-marketplace
+    section: 13. Testing and CI
+    samples_in_batch: 5
+    sub_purposes:
+      Test framework: 5
+      Tests location: 5
+      Pytest config location: 5
+      Python dep manifest for tests: 5
+      CI present: 5
+      CI file(s): 5
+      CI triggers: 5
+      CI does: 5
+      Matrix: 5
+      Action pinning: 5
+      Caching: 5
+      Test runner invocation: 5
+      Pitfalls observed: 5
+    anomalies:
+      - "anthropics--healthcare CI triggers sub-purpose body is a nested bullet list (four workflow entries) preserved under the heading"
+  - subject: claude-marketplace
+    section: 14. Release automation
+    samples_in_batch: 5
+    sub_purposes:
+      "`release.yml` (or equivalent) present": 4
+      "`release.yml` present": 1
+      Release trigger: 5
+      Automation shape: 5
+      Tag-sanity gates: 5
+      Release creation mechanism: 5
+      Draft releases: 5
+      CHANGELOG parsing: 5
+      Pitfalls observed: 5
+    anomalies:
+      - "anthropics--healthcare uses sub-purpose name `release.yml present` while other 4 files use `release.yml (or equivalent) present` — naming variance for the same concept"
+  - subject: claude-marketplace
+    section: 15. Marketplace validation
+    samples_in_batch: 5
+    sub_purposes:
+      Validation workflow present: 5
+      Validator: 5
+      Trigger: 5
+      Frontmatter validation: 5
+      Hooks.json validation: 5
+      Pitfalls observed: 5
+  - subject: claude-marketplace
+    section: 16. Documentation
+    samples_in_batch: 5
+    sub_purposes:
+      "`README.md` at repo root": 5
+      "`README.md` per plugin": 5
+      "`CHANGELOG.md`": 5
+      "`architecture.md`": 5
+      "`CLAUDE.md`": 5
+      Community health files: 5
+      LICENSE: 5
+      Badges / status indicators: 5
+      Additional document: 1
+      Pitfalls observed: 5
+    anomalies:
+      - "ekadetov--llm-wiki has an extra sub-purpose `Additional document` (covering WALKTHROUGH.md) not present in the other four samples"
+  - subject: claude-marketplace
+    section: 17. Novel axes
+    samples_in_batch: 5
+    sub_purposes: {}
+    anomalies:
+      - "Section contains no `- **Name**: content` bullets in any of the 5 files — content is a free-form bulleted list of pattern observations with bold inline lead-ins; no sub-purposes were converted"
+  - subject: claude-marketplace
+    section: 18. Gaps
+    samples_in_batch: 5
+    sub_purposes: {}
+    anomalies:
+      - "Section contains no `- **Name**: content` bullets in any of the 5 files — content is a flat bulleted list of gap statements; no sub-purposes were converted"

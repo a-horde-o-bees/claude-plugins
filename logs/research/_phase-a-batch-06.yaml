@@ -1,98 +1,193 @@
 files_processed:
-  - path: logs/research/mcp/samples/chroma-core--chroma-mcp.md
-    level1_normalized: false
-    bullets_converted: 0
-  - path: logs/research/mcp/samples/ckreiling--mcp-server-docker.md
-    level1_normalized: false
-    bullets_converted: 0
-  - path: logs/research/mcp/samples/cloudflare--mcp-server-cloudflare.md
-    level1_normalized: false
-    bullets_converted: 0
-  - path: logs/research/mcp/samples/crystaldba--postgres-mcp.md
-    level1_normalized: false
-    bullets_converted: 0
-  - path: logs/research/mcp/samples/datalayer--earthdata-mcp-server.md
-    level1_normalized: false
-    bullets_converted: 0
-  - path: logs/research/mcp/samples/datalayer--jupyter-mcp-server.md
-    level1_normalized: false
-    bullets_converted: 0
-  - path: logs/research/mcp/samples/designcomputer--mysql_mcp_server.md
-    level1_normalized: false
-    bullets_converted: 0
-  - path: logs/research/mcp/samples/duolingo--slack-mcp.md
-    level1_normalized: false
-    bullets_converted: 0
-  - path: logs/research/mcp/samples/echelon-ai-labs--servicenow-mcp.md
-    level1_normalized: false
-    bullets_converted: 15
-  - path: logs/research/mcp/samples/executeautomation--mcp-playwright.md
-    level1_normalized: false
-    bullets_converted: 41
-  - path: logs/research/mcp/samples/feiskyer--mcp-kubernetes-server.md
-    level1_normalized: false
-    bullets_converted: 41
-  - path: logs/research/mcp/samples/geropl--linear-mcp-go.md
-    level1_normalized: false
-    bullets_converted: 41
-  - path: logs/research/mcp/samples/getsentry--sentry-mcp.md
-    level1_normalized: false
-    bullets_converted: 41
-  - path: logs/research/mcp/samples/github--github-mcp-server.md
-    level1_normalized: false
-    bullets_converted: 41
-  - path: logs/research/mcp/samples/googleapis--mcp-toolbox.md
-    level1_normalized: false
-    bullets_converted: 41
-  - path: logs/research/mcp/samples/hannesrudolph--sqlite-explorer-fastmcp-mcp-server.md
-    level1_normalized: false
-    bullets_converted: 43
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/docker--hub-mcp.md
+    notes: "Section-3 'pitfalls observed' duplicated section-20 Gap (npm package name); replaced with 'none noted in this repo'."
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/duolingo--slack-mcp.md
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/echelon-ai-labs--servicenow-mcp.md
+    notes: "Section-3 'pitfalls observed' near-verbatim restatement of section 20; replaced. Section-5 pitfalls had auth-mechanism content; relocated to section 6 and slot replaced."
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/exa-labs--exa-mcp-server.md
+    notes: "Section 16 source split into dirs/config/integration-configs; consolidated. Section 8 source had two sub-purposes ('tools' and 'specialized skills directory'); consolidated to canonical."
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/executeautomation--mcp-playwright.md
+    notes: "Section-13 pitfalls and section-20 Gap both reference CI workflow contents; preserved both since each functions as a section-specific note."
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/feiskyer--mcp-kubernetes-server.md
+    notes: "Section-9 pitfalls duplicated section 20 Gaps; replaced with 'none noted in this repo'."
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/geropl--linear-mcp-go.md
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/getsentry--sentry-mcp.md
+    notes: "Section-3 pitfalls had cross-section contamination (`pnpm eval` axis already in section 18); kept Docker-publish gap as legitimate distribution pitfall."
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/github--github-mcp-server.md
+    notes: "Section-13 pitfalls restates section-20 Gap (CI workflow contents); preserved as section-specific note."
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/hannesrudolph--sqlite-explorer-fastmcp-mcp-server.md
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/hugoduncan--mcp-clj.md
+    notes: "Section-1 pitfalls restates section-20 Gap (Java version); preserved — runtime pitfall is also a runtime gap."
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/idosal--git-mcp.md
+    notes: "Section 16 source split into dirs/config; consolidated. Section-9 pitfalls and section-20 Gap both note logging-strategy unclarity; preserved both."
+  - path: /home/dev/projects/claude-plugins--ocd-research-migration/logs/research/mcp/samples/isaaccorley--planetary-computer-mcp.md
+    notes: "Section-3 pitfalls and section-20 Gap both reference PyPI publication; preserved as section-specific. Section 18 had a sub-purpose '### decision dimensions this repo reveals' — flattened to freeform per canonical."
 
 section_observations:
   - subject: mcp
-    section: "10. Host integrations shown in README or repo"
-    samples_in_batch: 16
-    sub_purposes:
-      Claude Desktop: 7
-      Cursor: 2
-      Claude Code: 2
-      Other editors/CLIs: 2
-      pitfalls observed: 16
-    anomalies:
-      - "Heterogeneous host names across samples — sub-purposes do not converge to a stable set"
-      - "Many samples list multiple hosts as plain bullets rather than a sub-purpose per host (executeautomation, feiskyer, geropl, getsentry, github, googleapis)"
+    section: Identification
+    samples_in_batch: 13
+    sub_purposes_seen: {url: 13, stars: 13, last-commit: 13, license: 13, default branch: 13, one-line purpose: 13}
+    shape: closed-set
+    common_description: |
+      Stable identification block — URL, stars, last-commit, license, default branch, and one-line purpose. Acts as the at-a-glance card before axis-by-axis analysis.
+    issues:
+      - "Several samples carry parenthetical guidance in headings ('last-commit (date or relative)') as authoring scaffolding; canonicalized to bare 'last-commit'."
   - subject: mcp
-    section: "17. Notable structural choices"
-    samples_in_batch: 16
-    anomalies:
-      - "Section consists of plain bullets with no name:content structure across all samples — no convertible sub-purposes"
+    section: 1. Language and runtime
+    samples_in_batch: 13
+    sub_purposes_seen: {"language(s) + version constraints": 13, "framework/SDK in use": 13, pitfalls observed: 13}
+    shape: closed-set
+    common_description: |
+      Implementation language(s) with version-floor constraints and the MCP framework or SDK choice. Pitfalls slot most often empty; when populated, points at unusual version floors or version-constraint omissions.
   - subject: mcp
-    section: "18. Unanticipated axes observed"
-    samples_in_batch: 16
-    sub_purposes:
-      "decision dimensions this repo reveals": 4
-    anomalies:
-      - "Most samples present section 18 as plain bullets without a sub-purpose; only chroma, datalayer-earthdata, datalayer-jupyter, feiskyer use the 'decision dimensions this repo reveals' subhead"
+    section: 2. Transport
+    samples_in_batch: 13
+    sub_purposes_seen: {supported transports: 13, how selected: 13, pitfalls observed: 13}
+    shape: closed-set
+    common_description: |
+      Which transports the server supports (stdio, HTTP/SSE, streamable-http, in-memory) and how it selects between them — CLI flag, separate console script, separate subcommand, env var, or implicit default.
+    issues:
+      - "'how selected' source labels are highly variable (parenthesized lists like 'flag, env, separate entry, auto-detect'); canonicalize to bare 'how selected'."
   - subject: mcp
-    section: "19. Python-specific"
-    samples_in_batch: 10
-    sub_purposes:
-      "SDK / framework variant": 10
-      "Python version floor": 10
-      Packaging: 10
-      "Entry point": 10
-      "Install workflow expected of end users": 10
-      "Async and tool signatures": 10
-      "Type / schema strategy": 10
-      Testing: 10
-      "Dev ergonomics": 10
-      "Notable Python-specific choices": 10
-    anomalies:
-      - "Section 19 absent from non-Python samples (cloudflare TS, executeautomation TS, geropl Go, getsentry TS, github Go, googleapis Go); present in 10 of 16"
+    section: 3. Distribution
+    samples_in_batch: 13
+    sub_purposes_seen: {"every mechanism observed": 13, "published package name(s)": 13, install commands shown in README: 13, pitfalls observed: 13}
+    shape: closed-set
+    common_description: |
+      Inventory of distribution channels (PyPI/uvx, npm/npx, Docker/GHCR, GitHub release binaries, source clone, hosted SaaS endpoints, Smithery, mcp-get) along with package name(s) and install commands shown to users. Pitfalls in this section frequently restate Gaps; consider folding.
   - subject: mcp
-    section: "20. Gaps"
-    samples_in_batch: 16
-    sub_purposes:
-      "what couldn't be determined": 3
-    anomalies:
-      - "Most samples present section 20 as plain bullets; only ckreiling, feiskyer, echelon use the 'what couldn't be determined' subhead"
+    section: 4. Entry point / launch
+    samples_in_batch: 13
+    sub_purposes_seen: {"command(s) users/hosts run": 13, "wrapper scripts, launchers, stubs": 13, pitfalls observed: 13}
+    shape: closed-set
+    common_description: |
+      Literal commands a user or host invokes to launch the server, plus wrapper scripts, launchers, stubs, or setup subcommands. Pitfalls almost always 'none'.
+  - subject: mcp
+    section: 5. Configuration surface
+    samples_in_batch: 13
+    sub_purposes_seen: {how config reaches the server: 13, pitfalls observed: 13}
+    shape: closed-set
+    common_description: |
+      How configuration enters the process — env vars, CLI flags, JSON config files, host-passed parameters, combinations — with actual variable and flag names enumerated.
+  - subject: mcp
+    section: 6. Authentication
+    samples_in_batch: 13
+    sub_purposes_seen: {flow: 13, where credentials come from: 13, pitfalls observed: 13}
+    shape: closed-set
+    common_description: |
+      Authentication mechanism (static token, API key, OAuth, kubeconfig delegation, none) and the source of credentials (env var, dashboard-issued token, OAuth provider, kubeconfig file). Multiple-mechanism support (Basic + OAuth + API Key) appears for enterprise SaaS targets.
+  - subject: mcp
+    section: 7. Multi-tenancy
+    samples_in_batch: 13
+    sub_purposes_seen: {tenancy model: 13, pitfalls observed: 13}
+    shape: closed-set
+    common_description: |
+      Tenancy posture — single-user, per-request tenant via OAuth, per-repository (parameterized URL), workspace-keyed, or N/A. Hosted SaaS endpoints push toward per-user OAuth; stdio binaries default to single-user.
+  - subject: mcp
+    section: 8. Capabilities exposed
+    samples_in_batch: 13
+    sub_purposes_seen: {"tools / resources / prompts / sampling / roots / logging / other": 13, pitfalls observed: 13}
+    shape: closed-set
+    common_description: |
+      Catalog of MCP primitives exposed — typically tools (named, sometimes counted by toolset), occasionally first-class skills or embedded-agent providers; resources/prompts/sampling/roots rarely appear. Tool count ranges 2–100+.
+    issues:
+      - "exa-labs added a 'specialized skills directory' sub-purpose; consolidated. Template should keep one canonical sub-purpose."
+  - subject: mcp
+    section: 9. Observability
+    samples_in_batch: 13
+    sub_purposes_seen: {"logging destination + format, metrics, tracing, debug flags": 13, pitfalls observed: 13}
+    shape: closed-set
+    common_description: |
+      Where logs go (stderr/file/none), what format, whether metrics/tracing exist, and any debug flags. Most samples report 'not documented' or note stdio framing pressure forcing logs off stdout.
+  - subject: mcp
+    section: 10. Host integrations shown in README or repo
+    samples_in_batch: 13
+    sub_purposes_seen: {"Claude Desktop": 11, "Claude Code": 4, Cursor: 5, "VS Code": 6, Cline: 4, Windsurf: 3, "Docker Ask Gordon": 1, Docker: 1, Codex: 1, OpenCode: 1, Antigravity: 1, Zed: 1, "Gemini CLI": 1, "v0 by Vercel": 1, Warp: 1, Kiro: 1, "Roo Code": 1, "Cursor IDE": 1, "Cline (VS Code)": 1, "Highlight AI": 1, "Augment Code": 1, "Msty AI": 1, "JetBrains IDEs": 1, "GitHub Copilot": 1, "ChatGPT Copilot": 1, ".vscode/": 1, "Other editors/CLIs": 1, Other: 2, pitfalls observed: 13}
+    shape: open-enumeration
+    common_description: |
+      One sub-heading per host integration documented in the repo. Open enumeration — host vocabulary is genuinely unbounded; hosts proliferate quickly (15+ in exa-labs alone).
+    outliers:
+      - sample: echelon-ai-labs--servicenow-mcp.md
+        why: "section content is 'Not captured per host' rather than per-host enumeration"
+      - sample: exa-labs--exa-mcp-server.md
+        why: "13 host sub-headings — broadest enumeration in the batch"
+    issues:
+      - "Cursor vs Cursor IDE, Cline vs Cline (VS Code), Other vs Other editors/CLIs — host names need normalization for cross-sample aggregation."
+      - "Some sources used a single freeform bullet ('- Claude Desktop, Cursor, ...') rather than per-host headings; rewrites split into per-host headings."
+  - subject: mcp
+    section: 11. Claude Code plugin wrapper
+    samples_in_batch: 13
+    sub_purposes_seen: {presence and shape: 13, pitfalls observed: 13}
+    shape: closed-set
+    common_description: |
+      Whether the repo ships an in-tree `.claude-plugin/` and/or `.mcp.json` wrapper. Most samples 'not present'; getsentry and exa-labs ship full wrappers, doubling as a notable structural choice.
+  - subject: mcp
+    section: 12. Tests
+    samples_in_batch: 13
+    sub_purposes_seen: {"presence, framework, location, notable patterns": 13, pitfalls observed: 13}
+    shape: closed-set
+    common_description: |
+      Tests presence, framework (pytest, Jest, Vitest, go-vcr, Playwright), test directory location, notable patterns (cassette recording, evaluation harnesses).
+  - subject: mcp
+    section: 13. CI
+    samples_in_batch: 13
+    sub_purposes_seen: {"presence, system, triggers, what it runs": 13, pitfalls observed: 13}
+    shape: closed-set
+    common_description: |
+      CI system in use (GitHub Actions when present), triggers, and what the workflows run. Many samples confirm .github/workflows exists without enumerating contents.
+  - subject: mcp
+    section: 14. Container / packaging artifacts
+    samples_in_batch: 13
+    sub_purposes_seen: {"Dockerfile, docker-compose, Helm, systemd, brew formula, etc.": 13, pitfalls observed: 13}
+    shape: closed-set
+    common_description: |
+      Inventory of container and packaging artifacts. Dockerfile dominant; docker-compose, devcontainer, Cloudflare Workers, brew formulas occasional.
+  - subject: mcp
+    section: 15. Example client / developer ergonomics
+    samples_in_batch: 13
+    sub_purposes_seen: {"MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs": 13, pitfalls observed: 13}
+    shape: closed-set
+    common_description: |
+      Developer ergonomics — sample configs, MCP Inspector wiring, manual CLI testing flows, evaluation harnesses, install-orchestration tools (Smithery, mcp-get, fastmcp install, setup subcommands).
+  - subject: mcp
+    section: 16. Repo layout
+    samples_in_batch: 13
+    sub_purposes_seen: {"single-package / monorepo / vendored / other": 13, pitfalls observed: 13}
+    shape: closed-set
+    common_description: |
+      Structural shape — single-package dominant, monorepo (pnpm workspaces, Turbo), Polylith, mixed-language repos with parallel subprojects.
+    issues:
+      - "Multiple samples split this section into 'dirs', 'config', 'integration configs' sub-purposes; consolidated."
+  - subject: mcp
+    section: 17. Notable structural choices
+    samples_in_batch: 13
+    shape: freeform
+    common_description: |
+      Freeform observations on distinctive structural decisions — distribution model, capability gating mechanism, transport selection style, packaging-vs-source posture, license choice, dogfooding tells.
+  - subject: mcp
+    section: 18. Unanticipated axes observed
+    samples_in_batch: 13
+    shape: freeform
+    common_description: |
+      Freeform observations naming axes the analyst noticed only after seeing this repo — vendor-specific companion configs, capability gating models, deployment topologies, mixed-language repos, dogfooding evidence.
+    issues:
+      - "isaaccorley split into a sub-purpose '### decision dimensions this repo reveals'; flattened to freeform per canonical."
+      - "feiskyer used a bulleted enumeration prefixed 'decision dimensions this repo reveals:'; rewritten as paragraph."
+  - subject: mcp
+    section: 19. Python-specific
+    samples_in_batch: 7
+    sub_purposes_seen: {"SDK / framework variant": 7, "Python version floor": 7, "Packaging": 7, "Entry point": 7, "Install workflow expected of end users": 7, "Async and tool signatures": 7, "Type / schema strategy": 7, "Testing": 7, "Dev ergonomics": 7, "Notable Python-specific choices": 7}
+    shape: closed-set
+    common_description: |
+      Python-specific axes only present when language is Python. Strong canonical sub-purpose vocabulary; sub-purposes match across all 7 Python samples.
+    issues:
+      - "Source labels frequently include parenthesized authoring guidance ('SDK / framework variant: raw `mcp` Python SDK / FastMCP 1.x / FastMCP 2.x / custom'); canonicalized to short labels."
+  - subject: mcp
+    section: 20. Gaps
+    samples_in_batch: 13
+    shape: freeform
+    common_description: |
+      Freeform list of facts the analyst could not confirm within research budget — license file content, last-commit dates, exact tool counts, Docker publishing status, schema strategies, version pins.
+    issues:
+      - "Section content overlaps heavily with per-section 'pitfalls observed' slots; consider folding pitfalls observations into the section body and keeping Gaps as the single canonical 'unknowns' surface."
