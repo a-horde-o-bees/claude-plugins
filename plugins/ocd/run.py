@@ -15,9 +15,15 @@ and `from tools.errors import NotReadyError` resolve — the vendored
 reachable from every module without depending on the opt-in setup
 system being deployed.
 
+Multi-word system names use hyphen on the CLI surface (`ocd-run
+needs-map`) but underscore as their Python package (`systems.needs_map`)
+because Python identifiers cannot contain hyphens. Hyphens in the bare
+name are rewritten to underscores before the systems.<name> lookup.
+
 Usage:
     python3 run.py pdf --src foo.md          # resolves to systems.pdf
     python3 run.py navigator scan .          # resolves to systems.navigator
+    python3 run.py needs-map summary         # resolves to systems.needs_map (hyphen → underscore)
     python3 run.py hooks.auto_approval       # left as-is (dotted, not promoted)
     python3 run.py setup init                # install/init CLI via systems.setup
 """
@@ -35,9 +41,12 @@ import importlib.util  # noqa: E402
 
 module = sys.argv[1]
 # Only promote bare (no-dot) names — dotted forms are treated as explicit
-# module paths and pass through unchanged.
-if "." not in module and importlib.util.find_spec(f"systems.{module}") is not None:
-    module = f"systems.{module}"
+# module paths and pass through unchanged. Hyphens rewrite to underscores
+# so CLI surface `ocd-run needs-map` resolves to `systems.needs_map`.
+if "." not in module:
+    candidate = module.replace("-", "_")
+    if importlib.util.find_spec(f"systems.{candidate}") is not None:
+        module = f"systems.{candidate}"
 
 sys.argv = sys.argv[1:]
 

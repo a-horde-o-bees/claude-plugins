@@ -1,34 +1,31 @@
 """Auto-init orchestrator — rectify deployed state to current templates.
 
-Scans every plugin under plugins/, runs each system's init(force=True),
-and rebuilds the `.claude/` tree to match current template shape. Data
-preservation is handled outside the init contract: all `.claude/**/*.db`
-files are mirrored to `.claude/pre-sync/<rel>` before any init runs, and
-schemas are compared afterward — matching schemas restore backup data
-(no data loss from wipe-and-recreate), diverging schemas keep the backup
-and surface a migration flag so the user handles the change intelligently.
+Scans every plugin under plugins/, runs each system's init(force=True)
+to bring deployed state into alignment with current templates, and
+prunes orphans in template categories whose source systems have been
+removed.
 
-Called by /checkpoint after push. Exits 0 on clean sync, non-zero when
-any DB backup has a schema mismatch that needs human migration.
+Per the new Init/Status Contract in python.md *Force semantics*, each
+system's init(force=True) is surgical — destructive only where state
+has actually drifted. DB-backed systems compose `tools.db.rectify`,
+which compares schema up front and no-ops when the live DB matches
+expected; data preservation across forced rebuilds is the system's
+responsibility (timestamped backups beside the live DB on schema
+divergence). Auto-init no longer maintains a project-level pre-sync
+backup-and-restore mechanism.
+
+Called by /checkpoint after push. Exits 0 on success.
 """
 
 import importlib
 import os
-import shutil
-import sqlite3
 import subprocess
 import sys
 from pathlib import Path
 
 
 def _git_root() -> Path:
-    """Anchor at the enclosing git root rather than walking `__file__` parents.
-
-    Matches what `framework.get_project_dir()` does internally when
-    `CLAUDE_PROJECT_DIR` is unset. Script has no access to the plugin
-    framework at import time (it bootstraps the framework), so we call
-    git directly instead of importing the helper.
-    """
+    """Anchor at the enclosing git root rather than walking `__file__` parents."""
     result = subprocess.run(
         ["git", "rev-parse", "--show-toplevel"],
         capture_output=True,
@@ -40,51 +37,19 @@ def _git_root() -> Path:
 
 PROJECT_ROOT = _git_root()
 CLAUDE_DIR = PROJECT_ROOT / ".claude"
-PRE_SYNC_DIR = CLAUDE_DIR / "pre-sync"
 
 
 TEMPLATE_CATEGORIES = ("rules", "conventions", "patterns")
 
 
 def main() -> int:
-    if _pre_sync_has_unresolved():
-        print(
-            f"{PRE_SYNC_DIR.relative_to(PROJECT_ROOT)} contains unresolved "
-            "backups from a prior run. Resolve or remove before re-syncing.",
-            file=sys.stderr,
-        )
-        return 2
-
-    backups = _backup_databases()
-
     claimed = _run_all_plugin_inits()
     _prune_orphans(claimed)
-    exit_code = _reconcile_backups(backups)
+    backups = _collect_db_backups()
     _scan_navigators()
-
-    return exit_code
-
-
-def _pre_sync_has_unresolved() -> bool:
-    if not PRE_SYNC_DIR.is_dir():
-        return False
-    return any(PRE_SYNC_DIR.rglob("*.db"))
-
-
-def _backup_databases() -> list[tuple[Path, Path]]:
-    """Mirror every .claude/**/*.db to .claude/pre-sync/<rel-path>."""
-    backups: list[tuple[Path, Path]] = []
-    if not CLAUDE_DIR.is_dir():
-        return backups
-    for db in CLAUDE_DIR.rglob("*.db"):
-        if PRE_SYNC_DIR in db.parents:
-            continue
-        rel = db.relative_to(CLAUDE_DIR)
-        backup = PRE_SYNC_DIR / rel
-        backup.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(db, backup)
-        backups.append((db, backup))
-    return backups
+    if backups:
+        _report_backups(backups)
+    return 0
 
 
 def _run_all_plugin_inits() -> set[Path]:
@@ -136,8 +101,9 @@ def _prune_orphans(claimed: set[Path]) -> None:
     """Remove files under .claude/{category}/<plugin>/ that no system claimed.
 
     Scoped to TEMPLATE_CATEGORIES where every file should trace back to a
-    template. Other trees (project-root `logs/` for user content, plugin
-    data dirs, worktrees, pre-sync) are left alone.
+    template. Catches files left behind when a system is removed entirely
+    — its init no longer runs, so the per-system deploy_files orphan
+    pruning never fires for those files.
     """
     for category in TEMPLATE_CATEGORIES:
         category_dir = CLAUDE_DIR / category
@@ -175,53 +141,32 @@ def _scan_navigators() -> None:
         )
 
 
-def _reconcile_backups(backups: list[tuple[Path, Path]]) -> int:
-    """Restore-on-schema-match, flag-on-mismatch."""
-    mismatches: list[tuple[Path, Path]] = []
-    for original, backup in backups:
-        if not original.exists():
-            mismatches.append((original, backup))
-            continue
-        if _schemas_match(original, backup):
-            shutil.copy2(backup, original)
-            backup.unlink()
-        else:
-            mismatches.append((original, backup))
+def _collect_db_backups() -> list[Path]:
+    """Find any timestamped DB backups left beside live DBs.
 
-    _cleanup_empty_pre_sync()
-
-    if mismatches:
-        print("\nSchema migration required:", file=sys.stderr)
-        for original, backup in mismatches:
-            print(f"  {original.relative_to(PROJECT_ROOT)}", file=sys.stderr)
-            print(f"    backup: {backup.relative_to(PROJECT_ROOT)}", file=sys.stderr)
-        return 1
-    return 0
+    Each system writes its own backup on schema divergence per the
+    Init/Status Contract. After all inits run, scan for them so the
+    end-of-run summary can flag them for the user.
+    """
+    backups: list[Path] = []
+    if not CLAUDE_DIR.is_dir():
+        return backups
+    for path in sorted(CLAUDE_DIR.rglob("*.db.backup-*")):
+        if path.is_file():
+            backups.append(path)
+    return backups
 
 
-def _schemas_match(a: Path, b: Path) -> bool:
-    return _schema_statements(a) == _schema_statements(b)
-
-
-def _schema_statements(db_path: Path) -> list[str]:
-    conn = sqlite3.connect(db_path)
-    try:
-        rows = conn.execute(
-            "SELECT sql FROM sqlite_master WHERE sql IS NOT NULL ORDER BY name"
-        ).fetchall()
-    finally:
-        conn.close()
-    return [row[0] for row in rows]
-
-
-def _cleanup_empty_pre_sync() -> None:
-    if not PRE_SYNC_DIR.is_dir():
-        return
-    for d in sorted(PRE_SYNC_DIR.rglob("*"), reverse=True):
-        if d.is_dir() and not any(d.iterdir()):
-            d.rmdir()
-    if PRE_SYNC_DIR.is_dir() and not any(PRE_SYNC_DIR.iterdir()):
-        PRE_SYNC_DIR.rmdir()
+def _report_backups(backups: list[Path]) -> None:
+    """Surface backup paths so the user knows manual review is pending."""
+    print("\nDB backups left behind by schema migrations:", file=sys.stderr)
+    for backup in backups:
+        print(f"  {backup.relative_to(PROJECT_ROOT)}", file=sys.stderr)
+    print(
+        "\nReview each backup and either fold the data into the new schema "
+        "or remove the file once you're confident.",
+        file=sys.stderr,
+    )
 
 
 def _print_changed(result: dict) -> None:

@@ -3,9 +3,12 @@
 Tests run the script as a subprocess against a synthetic throwaway git
 repo. Full end-to-end coverage against the real project tree is not
 practical (would mutate `.claude/` and run every plugin's init); tests
-here exercise the consumer-facing exit-code surface — the
-unresolved-backup gate, empty-project no-op, and orphan pruning in
-`TEMPLATE_CATEGORIES`.
+here exercise the consumer-facing exit-code surface — empty-project
+no-op, orphan pruning in `TEMPLATE_CATEGORIES`, and the end-of-run
+backup report.
+
+Schema-comparison helpers used by DB-backed systems live in
+`tools/db.py` with their own coverage in `test_db.py`.
 """
 
 import subprocess
@@ -54,32 +57,29 @@ def empty_repo(tmp_path: Path) -> Path:
     return repo
 
 
-class TestUnresolvedBackupGate:
-    def test_exits_2_when_pre_sync_has_db_files(self, empty_repo: Path):
-        """Stale `.claude/pre-sync/**/*.db` must block the next run —
-        the operator has to resolve or remove before re-syncing."""
-        pre_sync = empty_repo / ".claude" / "pre-sync"
-        pre_sync.mkdir(parents=True)
-        (pre_sync / "leftover.db").write_bytes(b"SQLite format 3\x00")
+class TestBackupReporting:
+    def test_reports_backups_left_under_claude_dir(self, empty_repo: Path):
+        """A timestamped `.db.backup-*` left by a prior init() should be
+        flagged in the end-of-run summary so the operator can review it."""
+        backup = (
+            empty_repo / ".claude" / "ocd" / "needs-map"
+            / "needs-map.db.backup-2026-01-01T00-00-00Z"
+        )
+        backup.parent.mkdir(parents=True)
+        backup.write_bytes(b"SQLite format 3\x00")
 
         result = _run_auto_init(empty_repo)
 
-        assert result.returncode == 2
-        assert "unresolved" in result.stderr
+        assert result.returncode == 0
+        assert "backup" in result.stderr.lower()
+        assert "needs-map.db.backup-" in result.stderr
 
-    def test_exits_0_when_pre_sync_absent(self, empty_repo: Path):
-        result = _run_auto_init(empty_repo)
-        assert result.returncode == 0, result.stderr
-
-    def test_exits_0_when_pre_sync_has_no_db_files(self, empty_repo: Path):
-        """Pre-sync directory with non-DB contents is not an unresolved state."""
-        pre_sync = empty_repo / ".claude" / "pre-sync"
-        pre_sync.mkdir(parents=True)
-        (pre_sync / "note.txt").write_text("stray file\n")
-
+    def test_silent_when_no_backups_exist(self, empty_repo: Path):
+        """End-of-run summary fires only when at least one backup is found."""
         result = _run_auto_init(empty_repo)
 
-        assert result.returncode == 0, result.stderr
+        assert result.returncode == 0
+        assert "backup" not in result.stderr.lower()
 
 
 class TestEmptyProject:

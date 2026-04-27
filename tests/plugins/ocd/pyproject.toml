@@ -6,6 +6,7 @@ testpaths = [
     "systems/governance",
     "systems/log",
     "systems/navigator",
+    "systems/needs_map",
     "systems/pdf",
     "systems/permissions",
     "systems/refactor",

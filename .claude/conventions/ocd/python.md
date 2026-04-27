@@ -119,8 +119,9 @@ Packages that declare infrastructure (database, deployed files, configuration) i
 
 Both functions return `{"files": [...], "extra": [...]}`:
 
-- `init(force=False)` — deploy infrastructure; `force=True` rebuilds from scratch
-- `status()` — report infrastructure state
+- `init(force=False)` — bring infrastructure to current state; refuses divergence without `force=True`
+- `init(force=True)` — rectify infrastructure to current state; surgical, only destructive where state has actually drifted (see *Force semantics* below)
+- `status()` — report infrastructure state without mutation
 
 Entry points take only their own domain-specific arguments. Project and plugin paths are resolved internally via `tools.environment` (`get_project_dir()`, `get_plugin_root()`, `get_plugin_data_dir()`) — see *Project, Plugin, and Data Directory Resolution*. Never accept those paths as parameters.
 
@@ -128,12 +129,31 @@ Entry points take only their own domain-specific arguments. Project and plugin p
 
 | Transition | Meaning |
 |------------|---------|
-| `absent → current` | First install |
-| `current → current` | Already current, no-op |
-| `divergent → current` | Overwritten by `--force` |
-| `current → reinstalled` | Force rebuilt an existing, non-divergent artifact (e.g. database wipe-and-recreate) |
+| `absent → current` | First install — created from scratch |
+| `current → current` | Already current — no work performed |
+| `divergent → current` | Drifted file overwritten from current template |
+| `divergent → reinstalled` | Divergent DB schema wiped and rebuilt; backup written for manual transition |
 
 `extra` entries: `{"label": str, "value": str}` — additional status lines rendered as aligned columns.
+
+**Force semantics.**
+
+`init(force=True)` is the canonical "rectify to current state" operation, invoked by `scripts/auto_init.py` on every checkpoint so the project always reflects the latest plugin code. Force is destructive **only where state has actually drifted** — it does not blindly wipe-and-rebuild healthy infrastructure. The contract:
+
+1. **Inventory** — read-only comparison between live state and current templates. DB-backed systems compose `tools.db.rectify`, which structurally compares the live DB schema against what the system's schema-builder produces. File-deploying systems compose `setup.deploy_files`, which hash-compares each template against its deployed copy.
+2. **No-op short-circuit** — if every artifact is current, emit `current → current` for each and return without I/O.
+3. **File rectification** — orphans removed, drifted files overwritten from template, transitions reported. DB untouched.
+4. **Schema rectification** — only when DB is `divergent` or `absent`. On divergent: live DB copied to a timestamped backup beside it (`<name>.db.backup-<ISO>`), wiped, rebuilt; emit `divergent → reinstalled` plus a backup-path entry.
+
+Each rectification step reports its own transitions. The orchestrator (`scripts/auto_init.py`) aggregates them and surfaces backup paths for the user to fold or remove after the run.
+
+`force=False` creates absent infrastructure and refuses divergent schema with an `InitError` — the user-direct path for "ensure exists without authorizing destruction."
+
+`init(force=True)` does not wipe data when schema matches. The explicit destructive verb for "wipe regardless of state" is per-system `reset` (see *Reset verb*).
+
+**Reset verb.**
+
+DB-backed systems expose a `reset` CLI verb (`ocd-run <system> reset`) for the explicit "wipe data and rebuild" intent that `init --force` no longer carries. Reset always backs up first, always wipes, always rebuilds — no schema short-circuit. Use when a user wants to start fresh regardless of schema state.
 
 **Status labels.**
 
