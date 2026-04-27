@@ -1,60 +1,162 @@
 # Sample
 
 ## Identification
-- url: https://github.com/hannesrudolph/sqlite-explorer-fastmcp-mcp-server
-- stars: 104
-- last-commit (date or relative): Not surfaced from landing page; repo reports 9 total commits on main
-- license: Not surfaced on landing page fetch; file LICENSE not confirmed within budget
-- default branch: main
-- one-line purpose: SQLite explorer MCP server — single script installed via `fastmcp install`; pre-`pyproject.toml`-era layout pinned to FastMCP 0.4.1.
+
+### url
+
+https://github.com/hannesrudolph/sqlite-explorer-fastmcp-mcp-server
+
+### stars
+
+104
+
+### last-commit (date or relative)
+
+Not surfaced from landing page; repo reports 9 total commits on main
+
+### license
+
+Not surfaced on landing page fetch; file LICENSE not confirmed within budget
+
+### default branch
+
+main
+
+### one-line purpose
+
+SQLite explorer MCP server — single script installed via `fastmcp install`; pre-`pyproject.toml`-era layout pinned to FastMCP 0.4.1.
 
 ## 1. Language and runtime
-- language(s) + version constraints: Python (100% of repo), Python 3.6+
-- framework/SDK in use: FastMCP
-- pitfalls observed: none noted in this repo
+
+### language(s) + version constraints
+
+Python (100% of repo), Python 3.6+
+
+### framework/SDK in use
+
+FastMCP
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 2. Transport
-- supported transports: stdio (default for FastMCP-installed servers)
-- how selected (flag, env, separate entry, auto-detect, etc.): Implicit — FastMCP CLI installer wires stdio transport; no explicit flag documented
-- pitfalls observed: none noted in this repo
+
+### supported transports
+
+stdio (default for FastMCP-installed servers)
+
+### how selected (flag, env, separate entry, auto-detect, etc.)
+
+Implicit — FastMCP CLI installer wires stdio transport; no explicit flag documented
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 3. Distribution
-- every mechanism observed: Git clone from source; FastMCP CLI install (`fastmcp install`); UV-based environment execution; no PyPI/npm/Docker artifacts observed
-- published package name(s): None — unpublished repo-only server
-- install commands shown in README: `fastmcp install sqlite_explorer.py --name "SQLite Explorer" -e SQLITE_DB_PATH=/path/to/db`
-- pitfalls observed: none noted in this repo
+
+### every mechanism observed
+
+Git clone from source; FastMCP CLI install (`fastmcp install`); UV-based environment execution; no PyPI/npm/Docker artifacts observed
+
+### published package name(s)
+
+None — unpublished repo-only server
+
+### install commands shown in README
+
+`fastmcp install sqlite_explorer.py --name "SQLite Explorer" -e SQLITE_DB_PATH=/path/to/db`
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 4. Entry point / launch
-- command(s) users/hosts run: `fastmcp install sqlite_explorer.py` then host launches via its configured MCP command; direct run also possible via `uv` with fastmcp + uvicorn
-- wrapper scripts, launchers, stubs: Single-file `sqlite_explorer.py` script; no additional launcher
-- pitfalls observed: none noted in this repo
+
+### command(s) users/hosts run
+
+`fastmcp install sqlite_explorer.py` then host launches via its configured MCP command; direct run also possible via `uv` with fastmcp + uvicorn
+
+### wrapper scripts, launchers, stubs
+
+Single-file `sqlite_explorer.py` script; no additional launcher
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 5. Configuration surface
-- how config reaches the server: Environment variable `SQLITE_DB_PATH` (required); no CLI flags or config files documented
-- pitfalls observed: none noted in this repo
+
+### how config reaches the server
+
+Environment variable `SQLITE_DB_PATH` (required); no CLI flags or config files documented
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 6. Authentication
-- flow: None — local SQLite file access, no credentials
-- where credentials come from: Not applicable for local SQLite
-- pitfalls observed: none noted in this repo
+
+### flow
+
+None — local SQLite file access, no credentials
+
+### where credentials come from
+
+Not applicable for local SQLite
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 7. Multi-tenancy
-- single-user / per-request tenant / workspace-keyed / not applicable / other: Single-user, single-database — one SQLite file per server instance pinned via env var
-- pitfalls observed: none noted in this repo
+
+### single-user / per-request tenant / workspace-keyed / not applicable / other
+
+Single-user, single-database — one SQLite file per server instance pinned via env var
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 8. Capabilities exposed
-- tools / resources / prompts / sampling / roots / logging / other: Tools only — `read_query` (SELECT with validation and row limits), `list_tables`, `describe_table`. No resources, prompts, sampling, or roots.
-- pitfalls observed: none noted in this repo
+
+### tools / resources / prompts / sampling / roots / logging / other
+
+Tools only — `read_query` (SELECT with validation and row limits), `list_tables`, `describe_table`. No resources, prompts, sampling, or roots.
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 9. Observability
-- logging destination + format, metrics, tracing, debug flags: None documented; README notes "progress output suppression for clean JSON responses" as a deliberate behavior
-- pitfalls observed: none noted in this repo
+
+### logging destination + format, metrics, tracing, debug flags
+
+None documented; README notes "progress output suppression for clean JSON responses" as a deliberate behavior
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 10. Host integrations shown in README or repo
-- Claude Desktop: Supported via FastMCP CLI install
-- Cline (VS Code): Manual MCP configuration example provided
-- Other editors/CLIs: Not mentioned
-- pitfalls observed: none noted in this repo
+
+### Claude Desktop
+
+Supported via FastMCP CLI install
+
+### Cline (VS Code)
+
+Manual MCP configuration example provided
+
+### Other editors/CLIs
+
+Not mentioned
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 11. Claude Code plugin wrapper
 
@@ -67,24 +169,54 @@ Not present — no `.claude-plugin` directory or Claude Code specific wiring obs
 none noted in this repo
 
 ## 12. Tests
-- presence, framework, location, notable patterns: No tests observed in repo
-- pitfalls observed: none noted in this repo
+
+### presence, framework, location, notable patterns
+
+No tests observed in repo
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 13. CI
-- presence, system, triggers, what it runs: No `.github/workflows` observed
-- pitfalls observed: none noted in this repo
+
+### presence, system, triggers, what it runs
+
+No `.github/workflows` observed
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 14. Container / packaging artifacts
-- Dockerfile, docker-compose, Helm, systemd, brew formula, etc.: None observed
-- pitfalls observed: none noted in this repo
+
+### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+
+None observed
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 15. Example client / developer ergonomics
-- MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs: Sample Cline VSCode JSON config shown; FastMCP CLI install as the primary dev ergonomic
-- pitfalls observed: none noted in this repo
+
+### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+
+Sample Cline VSCode JSON config shown; FastMCP CLI install as the primary dev ergonomic
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 16. Repo layout
-- single-package / monorepo / vendored / other: Single-file script with requirements and docs — minimal single-package layout
-- pitfalls observed: none noted in this repo
+
+### single-package / monorepo / vendored / other
+
+Single-file script with requirements and docs — minimal single-package layout
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 17. Notable structural choices
 - Single-file server script (`sqlite_explorer.py`) keeps the surface tiny

@@ -122,7 +122,10 @@ single ServiceNow instance per deployment (via env/URL)
 none noted in this repo
 
 ## 8. Capabilities exposed
-- tools / resources / prompts / sampling / roots / logging / other: **60+ tools** across:
+
+### tools / resources / prompts / sampling / roots / logging / other
+
+**60+ tools** across:
   - Incident management
   - Service catalog
   - Change requests
@@ -132,39 +135,88 @@ none noted in this repo
   - Changesets
   - Knowledge bases
   - User management
-- pitfalls observed: none noted in this repo
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 9. Observability
-- logging destination + format, metrics, tracing, debug flags: not captured
-- pitfalls observed: none noted in this repo
+
+### logging destination + format, metrics, tracing, debug flags
+
+not captured
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 10. Host integrations shown in README or repo
+
 Not captured per host
-- pitfalls observed: none noted in this repo
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 11. Claude Code plugin wrapper
-- presence and shape: none
-- pitfalls observed: none noted in this repo
+
+### presence and shape
+
+none
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 12. Tests
-- presence, framework, location, notable patterns: `tests/` directory present
-- pitfalls observed: none noted in this repo
+
+### presence, framework, location, notable patterns
+
+`tests/` directory present
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 13. CI
-- presence, system, triggers, what it runs: not captured — no mention
-- pitfalls observed: none noted in this repo
+
+### presence, system, triggers, what it runs
+
+not captured — no mention
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 14. Container / packaging artifacts
-- Dockerfile, docker-compose, Helm, systemd, brew formula, etc.: Dockerfile
-- pitfalls observed: none noted in this repo
+
+### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+
+Dockerfile
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 15. Example client / developer ergonomics
-- MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs: CLI arg shape for SSE mode
-- pitfalls observed: none noted in this repo
+
+### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+
+CLI arg shape for SSE mode
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 16. Repo layout
-- single-package / monorepo / vendored / other: single-package (`servicenow_mcp/`)
-- pitfalls observed: none noted in this repo
+
+### single-package / monorepo / vendored / other
+
+single-package (`servicenow_mcp/`)
+
+### pitfalls observed
+
+none noted in this repo
 
 ## 17. Notable structural choices
 - **Two separate entry points for different transports** — `python -m servicenow_mcp.cli` (stdio) vs `servicenow-mcp-sse` (SSE); architecturally split rather than env-var-switched
