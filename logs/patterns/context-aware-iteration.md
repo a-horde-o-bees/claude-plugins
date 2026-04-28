@@ -35,12 +35,12 @@ item-two.md,7104,pending,,
 **Spawn log** — append-only, one row per spawn:
 
 ```csv
-batch_id,spawned_at,items_count,total_measured_size,total_tokens,work_tokens,ratio,running_avg_ratio
-batch_00,2026-04-24T10:15:00Z,0,0,32894,0,,
-batch_01,2026-04-24T10:17:00Z,5,22431,67812,34918,1.557,1.557
+batch_id,spawned_at,items_count,total_measured_size,total_tokens,work_tokens,ratio,running_window_ratio,anomaly,notes
+batch_00,2026-04-24T10:15:00Z,0,0,32894,0,,,false,baseline
+batch_01,2026-04-24T10:17:00Z,5,22431,67812,34918,1.557,1.557,false,
 ```
 
-`batch_00` is the baseline spawn (zero items) capturing overhead `B = total_tokens`. For every later batch: `work_tokens = total_tokens − B`; `ratio = work_tokens / total_measured_size`; `running_avg_ratio = Σ work_tokens / Σ total_measured_size` across all non-baseline batches, weighted by batch size.
+`batch_00` is the baseline spawn (zero items) capturing overhead `B = total_tokens`. For every later batch: `work_tokens = total_tokens − B`; `ratio = work_tokens / total_measured_size`; `running_window_ratio = Σ work_tokens / Σ total_measured_size` across the last N non-baseline batches with `anomaly=false`, weighted by batch size. `anomaly` flags a batch whose data should be excluded from trailing-window calculations (see *Anomaly exclusion*). `notes` carries human-readable context (re-baselining reason, anomaly cause, instruction-set change marker).
 
 ## Pattern
 
@@ -73,20 +73,22 @@ batch_01,2026-04-24T10:17:00Z,5,22431,67812,34918,1.557,1.557
 16. Append batch_01 row to {log_path}
 17. For each {item} in {batch}: update queue row — status=done (or failed/unconsumable per return), batch_id=batch_01
 
-> Phase N — Self-calibrating. Running average naturally weights larger
-> batches more (they carry more signal per unit of size). Divergence of
-> ratio_k from running_avg_ratio is a warning that input distribution
-> shifted; investigate before the next spawn.
+> Phase N — Self-calibrating. Trailing-N window naturally tracks current
+> cost without anchoring to early-batch overhead. Divergence of ratio_k
+> from running_window_ratio is a warning that the next-batch prediction
+> may be off; classify as transient anomaly or trend shift before
+> proceeding.
 
 18. While pending items remain in {queue_path}:
-    1. {running_avg_ratio} = Σ work_tokens / Σ total_measured_size across all non-baseline log rows
-    2. {batch_capacity} = {work_budget} / {running_avg_ratio}
+    1. {running_window_ratio} = trailing-N window ratio (default N=3) — see "Ratio estimator"
+    2. {batch_capacity} = {work_budget} / {running_window_ratio}
     3. {batch} = bin-pack pending items up to {batch_capacity}
     4. If {batch} is empty AND pending items remain: Exit to user — all remaining items oversized; flag unconsumable and stop
     5. Spawn agent with: {agent_instructions} + item list for {batch}
     6. Read total_tokens; compute work_tokens, ratio
-    7. Append log row; update queue rows
-    8. If |ratio − running_avg_ratio| / running_avg_ratio > 0.3: log warning; consider re-baselining
+    7. If batch ran out of tokens (truncated reply, unfinished items): handle per "Token exhaustion handling" — do not silently roll the failure into running calc
+    8. Append log row; update queue rows
+    9. If |ratio − running_window_ratio| / running_window_ratio > 0.3: log warning; mark batch as anomaly candidate per "Anomaly exclusion"
 
 > Completion. Summarize from the queue + log. Archive or leave in place
 > depending on whether the workflow may rerun.
@@ -96,6 +98,42 @@ batch_01,2026-04-24T10:17:00Z,5,22431,67812,34918,1.557,1.557
     - Final running_avg_ratio and variance across batches
     - Pointer to {queue_path} and {log_path} for inspection
 ```
+
+## Ratio estimator
+
+**Trailing-N window is the default.** `Σ work_tokens / Σ total_measured_size` over the last N non-baseline, non-anomaly batches. N=3 is the default; raise it for high-variance workloads, lower it for fast-converging ones.
+
+The trailing window is the SOP, not a fallback. Lifetime weighted average is correct in expectation but anchors to early-batch costs that systematically misrepresent later cost — the first calibrated batch tends to pay a "first-batch tax" (agent interpreting instructions for the first time; no cached prompt context) that no later batch repeats. Trailing-N drops that tax after window-size batches; lifetime average bakes it in forever. The pattern's purpose is sizing the next batch correctly, and the next batch will look like recent batches, not like the workflow's lifetime arithmetic mean.
+
+**Lifetime weighted average is for diagnosis, not sizing.** When a batch fails or diverges sharply, broaden the view to lifetime history to understand what happened. Don't use the broadened view to size subsequent batches unless you've concluded the trailing window itself is contaminated.
+
+## Token exhaustion handling
+
+When a batch runs out of tokens (truncated reply, unfinished items, agent reports incomplete work), broaden the analysis window — but the *response* is conditional on what the broader history shows.
+
+1. Compute what the trailing-N window predicted for this batch's cost: `predicted_work = batch_size × running_window_ratio`
+2. Compare against budget: `predicted_total = predicted_work + B`
+3. If `predicted_total < budget`: the trailing window did not predict failure — this batch is an anomaly (single hard item, one-time content spike, agent retry-loop). Mark the batch row `anomaly=true` and exclude it from subsequent trailing-window calculations. SOP behavior continues unchanged.
+4. If `predicted_total ≥ budget`: the trailing window also signaled risk and the batch was sized too large anyway — re-baseline (Phase 0 spawn again) or shorten N until the window tracks current costs. The trend has shifted; SOP needs recalibration.
+
+The discipline: a single failed batch is not evidence the SOP is wrong. Anomalies happen — exclude them and keep going. Only when the trailing window itself stops predicting accurately does the SOP need adjustment.
+
+## Anomaly exclusion
+
+The running calculation excludes batches flagged `anomaly=true` from trailing-window arithmetic. An anomaly is a batch whose ratio diverges sharply from the window — typically a single oversized or unusually content-dense item that pulls the per-byte cost away from population norm.
+
+Excluding anomalies prevents one weird item from biasing the next 3+ batches. The anomaly batch's data still lives in the log for inspection; the running average just skips it.
+
+When to mark `anomaly=true`:
+
+- The batch ran out of tokens (per *Token exhaustion handling* — only when trailing-N didn't predict the failure)
+- `|ratio − running_window_ratio| / running_window_ratio > 0.3` AND the divergence is traceable to a specific item (one outlier, not a distribution shift)
+- A specific item caused agent retries or unusual tool-call density that won't recur
+
+When NOT to mark `anomaly=true`:
+
+- Multiple consecutive batches diverge similarly — that's a trend, not anomaly; re-baseline or shorten N
+- Divergence is unexplained — keep it in the calc; new uncertainty is real signal
 
 ## Bin-packing
 
@@ -155,6 +193,8 @@ Optional extension. Once `|ratio_k − running_avg_ratio| / running_avg_ratio < 
 - **Queue-order (FIFO) batching.** Wastes 15–25% of each batch's capacity when items vary in size. Bin-packing over a pre-measured table captures most of that.
 - **Fresh baseline per item.** Spawning one agent per item pays ~30K overhead for ~5K of real work. Batch until amortized overhead is a small fraction of batch cost.
 - **Blind parallelism.** Firing N agents in parallel before the ratio has converged risks N simultaneous bad-estimate spawns. Stabilize, then parallelize.
+- **Lifetime average for batch sizing.** Anchors forever to early-batch costs (especially the first-batch tax — instruction-interpretation overhead that does not repeat). Use trailing-N window for sizing; reserve lifetime view for diagnosing anomalies.
+- **Treating one bad batch as a trend.** A single token-exhaustion or sharp ratio divergence is usually an anomaly — one weird item, transient retry loop. Mark it `anomaly=true`, exclude from running calc, keep SOP. Only adjust the SOP when multiple consecutive batches diverge in the same direction.
 
 ## See also
 
