@@ -72,7 +72,22 @@ When a new purpose surfaces mid-research that samples didn't address, the refres
 2. Tally across samples for the new purpose.
 3. Update the consolidated doc's counts and citation pool.
 
-Scripts that assist tallying — walking the `samples/` directory, extracting per-purpose data points, producing refined counts — can live at `logs/research/<subject>/scripts/`. No shared project-level tooling exists today; subjects populate this folder as needs emerge.
+Scripts that assist tallying — walking the `samples/` directory, extracting per-purpose data points, producing refined counts — can live at `logs/research/<subject>/scripts/`. Subject-specific transforms go there.
+
+## Heading-Tree Tooling
+
+Cross-subject heading-tree analysis is provided by `ocd-run log research` verbs:
+
+| Verb | Purpose |
+|------|---------|
+| `check <path>` | Verify one markdown file has no sibling-duplicate headings. Run before consolidating to catch heading collisions early |
+| `count-sections --subject <name>` | Print chain-key coverage across the samples directory — which headings are near-universal vs rare |
+| `consolidate --chain "<key>" --subject <name>` | Print every sample's content under one chain key (e.g. `Sample > Authentication > flow`). The unit of synthesis when authoring `consolidated.md` per purpose |
+| `compliance --subject <name>` | Diff every sample against `_TEMPLATE.md`. Surfaces outlier headings (chain keys in samples but not in template — typos, non-canonical labels, or template-revision candidates) and reports order violations |
+
+Run `compliance` after retrofitting samples or before tallying — it confirms the corpus matches the template's heading tree (the single source of truth for sample structure). Outliers under open-enumeration sections (marked by a `<placeholder>` heading in the template) are not flagged; they are the section's content vocabulary.
+
+When `consolidated.md` is the goal, reach for `consolidate` per template section rather than reading every sample top-down. The output is bounded (one section's evidence at a time), grounded (returned content is verbatim from the samples), and composes naturally — each `consolidate` pass produces one section's worth of synthesized findings, ready to merge into the larger doc.
 
 ## Consuming Research
 
