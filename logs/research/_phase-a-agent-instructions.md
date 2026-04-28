@@ -50,31 +50,19 @@ For each path:
 
 ## Canonical sub-purpose names
 
-When rewriting, prefer short canonical labels over long parenthesized variants. The existing corpus uses both forms (e.g. "how selected" vs "how selected (flag, env, separate entry, auto-detect, etc.)"). Pick the short canonical form. Below is the canonical set discovered so far per section — use these names for cross-sample consistency:
+The subject's `_TEMPLATE.md` (sibling of the `samples/` directory) carries the canonical section + sub-purpose vocabulary for this corpus. Read it before processing your first file. The template's heading tree is the spec; use its `## <Section>` and `### <sub-purpose>` headings as the canonical names.
 
-- **Identification**: `url`, `stars`, `last-commit`, `license`, `default branch`, `one-line purpose`
-- **1. Language and runtime**: `language(s) + version constraints`, `framework/SDK in use`, `pitfalls observed`
-- **2. Transport**: `supported transports`, `how selected`, `pitfalls observed`
-- **3. Distribution**: `every mechanism observed`, `published package name(s)`, `install commands shown in README`, `pitfalls observed`
-- **4. Entry point / launch**: `command(s) users/hosts run`, `wrapper scripts, launchers, stubs`, `pitfalls observed`
-- **5. Configuration surface**: `how config reaches the server`, `pitfalls observed`
-- **6. Authentication**: `flow`, `where credentials come from`, `pitfalls observed`
-- **7. Multi-tenancy**: `tenancy model`, `pitfalls observed`
-- **8. Capabilities exposed**: `tools / resources / prompts / sampling / roots / logging / other`, `pitfalls observed`
-- **9. Observability**: `logging destination + format, metrics, tracing, debug flags`, `pitfalls observed`
-- **10. Host integrations shown in README or repo**: one `###` per host (e.g. `Claude Desktop`, `Claude Code`, `Cursor`, `VS Code`, `Smithery`, etc.), then `pitfalls observed`
-- **11. Claude Code plugin wrapper**: `presence and shape`, `pitfalls observed`
-- **12. Tests**: `presence, framework, location, notable patterns`, `pitfalls observed`
-- **13. CI**: `presence, system, triggers, what it runs`, `pitfalls observed`
-- **14. Container / packaging artifacts**: `Dockerfile, docker-compose, Helm, systemd, brew formula, etc.`, `pitfalls observed`
-- **15. Example client / developer ergonomics**: `MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs`, `pitfalls observed`
-- **16. Repo layout**: `single-package / monorepo / vendored / other`, `pitfalls observed`
-- **17. Notable structural choices**: freeform — no `###` subheadings, write paragraphs
-- **18. Unanticipated axes observed**: freeform unless the source clearly enumerates axes (then `### <axis name>` per axis)
-- **19. Python-specific** (only present in Python repos): `SDK / framework variant`, `Python version floor`, `Packaging`, `Entry point`, `Install workflow expected of end users`, `Async and tool signatures`, `Type / schema strategy`, `Testing`, `Dev ergonomics`, `Notable Python-specific choices`
-- **20. Gaps**: freeform — no `###` subheadings, write paragraphs
+When the source sample uses a bold-label bullet form (`- **Field**: value`), the bold label (lowercased, with `**` markdown stripped) becomes the canonical `### sub-purpose` heading. The bullet's value becomes the sub-purpose's paragraph content. When the source's bullet has slash-separated alternatives baked into the label (`- **Field**: a / b / c — actual value`), strip the alternatives from the heading and put the actual value as paragraph content.
 
-If the source has a sub-purpose not listed above, use a short canonical-style name and flag it as a new sub-purpose in the observations YAML.
+Prefer short canonical labels over long parenthesized variants. If the existing corpus uses both forms (e.g. "how selected" vs "how selected (flag, env, separate entry, auto-detect, etc.)"), pick the short form.
+
+When the source has a sub-purpose not in the template's tree, use a short canonical-style name and flag it as a new sub-purpose in the observations YAML.
+
+Some sections are freeform (no `###` subheadings expected) — typically the section's prose under its heading in the template makes this clear. Write content as paragraphs (or bullets when the source clearly enumerates parallel observations).
+
+Some sections are open-enumeration (one `###` per item, vocabulary content-driven) — the template marks these with a `<placeholder>` heading. In samples, replace the placeholder with one heading per item the source enumerated.
+
+Section numbering in the source (e.g. `## 1. Foo`) is dropped during rewrite. The template's heading order defines section sequence; numbers are not part of the canonical structure.
 
 ## Per-batch observation accumulation
 
