@@ -12,14 +12,14 @@ Testing discipline organized by phase of interaction: authoring tests, driving c
 
 ### What Qualifies
 
-Deterministic operations get traditional tests. Non-deterministic behavior (agent judgment, NL interpretation, workflow execution quality) gets evaluation protocols, not unit tests. If identical inputs reliably produce identical outputs, test it. If not, evaluate it through protocols that accept variance and assess outcomes.
+Deterministic operations get traditional tests. Non-deterministic behavior (e.g., agent judgment, NL interpretation, workflow execution quality) gets evaluation protocols, not unit tests. If identical inputs reliably produce identical outputs, test it. If not, evaluate it through protocols that accept variance and assess outcomes.
 
 ### Durability
 
 Verification of new code belongs in the test structure. Not in ad-hoc bash commands. Not in inline Python heredocs. Not in `python -c "..."` snippets. Not in any one-shot execution outside the test files.
 
 - All verification of new code — including smoke tests, "just to check" runs, round-trip confirmations, parse-and-render checks, and any other one-shot validation — goes through the test structure as a test in the relevant test file
-- Exploration and learning (reading code, querying state, understanding existing behavior) are different from verifying new code; explore freely, but verification of new code that you wrote requires a test
+- Exploration and learning (e.g., reading code, querying state, understanding existing behavior) are different from verifying new code; explore freely, but verification of new code that you wrote requires a test
 - Test fixtures handle environment setup automatically while ad-hoc commands require inline env vars that need manual approval — the durability cost matters more than the friction cost
 
 ### Techniques by Risk Class
@@ -38,7 +38,7 @@ Technique: snapshot/approval testing — capture golden output for representativ
 
 **Roundtrip and invertibility.** If a system reads a format and writes it back, the roundtrip property is the highest-value test. Parse then serialize then parse again must yield same structure.
 
-- Format parse-serialize roundtrips (frontmatter, manifests, configuration)
+- Format parse-serialize roundtrips (e.g., frontmatter, manifests, configuration)
 - Pattern matching symmetry (if pattern matches file, listing files under pattern includes that file)
 - Path resolution determinism (same input always resolves to same absolute path)
 
@@ -85,7 +85,7 @@ Technique: explicit boundary case enumeration plus property-based fuzzing of inp
 
 **Structured document validation.** Structured documentation consumed by agents is code. Validate schema and referential integrity, not prose content.
 
-Applies when — fields that agents parse programmatically (names, patterns, dependencies); referential integrity (manifest entries reference files that exist); format consistency across files of same type.
+Applies when — fields that agents parse programmatically (e.g., names, patterns, dependencies); referential integrity (manifest entries reference files that exist); format consistency across files of same type.
 
 Skip when — linting prose content that agents interpret with natural language understanding; enforcing style rules on descriptions that do not affect machine parsing.
 
@@ -95,7 +95,7 @@ Applies when — CLI end-to-end (invoke actual script, verify stdout/stderr/exit
 
 Skip when — duplicating what unit tests already cover with mocked boundaries; testing library behavior documented by library authors.
 
-**Value filter for an integration test:** what dispatch-class or real-world failure does this catch that unit tests don't? If the answer is "nothing specific," it's a retread of unit coverage. Content assertions should validate structure (shape, required fields, exit codes) — not semantic behavior that unit tests already cover.
+**Value filter for an integration test:** what dispatch-class or real-world failure does this catch that unit tests don't? If the answer is "nothing specific," it's a retread of unit coverage. Content assertions should validate structure (e.g., shape, required fields, exit codes) — not semantic behavior that unit tests already cover.
 
 **Git worktree isolation.** Integration tests that create, modify, or stage files within the project repository must run in a disposable git worktree. A worktree shares the object store with the main repo — tests operate on real project files in real git context — but has its own working tree and index. Changes in the worktree cannot affect the main working tree.
 
@@ -130,11 +130,11 @@ Skip when — tests only read project files without modification, operate entire
 
 Real agent tests cost tokens, take seconds to minutes per test, and carry model-variance and API-reliability flakiness. They are opt-in by default: mark them `pytestmark = pytest.mark.agent` at the module level, and the pytest configuration skips them unless `--run-agent` is passed on the command line.
 
-Agent tests should verify — plugin wiring around the subprocess (PATH resolution, venv binding, `CLAUDE_PROJECT_DIR` propagation, hook registration); hook invocation and corrective output under real tool calls the agent makes; substrate setup and teardown correctness when a real agent runs inside the sandbox.
+Agent tests should verify — plugin wiring around the subprocess (e.g., PATH resolution, venv binding, `CLAUDE_PROJECT_DIR` propagation, hook registration); hook invocation and corrective output under real tool calls the agent makes; substrate setup and teardown correctness when a real agent runs inside the sandbox.
 
 Agent tests should not verify — exact strings the agent produces (model variance makes these brittle; test observable side effects instead); specific tool-call sequences (agents reorder work; assert the required state at the end, not the path taken); model quality or reasoning (that belongs in evaluation protocols).
 
-Discipline for cost — fail fast before the subprocess call (assert preconditions before spending tokens); keep agent tests narrow (one behavior per test, minimal prompt); share setup where possible (a session-scoped fixture costs far less than per-test setup).
+Discipline for cost — fail fast before the subprocess call (assert preconditions before spending tokens); keep agent tests narrow (e.g., one behavior per test, minimal prompt); share setup where possible (a session-scoped fixture costs far less than per-test setup).
 
 ### Isolation
 
@@ -142,7 +142,7 @@ Tests must own their state. Never rely on ambient user settings, global environm
 
 - Tests that read `~/.claude/settings.json` (or similar) set `HOME` to a scratch path in the fixture and write the exact settings they need
 - Tests that read `CLAUDE_PROJECT_DIR` content set it to a `tmp_path` and populate only what the test requires
-- Tests that shell out to tools that may read ambient state (git, `uv`, etc.) scope that state via env vars or `cwd`
+- Tests that shell out to tools that may read ambient state (e.g., git, `uv`) scope that state via env vars or `cwd`
 
 CI's clean environment surfaces ambient-state dependencies loudly — a test that passes locally but fails in CI with "JSONDecodeError: Expecting value" or similar is almost always a fixture gap, not a flake.
 
@@ -166,12 +166,12 @@ A change is driven through its test: locate or write the test first, confirm it 
 
 Two concrete benefits specific to this workflow:
 
-- **Verification runs through an already-allowlisted path.** The test suite (`bin/project-run tests`, `pytest`, `ocd-run check`) is covered by existing permission patterns. Ad-hoc verification (`python -c "..."`, one-off bash pipelines, `VAR=$(...)` chains) frequently doesn't match allowlist patterns cleanly and halts for manual approval. Test-first converts unapproved verification into approved verification.
+- **Verification runs through an already-allowlisted path.** The test suite (e.g., `bin/project-run tests`, `pytest`, `ocd-run check`) is covered by existing permission patterns. Ad-hoc verification (e.g., `python -c "..."`, one-off bash pipelines, `VAR=$(...)` chains) frequently doesn't match allowlist patterns cleanly and halts for manual approval. Test-first converts unapproved verification into approved verification.
 - **The implementation can't ratify itself.** A test written after implementation tends to assert what the code happens to do rather than what the spec demands — if the implementation has a subtle bug, the after-the-fact test often encodes the bug as "correct."
 
 ### When Driving Applies
 
-- Adding a new callable (function, method, CLI verb, MCP tool, hook handler)
+- Adding a new callable (e.g., function, method, CLI verb, MCP tool, hook handler)
 - Modifying behavior of an existing callable — return values, error paths, side effects
 - Fixing a bug where you'd want a regression guard
 - Changing a round-trip-able format — parse ↔ serialize, schema, protocol
@@ -217,11 +217,11 @@ Every callable surface a consumer invokes — CLI verb, subcommand, hook handler
 - A callable with zero test references is a missing test, not a "simple enough" exemption
 - Untested callables accumulate rot — the next change breaks them silently because nothing fails
 - Required flags must have at least one test path exercising them
-- Boolean flags that change behavior meaningfully (destructive `--force`, mode-switching flags) require their own test path; boolean flags that only affect output ceremony (`--quiet`, `--no-color`) are covered transitively by flagless invocations
+- Boolean flags that change behavior meaningfully (e.g., destructive `--force`, mode-switching flags) require their own test path; boolean flags that only affect output ceremony (e.g., `--quiet`, `--no-color`) are covered transitively by flagless invocations
 
 **Crawlable inventory.** Coverage is decidable from the repository:
 
-1. List every callable — CLI verbs (argparse in `__main__.py`), hook handlers (entries in `hooks.json`), skill slash commands (`SKILL.md` files), MCP tools (tool registrations), project-level scripts (`bin/`, `scripts/`)
+1. List every callable — CLI verbs (argparse in `__main__.py`), hook handlers (entries in `hooks.json`), skill slash commands (`SKILL.md` files), MCP tools (tool registrations), project-level scripts (e.g., `bin/`, `scripts/`)
 2. For each callable, grep test files for an invocation
 3. Callables with zero invocations are coverage gaps
 
@@ -246,7 +246,7 @@ For any callable or deterministic component, ask:
 
 1. Does the callable have at least one test? If no: write one — the test kind is your choice per the rules below, but untested callables are the first gap to close.
 2. If deterministic:
-    1. If contract agents depend on (output format, exit codes, help text): snapshot test
+    1. If contract agents depend on (e.g., output format, exit codes, help text): snapshot test
     2. If invariants exist (properties that must hold for all inputs): property test
     3. If idempotent by design: test idempotency explicitly
     4. If security boundary: test exhaustively with adversarial cases

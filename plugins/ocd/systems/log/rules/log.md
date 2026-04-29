@@ -21,7 +21,7 @@ First decide whether to log at all:
 |------|------|-------------|
 | decision | reference | Non-obvious choice where alternatives were considered and rejected |
 | pattern | reference | Reusable workflow shape, methodology, or architectural template |
-| research | reference | Long-form investigation of a subject (ecosystem, population of artifacts, design space) backed by per-entity samples |
+| research | reference | Long-form investigation of a subject (e.g., ecosystem, population of artifacts, design space) backed by per-entity samples |
 | friction | queue | Gap between how a process should work and how it actually works — workflow-level, not artifact-level |
 | problem | queue | Concrete defect in an artifact — wrong output, broken invariant, incorrect behavior |
 | idea | queue | Exploratory idea, future work, or improvement suggestion |
@@ -43,7 +43,7 @@ log-role: queue
 ---
 ```
 
-This is the machine-readable source of truth — tools and scripts scanning the log system (cleanup verbs, review reports, lifecycle enforcement) read `logs/<type>/_template.md` frontmatter to determine how to treat entries of that type. The prose table above is the human-scannable view; the `log-role` field is authoritative.
+This is the machine-readable source of truth — tools and scripts scanning the log system (e.g., cleanup verbs, review reports, lifecycle enforcement) read `logs/<type>/_template.md` frontmatter to determine how to treat entries of that type. The prose table above is the human-scannable view; the `log-role` field is authoritative.
 
 ## Entry Format
 

@@ -38,9 +38,9 @@ Other entry-point files at project root follow the same case convention when a p
 
 **Lowercase — content within a structure:**
 
-- Convention, rule, and pattern templates (`design-principles.md`, `architecture-md.md`, `claude-marketplace.md`) — content *of* the governance system
+- Convention, rule, and pattern templates (e.g., `design-principles.md`, `architecture-md.md`, `claude-marketplace.md`) — content *of* the governance system
 - Log entries under `logs/<type>/` — content *of* the logs system
-- Component files extracted from a skill's workflow (`_pack.md`, `_open.md`)
+- Component files extracted from a skill's workflow (e.g., `_pack.md`, `_open.md`)
 - Working state files (`state.md`) and audit artifacts that aren't entry points
 - Python files (`.py`) and other code — standard language conventions apply
 
@@ -50,7 +50,7 @@ The rule matches established ecosystem conventions (GitHub's `LICENSE`/`CHANGELO
 
 A subsystem earns its own `README.md` and `ARCHITECTURE.md` when it has substantial internal structure — multiple components, its own schema, its own public interface beyond a single entry point. Libraries, plugins, and substantive services fit this category.
 
-Thin systems — a skill whose `SKILL.md` is its complete operational reference, a thin MCP server adapter over a domain library, a single-file script — do not require their own `README.md` and `ARCHITECTURE.md`. Their purpose is owned at their natural doc location (SKILL.md frontmatter description, module-level docstring, file header) and propagated to the parent's overview.
+Thin systems — a skill whose `SKILL.md` is its complete operational reference, a thin MCP server adapter over a domain library, a single-file script — do not require their own `README.md` and `ARCHITECTURE.md`. Their purpose is owned at their natural doc location (e.g., SKILL.md frontmatter description, module-level docstring, file header) and propagated to the parent's overview.
 
 Purpose statement propagation: every subsystem — whether it has its own docs or consolidates into the parent — owns its purpose statement at one canonical location. Parent documentation quotes from the canonical location rather than independently describing the subsystem, keeping the parent in sync when the subsystem evolves. The canonical locations:
 

@@ -45,11 +45,11 @@ Use `@dataclass` for value objects that group related fields. Prefer over plain 
 
 Use `pathlib.Path` throughout:
 
-- Function parameters that represent filesystem paths accept `Path`, not `str` — push `str`-to-`Path` conversion to process boundaries (CLI argument parsing, environment variables, subprocess interfaces)
+- Function parameters that represent filesystem paths accept `Path`, not `str` — push `str`-to-`Path` conversion to process boundaries (e.g., CLI argument parsing, environment variables, subprocess interfaces)
 - Functions that return filesystem paths return `Path`
 - Use `/` operator for path construction, not string concatenation or `os.path.join()`
-- Use `Path` methods (`resolve()`, `expanduser()`, `is_absolute()`, `parents`) over `os.path` equivalents
-- Exception: pattern-matching interfaces (glob patterns, regex on paths) operate on `str` representations since they match text, not filesystem objects
+- Use `Path` methods (e.g., `resolve()`, `expanduser()`, `is_absolute()`, `parents`) over `os.path` equivalents
+- Exception: pattern-matching interfaces (e.g., glob patterns, regex on paths) operate on `str` representations since they match text, not filesystem objects
 - When user input is interpolated into file paths, validate containment with `Path.is_relative_to()` to prevent path traversal
 
 ### Project, Plugin, and Data Directory Resolution
@@ -106,14 +106,14 @@ skill-name/
 
 ### Standard Internal Module Types
 
-- `_constants.py` — shared configuration values (thresholds, ordering lists, magic numbers) used across module files; create when constants are shared between parent module and CLI or between multiple internal modules
+- `_constants.py` — shared configuration values (e.g., thresholds, ordering lists, magic numbers) used across module files; create when constants are shared between parent module and CLI or between multiple internal modules
 - `_helpers.py` — pure utility functions with no dependency on module state; functions take data in and return data out; create when utility functions are shared across multiple files in the package
-- `_init.py` — initialization and status logic; contains `init()` for infrastructure setup and `status()` for health checks; CLI exposes these as `init` and `status` subcommands; standard for any package that requires infrastructure (database, deployed files, configuration). Full interface contract below in *Init/Status Contract*
-- `_{domain}.py` — focused on single functional domain; named for what it does (`_parser.py`, `_storage.py`, `_formatter.py`); create when a functional domain within a module has clear boundaries and its functions are primarily called by each other or by the parent facade
+- `_init.py` — initialization and status logic; contains `init()` for infrastructure setup and `status()` for health checks; CLI exposes these as `init` and `status` subcommands; standard for any package that requires infrastructure (e.g., database, deployed files, configuration). Full interface contract below in *Init/Status Contract*
+- `_{domain}.py` — focused on single functional domain; named for what it does (e.g., `_parser.py`, `_storage.py`, `_formatter.py`); create when a functional domain within a module has clear boundaries and its functions are primarily called by each other or by the parent facade
 
 ### Init/Status Contract
 
-Packages that declare infrastructure (database, deployed files, configuration) implement `init()` and `status()` in a `_init.py` internal module. The functions follow a deterministic contract so the plugin framework can aggregate outputs across every init/status-capable package in the plugin.
+Packages that declare infrastructure (e.g., database, deployed files, configuration) implement `init()` and `status()` in a `_init.py` internal module. The functions follow a deterministic contract so the plugin framework can aggregate outputs across every init/status-capable package in the plugin.
 
 **Interface.**
 
@@ -265,7 +265,7 @@ Shared fixtures live in `conftest.py` at the appropriate directory level — the
 
 **Test method names state what is verified.** Use descriptive names like `test_prefix_attack_blocked`, `test_cycle_detection_raises`, `test_empty_input_returns_zero`. The reader of a failure output should understand what broke from the test name alone.
 
-Fixtures provide isolated test state (temp directories, databases, environment variables). Prefer `tmp_path` and `monkeypatch` builtins over manual setup/teardown.
+Fixtures provide isolated test state (e.g., temp directories, databases, environment variables). Prefer `tmp_path` and `monkeypatch` builtins over manual setup/teardown.
 
 ### Git Worktree Fixtures
 
@@ -273,7 +273,7 @@ Integration tests requiring git worktree isolation (see testing convention) use 
 
 - Session-scoped fixture in `conftest.py` creates and tears down the worktree
 - Fixture yields the worktree path
-- Per-test setup/teardown handles test-specific state (temp directories, staged files) within the worktree
+- Per-test setup/teardown handles test-specific state (e.g., temp directories, staged files) within the worktree
 - `conftest.py` in the integration test directory owns the fixture
 
 ## Post-Refactor Cleanup

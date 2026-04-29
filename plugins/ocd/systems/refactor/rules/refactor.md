@@ -24,7 +24,7 @@ Prefer `Edit` directly when the transformation is:
 
 - A single-file change
 - Fewer than five call sites, all visible in current context
-- A semantic refactor that isn't mechanical substitution (extracting a function, changing a signature, introducing a wrapper)
+- A semantic refactor that isn't mechanical substitution (e.g., extracting a function, changing a signature, introducing a wrapper)
 
 The workflow overhead only pays off when the change is wide enough that manual edits risk missing a site or re-introducing a false positive.
 

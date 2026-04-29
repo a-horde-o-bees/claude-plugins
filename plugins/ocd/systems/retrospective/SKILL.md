@@ -1,6 +1,6 @@
 ---
 name: retrospective
-description: Wrap a session by surfacing patterns, friction, ideas, decisions, and other observations worth persisting before context goes stale. Walks the session, classifies candidates against each log type's `_template.md`, flags refinements to existing entries, surfaces user-memory candidates, and presents drafts for explicit user review. Nothing is written without acceptance.
+description: Wrap a session by first surfacing open threads — items raised but not yet dispositioned — so the user can act, log, or accept-as-is before retrospective walks for keepers. Then surfaces patterns, friction, ideas, decisions, refinements to existing entries, and user-memory candidates worth persisting before context goes stale. Nothing is written without explicit acceptance.
 argument-hint: ""
 allowed-tools:
   - Read
@@ -16,17 +16,31 @@ Active reflection at session end — surface patterns, friction, ideas, decision
 
 ## Process Model
 
-Three passes, in order:
+Four passes, in order. The first runs interactively before the others; the rest gather candidates that batch-present at the end.
 
-1. **Type-aligned walk** — for each log type, read its `_template.md`, then surface session content matching its `What Qualifies` criteria. Same walk asks: does anything from the session sharpen an *existing* entry of this type?
-2. **Memory walk** — separate from logs, surface user-scoped observations (role, preferences, validated approaches, project-level context).
-3. **What-else pass** — open-ended; capture observations that didn't fit any type. May signal a new log type, conversational feedback, or just shared context worth flagging.
+1. **Open threads pass** — surface items raised in the session that haven't been acted on or explicitly dispositioned. For each, the user picks one of three actions: *act now* (do the work before continuing), *log as <type>* (the thread becomes a candidate for the type-aligned walk), or *accept as-is* (surface only, no log, no further work). Runs first because thread dispositions may generate work that affects later passes — completing an open thread might surface its own decisions, ideas, or patterns that the type-walk will then catch.
+2. **Type-aligned walk** — for each log type, read its `_template.md`, then surface session content matching its `What Qualifies` criteria. Same walk asks: does anything from the session sharpen an *existing* entry of this type? Picks up "log as <type>" threads from pass 1 alongside session-discovered candidates.
+3. **Memory walk** — separate from logs, surface user-scoped observations (role, preferences, validated approaches, project-level context).
+4. **What-else pass** — open-ended; capture observations that didn't fit any type. May signal a new log type, conversational feedback, or just shared context worth flagging.
 
-Each pass produces draft candidates. All drafts batch-present at the end; the user accepts/edits/rejects per item. Nothing is written without explicit acceptance.
+Passes 2-4 produce draft candidates that batch-present at the end; the user accepts/edits/rejects per item. Pass 1 is interactive throughout — dispositions resolve before later passes start. Nothing is written without explicit acceptance.
 
 ## Reflection Prompts
 
-The active prompts that produce non-obvious candidates. Apply during the type-aligned walk, plus the cross-cutting prompts at the end.
+The active prompts that produce non-obvious candidates. The open-threads prompts run first and interactively; the rest run during the type-aligned walk plus the cross-cutting prompts at the end.
+
+### Open threads
+
+These look for **gaps in disposition** — things that were raised in the session but never received a yes/no/defer. Distinct from the type-aligned prompts, which look for content worth keeping. An open thread might or might not produce a log entry; the question is whether it has a disposition at all.
+
+- What got raised in this session that hasn't been acted on or explicitly deferred?
+- What scope-broadening question came up but didn't get a yes/no? ("Should we also check X?", "Does this apply to Y too?")
+- What observation was noted in passing without a disposition (act, defer, accept-as-out-of-scope)?
+- What "we should also..." went unanswered?
+- What follow-up was implied by a pivot or reframing but never explicitly committed to?
+- What review or audit was started but only partially completed?
+
+For each thread surfaced, the user chooses: *act now* (work happens before continuing), *log as <type>* (becomes a candidate in the type-walk batch), or *accept as-is* (surfaced for awareness, no log, no work).
 
 ### Per log type
 
@@ -60,26 +74,38 @@ The active prompts that produce non-obvious candidates. Apply during the type-al
 ```
 1. Read each `logs/<type>/_template.md` in the project — these are the qualifying criteria for classification
 2. List existing entries per type (Glob `logs/<type>/*.md` excluding `_template.md`) — so refinement candidates can be checked against actual content
-3. Apply the type-aligned walk:
+
+3. Open threads pass (interactive):
+    1. Apply the Open threads prompts against the session — produce {open-threads} list, each with a one-sentence description of the unaddressed thread
+    2. If {open-threads} is empty: skip to step 4
+    3. Present {open-threads} to the user as a numbered list
+    4. For each thread, ask user to pick: *act now* / *log as <type>* / *accept as-is*
+    5. Apply dispositions in order:
+        1. *act now*: do the work the thread implies before continuing — may pull in subsequent tool calls, file edits, etc. The thread is resolved in-session
+        2. *log as <type>*: append a draft entry to {new-candidates} for type {type}; the type-aligned walk batch-presents it alongside session-discovered candidates
+        3. *accept as-is*: surface the thread in the final report's "surfaced-only" section; no log, no work
+    6. Once dispositions are applied, proceed to subsequent passes — completed *act now* work may itself surface decisions/ideas/patterns the type walk picks up
+
+4. Type-aligned walk:
     1. For each {type} in {decision, friction, idea, pattern, problem, research}:
         1. Apply that type's reflection prompt against the session
         2. {new-candidates} += matching observations as new-entry drafts
         3. For each existing entry of {type}: did the session sharpen it? If yes: {refinement-candidates} += diff draft
-4. Apply cross-cutting prompts — surface anything caught at the type-walk level missed
-5. Apply memory-candidate prompts — gather user-scoped observations as memory drafts
-6. Apply what-else prompt — gather off-axis observations
-7. Present all candidates as a single batch:
+5. Apply cross-cutting prompts — surface anything caught at the type-walk level missed
+6. Apply memory-candidate prompts — gather user-scoped observations as memory drafts
+7. Apply what-else prompt — gather off-axis observations
+8. Present all candidates as a single batch:
     - For each: type / target path / rationale (one sentence) / draft content
     - Refinements show diff preview, not just prose
     - Memory candidates show frontmatter + body
     - What-else items show observation + proposed disposition
-8. For each candidate, ask user: accept / edit / reject
-9. Apply accepted candidates:
+9. For each candidate, ask user: accept / edit / reject
+10. Apply accepted candidates:
     1. New log entries: read `logs/<type>/_template.md` for structure, then Write `logs/<type>/<title>.md`
     2. Refinements: Edit the existing entry per draft
     3. Memory candidates: Write to user memory at `~/.claude/projects/<project-id>/memory/<name>.md` and update `MEMORY.md` index
     4. What-else: present to user as-is — no auto-write; user decides whether to capture later
-10. Return to caller: list of items written, refined, captured-to-memory, or surfaced-only — with their destinations
+11. Return to caller: list of items written, refined, captured-to-memory, or surfaced-only — with their destinations. Include open-threads outcomes (what was acted on, what was logged, what was accepted as-is)
 ```
 
 ## Rules

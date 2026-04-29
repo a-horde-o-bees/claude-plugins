@@ -28,7 +28,7 @@ Audit skills follow skill-md.md Body Structure, promoting sections to Prescribed
 
 ## Naming
 
-Directory: `audit-<subject>/`. The suffix names what the skill audits — typically a target type (governance, skill, documentation) for narrow audits, or a stance (static, runtime) when the audit spans multiple target types.
+Directory: `audit-<subject>/`. The suffix names what the skill audits — typically a target type (e.g., governance, skill, documentation) for narrow audits, or a stance (e.g., static, runtime) when the audit spans multiple target types.
 
 ## Holistic Reading
 

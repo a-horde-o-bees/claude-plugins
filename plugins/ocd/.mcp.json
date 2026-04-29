@@ -6,6 +6,10 @@
       "env": {
         "DB_PATH": ".claude/ocd/navigator/navigator.db"
       }
+    },
+    "transcripts": {
+      "command": "${CLAUDE_PLUGIN_DATA}/venv/bin/python3",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/run.py", "systems.transcripts.server"]
     }
   }
 }

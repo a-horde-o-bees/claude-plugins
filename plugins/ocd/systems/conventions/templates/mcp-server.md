@@ -7,48 +7,83 @@ governed_by:
 
 # MCP Server Conventions
 
-Tool design, server architecture, and data conventions for MCP servers exposed as plugin tools via FastMCP. Each server is a single module under `systems/<name>/server.py` that imports a domain library from `systems/<name>/` and exposes its functions as MCP tools. Library code (facades, internal modules, CLIs) under `systems/<name>/` is governed by general Python conventions, not this one.
+Tool design, server architecture, and data conventions for MCP servers exposed as plugin tools via FastMCP. Each server is a single module under `systems/<name>/server.py` that imports a domain library from `systems/<name>/` and exposes its functions as MCP tools. Library code (e.g., facades, internal modules, CLIs) under `systems/<name>/` is governed by general Python conventions, not this one.
 
 ## Tool Naming
 
 Tool names follow `object_action` format — the domain object first, then the operation. Agents discover related tools by scanning for a shared prefix. Names map to the server's internal module structure: tools backed by `_skills.py` are prefixed `skills_`, tools backed by `_references.py` are prefixed `references_`.
 
-Examples: `governance_match`, `governance_list`, `paths_get`, `skills_resolve` — not `list_governance`, `describe_path`, `resolve_skill`.
+Examples: `paths_query`, `paths_upsert`, `skills_query`, `governance_match`.
+
+The CLI counterpart for each MCP tool uses the same name with the underscore replaced by a space (e.g. `paths_query` ↔ `paths query`). See `cli.md` for the noun-verb hierarchy that flows from this alignment.
 
 ## Standardized Verbs
 
-Servers that manage collections of records use a standard verb set. Each verb has fixed semantics — agents learn the pattern once and apply it across servers.
+Reads use a single verb per concept. Writes split by operation semantics. Each verb has fixed semantics — agents learn the pattern once and apply it across servers.
+
+### Read verb
+
+| Verb | Operation |
+|------|-----------|
+| `query` | All retrieval — primary key lookup, enumeration, structural filter, text/keyword search. Input mode is selected by parameters; the tool dispatches internally. See *Input Mode Parameters*. |
+
+One read tool per concept covers every retrieval shape. Splitting reads into separate tools per input mode (`get`, `list`, `search`) fragments the agent's tool surface without semantic gain — the input distinction is an implementation concern, not a tool-selection concern.
+
+### Write verbs
 
 | Verb | Operation | Returns |
 |------|-----------|---------|
-| `add` | Create new entry | Created entry with assigned id |
-| `list` | Retrieve collection metadata | Compact entries with `has_detail` flag, without content |
-| `get` | Retrieve full entry | Complete entry including `detail_md` content |
-| `search` | Find entries by pattern | Matching entries (regex across summary and detail) |
-| `update` | Modify existing entry | Updated entry |
-| `remove` | Delete entry | Confirmation |
+| `upsert` | Create or update an entry by primary key | Created/updated entry |
+| `set` | Replace a value (scalar or whole collection) | Stored value |
+| `update` | Mutate fields on existing entry; supports multiple changes per call (e.g. set + clear in one transaction) | Per-field results |
+| `clear` | Null out a value while preserving the row (for annotation columns) | List of cleared keys |
+| `remove` | Delete an entry | Confirmation |
 
-Metadata operations (`list`, `search`) return compact representations — enough to identify and select. Full-read operations (`get`) include complete content. This separation prevents loading detail content the agent doesn't need.
+Multiple write verbs per concept are normal — different mutation semantics deserve different tools. `set` replaces; `update` mutates; `clear` nulls; `remove` deletes; `upsert` creates-or-updates. Collapsing these into a single tool with a `mode=` flag is a footgun — the agent loses the clear semantic boundary between "I'm changing this" and "I'm deleting this," and review/safety differ across these intents.
 
-### Domain-Specific Operations
+### Domain-specific operations
 
-When a server's domain requires operations that don't map to the standard verbs, use descriptive names that convey the operation's purpose. The `object_action` naming convention still applies — the operation name replaces a standard verb.
+When a concept's domain requires operations that don't reduce to query/upsert/set/update/clear/remove, use descriptive names that convey the operation's purpose. The `object_action` naming convention still applies — the operation name replaces a standard verb.
 
-Examples from navigator: `governance_match` (match files to conventions), `governance_order` (topological sort), `skills_resolve` (locate a skill by name), `scope_analyze` (composite analysis across references, sizes, and governance). These are domain operations, not CRUD — they combine data or apply domain logic that doesn't reduce to add/get/update/remove.
+Examples: `paths_undescribed` (deepest dir with undescribed children), `references_map` (build reference DAG from input paths), `scope_analyze` (composite of references + sizes + governance), `governance_order` (topological sort), `schema_describe` (live schema introspection). These are domain operations encoding business logic that doesn't fit standard CRUD.
 
-A server may mix standard verbs with domain-specific operations. The friction server uses all six standard verbs plus `friction_systems_list` (aggregate view by system). Standard verbs handle the individual-record lifecycle; domain operations handle cross-cutting queries.
+A server may mix standard verbs with domain-specific operations. Standard verbs handle the individual-record lifecycle; domain operations handle composites and cross-cutting queries.
+
+## Input Mode Parameters
+
+The unified `_query` tool absorbs multiple retrieval modes via optional parameters. The convention:
+
+| Input | Purpose | Example |
+|-------|---------|---------|
+| Primary key list | PK lookup (1 or more) | `paths=["a/b", "c/d"]` |
+| Scope + structural filters | Enumeration restricted to scope | `target_path=".", patterns=["*.py"]` |
+| Filter criteria | Structural query by typed fields | `project="X", from_ts="2026-01-01"` |
+| Text/keyword | Substring or fuzzy match | `text="authentication"` |
+
+Multiple inputs may combine within one call. The tool description must specify precedence when modes overlap (e.g. does `paths=[...]` filter the named paths or override a `text=...` match?). Mutex inputs that don't compose meaningfully should error rather than silently pick one.
+
+Output verbosity is controlled via a `show` parameter — a list of opt-in field buckets. Default output is lean (small, fast, common case); the agent opts into heavier or domain-specific fields when needed.
+
+| Pattern | Example |
+|---------|---------|
+| Default lean output | `sessions_query()` returns `{project, session, n_exchanges, n_purposed}` |
+| Opt-in detail | `sessions_query(show=["timeframes", "bytes"])` adds `first_ts`, `last_ts`, `bytes` |
+| Multiple buckets union | `exchanges_query(show=["messages", "metrics"])` adds chat content + full metric hierarchy |
+| Hierarchical buckets | `exchanges_query(show=["breakdown"])` adds `active_s` + `user_s` + `agent_s`; `["metrics"]` is the superset adding `total_s` + `idle_s` |
+
+Bucket names are validated against an allowed set; unknown values raise a validation error. The bucket vocabulary is documented in the tool description and discoverable via tool introspection. See `transcripts/server.py` for the canonical example.
 
 ## Markdown Detail Storage
 
-Servers that store entries with optional rich content use a two-tier pattern: a summary for scanning, and an optional markdown blob for detail.
+Servers that store entries with optional rich content use a two-tier pattern: a summary for scanning, and an optional markdown blob for detail. Delivered through the unified `_query` tool with an opt-in `show` bucket — not through separate read tools.
 
 | Field | Purpose | Present in |
 |-------|---------|------------|
-| `summary` | One-line description for scanning | All responses |
-| `detail_md` | Optional markdown content for extended context | `get` responses only |
-| `has_detail` | Boolean flag indicating detail_md exists | `list` responses |
+| `summary` | One-line description for scanning | All `_query` responses |
+| `detail_md` | Optional markdown content for extended context | `_query` responses when `show=["detail"]` |
+| `has_detail` | Boolean flag indicating `detail_md` exists | All `_query` responses (so the agent knows when to opt in) |
 
-This separation means `list` responses stay compact — the agent sees what exists and decides whether to `get` the full content.
+This separation means default `_query` responses stay compact — the agent sees what exists and `has_detail` signals when to add `show=["detail"]` for the full content.
 
 Update behavior for `detail_md`: pass `None` to leave unchanged, pass empty string `""` to clear to null.
 
@@ -135,6 +170,17 @@ Domain libraries live under `systems/<name>/`; MCP servers live under `systems/<
 - Server module is a presentation layer — no business logic, no database schema, no file I/O beyond what tool serialization requires
 - Database paths and configuration via environment variables, not hardcoded paths
 - Server module docstring states the server's domain scope and transport
+
+### Library and Tool Naming Are Independent
+
+Library function names do not need to mirror MCP tool names 1:1. The mapping is many-to-many:
+
+- One library function may back multiple MCP tools (e.g. a single `_scope.exchanges()` consumed by both a curated `exchanges_query` tool and a future analytics tool)
+- One MCP tool may compose multiple library functions (e.g. `scope_analyze` calls `references_map`, file-size helpers, and `governance_match` and assembles the result)
+
+Library function names follow Python ergonomics — the names that read naturally inside the package and at call sites. MCP tool names follow `object_action` for agent-facing discoverability. The two conventions are independent because they serve different consumers (Python callers vs agent tool selection).
+
+When reading per-target rectification work, treat the library and MCP surfaces as parallel renames to evaluate, not a single coupled rename. Caller fan-in (who else calls this library function?) governs whether a library rename is even needed when the MCP tool renames.
 
 ## Server and Library Layout
 
