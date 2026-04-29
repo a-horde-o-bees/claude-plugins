@@ -1,28 +1,27 @@
 ---
 name: checkpoint
-description: Commit, auto-init, push current branch, and (on main) refresh marketplace, update plugins, dispatch async CI gate, recommend restart
+description: Bundle the development checkpoint cycle for the current branch — commit (via /ocd:git), auto-init to rectify deployed templates, derivative commit, push, and CI watch. On main, also refresh marketplace, update plugins, and recommend a session restart so the cached plugin install picks up the new code.
 allowed-tools:
   - Skill
-  - Agent
-  - Bash(claude plugins *)
   - Bash(python3 scripts/auto_init.py)
+  - Bash(claude plugins *)
   - Bash(git status *)
   - Bash(git add *)
   - Bash(git commit *)
-  - Bash(git rev-parse *)
   - Bash(git branch *)
-  - Bash(gh run *)
 ---
 
 # /checkpoint
 
-Bundle the development checkpoint cycle for the current branch — commit, rectify deployed state against current templates, commit derivatives, push. When the current branch is `main`, also refresh marketplace, update plugins, dispatch the async CI gate, and recommend a restart so the cached plugin install picks up the new code. Sandbox and feature branches stop after the push because marketplace, cache, and CI integration only apply to main.
+Bundle the development checkpoint cycle for the current branch — commit, rectify deployed state against current templates, commit derivatives, push, watch CI. When the current branch is `main`, also refresh marketplace, update plugins, and recommend a restart so the cached plugin install picks up the new code. Sandbox and feature branches stop after the CI gate because marketplace, cache, and restart integration only apply to main.
+
+The generic commit + push + CI steps are delegated to `/ocd:git` verbs (`commit`, `push`, `ci`). Project-specific layers — `auto_init.py` rectification, marketplace refresh, plugin update, restart recommendation — sit on top of those calls. Other projects can use `/ocd:git checkpoint` directly when they don't need these layers.
 
 ## Workflow
 
 1. {branch} = bash: `git branch --show-current`
 
-> Branch awareness — checkpoint runs the same commit/auto-init/push cycle on any branch. Only the post-push integration steps (marketplace refresh, plugin update, CI gate, restart recommendation) are scoped to main, because those steps depend on the marketplace cache fetching from main tags and on CI workflows that fire for main pushes.
+> Branch awareness — checkpoint runs the same commit/auto-init/push/ci cycle on any branch. Only the post-push integration steps (marketplace refresh, plugin update, restart recommendation) are scoped to main, because those steps depend on the marketplace cache fetching from main tags and on the local plugin cache being a copy of what main publishes.
 
 2. Commit — skill: `/ocd:git commit`
 3. Auto-init — bash: `python3 scripts/auto_init.py`
@@ -36,42 +35,27 @@ Bundle the development checkpoint cycle for the current branch — commit, recti
     4. Stage those specific paths: bash: `git add <path1> <path2> ...`
     5. Commit: bash: `git commit -m "Deployed — rectify <brief summary derived from rectified paths>"` — message enumerates or summarizes what changed
 5. Push — skill: `/ocd:git push --branch {branch}`
+6. CI gate — skill: `/ocd:git ci --branch {branch}`
 
-> Main-only integration — marketplace refresh and plugin update fetch from main; running them after a sandbox push pulls stale main into cache while the sandbox is the active workspace. CI gate against origin/main is meaningless from a non-main push. Skip cleanly when {branch} is not main.
+> /ocd:git ci handles synchronous-vs-async dispatch and returns {ci-status} ∈ {passed, failed, dispatched, no-runs}. Non-main branches typically resolve to no-runs (CI workflows scoped to main); the gate runs uniformly so the user gets the answer when CI does fire on a sandbox branch.
 
-6. If {branch} is `main`:
+> Main-only integration — marketplace refresh and plugin update fetch from main; running them after a sandbox push pulls stale main into cache while the sandbox is the active workspace. Restart recommendation only makes sense when the cached plugin actually changed (i.e. main was pushed). Skip cleanly when {branch} is not main.
+
+7. If {branch} is `main`:
     1. Marketplace refresh — bash: `claude plugins marketplace update a-horde-o-bees`
     2. Update plugin — bash: `claude plugins update ocd@a-horde-o-bees`
-    3. CI gate (async):
-
-> Dispatch a background agent to watch GitHub Actions and return the aggregated outcome. Foreground checkpoint returns immediately after dispatch; the session receiving the agent's task-completion result reports the outcome inline as text. Runs already completed at dispatch time are reported synchronously so the foreground still sees stable-state results.
-
-        1. {sha} = bash: `git rev-parse origin/main`
-        2. bash: `gh run list --branch main --limit 5 --json databaseId,headSha,conclusion,status,workflowName,url`
-        3. Parse the JSON output; identify runs whose `headSha` matches {sha}
-        4. If no matching runs found: Set {ci-status} = `"no runs scheduled for {sha} yet — check manually via gh run list"` and proceed to Report
-        5. {watch-ids} = run IDs with `status` in (`in_progress`, `queued`)
-        6. If {watch-ids} is empty:
-            1. {ci-status} = synchronous aggregate — all `success` → `passed`; any `failure` → `failed` (with workflow name + URL); any other conclusion → surface as-is
-        7. Else:
-            1. async Spawn: Call: `_ci_watch.md` ({sha} = {sha}, {run-ids} = {watch-ids})
-            2. {ci-status} = `"dispatched for runs {watch-ids} — notification on completion"`
 
 ### Report
 
 - Branch: {branch}
-- Commits pushed: count and branch
+- Commits pushed: count and branch (from /ocd:git push)
 - Auto-init output: deployed file changes, orphans removed, DB migration flags if any
+- CI status from /ocd:git ci (passed, failed, dispatched, or no-runs)
 - If {branch} is `main`:
     - Plugins updated: versions
-    - CI status for {sha}:
-        - **Passed** (all runs were already complete at dispatch time) — list the workflows that ran successfully
-        - **Failed** (some run was already complete + failed at dispatch time) — flag prominently with workflow name + run URL; recommend investigating before further work
-        - **Dispatched** (runs were still in progress at dispatch time) — report the watched run IDs; the agent's task-completion result lands in the receiving session as text. No foreground wait.
-        - **No runs scheduled** — note that no workflows were triggered (or GitHub hadn't scheduled yet; manual recheck may be needed)
     - If commits were pushed AND CI passed (synchronous): recommend session restart (`/exit` then `claude --continue`)
     - If CI was dispatched (async): recommend waiting for the task-completion result before restart — the outcome lands as text in this session, so a restart before completion means manual `gh run list` recheck instead
     - If CI failed (synchronous): restart recommendation is still valid but investigating the CI failure comes first
-- Else: note that marketplace refresh, plugin update, CI gate, and restart recommendation are main-only and were skipped on this branch
+- Else: note that marketplace refresh, plugin update, and restart recommendation are main-only and were skipped on this branch
 - If nothing was pushed: checkpoint complete, no restart needed
 - If auto-init surfaced DB schema mismatches: flag the backup paths under `.claude/pre-sync/` and prompt the user to migrate before the next /checkpoint
