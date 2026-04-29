@@ -134,11 +134,11 @@ Mandatory sub-flows that run on every invocation stay inline regardless of size.
 
 ## Delegation
 
-Within skills, intelligent work delegation uses `Spawn:` exclusively. Tool calls (CLI scripts, bash commands) are not agent spawns and remain unrestricted. The skill executor applies user-directed corrections inline — no agent spawn needed for directed fixes.
+Within skills, intelligent work delegation uses `Spawn:` exclusively. Tool calls (e.g., CLI scripts, bash commands) are not agent spawns and remain unrestricted. The skill executor applies user-directed corrections inline — no agent spawn needed for directed fixes.
 
 ## File Enumeration
 
-Skills that operate on directories must use the `paths_list` MCP tool for file enumeration — never invent ad-hoc file listing (glob, `git ls-files`, agent judgment). Navigator applies project-wide exclude rules and traversal limits deterministically.
+Skills that operate on directories must use the `paths_list` MCP tool for file enumeration — never invent ad-hoc file listing (e.g., glob, `git ls-files`, agent judgment). Navigator applies project-wide exclude rules and traversal limits deterministically.
 
 ## User Interaction
 

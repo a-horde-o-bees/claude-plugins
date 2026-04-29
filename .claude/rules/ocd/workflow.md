@@ -20,7 +20,7 @@ Minimize agent count for ad-hoc work — each sub-agent independently loads cont
 
 ## Push Blocking
 
-Git push can be temporarily blocked for safe ad-hoc execution that might otherwise trigger a push (worktree-isolated evaluation, hook-tests that exercise git state). The block sets an invalid pushurl on `origin` — any push attempt fails loudly with `fatal: '/dev/null' does not appear to be a git repository`. Separate concern from testing discipline (`testing.md` covers that); Push Blocking is a safety envelope for execution that might push.
+Git push can be temporarily blocked for safe ad-hoc execution that might otherwise trigger a push (e.g., worktree-isolated evaluation, hook-tests that exercise git state). The block sets an invalid pushurl on `origin` — any push attempt fails loudly with `fatal: '/dev/null' does not appear to be a git repository`. Separate concern from testing discipline (`testing.md` covers that); Push Blocking is a safety envelope for execution that might push.
 
 - Block: `git config remote.origin.pushurl "file:///dev/null"`
 - Unblock: `git config --unset remote.origin.pushurl`

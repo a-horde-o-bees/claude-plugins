@@ -7,7 +7,7 @@ governed_by:
 
 # MCP Server Conventions
 
-Tool design, server architecture, and data conventions for MCP servers exposed as plugin tools via FastMCP. Each server is a single module under `systems/<name>/server.py` that imports a domain library from `systems/<name>/` and exposes its functions as MCP tools. Library code (facades, internal modules, CLIs) under `systems/<name>/` is governed by general Python conventions, not this one.
+Tool design, server architecture, and data conventions for MCP servers exposed as plugin tools via FastMCP. Each server is a single module under `systems/<name>/server.py` that imports a domain library from `systems/<name>/` and exposes its functions as MCP tools. Library code (e.g., facades, internal modules, CLIs) under `systems/<name>/` is governed by general Python conventions, not this one.
 
 ## Tool Naming
 

@@ -8,6 +8,8 @@ Foundational principles governing all artifacts, agent-user collaboration, and a
 
 When something goes wrong on multiple occasions, it likely represents a missing design principle or the need for a clarifying case bullet within an existing principle. Add accordingly so the principles prevent recurrence.
 
+Each **principle** is an umbrella concept that captures a coherent discipline. Multiple **case-bullets** under one principle express situation-specific applications of that discipline. Splitting happens at the discipline boundary — independent disciplines warrant separate principles; the same discipline applied at different moments produces multiple case-bullets under one principle. See *Trigger Specificity* for the independence test.
+
 Bullets within each principle use one of two forms:
 
 - **Declarative** — general guidance, recommendations, observations, or system-design statements that do not have a specific triggering moment.
@@ -46,12 +48,12 @@ Reveal information in layers — overview first, details on demand. Every level 
 
 Canonical guidance for how agents write descriptions of any artifact at any scale. A purpose statement tells a reader what something is and whether to go deeper — present at every structural boundary where a reader makes an include-or-skip decision, from a directory down to a single function.
 
-- When writing a description for any artifact (directory, file, section heading within a document, module docstring, class or function docstring, skill description, navigator entry, tool help text, frontmatter field): follow Purpose Statement guidance
+- When writing a description for any artifact (e.g., directory, file, section heading within a document, module docstring, class or function docstring, skill description, navigator entry, tool help text, frontmatter field): follow Purpose Statement guidance
 
 A purpose statement conveys:
 
 - **Scope** — what domain or responsibility the thing covers
-- **Role** — what kind of thing it is (business logic, CLI, config, convention, rule, section within a larger document, function in a module)
+- **Role** — what kind of thing it is (e.g., business logic, CLI, config, convention, rule, section within a larger document, function in a module)
 
 A purpose statement excludes:
 
@@ -78,16 +80,38 @@ Enforce correctness through structure, not documentation. When the system's stru
 - Structural and organizational decisions are deterministic — produce the same result regardless of who evaluates them
 - Before defining a skill's argument surface: use positional verbs for mutually-exclusive modes (one-of-N required) and flags for independent modifiers that combine freely. Flags for mutually-exclusive options permit invalid combinations like `--list --install`; positional verbs make one-of-N structurally impossible to violate
 
-## Verify Against Reality
+## Honesty
 
-Verify assumptions against system reality before acting — read what exists, validate current state, and check actual behavior so action proceeds on facts rather than guesses. The cost of verification is always lower than the cost of rework.
+Action and output stay tethered to verified evidence. Verify state before acting; verify claims against specific sources before stating them; bound conclusions to what was actually examined rather than universalizing from samples or asserting beyond the evidence. Compelling-sounding specifics from intuition or training data, and conclusions that extrapolate from a sample to a population, are reasoning failures — not stylistic choices — and they fail when probed. The cost of verification is always lower than the cost of acting on wrong facts or producing output that fails when someone interrogates it.
 
-- Before writing new functions: read existing implementations
+Action — verify before acting.
+
 - Before transforming data: validate current state
 - Before writing code that consumes an API: verify the return format
 - Before building on assumptions: verify with minimal tool calls
 - Before resuming mid-session skill work: verify current disk state matches expected state
 - After all file-modifying agents complete: review changes before presenting to user
+
+Claim verification — verify before stating.
+
+- Before making any quantitative claim in output: verify the number against its source. Never state "X years" or "N commits" or "M tests" from memory — check
+- Before making any performance, timing, memory, or other measurable-cost claim — even casually as part of an architectural argument: run the measurement. Approximations from intuition are easy to be wrong by 2-10x, and the wrong number drives wrong design decisions
+- Before stating ranking, market-position, or population claims about external tools, libraries, ecosystems, or registries: verify with a fetch or caveat the claim as memory ("from training data, may be stale"). Confident assertions about install bases, "most-pulled X," or "de-facto standard Y" must be backed by an authoritative source or marked as uncertain — never asserted from training data alone
+- Before claiming parity between two things (e.g., "my X is equivalent to their Y," "these patterns transfer"): name the specific bridge — what property is shared, what property differs — rather than asserting equivalence implicitly
+- Before using a phrase that has multiple industry interpretations: classify which interpretation applies to the actual work, and either use phrasing that disambiguates or explicitly note the interpretation in the surrounding context
+- When a specification (e.g., RFC, requirements doc, ticket, JD) gates on a specific claim: check whether the work literally meets the gate. If it doesn't, surface the gap in the decision-making, not in the final artifact
+- When reusing content across artifacts: re-verify the framing fits the new target; don't propagate a phrase from one context that overclaims in another
+- When backing off from a compelling-sounding claim to an honest one: preserve substance by adding specific evidence (e.g., measurements, citations, examples) rather than hedging with adverbs (e.g., "possibly," "somewhat," "relatively")
+- When applying a framework or taxonomy to existing artifacts: audit every artifact against the framework, not just new ones. Artifacts produced before the framework existed are the highest-risk category
+
+Claim scope — bound conclusions to what was examined.
+
+- "None of the 12 researched entities implement X" is a valid observation; "no system implements X" is not — it claims knowledge of the full landscape from a sample. Always state the scope of the search alongside the conclusion
+- Not finding something means the search did not surface it, not that it does not exist; state what was searched and what was not found, without concluding nonexistence
+- Findings reflect the entities examined, with whatever selection criteria, discovery paths, and depth limits shaped the sample; claims apply to the sample, not the population, unless the sample demonstrably covers the population
+- What has not been observed may still exist; default to "not yet found" rather than "does not exist"; the system's knowledge is incomplete by nature and assertions should reflect that
+- When summarizing findings from research: distinguish what was directly observed from what was inferred, and from what wasn't investigated at all. Absence of evidence is not evidence of absence
+- When listing examples in prose or parenthetical asides: signal non-exhaustiveness with "e.g.", ", etc.", or "..." so readers cannot mistake an illustrative list for a complete enumeration. Unqualified lists implicitly claim the items are the full set — if intent is illustrative, the marker is required; if intent is exhaustive, leave unmarked and let the prose carry the closure
 
 ## Confirm Shared Intent
 
@@ -130,6 +154,8 @@ One authoritative source for each concept. Derived artifacts validate against th
 - Tool implementations are authoritative for business logic; instructions reference tools by name
 - Describe current reality only; do not reference previous states, removed features, or change history
 - Rules and conventions are living context, not immutable constraints — flag conflicts and evaluate which should yield; during normal execution, follow rules without re-litigating
+- Scattered related content consolidates rather than repeating across locations — pick the canonical home and let other locations point at it (or remove the pointer entirely if the structure already implies the relationship)
+- Duplicate logic or documentation signals a need to reorganize — the duplication is the symptom; the missing canonical source is the cause
 
 ## Convention as Documentation
 
@@ -168,8 +194,7 @@ Completeness without verbosity. Every word must earn its place — if removing a
 - Include examples only when a rule is ambiguous without one
 - Examples are generic — use concepts, not project-specific names
 - Positive examples suffice — add counter-examples only when the rule is ambiguous without one
-- Scattered related content consolidates rather than repeating across locations
-- Duplicate logic or documentation signals a need to reorganize
+- Cross-references add maintenance burden — every pointer becomes a coupling that must be kept correct as either side evolves. Use them sparingly: each one earns its place against the future cost of keeping it accurate. The bar is highest in agent-facing artifacts (e.g., rules, principles, conventions) where the reader already has the full corpus loaded — explicit pointers between rules bloat without earning utility there. The bar is lower in user-facing documentation (e.g., READMEs, ARCHITECTURE files) where human readers do not carry the corpus in context, but sparing still applies. Coherence across artifacts is the responsibility of periodic holistic review, not mechanical pointer-everything-at-everything
 
 ## Trigger Specificity
 
@@ -177,18 +202,23 @@ Concepts trigger reliably only when they name a single mechanism. When one conce
 
 - A rule covering two failure modes through different mechanisms is actually two rules
 - A need that names two distinct concerns is two needs
-- A principle that bundles two disciplines is two principles when each requires a different action
-- Sharing a discipline does not justify sharing a concept; sharing a mechanism does
-- Test: would an agent encountering a situation know exactly which action to take? If not, the concept is too broad
+- A principle that bundles two **independent** disciplines is two principles. Disciplines are independent when each is coherent without the other — removing one doesn't leave the other incomplete. Two disciplines serving a shared umbrella concept (different facets of one core) live as case-bullets under one principle, not as separate principles
+- Independence test for principle splitting: "is principle A coherent without principle B?" If yes, they're independent and warrant separate principles. If removing one would leave the other incomplete or inconsistent, they're facets of one umbrella — keep them together with sharp case-bullets
+- Different application moments of the same discipline produce different **case-bullets**, not different **principles**. The "would an agent know which action to take?" test applies at the bullet level — does the trigger language make the action sharp? — not at the principle level
+- Sharing a discipline does not justify sharing a concept; sharing a mechanism does. (For rules and needs, mechanism is the splitting axis. For principles, the umbrella discipline is the unifying axis and case-bullets carry per-situation mechanisms.)
 - Before continuing when a rule should have triggered but did not: surface which rule was missed and what should have happened; proceed after user acknowledges
 
-## Reuse Before Create
+## Borrow Before Build
 
-Check what exists before building new. The best code is code you do not write. Existing implementations are tested, understood, and maintained — new implementations start with none of those properties.
+Before producing new code, abstractions, structures, or tools, examine what already exists — in the codebase, in the language standard library, in the framework, in the community ecosystem — and adopt or extend rather than invent. Novelty is justified only when continuity demonstrably can't carry the work, and the gap is named explicitly. Existing implementations are tested, understood, and maintained; new ones start with none of those properties. Conventional, maintained options exist for nearly every recurring problem.
 
-- Before writing a new function: search the codebase first
 - Adopt well-exercised tools and patterns over custom builds when they fulfill the purpose
 - Prefer composition of existing components over new abstractions for one-time operations
+- Before writing a new function: search the codebase first
+- Before designing a new abstraction or helper: ask what existing pattern in the codebase should this match — mirror the call shape, role split, and return type of the closest existing analog rather than designing in isolation
+- When two or more systems duplicate orchestration of existing primitives: extract the orchestration into a shared helper that mirrors the closest existing helper pattern; system declares, helper resolves
+- Before building a tool, library, or helper for a recurring problem (linting, formatting, parsing, CLI argument-handling, schema validation, retry logic, test fixtures, file-watching, etc.): check what the language standard library, framework, and community already provide; the conventional option is the default
+- Before introducing a non-conventional pattern, an unusual tool choice, or a custom abstraction with no community precedent: name what made the conventional option insufficient — the default is the ecosystem norm; deviations need affirmative justification, not silent adoption
 - Before proposing alternatives for missing capabilities: research existing solutions first, then explain the gap; proceed after user directs
 
 ## You Aren't Gonna Need It (YAGNI)
@@ -205,7 +235,7 @@ Design systems that can be interrupted and continued from any point. State is ex
 
 - Phase markers and history logs track progress through multi-step workflows
 - Persistent storage is the checkpoint — completed work survives interruption
-- State files use simple, inspectable formats (markdown status markers, JSONL logs)
+- State files use simple, inspectable formats (e.g., markdown status markers, JSONL logs)
 
 ## Composability
 
@@ -221,7 +251,7 @@ Operations are safely re-runnable — repeated execution converges to the same s
 
 - Init operations detect existing state and skip gracefully
 - Upsert over insert — handle the "already exists" case by design
-- Diff-based operations (dependency install, template sync) converge to the same state regardless of how many times they run
+- Diff-based operations (e.g., dependency install, template sync) converge to the same state regardless of how many times they run
 
 ## Agent-First Interfaces
 
@@ -232,7 +262,7 @@ The primary consumer of every tool, output, and error message is an agent. Desig
 - Output is structured and consistent — predictable markers, no decorative formatting
 - Tool descriptions state their purpose in terms an agent can match to a task
 - Instructions reference files by path, not by name — an agent should never need to search for a file
-- References to plugin skills use the qualified `/plugin:skill` form in every context — PFN `skill:` invocations, emitted strings, documentation, agent output, user-facing messages. Unqualified forms rely on the CLI router's namespacing fallback, which does not apply in other contexts (Skill tool, emitted strings, agent-produced docs). Qualified form is unambiguous everywhere and cannot collide across installed plugins. User-typed input at the CLI is not bound by this rule — the CLI router handles it — but anything the agent authors or emits qualifies
+- References to plugin skills use the qualified `/plugin:skill` form in every context — PFN `skill:` invocations, emitted strings, documentation, agent output, user-facing messages. Unqualified forms rely on the CLI router's namespacing fallback, which does not apply in other contexts (e.g., Skill tool, emitted strings, agent-produced docs). Qualified form is unambiguous everywhere and cannot collide across installed plugins. User-typed input at the CLI is not bound by this rule — the CLI router handles it — but anything the agent authors or emits qualifies
 - Instructions handed to agents are position-independent — the reader executes from the instructions alone without needing to know whether it is the top-level agent, a spawned subagent, or four levels deep in a delegation chain; terms like "orchestrator" or "caller" in handed-down content force the reader to infer its role rather than just act
 
 ## Graceful Degradation
@@ -243,15 +273,6 @@ When a dependency is unavailable or a precondition is not met, the system contin
 - Status reporting distinguishes stages of readiness (absent, initialized, stale, error) and pairs each with its corrective command
 - Error output names the specific missing piece and the specific next action, not a generic failure category
 - Before execution relies on an external tool or environment variable: verify availability and name the corrective command if missing, rather than letting a downstream call surface an unhelpful error
-
-## Epistemic Humility
-
-Findings and assertions are bounded by what was actually examined. The agent distinguishes between what was observed, what was not found, and what is unknown. Universalizing from a sample, treating absence as impossibility, or asserting certainty beyond the evidence are reasoning failures — not stylistic choices.
-
-- "None of the 12 researched entities implement X" is a valid observation; "no system implements X" is not — it claims knowledge of the full landscape from a sample; always state the scope of the search alongside the conclusion
-- Not finding something means the search did not surface it, not that it does not exist; state what was searched and what was not found, without concluding nonexistence
-- Findings reflect the entities examined, with whatever selection criteria, discovery paths, and depth limits shaped the sample; claims apply to the sample, not the population, unless the sample demonstrably covers the population
-- What has not been observed may still exist; default to "not yet found" rather than "does not exist"; the system's knowledge is incomplete by nature and assertions should reflect that
 
 ## Clean Break
 

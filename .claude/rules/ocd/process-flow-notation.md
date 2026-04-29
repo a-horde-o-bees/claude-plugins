@@ -84,7 +84,7 @@ Grouping headings organize contiguous steps within a single process. Steps conti
 3. Process {target-path}
 ```
 
-Curly-brace notation is reserved for values assigned once and referenced later. When a step describes the shape of returned data — the fields a `Return to caller:` hands back, the structure of a tool's output — use plain prose, not `{name}`. Decoration without downstream reference adds no execution meaning.
+Curly-brace notation is reserved for values assigned once and referenced later. When a step describes the shape of returned data — e.g., the fields a `Return to caller:` hands back, the structure of a tool's output — use plain prose, not `{name}`. Decoration without downstream reference adds no execution meaning.
 
 ## Conditionals
 
@@ -152,7 +152,7 @@ All delegations follow the same structural pattern — mechanism: followed by wh
 |--------|-----------|---------|
 | skill: | Skill tool | skill: /&lt;plugin&gt;:&lt;skill-name&gt; |
 | bash: | Bash tool | bash: `command` |
-| tool name: | Dedicated tool (Read, Grep, Glob, MCP tools) | tool-name: arg=value |
+| tool name: | Dedicated tool (e.g., Read, Grep, Glob, MCP tools) | tool-name: arg=value |
 | Call: | Read and follow a file or section | Call: `_component-name.md` |
 | Spawn: | Delegate to a new agent | Spawn: Call: `_component-name.md` |
 
@@ -167,7 +167,7 @@ Invocation types are optional — omit when the mechanism is unambiguous from co
 
 ## Arguments
 
-PFN content declares arguments in CLI-style format and references them in workflow steps using `--flag` (presence checks) and `{flag}` (value resolution). Consumer conventions that embed PFN workflows (skills, tool interfaces) declare their argument surface in this form.
+PFN content declares arguments in CLI-style format and references them in workflow steps using `--flag` (presence checks) and `{flag}` (value resolution). Consumer conventions that embed PFN workflows (e.g., skills, tool interfaces) declare their argument surface in this form.
 
 ### Declaration
 
