@@ -1,223 +1,253 @@
-"""Transcripts subsystem CLI.
+"""transcripts CLI.
 
-Presentation layer: argument parsing and dispatch. Business logic
-lives in `_transcripts` and is exposed via the package facade.
+Thin agent-debug surface mirroring the MCP server's tools. Each verb maps
+1:1 to an MCP tool of the same name (e.g. `sessions` → `sessions_query`).
+JSON output throughout — agent-consumable. Each verb except `reset`
+requires the DB to be ready (initialized via `/ocd:setup init`).
 
-Usage:
-    ocd-run transcripts project_list
-    ocd-run transcripts project_path
-    ocd-run transcripts chat_export [NAME ...] [--all]
-    ocd-run transcripts chat_clean  [NAME ...] [--all]
+Verbs:
+    projects                                                                  All projects, current marked
+    sessions   [--project X | --all-projects] [--from D --to D] [--show ...]  Sessions in scope
+    exchanges  [--project X | --session Y [--range R] | --all-projects]
+               [--from D --to D] [--show ...]                                 Per-exchange rows; default lean
+    purposes-set    <session> <json>                                          Batch upsert purposes
+    purposes-clear  <session> <exchange1> [<exchange2> ...]                   Batch clear purposes
+    settings   [<key> [<value>]]                                              Config + derived stats
+    reset                                                                     Backup + wipe DB
 
-`chat_export` and `chat_clean` default to the current project (resolved via
-`project_path`) when no NAME is given. `--all` operates on every project
-under ~/.claude/projects/.
-
-Encoded project names start with `-` (e.g., `-home-dev-projects-foo`).
-The leading-dash workaround in `main()` lets users pass them as positionals
-without `--` or `=` syntax.
+Scope precedence on `exchanges`: --session > --all-projects > --project >
+current project (default). Date filters apply on top of any scope filter.
+The `--show` flag accepts space-separated bucket names; see
+`SHOW_EXCHANGES` / `SHOW_SESSIONS` in `_scope.py` for the recognized values.
 """
 
 import argparse
+import json
+import sqlite3
 import sys
 
-from . import chat_clean, chat_export, project_list, project_path
+from tools.errors import InitError, NotReadyError
+
+from . import _db, _ingest, _init, _purposes, _scope, _settings, _stats
 
 
-def cmd_project_list() -> int:
-    """Print the encoded folder name of every project, one per line."""
-    for name in project_list():
-        print(name)
-    return 0
+def _connect() -> sqlite3.Connection:
+    """Return a connection to the deployed transcripts database.
 
-
-def cmd_project_path() -> int:
-    """Print the absolute path to the current project's transcripts directory."""
-    path = project_path()
-    if path is None:
-        print(
-            "Current project has no transcripts under ~/.claude/projects/.",
-            file=sys.stderr,
-        )
-        return 1
-    print(path)
-    return 0
-
-
-def cmd_chat_export(projects: list[str]) -> int:
-    """Export top-level chat for the given projects in place."""
-    if not projects:
-        print("No projects to export.", file=sys.stderr)
-        return 1
-
-    counts = chat_export(projects)
-    report = (
-        f"Exported {counts['written']} transcripts "
-        f"({counts['skipped']} unchanged"
-    )
-    if counts["missing"]:
-        report += f", {counts['missing']} project(s) missing"
-    report += ")"
-    print(report, file=sys.stderr)
-
-    return 0 if counts["missing"] == 0 else 1
-
-
-def cmd_chat_clean(projects: list[str]) -> int:
-    """Remove chat extracts for the given projects."""
-    if not projects:
-        print("No projects to clean.", file=sys.stderr)
-        return 1
-
-    counts = chat_clean(projects)
-    report = f"Removed {counts['removed']} chat extract(s)"
-    if counts["missing"]:
-        report += f" ({counts['missing']} project(s) missing)"
-    print(report, file=sys.stderr)
-
-    return 0 if counts["missing"] == 0 else 1
-
-
-def _dispatch_project_list(_args: argparse.Namespace) -> int:
-    _ = _args
-    return cmd_project_list()
-
-
-def _dispatch_project_path(_args: argparse.Namespace) -> int:
-    _ = _args
-    return cmd_project_path()
-
-
-def _resolve_projects(args: argparse.Namespace, action: str) -> list[str] | None:
-    """Resolve the project name list for chat_export / chat_clean.
-
-    Returns None if the invocation is invalid; caller should return 1.
+    Ensures readiness first — if the DB is absent or has a divergent
+    schema, raises NotReadyError so the CLI catch-and-format path runs.
     """
-    if args.all and args.projects:
-        print("Cannot combine project names with --all.", file=sys.stderr)
-        return None
+    _init.ensure_ready()
+    conn = _db.get_connection(str(_init._db_path()))
+    _settings.init_settings(conn)
+    return conn
 
-    if args.all:
-        projects = project_list()
-        if not projects:
-            print("No projects found under ~/.claude/projects/", file=sys.stderr)
-            return None
-        return projects
 
-    if args.projects:
-        return list(args.projects)
+def cmd_projects(_args: argparse.Namespace) -> int:
+    conn = _connect()
+    try:
+        _ingest.sync(conn, "")
+        print(json.dumps(_scope.projects(conn), indent=2))
+    finally:
+        conn.close()
+    return 0
 
-    current = project_path()
-    if current is None:
-        print(
-            f"Could not resolve current project for {action}. "
-            "This project has no transcripts in ~/.claude/projects/. "
-            "Pass project names as arguments or use --all.",
-            file=sys.stderr,
+
+def cmd_sessions(args: argparse.Namespace) -> int:
+    conn = _connect()
+    try:
+        project_filter = "" if args.all_projects else (args.project or _db.current_project_name())
+        _ingest.sync(conn, project_filter)
+        data = _scope.sessions(
+            conn,
+            project_filter=project_filter,
+            from_ts=args.from_ts or None,
+            to_ts=args.to_ts or None,
+            show=args.show or None,
         )
-        return None
-    return [current.name]
+        print(json.dumps(data, indent=2))
+    finally:
+        conn.close()
+    return 0
 
 
-def _dispatch_chat_export(args: argparse.Namespace) -> int:
-    projects = _resolve_projects(args, "chat_export")
-    if projects is None:
-        return 1
-    return cmd_chat_export(projects)
+def cmd_exchanges(args: argparse.Namespace) -> int:
+    conn = _connect()
+    try:
+        threshold_min = _settings.get(conn, "threshold_min")
+        threshold_s = float(threshold_min) * 60.0  # type: ignore[arg-type]
 
-
-def _dispatch_chat_clean(args: argparse.Namespace) -> int:
-    projects = _resolve_projects(args, "chat_clean")
-    if projects is None:
-        return 1
-    return cmd_chat_clean(projects)
-
-
-def _build_parser() -> argparse.ArgumentParser:
-    # Disable the default -h short flag so leading-dash project names (e.g.,
-    # `-home-dev-projects-foo`) don't trigger help via short-flag bundling.
-    # --help still works.
-    parser = argparse.ArgumentParser(
-        prog="transcripts",
-        description="Extract simplified chat from Claude Code transcripts",
-        add_help=False,
-    )
-    parser.add_argument("--help", action="help", help="show this help message and exit")
-    commands = parser.add_subparsers(dest="command", required=True)
-
-    list_p = commands.add_parser(
-        "project_list",
-        help="List encoded folder names of all projects under ~/.claude/projects/",
-        add_help=False,
-    )
-    list_p.add_argument("--help", action="help", help="show this help message and exit")
-    list_p.set_defaults(_dispatch=_dispatch_project_list)
-
-    path_p = commands.add_parser(
-        "project_path",
-        help="Print the absolute path to the current project's transcripts directory",
-        add_help=False,
-    )
-    path_p.add_argument("--help", action="help", help="show this help message and exit")
-    path_p.set_defaults(_dispatch=_dispatch_project_path)
-
-    export_p = commands.add_parser(
-        "chat_export",
-        help="Extract top-level chat for one or more projects "
-             "(default: current project)",
-        add_help=False,
-    )
-    export_p.add_argument("--help", action="help", help="show this help message and exit")
-    export_p.add_argument(
-        "projects", nargs="*", metavar="NAME",
-        help="Encoded project folder name(s). Omit for current project.",
-    )
-    export_p.add_argument(
-        "--all", action="store_true",
-        help="Export every project under ~/.claude/projects/ "
-             "(mutually exclusive with named projects)",
-    )
-    export_p.set_defaults(_dispatch=_dispatch_chat_export)
-
-    clean_p = commands.add_parser(
-        "chat_clean",
-        help="Remove chat extracts for one or more projects "
-             "(default: current project)",
-        add_help=False,
-    )
-    clean_p.add_argument("--help", action="help", help="show this help message and exit")
-    clean_p.add_argument(
-        "projects", nargs="*", metavar="NAME",
-        help="Encoded project folder name(s). Omit for current project.",
-    )
-    clean_p.add_argument(
-        "--all", action="store_true",
-        help="Clean every project under ~/.claude/projects/ "
-             "(mutually exclusive with named projects)",
-    )
-    clean_p.set_defaults(_dispatch=_dispatch_chat_clean)
-
-    return parser
-
-
-def main(argv: list[str] | None = None) -> int:
-    parser = _build_parser()
-    args, unknown = parser.parse_known_args(argv)
-
-    # Forward leading-single-dash unknowns to positional `projects`
-    # (chat_export / chat_clean only). Double-dash unknowns (likely typos)
-    # still error. Lets users type project names that start with `-`
-    # (Claude Code's path-encoded format) without needing `=` or `--`.
-    for token in unknown:
-        if token.startswith("--"):
-            parser.error(f"unrecognized argument: {token}")
-        if args.command in ("chat_export", "chat_clean") and hasattr(args, "projects"):
-            args.projects.append(token)
+        if args.session:
+            project_filter = ""
+            session_id = args.session
+        elif args.all_projects:
+            project_filter = ""
+            session_id = ""
         else:
-            parser.error(f"unrecognized argument: {token}")
+            project_filter = args.project or _db.current_project_name()
+            session_id = ""
 
-    return args._dispatch(args)
+        _ingest.sync(conn, project_filter)
+
+        range_from: int | None = None
+        range_to: int | None = None
+        if args.range:
+            if "-" in args.range:
+                rf, rt = args.range.split("-", 1)
+                range_from = int(rf)
+                range_to = int(rt)
+            else:
+                range_from = range_to = int(args.range)
+
+        data = _scope.exchanges(
+            conn, threshold_s,
+            project_filter=project_filter,
+            session_id=session_id,
+            range_from=range_from,
+            range_to=range_to,
+            from_ts=args.from_ts or None,
+            to_ts=args.to_ts or None,
+            show=args.show or None,
+        )
+        print(json.dumps(data, indent=2))
+    finally:
+        conn.close()
+    return 0
+
+
+def cmd_settings(args: argparse.Namespace) -> int:
+    conn = _connect()
+    try:
+        if args.key and args.value is not None:
+            stored = _settings.set_value(conn, args.key, args.value)
+            print(json.dumps({args.key: stored}, indent=2))
+            return 0
+        if args.key:
+            print(json.dumps({args.key: _settings.get(conn, args.key)}, indent=2))
+            return 0
+        threshold_min = _settings.get(conn, "threshold_min")
+        threshold_s = float(threshold_min) * 60.0  # type: ignore[arg-type]
+        out = {
+            "config": _settings.list_all(conn),
+            "derived": {
+                "avg_user_time_s": {
+                    "value": _stats.avg_user_time(conn, threshold_s),
+                    "description": _stats.AVG_USER_TIME_DESCRIPTION,
+                },
+            },
+        }
+        print(json.dumps(out, indent=2))
+    finally:
+        conn.close()
+    return 0
+
+
+def cmd_purposes_set(args: argparse.Namespace) -> int:
+    """Batch upsert purposes from a JSON object: {"<exchange>": "<text>", ...}."""
+    try:
+        raw = json.loads(args.purposes)
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"--purposes must be valid JSON: {exc}") from exc
+    if not isinstance(raw, dict):
+        raise ValueError("--purposes must be a JSON object mapping exchange numbers to text")
+    purposes_map: dict[int, str] = {}
+    for k, v in raw.items():
+        try:
+            purposes_map[int(k)] = v
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"exchange key '{k}' is not an integer") from exc
+
+    conn = _connect()
+    try:
+        session = _scope.resolve_session(conn, args.session_id)
+        written = _purposes.set_many(conn, session, purposes_map)
+        print(json.dumps({"session": session, "written": written}, indent=2))
+    finally:
+        conn.close()
+    return 0
+
+
+def cmd_purposes_clear(args: argparse.Namespace) -> int:
+    conn = _connect()
+    try:
+        session = _scope.resolve_session(conn, args.session_id)
+        cleared = _purposes.clear_many(conn, session, args.exchanges)
+        print(json.dumps({"session": session, "cleared": cleared}, indent=2))
+    finally:
+        conn.close()
+    return 0
+
+
+def cmd_reset(_args: argparse.Namespace) -> int:
+    """Reset the transcripts DB. Skips ensure_ready since we're rebuilding."""
+    result = _init.reset()
+    print(json.dumps(result, indent=2))
+    return 0
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser(
+        prog="transcripts",
+        description=(__doc__ or "").split("\n\n")[0],
+    )
+    sub = ap.add_subparsers(dest="verb", required=True)
+
+    p_projects = sub.add_parser("projects", help="All projects with current marker")
+    p_projects.set_defaults(func=cmd_projects)
+
+    p_sessions = sub.add_parser("sessions", help="Sessions in scope")
+    p_sessions.add_argument("--project", default="", help="Filter by name substring (default: current project)")
+    p_sessions.add_argument("--all-projects", action="store_true", help="Include every project")
+    p_sessions.add_argument("--from", dest="from_ts", default="", help="ISO timestamp lower bound")
+    p_sessions.add_argument("--to", dest="to_ts", default="", help="ISO timestamp upper bound")
+    p_sessions.add_argument("--show", nargs="*", default=[],
+                            help="Add detail buckets: timeframes, bytes")
+    p_sessions.set_defaults(func=cmd_sessions)
+
+    p_exchanges = sub.add_parser("exchanges", help="Exchanges with optional metrics + messages")
+    p_exchanges.add_argument("--project", default="", help="Filter by name substring (default: current project)")
+    p_exchanges.add_argument("--all-projects", action="store_true", help="Include every project")
+    p_exchanges.add_argument("--session", default="", help="Exact session id or unique prefix")
+    p_exchanges.add_argument("--range", default="", help="Exchange number ('5') or range ('5-10'); requires --session")
+    p_exchanges.add_argument("--from", dest="from_ts", default="", help="ISO timestamp lower bound")
+    p_exchanges.add_argument("--to", dest="to_ts", default="", help="ISO timestamp upper bound")
+    p_exchanges.add_argument("--show", nargs="*", default=[],
+                            help="Add detail buckets: messages, active, breakdown, metrics, timeframes")
+    p_exchanges.set_defaults(func=cmd_exchanges)
+
+    p_settings = sub.add_parser("settings", help="Show/set config; lists derived stats")
+    p_settings.add_argument("key", nargs="?", default="")
+    p_settings.add_argument("value", nargs="?", default=None)
+    p_settings.set_defaults(func=cmd_settings)
+
+    p_purposes_set = sub.add_parser("purposes-set", help="Batch upsert per-exchange purposes")
+    p_purposes_set.add_argument("session_id", help="Session ID or unique prefix")
+    p_purposes_set.add_argument(
+        "purposes",
+        help='JSON object mapping exchange numbers to purpose text (e.g. \'{"5": "...", "12": "..."}\')',
+    )
+    p_purposes_set.set_defaults(func=cmd_purposes_set)
+
+    p_purposes_clear = sub.add_parser("purposes-clear", help="Batch clear per-exchange purposes")
+    p_purposes_clear.add_argument("session_id", help="Session ID or unique prefix")
+    p_purposes_clear.add_argument(
+        "exchanges", nargs="+", type=int,
+        help="Exchange numbers to clear (one or more)",
+    )
+    p_purposes_clear.set_defaults(func=cmd_purposes_clear)
+
+    p_reset = sub.add_parser("reset", help="Backup and wipe the DB")
+    p_reset.set_defaults(func=cmd_reset)
+
+    args = ap.parse_args()
+
+    try:
+        rc = args.func(args)
+        sys.exit(rc)
+    except (LookupError, ValueError, KeyError, NotReadyError, InitError) as exc:
+        print(json.dumps({"error": str(exc)}), file=sys.stderr)
+        sys.exit(1)
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()
