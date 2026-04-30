@@ -29,12 +29,15 @@ logs/research/{topic}/
 - `logs/research/_phase-a-pick-batch.py` — picker; needs subject-parameterizing for marketplace
 - `logs/research/_phase-a-mcp-archive/` — completed mcp Phase A artifacts: 10 batch YAMLs, log.csv, `_synthesis.yaml` (per-section aggregation that seeds the from-scratch `repos-samples/_CONSOLIDATED.md`)
 - `logs/research/_lessons-from-mcp-phase-a.md` — methodology lessons from the mcp run, applicable to marketplace
-- `logs/research/mcp/samples/_TEMPLATE.md` — canonical mcp sample shape (renames to `repos-samples/_TEMPLATE.md` during migration)
-- `logs/research/mcp/consolidated.md` — current mcp synthesis; splits during migration: `## Decisions` block becomes sanity-check reference for the new `repos-samples/_CONSOLIDATED.md`; the rest seeds `ANALYSIS.md`
-- `logs/research/mcp/context/` — 40 reference-source captures; stays in place under new structure
-- `logs/research/claude-marketplace/samples/_TEMPLATE.md` — old bullet-form template; needs revision after Phase A retrofit
-- `plugins/ocd/systems/log/research/_compliance.py` — heading-tree-diff against template; recursive order check at every depth; will extend to `_CONSOLIDATED.md` checking
-- `ocd-run log research compliance --subject <name>` — corpus audit verb
+- `logs/research/mcp/repos-samples/_TEMPLATE.md` — canonical mcp sample shape; same template `_CONSOLIDATED.md` mirrors
+- `logs/research/mcp/repos-samples/_CONSOLIDATED.md` — skeleton (headings only); per-section synthesis pending (Task #10)
+- `logs/research/mcp/RESEARCH.md` — skeleton; cross-subtopic synthesis pending (Task #12)
+- `logs/research/mcp/ANALYSIS.md` — preserved user-facing content from old `consolidated.md` (minus `## Decisions`); refresh pending (Task #13)
+- `logs/research/_phase-a-mcp-archive/_legacy-decisions-for-sanity-check.md` — held `## Decisions` block from old `consolidated.md`; sanity-check reference for the new `_CONSOLIDATED.md`; delete after Task #10 completes
+- `logs/research/mcp/context/` — 40 reference-source captures; free-form under new structure
+- `logs/research/claude-marketplace/samples/_TEMPLATE.md` — old bullet-form template; needs revision after marketplace Phase A retrofit
+- `plugins/ocd/systems/log/research/_compliance.py` — heading-tree-diff against template; recursive order check at every depth; checks `_CONSOLIDATED.md` alongside samples
+- `ocd-run log research compliance --subject <name> [--subtopic <name>]` — corpus audit verb; auto-discovers single subtopic, requires `--subtopic` for multi
 
 ## Completed (this branch)
 
@@ -48,23 +51,21 @@ logs/research/{topic}/
 - Verification sweep over batches 1–4 (late-rule retroactive application)
 - Stale `logs/research/_scripts/` removed
 - Audit: 104/104 mcp samples clean against template (no outliers, no order violations) under recursive check
+- Research log type updated for new shape — `_template.md`, `_samples-template.md`, `_context-template.md` (new), log-routing rule
+- Compliance verb checks `_CONSOLIDATED.md` against `_TEMPLATE.md` alongside samples; reported separately
+- CLI subtopic discovery — `--subject NAME` auto-resolves single-subtopic, requires `--subtopic` for multi
+- mcp structural migration — `samples/` → `repos-samples/`; `scripts/` deleted; `consolidated.md` split (legacy `## Decisions` archived for sanity check, rest preserved as `ANALYSIS.md`); `RESEARCH.md` and `_CONSOLIDATED.md` skeletons land
+- Audit (post-migration): 104 samples + skeleton `_CONSOLIDATED.md` clean
 
 ## Pending
 
-### A. Cross-cutting structural changes (apply once; both subjects benefit)
+### A. mcp migration — synthesis (the costly part)
 
-- [ ] Update log routing rule + research log template — describe new shape: `context/` (free-form), `{subtopic}-samples/` (template-structured), topic-root `RESEARCH.md` + `ANALYSIS.md`
-- [ ] Author `logs/research/_context-template.md` — minimal frontmatter (`source`, `captured`, `type`, `relevance`), free-form body
-- [ ] Extend compliance verb to check `_CONSOLIDATED.md` against `_TEMPLATE.md` (same contract as samples; `<placeholder>` skip applies naturally)
-
-### B. mcp migration under new structure
-
-- [ ] Structural migration — rename `samples/` → `repos-samples/`; retire `scripts/`; remove `context/_TEMPLATE.md` and `context/_INDEX.md` ceremony (existing files stay in place); split `consolidated.md` content (`## Decisions` block held for sanity-check reference, rest seeds `ANALYSIS.md`); skeleton `repos-samples/_CONSOLIDATED.md` matching `_TEMPLATE.md` headings; skeleton `RESEARCH.md`. Single commit, no agent spawns
-- [ ] Author `repos-samples/_CONSOLIDATED.md` from scratch — per-section synthesis from `_phase-a-mcp-archive/_synthesis.yaml` + raw samples. ~18 agent batches (one per canonical section, excluding Python-specific). After all sections complete: sanity-check against the held `## Decisions` reference; flag divergences as either (a) findings the agent missed or (b) old claims the corpus doesn't support
+- [ ] Author `repos-samples/_CONSOLIDATED.md` from scratch — per-section synthesis from `_phase-a-mcp-archive/_synthesis.yaml` + raw samples. ~18 agent batches (one per canonical section, excluding Python-specific). After all sections complete: sanity-check against `_phase-a-mcp-archive/_legacy-decisions-for-sanity-check.md`; flag divergences as either (a) findings the agent missed or (b) old claims the corpus doesn't support; delete the legacy reference after reconciliation
 - [ ] Author `RESEARCH.md` — cross-subtopic synthesis pulling repos-samples + context together; form follows findings
-- [ ] Refresh `ANALYSIS.md` — from the migrated old consolidated.md content; update against new RESEARCH.md; prune unsupported claims
+- [ ] Refresh `ANALYSIS.md` — preserved old consolidated content; update against new `RESEARCH.md`; prune unsupported claims
 
-### C. Marketplace Phase A retrofit (54 samples)
+### B. Marketplace Phase A retrofit (54 samples)
 
 Apply the locked sample-corpus-retrofit pattern. Methodology stable; marketplace vocabulary differs (Marketplace discoverability, Plugin source binding, Channel distribution, etc. — 18 numbered sections vs mcp's 20).
 
@@ -79,19 +80,18 @@ Apply the locked sample-corpus-retrofit pattern. Methodology stable; marketplace
 
 Estimated cost: ~3–5 agent batches at trailing-N=1.4 work-tok/byte. Marketplace samples are denser (more rich `- **Field**:` bullets per section), so ratio may rise during calibration.
 
-### D. Marketplace migration under new structure
+### C. Marketplace migration under new structure
 
-After C: same structural sequence as B against the marketplace corpus.
+After B: same structural sequence as the mcp migration against the marketplace corpus.
 
-- [ ] Structural migration — `samples/` → `{subtopic}-samples/` (subtopic name TBD; likely `plugin-marketplaces-samples` or similar based on what the corpus turns out to be); split `consolidated.md`; create skeletons
+- [ ] Structural migration — `samples/` → `{subtopic}-samples/` (subtopic name TBD based on what the corpus turns out to be); split `consolidated.md`; create skeletons
 - [ ] Author `{subtopic}-samples/_CONSOLIDATED.md` from scratch — per-section synthesis
 - [ ] Author marketplace `RESEARCH.md`
 - [ ] Refresh marketplace `ANALYSIS.md`
 
-Sections B and D dominate context end-to-end and should not compete with other work. Each pending B-section synthesis is bounded (one canonical section across 104 samples fits in one agent context); the `_CONSOLIDATED.md` skeleton develops incrementally.
+Sections A and C dominate context end-to-end and should not compete with other work. Each pending section synthesis is bounded (one canonical section across the corpus fits in one agent context); the `_CONSOLIDATED.md` skeleton develops incrementally.
 
 ## Future phases (out of scope this branch)
 
-- **Phase C/D from prior plan** — retire `logs/research/mcp/scripts/_retrofit_samples_to_template.py` (legacy bullet-form retrofit script). Folded into Section B's "retire `scripts/`" step on this branch
 - **Generic retrofit engine** — promote per-subject retrofit scripts to a shared engine if the pattern emerges across more research subjects
 - **Marketplace name auto-detection in `/checkpoint`** — currently hardcoded as `a-horde-o-bees`; could be parsed from `.claude-plugin/marketplace.json`. Surfaced during `/ocd:git checkpoint` extraction work
