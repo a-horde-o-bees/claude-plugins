@@ -1,6 +1,6 @@
 # Log: Research
 
-Run research-corpus analysis against samples under `logs/research/<subject>/samples/`. Verbs dispatch via the `ocd-run log research` CLI — this fragment is pure routing.
+Run research-corpus analysis against samples under `logs/research/<subject>/<subtopic>-samples/`. Verbs dispatch via the `ocd-run log research` CLI — this fragment is pure routing.
 
 ## Process
 

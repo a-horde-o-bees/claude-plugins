@@ -167,7 +167,7 @@ def build_parser() -> argparse.ArgumentParser:
             "Log system CLI — research corpus analysis.\n"
             "\n"
             "Subcommand groups:\n"
-            "  research   Analyze markdown samples under logs/research/<subject>/samples/\n"
+            "  research   Analyze markdown samples under logs/research/<subject>/<subtopic>-samples/\n"
             "\n"
             "Legacy verbs (add/list/remove) remain as skill-level workflow fragments\n"
             "dispatched by the /log skill; they are not reachable via this CLI."
@@ -178,7 +178,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     research = sub.add_parser(
         "research",
-        help="Analyze research corpora under logs/research/<subject>/samples/",
+        help="Analyze research corpora under logs/research/<subject>/<subtopic>-samples/",
         description=(
             "Research corpus analysis.\n"
             "\n"

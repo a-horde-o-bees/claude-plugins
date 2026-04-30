@@ -49,7 +49,7 @@ This is the machine-readable source of truth — tools and scripts scanning the 
 
 Each entry is a file in `logs/{type}/{Title}.md`. Title is the entry's subject, used as both the filename and the level-1 heading — short enough to scan in a directory listing, detailed enough to distinguish from siblings. Read the type's `_template.md` for entry structure specific to that type.
 
-**Research is the exception** — research entries are directories, not single files. `logs/research/{subject}/` holds a consolidated synthesis doc, optional per-wave research outputs, and a `samples/` subdirectory with per-entity evidence files. See `logs/research/_template.md` and `logs/research/_samples-template.md` for the structure.
+**Research is the exception** — research entries are directories, not single files. `logs/research/{subject}/` holds a topic-root `RESEARCH.md` (agent-facing synthesis) and `ANALYSIS.md` (user-facing takeaways), one or more `<subtopic>-samples/` folders with template-structured per-entity evidence (each carrying `_TEMPLATE.md` and `_CONSOLIDATED.md`), and an optional `context/` directory holding free-form supporting sources. See `logs/research/_template.md`, `logs/research/_samples-template.md`, and `logs/research/_context-template.md` for structure.
 
 ## Custom Types
 

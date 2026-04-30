@@ -12,7 +12,7 @@ allowed-tools:
 
 # /log
 
-Create, list, or remove project log entries, or run structural analysis against research corpora. Log type routing is in always-on context via the log-routing rule; each type's `_template.md` in `logs/{type}/` defines entry structure. Research analysis operates on markdown samples under `logs/research/<subject>/samples/` — safe, read-only inspection of heading trees, coverage, and cross-sample section content.
+Create, list, or remove project log entries, or run structural analysis against research corpora. Log type routing is in always-on context via the log-routing rule; each type's `_template.md` in `logs/{type}/` defines entry structure. Research analysis operates on markdown samples under `logs/research/<subject>/<subtopic>-samples/` — safe, read-only inspection of heading trees, coverage, and cross-sample section content.
 
 ## Rules
 

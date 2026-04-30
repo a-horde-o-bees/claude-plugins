@@ -2,7 +2,7 @@
 
 Provides heading-tree parsing, duplicate-heading detection, and cross-
 sample aggregation helpers for markdown samples under a project's
-`logs/research/<subject>/samples/` directory. Exposed via CLI as
+`logs/research/<subject>/<subtopic>-samples/` directory. Exposed via CLI as
 `ocd-run log research <verb>` and via the `/log research` skill route;
 the tools also import directly for Python callers (e.g., future
 retrofit engines, test fixtures).
