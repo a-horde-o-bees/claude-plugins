@@ -356,7 +356,9 @@ class TestOrder:
         report = compare_to_template(sample, template)
         assert len(report.out_of_order) == 1
         violation = report.out_of_order[0]
+        assert violation.chain_key == "Sample"
         assert violation.heading == "B"
+        assert violation.expected_after == "A"
         assert violation.appears_after == "C"
 
     def test_omitted_sections_do_not_break_order(self, tmp_path):
@@ -379,6 +381,71 @@ class TestOrder:
             ## C
 
             content
+        """)
+        report = compare_to_template(sample, template)
+        assert report.out_of_order == []
+
+    def test_swapped_sub_purpose_is_flagged_with_chain_key(self, tmp_path):
+        """Order checks recurse — a swap at level-3 is flagged like a swap at level-2."""
+        template = _write_md(tmp_path, "_TEMPLATE.md", """
+            # Sample
+
+            ## Identification
+
+            ### url
+            ### stars
+            ### last-commit
+        """)
+        sample = _write_md(tmp_path, "nested-swap.md", """
+            # Sample
+
+            ## Identification
+
+            ### url
+
+            https://example.com
+
+            ### last-commit
+
+            2026-04-29
+
+            ### stars
+
+            123
+        """)
+        report = compare_to_template(sample, template)
+        assert len(report.out_of_order) == 1
+        violation = report.out_of_order[0]
+        assert violation.chain_key == "Sample > Identification"
+        assert violation.heading == "stars"
+        assert violation.expected_after == "url"
+        assert violation.appears_after == "last-commit"
+
+    def test_open_enumeration_section_skips_order_check(self, tmp_path):
+        """Children of a `<placeholder>` parent have content-driven order — never flagged."""
+        template = _write_md(tmp_path, "_TEMPLATE.md", """
+            # Sample
+
+            ## Hosts
+
+            ### <host name>
+        """)
+        sample = _write_md(tmp_path, "any-host-order.md", """
+            # Sample
+
+            ## Hosts
+
+            ### Cursor
+
+            second host
+
+            ### Claude Desktop
+
+            first host
+
+            ### Cline
+
+            third host
         """)
         report = compare_to_template(sample, template)
         assert report.out_of_order == []
