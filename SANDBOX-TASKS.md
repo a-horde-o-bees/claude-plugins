@@ -1,72 +1,97 @@
 # Sandbox: ocd/research-migration
 
-Phase A of the research-corpus retrofit landed by the `sandbox/log-research` merge — restructure MCP and claude-marketplace samples and gather per-section observations using the `context-aware-iteration` pattern over the new `sample_tools` primitives. Output feeds Phase B (master template design); does not retire the legacy `mcp/scripts/_retrofit_samples_to_template.py` (Phase C/D scope).
+Phase A of the research-corpus retrofit (mcp samples to heading-tree shape) landed; this branch now carries the structural migration that applies to both subjects: split each topic into a free-form `context/` collection, one or more `{subtopic}-samples/` folders (template-structured), a topic-root `RESEARCH.md` (cross-subtopic synthesis), and a topic-root `ANALYSIS.md` (user-facing takeaways). After mcp is migrated and re-synthesized under the new shape, marketplace gets the same Phase A retrofit and the same structural shape.
+
+## Target structure
+
+```
+logs/research/{topic}/
+    context/                   — free-form supporting sources (specs, docs, blogs, talks, papers,
+                                 datasets, code references, threads); minimal frontmatter
+                                 (source / captured / type / relevance), free-form body
+    {subtopic}-samples/        — examples of the target; template-structured for cross-sample
+                                 tallying. May be one folder; may be many when the research
+                                 needs distinct paths of inquiry with different shapes
+        _TEMPLATE.md           — canonical heading-tree shape for this subtopic
+        _CONSOLIDATED.md       — heading-by-heading accumulation of supporting samples + notes;
+                                 mirrors `_TEMPLATE.md`; same compliance contract as samples
+        <sample files>
+    RESEARCH.md                — agent-facing synthesis across all subtopics; form follows
+                                 findings (not bound to any single template)
+    ANALYSIS.md                — user-facing takeaways derived from RESEARCH.md
+```
 
 ## Pointers
 
-- `logs/decision/log.md` — Phase A/B/C/D plan (section "Sandbox scope excludes retrofit engine, work-queue tooling, and migration manifests")
-- Recovered log-research SANDBOX-TASKS (git history, commit `1ff5461^:SANDBOX-TASKS.md`) — full handoff plan including Phase A methodology
-- `logs/patterns/context-aware-iteration.md` — prescribed methodology: pre-measure → baseline spawn → calibrated iteration → accumulated observations
-- `logs/research/claude-marketplace/` — 54 samples, already passes `check`; consolidated.md cited as canonical example in the new template
-- `logs/research/mcp/` — ~100 samples, passes `check`; has corpus-specific `scripts/_retrofit_samples_to_template.py` (retires in Phase C/D, not here)
-- `plugins/ocd/systems/log/research/_sample_tools.py` — `parse_headings`, `count_sections`, `consolidate_section`, `check_no_duplicate_headings` primitives
-- `ocd-run log research check | count-sections | consolidate` — the CLI surface this phase exercises end-to-end
+- `logs/patterns/sample-corpus-retrofit.md` — read-understand-rewrite-accumulate methodology used across both subjects. Composes with `context-aware-iteration` for batch sizing
+- `logs/patterns/context-aware-iteration.md` — trailing-N ratio estimator is now the SOP
+- `logs/research/_phase-a-agent-instructions.md` — generalized agent instructions; subject-agnostic. Points at the subject's `_TEMPLATE.md` for canonical vocabulary
+- `logs/research/_phase-a-pick-batch.py` — picker; needs subject-parameterizing for marketplace
+- `logs/research/_phase-a-mcp-archive/` — completed mcp Phase A artifacts: 10 batch YAMLs, log.csv, `_synthesis.yaml` (per-section aggregation that seeds the from-scratch `repos-samples/_CONSOLIDATED.md`)
+- `logs/research/_lessons-from-mcp-phase-a.md` — methodology lessons from the mcp run, applicable to marketplace
+- `logs/research/mcp/samples/_TEMPLATE.md` — canonical mcp sample shape (renames to `repos-samples/_TEMPLATE.md` during migration)
+- `logs/research/mcp/consolidated.md` — current mcp synthesis; splits during migration: `## Decisions` block becomes sanity-check reference for the new `repos-samples/_CONSOLIDATED.md`; the rest seeds `ANALYSIS.md`
+- `logs/research/mcp/context/` — 40 reference-source captures; stays in place under new structure
+- `logs/research/claude-marketplace/samples/_TEMPLATE.md` — old bullet-form template; needs revision after Phase A retrofit
+- `plugins/ocd/systems/log/research/_compliance.py` — heading-tree-diff against template; recursive order check at every depth; will extend to `_CONSOLIDATED.md` checking
+- `ocd-run log research compliance --subject <name>` — corpus audit verb
 
-## Observations gathered so far (recon phase)
+## Completed (this branch)
 
-These feed into the per-section observation work but are also worth surfacing now since they affect methodology:
+- mcp Phase A: 104 samples retrofit complete (10 batches, trailing-N=1.4 work-tok/byte)
+- mcp Phase B template: heading-tree-as-spec; pitfalls optional; open-enumeration `<placeholder>` convention
+- Compliance tooling in `plugins/ocd/systems/log/research/_compliance.py` (26 tests; CLI verb wired)
+- Recursive sub-purpose order check — `_walk_order` traverses template + sample in parallel; `OrderViolation.chain_key` identifies parent context; `<placeholder>` parents skip order checks
+- Sample-corpus-retrofit pattern extracted (main worktree, `logs/patterns/sample-corpus-retrofit.md`)
+- Context-aware-iteration pattern updated with trailing-N as SOP (main worktree)
+- mcp corpus mechanical sweep: section numbering stripped, empty pitfalls headings removed
+- Verification sweep over batches 1–4 (late-rule retroactive application)
+- Stale `logs/research/_scripts/` removed
+- Audit: 104/104 mcp samples clean against template (no outliers, no order violations) under recursive check
 
-- **Sample format is hybrid heading/bullet.** Top-level purposes are headings (`## 1. Marketplace discoverability`, `## Identification`); sub-purposes are bullets-with-colons (`- **Manifest layout**: ...`). The `count_sections` walker only sees headings, so chain-key resolution stops at top-level purposes — sub-purpose granularity isn't reachable through the tooling
-- **`consolidate` does not aggregate cross-sample.** The level-1 heading is the entity ID (`# 123jimin-vibe/plugin-prompt-engineer`), so chain-key matching in `_find_section` descends from a per-entity root. `consolidate --chain "1. Marketplace discoverability"` returns 0 results; only entity-prefixed chains find one specific sample. Either samples need restructuring to drop entity-id-as-level-1 (entity in metadata instead), or `_find_section` needs a level-skip mode
-- **Both subjects pass `check`** — no duplicate-sibling-heading violations in either corpus
-- **Stale `logs/research/_scripts/__pycache__/`** — log-research sandbox removed `_scripts/` source but pyc cache regenerated post-merge. Delete the directory; it serves nothing under the new system
+## Pending
 
-## Tasks
+### A. Cross-cutting structural changes (apply once; both subjects benefit)
 
-### Phase A.0 — Observation methodology setup
+- [ ] Update log routing rule + research log template — describe new shape: `context/` (free-form), `{subtopic}-samples/` (template-structured), topic-root `RESEARCH.md` + `ANALYSIS.md`
+- [ ] Author `logs/research/_context-template.md` — minimal frontmatter (`source`, `captured`, `type`, `relevance`), free-form body
+- [ ] Extend compliance verb to check `_CONSOLIDATED.md` against `_TEMPLATE.md` (same contract as samples; `<placeholder>` skip applies naturally)
 
-- [ ] Decide observation output location per subject (proposed: `logs/research/<subject>/phase-a-observations.md` as a research-wave file alongside `consolidated.md`)
-- [ ] Decide work-queue + spawn-log location (proposed: `logs/research/_phase-a-queue.csv` + `logs/research/_phase-a-log.csv`, root-level since the queue spans subjects)
-- [ ] Design the agent instruction set for per-section observation spawns — what to read, what patterns to capture, output format. The instructions go through baseline spawn unchanged
-- [ ] Decide per-item granularity. Proposed: one queue row per (subject, top-level chain key). E.g. `("claude-marketplace", "1. Marketplace discoverability")`. `measured_size` = total bytes of that section's content concatenated across all samples in the subject. The agent's job: read those slices, observe, write to the subject's observation file under a heading matching the chain key
+### B. mcp migration under new structure
 
-### Phase A.1 — Build the work queue
+- [ ] Structural migration — rename `samples/` → `repos-samples/`; retire `scripts/`; remove `context/_TEMPLATE.md` and `context/_INDEX.md` ceremony (existing files stay in place); split `consolidated.md` content (`## Decisions` block held for sanity-check reference, rest seeds `ANALYSIS.md`); skeleton `repos-samples/_CONSOLIDATED.md` matching `_TEMPLATE.md` headings; skeleton `RESEARCH.md`. Single commit, no agent spawns
+- [ ] Author `repos-samples/_CONSOLIDATED.md` from scratch — per-section synthesis from `_phase-a-mcp-archive/_synthesis.yaml` + raw samples. ~18 agent batches (one per canonical section, excluding Python-specific). After all sections complete: sanity-check against the held `## Decisions` reference; flag divergences as either (a) findings the agent missed or (b) old claims the corpus doesn't support
+- [ ] Author `RESEARCH.md` — cross-subtopic synthesis pulling repos-samples + context together; form follows findings
+- [ ] Refresh `ANALYSIS.md` — from the migrated old consolidated.md content; update against new RESEARCH.md; prune unsupported claims
 
-- [ ] Run `count-sections` against both subjects to enumerate chain keys
-- [ ] Strip entity-id prefix to derive cross-sample top-level section names
-- [ ] For each (subject, section name) pair: collect all sample files containing that section and sum their section-content byte sizes — this is `measured_size`
-- [ ] Write the queue CSV with `path,measured_size,status,batch_id,notes` columns where `path` is the synthetic key `<subject>::<section name>`
+### C. Marketplace Phase A retrofit (54 samples)
 
-### Phase A.2 — Baseline spawn
+Apply the locked sample-corpus-retrofit pattern. Methodology stable; marketplace vocabulary differs (Marketplace discoverability, Plugin source binding, Channel distribution, etc. — 18 numbered sections vs mcp's 20).
 
-- [ ] Spawn one agent with the full Phase A instruction set + "do nothing; reply ACK; return" — capture `total_tokens` as `B`. This isolates fixed overhead from per-item cost
-- [ ] Append `batch_00` row to spawn log
+- [ ] Update `_phase-a-pick-batch.py` to subject-parameterize (currently hardcoded `SUBJECT = "mcp"`)
+- [ ] Initialize fresh `_phase-a-claude-marketplace-log.csv` (mcp's archived under `_phase-a-mcp-archive/`)
+- [ ] Calibration batch (3–5 samples covering shape variety)
+- [ ] Iterate batches until queue empty (~3–5 batches at trailing-N from mcp)
+- [ ] Verification sweep over early batches with any late rules
+- [ ] Audit: `ocd-run log research compliance --subject claude-marketplace`
+- [ ] Aggregate batch YAMLs into `_phase-b-claude-marketplace-synthesis.yaml`
+- [ ] Author marketplace `_TEMPLATE.md` (heading-tree-as-spec) and re-run compliance
 
-### Phase A.3 — Calibrated iteration
+Estimated cost: ~3–5 agent batches at trailing-N=1.4 work-tok/byte. Marketplace samples are denser (more rich `- **Field**:` bullets per section), so ratio may rise during calibration.
 
-- [ ] First batch: bin-pack pending items up to `(0.9 × budget − B) / seed_ratio`. Seed ratio is a conservative overestimate (e.g. 5 tokens per measured byte). Spawn, capture tokens, compute actual ratio
-- [ ] Subsequent batches: use running-average ratio for capacity; iterate until queue is empty or all remaining items are oversized
-- [ ] On each batch return: append spawn log row; update queue rows to `done` (or `failed`/`unconsumable`)
-- [ ] Watch for ratio divergence (`|ratio_k − running_avg| / running_avg > 0.3`) and re-baseline if input distribution shifts
+### D. Marketplace migration under new structure
 
-### Phase A.4 — Cleanup and handoff
+After C: same structural sequence as B against the marketplace corpus.
 
-- [ ] Delete `logs/research/_scripts/` (stale pyc cache only — confirmed no source files remain)
-- [ ] Verify both subjects' observation files are complete and pass `check`
-- [ ] Promote Phase B and Phase C/D to durable homes per the recovered handoff plan (`logs/idea/` entries or `TASKS.md` entries — original tracker doesn't survive unpack)
-- [ ] Run full plugin test suite; verify no regressions
+- [ ] Structural migration — `samples/` → `{subtopic}-samples/` (subtopic name TBD; likely `plugin-marketplaces-samples` or similar based on what the corpus turns out to be); split `consolidated.md`; create skeletons
+- [ ] Author `{subtopic}-samples/_CONSOLIDATED.md` from scratch — per-section synthesis
+- [ ] Author marketplace `RESEARCH.md`
+- [ ] Refresh marketplace `ANALYSIS.md`
 
-## Open Questions
+Sections B and D dominate context end-to-end and should not compete with other work. Each pending B-section synthesis is bounded (one canonical section across 104 samples fits in one agent context); the `_CONSOLIDATED.md` skeleton develops incrementally.
 
-- **Restructure samples in this phase, or only observe?** The recovered plan says Phase A restructures + observes, but Phase B owns the master template. Reading carefully: "restructure" likely means apply the master-template-shape only after Phase B emits one. So Phase A is **observation-first**; structural changes wait. Confirm before iteration starts
-- **Do observations need to capture sub-purpose patterns** (the bullet-with-colon items inside each section)? The tooling can't reach them, but they're load-bearing for understanding what the section actually conveys. Likely yes — the agent reads raw content, the tooling is just an entry point
-- **Output shape for observation file** — per-section heading with structured observations underneath, or a flat list of findings with cross-references? The decision shapes whether Phase B can scan the observations efficiently
+## Future phases (out of scope this branch)
 
-## Ready-to-start checklist
-
-When the three open questions are answered:
-
-- Queue + log CSVs initialized
-- Agent instruction set drafted and reviewed
-- Baseline spawn dispatched
-- First calibrated batch dispatched
+- **Phase C/D from prior plan** — retire `logs/research/mcp/scripts/_retrofit_samples_to_template.py` (legacy bullet-form retrofit script). Folded into Section B's "retire `scripts/`" step on this branch
+- **Generic retrofit engine** — promote per-subject retrofit scripts to a shared engine if the pattern emerges across more research subjects
+- **Marketplace name auto-detection in `/checkpoint`** — currently hardcoded as `a-horde-o-bees`; could be parsed from `.claude-plugin/marketplace.json`. Surfaced during `/ocd:git checkpoint` extraction work
