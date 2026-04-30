@@ -303,21 +303,35 @@ class CorpusCompliance:
     """Aggregate compliance across a samples directory.
 
     - `reports` — per-sample reports, one per non-meta `.md` file.
+    - `consolidated_report` — `_CONSOLIDATED.md`'s report when the file
+      exists in `samples_dir`; `None` when absent. `_CONSOLIDATED.md`
+      mirrors `_TEMPLATE.md` heading-for-heading (heading-by-heading
+      accumulation of supporting samples + notes), so it carries the
+      same compliance contract as samples but is a different artifact
+      kind (synthesis vs evidence) — kept separate from sample-aggregate
+      counts so reviewers see its status independently.
     - `outlier_counts` — `{chain_key: [files_where_it_appears]}` so
       reviewers can see which outlier names recur (canonicalization
-      candidates).
+      candidates). Aggregates samples only, not `_CONSOLIDATED.md`.
     - `missing_counts` — `{chain_key: count}` for template chain keys
       absent across the corpus; high counts indicate template revisions
-      worth considering.
+      worth considering. Aggregates samples only.
     """
 
     reports: list[ComplianceReport]
+    consolidated_report: ComplianceReport | None
     outlier_counts: dict[str, list[Path]]
     missing_counts: dict[str, int]
 
 
 def compliance_summary(samples_dir: Path, template_path: Path) -> CorpusCompliance:
-    """Run `compare_to_template` for every non-meta `.md` file under `samples_dir`."""
+    """Run `compare_to_template` for every non-meta `.md` file under `samples_dir`.
+
+    `_CONSOLIDATED.md`, when present, is checked against the template
+    using the same machinery and surfaced as `consolidated_report`.
+    Other `_*.md` files (the template itself, indices, archives) are
+    skipped.
+    """
     sample_files = sorted(
         p for p in samples_dir.glob("*.md")
         if p.is_file() and not p.name.startswith("_")
@@ -332,8 +346,16 @@ def compliance_summary(samples_dir: Path, template_path: Path) -> CorpusComplian
             outlier_counts.setdefault(outlier.chain_key, []).append(sample_path)
         for missing in report.missing:
             missing_counts[missing] = missing_counts.get(missing, 0) + 1
+
+    consolidated_path = samples_dir / "_CONSOLIDATED.md"
+    consolidated_report = (
+        compare_to_template(consolidated_path, template_path)
+        if consolidated_path.is_file() else None
+    )
+
     return CorpusCompliance(
         reports=reports,
+        consolidated_report=consolidated_report,
         outlier_counts=outlier_counts,
         missing_counts=missing_counts,
     )

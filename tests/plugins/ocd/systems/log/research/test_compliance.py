@@ -521,6 +521,126 @@ class TestCorpusSummary:
         assert summary.missing_counts == {}
 
 
+# ─── _CONSOLIDATED.md — checked alongside samples, reported separately ──
+
+
+class TestConsolidatedReport:
+    def test_consolidated_report_is_none_when_absent(self, tmp_path):
+        _write_md(tmp_path, "_TEMPLATE.md", "# Sample\n## A\n")
+        _write_md(tmp_path, "sample.md", "# Sample\n## A\ncontent\n")
+        summary = compliance_summary(tmp_path, tmp_path / "_TEMPLATE.md")
+        assert summary.consolidated_report is None
+
+    def test_consolidated_report_present_and_clean_when_mirrors_template(self, tmp_path):
+        _write_md(tmp_path, "_TEMPLATE.md", """
+            # Sample
+
+            ## Identification
+
+            ### url
+        """)
+        _write_md(tmp_path, "sample.md", """
+            # Sample
+
+            ## Identification
+
+            ### url
+
+            https://a.com
+        """)
+        _write_md(tmp_path, "_CONSOLIDATED.md", """
+            # Sample
+
+            ## Identification
+
+            ### url
+
+            Aggregated url notes across all samples.
+        """)
+        summary = compliance_summary(tmp_path, tmp_path / "_TEMPLATE.md")
+        assert summary.consolidated_report is not None
+        assert summary.consolidated_report.is_clean
+        assert summary.consolidated_report.sample_path.name == "_CONSOLIDATED.md"
+
+    def test_consolidated_outliers_are_kept_separate_from_sample_counts(self, tmp_path):
+        """_CONSOLIDATED.md is its own artifact; its outliers don't pollute corpus aggregates."""
+        _write_md(tmp_path, "_TEMPLATE.md", """
+            # Sample
+
+            ## Identification
+        """)
+        _write_md(tmp_path, "sample.md", """
+            # Sample
+
+            ## Identification
+
+            content
+        """)
+        _write_md(tmp_path, "_CONSOLIDATED.md", """
+            # Sample
+
+            ## Identification
+
+            aggregated
+
+            ## Cross-cutting note
+
+            this section is not in the template
+        """)
+        summary = compliance_summary(tmp_path, tmp_path / "_TEMPLATE.md")
+        assert summary.consolidated_report is not None
+        consolidated_outliers = [
+            o.chain_key for o in summary.consolidated_report.outliers
+        ]
+        assert "Sample > Cross-cutting note" in consolidated_outliers
+        assert "Sample > Cross-cutting note" not in summary.outlier_counts
+
+    def test_consolidated_order_violations_flagged(self, tmp_path):
+        _write_md(tmp_path, "_TEMPLATE.md", """
+            # Sample
+
+            ## A
+
+            ## B
+        """)
+        _write_md(tmp_path, "sample.md", """
+            # Sample
+
+            ## A
+
+            ## B
+        """)
+        _write_md(tmp_path, "_CONSOLIDATED.md", """
+            # Sample
+
+            ## B
+
+            second
+
+            ## A
+
+            first
+        """)
+        summary = compliance_summary(tmp_path, tmp_path / "_TEMPLATE.md")
+        assert summary.consolidated_report is not None
+        assert len(summary.consolidated_report.out_of_order) == 1
+        violation = summary.consolidated_report.out_of_order[0]
+        assert violation.heading == "A"
+        assert violation.expected_after == ""
+
+    def test_other_underscore_files_still_skipped(self, tmp_path):
+        """Only _CONSOLIDATED.md is special-cased; _INDEX.md and others remain ignored."""
+        _write_md(tmp_path, "_TEMPLATE.md", "# Sample\n## A\n")
+        _write_md(tmp_path, "_INDEX.md", "# Index\n## random heading\n")
+        _write_md(tmp_path, "_CONSOLIDATED.md", "# Sample\n## A\nagg\n")
+        _write_md(tmp_path, "sample.md", "# Sample\n## A\ncontent\n")
+        summary = compliance_summary(tmp_path, tmp_path / "_TEMPLATE.md")
+        # _INDEX.md absent from per-sample reports
+        assert [r.sample_path.name for r in summary.reports] == ["sample.md"]
+        # _CONSOLIDATED.md picked up
+        assert summary.consolidated_report is not None
+
+
 # ─── ComplianceReport API ────────────────────────────────────────────────
 
 
