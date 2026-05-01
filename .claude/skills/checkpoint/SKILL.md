@@ -4,6 +4,7 @@ description: Bundle the development checkpoint cycle for the current branch — 
 allowed-tools:
   - Skill
   - Bash(python3 scripts/auto_init.py)
+  - Bash(python3 -c *)
   - Bash(claude plugins *)
   - Bash(git status *)
   - Bash(git add *)
@@ -42,8 +43,11 @@ The generic commit + push + CI steps are delegated to `/ocd:git` verbs (`commit`
 > Main-only integration — marketplace refresh and plugin update fetch from main; running them after a sandbox push pulls stale main into cache while the sandbox is the active workspace. Restart recommendation only makes sense when the cached plugin actually changed (i.e. main was pushed). Skip cleanly when {branch} is not main.
 
 7. If {branch} is `main`:
-    1. Marketplace refresh — bash: `claude plugins marketplace update a-horde-o-bees`
-    2. Update plugin — bash: `claude plugins update ocd@a-horde-o-bees`
+    1. {marketplace-name} = bash: `python3 -c "import json; print(json.load(open('.claude-plugin/marketplace.json'))['name'])"`
+    2. {plugin-names} = bash: `python3 -c "import json; print(' '.join(p['name'] for p in json.load(open('.claude-plugin/marketplace.json'))['plugins']))"`
+    3. Marketplace refresh — bash: `claude plugins marketplace update {marketplace-name}`
+    4. For each {plugin} in {plugin-names}:
+        1. Update plugin — bash: `claude plugins update {plugin}@{marketplace-name}`
 
 ### Report
 

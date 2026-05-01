@@ -78,13 +78,24 @@ For each thread surfaced, the user chooses: *act now* (work happens before conti
 3. Open threads pass (interactive):
     1. Apply the Open threads prompts against the session — produce {open-threads} list, each with a one-sentence description of the unaddressed thread
     2. If {open-threads} is empty: skip to step 4
-    3. Present {open-threads} to the user as a numbered list
-    4. For each thread, ask user to pick: *act now* / *log as <type>* / *accept as-is*
+    3. Present {open-threads} to the user as a lettered list with worded disposition options. Letters identify items for quick reference; dispositions are stated as words because the disposition vocabulary is small and unambiguous on its own. Format:
+
+        ```
+        A. <thread description>
+        B. <thread description>
+        ...
+
+        For each, pick: act / log-<type> / accept-as-is
+        Respond like: `A: act, B: log-idea, C: accept-as-is`
+        ```
+
+        Lettered items avoid collision with Claude Code's `1/2/3` rating prompt per *Confirm Shared Intent* in the design principles, and let the user reply with shorthand referencing items by letter.
+    4. Parse the user's response. For `log`, accept either bare `log` (user picks log type later) or `log-<type>` (user names the type inline). Surface ambiguity rather than guess
     5. Apply dispositions in order:
-        1. *act now*: do the work the thread implies before continuing — may pull in subsequent tool calls, file edits, etc. The thread is resolved in-session
-        2. *log as <type>*: append a draft entry to {new-candidates} for type {type}; the type-aligned walk batch-presents it alongside session-discovered candidates
-        3. *accept as-is*: surface the thread in the final report's "surfaced-only" section; no log, no work
-    6. Once dispositions are applied, proceed to subsequent passes — completed *act now* work may itself surface decisions/ideas/patterns the type walk picks up
+        1. *act*: do the work the thread implies before continuing — may pull in subsequent tool calls, file edits, etc. The thread is resolved in-session
+        2. *log-<type>*: append a draft entry to {new-candidates} for type {type}; the batch presentation in step 8 picks it up alongside session-discovered candidates
+        3. *accept-as-is*: surface the thread in the final report's "surfaced-only" section; no log, no work
+    6. Once dispositions are applied, proceed to subsequent passes — completed *act* work may itself surface decisions/ideas/patterns the type walk picks up
 
 4. Type-aligned walk:
     1. For each {type} in {decision, friction, idea, pattern, problem, research}:
@@ -94,12 +105,40 @@ For each thread surfaced, the user chooses: *act now* (work happens before conti
 5. Apply cross-cutting prompts — surface anything caught at the type-walk level missed
 6. Apply memory-candidate prompts — gather user-scoped observations as memory drafts
 7. Apply what-else prompt — gather off-axis observations
-8. Present all candidates as a single batch:
-    - For each: type / target path / rationale (one sentence) / draft content
-    - Refinements show diff preview, not just prose
-    - Memory candidates show frontmatter + body
-    - What-else items show observation + proposed disposition
-9. For each candidate, ask user: accept / edit / reject
+8. Present all candidates as a single lettered batch — letters continue sequentially across all section boundaries (idea, friction, memory, refinements, what-else); letters do not reset between sections. Every item gets a letter for quick reference. Format:
+
+    ```
+    ## New entries
+
+    A. <type> [<target path>] — <one-sentence rationale>
+       <draft content or summary>
+
+    B. <type> [<target path>] — <one-sentence rationale>
+       <draft content or summary>
+
+    ## Refinements
+
+    C. <type> [<target path>] — <one-sentence rationale>
+       <diff preview against existing entry>
+
+    ## Memory
+
+    D. memory [<target memory file>] — <one-sentence rationale>
+       <frontmatter + body draft>
+
+    ## What-else
+
+    E. what-else — <observation>
+       <proposed disposition>
+
+    For each, pick: accept / edit / reject
+    Respond like: `A: accept, B: edit (change X to Y), C: reject` or batch shorthand like `A, B, D: accept; C: reject; E: edit ...`
+    ```
+
+    Refinements show diff preview, not just prose. Memory candidates show frontmatter + body. What-else items participate in the lettered sequence — they get the same A/B/C reference shorthand as other types, not a separate free-form section
+9. For each lettered candidate, parse the user's disposition: accept / edit / reject
+    - For *edit*: user provides the adjustment inline; the agent applies it to the draft before writing
+    - Batch shorthand (`A, B, D: accept`) and per-item form (`A: accept, B: edit ...`) are both valid; surface ambiguity rather than guess
 10. Apply accepted candidates:
     1. New log entries: read `logs/<type>/_template.md` for structure, then Write `logs/<type>/<title>.md`
     2. Refinements: Edit the existing entry per draft
