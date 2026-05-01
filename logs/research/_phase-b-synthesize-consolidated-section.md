@@ -1,53 +1,49 @@
 # Synthesize `_CONSOLIDATED.md` Section
 
-Per-section synthesis instructions for populating `_CONSOLIDATED.md`. A spawned agent reads this file, finds the next unsynthesized `##` section in the target `_CONSOLIDATED.md`, pulls verbatim corpus content for that section's chain key, synthesizes findings, writes the synthesis into the section, and continues until context tightens or all sections are populated.
+Per-section synthesis instructions for populating `_CONSOLIDATED.md`. A spawned agent reads this file, processes the explicitly-assigned chain keys in order, and returns when done. The orchestrator (calling context) bin-packs assignments under a context budget using `sections --size` data — agents have no introspection on context consumption, so work is divvied out at dispatch time, not self-paced.
 
 ## Variables
 
 - {subject} — Research subject name (e.g. `mcp`)
 - {subtopic} — Optional subtopic name (e.g. `repos`); single-subtopic subjects auto-resolve, omit the flag in CLI calls; multi-subtopic subjects must pass it. Resolves to `logs/research/<subject>/<subtopic>-samples/`
-- {sections-limit} — Optional integer; when set, agent processes at most this many sections then returns. Used to bound test runs
-- {sections-completed} — Loop counter; initialized to 0 in Setup
+- {chains} — Required. Ordered list of chain keys to process this spawn (e.g. `["Sample > Language and runtime", "Sample > Transport"]`). Orchestrator computed via `sections --size` bin-packing; agent processes exactly these, in order, then returns
 
 ## Process
 
-### Setup
-
-1. {sections-completed} = 0
-
 ### Orient
 
-2. Read `logs/research/{subject}/{subtopic-or-discovered}-samples/_TEMPLATE.md` — canonical heading tree, sub-purpose vocabulary, and per-section purpose statements
-3. Read `logs/research/{subject}/{subtopic-or-discovered}-samples/_CONSOLIDATED.md` — note which `##` sections are populated vs empty
+1. Read `logs/research/{subject}/{subtopic-or-discovered}-samples/_TEMPLATE.md` — canonical heading tree, sub-purpose vocabulary, and per-section purpose statements
+2. Read `logs/research/{subject}/{subtopic-or-discovered}-samples/_CONSOLIDATED.md` — confirm that each {chain} in the assignment list resolves to an empty `##` section
 
-> A section is **empty** when its `## Heading` is followed only by `###` sub-headings and blank lines (no body text at any depth) before the next `##` heading or EOF. A section is **populated** when it carries body text under any heading at any level.
+> A section is **empty** when its `## Heading` is followed only by `###` sub-headings and blank lines (no body text at any depth) before the next `##` heading or EOF. If an assigned chain's section is already populated, skip it and surface to caller in the report — do not overwrite.
 
-### Select
+### For each chain in {chains}
 
-4. Identify the first empty `##` section in `_CONSOLIDATED.md`
-5. If no empty section: Return to caller: all sections populated
-6. {section} = the section's heading text without the `## ` prefix
+3. {chain} = next chain key from the assignment list
+4. {section} = the chain key's leaf heading (e.g. `Language and runtime` for `Sample > Language and runtime`; `SDK / framework variant` for `Sample > Python-specific > SDK / framework variant`)
 
 ### Extract
 
-7. bash: `ocd-run log research content "Sample > {section}" --subject {subject}` — append `--subtopic {subtopic}` only when the subject has multiple `<subtopic>-samples/` folders
-8. {corpus} = stdout — every sample's content under that chain key, separated by `=== <filename> ===` markers
+5. bash: `ocd-run log research content "{chain}" --subject {subject}` — append `--subtopic {subtopic}` only when the subject has multiple `<subtopic>-samples/` folders
+6. {corpus} = stdout — every sample's content under that chain key, separated by `=== <filename> ===` markers
 
 ### Synthesize
 
-9. Read {corpus} carefully — every sample's evidence for this section
+7. Read {corpus} carefully — every sample's evidence for this section
 
 > Goal: a synthesis a reader can scan to learn (a) which implementation paths dominate, with adoption counts; (b) which sub-purpose values are common vs rare; (c) which samples exemplify each pattern; (d) what outliers reveal about the design space; (e) where corpus practice tensions with authoritative documentation.
 
-10. Identify named patterns — distinct implementation paths, design choices, or value clusters observed across the samples. Use canonical labels drawn from `_TEMPLATE.md`'s sub-purpose vocabulary where applicable; coin labels when the corpus surfaces a pattern the template doesn't name
-11. Count adoption per pattern: `<count>/<denom>`. Denominator follows applicability — full sample (e.g. 104) for universal sub-purposes, applicable subset for conditional ones; state the denominator's basis in narrative when not the full sample. Worked example: a Python-specific path adopted by 32 of the 62 Python-carrying repos is recorded as `32/62` with narrative naming "62 = Python-primary + Python+TS-mixed"
-12. Cite sample exemplars per pattern — filenames without path, comma-separated; cap explicit citation lists at ~5 representative entries when a pattern has many adopters
-13. Surface outliers — samples that diverge from dominant patterns; name the divergence and what it reveals about the design space, not just the fact of difference
-14. When the section has authoritative documentation prescribing a path (spec, SDK README, host docs): note alignment or conflict between docs and corpus practice
+8. Identify named patterns — distinct implementation paths, design choices, or value clusters observed across the samples. Use canonical labels drawn from `_TEMPLATE.md`'s sub-purpose vocabulary where applicable; coin labels when the corpus surfaces a pattern the template doesn't name
+9. Count adoption per pattern: `<count>/<denom>`. Denominator follows applicability — full sample (e.g. 104) for universal sub-purposes, applicable subset for conditional ones; state the denominator's basis in narrative when not the full sample. Worked example: a Python-specific path adopted by 32 of the 62 Python-carrying repos is recorded as `32/62` with narrative naming "62 = Python-primary + Python+TS-mixed"
+10. Cite sample exemplars per pattern — filenames without path, comma-separated; cap explicit citation lists at ~5 representative entries when a pattern has many adopters
+11. Surface outliers — samples that diverge from dominant patterns; name the divergence and what it reveals about the design space, not just the fact of difference
+12. When the section has authoritative documentation prescribing a path (spec, SDK README, host docs): note alignment or conflict between docs and corpus practice
 
 ### Format
 
-15. Section shape inside `_CONSOLIDATED.md`:
+13. Section shape inside `_CONSOLIDATED.md` depends on the chain's depth:
+
+    **Top-level chain (e.g. `Sample > Language and runtime`)** — the leaf is a `##` heading; populate the whole section including framing and all sub-purposes:
 
     ```
     ## {section}
@@ -63,7 +59,17 @@ Per-section synthesis instructions for populating `_CONSOLIDATED.md`. A spawned 
     {...}
     ```
 
-16. Adoption table format — default shape when the section reports implementation paths with authoritative-docs alignment (Transport, Distribution, Authentication, Python SDK / framework, etc.):
+    **Sub-purpose chain (e.g. `Sample > Python-specific > SDK / framework variant`)** — the leaf is a `###` heading; populate just that sub-purpose's body, leaving the parent `##` structure untouched:
+
+    ```
+    ### {leaf-heading}
+
+    {Synthesis for this sub-purpose: patterns, adoption, exemplars}
+    ```
+
+    When sub-purpose chains for one parent are processed across multiple spawns, a separate wrap-up assignment may add the parent's framing paragraph at the end.
+
+14. Adoption table format — default shape when the section reports implementation paths with authoritative-docs alignment (Transport, Distribution, Authentication, Python SDK / framework, etc.):
 
     ```
     | Implementation path | Docs | Adoption |
@@ -73,25 +79,23 @@ Per-section synthesis instructions for populating `_CONSOLIDATED.md`. A spawned 
 
     > ★ — explicitly prescribed by authoritative docs. ☆ — shown valid without endorsement. (blank) — docs silent; adoption is the only signal.
 
-17. For descriptive sections (Identification, Repo layout, License, etc.) the three-column shape degenerates because there's no docs-prescribed path. Use whatever table or narrative shape best conveys the distribution — bucketed counts for skewed numerics (stars), license-vs-adoption two-column, dominant-vs-tail split, or pure narrative when no tabular form fits
+15. For descriptive sections (Identification, Repo layout, License, etc.) the three-column shape degenerates because there's no docs-prescribed path. Use whatever table or narrative shape best conveys the distribution — bucketed counts for skewed numerics (stars), license-vs-adoption two-column, dominant-vs-tail split, or pure narrative when no tabular form fits
 
-18. Sections without natural sub-purpose structure (`## Notable structural choices`, `## Unanticipated axes observed`, `## Gaps`) take freeform body — bullets or short paragraphs. Skip the framing paragraph in those cases
+16. Sections without natural sub-purpose structure (`## Notable structural choices`, `## Unanticipated axes observed`, `## Gaps`) take freeform body — bullets or short paragraphs. Skip the framing paragraph in those cases
 
 ### Write
 
-19. Replace the empty `## {section}` block in `_CONSOLIDATED.md` with the synthesized content
-20. Heading text and level remain unchanged — {section} appears verbatim as `## {section}`; canonical sub-purposes from `_TEMPLATE.md` appear verbatim as `### <sub-purpose>`
-21. Verify compliance:
+17. Locate the heading in `_CONSOLIDATED.md` matching the chain's leaf (depth-2 `##` for top-level chains; depth-3 `###` for sub-purpose chains). Replace the empty block (heading + body up to the next sibling/parent heading) with the synthesized content
+18. Heading text and level remain unchanged — verbatim from `_TEMPLATE.md` for both the leaf heading and any nested sub-purposes
+19. Verify compliance:
     1. bash: `ocd-run log research compliance --subject {subject}` — append `--subtopic {subtopic}` only when multi-subtopic
-    2. If `Consolidated:` line reports outliers or order violations: revert the section's content; surface to caller — synthesis introduced a structural mismatch
-    3. Else: section accepted
+    2. If `Consolidated:` line reports outliers or order violations: revert this chain's content; record the failure in the report; continue to the next chain in {chains}
+    3. Else: chain accepted
 
 ### Continue
 
-22. {sections-completed} = {sections-completed} + 1
-23. If {sections-limit} set and {sections-completed} >= {sections-limit}: Return to caller
-24. If context budget feels constrained (~50% consumed): Return to caller
-25. Else: Go to step 3. Read `_CONSOLIDATED.md` — re-read to find the next empty section
+20. If more chains remain in {chains}: Go to step 3. Process next chain
+21. Else: proceed to Report
 
 ## Report when returning to caller
 
