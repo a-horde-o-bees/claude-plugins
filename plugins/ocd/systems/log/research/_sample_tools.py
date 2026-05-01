@@ -1,6 +1,6 @@
 """Markdown heading-tree analysis for research-corpus samples.
 
-Three operations:
+Operations:
 
 1. Parse a markdown file into a nested `Section` tree keyed by heading
    text, round-trip faithful with `serialize`.
@@ -11,6 +11,11 @@ Three operations:
    map (`chain_key -> [files]`); `consolidate_section` pulls one
    section's content across every sample that has it, so a reviewer
    can compare semantics without re-reading each file in full.
+4. Pre-measure context cost before consuming: `section_sizes` returns
+   per-chain-key UTF-8 byte counts across the whole tree, and
+   `consolidate_section_size` returns the cost for one chain. Together
+   they let an orchestrator bin-pack agent batches under a context
+   budget — companion behavior for the consolidation operations above.
 
 Chain keys use ` > ` as the separator: `Tests > CI` means the `CI`
 heading nested directly under `Tests`. This matches how a reviewer
@@ -292,6 +297,54 @@ def consolidate_section(
             results.append((md_file, serialize(match)))
 
     return results
+
+
+def consolidate_section_size(chain_key: str, sample_dir: Path) -> int:
+    """Return the UTF-8 byte count of section content under `chain_key` across all samples.
+
+    Companion to `consolidate_section` — lets an agent budget context
+    cost before consuming the content. Counts only the section bodies,
+    not the per-sample separators the CLI dispatch adds; the result is
+    proportional to what the agent will consume and stable across
+    working directories (separator overhead includes path strings,
+    which vary).
+    """
+    return sum(
+        len(content.encode("utf-8"))
+        for _, content in consolidate_section(chain_key, sample_dir)
+    )
+
+
+def section_sizes(sample_dir: Path) -> dict[str, int]:
+    """Return `{chain_key: total_bytes}` for every chain key across the sample directory.
+
+    Walks every non-underscore `.md` file under `sample_dir`, parses it,
+    and accumulates each heading's serialized body byte-count by chain
+    key. The size at a parent chain key includes its children (each
+    chain key gets the full serialized subtree under it) — same
+    semantics as `consolidate_section`.
+
+    Used for context-aware iteration: an orchestrator can read the full
+    section-tree-with-sizes in one pass, bin-pack chains under a budget,
+    and dispatch agent batches whose total content fits the budget.
+    """
+    result: dict[str, int] = {}
+
+    for md_file in _iter_sample_files(sample_dir):
+        root = parse_headings(md_file)
+
+        def walk(section: Section, chain: list[str]) -> None:
+            for child in section.children:
+                text = heading_text(child.heading_line)
+                new_chain = chain + [text]
+                chain_key = CHAIN_SEPARATOR.join(new_chain)
+                content_size = len(serialize(child).encode("utf-8"))
+                result[chain_key] = result.get(chain_key, 0) + content_size
+                walk(child, new_chain)
+
+        walk(root, [])
+
+    return result
 
 
 def _find_section(

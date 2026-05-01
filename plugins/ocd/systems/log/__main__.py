@@ -25,7 +25,9 @@ from .research._sample_tools import (
     DuplicateHeadingError,
     check_no_duplicate_headings,
     consolidate_section,
+    consolidate_section_size,
     count_sections,
+    section_sizes,
 )
 
 
@@ -98,30 +100,69 @@ def _dispatch_research_check(args: argparse.Namespace) -> int:
     return 0
 
 
-def _dispatch_research_count_sections(args: argparse.Namespace) -> int:
-    """Print per-chain-key coverage across a samples directory."""
+def _dispatch_research_sections(args: argparse.Namespace) -> int:
+    """Print the chain-key tree across a samples directory.
+
+    Bare invocation prints chain keys alphabetically. `--count` adds
+    adoption count and coverage columns and switches sort to coverage-
+    descending. `--size` adds a byte-count column. Flags compose; the
+    columns appear left-to-right in fixed order (count, coverage, size).
+    """
     samples_dir = _resolve_samples_dir(args)
     counts = count_sections(samples_dir)
     if not counts:
         print(f"No sections found in {samples_dir}")
         return 0
+
+    sizes = section_sizes(samples_dir) if args.size else {}
     total_samples = len(
         [p for p in samples_dir.glob("*.md") if not p.name.startswith("_")]
     )
-    # Sort by coverage descending, then chain key ascending — highest-
-    # coverage sections first, with stable alphabetical tie-break.
-    sorted_items = sorted(counts.items(), key=lambda kv: (-len(kv[1]), kv[0]))
-    max_key_len = max(len(k) for k, _ in sorted_items)
-    print(f"{'chain_key'.ljust(max_key_len)}  count  coverage")
-    for chain_key, files in sorted_items:
-        pct = len(files) / total_samples * 100 if total_samples else 0
-        print(f"{chain_key.ljust(max_key_len)}  {len(files):5d}  {pct:5.1f}%")
+
+    # Sort by coverage-desc when --count drives the table; alphabetical
+    # otherwise (the bare tree and --size-only views read top-to-bottom
+    # without count weight).
+    if args.count:
+        sorted_keys = sorted(counts.keys(), key=lambda k: (-len(counts[k]), k))
+    else:
+        sorted_keys = sorted(counts.keys())
+
+    max_key_len = max(len(k) for k in sorted_keys)
+
+    header_parts = ["chain_key".ljust(max_key_len)]
+    if args.count:
+        header_parts.extend(["count", "coverage"])
+    if args.size:
+        header_parts.append("size")
+    if args.count or args.size:
+        print("  ".join(header_parts))
+
+    for chain_key in sorted_keys:
+        row = [chain_key.ljust(max_key_len)]
+        if args.count:
+            file_count = len(counts[chain_key])
+            pct = file_count / total_samples * 100 if total_samples else 0
+            row.append(f"{file_count:5d}")
+            row.append(f"{pct:5.1f}%")
+        if args.size:
+            row.append(f"{sizes.get(chain_key, 0):8d}")
+        print("  ".join(row))
+
     return 0
 
 
-def _dispatch_research_consolidate(args: argparse.Namespace) -> int:
-    """Print serialized section content from every sample containing the chain."""
+def _dispatch_research_content(args: argparse.Namespace) -> int:
+    """Print serialized section content from every sample containing the chain.
+
+    `--size` short-circuits to a single integer (UTF-8 byte count of
+    section bodies summed across samples) — companion behavior so an
+    agent can budget cost before consuming.
+    """
     samples_dir = _resolve_samples_dir(args)
+    if args.size:
+        print(consolidate_section_size(args.chain, samples_dir))
+        return 0
+
     results = consolidate_section(args.chain, samples_dir)
     if not results:
         print(f"No samples contain chain key {args.chain!r}")
@@ -252,12 +293,12 @@ def build_parser() -> argparse.ArgumentParser:
             "Research corpus analysis.\n"
             "\n"
             "Verbs:\n"
-            "  check           Verify a markdown file has no sibling-duplicate headings\n"
-            "  count-sections  Print chain-key coverage across a samples directory\n"
-            "  consolidate     Print per-sample content under a given chain key\n"
-            "  compliance      Diff every sample against the subject's _TEMPLATE.md\n"
+            "  check        Verify a markdown file has no sibling-duplicate headings\n"
+            "  sections     Print the chain-key tree; --count and --size add columns\n"
+            "  content      Print per-sample content under a given chain key; --size for byte count\n"
+            "  compliance   Diff every sample (and _CONSOLIDATED.md) against _TEMPLATE.md\n"
             "\n"
-            "Samples-directory locators (count-sections, consolidate, compliance):\n"
+            "Samples-directory locators (sections, content, compliance):\n"
             "  --subject <name>    <project>/logs/research/<name>/<subtopic>-samples/\n"
             "                        Auto-resolves single-subtopic subjects;\n"
             "                        multi-subtopic requires --subtopic <name>.\n"
@@ -266,11 +307,13 @@ def build_parser() -> argparse.ArgumentParser:
             "\n"
             "Usage:\n"
             "  log research check <path>\n"
-            "  log research count-sections --subject <name>\n"
-            "  log research count-sections --subject <name> --subtopic <topic>\n"
-            "  log research count-sections --dir <path>\n"
-            "  log research consolidate --chain <key> --subject <name>\n"
-            "  log research consolidate --chain <key> --dir <path>\n"
+            "  log research sections --subject <name>\n"
+            "  log research sections --subject <name> --count\n"
+            "  log research sections --subject <name> --count --size\n"
+            "  log research sections --dir <path> --size\n"
+            "  log research content '<chain>' --subject <name>\n"
+            "  log research content '<chain>' --subject <name> --size\n"
+            "  log research content '<chain>' --dir <path>\n"
             "  log research compliance --subject <name>\n"
             "  log research compliance --subject <name> --show-missing --show-files\n"
             "  log research compliance --dir <path> --template <template-path>"
@@ -286,24 +329,38 @@ def build_parser() -> argparse.ArgumentParser:
     r_check.add_argument("path", help="Path to markdown file")
     r_check.set_defaults(_dispatch=_dispatch_research_check)
 
-    r_count = rsub.add_parser(
-        "count-sections",
-        help="Print chain-key coverage across a samples directory",
+    r_sections = rsub.add_parser(
+        "sections",
+        help="Print the chain-key tree; --count and --size add columns",
     )
-    _add_samples_location_args(r_count)
-    r_count.set_defaults(_dispatch=_dispatch_research_count_sections)
+    _add_samples_location_args(r_sections)
+    r_sections.add_argument(
+        "--count",
+        action="store_true",
+        help="Add adoption-count and coverage columns; sort by coverage descending",
+    )
+    r_sections.add_argument(
+        "--size",
+        action="store_true",
+        help="Add UTF-8 byte-count column (content cost when calling `content <chain>`)",
+    )
+    r_sections.set_defaults(_dispatch=_dispatch_research_sections)
 
-    r_consolidate = rsub.add_parser(
-        "consolidate",
-        help="Print per-sample content under a chain key",
+    r_content = rsub.add_parser(
+        "content",
+        help="Print per-sample content under a chain key; --size for byte count only",
     )
-    _add_samples_location_args(r_consolidate)
-    r_consolidate.add_argument(
-        "--chain",
-        required=True,
-        help="Chain key like 'Transport > Configuration' (` > ` separator)",
+    _add_samples_location_args(r_content)
+    r_content.add_argument(
+        "chain",
+        help="Chain key like 'Sample > Transport > Configuration' (' > ' separator)",
     )
-    r_consolidate.set_defaults(_dispatch=_dispatch_research_consolidate)
+    r_content.add_argument(
+        "--size",
+        action="store_true",
+        help="Print UTF-8 byte count instead of content (companion for budgeting)",
+    )
+    r_content.set_defaults(_dispatch=_dispatch_research_content)
 
     r_compliance = rsub.add_parser(
         "compliance",

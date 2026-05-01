@@ -98,13 +98,13 @@ Cross-subject heading-tree analysis is provided by `ocd-run log research` verbs:
 | Verb | Purpose |
 |------|---------|
 | `check <path>` | Verify one markdown file has no sibling-duplicate headings. Run before consolidating to catch heading collisions early |
-| `count-sections --subject <name>` | Print chain-key coverage across the samples directory — which headings are near-universal vs rare |
-| `consolidate --chain "<key>" --subject <name>` | Print every sample's content under one chain key (e.g. `Sample > Authentication > flow`). The unit of synthesis when authoring `_CONSOLIDATED.md` per purpose |
+| `sections --subject <name>` | Print the chain-key tree across the samples directory; `--count` adds adoption count and coverage; `--size` adds UTF-8 byte counts for context-budget bin-packing |
+| `content "<chain>" --subject <name>` | Print every sample's content under one chain key (e.g. `Sample > Authentication > flow`). The unit of synthesis when authoring `_CONSOLIDATED.md` per purpose. `--size` returns just the byte count for budgeting before consume |
 | `compliance --subject <name>` | Diff every sample (and `_CONSOLIDATED.md`) against `_TEMPLATE.md`. Surfaces outlier headings and reports order violations at every depth |
 
 Run `compliance` after retrofitting samples or before tallying — it confirms the corpus matches the template's heading tree (the single source of truth for sample structure). Outliers under open-enumeration sections (marked by a `<placeholder>` heading in the template) are not flagged; they are the section's content vocabulary.
 
-When `_CONSOLIDATED.md` is the goal, reach for `consolidate` per template section rather than reading every sample top-down. The output is bounded (one section's evidence at a time), grounded (returned content is verbatim from the samples), and composes naturally — each `consolidate` pass produces one section's worth of synthesized findings, ready to merge into the larger doc.
+When `_CONSOLIDATED.md` is the goal, reach for `content` per template section rather than reading every sample top-down. The output is bounded (one section's evidence at a time), grounded (returned content is verbatim from the samples), and composes naturally — each `content` pass produces one section's worth of synthesized findings, ready to merge into the larger doc. Use `sections --size` first when the orchestrator needs to bin-pack work under a context budget; see `agent-helper-functions.md` pattern for the sizing-companion convention.
 
 ## Authoring `RESEARCH.md` and `ANALYSIS.md`
 

@@ -409,3 +409,138 @@ class TestConsolidateSection:
         _write_md(sample_dir, "a.md", "# Root\n\n## A\n")
         results = consolidate_section("Root" + CHAIN_SEPARATOR + "Nonexistent", sample_dir)
         assert results == []
+
+
+# ─── section_sizes — chain-key sizing companion ──────────────────────────
+
+
+class TestSectionSizes:
+    def test_returns_byte_count_per_chain_key(self, tmp_path: Path):
+        from systems.log.research._sample_tools import section_sizes
+
+        sample_dir = tmp_path / "samples"
+        sample_dir.mkdir()
+        _write_md(sample_dir, "a.md", """
+            # Root
+
+            ## Transport
+
+            stdio
+        """)
+        sizes = section_sizes(sample_dir)
+        # Both chain keys are present (parent and child)
+        assert "Root" in sizes
+        assert "Root" + CHAIN_SEPARATOR + "Transport" in sizes
+        # Parent chain key includes the child (full subtree)
+        assert sizes["Root"] >= sizes["Root" + CHAIN_SEPARATOR + "Transport"]
+        # Sizes are non-zero positive
+        assert sizes["Root" + CHAIN_SEPARATOR + "Transport"] > 0
+
+    def test_aggregates_across_samples(self, tmp_path: Path):
+        from systems.log.research._sample_tools import section_sizes
+
+        sample_dir = tmp_path / "samples"
+        sample_dir.mkdir()
+        _write_md(sample_dir, "a.md", "# Root\n\n## A\n\nshort\n")
+        _write_md(sample_dir, "b.md", "# Root\n\n## A\n\nshort\nplus more text here\n")
+        sizes = section_sizes(sample_dir)
+        # Both samples' content under "Root > A" sums into the chain key
+        assert sizes["Root" + CHAIN_SEPARATOR + "A"] > 0
+        # Sum reflects both samples (not just one)
+        single_sample_size = sizes["Root" + CHAIN_SEPARATOR + "A"]
+        single_dir = tmp_path / "single"
+        single_dir.mkdir()
+        _write_md(single_dir, "a.md", "# Root\n\n## A\n\nshort\n")
+        single_sizes = section_sizes(single_dir)
+        assert single_sample_size > single_sizes["Root" + CHAIN_SEPARATOR + "A"]
+
+    def test_skips_underscore_prefixed_files(self, tmp_path: Path):
+        from systems.log.research._sample_tools import section_sizes
+
+        sample_dir = tmp_path / "samples"
+        sample_dir.mkdir()
+        _write_md(sample_dir, "a.md", "# Root\n\n## A\n\ncontent\n")
+        _write_md(sample_dir, "_TEMPLATE.md", "# Root\n\n## A\n\nlots and lots of template content\n")
+        sizes = section_sizes(sample_dir)
+        # _TEMPLATE.md content does not contribute to the size
+        assert sizes["Root" + CHAIN_SEPARATOR + "A"] < 50
+
+    def test_empty_directory_returns_empty_dict(self, tmp_path: Path):
+        from systems.log.research._sample_tools import section_sizes
+
+        sample_dir = tmp_path / "samples"
+        sample_dir.mkdir()
+        sizes = section_sizes(sample_dir)
+        assert sizes == {}
+
+    def test_chain_keys_match_count_sections(self, tmp_path: Path):
+        """section_sizes and count_sections expose the same chain keys."""
+        from systems.log.research._sample_tools import section_sizes
+
+        sample_dir = tmp_path / "samples"
+        sample_dir.mkdir()
+        _write_md(sample_dir, "a.md", """
+            # Root
+
+            ## A
+
+            ### A1
+
+            ## B
+        """)
+        sizes = section_sizes(sample_dir)
+        counts = count_sections(sample_dir)
+        assert set(sizes.keys()) == set(counts.keys())
+
+
+# ─── consolidate_section_size — single-chain budgeting ───────────────────
+
+
+class TestConsolidateSectionSize:
+    def test_returns_byte_count_of_content(self, tmp_path: Path):
+        from systems.log.research._sample_tools import consolidate_section_size
+
+        sample_dir = tmp_path / "samples"
+        sample_dir.mkdir()
+        _write_md(sample_dir, "a.md", "# Root\n\n## Transport\n\nstdio\n")
+        size = consolidate_section_size("Root" + CHAIN_SEPARATOR + "Transport", sample_dir)
+        assert size > 0
+
+    def test_chain_not_found_returns_zero(self, tmp_path: Path):
+        from systems.log.research._sample_tools import consolidate_section_size
+
+        sample_dir = tmp_path / "samples"
+        sample_dir.mkdir()
+        _write_md(sample_dir, "a.md", "# Root\n\n## A\n")
+        size = consolidate_section_size("Root" + CHAIN_SEPARATOR + "Nonexistent", sample_dir)
+        assert size == 0
+
+    def test_aggregates_across_samples(self, tmp_path: Path):
+        from systems.log.research._sample_tools import consolidate_section_size
+
+        sample_dir = tmp_path / "samples"
+        sample_dir.mkdir()
+        _write_md(sample_dir, "a.md", "# Root\n\n## Transport\n\nstdio\n")
+        _write_md(sample_dir, "b.md", "# Root\n\n## Transport\n\nstdio plus more\n")
+        size = consolidate_section_size("Root" + CHAIN_SEPARATOR + "Transport", sample_dir)
+        # Both samples contribute
+        single_dir = tmp_path / "single"
+        single_dir.mkdir()
+        _write_md(single_dir, "a.md", "# Root\n\n## Transport\n\nstdio\n")
+        single_size = consolidate_section_size("Root" + CHAIN_SEPARATOR + "Transport", single_dir)
+        assert size > single_size
+
+    def test_matches_section_sizes_for_same_chain(self, tmp_path: Path):
+        """consolidate_section_size and section_sizes agree on the same chain key."""
+        from systems.log.research._sample_tools import (
+            consolidate_section_size,
+            section_sizes,
+        )
+
+        sample_dir = tmp_path / "samples"
+        sample_dir.mkdir()
+        _write_md(sample_dir, "a.md", "# Root\n\n## A\n\ntext one\n")
+        _write_md(sample_dir, "b.md", "# Root\n\n## A\n\ntext two\n")
+        all_sizes = section_sizes(sample_dir)
+        single = consolidate_section_size("Root" + CHAIN_SEPARATOR + "A", sample_dir)
+        assert all_sizes["Root" + CHAIN_SEPARATOR + "A"] == single

@@ -30,7 +30,7 @@ Per-section synthesis instructions for populating `_CONSOLIDATED.md`. A spawned 
 
 ### Extract
 
-7. bash: `ocd-run log research consolidate --chain "Sample > {section}" --subject {subject}` — append `--subtopic {subtopic}` only when the subject has multiple `<subtopic>-samples/` folders
+7. bash: `ocd-run log research content "Sample > {section}" --subject {subject}` — append `--subtopic {subtopic}` only when the subject has multiple `<subtopic>-samples/` folders
 8. {corpus} = stdout — every sample's content under that chain key, separated by `=== <filename> ===` markers
 
 ### Synthesize
