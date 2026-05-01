@@ -168,6 +168,7 @@
 ## 16. Documentation
 
 - **`README.md` at repo root**: present (~10.7 KB — thorough marketplace overview, install snippets, plugin matrix, MCP provider table, "Making Them Yours" customization section, "Contributing" subsection)
+- **Owner profile README at `github.com/anthropics/anthropics`**: absent — no `<owner>/<owner>` repo found via gh api on 2026-04-30
 - **`README.md` per plugin**: mixed — `investment-banking/README.md`, `claude-in-office/README.md`, `partner-built/lseg/README.md`, `partner-built/spglobal/README.md` present; `financial-analysis`, `equity-research`, `private-equity`, `wealth-management` have no per-plugin README.
 - **`CHANGELOG.md`**: absent
 - **`architecture.md`**: absent

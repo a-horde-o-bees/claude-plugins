@@ -168,6 +168,7 @@
 ## 16. Documentation
 
 - **`README.md` at repo root**: present (3390 bytes — installation, prerequisites, per-command usage with examples, wiki structure diagram, Obsidian/qmd integration notes, uninstall)
+- **Owner profile README at `github.com/ekadetov/ekadetov`**: absent — no `<owner>/<owner>` repo found via gh api on 2026-04-30
 - **`README.md` per plugin**: not applicable (single-plugin, repo root IS the plugin root)
 - **`CHANGELOG.md`**: absent
 - **`architecture.md`**: absent

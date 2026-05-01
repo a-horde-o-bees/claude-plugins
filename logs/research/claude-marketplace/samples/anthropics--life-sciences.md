@@ -200,6 +200,7 @@
 ## 16. Documentation
 
 - **`README.md` at repo root**: present (~176 lines, ~5.8 KB). Sections: Quick Start, Available Plugins (grouped Remote MCP / Local MCP / Skills), Detailed Installation, Authentication Requirements, Support, License, Removed Plugins.
+- **Owner profile README at `github.com/anthropics/anthropics`**: absent — no `<owner>/<owner>` repo found via gh api on 2026-04-30
 - **`README.md` per plugin**: mostly absent. `clinical-trial-protocol-skill/README.md` exists (only one). Skills rely on `SKILL.md` frontmatter + body as their user-facing doc. MCP plugins rely on plugin.json `description` only.
 - **`CHANGELOG.md`**: absent. GitHub Releases' auto-generated notes serve as the change log.
 - **`architecture.md`**: absent — neither repo root nor per plugin.

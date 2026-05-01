@@ -174,6 +174,7 @@
 ## 16. Documentation
 
 - **`README.md` at repo root**: present — ~50 lines (1,881 bytes equivalent short-form). Covers structure (`/plugins` vs `/external_plugins`), install command, contribution split (Anthropic-internal vs submission-form external), plugin structure skeleton, and a pointer to official docs.
+- **Owner profile README at `github.com/anthropics/anthropics`**: absent — no `<owner>/<owner>` repo found via gh api on 2026-04-30
 - **`README.md` per plugin**: present on all 34 internal plugins checked; also present on external plugins where carried (but external plugin directories generally hold only `.claude-plugin/plugin.json` + `.mcp.json` — e.g., `asana/`, `github/`, `playwright/` show no README at that level). Mixed — internal plugins always ship a README; thin external MCP wrappers usually do not.
 - **`CHANGELOG.md`**: absent (0 matches)
 - **`architecture.md`**: absent (0 matches)

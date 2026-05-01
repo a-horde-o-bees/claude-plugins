@@ -1023,6 +1023,28 @@ Orient users, contributors, and future maintainers. Applicability universal.
 | `README.md` per plugin | 12/18 |
 | `architecture.md` per plugin | Rare |
 
+#### Owner profile README
+
+The `github.com/<owner>/<owner>` special repo, displayed at the top of the maintainer's profile page. Off-repo, but visible to anyone clicking through from a plugin repo to evaluate the maintainer.
+
+Probed all 49 unique account names across the 54-sample set on 2026-04-30. **15/49 owners (~31%) ship a profile README; 34/49 don't.** Letting the repos speak for themselves is the dominant stance.
+
+Among the 15 that do, the patterns split:
+
+| Pattern | Count | Examples | What it does |
+|---|---|---|---|
+| Trivial / decorative | 3 | includeHasan (1 line of dots), K-dash (29 lines, GitHub stats widgets only), 777genius (330 lines, mostly commented-out HTML) | Visual filler, no content |
+| Brief landing card | 4 | IgorGanapolsky, Lykhoyda, hwuiwon, raphaelchristi | 1-line bio + Now/Building + 3-5 project pointers + contact, ~25-40 lines |
+| Resume-tier portfolio | 4 | NoelClay, damionrashford, jmylchreest, lukasmalkmus | Project tables, tech badges, sometimes auto-generated from repo metadata (markscribe-style) |
+| Marketing collateral | 4 | ShaheerKhawaja, HiH-DimaN, affaan-m, ChanMeng666 | Founder/consultant pitch with multiple products, services, sometimes hidden GEO/LLM-optimization blocks; 80-750 lines |
+
+Implications:
+
+- **Enumeration ("X skills, Y agents, Z principles") shows up in the marketing tier**, not the credibility tier. Engineers framing themselves professionally describe what projects DO without counting parts.
+- **Lykhoyda's "Now / Building / Before" structure** is the most maintenance-light pattern observed: scannable, dated implicitly via section headings, no enumeration to keep in sync.
+- **The verbose marketing-tier READMEs read as consulting collateral**, not developer profiles — different audience than the marketplace-discoverer who's evaluating engineering output.
+- **No profile README is a defensible default.** 69% of sampled maintainers don't have one; the maintainer's plugin repos do the work of representation.
+
 #### CHANGELOG format
 
 ★ Docs recommend a CHANGELOG but don't prescribe format. Across ~27/54 repos that ship a CHANGELOG:

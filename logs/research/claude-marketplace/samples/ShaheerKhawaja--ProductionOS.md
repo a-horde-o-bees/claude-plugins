@@ -167,6 +167,7 @@
 ## 16. Documentation
 
 - **`README.md` at repo root**: present (~18.6 KB, substantial — covers quick start, core loop, workflow catalog, install matrix for Claude Code + Codex + npx).
+- **Owner profile README at `github.com/ShaheerKhawaja/ShaheerKhawaja`**: present (~83 lines, marketing collateral — multi-product founder pitch)
 - **`README.md` per plugin**: not applicable (single-plugin repo).
 - **`CHANGELOG.md`**: present, 13.6 KB, Keep-a-Changelog-style format with dated semver sections — but top entry is stale (`[8.0.0-alpha.2]` — 2026-03-22) relative to current `2.0.0-beta.1`.
 - **`architecture.md`**: present — `ARCHITECTURE.md` at repo root (22.8 KB, substantial).

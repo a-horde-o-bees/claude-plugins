@@ -159,6 +159,7 @@
 ## 16. Documentation
 
 - **`README.md` at repo root**: present (~4.4 KB). Opens with a value-pitch paragraph, then "How It Works", the three-tier explanation, "What Stays In Sync", install via `claude --plugin-dir`, MCP tools list, dashboard menu, language-support list, cross-platform notes, diagnostics (`/sanity`), contributing, MIT license.
+- **Owner profile README at `github.com/thecodeartificerX/thecodeartificerX`**: absent — no `<owner>/<owner>` repo found via gh api on 2026-04-30
 - **`README.md` per plugin**: not applicable (single plugin = the repo root README).
 - **`CHANGELOG.md`**: absent.
 - **`architecture.md`**: absent at repo root. `docs/DESIGN.md` (~36 KB) and `docs/SPEC.md` (~22 KB) exist and appear to carry architectural content (not opened in this pass — contents inferred from filename and size only). There is no file literally named `architecture.md`.

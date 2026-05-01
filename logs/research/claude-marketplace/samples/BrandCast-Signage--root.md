@@ -168,6 +168,7 @@
 ## 16. Documentation
 
 - **`README.md` at repo root**: present, ~15KB. User-facing install + usage guide, rich, two-harness instructions (Claude Code + Gemini). (Observed.)
+- **Owner profile README at `github.com/BrandCast-Signage/BrandCast-Signage`**: absent — no `<owner>/<owner>` repo found via gh api on 2026-04-30
 - **`README.md` per plugin**: not applicable — single-plugin marketplace, the repo root README is the plugin README.
 - **`CHANGELOG.md`**: present, ~11.6KB, Keep a Changelog format explicitly declared ("The format is based on Keep a Changelog") + SemVer declaration. Each release entry has `Added` / `Changed` / `Fixed` / `Why` / `Migration` subsections — the `Why` section is unusually substantive (decision rationale with links to external docs). (Observed.)
 - **`architecture.md`**: absent — no dedicated architecture doc at repo root or per-component. Architecture is sketched inside `CLAUDE.md`. (Observed.)

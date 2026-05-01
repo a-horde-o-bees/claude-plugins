@@ -187,6 +187,7 @@ Shared design: install into `CLAUDE_PLUGIN_ROOT` because ESM walks the filesyste
 ## 16. Documentation
 
 - **`README.md` at repo root**: present (~6.7 KB). Covers what the plugin does, prerequisites, install, first-time setup, skill/agent listing, data-source tiering with cost tiers, workspace layout, team usage, update, contributing, license.
+- **Owner profile README at `github.com/includeHasan/includeHasan`**: present (~1 line, trivial / placeholder — just dots)
 - **`README.md` per plugin**: not applicable — single-plugin-at-root layout means repo README *is* the plugin README.
 - **`CHANGELOG.md`**: present (~16.9 KB). Format: a hybrid — header declares "Format: [Semantic Versioning](https://semver.org)" but entries follow Keep-a-Changelog-ish conventions (`## [1.7.0] — 2026-04-11` with narrative subsections). Not strictly KAC (no `Added`/`Changed`/`Fixed` bucket headings), but recognisable.
 - **`architecture.md`**: absent at repo root. Architectural content is bundled into root `CLAUDE.md` (the "Architecture" section — five numbered layers with cross-reference rules).

@@ -173,6 +173,7 @@
 ## 16. Documentation
 
 - **`README.md` at repo root**: present, 17606 bytes. Heavy — includes architecture diagram, FAQ (six collapsibles), use cases, schema.org JSON-LD block for LLM/search indexing, badges.
+- **Owner profile README at `github.com/damionrashford/damionrashford`**: present (~59 lines, resume-tier portfolio — project table + tech badges)
 - **`README.md` per plugin**: present on all three (`plugins/polymarket/README.md`, `plugins/coinbase-agent-kit/README.md`, `plugins/trading-core/README.md`). Each leads with a "Default main-thread agent" section explaining the router pattern.
 - **`CHANGELOG.md`**: present per plugin (not at repo root). Format: Keep-a-Changelog-lite — `## [VERSION] — YYYY-MM-DD` heading, `### Added` subsection, narrative bullet lists. First-release entries only.
 - **`architecture.md`**: absent. Architecture content lives in the root `README.md` (ASCII diagram) and `CLAUDE.md` (layout + invariants).

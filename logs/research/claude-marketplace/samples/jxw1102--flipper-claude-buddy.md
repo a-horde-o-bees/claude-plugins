@@ -170,6 +170,7 @@
 ## 16. Documentation
 
 - **`README.md` at repo root**: present — 5163 bytes, user-facing quickstart (what it does, button reference, install, per-OS setup notes for macOS and Linux, troubleshooting table, support/license).
+- **Owner profile README at `github.com/jxw1102/jxw1102`**: absent — no `<owner>/<owner>` repo found via gh api on 2026-04-30
 - **`README.md` per plugin**: mixed — `flipper-app/README.md` exists (firmware-oriented), no README inside `plugin/`. The root README covers installation of both components.
 - **`CHANGELOG.md`**: present at `flipper-app/CHANGELOG.md` (scoped to firmware) — custom `## vX.Y` section format, not Keep-a-Changelog. No root-level CHANGELOG, no `plugin/CHANGELOG.md`.
 - **`architecture.md`**: absent as a dedicated file. Architectural content (three-layer diagram, threading model, protocol, runtime files, platform notes) lives in `CLAUDE.md` at the repo root, which blurs the agent-ops vs architecture separation this project's own conventions enforce.

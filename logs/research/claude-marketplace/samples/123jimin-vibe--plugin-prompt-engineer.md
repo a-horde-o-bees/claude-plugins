@@ -184,6 +184,7 @@
 ## 16. Documentation
 
 - **`README.md` at repo root**: present but **stub-only** — 162 bytes, consisting of four markdown headings (`# Prompt Engineer`, `## Token Counter`, `## LLM Invocation`, `### Q&A Mode`, `## Prompt Playground`) and a `> [!CAUTION]` admonition reading "This repository is currently in active development." No content under any heading. No install/usage instructions.
+- **Owner profile README at `github.com/123jimin-vibe/123jimin-vibe`**: absent — no `<owner>/<owner>` repo found via gh api on 2026-04-30
 - **`README.md` per plugin**: absent. The `plugin/` directory has no README; nor do `plugin/skills/<name>/`. Each SKILL.md serves as the skill's docs.
 - **`CHANGELOG.md`**: absent.
 - **`architecture.md`**: absent in the conventional sense, but `worklog/spec/` functions as a scattered architecture reference: `s0001-prompt-engineer-plugin.md` (top-level), `s0003-python-environment.md`, `s0004-testing.md`, `s0006-invoke-llm.md`, `s0007-exams.md`, `s0008-llm-providers.md`, `s0009-hooks.md`, `s0010-prompt-engineer-agent.md` etc.

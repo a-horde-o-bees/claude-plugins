@@ -163,6 +163,7 @@
 ## 16. Documentation
 
 - **`README.md` at repo root**: present (~5.0 KB — quick start, command table, config example, ASCII architecture diagram, "Related repos" table, rebrand note)
+- **Owner profile README at `github.com/Arcanon-hub/Arcanon-hub`**: absent — no `<owner>/<owner>` repo found via gh api on 2026-04-30
 - **`README.md` per plugin**: present at `plugins/arcanon/README.md` (~1.2 KB — mostly directs readers back to the repo-root README, plus install one-liner, command list, auto-behaviors summary, package layout table)
 - **`CHANGELOG.md`**: present at `plugins/arcanon/CHANGELOG.md` — Keep a Changelog format with an `[Unreleased]` section and a prose "Notes on prior versions" section covering the v1.0–v5.7.0 Ligamen history and the rebrand rationale.
 - **`architecture.md`**: present at `docs/architecture.md` (repo-root `docs/` folder) — system overview ASCII diagram, plugin structure table, worker process description, MCP server description (8 tools grouped by surface), hub sync description, storage, graph UI, scan pipeline, hook architecture. No per-plugin architecture.md.

@@ -171,6 +171,7 @@
 ## 16. Documentation
 
 - **`README.md` at repo root**: present (~450 lines including install guide, project-type table, skill catalog, bundle descriptions, commit workflow, key features, contributing).
+- **Owner profile README at `github.com/mdproctor/mdproctor`**: absent — no `<owner>/<owner>` repo found via gh api on 2026-04-30
 - **`README.md` per plugin**: absent — each plugin has only `SKILL.md` (no per-plugin README).
 - **`CHANGELOG.md`**: absent.
 - **`architecture.md`**: present at repo root as `docs/architecture.md` (not sampled deeply).

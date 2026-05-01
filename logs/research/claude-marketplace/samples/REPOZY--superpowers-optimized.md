@@ -164,6 +164,7 @@
 ## 16. Documentation
 
 - **`README.md` at repo root**: present (~43 KB — unusually thorough; covers research motivation, skill catalog, hook inventory, memory stack, install/update/uninstall for Claude/Cursor/Codex/OpenCode, and "Claude Opus 4.6's honest take" testimonial)
+- **Owner profile README at `github.com/REPOZY/REPOZY`**: absent — no `<owner>/<owner>` repo found via gh api on 2026-04-30
 - **`README.md` per plugin**: not applicable — single-plugin repo
 - **`CHANGELOG.md`**: absent; replaced by `RELEASE-NOTES.md` (116 KB, free-form "What's New" sections consumed by the session-start hook)
 - **`architecture.md`**: not at repo root; `docs/architecture/` is a directory (listing not fully traversed). `docs/architecture/smart-compress.md` is referenced from the README.

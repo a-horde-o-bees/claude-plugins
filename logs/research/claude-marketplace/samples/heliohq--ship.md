@@ -186,6 +186,7 @@
 ## 16. Documentation
 
 - **`README.md` at repo root**: present (~5.3 KB) — product narrative, install flow for all three runtimes (Claude, Codex, Cursor), skill table.
+- **Owner profile README at `github.com/heliohq/heliohq`**: absent — no `<owner>/<owner>` repo found via gh api on 2026-04-30
 - **`README.md` per plugin**: not applicable (single-plugin; repo README serves).
 - **`CHANGELOG.md`**: absent.
 - **`architecture.md`**: absent (architectural narrative is split into README "How It Works" + AGENTS.md "Architecture" section + individual `docs/design/*.md` files, currently one — `002-session-context-injection.md`).

@@ -184,6 +184,7 @@
 ## 16. Documentation
 
 - **`README.md` at repo root**: present (~40 KB — extensive with tables, install instructions, architecture diagram, troubleshooting, uninstall flow, developer section, promo video embed)
+- **Owner profile README at `github.com/ChanMeng666/ChanMeng666`**: present (~751 lines, marketing collateral — GEO/LLM-crawler-optimized; full bio + every project)
 - **`README.md` per plugin**: absent (no `plugins/audio-hooks/README.md`; the plugin dir has only plugin.json + hooks/bin/skills/audio/config. Plugin's "docs" is the SKILL.md frontmatter description + the root README.)
 - **`CHANGELOG.md`**: present (Keep a Changelog format, 66 KB, explicitly cites keepachangelog.com in the header)
 - **`architecture.md`**: present at `docs/ARCHITECTURE.md` (observed — also `docs/INSTALLATION_GUIDE.md` and `docs/TROUBLESHOOTING.md`). Not at plugin root; the repo root owns it.

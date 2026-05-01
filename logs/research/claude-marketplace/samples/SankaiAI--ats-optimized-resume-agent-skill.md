@@ -163,6 +163,7 @@
 ## 16. Documentation
 
 - **`README.md` at repo root**: present — 40958 bytes, bilingual (English + Chinese), with Table of Contents, five install methods, update/uninstall, dual AI-agent-targeted install-prompt section ("For AI Coding Agents — Read This First") containing literal clone+install commands for Claude Code, Cursor, Windsurf, OpenClaw
+- **Owner profile README at `github.com/SankaiAI/SankaiAI`**: absent — no `<owner>/<owner>` repo found via gh api on 2026-04-30
 - **`README.md` per plugin**: absent — single-plugin repo; the root README is the plugin README
 - **`CHANGELOG.md`**: absent
 - **`architecture.md`**: absent

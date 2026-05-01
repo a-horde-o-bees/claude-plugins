@@ -163,6 +163,7 @@
 ## 16. Documentation
 
 - **`README.md` at repo root**: present (~11KB). Strong opening pitch + install + "What Makes This Different" + "How This Compares" + "Documentation" section linking out to sub-docs + Community (Discord badge) + Feedback loop (three surfaces: `/feedback` skill, issue templates, discussions).
+- **Owner profile README at `github.com/BaseInfinity/BaseInfinity`**: absent — no `<owner>/<owner>` repo found via gh api on 2026-04-30
 - **`README.md` per plugin**: not applicable (single-plugin repo; there's no separate plugin-scoped README).
 - **`CHANGELOG.md`**: present (~46KB, heavy detail). Format is Keep-a-Changelog-like (`## [X.Y.Z] - YYYY-MM-DD` with `### Added`, `### Fixed`, `### Docs` sections) and doubles as the source the in-product `/update-wizard` skill consumes.
 - **`architecture.md`**: present as `ARCHITECTURE.md` (uppercase, ~11KB) at repo root — multi-layer diagram, hooks/skills tables, self-update flow.

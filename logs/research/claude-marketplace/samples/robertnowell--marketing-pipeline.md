@@ -210,6 +210,7 @@
 ## 16. Documentation
 
 - **`README.md` at repo root**: present (~4.3 KB, ~80 lines — install + use + what-it-does + anti-slop explainer + credentials table + supported surfaces + project-types + dev instructions + license)
+- **Owner profile README at `github.com/robertnowell/robertnowell`**: absent — no `<owner>/<owner>` repo found via gh api on 2026-04-30
 - **`README.md` per plugin**: not applicable (single-plugin repo; the root README is the plugin README)
 - **`CHANGELOG.md`**: absent
 - **`architecture.md`**: absent

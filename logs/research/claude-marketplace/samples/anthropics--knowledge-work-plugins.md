@@ -171,6 +171,7 @@
 ## 16. Documentation
 
 - **`README.md` at repo root**: present (~6 KB) — plugin table with per-plugin links, Claude Code install instructions, "How Plugins Work" section, "Making Them Yours" customization guide.
+- **Owner profile README at `github.com/anthropics/anthropics`**: absent — no `<owner>/<owner>` repo found via gh api on 2026-04-30
 - **`README.md` per plugin**: mostly present. Anthropic-owned: productivity, pdf-viewer, bio-research, customer-support, data, enterprise-search, finance, legal, marketing, design, engineering, human-resources, operations all ship a `README.md`. `cowork-plugin-management` ships **no** `README.md` (only skills + LICENSE). Partner-built: slack, zoom-plugin, apollo, common-room, brand-voice all ship READMEs.
 - **`CHANGELOG.md`**: absent at repo root. Present only at `partner-built/zoom-plugin/CHANGELOG.md` (free-form, not Keep a Changelog).
 - **`architecture.md`**: absent everywhere. Architecture descriptions live inside the `cowork-plugin-management/skills/create-cowork-plugin/SKILL.md` instructional content, not in dedicated docs.

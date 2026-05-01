@@ -180,6 +180,7 @@
 ## 16. Documentation
 
 - **`README.md` at repo root**: present (short — ~30 lines, install commands + plugin table)
+- **Owner profile README at `github.com/marioGusmao/marioGusmao`**: absent — no `<owner>/<owner>` repo found via gh api on 2026-04-30
 - **`README.md` per plugin**: mixed — `ai-quality-guardrails`, `codegraph`, `kdoc`, `router-plugin` have READMEs; `claude-utils` does not (no README at `plugins/claude-utils/`)
 - **`CHANGELOG.md`**: mixed — only `ai-quality-guardrails/docs/CHANGELOG.md` exists (Keep-a-Changelog format, entries `[0.1.0] - 2026-03-17 Added ...`). No root CHANGELOG. Other plugins lack changelogs despite high patch-version counts (kdoc at `1.0.38`, codegraph at `1.1.22` — dozens of versions with no changelog history)
 - **`architecture.md`**: absent at repo root. Per-plugin: `ai-quality-guardrails/docs/ARCHITECTURE.md` present; `codegraph` embeds architecture rationale in `README.md` ("Why Hybrid Indexing", "Why SQLite", "Why symbol_uid") rather than a separate file; kdoc has `docs/superpowers/specs/` and `docs/superpowers/plans/` instead of architecture.md; router-plugin has `docs/PROTOCOL.md`/`ADOPTION.md`/`CERTIFY.md`/`SCAFFOLD.md` — four topical specs instead of one architecture doc

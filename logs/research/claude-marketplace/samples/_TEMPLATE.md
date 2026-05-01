@@ -167,6 +167,7 @@ Filename convention: `<owner>--<repo>.md` (double-hyphen separator).
 ## 16. Documentation
 
 - **`README.md` at repo root**: present (rough size) / absent
+- **Owner profile README at `github.com/<owner>/<owner>`**: absent / present (~N lines, category — e.g. trivial / decorative / brief landing card / resume-tier portfolio / marketing collateral)
 - **`README.md` per plugin**: present / absent / mixed
 - **`CHANGELOG.md`**: absent / present (format — Keep a Changelog / custom / unclear)
 - **`architecture.md`**: absent / at repo root / per plugin / both

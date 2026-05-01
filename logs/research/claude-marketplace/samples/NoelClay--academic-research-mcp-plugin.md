@@ -177,6 +177,7 @@
 ## 16. Documentation
 
 - **`README.md` at repo root**: Present — ~2.3 KB, covers what-it-does / persona / install / usage / requirements / architecture / pedagogical-foundation / license. No badges.
+- **Owner profile README at `github.com/NoelClay/NoelClay`**: present (~48 lines, resume-tier portfolio — experience table + tech badges + certs)
 - **`README.md` per plugin**: Not applicable — single-plugin repo; the root README is the plugin README.
 - **`CHANGELOG.md`**: Absent.
 - **`architecture.md`**: Absent at repo root and per plugin. README has an "Architecture" section with component bullets, and `docs/superpowers/specs/2026-04-12-research-learning-tutor-design.md` (12.8 KB) plus `docs/superpowers/plans/2026-04-12-research-learning-tutor.md` (37.8 KB) hold design/plan history, but none of these are a conventional `architecture.md`.

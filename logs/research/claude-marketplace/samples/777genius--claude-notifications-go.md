@@ -195,6 +195,7 @@
 ## 16. Documentation
 
 - **`README.md` at repo root**: present (~17.9KB — covers features, installation, supported notification types, platform support, click-to-focus matrix of terminal apps, configuration, sounds, testing, contributing, troubleshooting)
+- **Owner profile README at `github.com/777genius/777genius`**: present (~330 lines, decorative — mostly commented-out HTML with one image)
 - **`README.md` per plugin**: not applicable — single-plugin marketplace, the repo README serves the plugin
 - **`CHANGELOG.md`**: present, Keep a Changelog format ("The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)" — explicit declaration in the file; entries organized as `### Added` / `### Fixed` / `### Changed` under `## [x.y.z] - YYYY-MM-DD` headers)
 - **`architecture.md`**: at `docs/ARCHITECTURE.md` (not at repo root; the docs/ directory carries it). Inferred: the repo follows a `docs/` convention for all non-README documentation

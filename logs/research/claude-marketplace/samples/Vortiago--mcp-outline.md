@@ -183,6 +183,7 @@
 ## 16. Documentation
 
 - **`README.md` at repo root**: present (~12 KB, ~240 lines) — comprehensive: features, prereqs, one-click-install buttons for VS Code/Cursor, manual install, per-client config snippets, configuration table with 16 env vars, access-control section, tool catalog organized into nine categories, resources, development quick-start, troubleshooting.
+- **Owner profile README at `github.com/Vortiago/Vortiago`**: absent — no `<owner>/<owner>` repo found via gh api on 2026-04-30
 - **`README.md` per plugin**: same file serves both roles (single-plugin repo).
 - **`CHANGELOG.md`**: absent. Release notes live only in GitHub Releases (auto-generated from commits by `gh release create --generate-notes`).
 - **`architecture.md`**: absent at repo root. `CLAUDE.md` embeds an informal architecture section ("Tool Categories", "Feature Registration Flow", "MCP Resources", "Health Check Endpoints") but it's operational-doc shape.

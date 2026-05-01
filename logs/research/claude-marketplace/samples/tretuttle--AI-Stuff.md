@@ -204,6 +204,7 @@
 ## 16. Documentation
 
 - **`README.md` at repo root**: present (~5.4 KB) — marketplace overview with per-plugin blurbs and install commands
+- **Owner profile README at `github.com/tretuttle/tretuttle`**: absent — no `<owner>/<owner>` repo found via gh api on 2026-04-30
 - **`README.md` per plugin**: present for browser-capture (~7.3 KB), omarchy-theme (~5.4 KB), persona (~12.4 KB), project-recon (~5 KB), parkpal-content (~4 KB), codex-session-export (~3 KB), plus `recon-wrapper/README.md` (~3.6 KB, side project). Consistent presence
 - **`CHANGELOG.md`**: absent everywhere
 - **`architecture.md`**: mixed. persona has `persona/docs/ARCHITECTURE.md`. No root architecture.md. No per-plugin architecture.md elsewhere

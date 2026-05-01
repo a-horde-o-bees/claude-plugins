@@ -169,6 +169,7 @@
 ## 16. Documentation
 
 - **`README.md` at repo root**: present (~2.3 KB, 38 lines — plugin index + Knowledge Ecosystem routing table)
+- **Owner profile README at `github.com/a3lem/a3lem`**: absent — no `<owner>/<owner>` repo found via gh api on 2026-04-30
 - **`README.md` per plugin**: mixed — 7 of 11 plugins have one (`basedpyright-lsp`, `project-knowledge`, `project-notes`, `python-rules`, `session-setup`, `spec-driven-dev`, `theo-calvin-testing`, `ticket-cli`). `auto-memory`, `better-comments`, `frontmatter` have no per-plugin README.
 - **`CHANGELOG.md`**: present (rudimentary at repo root; richer per-plugin in `spec-driven-dev` and `theo-calvin-testing`). Format is ad-hoc; the `spec-driven-dev` CHANGELOG most closely resembles Keep a Changelog (versioned `## [x.y.z] - YYYY-MM-DD` headers with Added/Changed/Removed subsections).
 - **`architecture.md`**: absent anywhere

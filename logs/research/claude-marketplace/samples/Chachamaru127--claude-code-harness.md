@@ -183,6 +183,7 @@
 ## 16. Documentation
 
 - **`README.md` at repo root**: present (18.4KB English) + `README_ja.md` (20.5KB Japanese mirror)
+- **Owner profile README at `github.com/Chachamaru127/Chachamaru127`**: absent — no `<owner>/<owner>` repo found via gh api on 2026-04-30
 - **`README.md` per plugin**: not applicable (single-plugin marketplace — repo README IS the plugin README)
 - **`CHANGELOG.md`**: present — 248KB Keep-a-Changelog-adjacent format in Japanese with explicit `[Unreleased]` section, `## [X.Y.Z] - YYYY-MM-DD` headings, and "今まで/今後" (Before/After) narrative per item. Release-body extraction uses awk to grab between `## [VERSION]` markers
 - **`architecture.md`**: at `docs/ARCHITECTURE.md` (uppercase) plus `docs/architecture/` subdirectory; `go/DESIGN.md` + `go/SPEC.md` for Go engine

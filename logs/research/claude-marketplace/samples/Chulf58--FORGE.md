@@ -165,6 +165,7 @@
 ## 16. Documentation
 
 - **`README.md` at repo root**: present (~8 KB, detailed — includes glass-wall metaphor, pipeline modes table, gates description, quick-start commands, install instructions, feature list)
+- **Owner profile README at `github.com/Chulf58/Chulf58`**: absent — no `<owner>/<owner>` repo found via gh api on 2026-04-30
 - **`README.md` per plugin**: not applicable — single-plugin repo
 - **`CHANGELOG.md`**: absent at repo root; release notes live on GitHub Releases (four entries). README mentions `docs/CHANGELOG.md` but that path was not directly inspected.
 - **`architecture.md`**: referenced in README as `docs/ARCHITECTURE.md` — but `docs/` top-level only has `archive/`, `context/`, `gotchas/` (GENERAL.md), which means `docs/ARCHITECTURE.md` is *promised in README but absent on disk at the time of inspection*. The README also references `docs/FORGE-OVERVIEW.md` and `docs/FORGE-REFERENCE.md`, neither of which is in the `docs/` listing either.

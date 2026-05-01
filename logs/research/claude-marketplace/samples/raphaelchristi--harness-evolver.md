@@ -174,6 +174,7 @@
 ## 16. Documentation
 
 - **`README.md` at repo root**: present, 7.6KB — covers install flows (plugin + npx), quick-start, LangSmith prerequisite, multi-runtime support (Claude Code, Cursor, Codex, Windsurf).
+- **Owner profile README at `github.com/raphaelchristi/raphaelchristi`**: present (~34 lines, brief landing card with stats widgets and skill icons)
 - **`README.md` per plugin**: not applicable (single-plugin repo; the repo-root README serves the plugin).
 - **`CHANGELOG.md`**: present, 47.9KB — follows Keep a Changelog 1.1.0 + SemVer, dated entries per tagged release, categorized as `Added` / `Fixed` / `Changed`.
 - **`architecture.md`**: present as `docs/ARCHITECTURE.md` at repo root (capitalized; not per-plugin since there's only one plugin). Describes the four-layer architecture (plugin / skills / agents / tools) but does not document versioning, channels, or multi-runtime install internals.

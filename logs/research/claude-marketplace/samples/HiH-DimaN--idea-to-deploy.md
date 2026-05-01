@@ -224,6 +224,7 @@
 ## 16. Documentation
 
 - **`README.md` at repo root**: present (substantial — 24 top-level headings: Problem, Solution, Quick Start, How It Works, End-to-End Example, Skills (7 categories), Subagents, Skill Contracts, Call Graph, Recommended Setup, Quality Gates, What Gets Generated, Seamless Route Switching, Recommended Models, Who Is This For, Project Types, What This Does NOT Do, Troubleshooting/FAQ, Contributing, Requirements, Changelog, License, Author). Also `README.ru.md` — full Russian translation.
+- **Owner profile README at `github.com/HiH-DimaN/HiH-DimaN`**: present (~90 lines, marketing collateral — services menu, product prices, in Russian)
 - **`README.md` per plugin**: not applicable (single-plugin repo; per-plugin README would be per-skill, which is not the convention).
 - **`CHANGELOG.md`**: present — Keep a Changelog 1.1.0 format with per-release `Added`/`Fixed`/`Changed`/`Ops`/`Context`/`Rationale`/`Lessons learned`/`Deliberately not done` sections. Unusual depth: entries include external-source attribution (e.g., v1.20.3 cites Karpathy analysis).
 - **`architecture.md`**: absent. Architecture content lives inline in README (Call Graph, Skill Contracts, How It Works sections) — not separated.

@@ -193,6 +193,7 @@
 ## 16. Documentation
 
 - **`README.md` at repo root**: present (~9 KB, substantial — install/setup table, usage walkthrough with 8-phase pipeline, MCP tool categorization, benchmarks, troubleshooting, security section, development, license)
+- **Owner profile README at `github.com/Lykhoyda/Lykhoyda`**: present (~35 lines, brief landing card — Now/Building/Before structure)
 - **`README.md` per plugin**: not applicable (single-plugin marketplace, plugin IS the repo)
 - **`CHANGELOG.md`**: present, Keep a Changelog base format with custom sections (`### Verified-stale`, `### Multi-review`, `### Benchmarks validated live`, `### Backlog state`). Entries are long-form with ticket IDs (B111, B76, D642, GH #31)
 - **`architecture.md`**: absent at repo root. Architecture content lives in `docs-site/src/content/docs/architecture.mdx` (Astro Starlight docs site published to GitHub Pages — `has_pages: true`, URL: https://lykhoyda.github.io/rn-dev-agent/)

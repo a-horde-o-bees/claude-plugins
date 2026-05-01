@@ -175,6 +175,7 @@
 ## 16. Documentation
 
 - **`README.md` at repo root**: present, ~15 KB — substantial with opening hook ("AI agents agree with each other. That's the problem."), a JWT HS256-confusion scare example, role table, hook-enforcement explanation, Quick Start for three CLIs, What's New in 5.0, 8-role table, CLI reference, platform support matrix, troubleshooting. Leads with outcome framing (findings the eight roles catch) rather than feature list.
+- **Owner profile README at `github.com/AgentBuildersApp/AgentBuildersApp`**: absent — no `<owner>/<owner>` repo found via gh api on 2026-04-30
 - **`README.md` per plugin**: not applicable (single-plugin marketplace).
 - **`CHANGELOG.md`**: present — custom format headed with "Theme: Verifiable enforcement.", no Keep-a-Changelog structure, no `[Unreleased]` section. Only the 5.0.0-alpha entry is visible in the file (only ~2 KB). Earlier versions' change history appears to live in commit messages (`v4.1.0`, `v4.2.0` mentioned in commits but not in CHANGELOG).
 - **`architecture.md`**: absent at root. No per-plugin `architecture.md`. A visual diagram lives at `docs/images/architecture.png` and is linked from README.

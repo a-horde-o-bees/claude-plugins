@@ -168,6 +168,7 @@
 ## 16. Documentation
 
 - **`README.md` at repo root**: present (2547 bytes) — install command, tool list, usage examples, format reference, privacy statement, license
+- **Owner profile README at `github.com/JordanCoin/JordanCoin`**: absent — no `<owner>/<owner>` repo found via gh api on 2026-04-30
 - **`README.md` per plugin**: same file serves (single-plugin repo)
 - **`CHANGELOG.md`**: absent
 - **`architecture.md`**: absent

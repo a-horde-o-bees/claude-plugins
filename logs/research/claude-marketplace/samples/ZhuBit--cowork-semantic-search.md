@@ -179,6 +179,7 @@
 ## 16. Documentation
 
 - **`README.md` at repo root**: present (~8.8 KB) — extensive: why, features, supported formats, multi-client install instructions (Claude Code / Cursor / Windsurf / Cline), usage examples, architecture diagram, roadmap, license.
+- **Owner profile README at `github.com/ZhuBit/ZhuBit`**: absent — no `<owner>/<owner>` repo found via gh api on 2026-04-30
 - **`README.md` per plugin**: not applicable — single-plugin repo; the root README serves the plugin.
 - **`CHANGELOG.md`**: absent.
 - **`architecture.md`**: absent — architecture is inlined as a section in the main README (directory diagram + component-choice table).

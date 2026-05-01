@@ -159,6 +159,7 @@
 ## 16. Documentation
 
 - **`README.md` at repo root**: present — ~15 KB, heavy with setup instructions, install variants, usage loop, documentation map, configuration overview. Opens with banner image and three SVG badges (GitHub / Claude Code / Cursor).
+- **Owner profile README at `github.com/SkinnnyJay/SkinnnyJay`**: absent — no `<owner>/<owner>` repo found via gh api on 2026-04-30
 - **`README.md` per plugin**: not applicable (single-plugin repo; root README covers the plugin).
 - **`CHANGELOG.md`**: present — Keep a Changelog format, SemVer-tagged (`[Unreleased]`, `[0.2.0] — 2026-04-08`, `[0.1.13] — 2026-04-05`).
 - **`architecture.md`**: at repo root in form of `docs/architecture.md` (also referenced as `docs/ARCHITECTURE.md` in README — case mismatch pitfall; file on disk is lowercase). Short (~2.7 KB) with a mermaid data-flow diagram and two-products (vault vs plugin repo) table.

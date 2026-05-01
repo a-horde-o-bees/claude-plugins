@@ -165,6 +165,7 @@
 ## 16. Documentation
 
 - **`README.md` at repo root**: present (15422 bytes, substantial).
+- **Owner profile README at `github.com/brunoborges/brunoborges`**: absent — no `<owner>/<owner>` repo found via gh api on 2026-04-30
 - **`README.md` per plugin**: present (`agent-plugin/README.md`, 3175 bytes).
 - **`CHANGELOG.md`**: absent. GitHub Releases `generate_release_notes` is the de facto changelog.
 - **`architecture.md`**: absent. `SPEC.md` (23037 bytes) and `ADR.md` (6831 bytes) at repo root cover the Go binary's architecture — not mirrored into the plugin.

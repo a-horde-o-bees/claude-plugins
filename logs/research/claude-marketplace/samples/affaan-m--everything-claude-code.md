@@ -195,6 +195,7 @@
 ## 16. Documentation
 
 - **`README.md` at repo root**: present, large (many thousands of lines per README badges + ToC references). Heavy badge header, multi-language READMEs for pt-BR, zh-CN, zh-TW, ja-JP, ko-KR, tr (under `docs/<locale>/`). Top-level also contains README.zh-CN.md as a direct translation file.
+- **Owner profile README at `github.com/affaan-m/affaan-m`**: present (~148 lines, marketing collateral — manifesto + flagship project framing)
 - **`README.md` per plugin**: n/a (single-plugin marketplace; plugin root IS repo root). `.claude-plugin/README.md` exists and presumably describes the marketplace-level metadata only.
 - **`CHANGELOG.md`**: present. Format is custom "per-release headings with sub-sections (Highlights, Release Surface, New Workflow Lanes, ECC 2.0 Alpha, Notes)" — not Keep a Changelog format. Chronological reverse-order.
 - **`architecture.md`**: absent at repo root. No per-plugin architecture.md. There is a `docs/SELECTIVE-INSTALL-ARCHITECTURE.md` (referenced in release.sh) that covers one specific subsystem.

@@ -175,6 +175,7 @@
 ## 16. Documentation
 
 - **`README.md` at repo root**: present — 11KB, consumer-facing, with install instructions for Claude Code / OpenCode / Codex CLI, feature table, skills table, env-var reference, CLI reference, advanced install notes, troubleshooting, and link to the hosted docs site
+- **Owner profile README at `github.com/jmylchreest/jmylchreest`**: present (~67 lines, resume-tier portfolio — auto-generated repo list with stars/downloads)
 - **`README.md` per plugin**: not applicable — single plugin, same README. Subsystem READMEs exist for contributors: `aide/README.md` (Go CLI), `adapters/README.md` (adapter architecture), `adapters/opencode/README.md`.
 - **`CHANGELOG.md`**: absent — 404s at both root and plugin-root paths. Release notes generated from commits at tag time (GitHub auto-notes).
 - **`architecture.md`**: present as `ARCHITECTURE.md` at repo root (uppercase — unusual). Also `docs/docs/reference/architecture.md` for the Docusaurus site.

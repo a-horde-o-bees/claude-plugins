@@ -162,6 +162,7 @@
 ## 16. Documentation
 
 - **`README.md` at repo root**: present (~5 KB — install table with plugin/cargo/brew/manual rows, features, SEPA note, credential isolation note)
+- **Owner profile README at `github.com/lukasmalkmus/lukasmalkmus`**: present (~38 lines, resume-tier portfolio — auto-generated activity feed via markscribe)
 - **`README.md` per plugin**: not applicable — single-plugin repo where plugin lives at root
 - **`CHANGELOG.md`**: present, Keep a Changelog format (1.1.0, SemVer-aligned); versions 0.1.0 → 0.4.0 all dated 2026-04-20
 - **`architecture.md`**: absent

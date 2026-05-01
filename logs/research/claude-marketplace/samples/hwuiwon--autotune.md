@@ -171,6 +171,7 @@
 ## 16. Documentation
 
 - **`README.md` at repo root**: present (~9 KB / ~220 lines). Rich: includes ASCII loop diagram, How It Works, What's Included, Quick Start, Monitor, Stop/Resume, Session Persistence, Confidence Scoring (MAD table), Health And Recovery, Backpressure Checks, Benchmark Script, Auto-Resume, Configuration table, CLI Reference, Architecture tree, Requirements, License
+- **Owner profile README at `github.com/hwuiwon/hwuiwon`**: present (~23 lines, brief landing card — experience + open source contributions)
 - **`README.md` per plugin**: not applicable (single-plugin repo; root README serves the plugin)
 - **`CHANGELOG.md`**: absent
 - **`architecture.md`**: absent (root README includes an "Architecture" section with a directory tree; no dedicated file)

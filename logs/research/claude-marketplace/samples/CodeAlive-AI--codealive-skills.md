@@ -159,6 +159,7 @@
 ## 16. Documentation
 
 - **`README.md` at repo root**: present (~4.4 KB) — installation options (skills.sh, Claude Code plugin, MCP server, plugin-bridge), setup instructions, API key storage table per-OS, usage examples.
+- **Owner profile README at `github.com/CodeAlive-AI/CodeAlive-AI`**: absent — no `<owner>/<owner>` repo found via gh api on 2026-04-30
 - **`README.md` per plugin**: n/a (single plugin, skill has `SKILL.md` at `skills/codealive-context-engine/SKILL.md` ~13 KB; `tools/plugin-bridge/README.md` ~3.5 KB for the auxiliary bridge tool).
 - **`CHANGELOG.md`**: absent (404 on main).
 - **`architecture.md`**: absent.

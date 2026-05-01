@@ -178,6 +178,7 @@
 ## 16. Documentation
 
 - **`README.md` at repo root**: present (7911 bytes) — thorough, with Quick Start, Claude Code integration section, MCP tools table, SDK integration section, "How It Works" pipeline diagram, configuration/prereqs/tests sections, and known-limitations pointer.
+- **Owner profile README at `github.com/smcady/smcady`**: absent — no `<owner>/<owner>` repo found via gh api on 2026-04-30
 - **`README.md` per plugin**: not applicable (single-plugin marketplace, root README serves).
 - **`CHANGELOG.md`**: absent.
 - **`architecture.md`**: present at `docs/architecture.md` (5320 bytes) — describes the classify→resolve→mutate→index pipeline, data model, MemoryEngine coordinator, SDK wrapper, MCP server, LLM model choices, and merge detector. Plus `docs/configuration.md`, `docs/walkthrough.md`, `docs/limitations.md`, `docs/assets/`.

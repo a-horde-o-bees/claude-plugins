@@ -169,6 +169,7 @@
 ## 16. Documentation
 
 - **`README.md` at repo root**: present, ~15KB — describes marketplace, installation, lists every skill per plugin with one-line description in tables, includes directory-layout tree, quality checklist, contributing section
+- **Owner profile README at `github.com/anthril/anthril`**: absent — no `<owner>/<owner>` repo found via gh api on 2026-04-30
 - **`README.md` per plugin**: mixed — `brand-manager`, `database-design`, `ppc-manager`, `software-development` have plugin-level READMEs; `business-economics`, `data-analysis`, `knowledge-engineering`, `npm-package-audit`, `plan-completion-audit`, `skill-creator` do not
 - **`CHANGELOG.md`**: present at repo root (Keep-a-Changelog, covers only `1.0.0` dated 2025-05-20, out of date vs live `1.0.1`/`1.1.0` plugin versions); also present at `plugins/ppc-manager/CHANGELOG.md` (same format, covers only `1.0.0` dated 2026-04-11)
 - **`architecture.md`**: present at `plugins/ppc-manager/docs/architecture.md` only — 12KB, comprehensive directory layout, data-flow, MCP server tool surface, auth library design, hook system, test strategy, dependency graph, extension guide. No repo-root architecture.md

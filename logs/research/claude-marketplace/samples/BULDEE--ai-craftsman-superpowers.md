@@ -175,6 +175,7 @@
 ## 16. Documentation
 
 - **`README.md` at repo root**: present (27.7 KB — substantial). Opens with badge row (License, Claude Code compat, Version, Commands count, Agents count, PRs Welcome), tagline "Transform Claude into a disciplined Senior Software Craftsman", ToC links (Installation, Skills, Security, Contributing). Sections cover Requirements, Installation (From GitHub + From Local Path + Verify), API Cost Model (explicit Haiku-call cost disclosure: ~$0.15-0.30/session), Quick Start with command examples, "Why Craftsman? — 6 Core Differentiators" marketing section, Additional Features, and links to examples.
+- **Owner profile README at `github.com/BULDEE/BULDEE`**: absent — no `<owner>/<owner>` repo found via gh api on 2026-04-30
 - **`README.md` per plugin**: n/a — single-plugin marketplace; the root README serves the one plugin.
 - **`CHANGELOG.md`**: present (41 KB) — Keep a Changelog v1.1.0 format, explicit SemVer adherence, dated entries for every version from v1.2.1 forward. Very detailed fix/change narratives — CHANGELOG entries routinely reference ADRs (e.g., "See [ADR-0013](docs/adr/0013-workflow-orchestrator.md)").
 - **`architecture.md`**: absent. Architectural content is embedded inline in CLAUDE.md ("## Architecture" section with directory tree + role annotations) and distributed across 15 ADRs under `docs/adr/`.

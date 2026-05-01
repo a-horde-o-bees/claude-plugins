@@ -204,6 +204,7 @@
 ## 16. Documentation
 
 - **`README.md` at repo root**: present, 36781 bytes (substantial; English). Paired `README.zh-CN.md` (33734 bytes) with a top-of-file language switcher link. Rich — includes problem statement, architecture section, install matrix, MCP tool enumeration, agent template listing, feature table with badges.
+- **Owner profile README at `github.com/CronusL-1141/CronusL-1141`**: absent — no `<owner>/<owner>` repo found via gh api on 2026-04-30
 - **`README.md` per plugin**: `plugin/README.md` present (3497 bytes) — install-focused, duplicates parts of the root README. `plugin/hooks/README.md` also present (1790 bytes) — hook-specific.
 - **`CHANGELOG.md`**: present at repo root (30090 bytes), Keep a Changelog format explicitly declared at top (`Format: [Keep a Changelog]`). Paired `CHANGELOG.zh-CN.md` (28931 bytes). Chronological-descending; every release block has Added/Changed/Fixed sections with prose explaining root causes (unusually detailed for a plugin repo).
 - **`architecture.md`**: not present at root (`docs/` directory exists but is not introspected in depth here). The root `CLAUDE.md` references `docs/architecture.md` but that path wasn't verified.

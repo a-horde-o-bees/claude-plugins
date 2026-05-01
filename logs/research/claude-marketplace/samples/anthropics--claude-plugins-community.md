@@ -159,6 +159,7 @@
 ## 16. Documentation
 
 - **`README.md` at repo root**: present (~1.4 KB) — short, consumer-facing; explains the read-only mirror model, install commands for Cowork (web) and Claude Code (CLI), and directs submissions to `clau.de/plugin-directory-submission`
+- **Owner profile README at `github.com/anthropics/anthropics`**: absent — no `<owner>/<owner>` repo found via gh api on 2026-04-30
 - **`README.md` per plugin**: not applicable — no plugin directories in this repo
 - **`CHANGELOG.md`**: absent
 - **`architecture.md`**: absent

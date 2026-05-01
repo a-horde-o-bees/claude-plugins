@@ -171,6 +171,7 @@
 ## 16. Documentation
 
 - **`README.md` at repo root**: present (~5.7 KB, substantive — install, quick start, CLI command table, plugin command table, BMAD integration, verification architecture diagram, requirements, license)
+- **Owner profile README at `github.com/iVintik/iVintik`**: absent — no `<owner>/<owner>` repo found via gh api on 2026-04-30
 - **`README.md` per plugin**: not applicable (single-plugin repo)
 - **`CHANGELOG.md`**: absent
 - **`architecture.md`**: present at repo root (`ARCHITECTURE.md`, ~6.9 KB) — describes entry point, module map, lib layout, templates, hooks (as-designed, not as-shipped — see §9)

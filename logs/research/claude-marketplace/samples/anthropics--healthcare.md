@@ -172,6 +172,7 @@
 ## 16. Documentation
 
 - **`README.md` at repo root**: present (~50 lines)
+- **Owner profile README at `github.com/anthropics/anthropics`**: absent — no `<owner>/<owner>` repo found via gh api on 2026-04-30
 - **`README.md` per plugin**: mixed — `clinical-trial-protocol-skill/README.md` and `prior-auth-review-skill/README.md` exist; `fhir-developer-skill/` has no README (SKILL.md only). None of the four MCP plugins has a README.
 - **`CHANGELOG.md`**: absent
 - **`architecture.md`**: absent (repo root or per plugin)

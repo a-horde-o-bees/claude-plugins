@@ -180,6 +180,7 @@
 ## 16. Documentation
 
 - **`README.md` at repo root**: present (~14 KB) — badges, hero image (`assets/coco.png`), installation, architecture table, commands/skills catalog, PR workflow diagram, configuration example.
+- **Owner profile README at `github.com/skullninja/skullninja`**: absent — no `<owner>/<owner>` repo found via gh api on 2026-04-30
 - **`README.md` per plugin**: not applicable — single-plugin repo, root README is the plugin README.
 - **`CHANGELOG.md`**: absent — change history lives entirely in GitHub release bodies (which are reasonably structured — "Fixes", "What's Changed", "Upgrade" sections — but not present in the repo).
 - **`architecture.md`**: absent — architectural content is embedded in `CLAUDE.md` (which doubles as project overview + agent-facing operational reference) and partly in README "How It Works". No dedicated developer-facing architecture document.

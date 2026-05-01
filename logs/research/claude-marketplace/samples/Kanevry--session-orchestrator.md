@@ -196,6 +196,7 @@
 ## 16. Documentation
 
 - **`README.md` at repo root**: present, 405 lines (19.5 KB). Install instructions for 3 IDEs (Claude Code, Codex, Cursor), troubleshooting, platform-support matrix, features overview.
+- **Owner profile README at `github.com/Kanevry/Kanevry`**: absent — no `<owner>/<owner>` repo found via gh api on 2026-04-30
 - **`README.md` per plugin**: not applicable (single plugin, plugin root = repo root).
 - **`CHANGELOG.md`**: present, Keep-a-Changelog format, 55.9 KB. Exceptionally detailed — per-session dev-trail entries during pre-release cycles, stable release blocks, migration sections. Tracks GitLab issue numbers (e.g., `#131`, `#124`).
 - **`architecture.md`**: present at `docs/plugin-architecture-v3.md` (13.9 KB) plus `docs/migration-v3.md` (6.9 KB). Not at repo root; placed under `docs/`.
