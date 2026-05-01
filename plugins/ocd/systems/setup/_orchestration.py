@@ -16,12 +16,30 @@ import importlib
 
 from ._enabled import effective_enabled, read_enabled, write_enabled
 from ._system_discovery import _discover_systems, _discover_workflow_skills
-from tools.environment import get_claude_home, get_plugin_root
+from tools.environment import get_claude_home, get_git_root_for, get_plugin_root, get_project_dir
 from ._formatting import format_bare_skill, format_section
 from ._metadata import find_marketplace_source, format_header, get_installed_version, get_plugin_name
 
 
 _META_SKILLS = {"setup"}
+
+
+def _require_git_project_dir() -> None:
+    """Refuse deploy verbs unless the project directory is inside a git repo.
+
+    Setup writes files into the project tree; without version control
+    those writes have no record and no rollback. The block is
+    intentional — `git init` is a deliberate one-line action that
+    establishes the tracking the deploy then relies on.
+    """
+    project_dir = get_project_dir()
+    try:
+        get_git_root_for(project_dir)
+    except RuntimeError as exc:
+        raise RuntimeError(
+            f"{project_dir} is not inside a git repository — run `git init` "
+            "before deploying ocd systems so artifacts are tracked and reversible.",
+        ) from exc
 
 
 def run_init(
@@ -46,6 +64,7 @@ def run_init(
 
     force: passed through to each subsystem's init().
     """
+    _require_git_project_dir()
     plugin_root = get_plugin_root()
     plugin_name = get_plugin_name(plugin_root)
 
@@ -121,6 +140,7 @@ def run_init(
 
 def run_enable(system: str) -> None:
     """Add system to the enabled list and init it in-place."""
+    _require_git_project_dir()
     plugin_root = get_plugin_root()
     available = _discover_systems(plugin_root)
     if system not in available:
@@ -150,6 +170,7 @@ def run_enable(system: str) -> None:
 
 def run_disable(system: str) -> None:
     """Remove system from enabled list and clean its deployed artifacts."""
+    _require_git_project_dir()
     plugin_root = get_plugin_root()
     available = _discover_systems(plugin_root)
     if system not in available:
