@@ -1,171 +1,163 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/makenotion/notion-mcp-server`. Notion API wrapper MCP server — pages, databases, comments, content search; first-party Notion-authored. 4,200 stars, MIT, default branch `main`, last commit March 18, 2026.
 
-### url
+## Server runtime
 
-https://github.com/makenotion/notion-mcp-server
+### Node.js / TypeScript with official MCP SDK
 
-### stars
-
-4,200
-
-### last-commit
-
-March 18, 2026
-
-### license
-
-MIT
-
-### default branch
-
-main
-
-### one-line purpose
-
-Notion MCP server — Notion API wrapper; ships `CLAUDE.md` in the repo.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-TypeScript 5.8.2; Node.js (specified in scripts)
-
-### framework/SDK in use
-
-MCP SDK ^1.25.1, Express 4.21.2, axios 1.8.4, openapi-client-axios 7.5.5, Zod 3.24.1
+TypeScript 5.8.2 server built on `@modelcontextprotocol/sdk` ^1.25.1, paired with Express 4.21.2 for the HTTP transport, axios 1.8.4 for outbound Notion API calls, openapi-client-axios 7.5.5 for OpenAPI-driven client generation, and Zod 3.24.1 for runtime validation. Node.js runtime (version constraint specified in `scripts` but not surfaced explicitly).
 
 ## Transport
 
-### supported transports
+### stdio
 
-STDIO (default), Streamable HTTP (configurable port, default 8080)
+Default transport.
 
-### how selected
+### Streamable HTTP
 
-CLI argument `--transport http [--port 8080]`
+Configurable port (default 8080) when invoked with `--transport http [--port 8080]`.
 
-## Distribution
+### Selection mechanism
 
-### every mechanism observed
+CLI flag at startup — `--transport http [--port 8080]` flips to HTTP mode; absence defaults to stdio.
 
-npm package (`@notionhq/notion-mcp-server`), Docker (`mcp/notion`), local build from source
+## Capability surface
 
-### published package name(s)
+### Domain-bundled tool set
 
-`@notionhq/notion-mcp-server`
+22 tools covering page create/retrieve, database query, page move, commenting, and content search — entity-organized around Notion's primary resource types (pages, databases, comments).
 
-### install commands shown in README
+## Configuration delivery
 
-`npx @notionhq/notion-mcp-server`, `npx @notionhq/notion-mcp-server --transport http [--port 8080]`, Docker pull, local build
+### Environment variables
 
-## Entry point / launch
+`NOTION_TOKEN` (recommended) or `OPENAPI_MCP_HEADERS` for credentials.
 
-### command(s) users/hosts run
+### HTTP request headers
 
-`npx @notionhq/notion-mcp-server` and HTTP variant
+Bearer token on HTTP transport.
 
-### wrapper scripts, launchers, stubs
+### Host-side JSON config snippet
 
-npm build (tsc + esbuild), npm dev (tsx watch)
-
-## Configuration surface
-
-### how config reaches the server
-
-env var `NOTION_TOKEN` (recommended) or `OPENAPI_MCP_HEADERS`; Bearer token for HTTP; client config files (Claude Desktop, Cursor, Zed, GitHub Copilot CLI)
+Documented configurations for Claude Desktop, Cursor, Zed, and GitHub Copilot CLI.
 
 ## Authentication
 
-### flow
+### Static API key / token via env var
 
-Notion API integration token (required)
+Notion API integration token required, supplied via `NOTION_TOKEN` env var, CLI args, or HTTP `Authorization: Bearer` header.
 
-### where credentials come from
+### Bearer token over HTTP/SSE
 
-`NOTION_TOKEN` env var, CLI args, or HTTP Bearer header
+HTTP-mode acceptance of Bearer tokens for transport-layer auth.
 
 ## Multi-tenancy
 
-### tenancy model
+### Single-user / single-tenant per process
 
-per-integration-token; HTTP transport supports multiple clients
+Per-integration-token; one credential, one identity.
 
-## Capabilities exposed
+### Multi-client sharing one process via session multiplexing
 
-### tools / resources / prompts / sampling / roots / logging / other
+HTTP transport supports multiple clients connecting to the same process.
 
-22 tools — page create/retrieve, database query, page move, commenting, content search
+## Distribution channel
 
-## Observability
+### npm via npx / bunx
 
-### logging destination + format, metrics, tracing, debug flags
+Published as `@notionhq/notion-mcp-server`; install via `npx @notionhq/notion-mcp-server` (stdio) or `npx @notionhq/notion-mcp-server --transport http [--port 8080]`.
 
-not explicitly documented
+### Docker / OCI image
 
-## Host integrations shown in README or repo
+Official image `mcp/notion` on Docker Hub.
 
-### Claude Desktop
+### Source clone with editable install
 
-`claude_desktop_config.json`
+Local build from source via `npm build` (tsc + esbuild) and `npm link` for Cursor symlink testing.
 
-### Cursor
+## Entry point and launch
 
-`.cursor/mcp.json`
+### `npx -y <package>` / `bunx`
 
-### Zed
+`npx @notionhq/notion-mcp-server` for stdio; HTTP variant adds `--transport http`.
 
-`settings.json`
+### Docker container entrypoint
 
-### GitHub Copilot CLI
+Docker Hub `mcp/notion` image.
 
-config documented
+## Build and packaging
 
-## Claude Code plugin wrapper
+### npm/Node toolchain
 
-### presence and shape
+`package.json` with build via tsc + esbuild; dev mode via `npm dev` (tsx watch).
 
-not present
+## Schema and types
 
-## Tests
+### Zod (TypeScript)
 
-### presence, framework, location, notable patterns
+Zod 3.24.1 for runtime validation in tool inputs and configuration.
 
-present; Vitest (`npm test`, `npm run test:watch`, `npm run test:coverage`); `NODE_ENV=test`; coverage reports
+## Container artifacts
+
+### Dockerfile (single-stage, build-from-source)
+
+Dockerfile (Node.js-based) at repo root.
+
+### Docker Compose for local dev
+
+`docker-compose.yml` present.
+
+### Published Docker image
+
+Official Docker Hub image `mcp/notion`.
+
+## Test stack
+
+### Vitest (TypeScript / Node)
+
+Vitest test runner (`npm test`, `npm run test:watch`, `npm run test:coverage`); `NODE_ENV=test`; coverage reports.
 
 ## CI
 
-### presence, system, triggers, what it runs
+### GitHub Actions
 
-present; GitHub Actions workflows; `npm run build`, `npm test` in pipeline
+`.github/workflows/` present; pipeline runs `npm run build` and `npm test`.
 
-## Container / packaging artifacts
+## Host integration
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+### Per-host README JSON snippets
 
-Dockerfile (Node.js-based); `docker-compose.yml`; official Docker Hub image (`mcp/notion`)
+Configuration examples documented for four host integrations: Claude Desktop (`claude_desktop_config.json`), Cursor (`.cursor/mcp.json`), Zed (`settings.json`), GitHub Copilot CLI.
 
-## Example client / developer ergonomics
+## Documentation surface
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+### README as the canonical surface
 
-configuration examples for 4 host integrations; Docker installation documented; local symlink testing via `npm link` for Cursor; `CLAUDE.md` file (Claude-specific guidance)
+Single README.md with multi-host integration snippets and Docker installation guidance.
 
-## Repo layout
+### Agent-facing meta-documentation (CLAUDE.md, .cursorrules, .mcp.json)
 
-### single-package / monorepo / vendored / other
+`CLAUDE.md` shipped at repo root providing Claude-specific guidance for agents working in the codebase.
 
-single-package, organized. Directories: `src/`, `docs/`, `scripts/`, `.github/`. Config: `package.json`, `tsconfig.json`, `vitest.config.ts`, `Dockerfile`, `docker-compose.yml`. Documentation: `CLAUDE.md`, `README.md`.
+## Repository layout
 
-## Notable structural choices
+### Single-package, organized subdirectories
 
-Official Notion-authored MCP server (first-party). Comprehensive test coverage (Vitest with coverage). Multi-host integration examples (4 platforms). Docker + docker-compose for containerized deployment. Explicit `CLAUDE.md` in repo.
+Single-package layout. Directories: `src/`, `docs/`, `scripts/`, `.github/`. Config: `package.json`, `tsconfig.json`, `vitest.config.ts`, `Dockerfile`, `docker-compose.yml`. Documentation: `CLAUDE.md`, `README.md`.
 
-## Unanticipated axes observed
+## Release and lifecycle
 
-`CLAUDE.md` shipped in the repo itself (guidance for Claude when working in the repo) — axis: agent-facing meta-documentation inside a server repo. OpenAPI client generation (openapi-client-axios) — axis: auto-derived tools from an OpenAPI spec vs hand-authored.
+### License — Permissive (MIT / Apache-2.0)
 
-## Gaps
+MIT license.
 
-Logging/observability strategy not documented. Rate limiting and Notion API quota handling not detailed. V2.0 migration details not in README (changelog reference only).
+### Active development
+
+Last commit March 18, 2026; ongoing maintenance.
+
+## Claude Code plugin / skill wrapper
+
+### Bare MCP server, no Claude Code wrapper
+
+No `.claude-plugin/` directory; users wire via `claude mcp add` or JSON config.

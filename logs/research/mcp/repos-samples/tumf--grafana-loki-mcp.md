@@ -1,207 +1,149 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/tumf/grafana-loki-mcp`. Grafana Loki log-query MCP server — multi-format output (text/JSON/markdown) for LogQL queries; uses Grafana as a proxy to Loki rather than connecting to Loki directly. 25 stars, MIT, default branch `main`. Active (103 commits). Discipline-first repo with pre-commit hooks shipped alongside the tool.
 
-### url
+## Server runtime
 
-https://github.com/tumf/grafana-loki-mcp
+### Python with FastMCP
 
-### stars
-
-25
-
-### last-commit
-
-active (103 commits; specific date not surfaced)
-
-### license
-
-MIT
-
-### default branch
-
-main
-
-### one-line purpose
-
-Grafana Loki log-query MCP server — multi-format output (text/JSON/markdown) for LogQL queries.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Python 93.2%; Python 3.10+.
-
-### framework/SDK in use
-
-FastMCP.
+Python 93.2% (Python 3.10+); FastMCP — major version pin from pyproject.toml not surfaced. Async-capable via FastMCP defaults (asyncio/anyio).
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio, SSE.
+Stdio transport supported.
 
-### how selected
+### SSE (Server-Sent Events)
 
-CLI flag / default.
+SSE supported alongside stdio.
 
-## Distribution
+### Selection mechanism
 
-### every mechanism observed
+CLI flag at startup / default — transport selectable via CLI flag with stdio as the default mode.
 
-PyPI (pip), uvx, editable dev install via `uv pip install -e ".[dev]"`.
+## Capability surface
 
-### published package name(s)
+### Domain-bundled tool set
 
-grafana-loki-mcp.
+Loki log querying via Grafana API; label name/value retrieval; time-range-configurable log retrieval. Multi-format output (text, JSON, markdown) per tool call.
 
-### install commands shown in README
+## Configuration delivery
 
-`pip install grafana-loki-mcp`; `uvx grafana-loki-mcp`.
+### Environment variables
 
-## Entry point / launch
+`GRAFANA_URL` and `GRAFANA_API_KEY` env vars.
 
-### command(s) users/hosts run
+### CLI flags with paired env-var equivalents
 
-`grafana-loki-mcp` with `-u <url>` and `-k <api-key>` flags.
-
-### wrapper scripts, launchers, stubs
-
-pre-commit hooks configured.
-
-## Configuration surface
-
-### how config reaches the server
-
-environment variables `GRAFANA_URL` and `GRAFANA_API_KEY`, or CLI flags `-u` and `-k`.
+CLI flags `-u <url>` and `-k <api-key>` paired with env-var equivalents — keeps stdio-launch config flexible.
 
 ## Authentication
 
-### flow
+### Static API key / token via env var
 
-Grafana API key.
-
-### where credentials come from
-
-`GRAFANA_API_KEY` env or `-k` CLI arg.
+Grafana API key supplied via `GRAFANA_API_KEY` env var or `-k` CLI arg. Single credential per process.
 
 ## Multi-tenancy
 
-### tenancy model
+### Single-user / single-tenant per process
 
-single-user per process (one Grafana instance / API key).
+Single Grafana instance / API key per process.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### PyPI via pip / pipx
 
-Loki log querying via Grafana API; label name/value retrieval; time-range-configurable log retrieval; multi-format output (text, JSON, markdown).
+`pip install grafana-loki-mcp` documented as install path. Package name `grafana-loki-mcp` on PyPI.
 
-## Observability
+### PyPI via uvx (zero-install runner)
 
-### logging destination + format, metrics, tracing, debug flags
+`uvx grafana-loki-mcp` documented as alternative install path.
 
-not surfaced
+### Source clone with editable install
 
-## Host integrations shown in README or repo
+Editable dev install: `uv pip install -e ".[dev]"`.
 
-### Claude Desktop / MCP clients
+## Entry point and launch
 
-JSON `mcpServers` entry specifying command, arguments, credentials.
+### Console script via `[project.scripts]` / npm bin
 
-## Claude Code plugin wrapper
+Console script `grafana-loki-mcp`. Host-config snippet shape: `uvx grafana-loki-mcp -u ... -k ...` — required CLI args inline. Quoting concerns when the host wrapper config carries inline flags.
 
-### presence and shape
+## Build and packaging
 
-not observed
+### Hatchling + uv (Python)
 
-## Tests
+`pyproject.toml`-based; `setup.py` also present per README. `uv` + `pip` compatible. Lock file presence not surfaced.
 
-### presence, framework, location, notable patterns
+### Python version pinning
 
-pytest with coverage reporting.
+`requires-python` floor: 3.10+.
+
+## Schema and types
+
+### FastMCP auto-derivation from type hints
+
+Schema auto-derived via FastMCP from typed signatures; Pydantic assumed via FastMCP.
+
+### Async model (cross-cutting)
+
+Async-capable via FastMCP — asyncio/anyio defaults.
+
+## Container artifacts
+
+### No container artifacts
+
+No Docker support mentioned in README.
+
+## Test stack
+
+### pytest with async + coverage
+
+`pytest` with coverage reporting.
+
+### Linter/formatter test gate
+
+`ruff` + `black` + `mypy` toolchain — both `ruff` and `black` present.
 
 ## CI
 
-### presence, system, triggers, what it runs
+### GitHub Actions
 
-GitHub Actions workflows + pre-commit hooks.
+GitHub Actions workflows present.
 
-## Container / packaging artifacts
+### Pre-commit hooks
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+Pre-commit hooks configured and shipped alongside the tool — discipline-first repo.
 
-no Docker support mentioned.
+## Repository layout
 
-## Example client / developer ergonomics
+### Single-package src-layout
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+Single-package layout.
 
-ruff + black + mypy toolchain; pre-commit hooks.
+## Host integration
 
-## Repo layout
+### Claude Desktop
 
-### single-package / monorepo / vendored / other
+JSON `mcpServers` entry specifying command, arguments, and credentials.
 
-single package.
+## Developer ergonomics
 
-## Notable structural choices
+### Linter and type-checker stack
 
-Takes Grafana's Loki API as an intermediary rather than Loki directly, making the MCP server usable for anyone with Grafana Cloud or a Grafana-fronted Loki without dealing with Loki auth separately.
+`ruff` + `black` + `mypy` + `pre-commit` as the dev toolchain.
 
-Multi-format output (text / JSON / markdown) for log results — rarer among MCP servers.
+### `pre-commit` framework
 
-Accepts both CLI flags and env vars for URL/API-key, which keeps stdio-launch config flexible.
+Pre-commit hooks shipped with the project.
 
-## Unanticipated axes observed
+## Release and lifecycle
 
-Output format as a tool parameter (text/JSON/markdown) — a documentation/UX dimension most MCP servers skip.
+### License — Permissive (MIT / Apache-2.0)
 
-Grafana-as-proxy architecture for Loki access (piggybacks on existing auth).
+MIT licensed.
 
-## Python-specific
+### Active development
 
-### SDK / framework variant
-
-FastMCP (major version not surfaced). Version pin from pyproject.toml not surfaced. Import pattern not surfaced.
-
-### Python version floor
-
-`requires-python` value: 3.10+.
-
-### Packaging
-
-build backend: pyproject.toml (setup.py also present per README). Lock file: not surfaced. Version manager convention: uv + pip compatible.
-
-### Entry point
-
-console script `grafana-loki-mcp`. Host-config snippet shape: `uvx grafana-loki-mcp -u ... -k ...`.
-
-### Install workflow expected of end users
-
-`pip install grafana-loki-mcp` or `uvx grafana-loki-mcp`.
-
-### Async and tool signatures
-
-async-capable via FastMCP; FastMCP default for asyncio/anyio.
-
-### Type / schema strategy
-
-mypy-checked; Pydantic assumed via FastMCP. Schema auto-derived via FastMCP.
-
-### Testing
-
-pytest with coverage. Fixture style not surfaced.
-
-### Dev ergonomics
-
-ruff + black + mypy + pre-commit.
-
-### Notable Python-specific choices
-
-pre-commit hook configuration shipped alongside tool — discipline-first repo. Coverage reporting in pytest config.
-
-## Gaps
-
-what couldn't be determined: FastMCP major version pin, exact async patterns, logging destination, last-commit date, Docker support (absent per README).
+Active project (103 commits); specific last-commit date not surfaced.

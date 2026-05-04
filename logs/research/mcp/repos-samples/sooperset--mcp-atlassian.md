@@ -1,205 +1,163 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/sooperset/mcp-atlassian`. Atlassian Jira/Confluence MCP server — community-canonical (5,000 stars, MIT, default branch `main`). v0.21.1 released April 10, 2026; 560+ commits, 70 releases. The de facto standard Atlassian MCP server with both Cloud and on-prem (Confluence v6.0+, Jira v8.14+) coverage; carries both `mcp` and `fastmcp` packages simultaneously.
 
-### url
+## Server runtime
 
-https://github.com/sooperset/mcp-atlassian
+### Python with both MCP SDK and FastMCP declared
 
-### stars
-
-5,000
-
-### last-commit
-
-v0.21.1 released April 10, 2026; 560+ commits, 70 releases.
-
-### license
-
-MIT
-
-### default branch
-
-main
-
-### one-line purpose
-
-Atlassian Jira/Confluence MCP server — community-canonical server carrying both `mcp` and `fastmcp` packages simultaneously.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Python (99.3%); specific min Python not extracted within budget.
-
-### framework/SDK in use
-
-Model Context Protocol Python SDK; Anthropic Claude Agent SDK conventions referenced.
+`pyproject.toml` pins `mcp>=1.8.0,<2.0.0` and `fastmcp>=2.13.0,<2.15.0` simultaneously — uses FastMCP 2.x as the runtime surface but also pins the raw `mcp` package, likely a transitional state from a project that predates FastMCP and migrated partially. `requires-python = ">=3.10"`. Python 99.3% of the source. Anthropic Claude Agent SDK conventions referenced.
 
 ## Transport
 
-### supported transports
+### SSE (Server-Sent Events)
 
-SSE (Server-Sent Events) primary; HTTP support mentioned.
+SSE primary; HTTP support also mentioned. Selection mechanism not extracted in detail — likely env-var or subcommand driven given the Python+uvx pattern.
 
-### how selected
+## Capability surface
 
-Not extracted in detail — likely env-var or subcommand driven given Python+uvx pattern.
+### Tools-heavy domain wrapper / domain-tool catalog
 
-## Distribution
+72 tools spanning Jira (search, issue CRUD, transitions, comments) and Confluence (search, page CRUD, comments). Supports both Cloud and on-prem deployments (Confluence v6.0+, Jira v8.14+). No explicit tool-group selector flag surfaced in this research window.
 
-### every mechanism observed
+## Configuration delivery
 
-PyPI (`mcp-atlassian`), Docker (Dockerfile present), source install, `uvx` execution.
+### Environment variables
 
-### published package name(s)
-
-`mcp-atlassian`.
-
-### install commands shown in README
-
-`uvx mcp-atlassian`.
-
-## Entry point / launch
-
-### command(s) users/hosts run
-
-`uvx mcp-atlassian` or containerized via Docker.
-
-### wrapper scripts, launchers, stubs
-
-PyPI entry point; docker image.
-
-## Configuration surface
-
-### how config reaches the server
-
-Environment variables for Atlassian connection — Cloud: `JIRA_URL`, `JIRA_USERNAME`, `JIRA_API_TOKEN`, `CONFLUENCE_URL`, `CONFLUENCE_USERNAME`, `CONFLUENCE_API_TOKEN`; Server/Data Center: `JIRA_PERSONAL_TOKEN`.
+Cloud: `JIRA_URL`, `JIRA_USERNAME`, `JIRA_API_TOKEN`, `CONFLUENCE_URL`, `CONFLUENCE_USERNAME`, `CONFLUENCE_API_TOKEN`. Server/Data Center: `JIRA_PERSONAL_TOKEN`. Env-var-driven with no documented CLI flag surface.
 
 ## Authentication
 
-### flow
+### Static API key / token via env var
 
-Cloud uses email + API token; Server/Data Center uses Personal Access Token; OAuth 2.0 supported per docs.
+Cloud uses email + API token (`JIRA_API_TOKEN`, `CONFLUENCE_API_TOKEN`). Server/Data Center uses a Personal Access Token via `JIRA_PERSONAL_TOKEN`.
 
-### where credentials come from
+### OAuth 2.1 / OIDC delegated (browser consent, multi-tenant)
 
-Atlassian-managed API tokens; PATs for on-prem.
+OAuth 2.0 supported per docs; flow mechanics for Cloud not fully extracted within budget.
 
 ## Multi-tenancy
 
-### tenancy model
+### Single-user / single-tenant per process
 
 Instance-keyed — one Atlassian site (URL + credentials) per process. No per-request tenant switching observed.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### PyPI via uvx (zero-install runner)
 
-72 tools spanning Jira (search, issue CRUD, transitions, comments) and Confluence (search, page CRUD, comments). Supports both Cloud and on-prem (Confluence v6.0+, Jira v8.14+).
+`uvx mcp-atlassian` is the canonical install command shown in README. Published as `mcp-atlassian` on PyPI.
 
-## Observability
+### Docker / OCI image
 
-### logging destination + format, metrics, tracing, debug flags
+Dockerfile present in repo; container distribution available alongside PyPI.
 
-Not extracted within budget.
+### PyPI via pip / pipx
 
-## Host integrations shown in README or repo
+`pip` install supported as alternative.
 
-### Claude Desktop
+### Source clone with editable install
 
-Supported.
+Install from source supported as a fallback path.
 
-### Cursor IDE
+## Entry point and launch
 
-Supported.
+### `uvx <package>`
 
-## Claude Code plugin wrapper
+Host-config snippet: `"command": "uvx"`, `"args": ["mcp-atlassian"]` — clean uvx invocation. `[project.scripts]` declares `mcp-atlassian = "mcp_atlassian:main"`.
 
-### presence and shape
+### Docker container entrypoint
 
-Not explicitly observed.
+Containerized launch via Docker as alternative to uvx.
 
-## Tests
+## Build and packaging
 
-### presence, framework, location, notable patterns
-
-Comprehensive test suite in `tests/` directory.
-
-## CI
-
-### presence, system, triggers, what it runs
-
-GitHub Actions tests workflow present.
-
-## Container / packaging artifacts
-
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
-
-Dockerfile present.
-
-## Example client / developer ergonomics
-
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
-
-`.devcontainer/` for dev environment; pre-commit hooks; `llms.txt` docs.
-
-## Repo layout
-
-### single-package / monorepo / vendored / other
-
-Single-package Python project with test + devcontainer + docs.
-
-## Notable structural choices
-
-Dual-deployment support (Cloud + Server/Data Center) with explicit version floors — Confluence v6.0+, Jira v8.14+ — signals deliberate enterprise-compatibility work. 72-tool surface is large; no explicit tool-group selector flag surfaced in this research window (contrast with PayPal's `--tools=all` or Supabase's `features`). Community-owned canonical — 5k stars on a non-vendor repo for Atlassian suggests Atlassian has not shipped a first-party MCP and this is the de facto standard. 171 open issues + 91 PRs indicates active maintenance but also backlog pressure at scale.
-
-## Unanticipated axes observed
-
-Enterprise-scale support (on-prem Data Center plus Cloud) in a community MCP — a level of deployment-mode coverage uncommon outside first-party vendors. `llms.txt` presence signals design-for-AI-consumption documentation pattern.
-
-## Python-specific
-
-### SDK / framework variant
-
-Both `mcp>=1.8.0,<2.0.0` and `fastmcp>=2.13.0,<2.15.0` pinned — uses FastMCP 2.x but also pins raw mcp for compatibility. Import pattern: FastMCP-based (inferred).
-
-### Python version floor
-
-`requires-python = ">=3.10"`.
-
-### Packaging
+### Hatchling + uv (Python)
 
 Build backend: `hatchling.build`. Lock file: present (uv project). Version manager convention: `uv`.
 
-### Entry point
+### Pin discipline (Python)
 
-`[project.scripts]`: `mcp-atlassian = "mcp_atlassian:main"`. README host-config snippet: `"command": "uvx"`, `"args": ["mcp-atlassian"]` — clean uvx invocation.
+Tight bounded ranges: `mcp>=1.8.0,<2.0.0`, `fastmcp>=2.13.0,<2.15.0`. Both upstream lines bounded against major version drift.
 
-### Install workflow expected of end users
+### Python version pinning
 
-`uvx mcp-atlassian` (primary), Docker, `pip`, or from source.
+`requires-python = ">=3.10"` declared in `pyproject.toml`.
 
-### Async and tool signatures
+## Schema and types
 
-pytest-asyncio + pytest-anyio both present in dev — likely mix of asyncio and anyio async styles. Source-level sync/async not inspected.
+### FastMCP auto-derivation from type hints
 
-### Type / schema strategy
+FastMCP-based schema auto-derivation likely (FastMCP is the primary runtime surface); raw `mcp` SDK also available for lower-level needs.
 
-FastMCP-based schema auto-derivation likely; also uses raw mcp for lower-level needs.
+### Async model (cross-cutting)
 
-### Testing
+Both `pytest-asyncio` and `pytest-anyio` declared in dev deps — likely a mix of asyncio and anyio async styles in handlers.
 
-pytest + pytest-cov + pytest-asyncio + pytest-anyio. Custom pytest markers: `integration`, `dc_e2e` (Data Center e2e), `cloud_e2e` (Cloud e2e) — separates deployment-mode test scopes. ruff + black + mypy in dev group (double formatter — unusual).
+## Container artifacts
 
-### Dev ergonomics
+### Dockerfile (single-stage, build-from-source)
 
-`.devcontainer/` for dev environment. Pre-commit hooks configured. `llms.txt` — AI-consumption docs format.
+Dockerfile present at repo root.
 
-### Notable Python-specific choices
+## Test stack
 
-Dual SDK (raw `mcp` + `fastmcp`) — likely historical: project predates FastMCP and migrated partially. Test markers split by deployment topology (`dc_e2e` vs `cloud_e2e`) — encodes the on-prem/cloud matrix into the test suite rather than just CI config. Both `black` and `ruff` in dev — redundant; `ruff format` typically replaces black in modern Python projects.
+### pytest with async + coverage
 
-## Gaps
+`tests/` directory with comprehensive suite. `pytest` + `pytest-cov` + `pytest-asyncio` + `pytest-anyio` in dev. Custom pytest markers separate test scopes by deployment topology: `integration`, `dc_e2e` (Data Center end-to-end), `cloud_e2e` (Cloud end-to-end) — encodes the on-prem/cloud matrix into the test suite rather than only into CI config.
 
-Tool-scoping mechanism (if any) — how users reduce 72 tools to a working subset not extracted. Exact OAuth 2.0 flow mechanics for Cloud. Whether the server supports simultaneously Jira + Confluence or requires separate launches. Transport selection mechanism details.
+### Linter/formatter test gate
+
+`ruff` + `black` + `mypy` in dev group. Both `ruff` and `black` formatters present.
+
+## CI
+
+### GitHub Actions
+
+GitHub Actions tests workflow present.
+
+## Repository layout
+
+### Single-package src-layout
+
+Single-package Python project with `tests/`, `.devcontainer/`, and docs alongside source.
+
+## Host integration
+
+### Claude Desktop
+
+Documented host.
+
+### Cursor
+
+Documented host.
+
+## Developer ergonomics
+
+### Devcontainer / mise / dev-environment manifests
+
+`.devcontainer/` for dev environment.
+
+### `pre-commit` framework
+
+Pre-commit hooks configured.
+
+## Documentation surface
+
+### `llms.txt` / `llms-full.txt`
+
+`llms.txt` shipped in repo — design-for-AI-consumption documentation pattern.
+
+## Release and lifecycle
+
+### License — Permissive (MIT / Apache-2.0)
+
+MIT licensed.
+
+### Active development
+
+v0.21.1 released April 10, 2026; 560+ commits, 70 releases. 171 open issues + 91 PRs indicates active maintenance with backlog pressure at scale.
+
+### Tagged release with version in changelog
+
+Standard semver tag releases (v0.21.1, etc.).

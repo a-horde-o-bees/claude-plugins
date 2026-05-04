@@ -1,179 +1,211 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/neondatabase/mcp-server-neon`. Neon Postgres MCP — hosted remote service model for managing Neon branches/databases. 587 stars, MIT, default branch `main`; actively deployed via Vercel.
 
-### url
+## Server runtime
 
-https://github.com/neondatabase/mcp-server-neon
+### Next.js (TypeScript) as MCP host
 
-### stars
-
-587
-
-### last-commit
-
-Not surfaced directly; repo is actively deployed via Vercel.
-
-### license
-
-MIT
-
-### default branch
-
-main
-
-### one-line purpose
-
-Neon Postgres MCP — hosted remote service model for managing Neon branches/databases.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-TypeScript (97.5%), JavaScript (2.2%), CSS (0.3%); Node.js v18+ (development v22+); pnpm + Corepack.
-
-### framework/SDK in use
-
-Next.js App Router as hosting surface; MCP tool/handler logic under `mcp-src/`.
+TypeScript (97.5%), JavaScript (2.2%), CSS (0.3%); Node.js v18+ (development v22+); pnpm + Corepack. Next.js App Router as hosting surface; MCP tool/handler logic under `mcp-src/`. The Next.js app bundles the landing page, OAuth UI, and MCP endpoint together.
 
 ## Transport
 
-### supported transports
+### Streamable HTTP
 
-Streamable HTTP (primary, `/mcp` endpoint), Server-Sent Events (`/sse`, deprecated/legacy).
+Primary transport — `/mcp` endpoint serves Streamable HTTP.
 
-### how selected
+### SSE (Server-Sent Events)
 
-Endpoint-URL based — clients hit `/mcp` for streamable HTTP or `/sse` for legacy transport.
+Legacy `/sse` endpoint marked deprecated; remains for backward compatibility.
 
-## Distribution
+### Hosted remote endpoint (vendor-operated)
 
-### every mechanism observed
+Vendor-operated endpoint at `mcp.neon.tech`; clients hit `https://mcp.neon.tech/mcp` rather than running a local process.
 
-Remote-hosted server at `mcp.neon.tech` (primary); npm/`npx` for local server; `npx neonctl@latest init` for client auto-wiring; Cursor IDE install button.
+### Selection mechanism
 
-### published package name(s)
+Endpoint-URL based — clients hit `/mcp` for streamable HTTP or `/sse` for the legacy transport.
 
-Distributed primarily as a hosted service; npm package referenced for local development.
+## Capability surface
 
-### install commands shown in README
+### Domain-bundled tool set
 
-`npx neonctl@latest init`; manual JSON config pointing at `https://mcp.neon.tech/mcp`.
+20+ tools across Projects (create/list/describe/delete), Branches (create/delete/describe/compare schema/reset), SQL (queries/transactions/list-tables/describe-schemas), Migrations (prepare/complete), Optimization (slow-query analysis, query tuning), Auth/Data API provisioning, Discovery (search/docs fetch).
 
-## Entry point / launch
+### Read/write tool split
 
-### command(s) users/hosts run
+Read-only mode exposes 13 specific tools; full mode exposes the larger 20+ tool surface.
 
-Remote — hosts configure `mcp.neon.tech/mcp` with OAuth; local — Next.js dev server (`pnpm dev`).
+### Scope-based tool filtering via URL param
 
-### wrapper scripts, launchers, stubs
+Tool filtering via `category` query param on the connection URL — granular scope beyond simple read-only.
 
-Vercel deployment pipeline; `.claude/skills/` skill definitions present in repo.
+### Migration prepare/commit pattern
 
-## Configuration surface
+Start/commit migration pattern lets agents prepare migrations for human review before applying.
 
-### how config reaches the server
+## Configuration delivery
 
-URL query params (`readonly`, `category` for tool filtering, `projectId` for single-project scoping); Authorization bearer header for API-key auth.
+### URL query parameters on HTTP connection
+
+Per-connection scoping via URL query params — `readonly`, `category` for tool filtering, `projectId` for single-project scoping.
+
+### HTTP request headers
+
+`Authorization` bearer header for API-key auth on each request.
 
 ## Authentication
 
-### flow
+### OAuth 2.1 / OIDC delegated (browser consent, multi-tenant)
 
-OAuth 2.0 with scopes (`read`, `write`, `*`) as primary; API key bearer token as headless alternative.
+OAuth 2.0 with scopes (`read`, `write`, `*`) as the primary auth path — browser-redirect flow, multi-tenant. Supports organization and personal project access via `org_id`/`project_id` in prompts.
 
-### where credentials come from
+### Per-request bearer token (provider-scoped)
 
-Browser OAuth redirect or `Authorization: Bearer <api-key>` header.
+API key bearer token as a headless alternative — `Authorization: Bearer <api-key>` header on each request.
 
 ## Multi-tenancy
 
-### tenancy model
+### Per-request tenancy via OAuth token scoping
 
-Per-request tenancy via OAuth token scoping — supports organization and personal project access via `org_id`/`project_id` in prompts; remote hosted multi-tenant service.
+Per-request tenancy via OAuth token scoping — supports organization and personal project access; remote hosted multi-tenant service serving many users from one runtime.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### Hosted endpoint (no install)
 
-20+ tools — Projects (create/list/describe/delete), Branches (create/delete/describe/compare schema/reset), SQL (queries/transactions/list-tables/describe-schemas), Migrations (prepare/complete), Optimization (slow-query analysis, query tuning), Auth/Data API provisioning, Discovery (search/docs fetch). Read-only mode exposes 13 specific tools.
+Primary delivery is `mcp.neon.tech` as a hosted service — users paste the URL into their host's MCP config; nothing installs locally.
 
-## Observability
+### npm via npx / bunx
 
-### logging destination + format, metrics, tracing, debug flags
+`npx neonctl@latest init` for client auto-wiring; npm-distributed for local development.
 
-Winston-based logging with configurable levels; Sentry integration; analytics integration.
+### Pre-built host installer / one-click install URL
 
-## Host integrations shown in README or repo
+Cursor IDE install button bypasses JSON copy-paste.
 
-### Cursor IDE
+## Entry point and launch
 
-Install button.
+### URL configuration (no local launch)
 
-### VS Code + GitHub Copilot
+Hosts configure `mcp.neon.tech/mcp` with OAuth — there is no local process to launch.
+
+### Framework CLI run
+
+Local development runs `pnpm dev` (Next.js dev server) for contributors.
+
+## Build and packaging
+
+### npm/Node toolchain
+
+Node ecosystem — `package.json`, pnpm + Corepack for dependency management.
+
+## Container artifacts
+
+### No container artifacts
+
+No Dockerfile; deployment is Vercel-hosted instead of containerized.
+
+### Vercel deployment config
+
+Vercel-hosted deployment with automatic preview environments per PR.
+
+## Test stack
+
+### Pyramid with web E2E (Playwright + ephemeral DB)
+
+Pyramid testing strategy — unit (pure logic), integration (tool contracts), E2E (MCP protocol with real clients), web E2E (Playwright, ephemeral DB). Run via `pnpm run test`.
+
+### End-to-end with browser automation
+
+Playwright drives web E2E tests against an ephemeral database — exercises browser-driven flows alongside the MCP protocol surface.
+
+## CI
+
+### GitHub Actions
+
+GitHub Actions in `.github/`.
+
+### Vercel preview-per-PR + main deploy
+
+Vercel automatic deployment from branches; preview environments per PR.
+
+## Deployment topology
+
+### Hosted SaaS endpoint
+
+Remote-hosted multi-tenant service running on Vercel; users connect to the operator-run endpoint.
+
+## Host integration
+
+### Cursor
+
+Cursor IDE install button.
+
+### VS Code / VS Code Insiders / Visual Studio family
+
+VS Code + GitHub Copilot supported.
+
+### Claude Code
 
 Supported.
 
-### Claude Code / Claude Desktop
+### Claude Desktop
 
 Supported.
 
-### Cline
+### Windsurf / Goose / Qodo Gen / Cline / Kiro / Augment
 
-Supported.
-
-### Windsurf
-
-Supported.
+Cline and Windsurf supported.
 
 ### Zed
 
 Supported.
 
-## Claude Code plugin wrapper
+## Repository layout
 
-### presence and shape
+### Hosted-service layout (Next.js app + mcp-src + lib)
 
-`.claude/skills/` skill definitions present in the repo — Claude Code skill wiring rather than a plugin manifest.
+`landing/` Next.js app with `app/api/` (transport + OAuth endpoints), `mcp-src/` (server/tools/handlers), `lib/` (OAuth/config helpers), `landing/tests/` (test suites), `.claude/skills/` directory.
 
-## Tests
+## Observability
 
-### presence, framework, location, notable patterns
+### Pino / Winston structured logging (Node)
 
-Pyramid — unit (pure logic), integration (tool contracts), E2E (MCP protocol with real clients), web E2E (Playwright, ephemeral DB). `pnpm run test`.
+Winston-based logging with configurable log levels.
 
-## CI
+### Sentry integration
 
-### presence, system, triggers, what it runs
+Sentry integration for error tracking.
 
-GitHub Actions in `.github/`; Vercel automatic deployment from branches; preview environments per PR.
+### Env-var-controlled log level
 
-## Container / packaging artifacts
+Configurable log levels via configuration.
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+## Developer ergonomics
 
-None observed — Vercel-hosted deployment model.
+### Sample MCP client configs in repo
 
-## Example client / developer ergonomics
+JSON config examples per host shipped alongside the server.
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+## Documentation surface
 
-JSON config examples per host; `.claude/skills/` definitions; Cursor install button.
+### Per-host README integration sections
 
-## Repo layout
+Per-host README sections; Cursor install button.
 
-### single-package / monorepo / vendored / other
+## Claude Code plugin / skill wrapper
 
-`landing/` Next.js app with `app/api/` transport + OAuth endpoints, `mcp-src/` server/tools/handlers, `lib/` OAuth/config helpers, `landing/tests/` test suites, `.claude/skills/`.
+### `.claude/skills/` directory in repo
 
-## Notable structural choices
+`.claude/skills/` skill definitions checked into the repo — Claude Code skill wiring rather than a plugin manifest. Aligns the MCP server with Claude Code skill workflows.
 
-Remote-first hosted MCP server rather than local-process default — OAuth flow is primary auth. Tool filtering via `category` query param — granular scope beyond simple read-only. Start/commit migration pattern lets agents prepare migrations for human review before applying. Project-scoped mode pins all operations to a single project via URL param. Next.js chosen over a plain Node server — bundles landing page, OAuth UI, and MCP endpoint together.
+## Release and lifecycle
 
-## Unanticipated axes observed
+### License — Permissive (MIT / Apache-2.0)
 
-`.claude/skills/` checked in to the repo — aligns MCP server with Claude Code skill workflows. Playwright-driven web E2E against ephemeral database — contrasts with most MCP servers that test only in unit/integration. Scope-based tool filtering via URL param is a notable alternative to env-var tool lists.
+MIT.
 
-## Gaps
+### Active development
 
-Last commit date not surfaced from landing page. Exact npm package name/version not extracted within budget. Specific Sentry/analytics configuration not surfaced.
+Active development — actively deployed via Vercel; preview environments per PR.

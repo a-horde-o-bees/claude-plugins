@@ -1,209 +1,139 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/JackKuo666/PubMed-MCP-Server`. PubMed research-paper MCP server — keyword and advanced search, metadata retrieval, PDF download, and deep paper analysis. ~108 stars, MIT, default branch `main`, 13 commits at capture.
 
-### url
+## Server runtime
 
-https://github.com/JackKuo666/PubMed-MCP-Server
+### Python with FastMCP
 
-### stars
-
-~108
-
-### last-commit
-
-13 commits (relatively small history, active at time of capture).
-
-### license
-
-MIT
-
-### default branch
-
-main
-
-### one-line purpose
-
-PubMed research-paper MCP server — keyword and advanced search, metadata retrieval, PDF download, and deep paper analysis.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Python, 3.10+ (`.python-version` file).
-
-### framework/SDK in use
-
-FastMCP (explicitly named in README).
+Python server explicitly named as FastMCP in README. Python 3.10+ floor declared via a `.python-version` dotfile. Exact FastMCP version pin not surfaced in README. `asyncio` mentioned, suggesting async tool handlers. Bare-script style — `pubmed_server.py` and `pubmed_web_search.py` at repo root rather than `src/<package>/`.
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio (standard MCP server default).
+stdio-only; implicit (no transport selection mechanism documented). README only shows Claude Desktop integration.
 
-### how selected
+## Capability surface
 
-stdio-only implicit; README only shows Claude Desktop integration.
+### Tools-only, hand-curated narrow surface
 
-## Distribution
+5 tools — `search_pubmed_key_words`, `search_pubmed_advanced`, `get_pubmed_article_metadata`, `download_pubmed_pdf`, `deep_paper_analysis`. No resources, prompts, or other primitives.
 
-### every mechanism observed
+## Configuration delivery
 
-Source clone + `pip install -r requirements.txt`; Smithery CLI.
+### Host-side JSON config snippet
 
-### published package name(s)
-
-Not published to PyPI at time of research (no `pip install pubmed-mcp-server` shown).
-
-### install commands shown in README
-
-`git clone ... && pip install -r requirements.txt`; Smithery.
-
-## Entry point / launch
-
-### command(s) users/hosts run
-
-`python pubmed_server.py` or `python -m pubmed-mcp-server`.
-
-### wrapper scripts, launchers, stubs
-
-`smithery.yaml` for Smithery install.
-
-## Configuration surface
-
-### how config reaches the server
-
-Claude Desktop `claude_desktop_config.json` command/args — absolute path to `pubmed_server.py`.
+Configuration via Claude Desktop `claude_desktop_config.json` — absolute path to `pubmed_server.py` passed via `python` command. No env vars or CLI flags surfaced (PubMed access is anonymous).
 
 ## Authentication
 
-### flow
+### None / implicit (local-resource gating)
 
-None.
-
-### where credentials come from
-
-N/A — anonymous PubMed web access.
+No auth at the MCP layer. Anonymous PubMed web access — server fronts a public unauthenticated upstream.
 
 ## Multi-tenancy
 
-### tenancy model
+### Single-user / single-tenant per process
 
-single-user
+Single-user.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### Source clone with editable install
 
-5 tools — `search_pubmed_key_words`, `search_pubmed_advanced`, `get_pubmed_article_metadata`, `download_pubmed_pdf`, `deep_paper_analysis`.
+`git clone ... && cd PubMed-MCP-Server && pip install -r requirements.txt`. No PyPI publication at time of research (no `pip install pubmed-mcp-server` shown).
 
-## Observability
+### Smithery registry
 
-### logging destination + format, metrics, tracing, debug flags
+`smithery.yaml` in repo root for Smithery install — server distributed via Smithery without ever being published to PyPI.
 
-Standard `logging` module.
+### Docker / OCI image
 
-## Host integrations shown in README or repo
+Dockerfile present as a third install path.
 
-### Claude Desktop
+## Entry point and launch
 
-JSON config snippets for macOS, Windows.
+### Bare interpreter + script path
 
-### Cline
+`python pubmed_server.py` (absolute path passed via Claude Desktop's `command`/`args`). No console-script entry registered; `pyproject.toml` script declarations not confirmed.
 
-Dedicated example.
+### Module invocation / `python -m <module>` fallback
 
-### Smithery
+`python -m pubmed-mcp-server` also surfaced as a launch form.
 
-`smithery.yaml` in repo root.
+## Build and packaging
 
-## Claude Code plugin wrapper
+### Requirements-driven (legacy Python)
 
-### presence and shape
+`requirements.txt` is the install contract; `pyproject.toml` also present. The redundant manifest pair (both `requirements.txt` and `pyproject.toml` co-located) suggests the repo was bootstrapped from a requirements-driven template.
 
-None observed (despite "MseeP.ai Security Assessment Badge" shown on README).
+### No lock file
 
-## Tests
+Lock file absent — `requirements.txt` plays the pin role.
 
-### presence, framework, location, notable patterns
+### Python version pinning
+
+`.python-version` (pyenv-style) at repo root pins Python 3.10+.
+
+## Schema and types
+
+### FastMCP auto-derivation from type hints
+
+FastMCP-derived schemas from type hints (per README's framework declaration).
+
+## Container artifacts
+
+### Dockerfile (single-stage, build-from-source)
+
+Dockerfile at repo root.
+
+## Test stack
+
+### No tests / not surfaced
 
 No tests observed.
 
 ## CI
 
-### presence, system, triggers, what it runs
+### GitHub Actions
 
-`.github/` directory present; no workflow details surfaced.
+`.github/` directory present; specific workflow content not surfaced in README.
 
-## Container / packaging artifacts
+## Host integration
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+### Claude Desktop
 
-Dockerfile present.
+JSON config snippets shown for macOS and Windows.
 
-## Example client / developer ergonomics
+### Windsurf / Goose / Qodo Gen / Cline / Kiro / Augment
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+Cline-specific integration example provided.
 
-Claude Desktop / Cline snippets; `smithery.yaml`.
+### Smithery / Glama discovery
 
-## Repo layout
+`smithery.yaml` in repo root.
 
-### single-package / monorepo / vendored / other
+## Observability
 
-Bare-script style — `pubmed_server.py` and `pubmed_web_search.py` at repo root; `pyproject.toml` and `requirements.txt` side by side.
+### Standard library `logging` (Python)
 
-## Notable structural choices
+Standard `logging` module.
 
-Keeps both `pyproject.toml` and `requirements.txt` — redundant manifest; suggests the repo was bootstrapped from a requirements-driven template. Bare-script top-level layout rather than `src/<pkg>/` — lightweight but harder to package for PyPI.
+## Repository layout
 
-## Unanticipated axes observed
+### Bare-script layout
 
-MCP server distributed via Smithery without ever being published to PyPI — the package manager path is optional when Smithery handles install.
+`pubmed_server.py` and `pubmed_web_search.py` at repo root with `pyproject.toml` and `requirements.txt` side by side. Lightweight but harder to package for PyPI.
 
-## Python-specific
+## Safety and security posture
 
-### SDK / framework variant
+### MseeP.ai security badge
 
-FastMCP (not pinned explicitly in README). Version pin from pyproject.toml not surfaced. Import pattern: FastMCP per README.
+"MseeP.ai Security Assessment Badge" displayed on README.
 
-### Python version floor
+## Release and lifecycle
 
-3.10+ (`.python-version` file).
+### License — Permissive (MIT / Apache-2.0)
 
-### Packaging
-
-Build backend unknown; no PyPI publication. Lock file: none (uses `requirements.txt`). Version manager convention: `.python-version` + `requirements.txt` (pyenv-style).
-
-### Entry point
-
-Bare script (`pubmed_server.py`). No console-script names. Host-config snippet shape: absolute path to `pubmed_server.py` via `python` command.
-
-### Install workflow expected of end users
-
-Source clone + `pip install -r requirements.txt`, or Smithery, or Docker. README one-liner: `git clone ... && cd PubMed-MCP-Server && pip install -r requirements.txt`.
-
-### Async and tool signatures
-
-Mentions `asyncio`; likely async.
-
-### Type / schema strategy
-
-FastMCP-derived (auto from type hints).
-
-### Testing
-
-None observed.
-
-### Dev ergonomics
-
-None explicit.
-
-### Notable Python-specific choices
-
-No PyPI publication, no console script — repository is distributed as code to clone, not as a package. Duplicate manifest files (`pyproject.toml` + `requirements.txt`) — unusual split.
-
-## Gaps
-
-Exact FastMCP version pin not surfaced. Whether `pyproject.toml` defines any console scripts not confirmed. CI workflow content not read.
+MIT license.

@@ -5,7 +5,7 @@ Run research-corpus analysis against samples under `logs/research/<subject>/<sub
 ## Process
 
 1. `{remainder}` = $ARGUMENTS with the leading `research` token removed
-2. If `{remainder}` is empty: Exit to user: research requires a verb — expected `check`, `sections`, `content`, or `compliance`; see `ocd-run log research --help`
+2. If `{remainder}` is empty: Exit to user: research requires a verb — expected `check`, `sections`, `references`, or `diff`; see `ocd-run log research --help`
 3. bash: `ocd-run log research {remainder}`
 4. Present CLI output to user — no summarization or reformatting
 5. Return to caller

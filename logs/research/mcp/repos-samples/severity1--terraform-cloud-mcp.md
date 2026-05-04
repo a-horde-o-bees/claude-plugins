@@ -1,114 +1,108 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/severity1/terraform-cloud-mcp`. Terraform Cloud MCP server — FastMCP + Pydantic; 50+ tools across account/workspace/run/plan/apply/project/organization/cost-estimation/assessment-results/state-versions/variables; orthogonal `READ_ONLY_TOOLS` and `ENABLE_DELETE_TOOLS` env-flag safety. 23 stars, MIT, default branch `main`. 80 commits on main; specific date not surfaced.
 
-### url
+## Server runtime
 
-https://github.com/severity1/terraform-cloud-mcp
+### Python with FastMCP
 
-### stars
-
-23
-
-### last-commit
-
-active on main (80 commits; specific date not surfaced).
-
-### license
-
-MIT
-
-### default branch
-
-main
-
-### one-line purpose
-
-Terraform Cloud MCP server — FastMCP + Pydantic; dual safety flags (read-only, enable-delete).
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Python; Python 3.12+.
-
-### framework/SDK in use
-
-FastMCP (Python).
+Python on FastMCP. FastMCP major/version pin and import pattern not surfaced in extract. async/await throughout the server.
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio (standard MCP protocol).
+Standard MCP stdio; no explicit network mode documented.
 
-### how selected
+## Capability surface
 
-default transport; no explicit network mode documented.
+### Tools-heavy domain wrapper / domain-tool catalog
 
-## Distribution
+50+ tools partitioned across upstream-API domains: account, workspace, run, plan, apply, project, organization, cost estimation, assessment results, state versions, variables. Domain-per-module decomposition matching upstream Terraform Cloud API surface.
 
-### every mechanism observed
+### Capability gating flags (per-tool, per-category, write-mode)
 
-local install via `uv`, Docker container, Claude Code CLI integration.
+Two orthogonal env-driven gates: `READ_ONLY_TOOLS` and `ENABLE_DELETE_TOOLS`. Two-axis safety switching — delete is more dangerous than write and gets its own toggle, distinct from read-only.
 
-### published package name(s)
+## Configuration delivery
 
-`terraform-cloud-mcp`.
+### Environment variables
 
-### install commands shown in README
-
-via `uv` package manager; Docker container; Claude Code CLI `claude mcp add`.
-
-## Entry point / launch
-
-### command(s) users/hosts run
-
-`terraform-cloud-mcp` (console script).
-
-### wrapper scripts, launchers, stubs
-
-Dockerfile for containerized deployment.
-
-## Configuration surface
-
-### how config reaches the server
-
-Environment variables — `TFC_TOKEN` (required), `TFC_ADDRESS`, `ENABLE_DELETE_TOOLS`, `READ_ONLY_TOOLS`.
+`TFC_TOKEN` (required), `TFC_ADDRESS`, `ENABLE_DELETE_TOOLS`, `READ_ONLY_TOOLS`.
 
 ## Authentication
 
-### flow
+### Static API key / token via env var
 
-Terraform Cloud API token.
-
-### where credentials come from
-
-`TFC_TOKEN` environment variable.
+Terraform Cloud API token supplied via `TFC_TOKEN` environment variable.
 
 ## Multi-tenancy
 
-### tenancy model
+### Single-user / single-tenant per process
 
-single-user per process (single API token); workspace/organization scope handled per tool call.
+Single API token per process; workspace/organization scope handled per tool call.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### PyPI via uvx (zero-install runner)
 
-50+ tools across account, workspace, run, plan, apply, project, organization, cost estimation, assessment results, state versions, variables.
+Local install via `uv` package manager; package name `terraform-cloud-mcp`.
 
-## Observability
+### Docker / OCI image
 
-### logging destination + format, metrics, tracing, debug flags
+Docker container build provided.
 
-debug logging enabled by default; format/destination not surfaced.
+### SDK CLI installer
 
-## Host integrations shown in README or repo
+`claude mcp add` registration via Claude Code CLI.
 
-### Claude Code CLI
+## Entry point and launch
 
-`claude mcp add` registration.
+### Console script via `[project.scripts]` / npm bin
+
+Console script `terraform-cloud-mcp`. Host-config snippet shape likely `uv run terraform-cloud-mcp` per README's uv workflow.
+
+## Build and packaging
+
+### Hatchling + uv (Python)
+
+`pyproject.toml` with uv backing; lock file presence implied; version manager convention `uv`.
+
+### Python version pinning
+
+`requires-python` = 3.12+.
+
+## Schema and types
+
+### Pydantic v2 models
+
+Pydantic models for structured data validation.
+
+### FastMCP auto-derivation from type hints
+
+Pydantic-backed schema auto-derivation via FastMCP.
+
+### Async model (cross-cutting)
+
+async/await throughout; asyncio via FastMCP.
+
+## Container artifacts
+
+### Dockerfile (single-stage, build-from-source)
+
+Dockerfile included for containerised deployment.
+
+## CI
+
+### GitHub Actions
+
+GitHub Actions configured.
+
+## Host integration
+
+### Claude Code
+
+`claude mcp add` CLI registration.
 
 ### Claude Desktop
 
@@ -118,96 +112,50 @@ JSON `mcpServers` entry.
 
 JSON `mcpServers` entry.
 
-### Copilot Studio
+### Per-host README JSON snippets
 
-JSON `mcpServers` entry.
+Per-host JSON config snippets in README, including a Copilot Studio entry.
 
-## Claude Code plugin wrapper
+## Observability
 
-### presence and shape
+### Env-var-controlled log level
 
-not observed (standard `claude mcp add` CLI usage, not a plugin marketplace wrapper).
+Debug logging "enabled by default" per README; format/destination not surfaced. Likely env-var-controlled (mechanism inferred, not directly observed).
 
-## Tests
+## Repository layout
 
-### presence, framework, location, notable patterns
+### Domain-per-module decomposition
 
-not surfaced in fetched content.
+Single-package with domain-per-module layout — one module per upstream-API object class (account, workspace, run, plan, apply, project, organization, cost_estimation, assessment_results, state_versions, variables).
 
-## CI
+## Safety and security posture
 
-### presence, system, triggers, what it runs
+### Read-only by default with explicit write flag
 
-GitHub Actions configured.
+`READ_ONLY_TOOLS` env flag toggles read-only mode.
 
-## Container / packaging artifacts
+### Destructive-action gating flag
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+`ENABLE_DELETE_TOOLS` orthogonal flag — delete actions gated separately from read-only/write distinction.
 
-Dockerfile included.
+## Developer ergonomics
 
-## Example client / developer ergonomics
+### Linter and type-checker stack
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+ruff + black formatters and mypy type checking.
 
-ruff/black formatters and mypy type checking referenced; domain-specific module structure.
+## Documentation surface
 
-## Repo layout
+### README as the canonical surface
 
-### single-package / monorepo / vendored / other
+README is the canonical surface.
 
-single-package; domain-per-module layout (account, workspace, run, plan, etc.).
+## Release and lifecycle
 
-## Notable structural choices
+### License — Permissive (MIT / Apache-2.0)
 
-Two-dimensional safety gating: `READ_ONLY_TOOLS` + separate `ENABLE_DELETE_TOOLS` rather than a single "write mode" flag. async/await throughout the server; FastMCP + Pydantic for schema.
+MIT.
 
-## Unanticipated axes observed
+### Active development
 
-Orthogonal read-only and enable-delete flags (delete is more dangerous than write and gets its own toggle). Domain-per-module decomposition for a REST-API-wrapping MCP server.
-
-## Python-specific
-
-### SDK / framework variant
-
-FastMCP (specific major not surfaced); version pin and import pattern not surfaced.
-
-### Python version floor
-
-`requires-python` value: 3.12+.
-
-### Packaging
-
-Build backend: pyproject.toml with uv. Lock file presence: implied. Version manager convention: uv.
-
-### Entry point
-
-console script `terraform-cloud-mcp`; host-config snippet shape likely `uv run terraform-cloud-mcp` (README references uv workflow).
-
-### Install workflow expected of end users
-
-uv install; Docker; `claude mcp add`.
-
-### Async and tool signatures
-
-async/await patterns throughout; asyncio via FastMCP.
-
-### Type / schema strategy
-
-Pydantic models for structured data validation; Pydantic-backed auto-derivation via FastMCP.
-
-### Testing
-
-not surfaced; fixture style not surfaced.
-
-### Dev ergonomics
-
-ruff + black + mypy toolchain.
-
-### Notable Python-specific choices
-
-mypy integration suggests stricter typing discipline than most community MCP servers. Two-axis safety switching (`READ_ONLY_TOOLS` and `ENABLE_DELETE_TOOLS`).
-
-## Gaps
-
-Test framework details, exact requires-python pin, logging destination, console script path in pyproject, last-commit date.
+80 commits on main; ongoing development.

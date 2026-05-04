@@ -1,209 +1,151 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/blazickjp/arxiv-mcp-server`. arXiv research MCP server — 6 tools (search, download, read, list, semantic search, citation graph) plus research-workflow prompts; ships MCP + Codex plugin + Claude Code skills in one repo. ~2,600 stars; Apache-2.0; default branch `main`; active (115+ commits).
 
-### url
+## Server runtime
 
-https://github.com/blazickjp/arxiv-mcp-server
+### Python with raw MCP SDK
 
-### stars
-
-~2,600
-
-### last-commit
-
-active (115+ commits)
-
-### license
-
-Apache-2.0
-
-### default branch
-
-main
-
-### one-line purpose
-
-arXiv research MCP server — 6 tools (search, download, read, list, semantic search, citation graph) plus research-workflow prompts; ships MCP + Codex plugin + Claude Code skills in one repo.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Python 99.2%; Python 3.11+.
-
-### framework/SDK in use
-
-raw `mcp` Python SDK (not FastMCP).
+Python (99.2% of repo); raw `mcp` Python SDK (not FastMCP). Import pattern: `mcp.server`. Version pin not surfaced from README. Python 3.11+ floor — higher than most MCP servers which target 3.10, suggesting use of newer typing / exception-group features.
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio (via `uv` / `uvx`).
+stdio only (via `uv` / `uvx`).
 
-### how selected
+## Capability surface
 
-stdio only.
+### Tools plus prompts (no resources)
 
-## Distribution
+6 tools — search, download, read, list stored, semantic search, citation graph — paired with MCP prompts for research analysis and literature review workflows. Research prompts are a shipped artifact (not just tools).
 
-### every mechanism observed
+## Configuration delivery
 
-PyPI via `uv tool install`, uvx, Docker, source.
+### CLI flags
 
-### published package name(s)
+`--storage-path` flag controls local paper storage location.
 
-`arxiv-mcp-server`; optional `arxiv-mcp-server[pdf]` extra.
+### Environment variables
 
-### install commands shown in README
-
-`uv tool install arxiv-mcp-server`; `uv tool install 'arxiv-mcp-server[pdf]'`.
-
-## Entry point / launch
-
-### command(s) users/hosts run
-
-`arxiv-mcp-server` console script.
-
-### wrapper scripts, launchers, stubs
-
-none.
-
-## Configuration surface
-
-### how config reaches the server
-
-CLI flags (`--storage-path`) and env vars (`ARXIV_STORAGE_PATH`).
+`ARXIV_STORAGE_PATH` env-var equivalent for storage path.
 
 ## Authentication
 
-### flow
+### None / implicit (local-resource gating)
 
-none.
-
-### where credentials come from
-
-N/A — arXiv public API; rate limit enforced locally (3-second minimum).
+No authentication — arXiv public API; rate limit enforced locally (3-second minimum between requests, reflecting arXiv's published guidance at the client layer).
 
 ## Multi-tenancy
 
-### tenancy model
+### Single-user / single-tenant per process
 
-single-user; local paper storage is per-instance.
+Single-user; local paper storage is per-instance.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### PyPI via uvx (zero-install runner)
 
-6 tools — search, download, read, list stored, semantic search, citation graph; **prompts** for research analysis and literature review workflows.
+`uv tool install arxiv-mcp-server` (primary); also runnable as `uvx arxiv-mcp-server`. PyPI package: `arxiv-mcp-server`. Optional `[pdf]` extra separates core arXiv client from heavier PDF processing dependencies.
 
-## Observability
+### Docker / OCI image
 
-### logging destination + format, metrics, tracing, debug flags
+Dockerfile present; Docker image as alternative install path.
 
-not surfaced; MCP-standard logging.
+### Source clone with editable install
 
-## Host integrations shown in README or repo
+Source install also supported.
+
+## Entry point and launch
+
+### Console script via `[project.scripts]` / npm bin
+
+`[project.scripts]` registers `arxiv-mcp-server` console script.
+
+### `uvx <package>`
+
+Host-config snippet shape: `uvx arxiv-mcp-server` or `uv tool install` then `arxiv-mcp-server`.
+
+## Build and packaging
+
+### Hatchling + uv (Python)
+
+Build backend not surfaced explicitly. `uv.lock` committed; version manager convention: uv. `requires-python = ">=3.11"`.
+
+### `uv.lock` committed
+
+Lock file committed for reproducibility.
+
+### Optional-dependency fan-out
+
+`[pdf]` extra for heavier PDF dependencies.
+
+## Schema and types
+
+### Pydantic v2 models
+
+Pydantic via the MCP SDK; schema auto-derived.
+
+### Async model (cross-cutting)
+
+Likely async (httpx idiom).
+
+## Container artifacts
+
+### Dockerfile (single-stage, build-from-source)
+
+Dockerfile present.
+
+## Test stack
+
+### pytest with async + coverage
+
+pytest (`python -m pytest`); `tests/` directory. Fixture style not inspected.
+
+## CI
+
+### GitHub Actions
+
+GitHub Actions `tests.yml` workflow with badge.
+
+## Repository layout
+
+### Single-package plus sibling host integrations
+
+Single package (`src/arxiv_mcp_server/`) plus sibling directories shipping integrations for non-MCP hosts: `skills/` for Claude Code and `.codex-plugin/` for Codex. Three host-native plugin wrappers in one repo — the MCP server is the core, and Codex and Claude Code each get dedicated sibling integrations rather than expecting hosts to generically consume the MCP surface.
+
+## Host integration
 
 ### Claude Desktop
 
 JSON config with uvx command.
 
-### Codex
+### Codex CLI / Copilot CLI / Gemini CLI
 
 `.codex-plugin/` integration manifest in repo root — first-class Codex plugin shape.
 
 ### Claude Code
 
-`skills/` directory suggests parallel skill artifacts.
+`skills/` directory present — explicit Claude Code skill wrapper co-located with the server.
 
-## Claude Code plugin wrapper
+## Observability
 
-### presence and shape
+### None / unspecified
 
-`skills/` directory present — explicit Claude Code skill wrapper co-located.
+Not surfaced; MCP-standard logging.
 
-## Tests
+## Claude Code plugin / skill wrapper
 
-### presence, framework, location, notable patterns
+### `.claude/skills/` directory in repo
 
-pytest (`python -m pytest`); `tests/` directory.
+`skills/` directory in repo carries Claude Code skill definitions alongside the MCP server source. Sibling directory packaging the server as a discoverable Claude Code skill in addition to its MCP surface.
 
-## CI
+## Release and lifecycle
 
-### presence, system, triggers, what it runs
+### License — Permissive (MIT / Apache-2.0)
 
-GitHub Actions `tests.yml` workflow with badge.
+Apache-2.0.
 
-## Container / packaging artifacts
+### Active development
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
-
-Dockerfile present.
-
-## Example client / developer ergonomics
-
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
-
-Claude Desktop JSON; uvx-style invocation.
-
-## Repo layout
-
-### single-package / monorepo / vendored / other
-
-single-package (`src/arxiv_mcp_server/`) + `skills/` + `.codex-plugin/`.
-
-## Notable structural choices
-
-Ships integration artifacts for three different host ecosystems in one repo: standard MCP (`src/`), Codex (`.codex-plugin/`), Claude Code skills (`skills/`). Optional `[pdf]` extra — separates core arXiv client from heavier PDF processing deps. Built-in 3-second rate-limit enforcement — reflects arXiv's rate-limit guidance at the client layer.
-
-## Unanticipated axes observed
-
-One server, three host-native plugin wrappers — the MCP server is the core, but Codex and Claude Code each get dedicated sibling integrations rather than expecting hosts to generically consume the MCP surface. "Research prompts" as a shipped artifact (not just tools) — leveraging MCP prompt primitives.
-
-## Python-specific
-
-### SDK / framework variant
-
-raw `mcp` SDK; version pin not surfaced from README; import pattern: `mcp.server`.
-
-### Python version floor
-
-`requires-python` value: `>=3.11`.
-
-### Packaging
-
-build backend not surfaced; lock file: `uv.lock` present; version manager convention: uv.
-
-### Entry point
-
-`[project.scripts]` → `arxiv-mcp-server`; actual console-script name: `arxiv-mcp-server`; host-config snippet shape: `uvx arxiv-mcp-server` or `uv tool install` then `arxiv-mcp-server`.
-
-### Install workflow expected of end users
-
-`uv tool install` (primary), uvx, Docker; one-liner: `uv tool install arxiv-mcp-server`.
-
-### Async and tool signatures
-
-likely async (httpx idiom).
-
-### Type / schema strategy
-
-Pydantic via MCP SDK; schema auto-derived.
-
-### Testing
-
-pytest; fixture style not inspected.
-
-### Dev ergonomics
-
-not surfaced.
-
-### Notable Python-specific choices
-
-Python 3.11+ floor (higher than most MCP servers which target 3.10) — suggests use of newer typing / exception-group features. PDF processing gated behind an extra, not a core dep — install stays slim for users who only need metadata.
-
-## Gaps
-
-Exact `mcp` SDK version pin not read. Contents of `skills/` directory (Claude Code wrapper shape) not inspected. `.codex-plugin/` manifest format not inspected.
+~2,600 stars; 115+ commits; active maintenance.

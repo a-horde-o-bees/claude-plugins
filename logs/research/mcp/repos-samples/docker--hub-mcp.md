@@ -1,167 +1,123 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/docker/hub-mcp`. Docker Hub MCP server — TypeScript with declarative tool catalog (`tools.json` / `tools.txt`); integrates with Docker's Ask Gordon agent via `gordon-mcp.yml`. 137 stars, Apache-2.0, default branch `main`, active (7 open PRs noted; last-commit not explicitly extracted).
 
-### url
+## Server runtime
 
-https://github.com/docker/hub-mcp
+### Node.js / TypeScript with official MCP SDK
 
-### stars
-
-137
-
-### last-commit
-
-Not explicitly extracted; active (7 open PRs noted)
-
-### license
-
-Apache-2.0
-
-### default branch
-
-main
-
-### one-line purpose
-
-Docker Hub MCP server (TypeScript) — tool catalog declared in `tools.json` for image discovery; integrates with Docker's Ask Gordon agent via `gordon-mcp.yml`.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-TypeScript (99.8%). Requires Node.js 22+.
-
-### framework/SDK in use
-
-Not explicitly extracted; likely `@modelcontextprotocol/sdk` (typical for TS MCP servers).
+TypeScript (99.8%) on Node.js 22+. Specific framework not directly confirmed but typical `@modelcontextprotocol/sdk` for TS MCP servers.
 
 ## Transport
 
-### supported transports
+### Streamable HTTP
 
-HTTP, stdio.
+`--transport=http` selectable; `--port` sets HTTP port (default 3000).
 
-### how selected
+### stdio
 
-CLI flag `--transport=http|stdio`; `--port` sets HTTP port (default 3000).
+`--transport=stdio` selectable.
 
-## Distribution
+### Selection mechanism
 
-### every mechanism observed
+CLI flag at startup — `--transport=http|stdio`, `--port=3000`. Transport is a first-class CLI flag with an explicit default rather than separate entry-point commands per transport.
 
-npm package; Dockerfile present; source clone/build.
+## Capability surface
 
-### published package name(s)
+### Tool catalog as data file
 
-Not explicitly extracted from README; appears published to npm based on install flow.
+Tools defined in `tools.json` / `tools.txt` — declarative catalog rather than inline schemas in source. Opens an authoring path that doesn't require TS expertise. Specific tool list not enumerated in fetched view; scope is Docker Hub operations.
 
-### install commands shown in README
+## Configuration delivery
 
-`npm install && npm run build && npm start -- [--transport=http|stdio] [--port=3000]`
+### Environment variables
 
-## Entry point / launch
+`HUB_PAT_TOKEN` for authentication credential.
 
-### command(s) users/hosts run
+### CLI flags
 
-`npm start -- ...` or direct execution of `dist/index.js` after build.
-
-### wrapper scripts, launchers, stubs
-
-`dist/index.js` as the built entry point.
-
-## Configuration surface
-
-### how config reaches the server
-
-Env vars (`HUB_PAT_TOKEN`) plus CLI args (`--transport`, `--port`, `--username`). `tools.json` and `tools.txt` ship tool definitions.
+`--transport`, `--port`, `--username`. Plus `tools.json`/`tools.txt` shipping tool definitions.
 
 ## Authentication
 
-### flow
+### Static API key / token via env var
 
-Static Docker Hub Personal Access Token (PAT).
-
-### where credentials come from
-
-`HUB_PAT_TOKEN` env var; paired with `--username` CLI arg.
+Static Docker Hub Personal Access Token (PAT) supplied via `HUB_PAT_TOKEN` env var; paired with `--username` CLI arg.
 
 ## Multi-tenancy
 
-### tenancy model
+### Single-user / single-tenant per process
 
-Single-user per process (one PAT plus username).
+One PAT plus username — single user per process.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### npm via npx / bunx
 
-Tools defined in `tools.json`. Specific tool list not enumerated in fetched view. Scope: Docker Hub operations.
+Appears published to npm based on install flow (specific package name not extracted from README). `npm install && npm run build && npm start -- ...` for source clone build flow.
 
-## Observability
+### Docker / OCI image
 
-### logging destination + format, metrics, tracing, debug flags
+Dockerfile present.
 
-Not extracted.
+### Source clone with editable install
 
-## Host integrations shown in README or repo
+`npm install && npm run build && npm start -- [--transport=http|stdio] [--port=3000]`.
 
-### Claude Desktop
+## Entry point and launch
 
-JSON snippet via `claude_desktop_config.json` (README section).
+### Built JS file (`node build/index.js`)
 
-### VS Code
+`dist/index.js` as the built entry point; `npm start -- ...` or direct execution after build.
 
-JSON snippet via User Settings JSON.
+### npm scripts (start/start:stdio/start:http)
 
-### Docker Ask Gordon
+`npm start -- ...` with transport flags forwarded.
 
-`gordon-mcp.yml` config file.
+## Build and packaging
 
-## Claude Code plugin wrapper
+### npm/Node toolchain
 
-### presence and shape
+`package.json`, `tsconfig.json`, ESLint config (`eslint.config.mjs`). TypeScript compiled to a built JS output.
 
-Not observed in root listing.
+## Container artifacts
 
-## Tests
+### Dockerfile (single-stage, build-from-source)
 
-### presence, framework, location, notable patterns
-
-Test files not explicitly called out in fetched view; ESLint config present.
+Dockerfile present. No compose/Helm.
 
 ## CI
 
-### presence, system, triggers, what it runs
+### GitHub Actions
 
-GitHub Actions present (`.github/`); specifics not extracted.
+`.github/` present; specific workflow contents not extracted.
 
-## Container / packaging artifacts
+## Host integration
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+### Claude Desktop
 
-Dockerfile. No compose/Helm.
+JSON snippet via `claude_desktop_config.json`.
 
-## Example client / developer ergonomics
+### VS Code / VS Code Insiders / Visual Studio family
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+JSON snippet via User Settings JSON.
 
-`tools.json` as a declarative tool manifest. Standard npm scripts.
+### Vendor-specific companion config
 
-## Repo layout
+`gordon-mcp.yml` — first-party Docker "Ask Gordon" integration. The MCP server pre-shapes its config for a first-party downstream tool, distinct from generic host config.
 
-### single-package / monorepo / vendored / other
+## Repository layout
 
-Single-package TS project. `src/`, `Dockerfile`, `package.json`, `tsconfig.json`, `tools.json`, `tools.txt`, `eslint.config.mjs`.
+### Single-package source (language-conventional)
 
-## Notable structural choices
+Single-package TS project: `src/`, `Dockerfile`, `package.json`, `tsconfig.json`, `tools.json`, `tools.txt`, `eslint.config.mjs`.
 
-Tools defined in a separate `tools.json` / `tools.txt` pair — declarative catalog rather than inline schemas in source. First-party Docker "Ask Gordon" integration (`gordon-mcp.yml`) — repo targets Docker's own agent surface alongside generic MCP hosts. Transport is a first-class CLI flag with an explicit default rather than separate entry-point commands (contrast with github-mcp-server's subcommand approach).
+## Release and lifecycle
 
-## Unanticipated axes observed
+### License — Permissive (MIT / Apache-2.0)
 
-Vendor-specific companion integration (`gordon-mcp.yml`) — MCP server pre-shaping its config for a first-party downstream tool, distinct from generic host config. Tool catalog as data file (`tools.json`/`tools.txt`) rather than code — opens an authoring path that doesn't require TS expertise.
+Apache-2.0.
 
-## Gaps
+### Active development
 
-Last-commit date. Exact npm package name if published. Tool enumeration / total tool count. Test framework and coverage. Whether the HTTP transport is Streamable HTTP, SSE, or plain JSON-RPC-over-HTTP.
+Active — 7 open PRs noted.

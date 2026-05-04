@@ -1,195 +1,133 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/stripe/agent-toolkit`. Stripe agent toolkit — MCP server alongside SDKs and AI-framework integrations (Vercel AI SDK, native SDK billing). 1.5k stars, MIT, default branch `main`. Cross-ecosystem monorepo publishing both Python and TypeScript packages; ships `.claude-plugin/` and `.cursor-plugin/` side by side. MCP is one of several agent-integration surfaces, not the primary product.
 
-### url
+## Server runtime
 
-https://github.com/stripe/agent-toolkit
+### Node.js / TypeScript with official MCP SDK
 
-### stars
+TypeScript (51.9%) is the primary language for the MCP component (`@stripe/mcp`). Anthropic MCP SDK + Stripe's own Node SDK; Vercel AI SDK integration as a peer.
 
-1.5k
+### Python with raw MCP SDK
 
-### last-commit
-
-Not explicitly extracted from README view
-
-### license
-
-MIT
-
-### default branch
-
-main
-
-### one-line purpose
-
-Stripe agent toolkit — MCP server plus host-specific wrappers; ships `.claude-plugin/` and `.cursor-plugin/` side by side.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-TypeScript (51.9%) with substantial Python co-primary. Dual-language repo.
-
-### framework/SDK in use
-
-Stripe's own SDKs (Node, Python); Vercel AI SDK integration; MCP components as a third pillar.
+Python co-primary in the repo; `stripe-agent-toolkit` PyPI package coexists with the TS packages. Python uses Stripe's own SDK alongside MCP components.
 
 ## Transport
 
-### supported transports
+### stdio
 
-Stdio via `@stripe/mcp` (local); remote hosted endpoint at `https://mcp.stripe.com` with OAuth.
+Stdio via `@stripe/mcp` (local) — `npx -y @stripe/mcp --api-key=YOUR_STRIPE_SECRET_KEY` invokes the local stdio server.
 
-### how selected
+### Hosted remote endpoint (vendor-operated)
 
-Install-target split — `npx @stripe/mcp` for stdio, the hosted URL for remote/OAuth.
+Stripe operates a hosted remote endpoint at `https://mcp.stripe.com` with OAuth — clients point at the URL rather than launching anything locally.
 
-## Distribution
+### Selection mechanism
 
-### every mechanism observed
+Install-target split — `npx @stripe/mcp` for stdio (local), the hosted URL for remote/OAuth. Two distinct entry points rather than runtime mode-switching within one binary.
 
-npm packages: `@stripe/agent-toolkit`, `@stripe/ai-sdk`, `@stripe/token-meter`, `@stripe/mcp`. PyPI: `stripe-agent-toolkit`. npx for the MCP entry.
+## Capability surface
 
-### published package name(s)
+### Tools-heavy domain wrapper / domain-tool catalog
 
-npm: `@stripe/agent-toolkit`, `@stripe/ai-sdk`, `@stripe/token-meter`, `@stripe/mcp`. PyPI: `stripe-agent-toolkit`.
+Tools exposing the Stripe API surface (payments, customers, etc.). Specific tool enumeration not extracted within budget.
 
-### install commands shown in README
+## Configuration delivery
 
-Python: `pip install stripe-agent-toolkit`. TypeScript: `npm install @stripe/agent-toolkit`. MCP: `npx -y @stripe/mcp --api-key=YOUR_STRIPE_SECRET_KEY`.
+### CLI flags
 
-### pitfalls observed
-
-Cross-ecosystem packaging: Python and TypeScript published from the same repo with parallel naming (`stripe-agent-toolkit` vs `@stripe/agent-toolkit`).
-
-## Entry point / launch
-
-### command(s) users/hosts run
-
-`npx -y @stripe/mcp --api-key=...` for stdio; hosted URL for remote.
-
-### wrapper scripts, launchers, stubs
-
-`@stripe/mcp` is the stdio entry; `@stripe/agent-toolkit` is the broader SDK.
-
-## Configuration surface
-
-### how config reaches the server
-
-`--api-key` CLI flag is the documented entry. Env var equivalent not fully extracted. Hosted endpoint handles config via OAuth scopes.
-
-### pitfalls observed
-
-Exact env-var config surface vs CLI flags not extracted.
+`--api-key` is the documented CLI entry for the stdio server. Hosted endpoint handles config via OAuth scopes; env-var equivalent for `--api-key` not fully extracted.
 
 ## Authentication
 
-### flow
+### Static API key / token via env var
 
-Static Stripe secret keys (recommend Restricted API Keys — RAK) for stdio; OAuth for hosted `mcp.stripe.com`.
+Stdio path uses static Stripe secret keys passed via `--api-key=...`. Stripe dashboard generates the keys.
 
-### where credentials come from
+### OAuth 2.1 / OIDC delegated (browser consent, multi-tenant)
 
-Stripe dashboard generates secret keys / RAKs; OAuth flow for hosted consumption.
+OAuth for hosted `mcp.stripe.com` — per-user consent. Each user authorizes their own Stripe account; the hosted endpoint holds per-user tokens.
+
+### Credential-scoping guidance
+
+README guidance recommends Restricted API Keys (RAK) over the full-power root secret key — security-ergonomics layer atop the static-key auth mechanism. Documentation pattern, not enforcement.
 
 ## Multi-tenancy
 
-### tenancy model
+### Single-user / single-tenant per process
 
-Single-account per process for stdio (one API key → one Stripe account); per-user OAuth for the hosted endpoint (each user authorizes their own Stripe account).
+Stdio mode: one `--api-key` per process maps to one Stripe account.
 
-## Capabilities exposed
+### Per-user / per-workspace via OAuth
 
-### tools / resources / prompts / sampling / roots / logging / other
+Hosted endpoint: per-user OAuth determines the tenant; each authenticated user's MCP calls run under their own Stripe account.
 
-Tools exposing Stripe API surface (payments, customers, etc.). Specific tool enumeration not extracted.
+## Distribution channel
 
-## Observability
+### npm via npx / bunx
 
-### logging destination + format, metrics, tracing, debug flags
+npm packages: `@stripe/agent-toolkit`, `@stripe/ai-sdk`, `@stripe/token-meter`, `@stripe/mcp`. The MCP entry uses `npx -y @stripe/mcp --api-key=...`.
 
-Not explicitly documented in README view.
+### PyPI via pip / pipx
 
-## Host integrations shown in README or repo
+PyPI package: `stripe-agent-toolkit`. Install: `pip install stripe-agent-toolkit`.
 
-### Claude Desktop
+### Hosted endpoint (no install)
 
-`.claude-plugin/` directory present — plugin wrapper shipped in-repo.
+`https://mcp.stripe.com` is the hosted remote-only path; no install when consumers point their host at the URL.
 
-### Cursor
+## Entry point and launch
 
-`.cursor-plugin/` directory present — plugin wrapper shipped in-repo.
+### `npx -y <package>` / `bunx`
 
-### Other hosts
+`npx -y @stripe/mcp --api-key=...` for the stdio launch — `--api-key` passed inline.
 
-stdio via `npx @stripe/mcp` applies universally through host JSON config.
+### URL configuration (no local launch)
 
-## Claude Code plugin wrapper
+Hosted endpoint: clients configure their MCP host with the `https://mcp.stripe.com` URL — no local launch step.
 
-### presence and shape
+## Repository layout
 
-`.claude-plugin/` directory present at repo root. No `.mcp.json` noted.
+### Monorepo with multiple published packages
 
-### pitfalls observed
+Monorepo with multiple npm packages (`@stripe/agent-toolkit`, `@stripe/ai-sdk`, `@stripe/token-meter`, `@stripe/mcp`) plus PyPI `stripe-agent-toolkit`. `.claude-plugin/` and `.cursor-plugin/` ship alongside code. MCP is treated as a peer to SDKs and AI-framework integrations rather than as the whole product.
 
-Contents of `.claude-plugin/plugin.json` (full plugin layout vs minimal) not extracted.
+### Single-package with dual-ecosystem wrapper
 
-## Tests
-
-### presence, framework, location, notable patterns
-
-Not deeply extracted. `.github/` present suggests CI-driven testing.
+Cross-ecosystem packaging — Python and TypeScript published from the same repo with parallel naming (`stripe-agent-toolkit` PyPI vs `@stripe/agent-toolkit` npm).
 
 ## CI
 
-### presence, system, triggers, what it runs
+### GitHub Actions
 
-GitHub Actions present; specifics not extracted.
+GitHub Actions present in `.github/`. Workflow specifics not extracted.
 
-### pitfalls observed
+## Host integration
 
-CI workflow specifics not extracted.
+### Claude Code
 
-## Container / packaging artifacts
+`.claude-plugin/` directory present at repo root — first-class Claude Code plugin wrapper alongside the raw MCP server.
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+### Cursor
 
-Not explicitly documented in README view.
+`.cursor-plugin/` directory present at repo root — Cursor-specific plugin wrapper analogous to `.claude-plugin/`.
 
-## Example client / developer ergonomics
+### Generic / host-agnostic snippet
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+Stdio via `npx @stripe/mcp` applies universally across MCP hosts via standard host JSON config.
 
-Dual-ecosystem SDKs (Node + Python) alongside MCP. Restricted API Key guidance is a security-ergonomics feature.
+## Claude Code plugin / skill wrapper
 
-## Repo layout
+### `.claude-plugin/` wrapper
 
-### single-package / monorepo / vendored / other
+`.claude-plugin/` directory present at repo root. Contents (full plugin layout vs minimal) not extracted within budget. No `.mcp.json` noted.
 
-Monorepo. Multiple SDK packages coexist: `@stripe/agent-toolkit` (Python + TS), `@stripe/ai-sdk` (Vercel integration), `@stripe/token-meter` (native SDK billing), and `@stripe/mcp` (MCP component). `.claude-plugin/` and `.cursor-plugin/` ship alongside code.
+## Release and lifecycle
 
-## Notable structural choices
+### License — Permissive (MIT / Apache-2.0)
 
-MCP as one of several agent-integration surfaces: the repo is explicitly an "agent-toolkit" housing Vercel-AI, SDK-billing, and MCP side-by-side. MCP is a peer, not the product.
+MIT licensed.
 
-Cross-ecosystem packaging: Python and TypeScript published from the same repo with parallel naming (`stripe-agent-toolkit` vs `@stripe/agent-toolkit`).
+### Active development
 
-Dual host-plugin wrappers shipped in-repo: `.claude-plugin/` and `.cursor-plugin/` — recognizing host-specific plugin formats as a distribution surface.
-
-Restricted API Key guidance elevated in docs — security posture as a first-class operational concern.
-
-Hosted remote + local stdio duality, similar pattern to sentry-mcp and cloudflare.
-
-## Unanticipated axes observed
-
-Multi-surface agent tooling: one repo ships SDKs, AI-framework integrations, billing primitives, and MCP — MCP treated as an integration channel among peers rather than the whole product.
-
-Per-host plugin wrappers as shipped artifacts (`.cursor-plugin/` in addition to `.claude-plugin/`).
-
-Credential-scoping as guidance (RAK) — vendor-specific security ergonomics documented alongside install.
-
-## Gaps
-
-Last-commit date not extracted. Specific tool list not extracted. CI workflow specifics not extracted. Whether Dockerfile is present not extracted. Contents of `.claude-plugin/plugin.json` (full plugin layout vs minimal) not extracted. Exact env-var config surface vs CLI flags not extracted.
+Active project. Last-commit date and CI specifics not extracted within budget.

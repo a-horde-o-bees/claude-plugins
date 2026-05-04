@@ -1,171 +1,125 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/v-3/discordmcp`. Discord MCP server — minimal 2-tool TypeScript wrapper around discord.js for sending and reading channel messages. 197 stars, MIT, default branch `main`. Source-clone-only distribution; no npm publish despite being a TypeScript project.
 
-### url
+## Server runtime
 
-https://github.com/v-3/discordmcp
+### Node.js / TypeScript with official MCP SDK
 
-### stars
-
-197
-
-### last-commit
-
-Not explicitly stated in extracted content
-
-### license
-
-MIT
-
-### default branch
-
-main
-
-### one-line purpose
-
-Discord MCP server — Discord API wrapper.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-TypeScript 100%; Node.js 16.x+.
-
-### framework/SDK in use
-
-Model Context Protocol TypeScript SDK; discord.js (inferred from typical Discord bot patterns).
+TypeScript (100%) Node.js server built on the Model Context Protocol TypeScript SDK; discord.js inferred for Discord API access. Node.js 16.x+ floor. Compiled to a `build/` JS output.
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio (Claude Desktop integration pattern — Discord API is the backend, but MCP transport to host is stdio).
+stdio default; launched via `node build/index.js` in Claude Desktop config. Discord API is the backend data plane; MCP transport to host is stdio.
 
-### how selected
+### Selection mechanism
 
-Stdio default; launched via node build output.
+Implicit single mode — stdio only.
 
-## Distribution
+## Capability surface
 
-### every mechanism observed
+### Tools-only, hand-curated narrow surface
 
-GitHub source clone only — no npm package mentioned.
+Two tools — `send-message` (post to Discord channels) and `read-messages` (retrieve up to 100 recent messages). Supports channel name or channel ID lookup. Minimal surface — no moderation, role management, embeds, or voice features.
 
-### published package name(s)
+## Configuration delivery
 
-None observed.
+### Environment variables
 
-### install commands shown in README
+`DISCORD_TOKEN` env var supplies the bot credential.
 
-`npm install` then `npm run build`.
+### Host-side JSON config snippet
 
-### pitfalls observed
-
-No npm publish — clone-and-build is the only path; limits distribution reach but keeps the repo simple. No npm package despite being a TypeScript project — distribution posture is source-only; compare to other TS MCPs that publish to npm as the primary path.
-
-## Entry point / launch
-
-### command(s) users/hosts run
-
-`node build/index.js` (production); `npm run dev` (development).
-
-### wrapper scripts, launchers, stubs
-
-npm scripts; entry at `build/index.js`.
-
-## Configuration surface
-
-### how config reaches the server
-
-`DISCORD_TOKEN` environment variable; `claude_desktop_config.json` for host-side.
+`claude_desktop_config.json` snippet shown in README — `command: "node"`, `args: [build/index.js]`, with `DISCORD_TOKEN` in the `env` block.
 
 ## Authentication
 
-### flow
+### Bot identity (third-party platform)
 
-Discord bot token — user creates a Discord bot application, invites the bot to a server with Read Messages / Send Messages / Read Message History permissions.
-
-### where credentials come from
-
-Discord Developer Portal bot credentials.
+Discord bot token — user creates a Discord bot application at the Developer Portal, invites the bot to a server with Read Messages / Send Messages / Read Message History permissions. Bot's server memberships define reachable tenants; users grant access through Discord's normal invite flow rather than configuring the MCP server. Credentials originate from the Discord Developer Portal and are supplied via the `DISCORD_TOKEN` env var.
 
 ## Multi-tenancy
 
-### tenancy model
+### Bot-scoped
 
-Bot-scoped — one bot identity per process; bot's server memberships define reachable tenants. Automatic server/channel discovery from bot's perspective.
+One bot identity per process; the bot's server memberships define reachable tenants. Multiple users may interact with the same bot, but the server's identity is fixed. Automatic server/channel discovery from the bot's perspective reduces config ceremony — tool calls accept either names or IDs.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### Source clone with editable install
 
-Two tools — `send-message` (post to Discord channels) and `read-messages` (retrieve up to 100 recent messages). Supports channel name or channel ID lookup.
+GitHub source clone only — `npm install` then `npm run build`. No npm publish. Limits distribution reach but keeps the repo simple. Distinct from typical TS MCP servers that publish to npm.
 
-## Observability
+## Entry point and launch
 
-### logging destination + format, metrics, tracing, debug flags
+### Built JS file (`node build/index.js`)
 
-Explicit error handling claimed; destination not specified.
+Host config invokes `node build/index.js`. Requires the consumer to have run `npm install && npm run build` first.
 
-## Host integrations shown in README or repo
+### npm scripts (start/start:stdio/start:http)
 
-### Claude for Desktop
+`npm run dev` for development. `npm run build` to produce the `build/` JS artifact. Production users invoke the built file directly.
 
-primary host integration.
+## Build and packaging
 
-## Claude Code plugin wrapper
+### npm/Node toolchain
 
-### presence and shape
+`package.json` with build/dev scripts; standard TypeScript-to-JS compilation producing a `build/` output.
 
-Not observed.
+## Container artifacts
 
-## Tests
+### No container artifacts
 
-### presence, framework, location, notable patterns
+No Dockerfile.
 
-Not observed — no test framework documented. MCP Inspector usage: `npx @modelcontextprotocol/inspector node build/index.js`.
+## Test stack
+
+### MCP Inspector as test driver
+
+`npx @modelcontextprotocol/inspector node build/index.js` documented as the verification path. No unit-test framework wired up.
+
+### No tests / not surfaced
+
+No unit test framework documented.
 
 ## CI
 
-### presence, system, triggers, what it runs
+### None / absent
 
-Not observed — no CI documented.
+No CI documented.
 
-## Container / packaging artifacts
+## Host integration
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+### Claude Desktop
 
-Not present.
+Primary documented host; JSON config snippet in README.
 
-## Example client / developer ergonomics
+### Inspector compatibility called out
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+MCP Inspector command shown in README as a verification surface.
 
-MCP Inspector command in README; Claude Desktop JSON config sample.
+## Observability
 
-## Repo layout
+### Stderr logging (convention / SDK default)
 
-### single-package / monorepo / vendored / other
+Explicit error handling claimed in README; destination not specified — likely stderr per stdio convention.
 
-Single-package — `/src`, `package.json`, `tsconfig.json`.
+## Repository layout
 
-## Notable structural choices
+### Single-package source (language-conventional)
 
-Minimal tool surface (2 tools) — send and read only; no moderation, role management, embed-creation, or voice features.
+Single-package — `/src`, `package.json`, `tsconfig.json`. Conventional TS layout.
 
-User-approval emphasis — README calls out explicit user approval before message sending, reflecting the trust concern of letting an LLM post to Discord channels.
+## Safety and security posture
 
-No npm publish — clone-and-build is the only path; limits distribution reach but keeps the repo simple.
+### Explicit non-security stance
 
-Automatic server/channel discovery — reduces config ceremony; tool calls accept either names or IDs.
+README emphasizes explicit user approval before message sending — reflects the trust concern of letting an LLM post to Discord channels. No hard enforcement, just author guidance to the operator.
 
-## Unanticipated axes observed
+## Release and lifecycle
 
-No npm package despite being a TypeScript project — distribution posture is source-only; compare to other TS MCPs that publish to npm as the primary path.
+### License — Permissive (MIT / Apache-2.0)
 
-User-approval framing in README suggests awareness of agent-action-on-external-service risk; a structural choice worth noting for any MCP that acts on shared/public surfaces.
-
-## Gaps
-
-Last commit date not extracted. Whether the project supports slash commands, threads, voice, embeds, or moderation. No CI or tests — quality signal is weaker than higher-star alternatives. Whether a canonical Discord-org first-party MCP exists (none surfaced in this research).
+MIT.

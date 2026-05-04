@@ -1,205 +1,171 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/chroma-core/chroma-mcp`. Chroma vector-DB MCP server — 12 tools for collection and document CRUD/query; single binary supports ephemeral / persistent / self-hosted / Chroma Cloud backing stores. ~536 stars; Apache-2.0; default branch `main`; v0.2.6 released 2025-08-14, active.
 
-### url
+## Server runtime
 
-https://github.com/chroma-core/chroma-mcp
+### Python with raw MCP SDK
 
-### stars
-
-~536
-
-### last-commit
-
-v0.2.6 released 2025-08-14; active
-
-### license
-
-Apache-2.0
-
-### default branch
-
-main
-
-### one-line purpose
-
-Chroma vector-DB MCP server — 12 tools for collection and document CRUD/query; single binary supports ephemeral / persistent / self-hosted / Chroma Cloud backing stores.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Python, `requires-python >= 3.10`.
-
-### framework/SDK in use
-
-raw `mcp` Python SDK (`mcp[cli]==1.6.0`) — no FastMCP dependency.
+Python `>=3.10` server using raw `mcp` SDK (`mcp[cli]==1.6.0`) — no FastMCP dependency. Exact pin `==1.6.0`. Import pattern: `mcp.server` / `mcp.server.fastmcp` (via the `mcp[cli]` extra). Pinned raw `mcp` SDK rather than FastMCP — unusual for a 2025 vector-DB server (most vendor servers have migrated to FastMCP).
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio (default via MCP SDK); SSE/HTTP not called out in README.
+stdio is the documented transport (default via the MCP SDK); SSE/HTTP not called out in README.
 
-### how selected
+### Selection mechanism
 
-CLI argument / env var mode controlling client type and transport.
+CLI argument / env-var mode controls client type and (where relevant) transport.
 
-## Distribution
+## Capability surface
 
-### every mechanism observed
+### Domain-bundled tool set
 
-PyPI via uvx, Docker.
+12 tools — collection CRUD (create/delete/modify), document operations (add/query/update), retrieval with filtering. Curated multi-tool surface organized by entity-type/operation class for vector-database semantics.
 
-### published package name(s)
+## Configuration delivery
 
-`chroma-mcp`.
+### CLI flags
 
-### install commands shown in README
+CLI args are the primary surface; flags select client mode (ephemeral | persistent | http | cloud) and tune connection.
 
-`uvx chroma-mcp`.
+### Environment variables
 
-## Entry point / launch
+Environment variables layered alongside CLI flags. Provider API keys via the `CHROMA_<PROVIDER>_API_KEY` convention — uniform auth surface across multiple embedding back-ends (OpenAI, Cohere, VoyageAI).
 
-### command(s) users/hosts run
+### Dotenv file
 
-`uvx chroma-mcp` with flags selecting client mode (ephemeral | persistent | http | cloud).
-
-### wrapper scripts, launchers, stubs
-
-none.
-
-## Configuration surface
-
-### how config reaches the server
-
-CLI args (primary), environment variables, optional `.env` file via `--dotenv-path`. Provider API keys via `CHROMA_<PROVIDER>_API_KEY` convention.
+Optional `.env` file via `--dotenv-path` flag layered on top of env-var resolution.
 
 ## Authentication
 
-### flow
+### Static API key / token via env var
 
-API key (for Chroma Cloud and for embedding providers).
+API key for Chroma Cloud and for embedding providers, supplied via env vars / `.env` / CLI args. Provider-prefixed pattern (`CHROMA_OPENAI_API_KEY`, `CHROMA_COHERE_API_KEY`, `CHROMA_VOYAGEAI_API_KEY`) gives a uniform auth surface across multiple embedding back-ends.
 
-### where credentials come from
+### Per-source independent API keys with graceful degradation
 
-env vars / `.env` / CLI args; provider-prefixed pattern (`CHROMA_OPENAI_API_KEY`, etc.).
+Bundles three cloud embedding SDKs in core deps (openai, cohere, voyageai) — not extras — giving a fat install but zero-friction provider switching across embedding back-ends. Each provider key is independent; the optional `sentence-transformers` extra lets users run locally-embedded collections without any of the cloud-provider keys.
 
 ## Multi-tenancy
 
-### tenancy model
+### Single-user / single-tenant per process
 
-single-user process; collection is per-call argument.
+Single-user process; collection is a per-call argument.
 
-## Capabilities exposed
+### Mode-switched backing store
 
-### tools / resources / prompts / sampling / roots / logging / other
+Single binary supports four backing-store modes (ephemeral in-memory, persistent local, HTTP self-hosted, Chroma Cloud) chosen at launch via flags rather than four separate entry points. Same MCP surface adapts to radically different deployment targets through a single client-type dimension.
 
-12 tools — collection CRUD (create/delete/modify), document ops (add/query/update), retrieval with filtering.
+## Distribution channel
 
-## Observability
+### PyPI via uvx (zero-install runner)
 
-### logging destination + format, metrics, tracing, debug flags
+`uvx chroma-mcp` — published as `chroma-mcp` on PyPI; runnable through uvx without prior install.
 
-standard MCP SDK stderr logging; no bespoke metrics/tracing.
+### Docker / OCI image
 
-## Host integrations shown in README or repo
+Dockerfile present; Docker as alternative install path.
 
-### Claude Desktop
+## Entry point and launch
 
-JSON config snippet.
+### Console script via `[project.scripts]` / npm bin
 
-### Cursor / other MCP clients
+`[project.scripts]` maps `chroma-mcp` to `chroma_mcp:main`.
 
-generic uvx-based config.
+### `uvx <package>`
 
-## Claude Code plugin wrapper
+Host-config snippet shape: `uvx chroma-mcp` with flags selecting client type — e.g., `uvx chroma-mcp --client-type persistent --data-dir ./chroma_data`.
 
-### presence and shape
+## Build and packaging
 
-none observed.
+### Hatchling + uv (Python)
 
-## Tests
+Build backend: hatchling. Lock file presence not confirmed. Version manager convention: `.python-version` likely (standard for uvx-published packages). `requires-python = ">=3.10"`.
 
-### presence, framework, location, notable patterns
+## Schema and types
 
-pytest ≥8.3.5, pytest-asyncio ≥0.26.0, pytest-cov ≥4.1.0; `tests/` directory.
+### Pydantic v2 models
 
-## CI
+Pydantic via the MCP SDK (pulled in transitively rather than declared explicitly); schemas auto-derived from signatures per MCP SDK idiom.
 
-### presence, system, triggers, what it runs
+### Async model (cross-cutting)
 
-GitHub Actions workflows in `.github/workflows/`.
+Mixed; pytest-asyncio in test deps suggests async coverage in the suite.
 
-## Container / packaging artifacts
+## Container artifacts
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+### Dockerfile (single-stage, build-from-source)
 
 Dockerfile present.
 
-## Example client / developer ergonomics
+## Test stack
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+### pytest with async + coverage
 
-`.env` example; Claude Desktop snippet; uvx CLI flags well documented.
+pytest ≥ 8.3.5, pytest-asyncio ≥ 0.26.0, pytest-cov ≥ 4.1.0; `tests/` directory. Fixture style not inspected.
 
-## Repo layout
+## CI
 
-### single-package / monorepo / vendored / other
+### GitHub Actions
 
-single-package (`src/chroma_mcp/`).
+GitHub Actions workflows in `.github/workflows/`.
 
-## Notable structural choices
+## Repository layout
 
-Single binary supports 4 backing-store modes (ephemeral, persistent, HTTP self-hosted, Chroma Cloud) chosen at launch via flags rather than four separate entry points. Pinned raw `mcp` SDK rather than FastMCP, which is unusual for a 2025 vector-DB server (most vendor servers have migrated to FastMCP).
+### Single-package src-layout
 
-## Unanticipated axes observed
+Single package under `src/chroma_mcp/`.
 
-Same MCP server package adapts to radically different deployment targets (in-memory vs durable local vs remote vs SaaS) through a single "client type" dimension. Provider-prefixed env convention (`CHROMA_<PROVIDER>_API_KEY`) gives a uniform auth surface across multiple embedding back-ends (OpenAI, Cohere, VoyageAI).
+## Observability
 
-## Python-specific
+### Stderr logging (convention / SDK default)
 
-### SDK / framework variant
+Standard MCP SDK stderr logging; no bespoke metrics / tracing.
 
-raw `mcp` SDK (`mcp[cli]==1.6.0`); version pin: exact `==1.6.0`; import pattern: from `mcp.server` / `mcp.server.fastmcp` (via `mcp[cli]` extra).
+## Host integration
 
-### Python version floor
+### Claude Desktop
 
-`requires-python` value: `>=3.10`.
+JSON config snippet provided.
 
-### Packaging
+### Cursor
 
-build backend: hatchling; lock file presence not confirmed; version manager convention: `.python-version` likely (standard for uvx-published packages).
+Generic uvx-based config covers Cursor and other MCP clients.
 
-### Entry point
+## Developer ergonomics
 
-`[project.scripts]` → `chroma_mcp:main`; actual console-script name: `chroma-mcp`; host-config snippet shape: `uvx chroma-mcp`.
+### MCP framework dev config
 
-### Install workflow expected of end users
+`mcp` CLI via `mcp[cli]` extra; `.env` example committed.
 
-uvx (primary), Docker; one-liner: `uvx chroma-mcp --client-type persistent --data-dir ./chroma_data`.
+### Sample MCP client configs in repo
 
-### Async and tool signatures
+Claude Desktop snippet plus uvx CLI flags well-documented.
 
-mixed; pytest-asyncio suggests async coverage.
+## Documentation surface
 
-### Type / schema strategy
+### README as the canonical surface
 
-Pydantic via MCP SDK; explicit `pydantic` not in deps but pulled in by mcp; auto-derived from signatures per MCP SDK idiom.
+`.env` example; Claude Desktop snippet; uvx CLI flags well documented inline.
 
-### Testing
+## Claude Code plugin / skill wrapper
 
-pytest + pytest-asyncio + pytest-cov; fixture style not inspected.
+### Bare MCP server, no Claude Code wrapper
 
-### Dev ergonomics
+None observed.
 
-`mcp` CLI via `mcp[cli]`; `.env` convention.
+## Release and lifecycle
 
-### Notable Python-specific choices
+### License — Permissive (MIT / Apache-2.0)
 
-Optional `sentence-transformers` extra lets users run locally-embedded collections without OpenAI/Cohere/Voyage keys. Bundles three cloud embedding SDKs in core deps (openai, cohere, voyageai) — not extras — giving a fat install but zero-friction provider switching.
+Apache-2.0.
 
-## Gaps
+### Tagged release with version in changelog
 
-Whether `uv.lock` is committed not confirmed. Exact list of 12 tools beyond categories not enumerated. Specific GH Actions jobs / release automation not inspected.
+v0.2.6 released 2025-08-14.
+
+### Active development
+
+Active maintenance with semver-tagged releases.

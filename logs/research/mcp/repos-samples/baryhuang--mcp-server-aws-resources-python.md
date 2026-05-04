@@ -1,209 +1,147 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/baryhuang/mcp-server-aws-resources-python`. AWS resources MCP server — exposes a single AST-sandboxed `exec boto3` tool (code-as-tool) rather than enumerating each AWS API. 24 stars; MIT license; default branch `main`; active on main (specific date not surfaced).
 
-### url
+## Server runtime
 
-https://github.com/baryhuang/mcp-server-aws-resources-python
+### Python with raw MCP SDK
 
-### stars
-
-24
-
-### last-commit
-
-active on main (specific date not surfaced)
-
-### license
-
-MIT
-
-### default branch
-
-main
-
-### one-line purpose
-
-AWS resources MCP server — exposes a single AST-sandboxed `exec boto3` tool (code-as-tool) rather than enumerating each AWS API.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Python 95.7%; Python version not explicitly surfaced.
-
-### framework/SDK in use
-
-raw MCP Python SDK (boto3-based).
+Python (95.7% of repo); raw `mcp` Python SDK with boto3 underpinning. Version pin and import pattern not surfaced; `requires-python` value not explicitly surfaced.
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio.
+stdio — the default MCP transport.
 
-### how selected
+## Capability surface
 
-default MCP transport.
+### Single code-execution tool with sandbox
 
-## Distribution
+Single "run boto3 code" tool — the LLM authors a Python snippet on the fly rather than calling N hand-enumerated per-API tools. AST validation gates each invocation against an explicit allowlist of permitted imports (`boto3`, `operator`, `json`, `datetime`, `pytz`, `dateutil`, `re`, `time`). Also exposes a dynamic AWS-resources resource alongside the single tool.
 
-### every mechanism observed
+## Configuration delivery
 
-Docker Hub (`buryhuang/mcp-server-aws-resources:latest`), git clone + uv, Smithery.
+### Environment variables
 
-### published package name(s)
+Env vars injected into the Docker command in the host config (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, optional `AWS_SESSION_TOKEN`, `AWS_DEFAULT_REGION`, or `AWS_PROFILE`).
 
-mcp-server-aws-resources (Docker); smithery registry entry.
+### Mounted credentials
 
-### install commands shown in README
-
-`docker pull buryhuang/mcp-server-aws-resources:latest`; `npx -y @smithery/cli install mcp-server-aws-resources-python --client claude`; uv-based source build.
-
-### pitfalls observed
-
-multi-arch Docker images (including arm/v7) for broader platform coverage.
-
-## Entry point / launch
-
-### command(s) users/hosts run
-
-`src/mcp_server_aws_resources/server.py` or containerized equivalent.
-
-### wrapper scripts, launchers, stubs
-
-Dockerfile; Smithery CLI.
-
-## Configuration surface
-
-### how config reaches the server
-
-environment variables injected into the Docker command in Claude Desktop config; or AWS profile path mounted into container.
+Alternative path: AWS profile / credential file mounted into the container.
 
 ## Authentication
 
-### flow
+### Cloud-native identity / credential chain
 
-AWS credentials via `AWS_ACCESS_KEY_ID` + `AWS_SECRET_ACCESS_KEY` (+ optional `AWS_SESSION_TOKEN`), `AWS_DEFAULT_REGION`, or `AWS_PROFILE` mount.
+AWS credentials via env vars (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, optional `AWS_SESSION_TOKEN`, `AWS_DEFAULT_REGION`, `AWS_PROFILE`) resolved through the AWS SDK chain.
 
-### where credentials come from
+### Mounted file credentials
 
-host env / mounted AWS credentials file.
+AWS credentials file mounted into the container as an alternative to env-var pass-through.
 
 ## Multi-tenancy
 
-### tenancy model
+### Single-user / single-tenant per process
 
-single-user per process (one AWS credential set).
+Single-user per process — one AWS credential set.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### Docker / OCI image
 
-single "run boto3 code" tool with AST validation sandboxing; exposes a dynamic AWS-resources resource.
+`docker pull buryhuang/mcp-server-aws-resources:latest`. Multi-architecture image publishing covers `linux/amd64`, `arm64`, and `arm/v7` for broader platform coverage.
 
-## Observability
+### Smithery registry
 
-### logging destination + format, metrics, tracing, debug flags
+Smithery installable: `npx -y @smithery/cli install mcp-server-aws-resources-python --client claude`. Smithery as a distribution vector alongside Docker and source.
 
-not explicitly documented.
+### Source clone with editable install
 
-## Host integrations shown in README or repo
+uv-based source build — git clone followed by uv install.
+
+## Entry point and launch
+
+### Bare interpreter + script path
+
+Server entry at `src/mcp_server_aws_resources/server.py`. Console-script name not surfaced.
+
+### Docker container entrypoint
+
+Containerized launch via `docker run -i` against the published multi-arch image; host config invokes Docker as the command.
+
+## Build and packaging
+
+### Hatchling + uv (Python)
+
+`pyproject.toml` present; build backend not surfaced. Version manager convention: uv. Lock file presence not surfaced.
+
+## Schema and types
+
+### Hand-authored tool schemas
+
+Single hand-authored tool schema — input is a Python code string. Schema strategy details otherwise not surfaced.
+
+### Async model (cross-cutting)
+
+Synchronous code execution; asyncio/anyio usage not surfaced — sync handlers throughout.
+
+## Container artifacts
+
+### Dockerfile (single-stage, build-from-source)
+
+Dockerfile present at repo root.
+
+### Multi-architecture image publishing
+
+Multi-arch images published for `linux/amd64`, `arm64`, `arm/v7`.
+
+## Test stack
+
+### No tests / not surfaced
+
+Test details not surfaced in the README excerpt.
+
+## CI
+
+### GitHub Actions
+
+`.github/` workflow directory present.
+
+## Repository layout
+
+### Single-package src-layout
+
+Single package under `src/mcp_server_aws_resources/`.
+
+## Safety and security posture
+
+### AST validation with import allowlist
+
+User-supplied Python is parsed to AST and validated against an explicit allowlist (`boto3`, `operator`, `json`, `datetime`, `pytz`, `dateutil`, `re`, `time`) before execution. Trust depends entirely on the allowlist's tightness.
+
+## Host integration
 
 ### Claude Desktop
 
 JSON `mcpServers` Docker command with env injection or AWS profile mount.
 
-### Smithery
+### Smithery / Glama discovery
 
-CLI-installable via `@smithery/cli install`.
+Smithery CLI-installable via `@smithery/cli install`.
 
-## Claude Code plugin wrapper
+## Claude Code plugin / skill wrapper
 
-### presence and shape
+### Bare MCP server, no Claude Code wrapper
 
-not observed.
+Not observed.
 
-## Tests
+## Release and lifecycle
 
-### presence, framework, location, notable patterns
+### License — Permissive (MIT / Apache-2.0)
 
-not detailed in README excerpt.
+MIT.
 
-## CI
+### Active development
 
-### presence, system, triggers, what it runs
-
-GitHub Actions directory present.
-
-## Container / packaging artifacts
-
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
-
-Dockerfile; multi-arch images published (linux/amd64, arm64, arm/v7).
-
-## Example client / developer ergonomics
-
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
-
-Smithery install path; Docker one-liner.
-
-## Repo layout
-
-### single-package / monorepo / vendored / other
-
-single package under `src/mcp_server_aws_resources/`.
-
-## Notable structural choices
-
-Exposes a single "execute arbitrary boto3 Python" tool rather than enumerating AWS APIs — AST validator + allowlist of imports (boto3, operator, json, datetime, pytz, dateutil, re, time) is the sandboxing mechanism. Multi-arch Docker images (including arm/v7) for broader platform coverage.
-
-## Unanticipated axes observed
-
-"Code-as-tool" architecture: one flexible code-execution tool with AST sandbox versus N hand-enumerated per-API tools. Smithery CLI as a distribution vector alongside Docker and source.
-
-## Python-specific
-
-### SDK / framework variant
-
-raw `mcp` Python SDK; version pin not surfaced; import pattern not surfaced.
-
-### Python version floor
-
-`requires-python` value not explicitly surfaced.
-
-### Packaging
-
-build backend: pyproject.toml present; lock file presence not surfaced; version manager convention: uv.
-
-### Entry point
-
-bare script at `src/mcp_server_aws_resources/server.py`; actual console-script name(s) not surfaced; host-config snippet shape: Docker-first config in Claude Desktop.
-
-### Install workflow expected of end users
-
-Docker pull; Smithery install.
-
-### Async and tool signatures
-
-synchronous code execution; asyncio/anyio usage not surfaced.
-
-### Type / schema strategy
-
-not surfaced; tool input is a Python code string; hand-authored single-tool schema.
-
-### Testing
-
-not detailed; fixture style not surfaced.
-
-### Dev ergonomics
-
-not surfaced.
-
-### Notable Python-specific choices
-
-AST validation for user-supplied Python is rare among MCP servers; treats AWS API as "run this Python snippet" rather than "call this named tool". Allowed-imports allowlist baked into the sandbox.
-
-## Gaps
-
-Python version floor, test presence, last-commit date, console script name, schema strategy details could not be determined.
+Active on main; specific date not surfaced.

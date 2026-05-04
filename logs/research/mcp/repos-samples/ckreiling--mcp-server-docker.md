@@ -1,201 +1,133 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/ckreiling/mcp-server-docker`. Docker Engine MCP server — 28+ tools for containers/images/networks/volumes plus MCP resources for stats/logs and MCP prompts for docker-compose workflows. 701 stars; GPL-3.0; default branch `main`; 53 total commits on main.
 
-### url
+## Server runtime
 
-https://github.com/ckreiling/mcp-server-docker
+### Python with raw MCP SDK
 
-### stars
-
-701
-
-### last-commit
-
-53 total commits on main (specific date not surfaced)
-
-### license
-
-GPL-3.0
-
-### default branch
-
-main
-
-### one-line purpose
-
-Docker Engine MCP server — 28+ tools for containers/images/networks/volumes plus MCP resources for stats/logs and MCP prompts for docker-compose workflows.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Python; version pinned via `.python-version` file (specific value not surfaced).
-
-### framework/SDK in use
-
-MCP protocol via Python SDK (FastMCP not explicitly surfaced); uses Docker SDK for Python for container operations.
+Python via the raw `mcp` Python SDK (FastMCP not explicitly surfaced). Uses the Docker SDK for Python for container operations. Python version pinned via `.python-version` file (specific value not surfaced). Import pattern not surfaced; async/sync behavior not documented.
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio.
+stdio is the default and only documented transport; no network transport documented.
 
-### how selected
+## Capability surface
 
-default; no network transport documented.
+### Tools plus resources plus prompts (full primitive coverage)
 
-## Distribution
+28+ tools covering containers, images, networks, and volumes. Resources expose container stats and logs. Prompts cover docker-compose workflow as orchestration primitives — natural-language → multi-step action. Advertises prompts as a first-class capability alongside tools, atypical for cloud/infra servers.
 
-### every mechanism observed
+## Configuration delivery
 
-uvx (uv package manager), Docker container, source clone.
+### Environment variables
 
-### published package name(s)
+`DOCKER_HOST` env var for remote Docker daemons (SSH URL form supported).
 
-mcp-server-docker.
+### Host-side JSON config snippet
 
-### install commands shown in README
-
-`uvx mcp-server-docker`; Docker image; clone + manual.
-
-## Entry point / launch
-
-### command(s) users/hosts run
-
-`mcp-server-docker` (console script).
-
-### wrapper scripts, launchers, stubs
-
-Dockerfile.
-
-## Configuration surface
-
-### how config reaches the server
-
-environment variables — `DOCKER_HOST` for remote Docker daemons; Claude Desktop JSON config.
+Claude Desktop JSON `mcpServers` entry documented as the primary integration shape.
 
 ## Authentication
 
-### flow
+### None / implicit (local-resource gating)
 
-Docker SDK `from_env()` discovery; supports SSH-based auth for remote Docker daemons.
-
-### where credentials come from
-
-local Docker socket or `DOCKER_HOST` env (SSH url supported).
+No MCP-layer auth. Docker SDK `from_env()` discovery uses ambient Docker credentials; trust derives from local socket access or `DOCKER_HOST` env (SSH URL supported as a first-class remote-daemon path, not just local socket).
 
 ## Multi-tenancy
 
-### tenancy model
+### Single-user / single-tenant per process
 
-single-user per process (one Docker daemon connection).
+Single-user per process; one Docker daemon connection. The process boundary equals the trust boundary; switching identities means relaunching with different `DOCKER_HOST` config.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### PyPI via uvx (zero-install runner)
 
-28+ tools (containers, images, networks, volumes); resources for container stats and logs; prompts for natural-language docker-compose workflow.
+`uvx mcp-server-docker` is the documented one-liner. PyPI package name: `mcp-server-docker`.
 
-## Observability
+### Docker / OCI image
 
-### logging destination + format, metrics, tracing, debug flags
+Docker container available; Dockerfile in repo.
 
-not surfaced in README.
+### Source clone with editable install
 
-## Host integrations shown in README or repo
+Clone + manual install supported.
+
+## Entry point and launch
+
+### Console script via `[project.scripts]` / npm bin
+
+Console script `mcp-server-docker`; `[project.scripts]` declared in `pyproject.toml`.
+
+### `uvx <package>`
+
+Host-config snippet shape: `uvx mcp-server-docker`.
+
+### Docker container entrypoint
+
+Dockerfile present; container invocation as alternative launch.
+
+## Build and packaging
+
+### Hatchling + uv (Python)
+
+`pyproject.toml` present (build backend not surfaced explicitly); version manager convention is Devbox + uv.
+
+### Python version pinning
+
+`.python-version` file used (pyenv-style); specific value not surfaced.
+
+## Schema and types
+
+### Hand-authored tool schemas
+
+Uses Docker SDK types; raw MCP SDK requires hand-authored schemas (FastMCP auto-derivation not in play). Specifics not surfaced.
+
+## Container artifacts
+
+### Dockerfile (single-stage, build-from-source)
+
+Dockerfile present (single-stage, build-from-source pattern).
+
+## Repository layout
+
+### Single-package src-layout
+
+Single package under `src/mcp_server_docker/`.
+
+## Host integration
 
 ### Claude Desktop
 
-JSON `mcpServers` entry (documented as primary integration).
+JSON `mcpServers` entry documented as primary integration.
 
-## Claude Code plugin wrapper
+## Claude Code plugin / skill wrapper
 
-### presence and shape
+### Bare MCP server, no Claude Code wrapper
 
-not observed.
+Not present.
 
-## Tests
+## Developer ergonomics
 
-### presence, framework, location, notable patterns
+### Devcontainer / mise / dev-environment manifests
 
-not mentioned in README.
+Devbox-based dev environment for reproducibility (rarer than direnv/asdf in this corpus).
 
 ## CI
 
-### presence, system, triggers, what it runs
+### GitHub Actions
 
 GitHub Actions referenced; specifics not surfaced.
 
-## Container / packaging artifacts
+## Release and lifecycle
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+### Active development
 
-Dockerfile present.
+53 total commits on main; ongoing project. Last-commit date not surfaced.
 
-## Example client / developer ergonomics
+### License — Copyleft (GPL-3.0)
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
-
-Devbox-based dev environment.
-
-## Repo layout
-
-### single-package / monorepo / vendored / other
-
-single package under `src/mcp_server_docker/`.
-
-## Notable structural choices
-
-Exposes MCP prompts for docker-compose workflow (natural-language → multi-step action), which is a capability most cloud/infra servers skip. Remote-daemon access over SSH is a first-class supported path, not just local socket.
-
-## Unanticipated axes observed
-
-Using MCP prompts as orchestration primitives rather than just tools (docker-compose workflow prompt). Devbox for reproducible dev environments (rarer than direnv/asdf).
-
-## Python-specific
-
-### SDK / framework variant
-
-raw MCP Python SDK (FastMCP not explicitly referenced); version pin not surfaced; import pattern not surfaced.
-
-### Python version floor
-
-`requires-python` value: set via `.python-version` file; specific value not surfaced.
-
-### Packaging
-
-build backend: pyproject.toml present; lock file presence not surfaced; version manager convention: Devbox + uv.
-
-### Entry point
-
-console script `mcp-server-docker`; actual console-script name: `mcp-server-docker`; host-config snippet shape: `uvx mcp-server-docker`.
-
-### Install workflow expected of end users
-
-`uvx mcp-server-docker`.
-
-### Async and tool signatures
-
-not surfaced; asyncio/anyio usage not surfaced.
-
-### Type / schema strategy
-
-uses Docker SDK types; specifics not surfaced; auto vs hand-authored not surfaced.
-
-### Testing
-
-not mentioned; fixture style not surfaced.
-
-### Dev ergonomics
-
-Devbox.
-
-### Notable Python-specific choices
-
-GPL-3.0 license is unusual for MCP servers (ecosystem skews MIT/Apache). Advertises prompts as a first-class capability alongside tools.
-
-## Gaps
-
-exact Python version pin, async/sync behavior, test presence, schema strategy, last-commit date could not be determined.
+GPL-3.0 — strong copyleft. Derivative works carry the same license; commercial use is permitted but obligations attach to redistribution. Unusual for this corpus, which skews MIT/Apache.

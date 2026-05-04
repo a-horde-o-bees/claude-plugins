@@ -1,213 +1,129 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/shreyaskarnik/huggingface-mcp-server`. Hugging Face Hub MCP server — uses all three MCP surfaces (tools + resources + prompts) with a custom `hf://` URI scheme; Smithery-first distribution; single-file server kept at repo root. ~70 stars, MIT, default branch `main`. Last commit not surfaced.
 
-### url
+## Server runtime
 
-https://github.com/shreyaskarnik/huggingface-mcp-server
+### Python with raw MCP SDK
 
-### stars
-
-~70
-
-### last-commit
-
-not explicitly surfaced
-
-### license
-
-MIT
-
-### default branch
-
-main
-
-### one-line purpose
-
-Hugging Face Hub MCP server — all three MCP surfaces (tools + resources + prompts) with a custom `hf://` URI scheme.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Python; version via `.python-version` file.
-
-### framework/SDK in use
-
-raw `mcp` Python SDK (not FastMCP).
-
-### pitfalls observed
-
-Exact `.python-version` content not read.
+Raw `mcp` Python SDK (not FastMCP). Import pattern `from mcp.server import Server` style. Python version via `.python-version` (exact value not surfaced).
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio (MCP default).
+stdio (MCP default); stdio-only.
 
-### how selected
+## Capability surface
 
-stdio-only
+### Tools plus resources plus prompts (full primitive coverage)
 
-## Distribution
+All three MCP primitives exercised in one server. Tools: search/info on models, datasets, spaces, papers, collections. Prompts: `compare-models`, `summarize-paper`. Resources: custom `hf://` URI scheme exposed via MCP resources — the custom URI scheme exposes a vendor-native namespace (Hugging Face Hub) addressable through MCP resources rather than `file://` or `http://`. Two MCP prompts shipped alongside the tool surface.
 
-### every mechanism observed
+## Configuration delivery
 
-Smithery CLI (`@shreyaskarnik/huggingface-mcp-server`); source clone + `uv sync`.
+### Environment variables
 
-### published package name(s)
-
-not confirmed on PyPI; Smithery as primary distribution.
-
-### install commands shown in README
-
-`npx -y @smithery/cli install @shreyaskarnik/huggingface-mcp-server --client claude`; `uv sync && uv run huggingface_mcp_server.py`.
-
-### pitfalls observed
-
-Whether PyPI publication exists not confirmed.
-
-## Entry point / launch
-
-### command(s) users/hosts run
-
-`uv run huggingface_mcp_server.py`.
-
-### wrapper scripts, launchers, stubs
-
-single script `huggingface_mcp_server.py`.
-
-## Configuration surface
-
-### how config reaches the server
-
-environment variables — `HF_TOKEN` optional.
+`HF_TOKEN` optional environment variable.
 
 ## Authentication
 
-### flow
+### API key (optional, for higher rate limits)
 
-optional bearer token.
-
-### where credentials come from
-
-`HF_TOKEN` env var (for higher rate limits and private-repo access).
+`HF_TOKEN` env var optional — present grants higher rate limits and private-repo access; absent still works for public/read-only operations.
 
 ## Multi-tenancy
 
-### tenancy model
+### Single-user / single-tenant per process
 
-single-user
+Single-user.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### Smithery registry
 
-tools — search/info on models, datasets, spaces, papers, collections; prompts — `compare-models`, `summarize-paper`; resources — custom `hf://` URI scheme.
+Distributed via Smithery CLI as `@shreyaskarnik/huggingface-mcp-server` — `npx -y @smithery/cli install @shreyaskarnik/huggingface-mcp-server --client claude`. Smithery-first distribution.
 
-## Observability
+### Source clone with `uv run` from source tree
 
-### logging destination + format, metrics, tracing, debug flags
+Source clone alternative: `uv sync && uv run huggingface_mcp_server.py`.
 
-not documented
+## Entry point and launch
 
-## Host integrations shown in README or repo
+### Bare interpreter + script path
 
-### Claude Desktop
+Bare script `huggingface_mcp_server.py` at repo root; no console script. Host-config snippet shape `uv run <path>/huggingface_mcp_server.py`.
 
-macOS/Windows config paths.
+### Source-tree `uv run`
 
-### Smithery
+`uv sync && uv run huggingface_mcp_server.py` — uv-from-source invocation.
 
-registered
+## Build and packaging
 
-## Claude Code plugin wrapper
+### Hatchling + uv (Python)
 
-### presence and shape
+Build backend likely hatchling (uv convention); not directly verified. `uv.lock` likely present.
 
-none observed
+### Python version pinning
 
-## Tests
+`.python-version` file present; exact value not surfaced.
 
-### presence, framework, location, notable patterns
+## Schema and types
 
-not mentioned in README.
-
-## CI
-
-### presence, system, triggers, what it runs
-
-not evident
-
-## Container / packaging artifacts
-
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
-
-Dockerfile present.
-
-## Example client / developer ergonomics
-
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
-
-Claude Desktop JSON snippet.
-
-## Repo layout
-
-### single-package / monorepo / vendored / other
-
-flat — main server file at root; `src/huggingface/` for helpers.
-
-## Notable structural choices
-
-Read-only-only stance: README explicitly scopes to read-only access. Custom `hf://` URI scheme exposed via MCP resources — one of few Python servers that use MCP's resource surface and prompts, not just tools. Two MCP prompts shipped (`compare-models`, `summarize-paper`) — demonstrates MCP prompt feature rather than tool-only.
-
-## Unanticipated axes observed
-
-Using all three MCP surfaces (tools + resources + prompts) in a single server, when most Python servers stick to tools only; explicit read-only contract as a security surface.
-
-## Python-specific
-
-### SDK / framework variant
-
-raw `mcp` SDK; version pin not surfaced; import pattern `from mcp.server import Server` style.
-
-### Python version floor
-
-`requires-python` value via `.python-version`; exact value not surfaced.
-
-### Packaging
-
-Build backend not surfaced (likely hatchling given uv convention). Lock file: uv-based (uv.lock likely). Version manager convention: uv + `.python-version`.
-
-### Entry point
-
-bare script (`huggingface_mcp_server.py`); no console-script; host-config snippet shape `uv run <path>/huggingface_mcp_server.py`.
-
-### Install workflow expected of end users
-
-Smithery-first, then uv source clone; Docker. One-liner: Smithery install via `npx`.
-
-### Async and tool signatures
-
-mix (MCP SDK accepts both).
-
-### Type / schema strategy
+### Pydantic v2 models
 
 Pydantic via MCP SDK; schema auto-derived from signatures.
 
-### Testing
+### Async model (cross-cutting)
 
-none observed
+Mix of sync and async (MCP SDK accepts both).
 
-### Dev ergonomics
+## Container artifacts
 
-MCP CLI via `mcp[cli]` implied.
+### Dockerfile (single-stage, build-from-source)
 
-### Notable Python-specific choices
+Dockerfile present.
 
-Single-file server kept at repo root rather than packaged — common "hackable" pattern for community MCP servers. Exposes MCP prompts — an underused MCP capability across the Python ecosystem.
+## Host integration
 
-## Gaps
+### Claude Desktop
 
-Whether PyPI publication exists not confirmed. Exact `.python-version` content not read. CI presence not verified.
+macOS/Windows config paths shown in README.
+
+### Smithery / Glama discovery
+
+Registered with Smithery; install command goes through Smithery CLI.
+
+## Repository layout
+
+### Single-package flat layout
+
+Flat layout — main server file (`huggingface_mcp_server.py`) at repo root; `src/huggingface/` for helpers. Hybrid flat-with-helper-subpackage shape: a single hackable script at root with supporting modules in a sibling `src/` package.
+
+## Safety and security posture
+
+### Read-only by default with explicit write flag
+
+README explicitly scopes the server to read-only access; no write tools shipped.
+
+## Developer ergonomics
+
+### Inspector/debug tooling references
+
+MCP CLI via `mcp[cli]` implied as a developer dependency.
+
+### Sample MCP client configs in repo
+
+Claude Desktop JSON snippet shipped in README.
+
+## Documentation surface
+
+### README as the canonical surface
+
+README is the canonical surface.
+
+## Release and lifecycle
+
+### License — Permissive (MIT / Apache-2.0)
+
+MIT.

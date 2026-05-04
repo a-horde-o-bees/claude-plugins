@@ -1,175 +1,165 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/rust-mcp-stack/rust-mcp-filesystem`. Rust filesystem MCP server — high-performance FS operations including glob search and ZIP archive create/extract; distributed across Homebrew, Cargo, npm, and Docker; rewrite of the JS `@modelcontextprotocol/server-filesystem` for performance. 144 stars, MIT, default branch `main`. Last commit March 15, 2026 (v0.4.1).
 
-### url
+## Server runtime
 
-https://github.com/rust-mcp-stack/rust-mcp-filesystem
+### Rust with rmcp / rust-mcp-sdk
 
-### stars
-
-144
-
-### last-commit
-
-March 15, 2026 (v0.4.1 release).
-
-### license
-
-MIT
-
-### default branch
-
-main
-
-### one-line purpose
-
-Rust filesystem MCP server — high-performance FS operations; distributed via Homebrew, Cargo, npm, and Docker.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Rust (version specified in rust-toolchain.toml).
-
-### framework/SDK in use
-
-rust-mcp-sdk, rust-mcp-schema libraries.
-
-### pitfalls observed
-
-Specific Rust version constraints (rust-toolchain.toml exists but content not fetched).
+Standalone Rust binary built on `rust-mcp-sdk` and `rust-mcp-schema` libraries. Rust toolchain version pinned via `rust-toolchain.toml` (exact version not extracted). Standalone binary with zero external runtime dependencies — no Node.js, Python, or system libs beyond an alpine base image when containerised.
 
 ## Transport
 
-### supported transports
+### stdio
 
-Not explicitly documented in provided content; inferred to be stdio-based (standard for MCP filesystem servers).
+Not explicitly documented in extracted README content; inferred to be stdio-based given standard MCP filesystem-server convention and the absence of any HTTP/network configuration. Selection mechanism not surfaced.
 
-### how selected
+## Capability surface
 
-Not explicitly documented; likely auto-detect or default.
+### Tools-heavy domain wrapper / domain-tool catalog
 
-## Distribution
+Filesystem operations exposed as tools — glob pattern file searching (`*.rs`, `src/**/*.txt`, `logs/error-???.log`), ZIP archive creation and extraction, general filesystem ops management. Read-only by default; CLI tool-disabling capability lets operators reduce the surface to lower token usage for specific workflows.
 
-### every mechanism observed
+### MCP Roots participation
 
-Shell script installer, PowerShell installer, Homebrew, Cargo, NPM package (`@rustmcp/rust-mcp-filesystem`), Docker Hub MCP Registry, GitHub release binary downloads, source build.
+MCP Roots functionality available, opt-in (disabled by default).
 
-### published package name(s)
+## Configuration delivery
 
-`rust-mcp-filesystem` (Cargo crate), `@rustmcp/rust-mcp-filesystem` (npm), Docker image at `hub.docker.com/mcp/server/rust-mcp-filesystem`.
+### CLI flags
 
-### install commands shown in README
-
-Shell script installer (Unix), PowerShell installer (Windows), Homebrew, `cargo install`, npm install, Docker pull.
-
-## Entry point / launch
-
-### command(s) users/hosts run
-
-Standalone binary execution (no version specified in provided content; inferred from architecture).
-
-### wrapper scripts, launchers, stubs
-
-Shell and PowerShell installer scripts.
-
-## Configuration surface
-
-### how config reaches the server
-
-Read-only by default with optional write access configuration; MCP Roots support (disabled by default); tool disabling capability to reduce functionality and token usage.
+Read-only by default; optional write-access configuration at startup; tool-disabling flags to reduce functionality and token usage; MCP Roots flag (off by default).
 
 ## Authentication
 
-### flow
+### None / implicit (local-resource gating)
 
-Not applicable; filesystem access controlled by read-only restriction and tool disabling.
-
-### where credentials come from
-
-Not applicable.
+No auth layer — filesystem access is gated by the read-only restriction and the tool-disabling capability rather than any credential mechanism.
 
 ## Multi-tenancy
 
-### tenancy model
+### Single-user / single-tenant per process
 
-Not applicable; single-user filesystem server.
+Single-user filesystem server; one local user's filesystem per process.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### Cargo crate / cargo install
 
-Glob pattern file searching (e.g., `*.rs`, `src/**/*.txt`), ZIP archive creation and extraction, filesystem operations management, MCP Roots functionality.
+Published as the `rust-mcp-filesystem` Cargo crate; installable via `cargo install`.
 
-## Observability
+### Homebrew formula
 
-### logging destination + format, metrics, tracing, debug flags
+Homebrew formula available for macOS users.
 
-Not documented in provided content.
+### npm package wrapping native binary
 
-### pitfalls observed
+Published as `@rustmcp/rust-mcp-filesystem` — npm package wrapping the native Rust binary so Node-ecosystem hosts can `npx`-install.
 
-Logging/observability details not documented.
+### Docker / OCI image
 
-## Host integrations shown in README or repo
+Docker image hosted at `hub.docker.com/mcp/server/rust-mcp-filesystem`.
 
-### Claude Desktop
+### Docker Hub MCP Registry
 
-Standard MCP configuration (assumed, not explicitly detailed in provided content).
+Vendor-namespaced image on the Docker Hub MCP Registry under `mcp/server/...`.
 
-### Claude Code
+### Pre-built binary release
 
-Not documented.
+Binary releases published on GitHub for direct download.
 
-### Other
+### Multi-channel publication
 
-Not documented.
+Published simultaneously across Cargo, Homebrew, npm, Docker Hub, and GitHub releases — broad cross-ecosystem distribution from a single Rust source.
 
-## Claude Code plugin wrapper
+### Windows .exe variant
 
-### presence and shape
+Windows installer built with the WiX toolset (`wix/` directory in the repo); commits to cross-platform distribution.
 
-Not present; this is a standalone server, not a plugin.
+## Entry point and launch
 
-## Tests
+### Native binary
 
-### presence, framework, location, notable patterns
+Standalone binary execution — exact invocation not extracted from README. Wrapper installer scripts (POSIX shell + PowerShell) fetch the pre-built binary release.
 
-Test framework present; testing configured via `cargo-nextest`; located in `tests/` directory.
+## Build and packaging
+
+### Cargo (Rust)
+
+`Cargo.toml` and `Cargo.lock` present — standard Rust build pipeline. Rust toolchain version pinned via `rust-toolchain.toml`.
+
+## Container artifacts
+
+### Multi-stage Dockerfile
+
+Multi-stage build using `clux/muslrust:stable` as the builder stage and `alpine:latest` as the final image — yields a static binary in a minimal container.
+
+### Hardened-by-default container posture
+
+Final image runs as a non-root user (`rust-mcp-user`).
+
+### Published Docker image
+
+Image is publicly available; users `docker pull` rather than build.
+
+## Test stack
+
+### Cargo test / cargo-nextest (Rust)
+
+Test framework configured via `cargo-nextest`; tests located in `tests/` directory.
+
+### Linter/formatter test gate
+
+Makefile.toml defines `fmt` (rustfmt), `clippy` (linting), `test` (cargo-nextest), `check` (composite), and `clippy-fix` (auto-correction) — lint and format gates run alongside tests.
 
 ## CI
 
-### presence, system, triggers, what it runs
+### GitHub Actions
 
-GitHub Actions; Makefile.toml defines: `fmt` (rustfmt), `clippy` (linting), `test` (cargo-nextest), `check` (composite), `clippy-fix` (auto-correction).
+GitHub Actions configured.
 
-## Container / packaging artifacts
+## Repository layout
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+### Single Rust crate
 
-Dockerfile present; multi-stage build using `clux/muslrust:stable` builder and `alpine:latest` final image; static binary with non-root user (`rust-mcp-user`); available on Docker Hub MCP Registry.
+Single-crate layout: `/src/` (source), `/tests/` (tests), `/docs/` (documentation), `/wix/` (Windows installer config), `Dockerfile`, `Makefile.toml`, `Cargo.toml`/`Cargo.lock`.
 
-## Example client / developer ergonomics
+## Safety and security posture
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+### Read-only by default with explicit write flag
 
-Glob pattern examples: `*.rs`, `src/**/*.txt`, `logs/error-???.log`; Makefile.toml targets for build, test, lint.
+Default posture is read-only; write access is opt-in via configuration. Pairs with tool-disabling capability to further reduce attack surface.
 
-## Repo layout
+### Hardened-by-default container posture
 
-### single-package / monorepo / vendored / other
+Multi-stage Docker build produces a static binary running as a non-root user inside an alpine final image — minimises base-image attack surface and avoids root-running container.
 
-Single-package server; structure: `/src/` (source), `/tests/` (tests), `/docs/` (documentation), `/wix/` (Windows installer), `Dockerfile`, `Makefile.toml`, `Cargo.toml/Cargo.lock`.
+## Developer ergonomics
 
-## Notable structural choices
+### Makefile / Makefile.toml
 
-Rewrite of JavaScript `@modelcontextprotocol/server-filesystem` in Rust for performance. Multi-stage Docker build for minimal image size (alpine final image, non-root user). CLI tool disabling to reduce token usage for specific workflows. MCP Roots support with opt-in (disabled by default). Read-only by default security model.
+`Makefile.toml` orchestrates fmt/clippy/test/check/clippy-fix targets — primary developer workflow entry point.
 
-## Unanticipated axes observed
+### PowerShell + batch scripts
 
-Standalone binary with zero external runtime dependencies (no Node.js, Python, or system libs beyond alpine base). Windows installer via WiX toolset shows commitment to cross-platform distribution. CLI tool disabling (not just feature flags) suggests token-aware deployments.
+PowerShell installer for Windows; POSIX shell installer for Unix — paired platform-native installers.
 
-## Gaps
+## Documentation surface
 
-Transports not explicitly documented (inferred as stdio-only). Specific Rust version constraints (rust-toolchain.toml exists but content not fetched). Logging/observability details not documented. Specific invocation command examples not provided (assumed standard MCP launch).
+### README plus docs directory
+
+README plus a `/docs/` subdirectory.
+
+## Release and lifecycle
+
+### License — Permissive (MIT / Apache-2.0)
+
+MIT license.
+
+### Active development
+
+v0.4.1 released March 15, 2026; ongoing maintenance.
+
+### Tagged release with version in changelog
+
+Tagged releases on GitHub corresponding to versioned binary releases.

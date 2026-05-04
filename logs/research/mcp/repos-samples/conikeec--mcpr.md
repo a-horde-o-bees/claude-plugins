@@ -1,167 +1,105 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/conikeec/mcpr`. Rust MCP implementation library — server/client scaffolding, CLI stub generation, mock transport for testing. Archived as of February 8, 2026. 350 stars; MIT; default branch `master`.
 
-### url
+## Server runtime
 
-https://github.com/conikeec/mcpr
+### Rust with rmcp / rust-mcp-sdk
 
-### stars
-
-350
-
-### last-commit
-
-Recent on master branch (specific date not in fetch content); repository status: Archived as of February 8, 2026
-
-### license
-
-MIT
-
-### default branch
-
-master
-
-### one-line purpose
-
-Rust MCP implementation library (archived Feb 2026) — server/client scaffolding, CLI stub generation, mock transport for testing.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Rust (no explicit MSRV specified).
-
-### framework/SDK in use
-
-Anthropic's Model Context Protocol (MCP) specification.
+Rust MCP scaffolding library implementing Anthropic's Model Context Protocol specification. No explicit MSRV documented; specifics discoverable in `Cargo.toml`. Library exposes server/client builders; consumers depend on `mcpr` crate to assemble their own MCP server programs.
 
 ## Transport
 
-### supported transports
+### stdio
 
-Stdio, SSE (Server-Sent Events); WebSocket planned but not yet implemented.
+Stdio supported as one of two transport options selectable at scaffold time.
 
-### how selected
+### SSE (Server-Sent Events)
 
-Selected via project generator at creation time: `mcpr generate-project --transport [stdio|sse]`.
+SSE supported as the network-transport option. Critical SSE transport issues in v0.2.0 (yanked); v0.2.3+ recommended.
 
-## Distribution
+### Selection mechanism
 
-### every mechanism observed
+Selected via project generator at creation time: `mcpr generate-project --transport [stdio|sse]`. WebSocket planned but not yet implemented.
 
-Cargo crate registry, Cargo binary installer.
+## Configuration delivery
 
-### published package name(s)
+### Functional options at construction (code-level)
 
-mcpr (crate).
-
-### install commands shown in README
-
-`cargo add mcpr = "0.2.3"` (library); `cargo install mcpr` (CLI tools).
-
-## Entry point / launch
-
-### command(s) users/hosts run
-
-Generated executables in `target/debug/` for both client and server; launch via compiled binaries after `cargo build`.
-
-### wrapper scripts, launchers, stubs
-
-Project scaffolding via `mcpr generate-project --name [name]`.
-
-## Configuration surface
-
-### how config reaches the server
-
-ServerConfig builder pattern with methods like `.with_name()`, `.with_version()`, `.with_tool()`; tool parameter schemas defined as JSON objects with properties and required field arrays.
+ServerConfig builder pattern with methods like `.with_name()`, `.with_version()`, `.with_tool()`. Tool parameter schemas defined as JSON objects with properties and required field arrays. No external config — choices are baked into the consuming program's source.
 
 ## Authentication
 
-### flow
+### None / implicit (local-resource gating)
 
-No explicit authentication mechanisms documented.
-
-### where credentials come from
-
-Not applicable; transport-layer security implied for production SSE deployments.
+No explicit authentication mechanisms documented in the library. Transport-layer security implied for production SSE deployments; consumers handle auth in their own server code.
 
 ## Multi-tenancy
 
-### tenancy model
+### N/A (library, not a runtime)
 
-Not applicable; library provides schema and transport abstractions but not multi-tenancy features.
+Library provides schema and transport abstractions but not multi-tenancy features; tenancy is the consumer's concern.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### Cargo crate / cargo install
 
-Tool registration and invocation, server initialization handshake with protocol version negotiation, client-server disconnection handling, interactive and one-shot operational modes.
+Published to crates.io as `mcpr`. Library consumers: `cargo add mcpr = "0.2.3"`. CLI tools: `cargo install mcpr`.
 
-## Observability
+## Entry point and launch
 
-### logging destination + format, metrics, tracing, debug flags
+### Generated binary from scaffolded project
 
-No explicit observability features documented.
+Project scaffolding via `mcpr generate-project --name [name]` emits client and server source. After `cargo build`, generated executables in `target/debug/` are launched as compiled binaries.
 
-## Host integrations shown in README or repo
+## Build and packaging
 
-### Claude Desktop
+### Cargo (Rust)
 
-Not documented.
+Standard Cargo crate published to crates.io. Specific Rust toolchain pinning not documented in fetched content.
 
-### Claude Code
+## Schema and types
 
-Not documented.
+### Rust schema crate
 
-### Other
+JSON-object schema definitions with properties and required arrays, declared via the ServerConfig builder.
 
-No host-specific integrations.
+## Test stack
 
-## Claude Code plugin wrapper
-
-### presence and shape
-
-Not present.
-
-## Tests
-
-### presence, framework, location, notable patterns
+### Mock transport layer for protocol-level testing
 
 Mock transport implementations for testing; testing patterns for both stdio and SSE transports documented.
 
 ## CI
 
-### presence, system, triggers, what it runs
+### GitHub Actions
 
-GitHub Actions configured in `.github/` directory.
+GitHub Actions configured in `.github/`.
 
-## Container / packaging artifacts
+## Repository layout
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+### Single Rust crate
 
-Not documented.
+Single Rust library package; `/src/` (core library), `/examples/` (example code, including a GitHub-repository client-server demo). Documentation: `README.md`, `MCP.md`, `CHANGELOG.md`, `CONTRIBUTING.md`.
 
-## Example client / developer ergonomics
+## Documentation surface
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+### README + examples/
 
-Project scaffolding via `mcpr generate-project`; example demonstrates GitHub repository interactions via complete client-server implementation.
+README plus `/examples/` directory; example demonstrates GitHub repository interactions via complete client-server implementation.
 
-## Repo layout
+## Developer ergonomics
 
-### single-package / monorepo / vendored / other
+### Setup subcommands on the MCP binary
 
-Single Rust library package; structure: `/src/` (core library), `/examples/` (example code); comprehensive documentation: `README.md`, `MCP.md`, `CHANGELOG.md`, `CONTRIBUTING.md`.
+`mcpr generate-project` subcommand reduces boilerplate for new MCP implementations; CLI tools included for server/client stub generation. Mock transport for testing enables fast, offline development.
 
-## Notable structural choices
+## Release and lifecycle
 
-Project generation command reduces boilerplate for new MCP implementations. Mock transport for testing enables fast, offline development. CLI tools included for server/client stub generation.
+### Archived
 
-## Unanticipated axes observed
+Repository archived as of February 8, 2026. Code still functions; no further fixes. Status as of archive: WebSocket transport planned but not implemented; v0.2.0 SSE transport yanked due to critical issues.
 
-Two-phase version negotiation in server initialization handshake. Repository archived as of Feb 2026 but still functional; unclear if superceded by newer Rust MCP implementations.
+### License — Permissive (MIT / Apache-2.0)
 
-## Gaps
-
-Repository is archived; no active development. WebSocket transport not implemented (marked as planned). Minimal observability features. Specific Rust version constraints not documented (could be found in Cargo.toml). Critical SSE transport issues in v0.2.0 (yanked); v0.2.3+ recommended but version landscape unclear from available content.
+MIT.

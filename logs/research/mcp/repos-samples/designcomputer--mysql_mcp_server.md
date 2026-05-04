@@ -1,209 +1,137 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/designcomputer/mysql_mcp_server`. MySQL MCP server — exposes tables as MCP resources and executes SQL via tools; built-in least-privilege user guidance. 1.2k stars, MIT, default branch `main`. v0.2.2 released April 18, 2025 (date inferred from release).
 
-### url
+## Server runtime
 
-https://github.com/designcomputer/mysql_mcp_server
+### Python with raw MCP SDK
 
-### stars
-
-1.2k
-
-### last-commit
-
-v0.2.2 released April 18, 2025 (date inferred from release).
-
-### license
-
-MIT
-
-### default branch
-
-main
-
-### one-line purpose
-
-MySQL MCP server — exposes tables as MCP resources and executes SQL via tools; least-privilege user guidance built in.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Python (93.2%), Dockerfile (6.8%); Python version floor declared as `>=3.11` in pyproject.toml. Specific runtime version not stated in fetched README content.
-
-### framework/SDK in use
-
-Anthropic MCP Python SDK (raw `mcp>=1.0.0`; not fastmcp).
+Python (93.2%) on Anthropic's raw `mcp` Python SDK (`mcp>=1.0.0`); not FastMCP. Low-level MCP server API — hand-authored schemas likely. `requires-python = ">=3.11"` floor — likely driven by the MySQL connector or a typing feature.
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio.
+Only stdio is documented; README describes the server as a "stdio-based protocol server rather than standalone application" and explicitly frames direct `python ...` invocation as incorrect usage.
 
-### how selected
+### Selection mechanism
 
-Implicit — only stdio is documented; README describes it as "stdio-based protocol server rather than standalone application".
+Implicit single mode — only stdio is documented; no transport-selection knob.
 
-## Distribution
+## Capability surface
 
-### every mechanism observed
+### Tools plus resources
 
-PyPI, Smithery installer, pip.
+Resources expose MySQL tables as listings and table contents readable as resources. Tools expose SQL query execution with error handling. Tables surface as queryable URIs; SQL execution exposed as a separate tool action.
 
-### published package name(s)
+## Configuration delivery
 
-`mysql-mcp-server`.
+### Environment variables
 
-### install commands shown in README
-
-`pip install mysql-mcp-server`; `npx -y @smithery/cli install mysql-mcp-server --client claude`.
-
-## Entry point / launch
-
-### command(s) users/hosts run
-
-Via `uv` or `uvx` package runners. README explicitly discourages `python ...` direct invocation, framing the server strictly as an MCP-protocol bridge for hosts.
-
-### wrapper scripts, launchers, stubs
-
-Dockerfile.
-
-## Configuration surface
-
-### how config reaches the server
-
-Environment variables — `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_USER`, `MYSQL_PASSWORD`, `MYSQL_DATABASE`.
+`MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_USER`, `MYSQL_PASSWORD`, `MYSQL_DATABASE` for connection settings.
 
 ## Authentication
 
-### flow
+### Database connection string
 
-MySQL username/password.
-
-### where credentials come from
-
-Environment variables. README emphasizes "never commit" credentials and restricting to minimum-permission DB users.
+MySQL username/password supplied via env vars. README emphasizes "never commit" credentials and restricting to minimum-permission DB users.
 
 ## Multi-tenancy
 
-### tenancy model
+### Single-user / single-tenant per process
 
 Single database connection per server; no per-request tenancy.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### PyPI via pip / pipx
 
-Resources — MySQL tables listed as resources, table contents readable. Tools — SQL query execution with error handling. Logging mentioned as "comprehensive."
+`pip install mysql-mcp-server`; published as `mysql-mcp-server` on PyPI.
 
-## Observability
+### Smithery registry
 
-### logging destination + format, metrics, tracing, debug flags
+`npx -y @smithery/cli install mysql-mcp-server --client claude` for Smithery-mediated install.
 
-Described as "comprehensive logging"; specifics not surfaced.
+### PyPI via uvx (zero-install runner)
 
-## Host integrations shown in README or repo
+README host-config snippets show `uvx --from mysql-mcp-server` (VS Code) and `uv --directory /path/to/repo run mysql_mcp_server` (dev).
 
-### Claude Desktop
+## Entry point and launch
 
-`claude_desktop_config.json` example.
+### Console script via `[project.scripts]` / npm bin
 
-### VS Code
+`[project.scripts]`: `mysql_mcp_server = "mysql_mcp_server:main"`. README explicitly discourages direct `python ...` invocation, framing the server strictly as an MCP-protocol bridge for hosts.
 
-`mcp.json` example.
+### `uv --directory` from source
 
-### Other editors/CLIs
+Dev-mode invocation: `uv --directory /path/to/repo run mysql_mcp_server`.
 
-Not enumerated.
+### `uvx <package>`
 
-## Claude Code plugin wrapper
+VS Code host snippet: `uvx --from mysql-mcp-server`.
 
-### presence and shape
+## Build and packaging
 
-Not present.
+### Hatchling + uv (Python)
 
-## Tests
+Build backend: `hatchling.build`. README uses uv/uvx; `pytest.ini` + `requirements-dev.txt` coexist with pyproject.toml (legacy split — pyproject does not carry dev extras). Lock file not explicitly noted in fetched content.
 
-### presence, framework, location, notable patterns
+### Python version pinning
 
-pytest-based (`pytest.ini`, `requirements-dev.txt`); `tests/` directory.
+`requires-python = ">=3.11"` declared in pyproject.toml.
+
+## Schema and types
+
+### Hand-authored tool schemas
+
+Low-level MCP SDK use without FastMCP — schemas hand-authored rather than auto-derived. Uses both tool and resource surfaces.
+
+## Container artifacts
+
+### Dockerfile (single-stage, build-from-source)
+
+Dockerfile present at repo root.
+
+## Test stack
+
+### pytest with async + coverage
+
+pytest-based via separate `pytest.ini` and `requirements-dev.txt` (legacy split — pyproject.toml does not carry dev extras). `tests/` directory present. pytest-asyncio not confirmed in fetched content.
 
 ## CI
 
-### presence, system, triggers, what it runs
+### GitHub Actions
 
-GitHub Actions (test.yml badge); workflow specifics not extracted.
+`test.yml` badge in README; specific workflow contents not extracted.
 
-## Container / packaging artifacts
+## Host integration
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+### Claude Desktop
 
-Dockerfile present.
+`claude_desktop_config.json` example provided.
 
-## Example client / developer ergonomics
+### VS Code / VS Code Insiders / Visual Studio family
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+`mcp.json` example provided.
 
-MCP Inspector debugging support referenced; JSON config examples for hosts.
+## Repository layout
 
-## Repo layout
-
-### single-package / monorepo / vendored / other
+### Single-package src-layout
 
 Single-package Python — `src/mysql_mcp_server/`, `tests/`, `.github/workflows/`, pyproject.toml.
 
-## Notable structural choices
+## Documentation surface
 
-Exposes tables as MCP resources (not only tools) — one of the few DB MCP servers to use the resource surface. README explicitly frames direct Python invocation as incorrect usage, enforcing the "protocol bridge" mental model. Security guidance is baked into the README (least-privilege user, never commit credentials).
+### README as the canonical surface
 
-## Unanticipated axes observed
+README baked-in security guidance — least-privilege user, never commit credentials. README also frames "non-direct Python invocation" as a deliberate agent-posture choice.
 
-Resources-as-tables pattern is rare — most DB MCP servers expose everything through tools. README's emphasis on non-direct invocation is an explicit agent-posture choice.
+## Release and lifecycle
 
-## Python-specific
+### License — Permissive (MIT / Apache-2.0)
 
-### SDK / framework variant
+MIT.
 
-Raw `mcp` Python SDK — `mcp>=1.0.0`; no fastmcp. Import pattern: low-level MCP server API (inferred).
+### Tagged release with version in changelog
 
-### Python version floor
-
-`requires-python = ">=3.11"` — higher than the corpus's 3.10 mode. CI matrix not extracted.
-
-### Packaging
-
-Build backend: `hatchling.build`. Lock file: not explicitly noted in fetched content. Version manager convention: README uses uv/uvx; `pytest.ini` + `requirements-dev.txt` coexist with pyproject.toml (dual-config).
-
-### Entry point
-
-`[project.scripts]`: `mysql_mcp_server = "mysql_mcp_server:main"`. README host-config snippets show `uv --directory /path/to/repo run mysql_mcp_server` (dev) and `uvx --from mysql-mcp-server` (VS Code).
-
-### Install workflow expected of end users
-
-`pip install mysql-mcp-server`, Smithery CLI for one-shot host setup, from-source with venv. README explicitly frames direct `python ...` invocation as incorrect.
-
-### Async and tool signatures
-
-pytest configured (`pytest.ini`); pytest-asyncio not confirmed in fetched content. Source-level sync/async not inspected.
-
-### Type / schema strategy
-
-Low-level MCP SDK — hand-authored schemas likely; uses both tool and resource surfaces.
-
-### Testing
-
-pytest via separate `pytest.ini` and `requirements-dev.txt` (legacy split; pyproject.toml does not carry dev extras). `tests/` directory present.
-
-### Dev ergonomics
-
-Not observed beyond test config and Smithery CLI integration.
-
-### Notable Python-specific choices
-
-Requirements split across `pyproject.toml` + `pytest.ini` + `requirements-dev.txt` — older Python project layout; most newer projects in the corpus consolidate into pyproject.toml. Python 3.11 floor is higher than most — likely driven by the MySQL connector or a typing feature.
-
-## Gaps
-
-Last commit date only inferred from v0.2.2 release. Logging format and destination not specified. CI workflow contents not extracted.
+v0.2.2 released April 18, 2025 (inferred from release).

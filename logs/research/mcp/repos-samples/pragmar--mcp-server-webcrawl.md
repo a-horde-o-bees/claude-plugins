@@ -1,201 +1,107 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/pragmar/mcp-server-webcrawl`. Web crawler MCP server — content extraction over pre-captured crawler archives (ArchiveBox/HTTrack/InterroBot/Katana/SiteOne/WARC/wget); ships "prompt routines" as Markdown templates alongside tools. 39 stars, default branch `master`, v0.15.0 released Dec 7, 2025.
 
-### url
+## Server runtime
 
-https://github.com/pragmar/mcp-server-webcrawl
+### Python with raw MCP SDK
 
-### stars
-
-39
-
-### last-commit
-
-v0.15.0 released Dec 7, 2025
-
-### license
-
-Present in repo (specific license not extracted within budget).
-
-### default branch
-
-master
-
-### one-line purpose
-
-Web crawler MCP server — content extraction with 'prompt routines' as a shipped capability alongside tools.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Python (95.2%); Python 3.10+.
-
-### framework/SDK in use
-
-Model Context Protocol Python SDK; Anthropic Claude Agent SDK conventions.
+Python (95.2%); Python 3.10+; raw `mcp` Python SDK at `mcp>=1.3.0` (no fastmcp). Low-level MCP server API (inferred). README references Anthropic Claude Agent SDK conventions.
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio.
+stdio is the standard transport for Claude Desktop integration.
 
-### how selected
+### Selection mechanism
 
-Stdio default for Claude Desktop integration; `--interactive` flag for terminal REPL mode.
+stdio default; `--interactive` flag selects a terminal REPL mode rather than a transport.
 
-## Distribution
+## Capability surface
 
-### every mechanism observed
+### Tools-only, hand-curated narrow surface
 
-PyPI.
+Boolean fulltext search with field-specific queries (url, content, headers, type, status, id, size). Content filtering by type (html, img, pdf, video, etc.) and HTTP status. Extraction modes: markdown, snippet, regex, XPath. Thumbnail generation for image content. Multi-crawler format compatibility: ArchiveBox, HTTrack, InterroBot, Katana, SiteOne, WARC, wget.
 
-### published package name(s)
+### Tools + prompt routines (out-of-band)
 
-`mcp-server-webcrawl`
+"Prompt routines" — pre-authored Markdown prompts for autonomous tasks (SEO audits, 404 detection, performance analysis) shipped in the `prompts/` directory. A concept adjacent to skills but shipped as plain Markdown rather than as MCP prompts protocol resources. Encodes "how to use the server for SEO audits" as reusable content rather than forcing users to rediscover prompting patterns.
 
-### install commands shown in README
+## Configuration delivery
 
-`pip install mcp-server-webcrawl`
+### CLI flags
 
-## Entry point / launch
-
-### command(s) users/hosts run
-
-Standard MCP mode: `mcp-server-webcrawl` (integrated with Claude Desktop). Interactive REPL: `mcp-server-webcrawl --interactive`. With crawler + data source: `mcp-server-webcrawl --crawler wget --datasrc /path/to/datasrc --interactive`.
-
-### wrapper scripts, launchers, stubs
-
-PyPI console entry point.
-
-## Configuration surface
-
-### how config reaches the server
-
-CLI flags — `--crawler`, `--datasrc`, `--interactive`.
+`--crawler`, `--datasrc`, `--interactive` are the CLI surface — no env vars or sidecar config observed.
 
 ## Authentication
 
-### flow
+### None / implicit (local-resource gating)
 
-Not applicable — reads local crawler archives on disk, no service auth.
-
-### where credentials come from
-
-Not applicable.
+Reads local crawler archives on disk; no service auth required. Operates entirely on local archives — the server has no external service dependency, so authentication is implicit local-resource gating.
 
 ## Multi-tenancy
 
-### tenancy model
+### Single-user / single-tenant per process
 
-Single-user — one data source per launch. Multiple crawler data sources would require multiple launches.
+One data source per launch. Multiple crawler data sources would require multiple launches.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### PyPI via pip / pipx
 
-Boolean fulltext search with field-specific queries (url, content, headers, type, status, id, size). Content filtering by type (html, img, pdf, video, etc.) and HTTP status. Extraction modes: markdown, snippet, regex, XPath. Thumbnail generation for image content. Multi-crawler format compatibility: ArchiveBox, HTTrack, InterroBot, Katana, SiteOne, WARC, wget. "Prompt routines" — pre-authored Markdown prompts for autonomous tasks (SEO audits, 404 detection, performance analysis).
+`pip install mcp-server-webcrawl` is the only install path shown; package name `mcp-server-webcrawl` on PyPI. No uv/uvx/pipx/Docker mentioned — positioned for plain Python users rather than uv-native ecosystem.
 
-## Observability
+## Entry point and launch
 
-### logging destination + format, metrics, tracing, debug flags
+### Console script via `[project.scripts]` / npm bin
 
-`--interactive` terminal mode doubles as a debug surface; explicit logging destination not extracted.
+`[project.scripts]`: `mcp-server-webcrawl = "mcp_server_webcrawl:main"`. Standard MCP mode: `mcp-server-webcrawl` (integrated with Claude Desktop). Interactive REPL: `mcp-server-webcrawl --interactive`. With crawler + data source: `mcp-server-webcrawl --crawler wget --datasrc /path/to/datasrc --interactive`.
 
-## Host integrations shown in README or repo
+## Build and packaging
+
+### Setuptools (with `setup.py` or `setup.cfg`)
+
+Build backend: `setuptools.build_meta`. Lock file: not observed (no `uv.lock` mentioned). Version manager convention: plain pip — no uv tooling.
+
+## Schema and types
+
+### Hand-authored tool schemas
+
+Low-level MCP SDK — hand-authored schemas likely.
+
+## Host integration
 
 ### Claude Desktop
 
 Primary; documentation lists it as a requirement.
 
-## Claude Code plugin wrapper
+## Claude Code plugin / skill wrapper
 
-### presence and shape
-
-Not observed.
-
-## Tests
-
-### presence, framework, location, notable patterns
-
-Not extracted — specific test config not visible in content.
-
-## CI
-
-### presence, system, triggers, what it runs
-
-Not extracted.
-
-## Container / packaging artifacts
-
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+### Bare MCP server, no Claude Code wrapper
 
 Not observed.
 
-## Example client / developer ergonomics
+## Documentation surface
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+### README plus docs directory
 
-`--interactive` REPL; `prompts/` directory with reusable prompt routines; `sphinx/` for documentation; `docs/` for guides.
+`sphinx/` for documentation build; `docs/` for guides.
 
-## Repo layout
+## Developer ergonomics
 
-### single-package / monorepo / vendored / other
+### Inspector/debug tooling references
+
+`--interactive` terminal REPL doubles as a debug surface — interactive querying available without running an MCP host or MCP Inspector.
+
+## Repository layout
+
+### Single-package, organized subdirectories
 
 Single-package Python project — `docs/`, `prompts/`, `sphinx/`.
 
-## Notable structural choices
+## Release and lifecycle
 
-Reads existing crawler archives rather than crawling live — the server operates on pre-captured data, which sidesteps rate-limit, politeness, and JS-rendering concerns. Reference case for "don't crawl inside MCP, index what the user crawled". Seven-crawler format compatibility is unusually broad — most crawler tools target one format; this server abstracts across the ecosystem. "Prompt routines" as a distribution surface — ships Markdown prompt templates alongside the tool surface. Encodes "how to use the server for SEO audits" as reusable content rather than forcing users to rediscover prompting patterns. `--interactive` terminal mode for debugging is rare; most MCP servers assume stdio-only operation and expect MCP Inspector for interactive debugging.
+### Tagged release with version in changelog
 
-## Unanticipated axes observed
-
-"Prompt routines" — a concept adjacent to skills but shipped as plain Markdown rather than as MCP prompts protocol resources. Structural reference for "how to package guided prompts with an MCP server". Non-OAuth, non-API-key auth posture — operates entirely on local archives — unusual among MCPs surveyed and demonstrates that valid MCP servers need not talk to external services at all. Small star count (39) but focused niche; canonical for multi-crawler archive search.
-
-## Python-specific
-
-### SDK / framework variant
-
-Raw `mcp` Python SDK — `mcp>=1.3.0`; no fastmcp. Import pattern: low-level MCP server API (inferred).
-
-### Python version floor
-
-`requires-python = ">=3.10"`.
-
-### Packaging
-
-Build backend: `setuptools.build_meta` — setuptools, not hatchling. Lock file: not observed (no `uv.lock` mentioned). Version manager convention: plain pip.
-
-### Entry point
-
-`[project.scripts]`: `mcp-server-webcrawl = "mcp_server_webcrawl:main"`. README install command: `pip install mcp-server-webcrawl`; interactive REPL via `mcp-server-webcrawl --interactive`.
-
-### Install workflow expected of end users
-
-`pip install mcp-server-webcrawl` (only install path shown). No uv/uvx/pipx/Docker mentioned.
-
-### Async and tool signatures
-
-Not inspected at source level; `mcp>=1.3.0` low-level SDK usually async. No pytest-asyncio observed.
-
-### Type / schema strategy
-
-Low-level MCP SDK — hand-authored schemas likely.
-
-### Testing
-
-No pytest config or dev extras declared in `pyproject.toml`. Test framework and CI details not extracted.
-
-### Dev ergonomics
-
-`sphinx/` directory for documentation build. `--interactive` REPL mode is a custom debug surface — unusual among MCP servers that typically rely on MCP Inspector.
-
-### Notable Python-specific choices
-
-Setuptools backend — contrarian vs the hatchling-dominated sample. No dev/test extras in `pyproject.toml` — minimal packaging posture. pip-only install instructions (no uv/uvx) — positioned for plain Python users rather than uv-native ecosystem.
-
-## Gaps
-
-Test framework and CI details not extracted. License specific name (MIT/Apache/etc.) not extracted. Whether the archive data format is auto-detected or user must specify `--crawler` each time.
+v0.15.0 released Dec 7, 2025; specific license name not extracted (license file present in repo).

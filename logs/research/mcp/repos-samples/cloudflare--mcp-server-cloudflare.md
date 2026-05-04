@@ -1,177 +1,157 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/cloudflare/mcp-server-cloudflare`. Cloudflare remote-MCP monorepo — 14 domain Workers (Workers Bindings, Observability, Radar, Browser Rendering, AI Gateway, AutoRAG, Audit Logs, CASB, GraphQL, etc.) deployed on Cloudflare; users point clients at hosted URLs. 3.6k stars; Apache-2.0; default branch `main`; `@repo/mcp-common@0.20.4` released 2026-03-31.
 
-### url
+## Server runtime
 
-https://github.com/cloudflare/mcp-server-cloudflare
+### TypeScript on Cloudflare Workers (V8 isolate)
 
-### stars
-
-3.6k
-
-### last-commit
-
-`@repo/mcp-common@0.20.4` released 2026-03-31
-
-### license
-
-Apache-2.0
-
-### default branch
-
-main
-
-### one-line purpose
-
-Cloudflare remote-MCP monorepo — 14 domain Workers (Workers Bindings, Observability, Radar, Browser Rendering, AI Gateway, AutoRAG, Audit Logs, CASB, GraphQL, etc.) deployed on Cloudflare; users point clients at hosted URLs.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-TypeScript (90.8%). Runs on Cloudflare Workers (V8 isolate runtime), not Node.
-
-### framework/SDK in use
-
-Cloudflare Workers stack; Turbo monorepo; internal `@repo/mcp-common` package abstracts shared server scaffolding.
+TypeScript (90.8% of repo); runs on Cloudflare Workers (V8 isolate runtime), not Node. Internal `@repo/mcp-common` package abstracts shared server scaffolding across the 14 domain Workers; Turbo monorepo orchestrates builds/tests.
 
 ## Transport
 
-### supported transports
+### Streamable HTTP
 
-Streamable HTTP via `/mcp` endpoint (primary); SSE via `/sse` endpoint (deprecated).
+Streamable HTTP via `/mcp` endpoint is the primary transport; users connect to `https://<domain>.mcp.cloudflare.com/mcp`.
 
-### how selected
+### SSE (Server-Sent Events)
 
-URL path — the path (`/mcp` vs `/sse`) selects the transport on the same Worker.
+SSE via `/sse` endpoint, deprecated. Two transport endpoints coexist on the same Worker so clients can migrate at their own pace.
 
-## Distribution
+### Stdio-to-HTTP shim on the client side
 
-### every mechanism observed
+`mcp-remote` (npm) is the universal client shim — translates host-side stdio into streamable HTTP requests against the Worker URL. The repo itself never speaks stdio; hosts spawn `npx mcp-remote <cloudflare-mcp-url>` and the shim handles auth handshake on the client side.
 
-Remote-only — all 14 servers run as Cloudflare Workers at public URLs (e.g. `https://observability.mcp.cloudflare.com/mcp`). End users install by pointing `mcp-remote` (npm) at the URL. No local binary, Docker, or npm install of the servers themselves.
+### Selection mechanism
 
-### published package name(s)
+URL path selects transport on the same Worker: `/mcp` for streamable HTTP, `/sse` for the deprecated SSE path.
 
-`mcp-remote` is the end-user shim (npm, not published by Cloudflare). `@repo/mcp-common@0.20.4` is an internal workspace package.
+## Capability surface
 
-### install commands shown in README
+### Domain-bundled tool set
 
-```json
-{"mcpServers": {"cloudflare-observability": {"command": "npx", "args": ["mcp-remote", "https://observability.mcp.cloudflare.com/mcp"]}}}
-```
+14 domain Workers each expose a tool set scoped to their service: Documentation, Workers Bindings, Workers Builds, Observability, Radar, Container, Browser Rendering, Logpush, AI Gateway, AutoRAG, Audit Logs, DNS Analytics, Digital Experience Monitoring, CASB, GraphQL.
 
-## Entry point / launch
+## Configuration delivery
 
-### command(s) users/hosts run
+### Hosted endpoint as primary delivery
 
-`npx mcp-remote <cloudflare-mcp-url>` — the client shim bridges stdio (host side) to streamable-HTTP (Cloudflare side).
-
-### wrapper scripts, launchers, stubs
-
-`mcp-remote` is the stub; no repo-side launcher.
-
-## Configuration surface
-
-### how config reaches the server
-
-Server-side: Wrangler config per Worker (`wrangler.toml`/`wrangler.jsonc`) controls deployment. Client-side: the host's MCP config holds only the URL. Authentication travels inline per-request.
+Server-side configuration is Wrangler config per Worker (`wrangler.toml`/`wrangler.jsonc`) controlling deployment. Client-side config is just the host's JSON snippet pointing at the URL: `{"mcpServers": {"cloudflare-observability": {"command": "npx", "args": ["mcp-remote", "https://observability.mcp.cloudflare.com/mcp"]}}}`. Authentication travels inline per-request.
 
 ## Authentication
 
-### flow
+### Per-request bearer token (provider-scoped)
 
-Cloudflare API tokens with per-service scopes — created via Cloudflare dashboard and passed at auth time. OAuth-like flow documented for the hosted endpoints.
-
-### where credentials come from
-
-Cloudflare dashboard (API tokens); the `mcp-remote` shim negotiates auth handshake with the Worker.
+Cloudflare API tokens with per-service scopes — created via Cloudflare dashboard and passed at auth time. The same Worker serves any account that authenticates; tenancy is determined per-call by which token arrived. OAuth-like flow documented for the hosted endpoints; `mcp-remote` shim negotiates the auth handshake with the Worker.
 
 ## Multi-tenancy
 
-### tenancy model
+### Per-request tenancy by inbound credential / bearer token
 
 Per-request tenancy. Each Worker invocation is scoped by the bearer token → authenticated Cloudflare account. The same Worker serves any account that authenticates.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### Hosted endpoint (no install)
 
-Tools per domain server. 14 domain servers cover: Documentation, Workers Bindings, Workers Builds, Observability, Radar, Container, Browser Rendering, Logpush, AI Gateway, AutoRAG, Audit Logs, DNS Analytics, Digital Experience Monitoring, CASB, GraphQL.
+Remote-only — all 14 servers run as Cloudflare Workers at public URLs (e.g. `https://observability.mcp.cloudflare.com/mcp`). End users install by pointing `mcp-remote` (npm) at the URL. No local binary, Docker, or npm install of the servers themselves. The repo ships operational Workers, not installable artifacts.
 
-## Observability
+## Entry point and launch
 
-### logging destination + format, metrics, tracing, debug flags
+### URL configuration (no local launch)
 
-Worker logs via Cloudflare dashboard; not a self-hostable logging layer.
+`npx mcp-remote <cloudflare-mcp-url>` is the host's command shape; the client-side shim bridges stdio (host side) to streamable HTTP (Cloudflare side). No repo-side launcher.
 
-## Host integrations shown in README or repo
+## Build and packaging
 
-### Cursor
+### Wrangler bundle (Cloudflare Workers)
 
-documented integration.
+Wrangler bundles the TypeScript source per Worker package and deploys directly to Cloudflare's edge. The "package" is the deployed Worker. `@repo/mcp-common@0.20.4` is an internal workspace package; `mcp-remote` is the end-user shim (npm, not published by Cloudflare).
 
-### Claude (Desktop implied)
+### npm/Node toolchain
 
-JSON snippet via `mcp-remote`.
+Turbo orchestrates monorepo builds; pnpm scripts; ESLint and Prettier in the dev toolchain.
 
-### Cloudflare AI Playground
+## Test stack
 
-first-party integration.
-
-### OpenAI Responses API
-
-documented integration.
-
-### Claude Code
-
-not explicitly documented (vs Claude Desktop); same JSON snippet pattern applies.
-
-## Claude Code plugin wrapper
-
-### presence and shape
-
-Not observed in fetched view.
-
-## Tests
-
-### presence, framework, location, notable patterns
+### Vitest (TypeScript / Node)
 
 Vitest across the monorepo.
 
 ## CI
 
-### presence, system, triggers, what it runs
+### GitHub Actions
 
 GitHub Actions; Turbo orchestrates builds/tests.
 
-## Container / packaging artifacts
+### Turbo (build orchestrator)
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+Turbo monorepo orchestrator drives CI build/test pipeline.
 
-N/A — servers run as Workers, not containers.
+## Deployment topology
 
-## Example client / developer ergonomics
+### Edge / serverless deployment (Cloudflare Workers, V8 isolate)
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+Servers run on Cloudflare's edge runtime; deployment artifact is the deployed Worker. No persistent in-memory state, request-scoped execution. The maintainer operates the runtime; users never run server code.
 
-pnpm scripts; ESLint; Prettier; README supplies `mcp-remote` JSON snippets.
+## Container artifacts
 
-## Repo layout
+### Cloudflare Workers config
 
-### single-package / monorepo / vendored / other
+Wrangler config per Worker controls deployment. Not container-based.
 
-Turbo/pnpm monorepo. 14 domain Workers as individual packages; shared `@repo/mcp-common` package abstracts common server concerns.
+### No container artifacts
 
-## Notable structural choices
+No Dockerfile or container-image distribution — Workers replace containers as the deployment artifact.
 
-All-remote deployment model — the repo ships operational Workers, not installable binaries. Users never run the server code; they consume it as a URL. Opposite end of the spectrum from awslabs/mcp (local-only stdio). `mcp-remote` as the stdio-to-streamable-HTTP bridge is the universal client shim; the repo itself never speaks stdio. Two transport endpoints coexisting on the same Worker (`/mcp` streamable-HTTP, `/sse` deprecated) lets clients migrate at their own pace. Shared `mcp-common` package: 14 domain servers factored into a shared scaffold + per-domain logic, mirroring Cloudflare's own platform composition patterns. Paid-plan gating called out: some features require Workers paid plan — operational cost surfaces as a server capability axis.
+## Repository layout
 
-## Unanticipated axes observed
+### Turbo + pnpm monorepo
 
-Hosting responsibility as a design axis: the server author operates the runtime, not the end user. Changes release concerns, auth model, and observability relative to locally-run servers. Stdio emulation via shim on the client side rather than on the server — hosts still speak stdio because `mcp-remote` translates to HTTP. Context-length mitigation guidance in README: chained-tool calls against high-cardinality Cloudflare data are called out as a context-window concern the client must manage.
+Turbo/pnpm monorepo. 14 domain Workers as individual packages; shared `@repo/mcp-common` package abstracts common server concerns. Mirrors Cloudflare's own platform composition patterns.
 
-## Gaps
+## Host integration
 
-Exact last commit on `main` (release tag is known, raw commit date not). Whether the 14 domain Workers expose consistent toolset-gating flags or each defines its own surface. Specific OAuth flow details for token negotiation. Whether a self-hostable variant is deployable from this repo (source ships, but docs focus on hosted URLs).
+### Cursor
+
+Documented integration.
+
+### Claude Desktop
+
+JSON snippet via `mcp-remote`.
+
+### Claude Code
+
+Same JSON snippet pattern applies (not explicitly broken out from Claude Desktop in README).
+
+### Cloudflare AI Playground / OpenAI Responses API / OpenAI Agents SDK
+
+Cloudflare AI Playground first-party integration; OpenAI Responses API documented integration.
+
+## Observability
+
+### Worker logs (platform-native)
+
+Worker logs via Cloudflare dashboard; not a self-hostable logging layer.
+
+## Claude Code plugin / skill wrapper
+
+### Bare MCP server, no Claude Code wrapper
+
+Not observed in fetched view.
+
+## Developer ergonomics
+
+### Sample MCP client configs in repo
+
+README supplies `mcp-remote` JSON snippets for hosts.
+
+## Release and lifecycle
+
+### Active development
+
+3.6k stars; tagged release `@repo/mcp-common@0.20.4` on 2026-03-31.
+
+### License — Permissive (MIT / Apache-2.0)
+
+Apache-2.0.

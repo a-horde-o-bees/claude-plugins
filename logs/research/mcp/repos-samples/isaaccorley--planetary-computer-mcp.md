@@ -1,209 +1,135 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/isaaccorley/planetary-computer-mcp`. Microsoft Planetary Computer / NASA STAC MCP server — Python server querying geospatial/earth data catalogs; co-located TypeScript VS Code extension as a parallel host integration. ~3 stars, Apache 2.0, default branch `main`, v1.3.3 released 2026-04-16.
 
-### url
+## Server runtime
 
-https://github.com/isaaccorley/planetary-computer-mcp
+### Python with raw MCP SDK
 
-### stars
-
-~3
-
-### last-commit
-
-v1.3.3 released 2026-04-16; active
-
-### license
-
-Apache 2.0
-
-### default branch
-
-main
-
-### one-line purpose
-
-Microsoft Planetary Computer / NASA STAC MCP server — queries geospatial/earth data catalogs; co-located TypeScript VS Code extension.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Python 87.5%, TypeScript 11.3% (VS Code extension); Python version via `.python-version`.
-
-### framework/SDK in use
-
-raw `mcp` SDK (Anthropic MCP Python implementation) — README phrasing suggests Claude Agent SDK / MCP rather than FastMCP.
+Python 87.5% with raw `mcp` SDK (Anthropic MCP Python implementation). Import pattern observed: `mcp.server`. README phrasing suggests Claude Agent SDK / MCP rather than FastMCP. Many newer servers have migrated to FastMCP; this one stays on the lower-level SDK.
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio (MCP default).
+stdio (MCP default) — stdio-only.
 
-### how selected
+### Selection mechanism
 
-stdio-only implicit.
+Implicit default — stdio-only, no transport flag.
 
-## Distribution
+## Capability surface
 
-### every mechanism observed
+### Tools-only, hand-curated narrow surface
 
-source clone + `uv sync`; VS Code extension for editor integration.
+2 tools — `download_data` (unified raster/DEM/climate data), `download_geometries` (vector/building data). Automatic geocoding and natural-language dataset detection at the tool-handler layer.
 
-### published package name(s)
+## Configuration delivery
 
-not confirmed on PyPI; repo distributed as-clone.
+### Environment variables
 
-### install commands shown in README
-
-`uv sync` (runtime), `uv sync --dev` (dev).
-
-### pitfalls observed
-
-Whether the repo publishes to PyPI or is distribution-as-source-only not confirmed.
-
-## Entry point / launch
-
-### command(s) users/hosts run
-
-`python -m planetary_computer_mcp.server`.
-
-### wrapper scripts, launchers, stubs
-
-VS Code extension under `vscode-extension/`.
-
-## Configuration surface
-
-### how config reaches the server
-
-function-call parameters + environment; specifics not documented.
+Configuration via environment + function-call parameters; specific env var names not documented.
 
 ## Authentication
 
-### flow
+### None / implicit (local-resource gating)
 
-none at MCP layer.
-
-### where credentials come from
-
-Planetary Computer STAC API is publicly accessible.
+None at MCP layer — Planetary Computer STAC API is publicly accessible.
 
 ## Multi-tenancy
 
-### tenancy model
+### Single-user / single-tenant per process
 
-single-user.
+Single-user.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### Source clone with editable install
 
-2 tools — `download_data` (unified raster/DEM/climate data), `download_geometries` (vector/building data); automatic geocoding and natural-language dataset detection.
+Source clone + `uv sync` (runtime), `uv sync --dev` (dev). PyPI publication not confirmed.
 
-## Observability
+## Entry point and launch
 
-### logging destination + format, metrics, tracing, debug flags
+### Module invocation / `python -m <module>` fallback
 
-not documented.
+`python -m planetary_computer_mcp.server` — module-level invocation rather than console script. `__main__.py` packaging convention.
 
-## Host integrations shown in README or repo
+## Build and packaging
 
-### VS Code
+### Hatchling + uv (Python)
 
-dedicated extension in `vscode-extension/` directory.
+uv-based workflow; `uv sync`-managed. `uv.lock` likely (uv sync convention). Build backend not surfaced in extract.
+
+### Python version pinning
+
+Python version via `.python-version`; exact value not surfaced. uv + `.python-version` version manager convention.
+
+## Schema and types
+
+### Pydantic v2 models
+
+Pydantic via MCP SDK; schema auto-derived. STAC clients tend to be async — likely async tool signatures.
+
+## Host integration
+
+### Co-located VS Code extension
+
+Co-located VS Code extension under `vscode-extension/` directory — TypeScript subproject parallel to the Python MCP server, mixed-language repo to cover editor integration outside MCP.
 
 ### Claude Desktop
 
-implied via `python -m` command pattern.
+Implied via `python -m` command pattern.
 
-## Claude Code plugin wrapper
+## Test stack
 
-### presence and shape
-
-none observed; VS Code extension is a parallel host integration.
-
-## Tests
-
-### presence, framework, location, notable patterns
+### pytest with async + coverage
 
 pytest via `uv run pytest`; `tests/` directory.
 
 ## CI
 
-### presence, system, triggers, what it runs
+### GitHub Actions
 
 GitHub Actions configured.
 
-## Container / packaging artifacts
+## Container artifacts
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+### No container artifacts
 
-not observed.
+Not observed.
 
-## Example client / developer ergonomics
+## Repository layout
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+### Cross-language monorepo / mixed-language layout
+
+Monorepo-ish — `src/` with `core/`, `tools/`, `server.py`, plus parallel `vscode-extension/` (TypeScript) subproject. Mixed-language layout (Python 87.5%, TypeScript 11.3%).
+
+## Domain logic and embedded intelligence
+
+### Visualization synthesis
+
+Generates visualizations for LLM analysis — server synthesizes images for the model to interpret. Multi-format outputs (GeoTIFF, GeoParquet, Zarr) — uncommon in MCP servers; implies large-file handling.
+
+## Release and lifecycle
+
+### License — Permissive (MIT / Apache-2.0)
+
+Apache 2.0.
+
+### Tagged release with version in changelog
+
+v1.3.3 released 2026-04-16; active.
+
+### Active development
+
+Active recent release cadence.
+
+## Developer ergonomics
+
+### `pre-commit` framework
 
 `uv run pre-commit run --all-files` for checks.
 
-## Repo layout
+### `uv run <tool>` invocations
 
-### single-package / monorepo / vendored / other
-
-monorepo-ish — `src/` with `core/`, `tools/`, `server.py`, plus parallel `vscode-extension/` (TypeScript) subproject.
-
-## Notable structural choices
-
-Ships a VS Code extension alongside the MCP server — parallel non-MCP integration path in the same repo. Supports multi-format outputs (GeoTIFF, GeoParquet, Zarr) — uncommon in MCP servers; implies large-file handling. Generates visualizations for LLM analysis — the server synthesizes images for the model to interpret.
-
-## Unanticipated axes observed
-
-Co-located VS Code extension (TypeScript) with the Python MCP server — mixed-language repo to cover editor integration outside MCP; LLM-targeted visualization generation (not just data retrieval) as a deliberate design choice.
-
-## Python-specific
-
-### SDK / framework variant
-
-raw `mcp` SDK implied. Version pin from pyproject.toml: not surfaced. Import pattern observed: `mcp.server`.
-
-### Python version floor
-
-via `.python-version`; exact value not surfaced.
-
-### Packaging
-
-Build backend: not surfaced; uv-based workflow. Lock file present: `uv.lock` likely (uv sync convention). Version manager convention: uv + `.python-version`.
-
-### Entry point
-
-`__main__.py` (module invoked with `python -m`). Actual console-script name(s): none surfaced. Host-config snippet shape: `python -m planetary_computer_mcp.server`.
-
-### Install workflow expected of end users
-
-source clone + `uv sync`. One-liner the README recommends: `uv sync`.
-
-### Async and tool signatures
-
-likely async (STAC clients tend to be async).
-
-### Type / schema strategy
-
-Pydantic via MCP SDK. Schema auto-derived.
-
-### Testing
-
-pytest (via `uv run pytest`).
-
-### Dev ergonomics
-
-pre-commit via `uv run pre-commit run --all-files`.
-
-### Notable Python-specific choices
-
-`python -m module.server` launch pattern — module-level invocation rather than console script. Raw MCP SDK in 2026 — many newer servers have migrated to FastMCP; this one stays on the lower-level SDK.
-
-## Gaps
-
-Exact pyproject contents and version pins not read. Whether the repo publishes to PyPI or is distribution-as-source-only not confirmed. Auth/config specifics beyond "no auth" not surfaced.
+`uv run pytest`, `uv run pre-commit` — uv-orchestrated tool invocations.

@@ -1,167 +1,159 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/modelcontextprotocol/kotlin-sdk`. Official MCP Kotlin SDK — Kotlin Multiplatform (JVM, Native, JS, Wasm). 1,300 stars, Apache-2.0 (new contributions) / MIT (existing code), default branch `main`, v0.11.1 released April 10, 2026.
 
-### url
+## Server runtime
 
-https://github.com/modelcontextprotocol/kotlin-sdk
+### Kotlin Multiplatform SDK
 
-### stars
-
-1,300
-
-### last-commit
-
-April 10, 2026 (v0.11.1 release)
-
-### license
-
-Apache 2.0 (new contributions) / MIT (existing code)
-
-### default branch
-
-main
-
-### one-line purpose
-
-Official MCP Kotlin SDK — multiplatform (JVM, Native, JS, Wasm).
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Kotlin 2.2+, Java 11+ (JVM target); multiplatform: JVM, Native, JS, Wasm.
-
-### framework/SDK in use
-
-Anthropic's Model Context Protocol (MCP) specification; Kotlin coroutines; Ktor server (optional).
+Official Kotlin SDK published as Maven artifacts (`io.modelcontextprotocol:kotlin-sdk*`); multiplatform targets JVM, Native, JS, and Wasm. Kotlin 2.2+ with Java 11+ for the JVM target. Coroutine-based APIs throughout. Ktor server is an optional companion for HTTP transports — engines specified independently to avoid transitive bloat. Maintained with JetBrains collaboration. Conformance testing ensures spec compliance.
 
 ## Transport
 
-### supported transports
+### stdio
 
-Stdio, Streamable HTTP (single endpoint with optional JSON-only or SSE), Server-Sent Events (SSE), WebSocket, ChannelTransport (local testing).
+Stdio transport.
 
-### how selected
+### Streamable HTTP
+
+Single endpoint with optional JSON-only or SSE response modes.
+
+### SSE (Server-Sent Events)
+
+SSE supported.
+
+### WebSocket
+
+`WebSocketTransport` — bidirectional persistent connection alongside stdio, SSE, and Streamable HTTP. Appropriate when both sides need symmetric streaming and the host environment already speaks WebSocket.
+
+### In-memory / in-process channel
+
+`ChannelTransport` for local testing — server and client share a Kotlin channel rather than serialize JSON over IPC.
+
+### Selection mechanism
 
 Configured at server initialization; embedded Ktor server for HTTP deployments; separate transport implementations.
 
-## Distribution
+## Capability surface
 
-### every mechanism observed
+### Tools plus resources plus prompts (full primitive coverage)
 
-Maven Central (Gradle/Maven), source build.
+Server side: Prompts, Resources, Tools, Completion, Logging, plus experimental features. Client side: Sampling (LLM requests), Roots (filesystem declaration), Elicitation. Pagination supported on list operations.
 
-### published package name(s)
+### Sampling and elicitation as client primitives
 
-`io.modelcontextprotocol:kotlin-sdk` (full), `io.modelcontextprotocol:kotlin-sdk-client` (client), `io.modelcontextprotocol:kotlin-sdk-server` (server).
+SDK exposes the client-side MCP primitives — sampling (LLM completion request back to the host) and elicitation (request user input via the host) — for applications building agents on top of MCP.
 
-### install commands shown in README
+## Configuration delivery
 
-`implementation("io.modelcontextprotocol:kotlin-sdk:x.x.x")` or granular client/server artifacts.
+### Functional options at construction (code-level)
 
-## Entry point / launch
-
-### command(s) users/hosts run
-
-Ktor server integration for HTTP deployments; STDIO transport for CLI tools; application-specific initialization.
-
-### wrapper scripts, launchers, stubs
-
-Sample implementations in `./samples/` directory.
-
-## Configuration surface
-
-### how config reaches the server
-
-CORS configuration for browser clients; configurable endpoint paths (default `/mcp`); transport-specific options.
+CORS configuration for browser clients; configurable endpoint paths (default `/mcp`); transport-specific options. SDK is consumed as a library; configuration happens in the consuming program.
 
 ## Authentication
 
-### flow
+### Application-delegated (SDK provides nothing)
 
-Not explicitly documented; delegated to transport/application layer.
-
-### where credentials come from
-
-Not applicable; SDK provides infrastructure, not auth.
+Auth not in SDK; delegated to transport/application layer.
 
 ## Multi-tenancy
 
-### tenancy model
+### N/A (library, not a runtime)
 
-Not applicable; SDK provides transport and protocol abstraction, multi-tenancy handled by application.
+SDK provides transport and protocol abstraction; multi-tenancy handled by the consuming application.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### Maven Central artifacts
 
-Server: Prompts, Resources, Tools, Completion, Logging, experimental features. Client: Sampling (LLM requests), Roots (filesystem declaration), Elicitation.
+`io.modelcontextprotocol:kotlin-sdk` (umbrella), `io.modelcontextprotocol:kotlin-sdk-client` (client), `io.modelcontextprotocol:kotlin-sdk-server` (server). Granular artifact split lets consumers depend on just the half they need. Install via `implementation("io.modelcontextprotocol:kotlin-sdk:x.x.x")` in Gradle.
 
-## Observability
+### Source clone with editable install
 
-### logging destination + format, metrics, tracing, debug flags
+Source build via Gradle.
 
-No explicit observability documented in provided content; Kotlin/Ktor standard logging available.
+## Entry point and launch
 
-## Host integrations shown in README or repo
+### SDK constructor + transport-method launch
 
-### Claude Desktop
+Ktor server integration for HTTP deployments; STDIO transport for CLI tools; application-specific initialization. Sample implementations live in `./samples/`.
 
-Inferred support via MCP standard; not explicitly detailed.
+### Library import inside a user's handler
 
-### Claude Code
+The SDK is a library; consumers import it into their own Kotlin/JVM applications.
 
-Not documented.
+## Build and packaging
 
-### Other
+### Maven / Gradle (JVM)
 
-Ktor CORS support enables browser-based clients.
+Maven Central artifacts via Gradle multi-module project — `kotlin-sdk-core`, `kotlin-sdk-client`, `kotlin-sdk-server`, `kotlin-sdk-testing`, `kotlin-sdk` umbrella. No transitive Ktor dependencies — developers specify Ktor engines independently.
 
-## Claude Code plugin wrapper
+## Test stack
 
-### presence and shape
+### End-to-end protocol-conformance harness
 
-Not present; this is an SDK for building servers/clients, not a server itself.
+Conformance tests under `conformance-test/` ensure spec compliance.
 
-## Tests
+### Mock transport layer for protocol-level testing
 
-### presence, framework, location, notable patterns
-
-Comprehensive testing infrastructure: `kotlin-sdk-testing` module, integration tests, conformance tests, test utilities in `test-utils/`; Knit properties for code snippet testing.
+`kotlin-sdk-testing` module plus integration tests; `test-utils/` provides utilities. Knit properties used for code-snippet testing in documentation.
 
 ## CI
 
-### presence, system, triggers, what it runs
+### GitHub Actions
 
 GitHub Actions configured; typical Gradle/Kotlin project structure.
 
-## Container / packaging artifacts
+## Observability
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+### None / unspecified
 
-Not documented; depends on application using the SDK.
+No explicit observability documented; Kotlin/Ktor standard logging available to consumers.
 
-## Example client / developer ergonomics
+## Host integration
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+### No host integration documentation
 
-Sample implementations in `./samples/` directory covering various transport configurations; Gradle build system for automation.
+SDK is for building servers/clients, not a runnable server. Multiplatform targets (JS, Wasm) enable browser-based clients with Ktor CORS support; specific host integrations are the consuming application's responsibility.
 
-## Repo layout
+### Production reference implementation
 
-### single-package / monorepo / vendored / other
+Sample implementations under `./samples/` cover various transport configurations.
 
-Monorepo structure with Gradle multi-module project: `kotlin-sdk-core`, `kotlin-sdk-client`, `kotlin-sdk-server`, `kotlin-sdk-testing`, `kotlin-sdk` (umbrella); supporting directories: `samples/`, `docs/`, `config/`, `integration-test/`, `conformance-test/`, `.github/`, `buildSrc/`.
+## Repository layout
 
-## Notable structural choices
+### Gradle multi-module / Maven multi-artifact monorepo
 
-Official Kotlin SDK maintained with JetBrains collaboration. Multiplatform support (JVM, Native, JS, Wasm) enables diverse deployment scenarios. Modular artifact structure allows client/server-only dependencies. Coroutine-friendly APIs throughout (Kotlin idiom). No transitive Ktor dependencies; developers specify engines independently. Conformance testing ensures spec compliance. Keep-human-in-loop guidance for sensitive operations.
+Gradle multi-module project: `kotlin-sdk-core`, `kotlin-sdk-client`, `kotlin-sdk-server`, `kotlin-sdk-testing`, `kotlin-sdk` (umbrella); supporting directories: `samples/`, `docs/`, `config/`, `integration-test/`, `conformance-test/`, `.github/`, `buildSrc/`. Modular artifact structure allows client/server-only dependencies.
 
-## Unanticipated axes observed
+## Documentation surface
 
-Multiplatform Kotlin (Native, JS, Wasm) enables MCP implementations outside JVM. ChannelTransport for local testing without networking. Pagination support for list operations suggests handling of large result sets. Explicit CORS configuration for browser-based clients (unusual for MCP).
+### README plus docs directory
 
-## Gaps
+`docs/` directory present alongside README; Knit-based code-snippet testing in documentation.
 
-Specific Ktor version constraints not documented. Observability/logging patterns not detailed. Full Docker/containerization guidance not provided. Complete transport selection pattern not documented.
+## Developer ergonomics
+
+### Sample implementations directory
+
+`samples/` directory with end-to-end mini-apps covering various transports/configurations.
+
+## Release and lifecycle
+
+### Dual-license relicensing gate
+
+Apache-2.0 license for new contributions; MIT for existing code. The release process enforces the contributor agreement — a forward migration mechanism without rewriting prior commits.
+
+### Active development
+
+v0.11.1 released April 10, 2026; ongoing.
+
+### Tagged release with version in changelog
+
+Standard semver tags; v0.11.1.
+
+## Claude Code plugin / skill wrapper
+
+### Bare MCP server, no Claude Code wrapper
+
+This is an SDK for building servers/clients, not a server itself.

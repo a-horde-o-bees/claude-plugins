@@ -1,213 +1,147 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/pathintegral-institute/mcp.science`. Scientific-computing MCP monorepo — single PyPI package dispatches to multiple servers via `uvx mcp-science <server>`; Hatch `force-include` embeds nested server dirs. 128 stars, MIT, default branch `main`, last commit July 1, 2025 (v0.2.0); may be older than indicated as of April 2026.
 
-### url
+## Server runtime
 
-https://github.com/pathintegral-institute/mcp.science
+### Python with hand-rolled MCP
 
-### stars
-
-128
-
-### last-commit
-
-July 1, 2025 (v0.2.0 release); as of April 2026, may be older than indicated.
-
-### license
-
-MIT
-
-### default branch
-
-main
-
-### one-line purpose
-
-Scientific-computing MCP monorepo — single PyPI package dispatches to multiple servers via `uvx mcp-science <server>`; Hatch `force-include` embeds nested server dirs.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Python (version not specified in provided content).
-
-### framework/SDK in use
-
-Anthropic's Model Context Protocol (MCP) specification.
+Top-level `pyproject.toml` lists only `click>=8.2.1` — no `mcp` or `fastmcp` at root. Root `mcp-science` CLI is a dispatcher; individual servers in `servers/*/` each have their own `pyproject.toml` with per-server SDK choice (varies per sub-server). Anthropic's Model Context Protocol specification referenced.
 
 ## Transport
 
-### supported transports
+### stdio
 
 Stdio-based communication as primary transport mechanism for MCP interactions.
 
-### how selected
+### Selection mechanism
 
-Standardized MCP stdio transport; selected at server invocation via `uvx`.
+Standardized MCP stdio transport selected at server invocation via `uvx`.
 
-## Distribution
+## Capability surface
 
-### every mechanism observed
+### Domain-bundled tool set
 
-PyPI via `mcp-science` namespace, uv package manager, source build.
+Specialized functions per server — web content retrieval, academic searches, code execution (Python, SSH), scientific computation (DFT via GPAW), database operations (TinyDB), Jupyter kernel interaction, Wolfram Language evaluation.
 
-### published package name(s)
+## Configuration delivery
 
-`mcp-science` (PyPI package namespace).
+### Host-side JSON config snippet
 
-### install commands shown in README
+Client application JSON files (e.g., Claude Desktop `claude_desktop_config.json`); host-config snippet `"command": "uvx"`, `"args": ["mcp-science", "web-fetch"]`.
 
-`uvx mcp-science <server-name>` (recommended); source installation also available.
+### Environment variables
 
-### pitfalls observed
-
-PyPI package namespace (`mcp-science`) allows separate versioning per server. `uvx` dependency handling avoids manual Python environment setup.
-
-## Entry point / launch
-
-### command(s) users/hosts run
-
-`uvx mcp-science <server-name>` (e.g., `uvx mcp-science web-fetch`, `uvx mcp-science python-code`, etc.).
-
-### wrapper scripts, launchers, stubs
-
-None required; `uvx` tool handles automatic installation and execution.
-
-## Configuration surface
-
-### how config reaches the server
-
-Client application JSON files (e.g., Claude Desktop `claude_desktop_config.json`); server-specific API keys required for certain integrations (Materials Project, TXYZ Search) configured within individual server configurations; optional MCPM (Model Context Protocol Manager) for automated server wiring.
+Server-specific API keys for specialized integrations (Materials Project, TXYZ Search) configured via env vars within individual server configurations.
 
 ## Authentication
 
-### flow
+### Per-tool varied (monorepo)
 
-Server-specific API keys for specialized integrations; no centralized authentication mechanism.
-
-### where credentials come from
-
-Environment variables or configuration files (server-specific).
+Authentication varies per sub-server — no centralized auth mechanism. Server-specific API keys for specialized integrations; some sub-servers need keys, others none.
 
 ## Multi-tenancy
 
-### tenancy model
+### N/A (library, not a runtime)
 
-Not applicable; monorepo collection of independent servers; each server is single-user.
+Monorepo collection of independent servers; each sub-server is single-user. No shared runtime to multiplex tenants across.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### PyPI via uvx (zero-install runner)
 
-Specialized functions per server: web content retrieval, academic searches, code execution (Python, SSH), scientific computation (DFT via GPAW), database operations (TinyDB), Jupyter kernel interaction, Wolfram Language evaluation.
+PyPI package `mcp-science`; canonical install is `uvx mcp-science <server-name>`. PyPI namespace allows separate versioning per server.
 
-## Observability
+### Source clone with editable install
 
-### logging destination + format, metrics, tracing, debug flags
+Source build also available as a fallback install path.
 
-No explicit observability features documented.
+## Entry point and launch
 
-## Host integrations shown in README or repo
+### CLI dispatcher subcommand
 
-### Claude Desktop
+`uvx mcp-science <server-name>` — dispatcher name + subcommand selects the actual server (e.g., `uvx mcp-science web-fetch`, `uvx mcp-science python-code`). The `mcp-science` console script is a CLI dispatcher to the embedded sub-servers.
 
-Yes; configuration shown in README with JSON snippet: `"mcpServers": { "web-fetch": { "command": "uvx", "args": ["mcp-science", "web-fetch"] } }`.
+### `uvx <package>`
 
-### Claude Code
+`uvx` handles automatic install and execution.
 
-Not explicitly documented.
+## Build and packaging
 
-### Other
+### Hatchling + uv (Python)
 
-MCPM (Model Context Protocol Manager) mentioned for automated client integration.
+Build backend `hatchling.build`; `uv` is the version-manager convention.
 
-## Claude Code plugin wrapper
+### `uv.lock` committed
 
-### presence and shape
+`uv.lock` present at root.
 
-Not present; collection of independent PyPI servers.
+### Hatch force-include for monorepo wheel
 
-## Tests
+Root package force-includes `mcp_science/servers` directory — non-standard Hatch configuration that pulls nested server directories into the wheel rather than relying on a workspace-based build.
 
-### presence, framework, location, notable patterns
+### Python version pinning
 
-Not documented in provided content.
+Root `requires-python = ">=3.10"`; per-server floors not individually inspected.
 
-## CI
+## Container artifacts
 
-### presence, system, triggers, what it runs
-
-Not documented in provided content; typical Python project structure implies testing infrastructure.
-
-## Container / packaging artifacts
-
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+### No container artifacts
 
 Not mentioned; not required for PyPI distribution.
 
-## Example client / developer ergonomics
+## Repository layout
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+### Monorepo with per-server subdirectories and one PyPI package
 
-Claude Desktop JSON configuration example provided; uvx automatic installation and execution handles DevEx; each server has dedicated README.
+Monorepo where a single PyPI package (`mcp-science`) routes to multiple servers via CLI subcommand. Root: documentation (`README.md`, `CITATION.cff`), configuration (`pyproject.toml`, `uv.lock`), assets (`assets/`), web (`index.html`, `CNAME` for GitHub Pages). Per-server subdirectories under `/servers/` each contain dedicated README, `pyproject.toml`, source code.
 
-## Repo layout
+## Host integration
 
-### single-package / monorepo / vendored / other
+### Claude Desktop
 
-Monorepo organization; `/servers/` subdirectories containing individual server implementations, each with: dedicated README, `pyproject.toml`, source code; root: documentation (`README.md`, `CITATION.cff`), configuration (`pyproject.toml`, `uv.lock`), assets (`assets/`), web (`index.html`, `CNAME` for GitHub Pages).
+JSON snippet shown in README — `"mcpServers": { "web-fetch": { "command": "uvx", "args": ["mcp-science", "web-fetch"] } }`.
 
-## Notable structural choices
+### Aggregator/installer registry
 
-Monorepo structure enables centralized governance with independent per-server deployments. PyPI package namespace (`mcp-science`) allows separate versioning per server. `uvx` dependency handling avoids manual Python environment setup. Scientific focus (materials, DFT, Jupyter, Wolfram) targets academic/research community. GitHub Pages site at mcp.science for discoverability.
+MCPM (Model Context Protocol Manager) mentioned for automated client integration.
 
-## Unanticipated axes observed
+## Documentation surface
 
-Monorepo of thematically-linked servers (scientific focus) vs. single-server repos. Citation metadata (`CITATION.cff`) suggests academic publication focus. Integration with scientific tools (GPAW, Wolfram Language, Jupyter) uncommon in MCP ecosystem. Multi-language support within monorepo (Python primary, but Wolfram Language backend).
+### Per-subserver README in monorepo
 
-## Python-specific
+Each sub-server has its own dedicated README.
 
-### SDK / framework variant
+### CITATION.cff
 
-Top-level `pyproject.toml` lists only `click>=8.2.1` — no `mcp` or `fastmcp` at root. Root `mcp-science` CLI is a dispatcher; individual servers in `servers/*/` each have their own `pyproject.toml` with per-server SDK choice (not individually inspected here). Import pattern varies per sub-server.
+`CITATION.cff` ships at root — academic publication metadata, signaling research/citation focus.
 
-### Python version floor
+### GitHub Pages / hosted docs site
 
-Root: `requires-python = ">=3.10"`. Per-server floors not individually inspected.
+GitHub Pages site at `mcp.science` for discoverability.
 
-### Packaging
+### README as the canonical surface
 
-Build backend: `hatchling.build`. Lock file: `uv.lock` present (root). Version manager convention: `uv`. Monorepo structure: root package force-includes `mcp_science/servers` directory (non-standard Hatch configuration).
+Top-level README at repo root.
 
-### Entry point
+## Developer ergonomics
 
-`[project.scripts]`: `mcp-science = "mcp_science:main"` — the dispatcher. README host-config snippet: `"command": "uvx"`, `"args": ["mcp-science", "web-fetch"]` — dispatcher name + subcommand selects server.
+### Sample MCP client configs in repo
 
-### Install workflow expected of end users
+Claude Desktop JSON configuration example provided for the dispatcher pattern.
 
-`uvx mcp-science <server-name>` (primary). `uv` install via `curl -sSf https://astral.sh/uv/install.sh | bash`. Optional MCPM tool for convenience.
+## Claude Code plugin / skill wrapper
 
-### Async and tool signatures
+### Bare MCP server, no Claude Code wrapper
 
-Not inspected; per-server.
+Not present; collection of independent PyPI servers.
 
-### Type / schema strategy
+## Release and lifecycle
 
-Per-server.
+### License — Permissive (MIT / Apache-2.0)
 
-### Testing
+MIT.
 
-Not documented at root.
+### Tagged release with version in changelog
 
-### Dev ergonomics
-
-GitHub Pages site at mcp.science for discovery. `CITATION.cff` — academic publication metadata.
-
-### Notable Python-specific choices
-
-Dispatcher-style monorepo where a single PyPI package (`mcp-science`) routes to multiple servers via CLI subcommand — unique in the sample. Other monorepos (awslabs, mcp.science) ship one PyPI package per server; this one ships one package and dispatches internally. Hatch `force-include` directive pulls `mcp_science/servers` into the wheel — custom monorepo build shape rather than workspace-based approach.
-
-## Gaps
-
-Test framework and patterns not examined. CI/CD configuration not detailed. Individual server dependencies and compatibility not enumerated. Last release (v0.2.0) from July 2025; repo may be dormant or slowly maintained.
+v0.2.0 released July 1, 2025.

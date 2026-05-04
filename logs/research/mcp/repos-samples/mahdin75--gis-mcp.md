@@ -1,213 +1,179 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/mahdin75/gis-mcp`. GIS MCP server — wraps 92 geospatial tools across 5+ Python libraries (Shapely, GeoPandas, Rasterio, PyProj, GDAL, PySAL) with per-library optional-extras fan-out, plus REST `/storage/*` endpoints for HTTP-mode binary artifact transfer; ships `llms.txt`. ~137 stars, MIT, default branch `main`, v0.14.0 (2025-12-21).
 
-### url
+## Server runtime
 
-https://github.com/mahdin75/gis-mcp
+### Python with FastMCP
 
-### stars
-
-~137
-
-### last-commit
-
-v0.14.0 (2025-12-21); active
-
-### license
-
-MIT
-
-### default branch
-
-main
-
-### one-line purpose
-
-GIS MCP server — 92 geospatial tools across 5 libraries (Shapely, GeoPandas, Rasterio, PyProj, GDAL) with per-library optional-extras fan-out; ships `llms.txt`.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Python, `requires-python >= 3.10`
-
-### framework/SDK in use
-
-FastMCP 2.x (`fastmcp == 2.13.1`)
+Python server built on FastMCP 2.x with exact pin `fastmcp == 2.13.1` — conservative against FastMCP API drift. Import pattern: `fastmcp`. `requires-python = ">=3.10"`. FastMCP auto-wraps both sync and async tool signatures.
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio (default for local), HTTP (`GIS_MCP_TRANSPORT=http`), SSE
+Default transport for local use.
 
-### how selected
+### Streamable HTTP
 
-env var `GIS_MCP_TRANSPORT`
+HTTP transport selectable via `GIS_MCP_TRANSPORT=http`; runs on port 9010 via Docker.
 
-## Distribution
+### SSE (Server-Sent Events)
 
-### every mechanism observed
+SSE transport supported.
 
-PyPI (`uv pip install gis-mcp`), source editable (`uv pip install -e .`), Docker (two Dockerfiles — prod and local), Smithery (`smithery.yaml`)
+### Selection mechanism
 
-### published package name(s)
+Environment variable `GIS_MCP_TRANSPORT` selects transport — container-friendly env-var-driven selection.
 
-`gis-mcp`
+## Capability surface
 
-### install commands shown in README
+### Library fan-out
 
-`uv pip install gis-mcp`, `uv pip install gis-mcp[visualize]`, Docker build/run
+92 tools spanning Shapely (29), PyProj (13), GeoPandas (13), Rasterio (20), PySAL (18), visualization (2), plus data-acquisition modules (climate, ecology, movement, land cover, satellite imagery). "GIS Swiss army knife" — wrapping multiple upstream Python libraries into one MCP surface.
 
-### pitfalls observed
+### REST endpoints alongside MCP tools
 
-Whether CI publishes to PyPI on tag is not confirmed.
+HTTP mode adds `/storage/upload`, `/storage/download`, `/storage/list` REST endpoints for binary artifact transfer that MCP isn't designed for. MCP layer carries metadata; REST layer carries bytes.
 
-## Entry point / launch
+## Configuration delivery
 
-### command(s) users/hosts run
+### Environment variables
 
-`gis-mcp` console script, `python -m gis_mcp`, or HTTP on port 9010 via Docker
+`GIS_MCP_TRANSPORT` controls transport selection.
 
-### wrapper scripts, launchers, stubs
+### Host-side JSON config snippet
 
-Docker images handle HTTP transport setup
-
-## Configuration surface
-
-### how config reaches the server
-
-environment variables (`GIS_MCP_TRANSPORT`), host-config JSON for Claude Desktop / Cursor
+Per-host JSON config snippets documented for Claude Desktop and Cursor.
 
 ## Authentication
 
-### flow
+### None / implicit (local-resource gating)
 
-none at MCP layer
+No authentication at the MCP layer. Downstream API keys (e.g. Copernicus cdsapi) handled via dataset-specific config.
 
-### where credentials come from
+### Per-source independent API keys with graceful degradation
 
-N/A; downstream API keys (e.g. Copernicus cdsapi) via dataset-specific config
+Downstream provider credentials (e.g., Copernicus cdsapi) are dataset-specific and optional per data source.
 
 ## Multi-tenancy
 
-### tenancy model
+### Single-user / single-tenant per process
 
-single-user; HTTP mode exposes per-user upload/download endpoints but no tenant isolation
+Single-user; HTTP mode exposes per-user upload/download endpoints but no tenant isolation.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### PyPI via uvx (zero-install runner)
 
-92 tools spanning Shapely (29), PyProj (13), GeoPandas (13), Rasterio (20), PySAL (18), visualization (2), and data-acquisition modules (climate, ecology, movement, land cover, satellite imagery). HTTP mode adds `/storage/upload`, `/storage/download`, `/storage/list` REST endpoints.
+Published as `gis-mcp` on PyPI. README install: `uv pip install gis-mcp` (with optional extras). Optional extras include `[visualize]`.
 
-## Observability
+### Source clone with editable install
 
-### logging destination + format, metrics, tracing, debug flags
+`uv pip install -e .` for development.
 
-not specified in README
+### Docker / OCI image
 
-## Host integrations shown in README or repo
+Two Dockerfiles — `Dockerfile` (prod) and `Dockerfile.local` (dev). Docker run on port 9010 for HTTP transport.
 
-### Claude Desktop
+### Smithery registry
 
-`~/.config/Claude/claude_desktop_config.json` snippet
+`smithery.yaml` registered with Smithery.
 
-### Cursor
+## Entry point and launch
 
-`.cursor/mcp.json` snippet
+### Console script via `[project.scripts]` / npm bin
 
-### Smithery
+Console script `gis-mcp` registered as `gis_mcp.main:main`.
 
-`smithery.yaml` registered
+### Module invocation / `python -m <module>` fallback
 
-## Claude Code plugin wrapper
+`python -m gis_mcp` as alternate entry.
 
-### presence and shape
+### Docker container entrypoint
 
-none observed
+Docker images handle HTTP transport setup on port 9010.
 
-## Tests
+## Build and packaging
 
-### presence, framework, location, notable patterns
+### Hatchling + uv (Python)
 
-pytest with coverage and async support (in `test` extra); `tests/` directory
+Build backend: hatchling. uv-based workflow. `uv.lock` presence not explicitly confirmed.
+
+### Optional-dependency fan-out
+
+Eight domain-specific optional extras — `administrative-boundaries`, `climate`, `ecology`, `movement`, `satellite-imagery`, `land-cover`, `visualize`, plus `test`. Each extra bundles a single upstream library; `all` extra composes most. Per-library extras let users install only the toolchain slices they need. Heavy geospatial deps (rasterio, fiona, geopandas) kept as core deps despite large wheels — prioritizes install simplicity over minimal footprint.
+
+### Pin discipline (Python)
+
+Exact pin `fastmcp == 2.13.1` — prioritizes reproducibility over upgrade speed; conservative against FastMCP API drift.
+
+## Schema and types
+
+### FastMCP auto-derivation from type hints
+
+Schema auto-derived from signatures via FastMCP. Pydantic for validation.
+
+## Container artifacts
+
+### Multi-Dockerfile (prod / dev split)
+
+Two-variant container strategy — `Dockerfile` for production, `Dockerfile.local` for development. Explicit separation when the dev image needs additional tooling or different base.
+
+## Test stack
+
+### pytest with async + coverage
+
+pytest with coverage and async support (in `test` extra); `tests/` directory.
+
+### Dev extras gating test deps
+
+Test dependencies gated behind a `test` optional-extra rather than installed by default.
 
 ## CI
 
-### presence, system, triggers, what it runs
+### GitHub Actions
 
-GitHub Actions in `.github/workflows/`; CI badge visible
+GitHub Actions in `.github/workflows/`; CI badge visible. Whether CI publishes to PyPI on tag is not confirmed.
 
-## Container / packaging artifacts
+## Repository layout
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+### Single-package src-layout
 
-`Dockerfile` (prod) and `Dockerfile.local` (dev) — two-variant container strategy
+`src/gis_mcp/` source layout with rich optional-extras fan-out.
 
-## Example client / developer ergonomics
+## Host integration
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+### Claude Desktop
 
-`agents/` example directory; `llms.txt` / `llms-full.txt` for "vibe coding" context; pre-commit-style workflow
+`~/.config/Claude/claude_desktop_config.json` snippet documented.
 
-## Repo layout
+### Cursor
 
-### single-package / monorepo / vendored / other
+`.cursor/mcp.json` snippet documented.
 
-single-package (`src/gis_mcp/`) with rich optional-extras fan-out
+### Smithery / Glama discovery
 
-## Notable structural choices
+`smithery.yaml` registered with Smithery.
 
-`fastmcp == 2.13.1` exact pin — conservative against FastMCP API drift. 8 domain-specific optional extras (`administrative-boundaries`, `climate`, `ecology`, `movement`, `satellite-imagery`, `land-cover`, `visualize`, plus `test`) — each extra bundles a single upstream library; `all` extra composes most. Two Dockerfiles (`Dockerfile` vs `Dockerfile.local`) — explicit separation of production image from development image. `llms.txt` and `llms-full.txt` in repo expose a curated context summary for LLM consumers beyond the MCP protocol itself.
+## Developer ergonomics
 
-## Unanticipated axes observed
-
-Wrapping 92 tools from 5+ distinct Python libraries into one MCP surface — a "GIS Swiss army knife" pattern. Exposing file-transfer REST endpoints (`/storage/*`) alongside MCP tools to handle binary artifact movement that MCP isn't built for.
-
-## Python-specific
-
-### SDK / framework variant
-
-FastMCP 2.x. Version pin from pyproject.toml: `fastmcp == 2.13.1`. Import pattern observed: `fastmcp`.
-
-### Python version floor
-
-`requires-python` value: `>=3.10`
-
-### Packaging
-
-Build backend: hatchling. Lock file presence not explicitly confirmed; uv-based workflow. Version manager convention: uv.
-
-### Entry point
-
-Both `gis-mcp` console script and `python -m gis_mcp` work. Console-script name: `gis-mcp` → `gis_mcp.main:main`. Host-config snippet shape: Claude Desktop uses direct command `gis-mcp`; Docker uses HTTP URL.
-
-### Install workflow expected of end users
-
-`uv pip install gis-mcp` (with optional extras), Docker. One-liner the README recommends: `uv pip install gis-mcp`.
-
-### Async and tool signatures
-
-FastMCP auto-wraps both; pytest has async support.
-
-### Type / schema strategy
-
-Pydantic via FastMCP; schema auto-derived from signatures.
-
-### Testing
-
-pytest + coverage + async plugin (in `test` extra). Fixture style not inspected.
-
-### Dev ergonomics
+### `agents/` example directory
 
 `agents/` directory provides runnable example clients.
 
-### Notable Python-specific choices
+## Documentation surface
 
-Optional-extra-per-library pattern — exposes an opt-in fan-out: users install only the GIS toolchain they need. Heavy geospatial deps (rasterio, fiona, geopandas) kept as core deps despite large wheels — prioritizes install simplicity over minimal footprint.
+### `llms.txt` / `llms-full.txt`
 
-## Gaps
+`llms.txt` and `llms-full.txt` shipped at repo root for "vibe coding" LLM context — the two-file pattern (digestible summary + complete reference).
 
-`uv.lock` presence not explicitly confirmed. Whether CI publishes to PyPI on tag not confirmed. Exact list of optional extras provided by `all` not fully enumerated.
+## Release and lifecycle
+
+### Active development
+
+v0.14.0 (2025-12-21); active.
+
+### License — Permissive (MIT / Apache-2.0)
+
+MIT.

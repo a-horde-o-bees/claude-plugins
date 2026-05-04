@@ -1,209 +1,129 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/ktanaka101/mcp-server-duckdb`. DuckDB MCP server — single generic `query` tool executing arbitrary SQL against a local DuckDB file. 174 stars, MIT, default branch `main`, last commit May 5, 2025 (v1.1.0).
 
-### url
+## Server runtime
 
-https://github.com/ktanaka101/mcp-server-duckdb
+### Python with raw MCP SDK
 
-### stars
-
-174
-
-### last-commit
-
-May 5, 2025 (v1.1.0)
-
-### license
-
-MIT
-
-### default branch
-
-main
-
-### one-line purpose
-
-DuckDB MCP server — SQL query execution against DuckDB files.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Python (100%)
-
-### framework/SDK in use
-
-Anthropic MCP Python SDK
+Python 100% server using the raw Anthropic MCP Python SDK (`mcp>=1.0.0`); no FastMCP. Low-level MCP server API (inferred). `requires-python = ">=3.10"`.
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio (standard MCP)
+Implicit — stdio is the only transport documented; no transport selection mechanism.
 
-### how selected
+## Capability surface
 
-Implicit — stdio is the only transport documented
+### Single generic tool
 
-## Distribution
+One tool — `query` — accepting arbitrary SQL. Delegates SQL generation entirely to the LLM rather than providing specialized tools. No resources, prompts, sampling, or roots.
 
-### every mechanism observed
+## Configuration delivery
 
-PyPI, uvx runner, Smithery registry
+### CLI flags
 
-### published package name(s)
-
-mcp-server-duckdb
-
-### install commands shown in README
-
-`npx -y @smithery/cli install mcp-server-duckdb --client claude`; `uvx mcp-server-duckdb --db-path <path>`
-
-### pitfalls observed
-
-No container or Homebrew artifacts observed
-
-## Entry point / launch
-
-### command(s) users/hosts run
-
-`uvx mcp-server-duckdb --db-path <path> [--readonly] [--keep-connection]`
-
-### wrapper scripts, launchers, stubs
-
-CLI entry point registered via package metadata; Smithery installer handles host registration
-
-## Configuration surface
-
-### how config reaches the server
-
-CLI flags only — `--db-path` (required), `--readonly`, `--keep-connection`. No env vars or config files documented.
+Configuration only via CLI flags — `--db-path` (required), `--readonly`, `--keep-connection`. No env vars or config files documented.
 
 ## Authentication
 
-### flow
+### None / implicit (local-resource gating)
 
-None — local DuckDB file access
-
-### where credentials come from
-
-Not applicable
+No authentication; local DuckDB file access only.
 
 ## Multi-tenancy
 
-### tenancy model
+### Single-user / single-tenant per process
 
-Single-user, single-database — one DuckDB file per server instance
+One DuckDB file per server instance.
 
-## Capabilities exposed
+### Connection-lifecycle as a knob
 
-### tools / resources / prompts / sampling / roots / logging / other
+`--keep-connection` flag is explicit to enable TEMP objects across calls — a deliberate session-state trade-off. Persistent connections enable cross-call state but break the stateless-per-request model.
 
-Single tool — `query` (accepts arbitrary SQL). No resources, prompts, sampling, or roots.
+## Distribution channel
 
-## Observability
+### PyPI via uvx (zero-install runner)
 
-### logging destination + format, metrics, tracing, debug flags
+Published as `mcp-server-duckdb` on PyPI; canonical README install: `uvx mcp-server-duckdb --db-path <path>`. README host-config snippet: `"command": "uvx"`, `"args": ["mcp-server-duckdb", "--db-path", "<path>"]`. No pip instructions shown.
 
-None in README; MCP Inspector recommended for debugging
+### Smithery registry
 
-## Host integrations shown in README or repo
+Smithery CLI installer recipe documented: `npx -y @smithery/cli install mcp-server-duckdb --client claude`.
 
-### Claude Desktop
+## Entry point and launch
 
-Supported via `claude_desktop_config.json` example
+### Console script via `[project.scripts]` / npm bin
 
-### Smithery
+`[project.scripts]`: `mcp-server-duckdb = "mcp_server_duckdb:main"`.
 
-Supported via its CLI installer
+### `uvx <package>`
 
-## Claude Code plugin wrapper
+Canonical launch via `uvx mcp-server-duckdb --db-path <path> [--readonly] [--keep-connection]`.
 
-### presence and shape
+## Build and packaging
 
-Not present
+### Hatchling + uv (Python)
 
-## Tests
+Build backend `hatchling.build`. uv/uvx ecosystem. Lock file likely `uv.lock`.
 
-### presence, framework, location, notable patterns
+### Pin discipline (Python)
 
-`tests/` directory present; framework not specified within fetch budget
+Loose pin `mcp>=1.0.0` — minimal-ceremony posture. Minimal pyproject.toml — only pytest in dev; no ruff/mypy/coverage.
+
+## Schema and types
+
+### Hand-authored tool schemas
+
+Raw `mcp` SDK without FastMCP — tool handlers register an explicit input schema dict; author writes the schema directly.
+
+## Test stack
+
+### pytest with async + coverage
+
+`pytest>=8.3.4` in dev deps; `tests/` directory present. No pytest config in pyproject.toml. pytest-asyncio not declared.
 
 ## CI
 
-### presence, system, triggers, what it runs
+### GitHub Actions
 
-`.github/workflows/` present; specific workflow contents not extracted within budget
+`.github/workflows/` present; specific workflow contents not extracted within budget.
 
-## Container / packaging artifacts
+## Safety and security posture
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+### Read-only by default with explicit write flag
 
-None documented
+`--readonly` flag leverages DuckDB's native read-only protection rather than tool-layer validation. Non-readonly mode auto-creates the DB file and parent directories.
 
-## Example client / developer ergonomics
+## Repository layout
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+### Single-package src-layout
 
-MCP Inspector recommended; Claude Desktop JSON config shown; Smithery CLI recipe
+Single-package Python project.
 
-## Repo layout
+## Host integration
 
-### single-package / monorepo / vendored / other
+### Claude Desktop
 
-Single-package Python project
+Supported via `claude_desktop_config.json` example.
 
-## Notable structural choices
+### Smithery / Glama discovery
 
-Single generic `query` tool delegates SQL generation entirely to the LLM rather than providing specialized tools. Read-only mode leverages DuckDB's native protection, not tool-layer validation. `--keep-connection` flag is explicit to enable TEMP objects across calls — a deliberate session-state trade-off. Non-readonly mode auto-creates the DB file and parent directories.
+Smithery CLI installer wires the host.
 
-## Unanticipated axes observed
+## Developer ergonomics
 
-Connection-lifecycle flag (`--keep-connection`) as a first-class knob — a design choice most servers hide.
-
-## Python-specific
-
-### SDK / framework variant
-
-Raw `mcp` Python SDK — `mcp>=1.0.0`; no fastmcp. Import pattern: low-level MCP server API (inferred).
-
-### Python version floor
-
-`requires-python = ">=3.10"`
-
-### Packaging
-
-Build backend: `hatchling.build`. Lock file: likely uv.lock (uv/uvx ecosystem). Version manager convention: `uv`/`uvx`.
-
-### Entry point
-
-`[project.scripts]`: `mcp-server-duckdb = "mcp_server_duckdb:main"`. README host-config snippet: `"command": "uvx"`, `"args": ["mcp-server-duckdb", "--db-path", "<path>"]`.
-
-### Install workflow expected of end users
-
-`uvx mcp-server-duckdb` (primary), Smithery CLI installer for host setup. No pip instructions shown.
-
-### Async and tool signatures
-
-`pytest>=8.3.4` in dev deps; pytest-asyncio not declared. Source not inspected.
-
-### Type / schema strategy
-
-Low-level MCP SDK — hand-authored schemas
-
-### Testing
-
-pytest in dev deps; `tests/` directory. No pytest config in pyproject.toml.
-
-### Dev ergonomics
+### Inspector/debug tooling references
 
 README recommends MCP Inspector (`npx @modelcontextprotocol/inspector`). No Makefile/task runner observed.
 
-### Notable Python-specific choices
+## Release and lifecycle
 
-Minimal pyproject.toml — only pytest in dev; no ruff/mypy/coverage. Single-tool server, low ceremony — pragmatic Python layout.
+### Active development
 
-## Gaps
+Last commit May 5, 2025 (v1.1.0).
 
-Test framework and CI workflow specifics not extracted within budget. No container or Homebrew artifacts observed.
+### License — Permissive (MIT / Apache-2.0)
+
+MIT.

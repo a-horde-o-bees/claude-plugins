@@ -1,179 +1,169 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/bhauman/clojure-mcp`. Clojure REPL MCP server — 50+ tools via nREPL for structure-aware editing, code evaluation, and multi-REPL support (Shadow-cljs/Babashka/Basilisp/Scittle). 735 stars; EPL-2.0 (Eclipse Public License v 2.0); default branch `main`; last release v0.3.1 dated March 14, 2026.
 
-### url
+## Server runtime
 
-https://github.com/bhauman/clojure-mcp
+### Clojure with nREPL bridge
 
-### stars
-
-735
-
-### last-commit
-
-March 14, 2026 (v0.3.1 release)
-
-### license
-
-EPL-2.0 (Eclipse Public License v 2.0)
-
-### default branch
-
-main
-
-### one-line purpose
-
-Clojure REPL MCP server — 50+ tools via nREPL for structure-aware editing, code evaluation, and multi-REPL support (Shadow-cljs/Babashka/Basilisp/Scittle).
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Clojure (99.9%); Java runtime (JDK 17 or later inferred).
-
-### framework/SDK in use
-
-Anthropic's Model Context Protocol (MCP); nREPL (REPL protocol).
+Clojure (99.9% of repo) on the JVM (JDK 17 or later inferred). MCP protocol bridged onto an nREPL connection — tool invocations become forms evaluated in the running REPL. Multi-environment detection switches between Clojure, ClojureScript via Shadow-cljs, Babashka, Basilisp, and Scittle.
 
 ## Transport
 
-### supported transports
+### nREPL connection
 
-JSON-RPC protocol via nREPL connection (REPL-driven); CLI and Claude Desktop variants with different connection patterns.
+JSON-RPC over an nREPL connection. The MCP server is itself driven through the REPL protocol; tool calls are forms evaluated by the connected REPL.
 
-### how selected
+### Selection mechanism
 
-Entry point selection at launch: CLI assistants, Claude Desktop, or other MCP clients with environment-specific configuration.
+Profile-driven launcher — entry-point selection at launch chooses between CLI assistants, Claude Desktop, and other MCP clients with environment-specific configuration.
 
-## Distribution
+## Capability surface
 
-### every mechanism observed
+### Tools-heavy domain wrapper / domain-tool catalog
 
-Clojure tools installer, source build.
+50+ tools targeting Clojure ecosystem needs across categories: read-only file operations, code evaluation, structure-aware editing, shell execution, agent-based analysis. REPL-driven evaluation; Clojure syntax/formatting aware. Agent-augmented tools layered over base REPL operations call out to external LLMs (Anthropic, OpenAI, Google Gemini) when configured.
 
-### published package name(s)
+## Configuration delivery
 
-io.github.bhauman/clojure-mcp.
+### Sidecar config files (JSON / YAML / TOML / EDN)
 
-### install commands shown in README
+Project-level `.clojure-mcp/config.edn` with a Clojure-map structure carries tool filtering, profile selection, nREPL parameters, and formatting preferences (cljfmt toggle).
 
-`clojure -Ttools install-latest :lib io.github.bhauman/clojure-mcp :as mcp`.
+### CLI flags
 
-## Entry point / launch
+Command-line overrides for tool filtering, profile selection, and nREPL parameters.
 
-### command(s) users/hosts run
+### Environment variables
 
-`clojure -Tmcp start` (post-install); CLI profile: `clojure-mcp-light` for lightweight REPL; full with `:cli-assist` profile; Claude Desktop: configured in `claude_desktop_config.json`.
-
-### wrapper scripts, launchers, stubs
-
-None documented.
-
-## Configuration surface
-
-### how config reaches the server
-
-Project file `.clojure-mcp/config.edn` with Clojure map structure; command-line overrides for tool filtering, profile selection, nREPL parameters; optional environment variables for external LLM providers.
+Optional environment variables for external LLM provider API keys (Anthropic, OpenAI, Google Gemini) used by agent tools.
 
 ## Authentication
 
-### flow
+### None / implicit (local-resource gating)
 
-No built-in authentication; optional API key configuration for external LLM providers (Anthropic, OpenAI, Google Gemini) via environment variables for agent tools.
+No built-in authentication on the MCP layer — local stdio/REPL-resident execution.
 
-### where credentials come from
+### Optional external LLM API keys
 
-Environment variables for optional external LLM API keys.
+Optional API keys for external LLM providers (Anthropic, OpenAI, Google Gemini) supplied via env vars when present; agent-augmented tools use them when configured.
 
 ## Multi-tenancy
 
-### tenancy model
+### Single-user / single-tenant per process
 
 Single-user per project/REPL instance; workspace-specific via project configuration.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### Language-native installer
 
-50+ tools across categories: read-only file operations, code evaluation, structure-aware editing, shell execution, agent-based analysis; REPL-driven evaluation; Clojure syntax/formatting aware.
+`clojure -Ttools install-latest :lib io.github.bhauman/clojure-mcp :as mcp` — Clojure tools installer via Maven-style coords (`io.github.bhauman/clojure-mcp`). Source build also documented.
 
-## Observability
+## Entry point and launch
 
-### logging destination + format, metrics, tracing, debug flags
+### Language-tool launcher
 
-JSON-RPC notifications signal tool/resource availability changes; server logs nREPL connection details and tool initialization status during startup; notification-based change detection.
+`clojure -Tmcp start` post-install. Profile variants: `clojure-mcp-light` for lightweight REPL; `:cli-assist` profile for full assistant; Claude Desktop launches via shell path and command arguments.
 
-## Host integrations shown in README or repo
+### Profile-driven launcher
 
-### Claude Desktop
+Clojure `deps.edn` aliases / profiles (`:stdio-server`, `:sse-server`-style mechanism) select transport / mode at launch.
 
-Yes; configured in `claude_desktop_config.json` with shell path and command arguments.
+## Build and packaging
 
-### Claude Code
+### Maven / Gradle (JVM)
 
-Not explicitly documented; MCP client wiki referenced.
+Maven-style coords (`io.github.bhauman/clojure-mcp`); JVM runtime; `deps.edn` for dependency management. JDK 17+ inferred.
 
-### nREPL
+## Test stack
 
-Primary integration mechanism (REPL-driven).
-
-### Shadow-cljs
-
-Multi-REPL support for ClojureScript.
-
-### Babashka/Basilisp/Scittle
-
-Environment type detection and switching.
-
-### Git/Shell
-
-Bash tool for version control and system operations.
-
-## Claude Code plugin wrapper
-
-### presence and shape
-
-Not present; server-only implementation.
-
-## Tests
-
-### presence, framework, location, notable patterns
+### Clojure-native testing
 
 Test directory present; typical Clojure testing patterns; project structure suggests comprehensive testing.
 
 ## CI
 
-### presence, system, triggers, what it runs
+### GitHub Actions
 
 GitHub Actions configured in `.github/`; typical Clojure project CI.
 
-## Container / packaging artifacts
+## Container artifacts
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+### No container artifacts
 
 Not documented in provided content.
 
-## Example client / developer ergonomics
+## Observability
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+### Change-notification channels / JSON-RPC notifications
 
-Substantial documentation: README.md (30KB), PROJECT_SUMMARY.md (26KB), CONFIG.md (9KB), FAQ.md (8KB); `clj-sandbox-example.sb` example file; clear Claude Desktop integration guide.
+JSON-RPC notifications signal tool/resource availability changes; server logs nREPL connection details and tool initialization status during startup; notification-based change detection used to refresh client-side capability views.
 
-## Repo layout
+## Deployment topology
 
-### single-package / monorepo / vendored / other
+### REPL-resident
 
-Single Clojure package; structure: `src/`, `test/`, `doc/`, `resources/`, `deps.edn`, `docs/`; extensive documentation in root: README, PROJECT_SUMMARY, CHANGELOG, CONFIG, FAQ, BIG_IDEAS, LLM_CODE_STYLE; `.github/`, `.claude/` directories.
+Server code runs inside a long-lived REPL process; the host connects to the REPL. Native Clojure-ecosystem deployment shape.
 
-## Notable structural choices
+## Repository layout
 
-REPL-driven development as primary paradigm (nREPL integration). Clojure-aware editing tools (structure-aware, syntax-aware formatting). Multi-REPL support (Shadow-cljs, Babashka, Basilisp, Scittle). 50+ tools targeting Clojure ecosystem needs. Configuration via Clojure maps (deps-like pattern). LLM_CODE_STYLE.md for AI assistant guidance. Sandbox example demonstrating safe code evaluation.
+### Clojure project layout
 
-## Unanticipated axes observed
+Standard Clojure layout: `src/`, `test/`, `doc/`, `resources/`, `deps.edn`, `docs/`. Extensive root-level documentation: README, PROJECT_SUMMARY, CHANGELOG, CONFIG, FAQ, BIG_IDEAS, LLM_CODE_STYLE. `.github/` and `.claude/` directories present.
 
-REPL-as-transport pattern (nREPL) is unusual for MCP. Multi-environment detection (Clojure, ClojureScript, Babashka, etc.). Code formatting preferences in configuration (cljfmt toggle). Agent tools with optional external LLM integration (agent-augmented). 50+ tools unusual; suggests comprehensive Clojure ecosystem coverage. LLM_CODE_STYLE documentation for prompt optimization (unusual).
+## Safety and security posture
 
-## Gaps
+### None / not surfaced
 
-Specific Java version constraints (JDK 17+ inferred but not confirmed). nREPL transport protocol details not fully explained. Docker/containerization not documented. Specific test framework and patterns not examined.
+Sandbox-example file (`clj-sandbox-example.sb`) demonstrates safe code-evaluation patterns but no enforced sandbox documented at the server layer.
+
+## Domain logic and embedded intelligence
+
+### In-server LLM client
+
+Optional external LLM integration for agent tools — server can call out to Anthropic, OpenAI, or Google Gemini when configured, layering LLM-shaped post-processing on REPL operations.
+
+## Host integration
+
+### Claude Desktop
+
+Configured in `claude_desktop_config.json` with shell path and command arguments.
+
+### nREPL host
+
+Primary integration mechanism — server runs as a connected REPL participant.
+
+## Documentation surface
+
+### README plus docs directory
+
+README.md (30KB), PROJECT_SUMMARY.md (26KB), CONFIG.md (9KB), FAQ.md (8KB), BIG_IDEAS, CHANGELOG, LLM_CODE_STYLE — substantial supplementary documentation.
+
+### Bundled `cursor_rules.md` / AI-guidance content
+
+`LLM_CODE_STYLE.md` shipped with the repo for AI assistant guidance — a markdown file conveying conventions the LLM should follow when using the server (rules/guidance the host's LLM is expected to read; not an MCP tool or prompt).
+
+### Agent-facing meta-documentation (CLAUDE.md, .cursorrules, .mcp.json)
+
+`.claude/` directory present at repo root — Claude is part of the contributor experience for the repo.
+
+## Claude Code plugin / skill wrapper
+
+### Bare MCP server, no Claude Code wrapper
+
+Server-only implementation — no Claude Code plugin/skill wrapper present.
+
+## Release and lifecycle
+
+### License — Weak copyleft (EPL-2.0)
+
+EPL-2.0 (Eclipse Public License v 2.0) — weak copyleft, requires share-alike for derivatives. Commercial use permitted. The canonical license for Clojure-world projects.
+
+### Tagged release with version in changelog
+
+v0.3.1 release dated 2026-03-14; CHANGELOG present.
+
+### Active development
+
+Active maintenance with semver-tagged releases.

@@ -1,175 +1,165 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/executeautomation/mcp-playwright`. Playwright browser-automation MCP server — scripted browser actions for end-to-end testing and scraping; 143+ device emulation presets; published across four channels (npm, mcp-get, Smithery, Docker). 5.5k stars, MIT, default branch `main`.
 
-### url
+## Server runtime
 
-https://github.com/executeautomation/mcp-playwright
+### Node.js / TypeScript with official MCP SDK
 
-### stars
-
-5.5k
-
-### last-commit
-
-Not explicitly extracted within budget.
-
-### license
-
-MIT
-
-### default branch
-
-main
-
-### one-line purpose
-
-Playwright browser-automation MCP server — scripted browser actions for end-to-end testing and scraping.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-TypeScript (93.6%); Node.js runtime (npx/npm-based distribution).
-
-### framework/SDK in use
-
-Model Context Protocol SDK; README describes alignment with Anthropic's Claude Agent SDK conventions. Playwright is the underlying browser-automation engine.
+TypeScript (93.6%) on Node.js (npx/npm-based distribution). README describes alignment with Anthropic's Claude Agent SDK conventions; Playwright is the underlying browser-automation engine.
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio (recommended for Claude Desktop); HTTP/SSE (standalone server mode).
+Recommended for Claude Desktop. Default when launched via `npx`.
 
-### how selected
+### Streamable HTTP
 
-Stdio default when launched via `npx`; HTTP enabled by passing `--port <n>` (e.g. `--port 8931`).
+Standalone server mode.
 
-## Distribution
+### SSE (Server-Sent Events)
 
-### every mechanism observed
+HTTP/SSE supported in standalone server mode.
 
-npm, mcp-get, Smithery CLI, Docker.
+### Selection mechanism
 
-### published package name(s)
+CLI flag at startup — stdio default; HTTP enabled by passing `--port <n>` (e.g. `--port 8931`). Dual-transport from one binary — `--port` switches between stdio and HTTP, not separate entry points.
 
-@executeautomation/playwright-mcp-server
+## Capability surface
 
-### install commands shown in README
+### Tools-heavy domain wrapper / domain-tool catalog
 
-`npm install -g @executeautomation/playwright-mcp-server`. `npx @michaellatman/mcp-get@latest install @executeautomation/playwright-mcp-server`. `npx @smithery/cli install @executeautomation/playwright-mcp-server --client claude`.
+Browser automation: navigation, click, fill, screenshot capture, test code generation, web scraping, JavaScript execution in page context, device emulation with 143+ device presets. Elevates the server beyond "headless browser" to "mobile and cross-device testing harness".
 
-### pitfalls observed
+## Configuration delivery
 
-Four distribution mechanisms (npm, mcp-get, Smithery, Docker) — this is one of the more broadly-distributed MCP servers; serves as a reference for "how many channels to publish to" decisions.
+### CLI flags
 
-## Entry point / launch
+`--port` and similar CLI flags.
 
-### command(s) users/hosts run
+### Sidecar config files (JSON / YAML / TOML / EDN)
 
-Stdio: `npx -y @executeautomation/playwright-mcp-server`. HTTP: `npx @executeautomation/playwright-mcp-server --port 8931`.
-
-### wrapper scripts, launchers, stubs
-
-npm `bin` entry; Smithery and mcp-get wrappers for install orchestration.
-
-## Configuration surface
-
-### how config reaches the server
-
-CLI flags (`--port` etc.); `mcp-config.json` for settings; automatic Playwright browser installation on first use.
+`mcp-config.json` for settings.
 
 ## Authentication
 
-### flow
+### None / implicit (local-resource gating)
 
-Not applicable — browser automation against public web; no service-level auth. Sites that require auth rely on Playwright's own cookie/state mechanisms, not an MCP-layer auth flow.
-
-### where credentials come from
-
-User-driven within browser session (manual login flows in Playwright contexts).
+Browser automation against public web — no service-level MCP-layer auth. Sites that require auth rely on Playwright's own cookie/state mechanisms in browser sessions, not an MCP-layer auth flow. User-driven within browser session (manual login flows in Playwright contexts).
 
 ## Multi-tenancy
 
-### tenancy model
+### Single-user / single-tenant per process
 
-Single-user — one browser context per server process. Multi-session concurrency would require multiple launches or HTTP mode with session management (not explicitly documented).
+One browser context per server process. Multi-session concurrency would require multiple launches or HTTP mode with session management (not explicitly documented).
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### npm via npx / bunx
 
-Browser automation (navigation, click, fill, etc.), screenshot capture, test code generation, web scraping, JavaScript execution in page context, device emulation with 143+ device presets.
+`npm install -g @executeautomation/playwright-mcp-server`. Published as `@executeautomation/playwright-mcp-server`.
 
-## Observability
+### Aggregator/installer registry
 
-### logging destination + format, metrics, tracing, debug flags
+`npx @michaellatman/mcp-get@latest install @executeautomation/playwright-mcp-server` (mcp-get).
 
-Logs written to `~/playwright-mcp-server.log` in stdio mode — specifically to keep stdout clean for JSON-RPC framing. File-based log is the observability surface.
+### Smithery registry
 
-## Host integrations shown in README or repo
+`npx @smithery/cli install @executeautomation/playwright-mcp-server --client claude`.
 
-### Claude Desktop
+### Docker / OCI image
 
-primary host integration.
+Dockerfile present alongside docker-compose.yml.
 
-### Cline
+### Multi-channel publication
 
-documented host integration.
+Four parallel distribution mechanisms: npm, mcp-get aggregator, Smithery, and Docker.
 
-### Cursor IDE
+## Entry point and launch
 
-documented host integration.
+### `npx -y <package>` / `bunx`
 
-### VS Code
+Stdio: `npx -y @executeautomation/playwright-mcp-server`. HTTP: `npx @executeautomation/playwright-mcp-server --port 8931`.
 
-via GitHub Copilot.
+### Console script via `[project.scripts]` / npm bin
 
-## Claude Code plugin wrapper
+npm `bin` entry; Smithery and mcp-get wrappers for install orchestration.
 
-### presence and shape
+## Build and packaging
 
-Not observed — no `.claude-plugin` directory surfaced in research.
+### npm/Node toolchain
 
-## Tests
+`package.json` defines build and bin entries; npm registry is the publish target.
 
-### presence, framework, location, notable patterns
+### System-level dependencies
+
+Browser runtime (Playwright) — automatic browser installation on first use reduces setup friction but introduces a first-run delay.
+
+## Test stack
+
+### Jest (TypeScript / Node)
 
 Jest; tests in `src/__tests__`; npm scripts wire up test runs.
 
 ## CI
 
-### presence, system, triggers, what it runs
+### GitHub Actions
 
-GitHub Actions `.github/workflows` directory present; specific workflows not extracted within budget.
+`.github/workflows` directory present; specific workflows not extracted within budget.
 
-## Container / packaging artifacts
+## Container artifacts
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+### Dockerfile (single-stage, build-from-source)
 
-Dockerfile present; docker-compose.yml present.
+Dockerfile present.
 
-## Example client / developer ergonomics
+### Docker Compose for local dev
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+`docker-compose.yml` present.
 
-`mcp-config.json` for settings; sample Claude Desktop JSON config in README; Smithery CLI as an install flow.
+## Observability
 
-## Repo layout
+### File-based logging
 
-### single-package / monorepo / vendored / other
+Logs written to `~/playwright-mcp-server.log` in stdio mode — a deliberate design response to the stdio framing constraint. The server cannot log to stdout without corrupting JSON-RPC; file-based log is the observability surface.
+
+## Host integration
+
+### Claude Desktop
+
+Primary host integration; sample Claude Desktop JSON config in README.
+
+### Cursor
+
+Documented host integration (Cursor IDE).
+
+### VS Code / VS Code Insiders / Visual Studio family
+
+Documented integration via GitHub Copilot.
+
+### Windsurf / Goose / Qodo Gen / Cline / Kiro / Augment
+
+Cline documented as a host integration.
+
+## Repository layout
+
+### Single-package source (language-conventional)
 
 Single-package TypeScript project.
 
-## Notable structural choices
+## Documentation surface
 
-Dual-transport from one binary — `--port` switches between stdio and HTTP, not separate entry points. File-based logging (`~/playwright-mcp-server.log`) is a deliberate design response to the stdio framing constraint — the server cannot log to stdout without corrupting JSON-RPC. Automatic browser install on first use reduces setup friction but introduces a first-run delay. Device emulation with 143+ presets elevates the server beyond "headless browser" to "mobile and cross-device testing harness".
+### Per-host README integration sections
 
-## Unanticipated axes observed
+Per-host config snippets in README (Claude Desktop, Cline, Cursor IDE, VS Code via Copilot).
 
-Four distribution mechanisms (npm, mcp-get, Smithery, Docker) — this is one of the more broadly-distributed MCP servers; serves as a reference for "how many channels to publish to" decisions. 5.5k stars makes this a de facto canonical Playwright MCP despite unofficial (non-Microsoft) ownership. Microsoft's own `@playwright/mcp` exists as a competitor — both ship, neither is officially crowned.
+### Sidecar config files (JSON / YAML / TOML / EDN)
 
-## Gaps
+`mcp-config.json` for settings; sample Claude Desktop JSON config in README.
 
-Last commit date not confirmed within extracted content. Whether HTTP mode supports multi-client concurrency or is single-session. Exact CI workflow set. Interplay with Microsoft's `@playwright/mcp` — feature parity, divergent choices, migration paths — not surveyed.
+## Release and lifecycle
+
+### License — Permissive (MIT / Apache-2.0)
+
+MIT.

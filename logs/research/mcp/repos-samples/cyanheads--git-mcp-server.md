@@ -1,163 +1,191 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/cyanheads/git-mcp-server`. Git MCP server (TypeScript) — 28 tools across repo/commits/branches/remotes; dual Node+Bun runtime with base-directory sandboxing for multi-tenant usage. 207 stars; Apache-2.0; default branch `main`; last commit April 19, 2026.
 
-### url
+## Server runtime
 
-https://github.com/cyanheads/git-mcp-server
+### Node.js / TypeScript with official MCP SDK
 
-### stars
+TypeScript ^6.0.3 on the official MCP SDK ^1.29.0. Hono for HTTP, Pino for logging, tsyringe for DI, Zod for validation, OpenTelemetry (optional). Node.js >=20.0.0.
 
-207
+### TypeScript on Bun
 
-### last-commit
-
-April 19, 2026
-
-### license
-
-Apache-2.0
-
-### default branch
-
-main
-
-### one-line purpose
-
-Git MCP server (TypeScript) — 28 tools across repo/commits/branches/remotes; dual Node+Bun runtime with base-directory sandboxing for multi-tenant usage.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-TypeScript ^6.0.3; Node.js >=20.0.0, Bun >=1.2.0.
-
-### framework/SDK in use
-
-MCP SDK ^1.29.0, Hono (HTTP), Pino (logging), tsyringe (DI), Zod (validation), OpenTelemetry (optional).
+Bun >=1.2.0 also supported as runtime; runtime auto-detection between Node and Bun.
 
 ## Transport
 
-### supported transports
+### stdio
 
-STDIO, Streamable HTTP (configurable port 3015, hostname).
+stdio transport (default).
 
-### how selected
+### Streamable HTTP
 
-environment config selection.
+Streamable HTTP with configurable port 3015 and hostname.
 
-## Distribution
+### Selection mechanism
 
-### every mechanism observed
+Environment-config driven selection (validated via Zod); separate npm scripts (`npm run start:stdio`, `npm run start:http`) for explicit mode entry.
 
-npm (`npx @cyanheads/git-mcp-server@latest`), Bun (`bunx @cyanheads/git-mcp-server@latest`).
+## Capability surface
 
-### published package name(s)
+### Tools-heavy domain wrapper / domain-tool catalog
 
-`@cyanheads/git-mcp-server`.
+28 tools across 7 categories (repo management, staging/commits, history inspection, analysis, branching/merging, remote ops, advanced workflows).
 
-### install commands shown in README
+### Tools plus resources plus prompts (full primitive coverage)
 
-`npx @cyanheads/git-mcp-server@latest` or `bunx @cyanheads/git-mcp-server@latest`.
+28 tools plus 1 resource (repo metadata) plus 1 prompt — full primitive coverage.
 
-## Entry point / launch
+## Configuration delivery
 
-### command(s) users/hosts run
-
-npx or bunx invocation; also `npm run start:stdio`, `npm run start:http`.
-
-### wrapper scripts, launchers, stubs
-
-npm scripts for stdio vs HTTP startup modes.
-
-## Configuration surface
-
-### how config reaches the server
+### Environment variables
 
 Zod-validated env vars: transport type, session mode, response format, Git identity, base-dir restriction, GPG/SSH commit signing, auth mode, logging level.
 
+### CLI flags
+
+npm scripts (`start:stdio`, `start:http`) act as transport-mode-selecting entry points.
+
 ## Authentication
 
-### flow
+### None / implicit (local-resource gating)
 
-three modes — `none` (default), `jwt` (32+ char secret), `oauth` (OIDC provider).
+Default `none` mode — trust derives from transport (stdio) and base-dir restriction. `AUTH_MODE=none` for dev.
 
-### where credentials come from
+### JWT
 
-env vars or request headers.
+`jwt` mode — 32+ char secret required. HTTP-mode opt-in.
+
+### OAuth 2.x with issuer + JWKS (HTTP-mode bolt-on)
+
+`oauth` mode with OIDC provider. One of three modes selectable via `AUTH_MODE` switch (`none|jwt|oauth`).
 
 ## Multi-tenancy
 
-### tenancy model
+### Workspace-scoped sandboxing within a single tenant
 
-workspace-keyed via base-directory restriction; per-session working-directory management.
+Workspace-keyed via base-directory restriction (`BASE_DIR` env var). Server constrains per-session operations to the configured base directory. Per-session working-directory management lets one server process serve multiple stdio sessions, each scoped to its own subdirectory within the allowlisted base — adds a per-session layer atop the server-wide root constraint.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### npm via npx / bunx
 
-28 tools across 7 categories (repo management, staging/commits, history inspection, analysis, branching/merging, remote ops, advanced workflows); 1 resource (repo metadata); 1 prompt.
+npm: `npx @cyanheads/git-mcp-server@latest`. Bun: `bunx @cyanheads/git-mcp-server@latest`. Published package: `@cyanheads/git-mcp-server`.
 
-## Observability
+## Entry point and launch
 
-### logging destination + format, metrics, tracing, debug flags
+### `npx -y <package>` / `bunx`
 
-structured via Pino; request context tracking for auditing; optional OpenTelemetry for traces/metrics; log level configurable.
+Primary host-config snippet: `npx @cyanheads/git-mcp-server@latest` or `bunx @cyanheads/git-mcp-server@latest`.
 
-## Host integrations shown in README or repo
+### npm scripts (start/start:stdio/start:http)
 
-### Cline
+`npm run start:stdio` and `npm run start:http` are the explicit transport-mode launchers.
 
-MCP client configs (e.g., `cline_mcp_settings.json`) documented.
+## Build and packaging
 
-### Cloudflare Workers
+### npm/Node toolchain
 
-deployment pipeline.
+`package.json` with build scripts for both Node and Bun targets.
 
-## Claude Code plugin wrapper
+## Schema and types
 
-### presence and shape
+### Zod (TypeScript)
 
-not present.
+Zod for env-var and runtime validation.
 
-## Tests
+## Container artifacts
 
-### presence, framework, location, notable patterns
+### Dockerfile (single-stage, build-from-source)
 
-present; Bun test runner with Vitest compatibility; coverage reports.
+Dockerfile present (implied by Bun build path); no docker-compose found.
+
+### Cloudflare Workers config
+
+Cloudflare Workers deployment pipeline documented as an additional deploy target alongside the Dockerfile.
+
+## Test stack
+
+### Bun test runner with Vitest compatibility
+
+Bun test runner with Vitest compatibility; coverage reports.
 
 ## CI
 
-### presence, system, triggers, what it runs
+### GitHub Actions
 
-present; `npm run devcheck` (lint, format, typecheck); dependency audit; unit + integration test suite.
+CI present; `npm run devcheck` runs lint, format, typecheck; dependency audit; unit + integration test suite.
 
-## Container / packaging artifacts
+### Build + test + supply-chain scan
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+Dependency audit alongside lint/format/typecheck and test suite.
 
-Dockerfile present (implied by Bun build); no docker-compose found.
+## Deployment topology
 
-## Example client / developer ergonomics
+### Local stdio process per session
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+Default deployment as a local stdio process per session.
 
-MCP client configuration examples; dev mode with file watching; session-specific working-directory management.
+### Self-hosted HTTP server
 
-## Repo layout
+HTTP transport supports self-hosted deployment shape (configurable port 3015, hostname).
 
-### single-package / monorepo / vendored / other
+### Edge / serverless deployment (Cloudflare Workers, V8 isolate)
 
-single-package, organized by concern: `src/` (tools/, resources/, transports/, services/, storage/, config/, utils/, container/), `tests/` mirrored structure; config files: `package.json`, `tsconfig.json`, `.env.example`.
+Cloudflare Workers documented as an additional deploy target alongside the Dockerfile — `wrangler.toml`/`wrangler.jsonc` available.
 
-## Notable structural choices
+## Repository layout
 
-Dual runtime support (Node 20+, Bun 1.2+) with auto-detection. Structured logging with request context for audit trails. Optional OTel instrumentation for observability. Dependency injection (tsyringe) for testable design. Multi-tenant sandboxing via base-directory constraints.
+### Single-package, organized subdirectories
 
-## Unanticipated axes observed
+Single-package, organized by concern: `src/` (tools/, resources/, transports/, services/, storage/, config/, utils/, container/), `tests/` mirroring source structure. Config files: `package.json`, `tsconfig.json`, `.env.example`.
 
-Runtime auto-detection between Node and Bun — axis: multi-runtime support. Multi-tenant sandboxing via base-directory restriction — axis: workspace isolation in a stdio server. Session-based working-directory isolation.
+## Host integration
 
-## Gaps
+### Windsurf / Goose / Qodo Gen / Cline / Kiro / Augment
 
-Exact last-commit details (only date). Full CI pipeline details not visible in README. OTel configuration examples not provided.
+Cline MCP client configs (e.g., `cline_mcp_settings.json`) documented.
+
+## Observability
+
+### Pino / Winston structured logging (Node)
+
+Structured logging via Pino; log level configurable via env var.
+
+### Request context tracking for audit
+
+Request context tracking for auditing.
+
+### OpenTelemetry instrumentation
+
+Optional OpenTelemetry for traces and metrics (instrumentation off by default).
+
+### Env-var-controlled log level
+
+Log level configured via env var.
+
+## Developer ergonomics
+
+### Linter and type-checker stack
+
+`npm run devcheck` aggregates lint, format, and typecheck.
+
+### Sample MCP client configs in repo
+
+MCP client configuration examples in repo; dev mode with file watching; session-specific working-directory management.
+
+## Claude Code plugin / skill wrapper
+
+### Bare MCP server, no Claude Code wrapper
+
+Not present.
+
+## Release and lifecycle
+
+### Active development
+
+Last commit April 19, 2026; 207 stars.
+
+### License — Permissive (MIT / Apache-2.0)
+
+Apache-2.0.

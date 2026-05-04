@@ -1,205 +1,155 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/marlonluo2018/pandas-mcp-server`. Pandas DataFrame analysis MCP server — blacklist-sandboxed pandas code execution for data exploration; generates Chart.js visualizations to disk. ~40 stars, MIT, default branch `main`, moderate-activity repo.
 
-### url
+## Server runtime
 
-https://github.com/marlonluo2018/pandas-mcp-server
+### Python with FastMCP
 
-### stars
-
-~40
-
-### last-commit
-
-not explicitly surfaced; moderate-activity repo
-
-### license
-
-MIT
-
-### default branch
-
-main
-
-### one-line purpose
-
-Pandas DataFrame analysis MCP server — blacklist-sandboxed pandas code execution for data exploration.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Python (84.6%), HTML (15.4%); Python 3.10+
-
-### framework/SDK in use
-
-FastMCP (`fastmcp >= 1.0.0`) — suggests FastMCP 1.x era or the built-in `mcp.server.fastmcp` submodule
+Python (84.6%) plus HTML (15.4%); Python 3.10+; FastMCP runtime declared as `fastmcp >= 1.0.0` — lower bound suggests FastMCP 1.x-compatible usage. Import pattern likely `from fastmcp import FastMCP` or via `mcp.server.fastmcp`. Hand-authored tool schemas likely with Pydantic via FastMCP. Pandas execution sync by nature.
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio (MCP default)
+MCP default; no alternate transport documented.
 
-### how selected
+### Selection mechanism
 
-stdio only (no alternate transport documented)
+Implicit single mode — stdio only.
 
-## Distribution
+## Capability surface
 
-### every mechanism observed
+### Tools-only, hand-curated narrow surface
 
-source clone + `pip install -r requirements.txt`; `uvx pandas-mcp-cli` hinted
+4 tools: `read_metadata_tool` (file structure), `interpret_column_data` (column value patterns), `run_pandas_code_tool` (sandboxed pandas execution), `generate_chartjs_tool` (interactive chart generation). No resources, prompts, sampling, or other primitives.
 
-### published package name(s)
+### Single code-execution tool with sandbox
 
-`pandas-mcp-cli` (inferred from uvx command)
+`run_pandas_code_tool` accepts arbitrary pandas code and executes server-side under a string-level denylist filter. Replaces N hand-enumerated per-operation tools with one flexible primitive. Resource accounting via `psutil` for memory/CPU budgeting of user-submitted code.
 
-### install commands shown in README
+## Configuration delivery
 
-`pip install -r requirements.txt`; `uvx pandas-mcp-cli`
+### Dotenv file
 
-### pitfalls observed
-
-Whether `pandas-mcp-cli` is actually a published PyPI package not verified.
-
-## Entry point / launch
-
-### command(s) users/hosts run
-
-`python server.py` (server), `python cli.py` (CLI), `uvx pandas-mcp-cli`
-
-### wrapper scripts, launchers, stubs
-
-`server.py` and `cli.py` at repo root
-
-## Configuration surface
-
-### how config reaches the server
-
-optional `.env` file with `.env.example` template
+Optional `.env` file with `.env.example` template shipped in repo.
 
 ## Authentication
 
-### flow
+### None / implicit (local-resource gating)
 
-none
-
-### where credentials come from
-
-N/A
+No auth — local data exploration; trust derived from process boundary. Operates on user-supplied CSV/data paths.
 
 ## Multi-tenancy
 
-### tenancy model
+### Single-user / single-tenant per process
 
-single-user; operates on user-supplied CSV/data paths per call
+Single-user; operates on user-supplied CSV/data paths per call.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### Source clone with editable install
 
-4 tools — `read_metadata_tool` (file structure), `interpret_column_data` (column value patterns), `run_pandas_code_tool` (sandboxed pandas execution), `generate_chartjs_tool` (interactive chart generation)
+`pip install -r requirements.txt` after clone is the documented install path.
+
+### PyPI via uvx (zero-install runner)
+
+`uvx pandas-mcp-cli` hinted (whether the package is actually published to PyPI not verified).
+
+## Entry point and launch
+
+### Bare interpreter + script path
+
+`python server.py` (server) and `python cli.py` (CLI) — bare scripts at repo root.
+
+### `uvx <package>`
+
+`uvx pandas-mcp-cli` if the package is published.
+
+## Build and packaging
+
+### Requirements-driven (legacy Python)
+
+`requirements.txt` only (no `uv.lock`). Build backend not surfaced; pip-only version manager convention.
+
+### Pin discipline (Python)
+
+Loose pin `fastmcp >= 1.0.0` — minimal-ceremony posture. `pytest>=8.3.5` and `pillow>=11.2.1` declared in core deps; `pytest` as a runtime dep is likely an oversight (would normally be a dev extra).
+
+## Schema and types
+
+### FastMCP auto-derivation from type hints
+
+Pydantic via FastMCP; tool schemas hand-authored or auto-derived from typed signatures.
+
+### Async model (cross-cutting)
+
+Sync throughout — pandas operations are sync by nature.
+
+## Test stack
+
+### pytest with async + coverage
+
+pytest-style tests at repo root (`test_metadata.py`, `test_execution.py`, `test_generate_barchart.py`) — nonstandard location (top-level rather than `tests/`).
 
 ## Observability
 
-### logging destination + format, metrics, tracing, debug flags
+### File-system artifacts as side effects
 
-logs written to `./logs/`; chart outputs to `./charts/` — both file-system based
+Logs written to `./logs/`; chart outputs to `./charts/` — both file-system based. Tool returns paths, not data.
 
-## Host integrations shown in README or repo
+## Safety and security posture
 
-### Claude Desktop
+### Blacklist-filtered code execution
 
-Windows/macOS/Linux config paths documented with command/args form
+Server accepts user-submitted pandas code and filters dangerous operations via a string-level denylist. Resource accounting via `psutil`. A known-fragile approach (string-level denylist vs process isolation or restricted exec); the convenience of in-process execution is taken over the risk of denylist gaps.
 
-## Claude Code plugin wrapper
+## Container artifacts
 
-### presence and shape
+### No container artifacts
 
-none observed
-
-## Tests
-
-### presence, framework, location, notable patterns
-
-`test_metadata.py`, `test_execution.py`, `test_generate_barchart.py` at root — pytest-style but located at top level
+No Dockerfile or docker-compose mentioned.
 
 ## CI
 
-### presence, system, triggers, what it runs
+### None / absent
 
-none mentioned
+No CI configured.
 
-## Container / packaging artifacts
+## Host integration
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+### Per-OS path documentation
 
-none mentioned
+Claude Desktop section enumerates Windows/macOS/Linux config paths with command/args form.
 
-## Example client / developer ergonomics
+### Claude Desktop
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+Documented integration via per-OS config-file paths.
 
-`.env.example`; per-OS Claude Desktop paths
+## Repository layout
 
-## Repo layout
+### Single-package flat layout
 
-### single-package / monorepo / vendored / other
+Flat layout — `/core` subdirectory (metadata, execution, visualization, chart_generators); scripts at repo root. "Hackable" community server layout.
 
-flat layout — `/core` subdirectory (metadata, execution, visualization, chart_generators); scripts at root
+## Documentation surface
 
-## Notable structural choices
+### README as the canonical surface
 
-Security posture: "sandboxed pandas execution" via blacklist filtering of malicious operations — string-level denylist is a known-fragile approach versus process isolation or restricted exec. Generates HTML with Chart.js and writes to `./charts/` — chart artifacts persist on disk; MCP client has to read the file path. Uses `psutil` in core deps — likely for memory/CPU budgeting of user-submitted code.
+Single README.md.
 
-## Unanticipated axes observed
+## Release and lifecycle
 
-Persistent file-system output as the tool return channel (return a path, not data) for visualizations. Blacklist-based sandboxing for arbitrary pandas code execution — a fundamentally different trust model than pure read-only tool servers.
+### License — Permissive (MIT / Apache-2.0)
 
-## Python-specific
+MIT license.
 
-### SDK / framework variant
+### Active development
 
-FastMCP (`fastmcp >= 1.0.0`); lower bound suggests FastMCP 1.x–compatible usage. Version pin from pyproject.toml: `fastmcp >= 1.0.0`. Import pattern observed likely `from fastmcp import FastMCP` or via `mcp.server.fastmcp`.
+Moderate-activity repo.
 
-### Python version floor
+## Claude Code plugin / skill wrapper
 
-`requires-python` value: Python 3.10+ (per README)
+### Bare MCP server, no Claude Code wrapper
 
-### Packaging
-
-Build backend not surfaced. Lock file: `requirements.txt` only (no uv.lock). Version manager convention: pip-only.
-
-### Entry point
-
-Bare scripts (`server.py`, `cli.py`). No console-script names locally; `pandas-mcp-cli` via uvx suggests a PyPI publication. Host-config snippet shape: `python <path>/server.py` in Claude Desktop config.
-
-### Install workflow expected of end users
-
-Source clone + pip. One-liner the README recommends: `pip install -r requirements.txt` after clone.
-
-### Async and tool signatures
-
-Not surfaced; pandas code execution is sync by nature.
-
-### Type / schema strategy
-
-Pydantic via FastMCP; hand-authored tool schemas likely.
-
-### Testing
-
-pytest (inferred from `test_*.py` naming). Fixture style not inspected.
-
-### Dev ergonomics
-
-not surfaced
-
-### Notable Python-specific choices
-
-`psutil` as a core dep — used for resource accounting around the pandas sandbox. `chardet>=5.0.0` in core — auto-detects CSV encoding, a frequent real-world pain point. Tests at repo root rather than `tests/` directory — nonstandard location.
-
-## Gaps
-
-Whether `pandas-mcp-cli` is actually a published PyPI package not verified. License/CI/Docker absence vs just not documented not determined. Exact dependency pin list beyond pandas/fastmcp/chardet/psutil not read.
+No `.claude-plugin/` directory or Claude Code wrapper.

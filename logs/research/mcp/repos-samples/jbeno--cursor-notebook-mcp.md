@@ -1,205 +1,155 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/jbeno/cursor-notebook-mcp`. Cursor notebook MCP server — operates on Jupyter notebooks (local and remote-over-SFTP) for Cursor and other MCP hosts. ~158 stars, CC BY-NC-SA 4.0 (Creative Commons NonCommercial), default branch `main`, version 0.3.2 referenced.
 
-### url
+## Server runtime
 
-https://github.com/jbeno/cursor-notebook-mcp
+### Python with both MCP SDK and FastMCP declared
 
-### stars
-
-~158
-
-### last-commit
-
-active; version 0.3.2 referenced
-
-### license
-
-CC BY-NC-SA 4.0 (Creative Commons, NonCommercial)
-
-### default branch
-
-main
-
-### one-line purpose
-
-Cursor notebook MCP server — SFTP transport for operating on remote Jupyter notebooks; CC BY-NC-SA license.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Python 3.10+
-
-### framework/SDK in use
-
-FastMCP 2.x (`fastmcp >= 2.7.0, < 2.11`) plus raw `mcp >= 0.1.0` as fallback
+Python 3.10+ server (`requires-python = ">=3.10"`) declaring both FastMCP 2.x (`fastmcp >= 2.7.0, < 2.11`) and raw `mcp >= 0.1.0` as dependencies. The narrow `< 2.11` upper bound explicitly guards against FastMCP 2.11 breaking changes. Pydantic pinned `>=2.0.0, <2.12.0`. Dual import pattern (`fastmcp` plus `mcp`) suggests a migration or compatibility shim. Async (FastMCP + starlette + uvicorn).
 
 ## Transport
 
-### supported transports
+### stdio
 
-Streamable HTTP (recommended), SSE (legacy), stdio
+Supported transport; selectable via Cursor JSON config (command form).
 
-### how selected
+### Streamable HTTP
 
-CLI flags `--host`, `--port`; transport inferred from Cursor JSON config (URL vs command)
+Recommended transport. Selectable via `--host` and `--port` CLI flags; HTTP host-config snippet shape: `{"url": "http://127.0.0.1:8080/mcp"}` in Cursor config. Whether HTTP transport uses FastMCP's `streamable-http` or a custom Starlette mount is not confirmed.
 
-## Distribution
+### SSE (Server-Sent Events)
 
-### every mechanism observed
+Legacy transport supported.
 
-PyPI (`pip install`, `uv pip install`), editable dev install
+### SFTP / SSH for remote resource access
 
-### published package name(s)
+The MCP server speaks stdio/HTTP to the host but the data plane reaches remote Jupyter notebooks over SFTP/SSH. `paramiko >= 2.8.0` is a core dep — SFTP support is mainline, not optional. Workspace-root enforcement applies to remote paths as well as local.
 
-`cursor-notebook-mcp`
+### Selection mechanism
 
-### install commands shown in README
+Transport inferred from Cursor JSON config (URL vs command). CLI flags `--host`, `--port` apply to HTTP mode.
 
-`pip install cursor-notebook-mcp`, `uv pip install cursor-notebook-mcp`, `pip install -e ".[dev]"`
+## Capability surface
 
-## Entry point / launch
+### Domain-bundled tool set
 
-### command(s) users/hosts run
+25+ notebook-management tools — `notebook_create`, `notebook_read`, `notebook_edit_cell`, `notebook_add_cell`, `notebook_export`, `notebook_search`, `notebook_get_outline`, `notebook_get_server_path_context`, plus SFTP-compatible variants. Notebook-domain entities (notebooks, cells, outlines) modeled as discrete callable units.
 
-`cursor-notebook-mcp` console script or `python -m cursor_notebook_mcp.server`
+## Configuration delivery
 
-### wrapper scripts, launchers, stubs
+### CLI flags
 
-`run_tests.sh` / `run_tests.ps1` test wrappers
+`--host`, `--port`, `--allow-root`, `--sftp-key`, `--sftp-password`, `--sftp-auth-mode` (auto/key/password/key+interactive). `--allow-root` is required for local-path access (explicit local opt-in).
 
-## Configuration surface
+### Host-side JSON config snippet
 
-### how config reaches the server
-
-CLI flags (`--host`, `--port`, `--allow-root`, `--sftp-*`); Cursor `mcp.json` files (global `~/.cursor/mcp.json` or project-scoped `.cursor/mcp.json`)
+Cursor `mcp.json` files — global `~/.cursor/mcp.json` or project-scoped `.cursor/mcp.json`. Both levels documented explicitly.
 
 ## Authentication
 
-### flow
+### SFTP / SSH credentials
 
-SFTP/SSH for remote notebook access
+Credentials for the SFTP/SSH data plane supplied via `--sftp-key`, `--sftp-password`, with `--sftp-auth-mode` selector (auto/key/password/key+interactive). Interactive prompts supported.
 
-### where credentials come from
+### None / implicit (local-resource gating)
 
-`--sftp-key`, `--sftp-password`, `--sftp-auth-mode` (auto/key/password/key+interactive); interactive prompts supported
+Local-mode access uses workspace-root gating via `--allow-root` rather than authentication; the trust boundary is path scope rather than identity.
 
 ## Multi-tenancy
 
-### tenancy model
+### Workspace-scoped sandboxing within a single tenant
 
-workspace-keyed — workspace root restrictions enforced via `os.path.realpath`; `--allow-root` required for local-path access
+Workspace root restrictions enforced via `os.path.realpath`. `--allow-root` is required for local-path access. Single-user but with explicit workspace-root boundaries; path-traversal defense bounds the blast radius.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### PyPI via pip / pipx
 
-25+ tools — `notebook_create`, `notebook_read`, `notebook_edit_cell`, `notebook_add_cell`, `notebook_export`, `notebook_search`, `notebook_get_outline`, `notebook_get_server_path_context`, plus SFTP-compatible variants
+`pip install cursor-notebook-mcp` and `uv pip install cursor-notebook-mcp`. Published package name: `cursor-notebook-mcp`.
 
-## Observability
+### Source clone with editable install
 
-### logging destination + format, metrics, tracing, debug flags
+`pip install -e ".[dev]"` for development.
 
-not surfaced
+## Entry point and launch
 
-## Host integrations shown in README or repo
+### Console script via `[project.scripts]` / npm bin
 
-### Cursor
+Console script `cursor-notebook-mcp` registered.
 
-`.cursor/mcp.json` (project) or `~/.cursor/mcp.json` (global) — explicit dual-level config documented
+### Module invocation / `python -m <module>` fallback
 
-### Claude Desktop
+`python -m cursor_notebook_mcp.server` available as alternate entry.
 
-implied via stdio transport
+## Build and packaging
 
-## Claude Code plugin wrapper
+### Pin discipline (Python)
 
-### presence and shape
+Narrow version window `fastmcp >= 2.7.0, < 2.11` (explicit guard against FastMCP 2.11 breaking changes). Pydantic pinned `>=2.0.0, <2.12.0`.
 
-none observed; optimized for Cursor specifically
+## Schema and types
 
-## Tests
+### FastMCP auto-derivation from type hints
 
-### presence, framework, location, notable patterns
+FastMCP auto-derives schemas from signatures.
 
-pytest + pytest-asyncio + pytest-cov + pytest-timeout; `tests/` directory; `test_plan.md` with scenario-based test documentation; cross-platform test runners
+### Pydantic v2 models
+
+Pydantic 2.x in core deps (`>=2.0.0, <2.12.0`).
+
+## Test stack
+
+### pytest with async + coverage
+
+pytest + pytest-asyncio + pytest-cov + pytest-timeout. `tests/` directory with scenario-based test plan in `test_plan.md`.
 
 ## CI
 
-### presence, system, triggers, what it runs
+### GitHub Actions
 
-GitHub Actions in `.github/`
+CI present in `.github/`.
 
-## Container / packaging artifacts
+## Safety and security posture
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+### Workspace path enforcement (canonicalization)
 
-none observed
+Workspace-root restrictions enforced via `os.path.realpath` — explicit path-traversal defense. `--allow-root` gates local-path access; SFTP mode also bounded by workspace-root realpath checks.
 
-## Example client / developer ergonomics
+## Repository layout
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+### Single-package src-layout
 
-`cursor_rules.md` (AI guidance rules), `test_plan.md`, example notebooks in `examples/`
+Single-package (`cursor_notebook_mcp/`) with `examples/` and `tests/` siblings.
 
-## Repo layout
+## Host integration
 
-### single-package / monorepo / vendored / other
+### Cursor
 
-single-package (`cursor_notebook_mcp/`) + `examples/` + `tests/`
+`.cursor/mcp.json` (project) or `~/.cursor/mcp.json` (global) — explicit dual-level config documented.
 
-## Notable structural choices
+### Claude Desktop
 
-Non-commercial license (CC BY-NC-SA 4.0) is rare for MCP servers, which overwhelmingly pick permissive licenses; this limits commercial adoption. Dual MCP framework deps — both `fastmcp` and raw `mcp` — suggest a migration or compatibility shim. SFTP transport for notebook files operates on remote notebooks over SSH, not just local; this brings `paramiko>=2.8.0` into core deps. Workspace-root enforcement via `os.path.realpath` is an explicit path-traversal defense.
+Implied via stdio transport.
 
-## Unanticipated axes observed
+## Developer ergonomics
 
-MCP server accessing remote filesystem over SFTP (not HTTP/REST) — the server itself is a local process but files live remotely; workspace-root boundary as a security primitive; a `cursor_rules.md` file shipped *alongside* the MCP server as AI-guidance content (neither MCP tool nor MCP prompt — just bundled documentation for the LLM to read).
+### PowerShell + batch scripts
 
-## Python-specific
+Cross-platform test runners `run_tests.sh` and `run_tests.ps1` — Windows parity is explicit, not an afterthought. `test_plan.md` with scenario-based test documentation; example notebooks in `examples/`.
 
-### SDK / framework variant
+## Documentation surface
 
-FastMCP 2.x (`>=2.7.0, <2.11`) with `mcp>=0.1.0` also declared. Version pins from pyproject.toml — `fastmcp>=2.7.0,<2.11`, `pydantic>=2.0.0,<2.12.0`. Import pattern observed: `fastmcp` + `mcp`.
+### Bundled `cursor_rules.md` / AI-guidance content
 
-### Python version floor
+`cursor_rules.md` shipped alongside the server as bundled AI-guidance content (neither MCP tool nor MCP prompt) — context for the LLM to read.
 
-`requires-python` value — `>=3.10`
+## Release and lifecycle
 
-### Packaging
+### Active development
 
-Build backend not surfaced. Lock file not surfaced. Version manager convention: pip / uv pip compatible.
+Active, with version 0.3.2 referenced.
 
-### Entry point
+### License — Copyleft / non-commercial (CC BY-NC-SA)
 
-Both `cursor-notebook-mcp` console script and `python -m cursor_notebook_mcp.server`. Console-script name: `cursor-notebook-mcp`. Host-config snippet shape for HTTP transport: `{"url": "http://127.0.0.1:8080/mcp"}` in Cursor config.
-
-### Install workflow expected of end users
-
-pip + uv pip. One-liner the README recommends — `pip install cursor-notebook-mcp`.
-
-### Async and tool signatures
-
-async (FastMCP + starlette + uvicorn)
-
-### Type / schema strategy
-
-Pydantic 2.x (`>=2.0.0, <2.12.0`); FastMCP auto-derives from signatures.
-
-### Testing
-
-pytest + pytest-asyncio + pytest-cov + pytest-timeout. Fixture style: scenario-based test plan in `test_plan.md`.
-
-### Dev ergonomics
-
-`run_tests.sh` and `run_tests.ps1` for cross-platform test wrappers.
-
-### Notable Python-specific choices
-
-Pinned FastMCP to a narrow `>=2.7.0,<2.11` window, explicitly guarding against FastMCP 2.11 breaking changes. `paramiko` as a core dep — SFTP support is mainline, not optional. Dual-platform shell scripts (`.sh`/`.ps1`) for test invocation — Windows parity is explicit, not an afterthought.
-
-## Gaps
-
-Whether HTTP transport is FastMCP's `streamable-http` or a custom Starlette mount is not confirmed. Lock file convention not verified. Whether SFTP backend is mandatory or falls back to local when no SFTP args given is unclear — the `--allow-root` gating suggests explicit local opt-in.
+CC BY-NC-SA 4.0 — non-commercial license. Limits commercial adoption.

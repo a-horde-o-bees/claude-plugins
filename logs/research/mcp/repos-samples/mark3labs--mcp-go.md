@@ -1,171 +1,155 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/mark3labs/mcp-go`. Go MCP SDK — framework for building MCP servers in Go; widely-adopted community SDK. 8,600 stars, MIT, default branch `main`, last commit April 14, 2026 (v0.48.0).
 
-### url
+## Server runtime
 
-https://github.com/mark3labs/mcp-go
+### Go with mark3labs/mcp-go SDK
 
-### stars
-
-8,600
-
-### last-commit
-
-April 14, 2026 (v0.48.0 release)
-
-### license
-
-MIT
-
-### default branch
-
-main
-
-### one-line purpose
-
-Go MCP SDK — framework for building MCP servers in Go.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Go 1.25.5+
-
-### framework/SDK in use
-
-Anthropic's Model Context Protocol (MCP) specification; Go stdlib net/http
+Go 1.25.5+ library exposing constructors, registration calls (`server.NewMCPServer()`, `RegisterSession()`), and transport-method launch points. Uses Go stdlib `net/http` for HTTP-tier needs. Native Go structs become tool arguments with automatic JSON-Schema generation. Distributed as `github.com/mark3labs/mcp-go`. Library, not a runnable server itself — applications embed the SDK.
 
 ## Transport
 
-### supported transports
+### stdio
 
-Stdio, SSE (Server-Sent Events), Streamable HTTP
+`server.ServeStdio()` entry method.
 
-### how selected
+### SSE (Server-Sent Events)
 
-Separate entry point methods: `server.ServeStdio()`, `server.ServeSSE()`, `server.ServeHTTP()`
+`server.ServeSSE()` entry method.
 
-## Distribution
+### Streamable HTTP
 
-### every mechanism observed
+`server.ServeHTTP()` entry method.
 
-go get, source build
+### Selection mechanism
 
-### published package name(s)
+Separate entry points per transport — caller picks `ServeStdio()` / `ServeSSE()` / `ServeHTTP()` at code level rather than via runtime config.
 
-github.com/mark3labs/mcp-go (Go module)
+## Capability surface
 
-### install commands shown in README
+### Tools plus resources plus prompts (full primitive coverage)
 
-`go get github.com/mark3labs/mcp-go`
+SDK supports Tools, Resources, Prompts, plus Sessions (per-client state), Notifications, request hooks for telemetry, and Recovery middleware that catches panics in tool handlers.
 
-## Entry point / launch
+### Runtime tool registration API
 
-### command(s) users/hosts run
+Server exposes a programmatic API for registering tools/resources/prompts via constructor and method calls.
 
-Server initialization via `server.NewMCPServer()` constructor; transport method determines launch (stdio, SSE, or HTTP listener)
+## Configuration delivery
 
-### wrapper scripts, launchers, stubs
+### Functional options at construction (code-level)
 
-None documented; applications embed the SDK directly
-
-## Configuration surface
-
-### how config reaches the server
-
-Code-level configuration via functional options pattern: `WithToolCapabilities()`, `WithTaskCapabilities()`, `WithMaxConcurrentTasks()`, `RegisterSession()`, middleware registration for tools/prompts/recovery
+Configuration via functional options pattern — `WithToolCapabilities()`, `WithTaskCapabilities()`, `WithMaxConcurrentTasks()`, `RegisterSession()`, plus middleware registration for tools/prompts/recovery. Choices baked into the consuming program's source.
 
 ## Authentication
 
-### flow
+### Application-delegated (SDK provides nothing)
 
-Session registration via `RegisterSession()` method; no explicit auth mechanism documented — delegated to transport layer
-
-### where credentials come from
-
-Application-specific, not centralized in SDK
+No auth in the SDK itself. `RegisterSession()` provides session abstraction; application wires its own auth at the transport layer.
 
 ## Multi-tenancy
 
-### tenancy model
+### Per-session state via session registration
 
-Per-request via session registration; notification channels support per-client state management
+`RegisterSession()` plus per-client notification channels enable multi-client scenarios; the SDK supports per-session state isolation.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### Go module via `go get` / `go install`
 
-Tools, Resources, Prompts, Sessions (per-client state), Notifications, Request hooks for telemetry, Recovery middleware for panics
+`go get github.com/mark3labs/mcp-go`. Library use case — no published binary needed.
 
-## Observability
+## Build and packaging
 
-### logging destination + format, metrics, tracing, debug flags
+### Go modules (`go.mod` / `go.sum`)
 
-Request hooks for telemetry across all functionality; Recovery middleware captures tool execution panics; Session tracking with notification channels for per-client events
+`go.mod` declares module path `github.com/mark3labs/mcp-go` with Go 1.25.5+ toolchain constraint; the Go toolchain resolves dependencies and builds without a separate package manager. No published binary — consumers add the module via `go get` and the build is the application's `go build`.
 
-## Host integrations shown in README or repo
+## Entry point and launch
 
-### Claude Desktop
+### SDK constructor + transport-method launch
 
-Not explicitly documented in provided content
+Consumer's `main` calls `server.NewMCPServer()`, then dispatches via `ServeStdio()` / `ServeSSE()` / `ServeHTTP()`. The launcher is application code, not an SDK-provided binary.
 
-### Claude Code
+## Schema and types
 
-Not documented
+### Go automatic schema generation
 
-### pitfalls observed
+Native Go structs become tool arguments with automatic JSON-Schema generation via the SDK's reflection. Type-safe schemas without runtime reflection cost.
 
-No host-specific integrations documented; SDK expects applications to handle host integration
+## Test stack
 
-## Claude Code plugin wrapper
+### Go stdlib testing
 
-### presence and shape
-
-Not present; this is an SDK for building servers, not a server itself
-
-## Tests
-
-### presence, framework, location, notable patterns
-
-Test framework present (Go stdlib testing); located in `*_test.go` files and `e2e/` directory; patterns include end-to-end tests and unit tests for core functionality
+Test files in `*_test.go` files plus an `e2e/` directory; patterns include end-to-end and unit tests for core functionality.
 
 ## CI
 
-### presence, system, triggers, what it runs
+### GitHub Actions
 
-GitHub Actions; workflows present: `ci.yml` (main testing), `golangci-lint.yml` (linting), `pages.yml` (documentation), `release.yml` (release automation); triggers on push/PR
+`.github/workflows/`: `ci.yml` (main testing), `golangci-lint.yml` (linting), `pages.yml` (documentation), `release.yml` (release automation); triggers on push/PR.
 
-### pitfalls observed
+### GitHub Actions plus dedicated lint config
 
-Explicit language version tested in CI not confirmed (go.mod specifies 1.25.5 but CI workflow content not fully detailed).
+`.golangci.yml` separately versioned; lint runs as a CI step.
 
-## Container / packaging artifacts
+### Release-cut workflow on tag push
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+`release.yml` for release automation triggered on tag push.
 
-Not present for the SDK itself; examples may include containerization
+## Observability
 
-## Example client / developer ergonomics
+### Request lifecycle hooks for telemetry
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+SDK exposes request hooks across all functionality so applications can wire OpenTelemetry, metrics, or logging without modifying SDK code. Recovery middleware captures tool execution panics so a bad tool call doesn't crash the process.
 
-20 example implementations included covering client, server, HTTP, SSE, OAuth, roots, sampling, structured tools, tasks; patterns for in-process integration and custom transports
+### Change-notification channels / JSON-RPC notifications
 
-## Repo layout
+Per-client notification channels for tool/resource/prompt updates and per-client events.
 
-### single-package / monorepo / vendored / other
+## Host integration
 
-Single-package SDK; organized by functionality: `mcp/` (protocol), `client/`, `server/`, `util/`, `mcptest/`, `examples/`, `e2e/`, `.github/`
+### No host integration documentation
 
-## Notable structural choices
+SDK targets application authors — host-specific integrations are the consuming application's responsibility, not the SDK's.
 
-Request lifecycle hooks enable custom observability without modifying core code. Session-based per-client state management allows multi-user scenarios. Separate entry methods for different transports avoid configuration complexity. 20+ examples covering diverse patterns suggest strong developer onboarding focus. No built-in authentication in SDK; delegates to transport/application layer.
+### Production reference implementation
 
-## Unanticipated axes observed
+20 example implementations cover client, server, HTTP, SSE, OAuth, roots, sampling, structured tools, tasks; patterns for in-process integration and custom transports demonstrate real-world wiring.
 
-Task-augmented tool execution (asynchronous with concurrency limits) differentiates this SDK from basic tool registries. Recovery middleware for panics in tool handlers is an unusual operational safety feature. Notification channels for client-specific events support event-driven server architectures.
+## Repository layout
 
-## Gaps
+### Single-package, organized subdirectories
 
-Explicit language version tested in CI not confirmed (go.mod specifies 1.25.5 but CI workflow content not fully detailed). Docker containerization patterns for production deployment not documented in SDK itself. CI workflow files in `.github/workflows/ci.yml` could be examined for test framework confirmation.
+Single-package SDK organized by functionality: `mcp/` (protocol), `client/`, `server/`, `util/`, `mcptest/`, `examples/`, `e2e/`, `.github/`.
+
+## Developer ergonomics
+
+### Examples directory with many patterns
+
+20+ runnable patterns covering the full surface — client, server, HTTP, SSE, OAuth, roots, sampling, structured tools, tasks; in-process integration patterns and custom transport patterns.
+
+### Linter and type-checker stack
+
+`golangci-lint` configured via `.golangci.yml`.
+
+## Release and lifecycle
+
+### License — Permissive (MIT / Apache-2.0)
+
+MIT license.
+
+### Active development
+
+v0.48.0 released April 14, 2026; ongoing maintenance.
+
+### Tagged release with version in changelog
+
+Standard semver tag (v0.48.0); release pipeline produces tagged releases.
+
+## Claude Code plugin / skill wrapper
+
+### Bare MCP server, no Claude Code wrapper
+
+This is an SDK for building servers, not a server itself; no Claude Code wrapper.

@@ -1,167 +1,89 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/jparkerweb/mcp-sqlite`. SQLite MCP server — schema exploration and parameterized SQL execution against a local SQLite file. 99 stars, MIT, default branch `main`.
 
-### url
+## Server runtime
 
-https://github.com/jparkerweb/mcp-sqlite
+### Node.js / TypeScript with official MCP SDK
 
-### stars
-
-99
-
-### last-commit
-
-Not explicitly shown in GitHub UI
-
-### license
-
-MIT
-
-### default branch
-
-main
-
-### one-line purpose
-
-SQLite MCP server — schema exploration and SQL execution.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-TypeScript/JavaScript, Node.js 14.0.0+
-
-### framework/SDK in use
-
-MCP SDK (@modelcontextprotocol/sdk ^1.12.1), sqlite3
+TypeScript/JavaScript on Node.js 14.0.0+ using `@modelcontextprotocol/sdk ^1.12.1`. Uses `sqlite3` as the database driver.
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio
+Default and only transport documented; no transport selection mechanism surfaced in README.
 
-### how selected
+## Capability surface
 
-Default, no transport selection mechanism documented
+### Tools-only, hand-curated narrow surface
 
-## Distribution
+Hand-curated tool surface for database introspection, CRUD operations, and parameterized SQL query execution. Parameterized queries protect against SQL injection.
 
-### every mechanism observed
+## Configuration delivery
 
-npm package (mcp-sqlite)
+### CLI flags
 
-### published package name(s)
+Database path passed as a positional CLI argument: `npx -y mcp-sqlite <database-path>`.
 
-mcp-sqlite
+### Host-side JSON config snippet
 
-### install commands shown in README
-
-`npx -y mcp-sqlite <database-path>`
-
-### pitfalls observed
-
-Direct npx invocation without intermediate config
-
-## Entry point / launch
-
-### command(s) users/hosts run
-
-`npx -y mcp-sqlite <database-path>`
-
-### wrapper scripts, launchers, stubs
-
-mcp-sqlite-server (CommonJS in package.json bin field)
-
-## Configuration surface
-
-### how config reaches the server
-
-Database path as CLI argument, IDE configuration via JSON
+IDE configuration via JSON (Cursor / VSCode `mcp.json`-style entries showing the npx command).
 
 ## Authentication
 
-### flow
+### None / implicit (local-resource gating)
 
-None specified
-
-### where credentials come from
-
-Not applicable
+No authentication; relies on local-file access semantics for the SQLite database.
 
 ## Multi-tenancy
 
-### tenancy model
+### Single-user / single-tenant per process
 
-Single-user per database instance
+One server instance per database file; single-user model.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### npm via npx / bunx
 
-Database introspection, CRUD operations, SQL query execution with parameterized queries
+Published as `mcp-sqlite` on npm. README install command: `npx -y mcp-sqlite <database-path>` — direct npx invocation without intermediate config.
 
-## Observability
+## Entry point and launch
 
-### logging destination + format, metrics, tracing, debug flags
+### `npx -y <package>` / `bunx`
 
-MCP Inspector test script via npm test
+`npx -y mcp-sqlite <database-path>` is the canonical launch form. The package's `bin` field registers `mcp-sqlite-server` (CommonJS).
 
-## Host integrations shown in README or repo
+## Test stack
+
+### MCP Inspector as test driver
+
+`@modelcontextprotocol/inspector` invoked via `npm test` script — protocol-level end-to-end exercise rather than unit tests.
+
+## Repository layout
+
+### Single-package source (language-conventional)
+
+Single npm package — `package.json`, README, `bin` entry. Conventional npm layout.
+
+## Host integration
 
 ### Cursor
 
-npx command
+Documented integration via npx command in MCP config.
 
-### VSCode
+### VS Code / VS Code Insiders / Visual Studio family
 
-npx command
+Documented integration via npx command in MCP config.
 
-## Claude Code plugin wrapper
+## Developer ergonomics
 
-### presence and shape
+### Inspector/debug tooling references
 
-Not present in documentation
+MCP Inspector integrated as the `npm test` driver; postinstall instructions reference Inspector for debugging.
 
-## Tests
+## Release and lifecycle
 
-### presence, framework, location, notable patterns
+### License — Permissive (MIT / Apache-2.0)
 
-Present; MCP Inspector framework; npm test script
-
-## CI
-
-### presence, system, triggers, what it runs
-
-Not documented
-
-## Container / packaging artifacts
-
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
-
-Not observed
-
-## Example client / developer ergonomics
-
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
-
-MCP Inspector integrated as test; postinstall instructions
-
-## Repo layout
-
-### single-package / monorepo / vendored / other
-
-Single npm package with package.json, README, bin entry
-
-## Notable structural choices
-
-Minimal dependencies (sqlite3 + MCP SDK only). Direct npx invocation without intermediate config. Parameterized query support for security.
-
-## Unanticipated axes observed
-
-CRUD-first design rather than query-focused like some competitors.
-
-## Gaps
-
-Last commit date not displayed in GitHub UI. CI/CD system not documented. HTTP transport alternative not documented.
+MIT.

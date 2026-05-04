@@ -1,217 +1,157 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/utensils/mcp-nixos`. nixpkgs package-manager MCP server — exposes only 2 tools as a deliberate token-efficiency strategy despite Nix's huge surface. 597 stars, MIT, default branch `main`.
 
-### url
+## Server runtime
 
-https://github.com/utensils/mcp-nixos
+### Python with FastMCP
 
-### stars
-
-597
-
-### last-commit
-
-April 3, 2026 (v2.3.1 release)
-
-### license
-
-MIT
-
-### default branch
-
-main
-
-### one-line purpose
-
-nixpkgs package-manager MCP server — exposes only 2 tools as a deliberate token-efficiency strategy despite Nix's huge surface.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Python 74.3%, TypeScript 22.7%, Nix 1.3%; Python 3.11+.
-
-### framework/SDK in use
-
-FastMCP (implied by env-var configuration naming `MCP_NIXOS_*` and standard FastMCP options).
+Python (74.3%) + TypeScript (22.7%) + Nix (1.3%); Python 3.11+. FastMCP implied by env-var configuration naming `MCP_NIXOS_*` and standard FastMCP options. FastMCP major version not surfaced in pyproject.toml.
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio (default), HTTP, Docker-wrapped.
+stdio default; `MCP_NIXOS_TRANSPORT` env var defaults select stdio.
 
-### how selected
+### Streamable HTTP
 
-environment variables — `MCP_NIXOS_TRANSPORT`, `MCP_NIXOS_HOST`, `MCP_NIXOS_PORT`, `MCP_NIXOS_PATH`, `MCP_NIXOS_STATELESS_HTTP`.
+HTTP transport configurable via `MCP_NIXOS_TRANSPORT`, `MCP_NIXOS_HOST`, `MCP_NIXOS_PORT`, `MCP_NIXOS_PATH` env vars. Stateless mode supported via `MCP_NIXOS_STATELESS_HTTP` for shared deployment behind a load balancer.
 
-## Distribution
+### Selection mechanism
 
-### every mechanism observed
+Environment variable — `MCP_NIXOS_TRANSPORT=stdio|http`. Container-friendly because env vars are the natural Docker/Kubernetes config surface; companion env vars (`MCP_NIXOS_HOST`, `MCP_NIXOS_PORT`, `MCP_NIXOS_PATH`, `MCP_NIXOS_STATELESS_HTTP`) configure host/port/path/stateless behavior.
 
-uvx, Nix (`nix run github:utensils/mcp-nixos`), Docker (ghcr.io), pip, HTTP remote, declarative NixOS/Home Manager via nixpkgs.
+## Capability surface
 
-### published package name(s)
+### Token-economy unified-tool surface
 
-mcp-nixos (PyPI); `ghcr.io/utensils/mcp-nixos`.
+Two primary tools — `nix()` (unified query, ~1,030 tokens of schema) and `nix_versions()` (package version history). Deliberate compression of the tool surface to a small number of broad tools — schema text counts against the host's token budget, so fewer tools means smaller capability advertisement. Contrasts sharply with 50–250-tool servers in the same domain.
 
-### install commands shown in README
+## Configuration delivery
 
-`uvx mcp-nixos`; `nix run github:utensils/mcp-nixos`; `docker run ghcr.io/utensils/mcp-nixos`; `pip install mcp-nixos`.
+### Environment variables
 
-### pitfalls observed
-
-declarative install path via nixpkgs is rare for MCP servers.
-
-## Entry point / launch
-
-### command(s) users/hosts run
-
-`uvx mcp-nixos`, `nix run ...`, or Docker.
-
-### wrapper scripts, launchers, stubs
-
-Nix flake (available via `nix develop`); `nix run` via github: URL.
-
-## Configuration surface
-
-### how config reaches the server
-
-environment variables for HTTP transport — `MCP_NIXOS_TRANSPORT`, `MCP_NIXOS_HOST`, `MCP_NIXOS_PORT`, `MCP_NIXOS_PATH`, `MCP_NIXOS_STATELESS_HTTP`.
+`MCP_NIXOS_TRANSPORT`, `MCP_NIXOS_HOST`, `MCP_NIXOS_PORT`, `MCP_NIXOS_PATH`, `MCP_NIXOS_STATELESS_HTTP` for HTTP transport configuration. Env-var-only configuration surface.
 
 ## Authentication
 
-### flow
+### None / implicit (local-resource gating)
 
-no explicit authentication; relies on public NixOS endpoints.
-
-### where credentials come from
-
-N/A.
+No authentication — relies on public NixOS endpoints. Public unauthenticated upstream.
 
 ## Multi-tenancy
 
-### tenancy model
+### Stateless HTTP for shared deployment
 
-stateless HTTP option supports shared deployment (stateless → multi-user capable).
+`MCP_NIXOS_STATELESS_HTTP` flag disables per-connection state so the server can sit behind a load balancer with multiple instances handling requests interchangeably. Multi-user-capable since the upstream is public.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### PyPI via uvx (zero-install runner)
 
-two primary tools — `nix()` (unified query, ~1,030 tokens) and `nix_versions()` (package version history).
+`uvx mcp-nixos` is the canonical install command. Published to PyPI as `mcp-nixos`.
 
-## Observability
+### PyPI via pip / pipx
 
-### logging destination + format, metrics, tracing, debug flags
+`pip install mcp-nixos` for users on plain Python.
 
-not explicitly detailed
+### Docker / OCI image
 
-## Host integrations shown in README or repo
+Published at `ghcr.io/utensils/mcp-nixos`. `docker run ghcr.io/utensils/mcp-nixos` documented as one of the launch paths.
 
-### Claude Desktop
+### Nix flake (`nix run github:...`)
 
-JSON `mcpServers` entry (via uvx or Docker).
+`nix run github:utensils/mcp-nixos` — Nix-native install via flake reference. Pairs with `nix develop` for contributors.
 
-### NixOS/Home Manager
+### Declarative NixOS / Home Manager module via nixpkgs
 
-declarative config entry available in nixpkgs.
+Server packaged as a first-class nixpkgs entry; users add a config block to their NixOS or Home Manager config. Rare among MCP servers — unique declarative system-config-managed install path.
 
-## Claude Code plugin wrapper
+### Hosted endpoint (no install)
 
-### presence and shape
+HTTP-remote variant available; users can point at a remote endpoint instead of running locally.
 
-not observed
+## Entry point and launch
 
-## Tests
+### `uvx <package>`
 
-### presence, framework, location, notable patterns
+Host config uses `"command": "uvx"` with `"mcp-nixos"` as the arg. The cleanest stdio launcher for Python servers.
 
-pytest-based.
+### Docker container entrypoint
+
+`docker run` against the ghcr.io image; container's entrypoint runs the stdio server with env vars pulled in via `-e`.
+
+## Build and packaging
+
+### Hatchling + uv (Python)
+
+`pyproject.toml`-driven Python build. Console script `mcp-nixos` registered.
+
+### Python version pinning
+
+`requires-python = ">=3.11"`.
+
+## Container artifacts
+
+### Published Docker image
+
+Image at `ghcr.io/utensils/mcp-nixos` — pre-built so users skip the local build.
+
+### Nix flake / NixOS module
+
+`flake.nix` for `nix develop` and `nix run` workflows; declarative module exposed via nixpkgs for system-level installation. Doubles as distribution and dev environment.
+
+## Test stack
+
+### pytest with async + coverage
+
+pytest-based test suite. Specific fixture style not surfaced.
 
 ## CI
 
-### presence, system, triggers, what it runs
+### GitHub Actions
 
-GitHub Actions (badge referenced); CodeRabbit reviews.
+GitHub Actions configured (badge referenced in README).
 
-## Container / packaging artifacts
+### CodeRabbit-style PR review bot
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+CodeRabbit reviews referenced — automated AI-assisted PR review.
 
-Docker image on ghcr.io; Nix flake for nix-native install; declarative NixOS/Home Manager module.
+## Host integration
 
-## Example client / developer ergonomics
+### Claude Desktop
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+JSON `mcpServers` entry with `uvx mcp-nixos` or Docker `command`/`args` shape.
 
-`nix develop` shell; ruff/mypy toolchain.
+### NixOS / Home Manager module
 
-## Repo layout
+Declarative config entry available in nixpkgs — install + activation in one place.
 
-### single-package / monorepo / vendored / other
+## Observability
 
-single package with Python core + TypeScript (likely docs or companion UI).
+### None / unspecified
 
-## Notable structural choices
+Logging destination not explicitly detailed in surfaced content.
 
-intentionally collapses the tool surface to two tools: a single unified `nix()` query (~1,030 tokens) and a `nix_versions()` helper — contrasts sharply with 50–250-tool servers in the same domain.
+## Repository layout
 
-supports stateless HTTP mode for shared/multi-user deployments.
+### Single-package src-layout
 
-declarative install path via nixpkgs is rare for MCP servers.
+Single Python package core with TypeScript sibling (likely docs or companion UI).
 
-## Unanticipated axes observed
+## Developer ergonomics
 
-deliberate token-efficiency focus on the MCP tool surface (few, broad tools vs many narrow ones).
+### Linter and type-checker stack
 
-stateless-HTTP transport flag separates cacheable deployments from stateful ones.
+ruff/mypy toolchain wired in.
 
-declarative-config distribution (nixpkgs) as a first-class install channel.
+### Devcontainer / mise / dev-environment manifests
 
-## Python-specific
+`nix develop` shell — reproducible dev environment more rigorous than virtualenvs.
 
-### SDK / framework variant
+## Release and lifecycle
 
-FastMCP (major version not surfaced). Version pin from pyproject.toml not surfaced. Import pattern not surfaced.
+### License — Permissive (MIT / Apache-2.0)
 
-### Python version floor
-
-`requires-python` value: 3.11+.
-
-### Packaging
-
-build backend: pyproject.toml. Lock file: not surfaced. Version manager convention: uv + nix.
-
-### Entry point
-
-console script `mcp-nixos`. Host-config snippet shape: `uvx mcp-nixos`.
-
-### Install workflow expected of end users
-
-`uvx mcp-nixos`.
-
-### Async and tool signatures
-
-not surfaced; asyncio/anyio usage not surfaced.
-
-### Type / schema strategy
-
-mypy-checked; specifics not surfaced. Schema auto-derived via FastMCP default.
-
-### Testing
-
-pytest. Fixture style not surfaced.
-
-### Dev ergonomics
-
-`nix develop` reproducible shell.
-
-### Notable Python-specific choices
-
-two-tool API as a token-efficiency strategy. `nix develop` shell for dev environment is more reproducible than virtualenvs. Declarative install via nixpkgs is unique among MCP servers.
-
-## Gaps
-
-what couldn't be determined: FastMCP major version pin, async behavior, Python entry-point path in pyproject, logging destination.
+MIT.

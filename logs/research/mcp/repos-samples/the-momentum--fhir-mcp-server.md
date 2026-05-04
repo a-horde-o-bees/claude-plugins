@@ -1,223 +1,175 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/the-momentum/fhir-mcp-server`. FHIR healthcare MCP server — embedded RAG stack (llama-index + huggingface + pinecone) inside the server; in-server encrypted credential vault for PHI handling. 77 stars, MIT, default branch `main`. FHIR-agnostic (Medplum referenced as example backend). The server embeds a full RAG pipeline rather than calling out to an external retrieval service — a server-boundary-blurring pattern driven by regulated-domain (HIPAA/PHI) requirements.
 
-### url
+## Server runtime
 
-https://github.com/the-momentum/fhir-mcp-server
+### Python with FastMCP
 
-### stars
-
-77
-
-### last-commit
-
-not captured
-
-### license
-
-MIT
-
-### default branch
-
-main
-
-### one-line purpose
-
-FHIR healthcare MCP server — embedded RAG stack (llama-index + huggingface + pinecone); in-server encrypted credential vault for PHI handling.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Python 97%; `requires-python = ">=3.12"`.
-
-### framework/SDK in use
-
-FastMCP (standalone `fastmcp` package).
+Python 97% (`requires-python = ">=3.12"`); FastMCP standalone (2.x), `fastmcp` core dep. Import pattern likely `from fastmcp import FastMCP`. Async handlers likely (FastMCP 2.x + httpx + FastAPI). `fastapi` pulled in alongside `fastmcp` — likely for the HTTP transport surface. `greenlet` as a dep hints at sync/async bridging (SQLAlchemy-style patterns).
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio, http, https — selected via `TRANSPORT_MODE` env var.
+Stdio transport — selected via `TRANSPORT_MODE` env var.
 
-### how selected
+### Streamable HTTP
 
-environment variable
+HTTP transport — selected via `TRANSPORT_MODE` env var.
 
-## Distribution
+### HTTP with JSON response mode
 
-### every mechanism observed
+HTTPS variant — selected via `TRANSPORT_MODE` env var. Three transport modes (stdio / http / https) selected via env var.
 
-`make build` (Docker-based); `make uv` (uv-based install); clone required.
+### Selection mechanism
 
-### published package name(s)
+Environment variable — `TRANSPORT_MODE` selects stdio/http/https. Container-friendly because env vars are the natural Docker/Kubernetes config surface.
 
-no PyPI publication documented
+## Capability surface
 
-### install commands shown in README
+### Domain-bundled tool set
 
-`make build` or `make uv`
+14+ tools across FHIR resources (Patient, Observation, Condition, Medication, etc.), document management, LOINC terminology lookup.
 
-## Entry point / launch
+### Embedded RAG / retrieval pipeline
 
-### command(s) users/hosts run
+Server bundles `llama-index` + `huggingface` embeddings + `pinecone` + `sentence-transformers` + `pymupdf` for in-process embedding, vector storage, and document parsing. Tool calls run inference and similarity search inside the server rather than delegating to an external RAG service. Provides domain-aware retrieval for FHIR + document context the upstream doesn't pre-index.
 
-`start.py` as entry; launched via Docker Compose or uv.
+## Configuration delivery
 
-### wrapper scripts, launchers, stubs
-
-console script `start` → `start:main` (via pyproject).
-
-## Configuration surface
-
-### how config reaches the server
+### Environment variables
 
 `TRANSPORT_MODE` env var; FHIR backend URL + OAuth2 client ID/secret; optional encryption master key for sensitive fields.
 
 ## Authentication
 
-### flow
+### OAuth 2.0 client credentials
 
-OAuth2 client-credentials against the FHIR server; FHIR servers like Medplum mentioned as targets.
+OAuth2 client-credentials flow against the FHIR server; no browser/user consent step. FHIR servers like Medplum mentioned as targets. Credentials supplied via env vars.
 
-### where credentials come from
+### In-server encrypted credential vault
 
-environment variables; the server also supports "encrypted credential storage with optional master key-based encryption for sensitive fields" — a server-internal credential vault.
+Server supports encrypted credential storage with optional master-key-based encryption for sensitive fields — an in-server credential vault driven by HIPAA/PHI handling concerns. Master-key provisioning mechanics not documented in detail.
 
 ## Multi-tenancy
 
-### tenancy model
+### Single-user / single-tenant per process
 
-not addressed
+Tenancy not addressed; single OAuth2 client-credentials pair per process implies single-tenant.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### Source clone with editable install
 
-14+ tools across FHIR resources (Patient, Observation, Condition, Medication, etc.), document management, LOINC terminology lookup.
+Clone required; `make uv` is the uv-based install path.
 
-## Observability
+### Docker / OCI image
 
-### logging destination + format, metrics, tracing, debug flags
+`make build` (Docker-based) install path. Dockerfile + docker-compose.yml shipped.
 
-not captured
+## Entry point and launch
 
-## Host integrations shown in README or repo
+### Console script via `[project.scripts]` / npm bin
 
-### Claude Desktop
+Console script `start = start:main` declared in pyproject — bare-module-name `start` rather than `app.start`. Host-config snippet shape: likely direct `uv run start` or script path inside Docker.
 
-configured via `claude_desktop_config.json` example with Docker or uv launcher.
+### Make targets in repo
 
-## Claude Code plugin wrapper
+`make build` and `make uv` are the documented install/launch entry points; `make test-connection` for upstream-reachability check.
 
-### presence and shape
+## Build and packaging
 
-none
+### uv_build backend (Python)
 
-## Tests
+Build backend: `uv_build` with `module-name = "app"` — non-standard module-name. Adoption of uv's native build backend rather than hatchling.
 
-### presence, framework, location, notable patterns
+### Python version pinning
 
-pytest + pytest-asyncio + pytest-cov declared in dev deps; `.github` present.
+`requires-python = ">=3.12"`. `.python-version` present; `uv.lock` implied.
+
+### `uv.lock` committed
+
+uv-managed lockfile; uv is the version manager convention.
+
+## Schema and types
+
+### Pydantic v2 models
+
+Pydantic v2 (explicit dep) with `pydantic-settings` for config.
+
+### Async model (cross-cutting)
+
+Async throughout — FastMCP 2.x with httpx + FastAPI; `greenlet` dep hints at sync/async bridging for SQLAlchemy-style upstream patterns.
+
+## Container artifacts
+
+### Dockerfile (single-stage, build-from-source)
+
+Dockerfile present at repo root.
+
+### Docker Compose for local dev
+
+`docker-compose.yml` present; volume mounting documented.
+
+## Test stack
+
+### pytest with async + coverage
+
+`pytest` + `pytest-asyncio` + `pytest-cov` declared in dev deps.
+
+### Linter/formatter test gate
+
+`ruff` + `ty` (type checker alternative to mypy) for lint/type-check — `ty` is a newer alternative to `mypy`, a small leading-edge signal.
 
 ## CI
 
-### presence, system, triggers, what it runs
+### GitHub Actions
 
 GitHub Actions present.
 
-## Container / packaging artifacts
+## Repository layout
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+### Single-package src-layout
 
-Dockerfile + docker-compose.yml; volume mounting documented.
+Single-package with `app/` module — build backend is `uv_build` with `module-name = "app"`.
 
-## Example client / developer ergonomics
+## Domain logic and embedded intelligence
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+### Embedded RAG / retrieval pipeline
 
-Makefile — `make build`, `make uv` as primary workflow entry. Uses `pre-commit`, `ruff`, `ty` for lint/type-check.
+The server hosts the RAG pipeline rather than exposing tools that call an upstream RAG service — `llama-index` + `huggingface` + `pinecone` + `sentence-transformers` + `pymupdf` all in-process.
 
-### pitfalls observed
+### Domain-specific terminology service integration
 
-Makefile-driven workflow — `make build`, `make uv`, `make test-connection`; common in data-ops projects but rare in MCP servers.
+Healthcare-specific terminology service integration (LOINC) — the server bridges a domain-specific terminology ontology alongside the primary FHIR API.
 
-## Repo layout
+## Host integration
 
-### single-package / monorepo / vendored / other
+### Claude Desktop
 
-single-package with `app/` module (build backend is `uv_build` with `module-name = "app"`).
+`claude_desktop_config.json` example with Docker or uv launcher.
 
-## Notable structural choices
+## Developer ergonomics
 
-Three transport modes (stdio / http / https) selected via env var — among the richest transport surfaces in the sample.
+### Makefile / Makefile.toml
 
-FHIR-agnostic — not tied to a single FHIR server; connects to any FHIR-compliant backend (Medplum referenced as example).
+Makefile-driven workflow — `make build`, `make uv`, `make test-connection` as primary entry points.
 
-Encrypted credential storage with master-key-based encryption — in-server credential vault, unusual among MCP servers; likely driven by HIPAA/PHI handling concerns.
+### `pre-commit` framework
 
-`uv_build` backend with module name `app` — explicit non-standard module naming, matches `voska/hass-mcp` pattern.
+`pre-commit` configured.
 
-LLM-assisted retrieval stack — depends on `llama-index` + `huggingface` embeddings + `pinecone` + `sentence-transformers` + `pymupdf`; the server embeds a full RAG pipeline for FHIR + document context.
+### Linter and type-checker stack
 
-Makefile-driven workflow — `make build`, `make uv`, `make test-connection`; common in data-ops projects but rare in MCP servers.
+`ruff` + `ty` — `ty` is a newer type-checker alternative to mypy.
 
-## Unanticipated axes observed
+## Release and lifecycle
 
-In-server RAG pipeline — the server embeds an embedding + vector-store + document-parsing stack inside an MCP server. Most MCP servers expose tools that call upstream RAG services; this one hosts the RAG itself. A server-boundary-blurring pattern.
+### License — Permissive (MIT / Apache-2.0)
 
-Compliance-driven encryption features (master-key for sensitive credentials) — a distinct design axis emerging from regulated domains (healthcare, finance, legal).
+MIT licensed.
 
-Transport-mode env-var switch pattern for stdio/http/https — different from `awslabs.aws-api-mcp-server`'s CLI flag; env-var-driven transport selection is better suited to containerized deployments.
+### Active development
 
-`uv_build` backend — less common than hatchling; shows the `uv` tool's build-backend integration is being adopted.
-
-Healthcare-specific terminology service integration (LOINC) — the server bridges a domain-specific terminology ontology, a pattern that would reappear in legal (Westlaw taxonomies), education (curriculum standards), and finance (ticker/ISIN conventions).
-
-## Python-specific
-
-### SDK / framework variant
-
-FastMCP standalone (2.x); `fastmcp` core dep, version not captured precisely; import pattern likely `from fastmcp import FastMCP`.
-
-### Python version floor
-
-`requires-python` value: `>=3.12`.
-
-### Packaging
-
-build backend: `uv_build` with `module-name = "app"` — unusual; shows adoption of `uv`'s native build backend. `.python-version` present; `uv.lock` implied. Version manager convention: `uv`.
-
-### Entry point
-
-console script `start = start:main` (entry at `start:main` — bare-module-name `start` rather than `app.start`). Host-config snippet shape: likely direct `uv run start` or script path inside Docker.
-
-### Install workflow expected of end users
-
-`make uv` or `make build`.
-
-### Async and tool signatures
-
-likely async (FastMCP 2.x + httpx + FastAPI).
-
-### Type / schema strategy
-
-Pydantic v2 (explicit dep) with pydantic-settings for config.
-
-### Testing
-
-pytest + pytest-asyncio + pytest-cov; fixture style not captured.
-
-### Dev ergonomics
-
-Makefile + pre-commit + ruff + ty (type checker alternative to mypy).
-
-### Notable Python-specific choices
-
-Heavy RAG stack: `llama-index`, `huggingface` embeddings, `pinecone`, `sentence-transformers`, `pymupdf`. `cryptography` + `passlib` for credential encryption. `fastapi` pulled in alongside `fastmcp` — likely for the HTTP transport surface. `greenlet` as a dep hints at sync/async bridging (SQLAlchemy-style patterns). `ty` type-checker (a newer alternative to `mypy`) — a small leading-edge signal.
-
-## Gaps
-
-what couldn't be determined: exact stars update time, complete tool surface, how the encryption master key is provisioned in practice, whether RAG components are optional or always active, LOINC terminology source.
+Active project; last-commit date not captured.

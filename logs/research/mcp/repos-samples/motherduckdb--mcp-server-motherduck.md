@@ -1,114 +1,130 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/motherduckdb/mcp-server-motherduck`. MotherDuck/DuckDB MCP server — query MotherDuck cloud and local DuckDB from one binary, with optional S3 access. 468 stars, MIT, default branch `main`, last commit March 30, 2026 (v1.0.4).
 
-### url
+## Server runtime
 
-https://github.com/motherduckdb/mcp-server-motherduck
+### Python with FastMCP
 
-### stars
-
-468
-
-### last-commit
-
-March 30, 2026 (v1.0.4 release)
-
-### license
-
-MIT
-
-### default branch
-
-main
-
-### one-line purpose
-
-MotherDuck/DuckDB MCP server — query MotherDuck cloud and local DuckDB from one binary.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Python >=3.10.
-
-### framework/SDK in use
-
-fastmcp (>=2.14,<3), Anthropic MCP SDK.
+Python (>=3.10) on FastMCP 2.x — `fastmcp>=2.14,<3` pinned in `pyproject.toml`. Anthropic MCP SDK also declared. FastMCP auto-derives schemas from type hints. FastMCP 2.14 typically supports both sync and async tool signatures; `pytest-asyncio>=0.24` in dev deps confirms async test surface.
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio (default), HTTP.
+Default transport for Claude Desktop / VS Code style hosts.
 
-### how selected
+### Streamable HTTP
 
-Via configuration in client-specific settings (Claude Desktop, VS Code, etc.).
+HTTP transport supported; selection via client-specific configuration.
 
-## Distribution
+### Selection mechanism
 
-### every mechanism observed
+Configured via client-specific settings (Claude Desktop, VS Code, etc.) rather than a CLI flag.
 
-PyPI (`mcp-server-motherduck`), uvx, MCP Bundle (`.mcpb`), GitHub releases.
+## Capability surface
 
-### published package name(s)
+### Domain-bundled tool set
 
-`mcp-server-motherduck`
+SQL query execution (read/write modes), database listing, table listing, column inspection, database switching. Supports local files, S3, MotherDuck cloud, and in-memory databases.
 
-### install commands shown in README
+## Configuration delivery
 
-`uvx mcp-server-motherduck --db-path :memory: --read-write --allow-switch-databases`.
+### CLI flags
 
-## Entry point / launch
+CLI args control behavior — `--db-path`, `--read-write`, `--allow-switch-databases`, `--motherduck-token`.
 
-### command(s) users/hosts run
+### Environment variables
 
-`mcp-server-motherduck` with optional parameters (`--db-path`, `--read-write`, `--allow-switch-databases`, `--motherduck-token`).
-
-### wrapper scripts, launchers, stubs
-
-Entry point configured in `pyproject.toml` as CLI tool invocation.
-
-## Configuration surface
-
-### how config reaches the server
-
-CLI arguments for flags, environment variables for credentials (`motherduck_token`, AWS credentials).
+Credentials via env vars — `motherduck_token`, AWS credentials for S3 access.
 
 ## Authentication
 
-### flow
+### Static API key / token via env var
 
-Static token via `motherduck_token` environment variable or `--motherduck-token` parameter; AWS credentials for S3 access.
+MotherDuck access via static token in `motherduck_token` env var or `--motherduck-token` parameter.
 
-### where credentials come from
+### Cloud-native identity / credential chain
 
-Environment variables, CLI arguments.
+AWS credentials picked up for S3 access.
 
 ## Multi-tenancy
 
-### tenancy model
+### Single-user / single-tenant per process
 
-Single-user with ability to switch databases via `--allow-switch-databases` flag.
+Single-user per process; database switching available within that single context via `--allow-switch-databases` flag.
 
-## Capabilities exposed
+### Mode-switched backing store
 
-### tools / resources / prompts / sampling / roots / logging / other
+`--allow-switch-databases` flag toggles whether the user can switch between local DuckDB, MotherDuck cloud, S3-backed, and in-memory databases mid-session.
 
-SQL query execution (read/write modes), database listing, table listing, column inspection, database switching, support for local files, S3, MotherDuck, in-memory databases.
+## Distribution channel
 
-## Observability
+### PyPI via uvx (zero-install runner)
 
-### logging destination + format, metrics, tracing, debug flags
+Published to PyPI as `mcp-server-motherduck`; canonical install is `uvx mcp-server-motherduck --db-path :memory: --read-write --allow-switch-databases`.
 
-Not explicitly documented; development includes pytest with asyncio support.
+### MCPB bundle / Desktop Extension manifest
 
-## Host integrations shown in README or repo
+`.mcpb` bundle distribution for Claude Desktop drag-and-drop install, signaled by `.mcpbignore` in repo. GitHub releases publish bundles and source artifacts.
+
+## Entry point and launch
+
+### `uvx <package>`
+
+Primary launch — `uvx mcp-server-motherduck` with CLI flags. README host-config snippet uses `"command": "uvx"`, `"args": ["mcp-server-motherduck", "--db-path", ":memory:", "--read-write", "--allow-switch-databases"]`.
+
+### Console script via `[project.scripts]` / npm bin
+
+`[project.scripts]` registers `mcp-server-motherduck = "mcp_server_motherduck:main"`.
+
+## Build and packaging
+
+### Hatchling + uv (Python)
+
+Build backend `hatchling.build`; `uv` is the version manager convention.
+
+### `uv.lock` committed
+
+`uv.lock` present in the repo.
+
+### Pin discipline (Python)
+
+`fastmcp>=2.14,<3` — pinned major version with tight lower bound to bound breaking-change surface.
+
+## Schema and types
+
+### FastMCP auto-derivation from type hints
+
+FastMCP auto-derives schemas from Python type hints.
+
+## Container artifacts
+
+### No container artifacts
+
+No Dockerfile observed; uv-based Python packaging is the preferred distribution path.
+
+### `.mcpbignore` for bundle packaging
+
+`.mcpbignore` file present, governing what enters the `.mcpb` bundle.
+
+## Test stack
+
+### pytest with async + coverage
+
+pytest 8.0+ with `pytest-asyncio>=0.24`; `asyncio_mode = "auto"`, `asyncio_default_fixture_loop_scope = "function"`. Custom `slow` marker for deselection. `testpaths = ["tests"]`. python-dotenv + ruff in test/dev deps.
+
+## CI
+
+### GitHub Actions
+
+`.github/` directory present; specific workflow details not extracted within budget.
+
+## Host integration
 
 ### Claude Desktop
 
-JSON-based configuration.
+JSON-based configuration (`claude_desktop_config.json` snippet).
 
 ### Claude Code
 
@@ -116,106 +132,60 @@ Dedicated CLI commands provided.
 
 ### Cursor
 
-Supported.
+Supported via host-config snippet.
 
-### VS Code
-
-Supported.
-
-### Codex CLI
+### VS Code / VS Code Insiders / Visual Studio family
 
 Supported.
 
-### Gemini CLI
+### Codex CLI / Copilot CLI / Gemini CLI
 
-Supported.
+Codex CLI and Gemini CLI supported.
 
-## Claude Code plugin wrapper
+## Repository layout
 
-### presence and shape
-
-`.claude-plugin` wrapper mentioned as present with dedicated CLI commands.
-
-## Tests
-
-### presence, framework, location, notable patterns
-
-Present; pytest (8.0+) with pytest-asyncio (0.24+); location: `tests/` directory.
-
-## CI
-
-### presence, system, triggers, what it runs
-
-`.github/` directory present; specific workflow details not extracted within budget.
-
-## Container / packaging artifacts
-
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
-
-Not observed; uv-based Python packaging preferred.
-
-## Example client / developer ergonomics
-
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
-
-Makefile present; sample configurations for Claude Desktop integration.
-
-## Repo layout
-
-### single-package / monorepo / vendored / other
+### Single-package src-layout
 
 Single-package Python project with `src/`, `tests/`, `pyproject.toml`, `uv.lock`.
 
-## Notable structural choices
+## Safety and security posture
 
-Uses fastmcp framework for rapid development. Supports local and cloud databases (MotherDuck) with S3 integration. Read-write mode flag allows toggling safety posture. `.mcpbignore` file suggests bundling mechanism.
+### Read-only by default with explicit write flag
 
-## Unanticipated axes observed
+`--read-write` flag explicitly toggles mutating SQL; default posture is read-only.
 
-Database switching as feature flag suggests multi-database workflows. Explicit read/write mode control separates safety postures.
+## Developer ergonomics
 
-## Python-specific
+### Makefile / Makefile.toml
 
-### SDK / framework variant
+Makefile present.
 
-FastMCP 2.x — `fastmcp>=2.14,<3` in `pyproject.toml`. Import pattern: `from fastmcp import FastMCP` (inferred from 2.x usage).
+### Sample MCP client configs in repo
 
-### Python version floor
+Sample configurations for Claude Desktop integration shipped alongside the server.
 
-`requires-python = ">=3.10"`. CI matrix not extracted.
+## Documentation surface
 
-### Packaging
+### README as the canonical surface
 
-Build backend: `hatchling.build`. Lock file: `uv.lock` present. Version manager convention: `uv`.
+README is the canonical documentation surface.
 
-### Entry point
+## Claude Code plugin / skill wrapper
 
-`[project.scripts]`: `mcp-server-motherduck = "mcp_server_motherduck:main"`. README host-config snippet: `"command": "uvx"`, `"args": ["mcp-server-motherduck", "--db-path", ":memory:", "--read-write", "--allow-switch-databases"]` — pure uvx with CLI flags.
+### `.claude-plugin/` wrapper
 
-### Install workflow expected of end users
+`.claude-plugin` wrapper mentioned as present, with dedicated CLI commands for Claude Code.
 
-`uvx mcp-server-motherduck` (primary), `pip install uv` / `brew install uv` as prerequisite, `.mcpb` drag-and-drop bundle for Claude Desktop, or source-clone with `uv`. No Docker image published.
+## Release and lifecycle
 
-### Async and tool signatures
+### License — Permissive (MIT / Apache-2.0)
 
-FastMCP 2.14 typically supports both sync and async tool signatures; exact repo style not inspected at source level. `pytest-asyncio>=0.24` in dev deps confirms async test surface.
+MIT.
 
-### Type / schema strategy
+### Tagged release with version in changelog
 
-FastMCP auto-derives schemas from type hints.
+v1.0.4 released March 30, 2026; semver-tagged releases.
 
-### Testing
+### Active development
 
-pytest + pytest-asyncio + python-dotenv + ruff. `asyncio_mode = "auto"`, `asyncio_default_fixture_loop_scope = "function"`. Custom `slow` marker for deselection. `testpaths = ["tests"]`.
-
-### Dev ergonomics
-
-Makefile present. `.mcpbignore` file — suggests MCP bundle (`.mcpb`) packaging workflow.
-
-### Notable Python-specific choices
-
-`.mcpb` bundle distribution is a Python-ecosystem-specific packaging path (MCP bundles for Claude Desktop drag-and-drop), observed in only a handful of repos. Pinned FastMCP major with tight lower bound (`>=2.14,<3`) — keeps breaking-change surface bounded.
-
-## Gaps
-
-Exact CI/CD setup and triggers (requires `.github/workflows` inspection). Logging destination and format (requires code inspection). Complete test coverage strategy (requires test file inspection).
+Active recent release activity.

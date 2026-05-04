@@ -1,221 +1,189 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/awslabs/mcp/tree/main/src/aws-api-mcp-server`. AWS API MCP server — wraps the AWS CLI with `call_aws`, `suggest_aws_commands`, and an experimental `get_execution_plan` for NL-to-CLI guidance. Apache-2.0, default branch `main`, sub-server inside the awslabs/mcp monorepo.
 
-### url
+## Server runtime
 
-https://github.com/awslabs/mcp/tree/main/src/aws-api-mcp-server
+### Python with both MCP SDK and FastMCP declared
 
-### stars
-
-parent monorepo (awslabs/mcp) — sub-server has no independent star count
-
-### last-commit
-
-not captured individually (sub-server within actively-maintained monorepo)
-
-### license
-
-Apache-2.0
-
-### default branch
-
-main
-
-### one-line purpose
-
-AWS API MCP server — wraps the AWS CLI with `call_aws`, `suggest_aws_commands`, and an experimental `get_execution_plan` for NL-to-CLI guidance.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Python `>=3.10`.
-
-### framework/SDK in use
-
-FastMCP 2.x (`fastmcp>=3.0.1`) alongside raw `mcp>=1.23.0` — both are declared dependencies.
+Hybrid path — `pyproject.toml` declares both `mcp>=1.23.0` and `fastmcp>=3.0.1` as dependencies; one server bridging two SDK generations. Import patterns not directly captured. Async/sync tool signatures not surfaced from README alone.
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio (default, single-user); streamable-http (with optional OAuth).
+Default transport for single-user mode; AWS credential chain (profile or env) provides identity.
 
-### how selected
+### Streamable HTTP
 
-CLI / environment flag; OAuth configured via issuer + JWKS endpoints.
+Optional streamable-HTTP mode with optional OAuth issuer + JWKS configuration.
 
-## Distribution
+### Selection mechanism
 
-### every mechanism observed
+CLI flag / environment variable. OAuth configured via issuer + JWKS endpoints (separate concern from transport selection).
 
-PyPI package `awslabs.aws-api-mcp-server`; `uvx` invocation; `pip install`; Docker image published to AWS ECR; clone-from-source for development.
+## Capability surface
 
-### published package name(s)
-
-`awslabs.aws-api-mcp-server` (PyPI).
-
-### install commands shown in README
-
-- `uvx awslabs.aws-api-mcp-server@latest`
-- `pip install awslabs.aws-api-mcp-server`
-- Docker pull from public ECR
-
-## Entry point / launch
-
-### command(s) users/hosts run
-
-`uvx awslabs.aws-api-mcp-server@latest`; `python -m awslabs.aws_api_mcp_server.server`; Docker run.
-
-### wrapper scripts, launchers, stubs
-
-Console script `awslabs.aws-api-mcp-server` → `awslabs.aws_api_mcp_server.server:main`.
-
-## Configuration surface
-
-### how config reaches the server
-
-Environment variables (`AWS_PROFILE`, `AWS_REGION`, transport mode, OAuth endpoints, feature flags for experimental tools); CLI flags; Docker `-e` env injection for containerized runs.
-
-## Authentication
-
-### flow
-
-stdio mode — AWS credential chain (profile or env); streamable-http — optional OAuth issuer + JWKS, or no-auth mode.
-
-### where credentials come from
-
-Standard AWS credential resolution (env vars, `~/.aws/credentials`, profile).
-
-## Multi-tenancy
-
-### tenancy model
-
-Single-user only — README explicitly states "NOT designed for multi-tenant environments". Each instance requires dedicated credentials and working directory.
-
-## Capabilities exposed
-
-### tools / resources / prompts / sampling / roots / logging / other
+### Tools-only, hand-curated narrow surface
 
 Tools only — `call_aws` (executes validated AWS CLI commands), `suggest_aws_commands` (NL → CLI mapping), `get_execution_plan` (experimental, feature-flagged).
 
-## Observability
+### Capability gating flags (per-tool, per-category, write-mode)
 
-### logging destination + format, metrics, tracing, debug flags
+Experimental tool (`get_execution_plan`) gated behind a feature flag.
 
-`python-json-logger` + `loguru` dependencies imply structured JSON logging; specifics not extracted.
+## Configuration delivery
 
-## Host integrations shown in README or repo
+### Environment variables
 
-Not enumerated per host in the sub-server README — parent monorepo aggregates host examples.
+`AWS_PROFILE`, `AWS_REGION`, transport mode env, OAuth endpoints, feature flags for experimental tools.
 
-## Claude Code plugin wrapper
+### CLI flags
 
-### presence and shape
+CLI flag surface for transport selection and feature toggles.
 
-None at sub-server level; awslabs publishes via the MCP server catalog only.
+## Authentication
 
-## Tests
+### Cloud-native identity / credential chain
 
-### presence, framework, location, notable patterns
+stdio mode — AWS credential chain (env vars, `~/.aws/credentials`, profile). Single-user only.
 
-pytest + pytest-asyncio + pytest-cov + pytest-mock declared as dev deps.
+### OAuth 2.x with issuer + JWKS (HTTP-mode bolt-on)
 
-## CI
+streamable-HTTP mode — optional OAuth with configurable issuer + JWKS endpoints, or a no-auth mode. A richer auth story than typical Python MCP servers; whether OAuth validation is real JWT verification or stub not captured.
 
-### presence, system, triggers, what it runs
+## Multi-tenancy
 
-Parent monorepo runs GitHub Actions; sub-server-specific CI config not extracted.
+### Single-user / single-tenant per process
 
-## Container / packaging artifacts
+README explicitly states "NOT designed for multi-tenant environments." Each instance requires dedicated credentials and working directory.
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+## Distribution channel
 
-Dockerfile present; images published to AWS public ECR.
+### PyPI via uvx (zero-install runner)
 
-## Example client / developer ergonomics
+Published as `awslabs.aws-api-mcp-server` on PyPI; canonical install `uvx awslabs.aws-api-mcp-server@latest`.
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+### PyPI via pip / pipx
 
-`pre-commit`, `commitizen`, `ruff`, `pyright` in dev deps — implies enforced commit convention and type-checking.
+`pip install awslabs.aws-api-mcp-server` documented as an alternative.
 
-## Repo layout
+### Docker / OCI image
 
-### single-package / monorepo / vendored / other
+Docker image published to AWS public ECR.
 
-Sub-package inside the awslabs/mcp monorepo under `src/aws-api-mcp-server/`; self-contained `pyproject.toml` per sub-server.
+### Source clone with editable install
 
-## Notable structural choices
+Clone-from-source documented for development.
 
-Wraps the AWS CLI (not boto3) — ships `awscli==1.44.81` as a pinned direct dependency and invokes CLI commands on behalf of the LLM.
+## Entry point and launch
 
-Depends on both `mcp` SDK and `fastmcp` — one server bridging two SDK generations.
+### Console script via `[project.scripts]` / npm bin
 
-Pinning to a specific awscli version (1.44.81 exact) is unusual — suggests CLI behavior is part of the tested contract.
+`[project.scripts]` console script `awslabs.aws-api-mcp-server` → `awslabs.aws_api_mcp_server.server:main`. Quoted dotted name pattern lets the dotted PyPI name match the dotted console-script name.
 
-`lxml`, `requests`, `python-frontmatter`, `importlib_resources` suggest embedded documentation or spec assets are bundled in-package.
+### `uvx <package>`
 
-Read/write guard via feature flag (`get_execution_plan` experimental).
+Host-config snippet shape: `uvx awslabs.aws-api-mcp-server@latest`.
 
-## Unanticipated axes observed
+### Module invocation / `python -m <module>` fallback
 
-Sub-server as a first-class Python package — every monorepo sub-server has its own `pyproject.toml`, console script, and PyPI release, so consumers install one sub-server without pulling the rest.
+`python -m awslabs.aws_api_mcp_server.server` documented.
 
-CLI-wrapping vs SDK-wrapping as a server-design axis — this sub-server wraps a CLI; sibling `bedrock-kb-retrieval-mcp-server` uses boto3 directly.
+### Docker container entrypoint
 
-Explicit anti-multi-tenancy statement — not just silence; the README documents the boundary.
+Docker run as an alternative launch form.
 
-Optional OAuth on streamable-http with configurable issuer/JWKS — a richer auth story than most Python MCP servers, which typically bypass auth and rely on the stdio channel.
+## Build and packaging
 
-## Python-specific
+### Hatchling + uv (Python)
 
-### SDK / framework variant
+Build backend: hatchling. Version manager convention: uv / uvx invocation throughout README. Lock file not captured (uv.lock recommended in README).
 
-Both raw `mcp` and FastMCP 2.x — `mcp>=1.23.0` and `fastmcp>=3.0.1` declared together. Import pattern not captured directly (would need source read); dependency shape implies mixed use.
-
-### Python version floor
+### Python version pinning
 
 `requires-python = ">=3.10"`.
 
-### Packaging
+### Pin discipline (Python)
 
-Build backend: `hatchling`. Lock file not captured; `uv` recommended in README (likely `uv.lock`). Version manager convention: `uv` / `uvx` invocation throughout README.
+Tight: bundles `awscli==1.44.81` exact pin (CLI behavior is part of the tested contract); ranged on `mcp>=1.23.0`, `fastmcp>=3.0.1`, `pydantic>=2.10.6`.
 
-### Entry point
+## Schema and types
 
-`[project.scripts]` console script — `awslabs.aws-api-mcp-server = awslabs.aws_api_mcp_server.server:main`. Host-config snippet shape: `uvx awslabs.aws-api-mcp-server@latest`.
+### Pydantic v2 models
 
-### Install workflow expected of end users
+`pydantic>=2.10.6` declared — Pydantic v2 schemas. FastMCP auto-derives from function signatures by convention; with hybrid SDK path some hand-registration also likely.
 
-`uvx awslabs.aws-api-mcp-server@latest` (zero-install via uv).
+### FastMCP auto-derivation from type hints
 
-### Async and tool signatures
+FastMCP 3.x conventions support auto-derivation from typed signatures.
 
-Sync vs async not captured from README alone; FastMCP 3.x conventions support both.
+## Container artifacts
 
-### Type / schema strategy
+### Dockerfile (single-stage, build-from-source)
 
-`pydantic>=2.10.6` — Pydantic v2 schemas. FastMCP auto-derives from function signatures by convention.
+Dockerfile present.
 
-### Testing
+### Published Docker image
 
-pytest + pytest-asyncio + pytest-cov + pytest-mock. Fixture style not captured.
+Images published to AWS public ECR.
 
-### Dev ergonomics
+## Test stack
 
-pre-commit, ruff, pyright, commitizen — commit-style enforcement pipeline.
+### pytest with async + coverage
 
-### Notable Python-specific choices
+pytest + pytest-asyncio + pytest-cov + pytest-mock declared as dev deps.
 
-Bundles pinned `awscli==1.44.81` — a CLI tool distributed as a Python dependency of an MCP server.
+### Linter/formatter test gate
 
-Mixes `loguru` and `python-json-logger` — dual logging paths.
+ruff + pyright in dev deps.
 
-`importlib_resources` for packaged asset access.
+## CI
 
-`setuptools>=69.0.0` as a runtime dep (unusual for a hatchling-built package) — suggests setuptools-style entry-point resolution used at runtime.
+### Monorepo CI inheritance
 
-## Gaps
+Parent monorepo runs GitHub Actions; sub-server-specific CI config not extracted.
 
-Exact console-script implementation details, async vs sync tool signatures without reading source, whether OAuth validation is real JWT verification or a stub, exact sub-server CI config (inherits from monorepo), Docker image tagging scheme.
+## Host integration
+
+### Monorepo catalog
+
+Sub-server README defers host-integration examples to the parent monorepo catalog rather than enumerating per host.
+
+## Observability
+
+### loguru (Python)
+
+`loguru` for application logging; sometimes paired with `python-json-logger` — dual logging paths in one server.
+
+## Repository layout
+
+### Monorepo of namespace-prefixed packages
+
+Sub-package inside the awslabs/mcp monorepo under `src/aws-api-mcp-server/` with its own `pyproject.toml` and PyPI release. Each sub-server independently published and installable.
+
+## Safety and security posture
+
+### Anti-multi-tenancy disclaimer
+
+README explicitly states "NOT designed for multi-tenant environments" — documents the boundary rather than letting users assume.
+
+## Developer ergonomics
+
+### `pre-commit` framework
+
+`pre-commit` declared in dev deps.
+
+### `commitizen`
+
+`commitizen` declared in dev deps — commit-message convention enforcement.
+
+### Linter and type-checker stack
+
+ruff, pyright in dev deps.
+
+## Release and lifecycle
+
+### License — Permissive (MIT / Apache-2.0)
+
+Apache-2.0.

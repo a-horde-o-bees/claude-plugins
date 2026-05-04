@@ -1,221 +1,135 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/awslabs/mcp/tree/main/src/mcp-lambda-handler`. Framework (not server) for building Lambda-hosted MCP servers — decorator-based tool declaration on API Gateway with pluggable DynamoDB session state. Apache-2.0; default branch `main`; sub-package in awslabs/mcp monorepo, deliberately packaged small (3 runtime deps). This artifact breaks the "every sub-package is a server" assumption — it is infrastructure for building servers.
 
-### url
+## Server runtime
 
-https://github.com/awslabs/mcp/tree/main/src/mcp-lambda-handler
+### Python with hand-rolled MCP
 
-### stars
-
-parent monorepo
-
-### last-commit
-
-not captured individually
-
-### license
-
-Apache-2.0
-
-### default branch
-
-main
-
-### one-line purpose
-
-Framework (not server) for building Lambda-hosted MCP servers — decorator-based tool declaration on API Gateway with pluggable DynamoDB session state.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Python `>=3.10`.
-
-### framework/SDK in use
-
-custom — does not depend on `mcp` or `fastmcp` as a runtime dep; implements the serverless HTTP surface directly.
+Python `>=3.10`. No dependency on the official `mcp` SDK or `fastmcp` — the protocol surface is implemented directly against Lambda request/response shapes. The serverless HTTP surface bridges MCP framing onto API Gateway events. Runtime deps: `python-dateutil`, `boto3`, `botocore` only — the smallest trustworthy surface, no Pydantic. Decorator-style ergonomics (`@mcp.tool()`) reproduced atop the custom implementation.
 
 ## Transport
 
-### supported transports
+### HTTP via API Gateway in front of Lambda
 
-HTTP (via AWS API Gateway → Lambda).
+Inherently HTTP — there is no stdio path. The MCP-over-HTTP endpoint (`/mcp`) is exposed as an API Gateway route invoking a Lambda handler. Transport is fixed at deployment time.
 
-### how selected
+## Capability surface
 
-Deployment-time; there is no stdio path — this is inherently HTTP.
+### Tools-only, hand-curated narrow surface
 
-## Distribution
+Tools-only — declared via `@mcp.tool()` decorator in the user's Lambda module (the user authors tool functions; this package executes them).
 
-### every mechanism observed
+## Configuration delivery
 
-PyPI package `awslabs.mcp-lambda-handler`; embedded as a library dependency inside a user's Lambda package.
+### Environment variables
 
-### published package name(s)
-
-`awslabs.mcp-lambda-handler`.
-
-### install commands shown in README
-
-`pip install -e .[dev]` (for local development).
-
-## Entry point / launch
-
-### command(s) users/hosts run
-
-None — this is a library, not a standalone server. The user writes a Lambda handler that delegates to `MCPLambdaHandler`.
-
-### wrapper scripts, launchers, stubs
-
-Console script `awslabs.mcp-lambda-handler` → `awslabs.mcp_lambda_handler.server:main` declared but primary use is library import.
-
-## Configuration surface
-
-### how config reaches the server
-
-Lambda environment variables, session backend configuration (NoOp or DynamoDB or custom class).
+Lambda environment variables; session-backend choice (NoOp, DynamoDB, or custom class) configured via constructor.
 
 ## Authentication
 
-### flow
+### Upstream-delegated (gateway authorizer)
 
-Delegated to API Gateway + Lambda Authorizer — bearer tokens in `Authorization` header validated upstream of the handler.
-
-### where credentials come from
-
-API Gateway authorizer output; application never sees raw tokens.
+Authentication delegated to API Gateway + Lambda Authorizer — bearer tokens in `Authorization` header validated upstream of the handler. Application code never sees raw tokens; the authorizer's output reaches the server.
 
 ## Multi-tenancy
 
-### tenancy model
+### Per-request tenancy with externalized session state
 
-Per-request tenant model — Lambda invocations are naturally isolated; session backend (DynamoDB) keyed by session ID allows persistent state per tenant across requests.
+Lambda invocations are naturally isolated per-request; pluggable session backend (DynamoDB) keyed by session ID enables persistent state per tenant across requests. NoOp backend is the stateless default; DynamoDB backend the persistent option; custom-backend interface allows others.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### PyPI via pip / pipx
 
-Tools — declared via `@mcp.tool()` decorator in the user's Lambda module.
+PyPI package `awslabs.mcp-lambda-handler`; install for local dev via `pip install -e .[dev]`.
 
-## Observability
+### Lambda deployment package
 
-### logging destination + format, metrics, tracing, debug flags
+Embedded as a library dependency inside the user's Lambda deployment package — the artifact ships as part of the consumer's Lambda zip rather than as a standalone server.
 
-CloudWatch Logs (implicit via Lambda); X-Ray tracing can layer on; no specific logging framework listed in deps.
+## Entry point and launch
 
-## Host integrations shown in README or repo
+### Library import inside a user's handler
 
-Not a host-configured server — deployed as Lambda + API Gateway; consumers configure their MCP client to hit the API Gateway URL.
+No standalone command. Consumer imports `from awslabs.mcp_lambda_handler import MCPLambdaHandler` and writes a Lambda handler that delegates: `def lambda_handler(event, context): return mcp.handle_request(event, context)`. A console script `awslabs.mcp-lambda-handler` mapped to `awslabs.mcp_lambda_handler.server:main` is declared but primary use is library import.
 
-## Claude Code plugin wrapper
+## Build and packaging
 
-### presence and shape
+### Hatchling + uv (Python)
 
-None — this artifact is infrastructure for building remote MCP servers.
+Build backend: hatchling. `requires-python = ">=3.10"`. Version manager convention: pip emphasized for editable install (`pip install -e .[dev]`); `uv` not emphasized.
 
-## Tests
+## Schema and types
 
-### presence, framework, location, notable patterns
+### Hand-authored tool schemas
 
-Dev extras installable via `pip install -e .[dev]` but test framework not extracted.
+No Pydantic dependency — tool schema strategy likely dataclasses or TypedDict; schemas hand-authored without an SDK to derive them.
 
-## CI
-
-### presence, system, triggers, what it runs
-
-Parent monorepo.
-
-## Container / packaging artifacts
-
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
-
-No Dockerfile at this level — Lambda is the packaging target (zip archive).
-
-## Example client / developer ergonomics
-
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
-
-Example Lambda handler in README showing `mcp.handle_request(event, context)`.
-
-## Repo layout
-
-### single-package / monorepo / vendored / other
-
-Sub-package in awslabs/mcp; deliberately packaged small.
-
-## Notable structural choices
-
-Not an MCP server — a framework for building Lambda-hosted MCP servers. Breaks the "server" assumption of the sample.
-
-Pluggable session management — NoOp (stateless) or DynamoDB (persistent) with a custom-backend interface.
-
-Decorator-driven tool declaration (`@mcp.tool()`) — familiar FastMCP pattern but reimplemented on top of Lambda request/response shapes rather than `fastmcp`.
-
-Zero dependency on the `mcp` Python SDK or `fastmcp` — instead, declares `python-dateutil`, `boto3`, `botocore` only; implies protocol wire format is implemented directly against Lambda events.
-
-API Gateway as the transport layer — the MCP-over-HTTP endpoint (`/mcp`) is an API Gateway route, and authentication is offloaded to Lambda Authorizers.
-
-Smallest dependency footprint of any awslabs sub-server observed (3 deps).
-
-## Unanticipated axes observed
-
-"Server" vs "server-framework" — a sub-package in an MCP-server monorepo that is itself not a server but a library for building servers. Reveals a structural category the sample schema doesn't anticipate.
-
-Protocol implementation without the official SDK — the package presumably re-implements MCP message framing on top of API Gateway events rather than importing `mcp`.
-
-Session management as a pluggable extension point — most MCP servers are single-process stateless or single-process stateful; this one externalizes session state to DynamoDB, matching serverless best practice.
-
-Infrastructure-dependent auth (API Gateway Authorizer) — authentication is architecturally outside the server, not inside it.
-
-Serverless deployment model as a first-class target — cold-start sensitivity, statelessness, external session stores all become design concerns.
-
-## Python-specific
-
-### SDK / framework variant
-
-custom — neither `mcp` nor `fastmcp` imported. N/A for version pin (not a consumer of either SDK). Consumer imports `from awslabs.mcp_lambda_handler import MCPLambdaHandler` and uses `@mcp.tool()` decorator.
-
-### Python version floor
-
-`requires-python = ">=3.10"`.
-
-### Packaging
-
-Build backend: hatchling. Lock file not captured. Version manager convention: pip (`pip install -e .[dev]`); `uv` not emphasized.
-
-### Entry point
-
-Console script declared (`awslabs.mcp-lambda-handler`) but primary usage is library import inside a Lambda handler — `def lambda_handler(event, context): return mcp.handle_request(event, context)`. Host-config snippet shape: N/A — deployed as Lambda, invoked via HTTPS endpoint.
-
-### Install workflow expected of end users
-
-`pip install -e .[dev]` for local; in production, included as a dependency in the Lambda deployment package.
-
-### Async and tool signatures
+### Async model (cross-cutting)
 
 Lambda handlers are typically sync; tool functions likely sync `def`.
 
-### Type / schema strategy
+## Container artifacts
 
-Not captured — no Pydantic dependency listed, so likely dataclasses or TypedDict.
+### No container artifacts
 
-### Testing
+No Dockerfile at this level — Lambda zip is the packaging target.
 
-Dev extras exist; specifics not extracted.
+## Observability
 
-### Dev ergonomics
+### CloudWatch via Lambda
 
-Not captured; Lambda testing typically via SAM or Lambda local invoke.
+Implicit CloudWatch logging via the Lambda runtime; X-Ray tracing can layer on. No specific logging framework declared in deps.
 
-### Notable Python-specific choices
+## Deployment topology
 
-Pure-stdlib HTTP protocol handling (no Pydantic, no mcp-sdk, no fastmcp) — the smallest trustworthy surface.
+### Serverless (Lambda + API Gateway)
 
-`python-dateutil` as the only non-AWS runtime dep — suggests time-sensitive session token handling.
+Server code runs in Lambda fronted by API Gateway. Per-request invocation; cold-start sensitivity; statelessness enforced by the substrate; session state externalized to DynamoDB via the pluggable backend.
 
-boto3 + botocore pair (rather than just boto3) — explicit, enables DynamoDB session backend.
+## Repository layout
 
-## Gaps
+### Server-framework sub-package
 
-Whether MCP protocol is re-implemented byte-for-byte or piggybacks on a subset; exact session schema for the DynamoDB backend; how `@mcp.tool()` decorator maps to the protocol without `fastmcp`; test framework; whether streaming responses are supported given Lambda response-size constraints.
+Sub-package within the `awslabs/mcp` monorepo that is itself a library for building servers, not a server. Structural category for infrastructure-tier artifacts inside a server-monorepo.
+
+## Extension points
+
+### Middleware module slot
+
+Pluggable session-management abstraction — NoOp (stateless), DynamoDB (persistent), or custom-backend interface implemented by the consumer. Externalizes session state to DynamoDB matching serverless best practice.
+
+## CI
+
+### Monorepo CI inheritance
+
+CI inherited from parent monorepo; no workflow at sub-server level.
+
+## Test stack
+
+### Dev extras gating test deps
+
+Dev extras installable via `pip install -e .[dev]`; specific test framework not extracted.
+
+## Host integration
+
+### No host integration documentation
+
+Not a host-configured server — deployed as Lambda + API Gateway; consumers configure their MCP client to hit the API Gateway URL rather than launching a process.
+
+## Claude Code plugin / skill wrapper
+
+### Bare MCP server, no Claude Code wrapper
+
+No Claude Code wrapper — this artifact is infrastructure for building remote MCP servers.
+
+## Release and lifecycle
+
+### License — Permissive (MIT / Apache-2.0)
+
+Apache-2.0.
+
+### Active development
+
+Default branch `main`; maintained via parent monorepo.

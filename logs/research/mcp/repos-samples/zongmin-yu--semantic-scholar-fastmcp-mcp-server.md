@@ -1,209 +1,145 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/zongmin-yu/semantic-scholar-fastmcp-mcp-server`. Semantic Scholar MCP server — dual-protocol MCP (stdio) + HTTP REST in the same process; FastMCP-backed. ~125 stars, MIT, default branch `main`.
 
-### url
+## Server runtime
 
-https://github.com/zongmin-yu/semantic-scholar-fastmcp-mcp-server
+### Python with FastMCP
 
-### stars
-
-~125
-
-### last-commit
-
-not surfaced
-
-### license
-
-MIT
-
-### default branch
-
-main
-
-### one-line purpose
-
-Semantic Scholar MCP server — dual-protocol MCP (stdio) + HTTP REST in the same process; FastMCP-backed.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Python 3.10+.
-
-### framework/SDK in use
-
-FastMCP.
+Python 3.10+ with FastMCP. Import pattern `from fastmcp import FastMCP` likely; version pin not surfaced. Schema auto-derived via FastMCP. Likely async (FastMCP + httpx).
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio (MCP default); HTTP bridge on port 8000 (bundled in-process).
+stdio is the MCP default transport.
 
-### how selected
+### REST API bridge alongside MCP
 
-stdio primary; HTTP bridge toggled via env var (`SEMANTIC_SCHOLAR_ENABLE_HTTP_BRIDGE`).
+Custom HTTP REST bridge runs in-process bound to port 8000 (configurable via `SEMANTIC_SCHOLAR_HTTP_BRIDGE_HOST`/`SEMANTIC_SCHOLAR_HTTP_BRIDGE_PORT`); both protocols serve simultaneously. Toggled via `SEMANTIC_SCHOLAR_ENABLE_HTTP_BRIDGE` env var. Non-MCP clients consume the same tool surface through a hand-rolled REST API. Suggests FastMCP's `streamable-http` is not being used; custom bridge layer lives alongside.
 
-## Distribution
+### Selection mechanism
 
-### every mechanism observed
+Implicit default — stdio always; HTTP bridge is opt-in via env-var enable flag and serves alongside, not instead of stdio.
 
-PyPI (`pip install semantic-scholar-fastmcp`), uvx, Docker (+ docker-compose).
+## Capability surface
 
-### published package name(s)
+### Domain-bundled tool set
 
-`semantic-scholar-fastmcp`.
+16 tools organized into 4 explicit functional groups — 8 paper search/discovery, 2 citation analysis, 4 author info, 2 recommendation. Tool categorization baked into documentation structure.
 
-### install commands shown in README
+### REST endpoints alongside MCP tools
 
-`pip install semantic-scholar-fastmcp`, `uvx semantic-scholar-fastmcp`.
+The HTTP bridge exposes the same tool surface to non-MCP clients. Distinct from MCP transport — a parallel REST API layered alongside.
 
-## Entry point / launch
+## Configuration delivery
 
-### command(s) users/hosts run
+### Environment variables
 
-`semantic-scholar-mcp-server` console script.
+`SEMANTIC_SCHOLAR_API_KEY`, `SEMANTIC_SCHOLAR_ENABLE_HTTP_BRIDGE`, `SEMANTIC_SCHOLAR_HTTP_BRIDGE_HOST`, `SEMANTIC_SCHOLAR_HTTP_BRIDGE_PORT` — vendor-prefixed env-var convention.
 
-### wrapper scripts, launchers, stubs
+### Host-side JSON config snippet
 
-docker-compose orchestration shipped.
-
-## Configuration surface
-
-### how config reaches the server
-
-environment variables — `SEMANTIC_SCHOLAR_API_KEY`, `SEMANTIC_SCHOLAR_ENABLE_HTTP_BRIDGE`, `SEMANTIC_SCHOLAR_HTTP_BRIDGE_HOST`, `SEMANTIC_SCHOLAR_HTTP_BRIDGE_PORT`.
+Claude Desktop JSON snippet uses `uvx` command shape.
 
 ## Authentication
 
-### flow
+### API key (optional, for higher rate limits)
 
-optional API key.
-
-### where credentials come from
-
-`SEMANTIC_SCHOLAR_API_KEY` env var (higher rate limits).
+Optional API key via `SEMANTIC_SCHOLAR_API_KEY` for higher rate limits — server works without credentials but accepts the key to lift quotas.
 
 ## Multi-tenancy
 
-### tenancy model
+### Single-user / single-tenant per process
 
-single-user.
+Single-user; one credential set per process.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### PyPI via pip / pipx
 
-16 tools — 8 paper search/discovery, 2 citation analysis, 4 author info, 2 recommendation.
+`pip install semantic-scholar-fastmcp` documented; published as `semantic-scholar-fastmcp` on PyPI.
 
-## Observability
+### PyPI via uvx (zero-install runner)
 
-### logging destination + format, metrics, tracing, debug flags
+`uvx semantic-scholar-fastmcp` — canonical zero-install path.
 
-not surfaced
+### Docker / OCI image
 
-## Host integrations shown in README or repo
+Dockerfile and `docker-compose.yml` ship with the repo.
 
-### Claude Desktop
+## Entry point and launch
 
-JSON config snippet (uvx command).
+### Console script via `[project.scripts]` / npm bin
 
-### HTTP bridge
+`[project.scripts]` registers `semantic-scholar-mcp-server` as the console script. Host-config snippet shape: `uvx semantic-scholar-fastmcp`.
 
-serves on 0.0.0.0:8000 for non-MCP consumers.
+## Build and packaging
 
-## Claude Code plugin wrapper
+### Hatchling + uv (Python)
 
-### presence and shape
+Version manager convention: pip + uvx. Build backend not surfaced explicitly.
 
-none observed
+### Optional-dependency fan-out
 
-## Tests
+`[dev]` optional extra gates test/dev dependencies.
 
-### presence, framework, location, notable patterns
+### Python version pinning
 
-`tests/` directory; framework not detailed.
+`requires-python = ">=3.10"`.
+
+## Schema and types
+
+### FastMCP auto-derivation from type hints
+
+Tool function signatures with type hints become MCP tool input schemas automatically; Pydantic via FastMCP.
+
+## Container artifacts
+
+### Dockerfile (single-stage, build-from-source)
+
+Dockerfile present at repo root.
+
+### Docker Compose for local dev
+
+`docker-compose.yml` orchestrates the server for local development.
+
+## Test stack
+
+### pytest with async + coverage
+
+`tests/` directory present; `[dev]` extra implies pytest. Specifics not surfaced.
+
+### Dev extras gating test deps
+
+`[dev]` optional extra gates test dependencies.
 
 ## CI
 
-### presence, system, triggers, what it runs
+### GitHub Actions
 
-GitHub Actions in `.github/`.
+`.github/` directory with GitHub Actions present.
 
-## Container / packaging artifacts
+## Host integration
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+### Claude Desktop
 
-Dockerfile and docker-compose.yml present.
+JSON config snippet using `uvx` command shown in README.
 
-## Example client / developer ergonomics
+## Observability
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+### None / unspecified
 
-`[dev]` optional extra.
+Logging strategy not surfaced.
 
-## Repo layout
+## Repository layout
 
-### single-package / monorepo / vendored / other
+### Single-package src-layout
 
-single-package (`semantic_scholar/` with `server.py`, `mcp.py`, `config.py`, utility modules).
+Single-package — `semantic_scholar/` with `server.py`, `mcp.py`, `config.py`, utility modules. Separate `mcp.py` and `server.py` files likely split MCP-protocol surface from HTTP/business-logic surface.
 
-## Notable structural choices
+## Release and lifecycle
 
-Bundles an HTTP bridge alongside the MCP protocol — the same server process exposes both MCP tools and a generic HTTP endpoint (port 8000), enabled by default.
+### License — Permissive (MIT / Apache-2.0)
 
-16 tools organized into 4 explicit functional groups — tool categorization baked into documentation structure.
-
-Separate `mcp.py` and `server.py` files — likely splits MCP-protocol surface from HTTP/business-logic surface.
-
-## Unanticipated axes observed
-
-dual protocol exposure (MCP stdio + HTTP REST) in a single process, rather than picking one — the HTTP bridge is on by default, making this usable by non-MCP clients out of the box. This is a distinct pattern from "pick a transport" (which is still one protocol); this server serves two protocols simultaneously.
-
-## Python-specific
-
-### SDK / framework variant
-
-FastMCP. Version pin from pyproject.toml not surfaced. Import pattern: `from fastmcp import FastMCP` likely.
-
-### Python version floor
-
-`requires-python` value: `>=3.10`.
-
-### Packaging
-
-build backend not surfaced. Lock file not surfaced. Version manager convention: pip + uvx.
-
-### Entry point
-
-`[project.scripts]` → `semantic-scholar-mcp-server`. Actual console-script name: `semantic-scholar-mcp-server`. Host-config snippet shape: `uvx semantic-scholar-fastmcp`.
-
-### Install workflow expected of end users
-
-pip, uvx, Docker. One-liner: `pip install semantic-scholar-fastmcp`.
-
-### Async and tool signatures
-
-likely async (FastMCP + httpx).
-
-### Type / schema strategy
-
-Pydantic via FastMCP.
-
-### Testing
-
-`[dev]` extra implies pytest but not confirmed.
-
-### Dev ergonomics
-
-`[dev]` extra.
-
-### Notable Python-specific choices
-
-In-process HTTP bridge is interesting — suggests FastMCP's `streamable-http` transport is not being used; instead, a custom bridge layer lives alongside.
-
-## Gaps
-
-HTTP bridge internals not inspected (is it `streamable-http`, `sse`, or a custom FastAPI app?). Version pins for FastMCP not surfaced. Lock file convention not confirmed.
+MIT.

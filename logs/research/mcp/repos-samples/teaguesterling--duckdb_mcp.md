@@ -1,179 +1,137 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/teaguesterling/duckdb_mcp`. DuckDB-embedded MCP server — implemented as a native DuckDB extension invoked from SQL rather than as a standalone process. 47 stars, MIT, default branch `main`. v2.1.0 released March 28, 2026. Blurs database and tool-registry roles: SQL PRAGMAs control the server, SQL templates become first-class published tools, and `ATTACH` semantics let queries span multiple MCP-exposed data sources.
 
-### url
+## Server runtime
 
-https://github.com/teaguesterling/duckdb_mcp
+### DuckDB extension (C++) embedding MCP
 
-### stars
-
-47
-
-### last-commit
-
-v2.1.0 released March 28, 2026
-
-### license
-
-MIT
-
-### default branch
-
-main
-
-### one-line purpose
-
-DuckDB-embedded MCP server — implemented as a DuckDB extension invoked from SQL, rather than a standalone process.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-C++ (73.7%), Shell (13.1%), Python (10.6%), small TS/JS/HTML. Built as a DuckDB extension — runtime is DuckDB itself.
-
-### framework/SDK in use
-
-Custom implementation of MCP as a native DuckDB extension; CMake build.
+Native DuckDB extension built with CMake. C++ (73.7%), Shell (13.1%), Python (10.6%), small TS/JS/HTML. The "server" is the user's DuckDB session; tool calls and configuration originate from SQL statements (`PRAGMA mcp_server_start(...)`, `PRAGMA mcp_publish_tool(...)`). Custom hand-rolled MCP implementation; no third-party MCP SDK.
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio, HTTP (server mode with token auth), MCP client (connects to external MCP servers via SQL `ATTACH`).
+Stdio transport supported — selectable via `PRAGMA mcp_server_start(...)` parameters from SQL.
 
-### how selected
+### Streamable HTTP
 
-`PRAGMA mcp_server_start(...)` selects server mode and transport parameters from SQL.
+HTTP server mode with bearer-token auth; `/health` and `/mcp` endpoints surface remote access.
 
-## Distribution
+### MCP-client mode (server connects out)
 
-### every mechanism observed
+Inverted role — the same artifact connects out to other MCP servers via SQL `ATTACH`, federating other MCP-exposed data sources into a unified SQL plane. Lets queries span the local server's tools plus attached upstream MCP servers' tools.
 
-Build from source with `make`; CMake-driven; no package-registry distribution observed (extension not yet in DuckDB community extensions per content fetched).
+### Selection mechanism
 
-### published package name(s)
+SQL PRAGMA — server mode and transport parameters chosen from SQL inside the embedded extension. User issues `PRAGMA mcp_server_start(...)` with transport options as arguments.
 
-None observed.
+## Capability surface
 
-### install commands shown in README
+### Domain-bundled tool set
 
-`make` (build from source).
+Built-in tools for query execution, table/schema description, listing, database introspection, export, DDL.
 
-## Entry point / launch
+### User-publishable tools meta-tool
 
-### command(s) users/hosts run
+`PRAGMA mcp_publish_tool` registers a custom parameterized SQL query as a discoverable MCP tool with name, description, properties, required fields, and output format. SQL templates become first-class MCP tools at runtime.
 
-Users issue SQL `PRAGMA mcp_server_start()`, `PRAGMA mcp_publish_tool(...)`, and `SELECT` functions inside DuckDB. HTTP endpoints `/health` and `/mcp` surface remote access.
+## Configuration delivery
 
-### wrapper scripts, launchers, stubs
+### SQL PRAGMA parameters
 
-Example configs under `/examples`.
+SQL PRAGMA calls with parameters (name, description, SQL template, properties, required fields, output format) are the primary config mechanism. JSON config file for HTTP/token settings.
 
-## Configuration surface
+### HTTP request headers
 
-### how config reaches the server
-
-SQL PRAGMA calls with parameters (name, description, SQL template, properties, required fields, output format). JSON config file for HTTP/token settings.
+Bearer token in HTTP server mode read via Authorization headers.
 
 ## Authentication
 
-### flow
+### Bearer token via JSON config file
 
-Bearer-token authentication in HTTP server mode.
-
-### where credentials come from
-
-JSON configuration file.
+Bearer-token authentication in HTTP server mode; the bearer token is read from a JSON configuration file rather than env var or CLI flag — used because the embedded-extension model means env vars are awkward to thread through the host process.
 
 ## Multi-tenancy
 
-### tenancy model
+### Single connection per server instance
 
 Single-instance server keyed to the DuckDB database; no per-request tenant handling documented.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### Source build with make / CMake
 
-Built-in tools for query execution, table/schema description, listing, database introspection, export, DDL. Custom parameterized SQL queries publishable as tools via `mcp_publish_tool`. Output format per-tool (JSON/Markdown/CSV).
+`make` (build from source) is the only documented install. CMake-driven; no package-registry distribution observed (extension not yet in DuckDB community extensions per content fetched).
 
-## Observability
+## Entry point and launch
 
-### logging destination + format, metrics, tracing, debug flags
+### SQL PRAGMA invocation
 
-Not detailed in README within budget; HTTP `/health` endpoint provides liveness.
+User starts the server from inside a DuckDB session via `PRAGMA mcp_server_start()`. Tool publication via `PRAGMA mcp_publish_tool(...)`. The host process is the DuckDB CLI/library; the MCP server is a behavior toggled within it.
 
-### pitfalls observed
+## Build and packaging
 
-Observability/logging specifics not surfaced.
+### Native build system (CMake / make)
 
-## Host integrations shown in README or repo
+CMake-based build invoked through `make`. Native C++ extension build pipeline.
 
-### Claude Desktop
+## Test stack
 
-Configuration via `.mcp.json` in project root.
+### Native build-system test target
 
-### Other editors/CLIs
-
-Not explicitly enumerated.
-
-## Claude Code plugin wrapper
-
-### presence and shape
-
-Not present.
-
-## Tests
-
-### presence, framework, location, notable patterns
-
-Tests under `/test`; `make test` command.
+Tests under `/test`; `make test` invokes the CMake-based test target.
 
 ## CI
 
-### presence, system, triggers, what it runs
+### GitHub Actions
 
-GitHub Actions workflows present in `.github/workflows`; specifics not extracted within budget.
+`.github/workflows/` present; specifics not extracted within budget.
 
-### pitfalls observed
+## Repository layout
 
-CI workflow details not extracted.
-
-## Container / packaging artifacts
-
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
-
-None observed.
-
-## Example client / developer ergonomics
-
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
-
-`make test` target; 6+ ready-to-use configs under `/examples`; ReadTheDocs documentation.
-
-## Repo layout
-
-### single-package / monorepo / vendored / other
+### Single-package source (language-conventional)
 
 Single-package DuckDB extension — `src/`, `examples/`, `test/`, CMake-based, with separate security audit docs.
 
-## Notable structural choices
+## Observability
 
-Native DuckDB extension rather than a standalone process — MCP surface is reachable via SQL PRAGMAs.
+### Health endpoint
 
-Dual-mode: server for AI assistants AND client connecting to other MCP resources via `ATTACH`.
+HTTP `/health` endpoint provides liveness probe.
 
-Per-tool output format is an explicit token-efficiency knob.
+## Host integration
 
-`PRAGMA mcp_publish_tool` makes SQL templates first-class discoverable tools.
+### `.mcp.json` in project root
 
-## Unanticipated axes observed
+Claude Desktop integration via `.mcp.json` in project root.
 
-MCP-as-SQL-extension blurs database and tool-registry roles — unusual architecture.
+## Developer ergonomics
 
-`ATTACH`-style client semantics lets SQL queries span multiple MCP-exposed data sources.
+### Examples directory with many patterns
 
-## Gaps
+6+ ready-to-use configs under `/examples`.
 
-Observability/logging specifics not surfaced. CI workflow details not extracted. No container or binary distribution observed — source-only build.
+### Makefile / Makefile.toml
+
+`make test` target plus other make-driven workflows.
+
+## Documentation surface
+
+### GitHub Pages / hosted docs site
+
+ReadTheDocs documentation hosted alongside the repo.
+
+## Release and lifecycle
+
+### License — Permissive (MIT / Apache-2.0)
+
+MIT licensed.
+
+### Tagged release with version in changelog
+
+v2.1.0 released March 28, 2026.
+
+### Active development
+
+Active project with v2.x line.

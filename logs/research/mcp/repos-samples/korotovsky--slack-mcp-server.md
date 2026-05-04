@@ -1,167 +1,149 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/korotovsky/slack-mcp-server`. Slack MCP server in Go — supports four distinct Slack token types (browser cookie, user OAuth, bot, "stealth-mode" cookie), exposes 14 conversation/thread/search tools, and ships a DXT bundle for Claude Desktop drag-and-drop install. 1,500 stars, MIT, default branch `master`, last commit April 16, 2026.
 
-### url
+## Server runtime
 
-https://github.com/korotovsky/slack-mcp-server
+### Go with custom MCP implementation
 
-### stars
-
-1,500
-
-### last-commit
-
-April 16, 2026
-
-### license
-
-MIT
-
-### default branch
-
-master
-
-### one-line purpose
-
-Slack MCP server (Go) — 4 token types; stealth mode; ships DXT manifest.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Go; Go 1.21+ (inferred from go.mod modern features)
-
-### framework/SDK in use
-
-custom Go MCP implementation; no standard Go web framework
+Custom Go MCP implementation (no standard Go web framework, no third-party MCP SDK). Go 1.21+ inferred from go.mod modern features. Single static binary; ships a custom User-Agent and TLS configuration to support enterprise-Slack environments.
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio, SSE, HTTP
+Default transport (`SLACK_MCP_TRANSPORT=stdio`).
 
-### how selected
+### Streamable HTTP
 
-env var `SLACK_MCP_TRANSPORT` (default stdio); configurable host/port
+HTTP transport supported with configurable host and port.
 
-## Distribution
+### SSE (Server-Sent Events)
 
-### every mechanism observed
+SSE transport supported.
 
-Docker (Dockerfile + docker-compose variants), npm tool for MCP Inspector, source build via Go
+### Selection mechanism
 
-### published package name(s)
+Environment variable `SLACK_MCP_TRANSPORT` selects transport (default `stdio`). Host/port configurable via additional env vars; API key required for SSE/HTTP modes.
 
-Docker image; Go executable (self-built)
+## Capability surface
 
-### install commands shown in README
+### Domain-bundled tool set
 
-`go run mcp/mcp-server.go --transport stdio`, Docker build/run, npm for inspector
+14 tools covering Slack domain entities — conversation history, thread replies, message search, reactions, user group management, unread tracking. 2 directory-style resources (channel list, user list) in CSV.
 
-## Entry point / launch
+### Tools plus resources
 
-### command(s) users/hosts run
+Tools plus 2 directory resources (channel/user CSV listings).
 
-`go run mcp/mcp-server.go --transport stdio`, Docker container, `@modelcontextprotocol/inspector` via npm
+### Capability gating flags (per-tool, per-category, write-mode)
 
-### wrapper scripts, launchers, stubs
+Per-tool enable flags exposed via env vars to scope the surface per deployment.
 
-Makefile (5.7 KB) for build automation; docker-compose variants for dev/toolkit
+## Configuration delivery
 
-## Configuration surface
+### Environment variables
 
-### how config reaches the server
-
-env vars — `SLACK_MCP_XOXC_TOKEN` (browser), `SLACK_MCP_XOXD_TOKEN` (cookie), `SLACK_MCP_XOXP_TOKEN` (user OAuth), `SLACK_MCP_XOXB_TOKEN` (bot), port (default 13080), host, API key for SSE/HTTP, proxy, per-tool enable flags
+Four token env vars (`SLACK_MCP_XOXC_TOKEN`, `SLACK_MCP_XOXD_TOKEN`, `SLACK_MCP_XOXP_TOKEN`, `SLACK_MCP_XOXB_TOKEN`); transport selector (`SLACK_MCP_TRANSPORT`); host, port (default 13080), API key for SSE/HTTP, proxy, log level (`SLACK_MCP_LOG_LEVEL`), per-tool enable flags.
 
 ## Authentication
 
-### flow
+### Multi-mode token selection
 
-four token types (browser, cookie, user OAuth, bot); flexible choice allows stealth mode or OAuth
-
-### where credentials come from
-
-env vars; workspace admin approval required for OAuth
+Four distinct Slack credential types selectable via env var: browser cookie (`XOXC`), additional cookie (`XOXD`), user OAuth token (`XOXP`), bot token (`XOXB`). The combination accepted determines operating mode — the cookie-based flow enables "stealth mode" deployment with no workspace permissions; OAuth requires workspace admin approval. Choice ranges from privilege-minimized stealth to formal OAuth.
 
 ## Multi-tenancy
 
-### tenancy model
+### Per-workspace tenant via upstream token
 
-per-workspace tenant via Slack API token; per-user isolation via DM/channel context
+Per-workspace tenancy via Slack API token; per-user isolation via DM/channel context. Server identity is fixed by the configured token.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### Docker / OCI image
 
-14 tools — conversation history, thread replies, message search, reactions, user group management, unread tracking. 2 resources as directories (channel list, user list) in CSV.
+Distributed as Docker (`Dockerfile` + multiple `docker-compose` variants).
+
+### MCPB bundle / Desktop Extension manifest
+
+Ships `manifest-dxt.json` — Claude Desktop drag-and-drop install via Desktop Extensions packaging.
+
+### Go module via `go get` / `go install`
+
+Source build via Go toolchain: `go run mcp/mcp-server.go --transport stdio`. Self-built Go executable distribution.
+
+## Entry point and launch
+
+### Native binary
+
+Self-built Go executable; users `go run` or run the compiled binary directly.
+
+### Docker container entrypoint
+
+`docker run` against the published Docker image.
+
+## Container artifacts
+
+### Dockerfile (single-stage, build-from-source)
+
+`Dockerfile` (874 bytes) at repo root.
+
+### Docker Compose for local dev
+
+`docker-compose.yml`, `docker-compose.dev.yml`, `docker-compose.toolkit.yml` — three Compose variants for different use cases (production, dev, toolkit).
 
 ## Observability
 
-### logging destination + format, metrics, tracing, debug flags
+### Env-var-controlled log level
 
-configurable log level (`SLACK_MCP_LOG_LEVEL`); Inspector tool for debugging; macOS log location `~/Library/Logs/Claude/mcp*.log`
-
-## Host integrations shown in README or repo
-
-### Claude
-
-primary integration documented
-
-### Enterprise Slack
-
-custom User-Agent, TLS config for Slack environments
-
-## Claude Code plugin wrapper
-
-### presence and shape
-
-not present
-
-## Tests
-
-### presence, framework, location, notable patterns
-
-not documented
+`SLACK_MCP_LOG_LEVEL` env var sets log severity. macOS log location documented as `~/Library/Logs/Claude/mcp*.log`.
 
 ## CI
 
-### presence, system, triggers, what it runs
+### GitHub Actions
 
-present; `.github/` (GitHub Actions); `.vscode/` IDE settings
+`.github/` present (GitHub Actions). Full CI pipeline details not visible in README.
 
-### pitfalls observed
+## Repository layout
 
-full CI pipeline details not visible in README
+### Single-package source (language-conventional)
 
-## Container / packaging artifacts
+Standard Go layout — `cmd/`, `pkg/`, `build/`, `docs/`, `.github/`, `.vscode/`, `npm/`. Config at root: `Makefile`, `go.mod`, `go.sum`, `.env.dist`, docker-compose variants. Additional artifacts: `manifest-dxt.json`, `SECURITY.md`.
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+## Host integration
 
-Dockerfile (874 bytes); `docker-compose.yml`, `docker-compose.dev.yml`, `docker-compose.toolkit.yml` (three variants); `.dockerignore`
+### Claude Desktop
 
-## Example client / developer ergonomics
+Primary host integration documented. DXT manifest (`manifest-dxt.json`) provides drag-and-drop install.
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+### MCPB / DXT bundle manifest
 
-docker-compose examples (dev, toolkit variants); configuration examples in README; Inspector tool for debugging; logging examples in documentation; Makefile for cross-platform build automation
+`manifest-dxt.json` shipped alongside the server.
 
-## Repo layout
+### Inspector compatibility called out
 
-### single-package / monorepo / vendored / other
+`@modelcontextprotocol/inspector` referenced via npm tooling for debugging.
 
-single-package Go project. Directories: `cmd/`, `pkg/`, `build/`, `docs/`, `.github/`, `.vscode/`, `npm/`. Config: `Makefile`, `go.mod`, `go.sum`, `.env.dist`, docker-compose variants. Additional: `manifest-dxt.json`, `SECURITY.md`.
+## Developer ergonomics
 
-## Notable structural choices
+### Makefile / Makefile.toml
 
-Go implementation (single binary, performance). Four authentication modes (flexibility for different Slack setups). Docker-compose variants for different use cases (dev, toolkit). Enterprise Slack support (custom User-Agent). Makefile for cross-platform build automation.
+Makefile (5.7 KB) for cross-platform build automation.
 
-## Unanticipated axes observed
+### Sample MCP client configs in repo
 
-Four distinct Slack token types — multiple authentication mechanisms within one server. "Stealth mode" operation (no workspace permissions) — privilege-minimized deployment flavor. Enterprise/GovSlack support via TLS + User-Agent customization — enterprise flavor. `manifest-dxt.json` — Desktop Extensions manifest, a Claude Desktop-specific packaging format distinct from `.mcp.json`.
+docker-compose examples (dev, toolkit variants); configuration examples in README; logging examples in documentation.
 
-## Gaps
+### Inspector/debug tooling references
 
-Testing strategy not documented. Full CI pipeline details not visible in README. Rate limiting and Slack API quota handling not detailed.
+Inspector recommended for debugging.
+
+## Release and lifecycle
+
+### Active development
+
+1,500 stars; last commit April 16, 2026.
+
+### License — Permissive (MIT / Apache-2.0)
+
+MIT.

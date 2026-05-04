@@ -1,217 +1,215 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/redis/mcp-redis`. Redis MCP server — key/value/data-structure operations across eight Redis families plus vector search; uses `uv_build` native backend; EntraID + standard Redis ACL auth. 488 stars, MIT, default branch `main`, v0.5.0 released March 16, 2026.
 
-### url
+## Server runtime
 
-https://github.com/redis/mcp-redis
+### Python with raw MCP SDK
 
-### stars
-
-488
-
-### last-commit
-
-v0.5.0 released March 16, 2026.
-
-### license
-
-MIT
-
-### default branch
-
-main
-
-### one-line purpose
-
-Redis MCP server — key/value/data-structure operations; uses `uv_build` native backend.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Python (99.9%).
-
-### framework/SDK in use
-
-Anthropic Claude Agent SDK (per README phrasing); `uv` tooling throughout.
+Python (99.9%); raw `mcp` Python SDK — `mcp[cli]>=1.26.0` in dependencies; no fastmcp. Low-level MCP server API (inferred). README phrasing references Anthropic Claude Agent SDK; `uv` tooling throughout.
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio (README notes "streamable-http transport will be added in the future").
+stdio is the only currently-supported transport (README notes "streamable-http transport will be added in the future").
 
-### how selected
+### Selection mechanism
 
-Implicit stdio only for now.
+Implicit single mode — stdio only for now.
 
-## Distribution
+## Capability surface
 
-### every mechanism observed
+### Tools-heavy domain wrapper / domain-tool catalog
 
-PyPI (via `uvx --from redis-mcp-server@latest`), Git (via `uvx --from git+...`), Docker (`docker build -t mcp-redis .`).
+Tools across eight Redis categories — strings, hashes, lists, sets, sorted sets, pub/sub, streams, JSON manipulation. Per-data-structure tool grouping mirrors Redis command families.
 
-### published package name(s)
+### Tools-only, hand-curated narrow surface
 
-`redis-mcp-server`.
+Resources/prompts/sampling/roots not documented — tools-only surface.
 
-### install commands shown in README
+## Configuration delivery
 
-`uvx --from redis-mcp-server@latest redis-mcp-server --url "redis://localhost:6379/0"`; Docker build.
+### CLI flags
 
-## Entry point / launch
+`--url`, `--host`, `--port`, `--username`, `--password`, `--db`, `--ssl`, `--ssl-ca-path`, `--ssl-keyfile`, `--ssl-certfile`, `--cluster-mode`. CLI-first with env var fallback rather than env-first.
 
-### command(s) users/hosts run
+### Environment variables
 
-`redis-mcp-server --url <redis-uri>` (CLI bin) with optional flags.
+Env vars and `.env` files supported. `MCP_REDIS_LOG_LEVEL` for log severity (DEBUG/INFO/WARNING/ERROR/CRITICAL; default WARNING). `MCP_DOCS_SEARCH_URL` for docs search HTTP API.
 
-### wrapper scripts, launchers, stubs
+### Connection URI scheme
 
-Dockerfile; `server.json` MCP server config.
+Redis URI scheme (`redis://`, `rediss://`).
 
-## Configuration surface
+### Dotenv file
 
-### how config reaches the server
+`.env` files supported.
 
-Three sources — CLI flags (`--url`, `--host`, `--port`, `--username`, `--password`, `--db`, `--ssl`, `--ssl-ca-path`, `--ssl-keyfile`, `--ssl-certfile`, `--cluster-mode`); environment variables and `.env` files; Redis URI scheme (`redis://`, `rediss://`). `MCP_REDIS_LOG_LEVEL` for log severity. `MCP_DOCS_SEARCH_URL` for docs search HTTP API.
+### Host-side JSON config snippet
+
+Claude Desktop JSON config example with `"command": "/Users/.../uvx"` and `"args": ["--from", "redis-mcp-server@latest", "redis-mcp-server", "--url", "redis://..."]` — `uvx --from` pattern with explicit package reference.
 
 ## Authentication
 
-### flow
+### Database connection string
 
-Standard Redis ACL (username/password) plus Azure EntraID with three sub-flows — service principal, managed identity, default Azure credential; automatic token renewal with background refresh.
+Standard Redis ACL via username/password supplied through CLI flags, env vars, or URI.
 
-### where credentials come from
+### Cloud-native identity / credential chain
 
-CLI flags, env vars, or cloud-native identity (EntraID).
+Azure EntraID with three sub-flows — service principal, managed identity, default Azure credential; automatic token renewal with background refresh. EntraID support with managed identity is layered as an alternative to the standard Redis ACL credential path — same server speaks both auth schemes.
 
 ## Multi-tenancy
 
-### tenancy model
+### Single connection per server instance
 
 Single Redis connection per server instance; cluster mode available but no per-request tenancy.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### PyPI via uvx (zero-install runner)
 
-Tools across eight categories — strings, hashes, lists, sets, sorted sets, pub/sub, streams, JSON manipulation; vector search via query engine; server management info; documentation search via `MCP_DOCS_SEARCH_URL`. Resources/prompts/sampling/roots not documented.
+`uvx --from redis-mcp-server@latest redis-mcp-server --url "redis://localhost:6379/0"`; package name `redis-mcp-server`.
 
-## Observability
+### PyPI via pip / pipx
 
-### logging destination + format, metrics, tracing, debug flags
+`pip install redis-mcp-server` also documented.
 
-Standard Python logging; `MCP_REDIS_LOG_LEVEL` (DEBUG/INFO/WARNING/ERROR/CRITICAL); default WARNING.
+### Install-from-git via uvx
 
-## Host integrations shown in README or repo
+`uvx --from git+https://...` for a GitHub install.
+
+### Docker / OCI image
+
+`docker build -t mcp-redis .` documented; Dockerfile present.
+
+### Source clone with editable install
+
+From-source `uv sync` documented.
+
+## Entry point and launch
+
+### Console script via `[project.scripts]` / npm bin
+
+`[project.scripts]`: `redis-mcp-server = "src.main:cli"` — `src.` prefix in the module path means the project's `src/` directory is itself imported as a top-level package rather than serving as a layout container. CLI bin: `redis-mcp-server --url <redis-uri>` with optional flags.
+
+### `uvx <package>`
+
+`uvx --from redis-mcp-server@latest redis-mcp-server --url "..."` — host-config snippet shape uses `uvx --from` pattern.
+
+## Build and packaging
+
+### uv_build backend (Python)
+
+Build backend: `uv_build` (one of the very few repos in the sample using uv's native build backend) — `requires = ["uv_build>=0.8.3,<0.12.0"]`. Mainstream choice elsewhere is hatchling.
+
+### `uv.lock` committed
+
+`uv.lock` present.
+
+## Schema and types
+
+### Hand-authored tool schemas
+
+Low-level MCP SDK — hand-authored tool schemas likely.
+
+### Async model (cross-cutting)
+
+Low-level `mcp[cli]` SDK with `pytest-asyncio` + `asyncio_mode = "auto"` — async tool handlers (`async def`).
+
+## Container artifacts
+
+### Dockerfile (single-stage, build-from-source)
+
+Dockerfile present; no compose/helm/systemd.
+
+## Test stack
+
+### pytest with async + coverage
+
+pytest + pytest-asyncio + pytest-cov + pytest-mock in dev group; separate `test` dependency-group. `addopts` includes `--cov=src --cov-fail-under=80` — coverage gate enforced at 80%. `asyncio_mode = "auto"`.
+
+### Branch coverage enforcement
+
+Coverage fail-threshold (`--cov-fail-under=80`) configured in `addopts`.
+
+### MyPy strict + Bandit security scans alongside tests
+
+mypy + black + bandit + safety in dev extras — heavy typing/security tooling. bandit + safety in dev — security scanning as first-class tooling.
+
+## CI
+
+### GitHub Actions
+
+GitHub Actions (integration workflow badge shown); specifics not extracted within budget.
+
+### Codecov integration
+
+codecov badge / integration in tests.
+
+## Host integration
 
 ### Claude Desktop
 
 JSON config example.
 
-### VS Code + GitHub Copilot
+### VS Code / VS Code Insiders / Visual Studio family
 
-Supported, requires `chat.agent.enabled: true`.
+VS Code + GitHub Copilot supported; requires `chat.agent.enabled: true`.
 
-### Augment
+### Windsurf / Goose / Qodo Gen / Cline / Kiro / Augment
 
-Supported via its Easy MCP feature.
+Augment supported via its Easy MCP feature.
 
-### OpenAI Agents SDK
+### Cloudflare AI Playground / OpenAI Responses API / OpenAI Agents SDK
 
-Supported.
+OpenAI Agents SDK supported.
 
-## Claude Code plugin wrapper
+## Claude Code plugin / skill wrapper
 
-### presence and shape
+### Bare MCP server, no Claude Code wrapper
 
 Not present (no `.claude-plugin` directory).
 
-## Tests
+## Documentation surface
 
-### presence, framework, location, notable patterns
+### README as the canonical surface
 
-Tests under `/tests`; codecov integration.
+README is canonical; `examples/` directory for usage demos; `server.json` for MCP server registry wiring; codecov badge.
 
-## CI
+## Developer ergonomics
 
-### presence, system, triggers, what it runs
+### Examples directory with many patterns
 
-GitHub Actions (integration workflow badge shown); specifics not extracted within budget.
+`examples/` directory for usage demos.
 
-### pitfalls observed
+### `uv run <tool>` invocations
 
-Exact CI workflow list not extracted.
+`uv`-first Python tooling (uvx, uv.lock) rather than pip/poetry.
 
-## Container / packaging artifacts
+## Repository layout
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
-
-Dockerfile present; no compose/helm/systemd.
-
-## Example client / developer ergonomics
-
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
-
-`examples/` directory for usage demos; `server.json` for MCP server registry wiring; codecov badge.
-
-## Repo layout
-
-### single-package / monorepo / vendored / other
+### Single-package src-layout
 
 Single-package Python project — `src/`, `tests/`, `examples/`, Dockerfile, `pyproject.toml`, `server.json`, `uv.lock`.
 
-## Notable structural choices
+## Release and lifecycle
 
-`uv`-first Python tooling (uvx, uv.lock) rather than pip/poetry. CLI-first with env var fallback rather than env-first. Granular SSL knobs (ca-path, keyfile, certfile) alongside URI schemes. EntraID support with managed identity is rare among community MCP servers — reflects enterprise Azure deployment pressure. Per-data-structure tool grouping mirrors Redis command families.
+### License — Permissive (MIT / Apache-2.0)
 
-## Unanticipated axes observed
+MIT.
 
-In-server documentation-search tool via a separate HTTP endpoint (`MCP_DOCS_SEARCH_URL`) is an unusual design — RAG-style augmentation attached to a database server. Vector search as a first-class capability alongside core Redis data structures. Cluster-mode flag as a first-class config axis.
+### Tagged release with version in changelog
 
-## Python-specific
+v0.5.0 released March 16, 2026.
 
-### SDK / framework variant
+### Active development
 
-Raw `mcp` Python SDK — `mcp[cli]>=1.26.0` in dependencies; no fastmcp. Import pattern: low-level MCP server API (inferred).
+Active development; integration workflow CI badge.
 
-### Python version floor
+## Safety and security posture
 
-`requires-python = ">=3.10"`. CI matrix not extracted.
+### None / not surfaced
 
-### Packaging
-
-Build backend: `uv_build` (one of the very few repos in the sample using uv's native build backend) — `requires = ["uv_build>=0.8.3,<0.12.0"]`. Lock file: `uv.lock` present. Version manager convention: `uv`.
-
-### Entry point
-
-`[project.scripts]`: `redis-mcp-server = "src.main:cli"` — note unusual `src.` prefix in the module path. README host-config snippet: `"command": "/Users/.../uvx"` with `"args": ["--from", "redis-mcp-server@latest", "redis-mcp-server", "--url", "redis://..."]` — `uvx --from` pattern with explicit package reference.
-
-### Install workflow expected of end users
-
-`pip install redis-mcp-server` or `uvx --from redis-mcp-server@latest`, or `uvx --from git+https://...` for a GitHub install, Docker image `mcp/redis`, or from-source `uv sync`.
-
-### Async and tool signatures
-
-Low-level `mcp[cli]` SDK — tool handlers likely `async def`. `pytest-asyncio` + `asyncio_mode = "auto"` in pytest config confirms async.
-
-### Type / schema strategy
-
-Low-level MCP SDK — hand-authored tool schemas likely. mypy + black + bandit + safety in dev extras — heavy typing/security tooling.
-
-### Testing
-
-pytest + pytest-asyncio + pytest-cov + pytest-mock in dev group; separate `test` dependency-group. `addopts` includes `--cov=src --cov-fail-under=80` — coverage gate enforced at 80%. `asyncio_mode = "auto"`.
-
-### Dev ergonomics
-
-`uv_build` native backend and dependency-groups (PEP 735) — modern uv-native project layout. bandit + safety in dev — security scanning as first-class tooling. twine for PyPI publishing pipeline.
-
-### Notable Python-specific choices
-
-`uv_build` backend adoption — one of the few in the sample; mainstream choice is hatchling. PEP 735 `[dependency-groups]` with distinct `dev` and `test` groups. Coverage fail-threshold (`--cov-fail-under=80`) configured in `addopts`. `src.main:cli` entry point path is unusual — most projects use top-level module path without the `src.` prefix.
-
-## Gaps
-
-Exact CI workflow list not extracted. Streamable-HTTP transport promised but not yet shipped. `server.json` contents not inspected.
+Not explicitly surfaced; SSL knobs (ca-path, keyfile, certfile) provide transport-level integrity but no application-level safety gates documented.

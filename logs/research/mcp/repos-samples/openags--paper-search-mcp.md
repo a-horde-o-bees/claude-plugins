@@ -1,110 +1,146 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/openags/paper-search-mcp`. Academic paper search MCP server — arXiv/PubMed/etc. search and download across 20+ academic providers; ships Claude Code skills in-tree alongside the MCP server. ~1,200 stars, MIT, default branch `main`, active development (37+ commits).
 
-### url
+## Server runtime
 
-https://github.com/openags/paper-search-mcp
+### Python with both MCP SDK and FastMCP declared
 
-### stars
-
-~1,200
-
-### last-commit
-
-active (37+ commits)
-
-### license
-
-MIT
-
-### default branch
-
-main
-
-### one-line purpose
-
-Academic paper search MCP server — arXiv/PubMed search + Claude Code skills in-tree; dual FastMCP + `mcp[cli]` dependency.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Python, `requires-python >= 3.10` (supports 3.10–3.13).
-
-### framework/SDK in use
-
-Both `mcp[cli]>=1.6.0` and `fastmcp` declared — dual imports suggested; FastMCP used for server, MCP CLI kept for tooling.
+Both `mcp[cli]>=1.6.0` and `fastmcp` declared — dual imports. FastMCP used for server surface; `mcp[cli]` kept for dev/inspector tooling. `requires-python >= 3.10` (supports 3.10–3.13). `httpx` async I/O.
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio (default for Claude Desktop); HTTP indirectly via academic APIs the server consumes.
+stdio is the default transport for Claude Desktop integration.
 
-### how selected
+### Selection mechanism
 
-stdio default; explicit transport selection not surfaced in README.
+stdio default; no explicit transport selection mechanism surfaced in README.
 
-## Distribution
+## Capability surface
 
-### every mechanism observed
+### Aggregator-tool catalog (many upstreams, normalized tool surface)
 
-PyPI (`pip install paper-search-mcp`), uv tool install, uvx, Smithery CLI, Docker, source clone.
+Unified `search_papers` and `download_with_fallback` tools dispatch across 20+ academic sources, plus platform-specific search/download/read tools per source — arXiv, PubMed, bioRxiv, medRxiv, Google Scholar, Semantic Scholar, Crossref, OpenAlex, PMC, CORE, Europe PMC, dblp, OpenAIRE, CiteSeerX, DOAJ, BASE, Zenodo, HAL, SSRN, Unpaywall, optional Sci-Hub.
 
-### published package name(s)
+## Configuration delivery
 
-`paper-search-mcp`
+### Environment variables
 
-### install commands shown in README
+Provider API keys follow the `PAPER_SEARCH_MCP_*` prefix convention — `PAPER_SEARCH_MCP_UNPAYWALL_EMAIL`, `_CORE_API_KEY`, `_SEMANTIC_SCHOLAR_API_KEY`, `_ZENODO_ACCESS_TOKEN`, `_GOOGLE_SCHOLAR_PROXY_URL`, `_IEEE_API_KEY`, `_ACM_API_KEY`.
 
-`pip install paper-search-mcp`, `uv tool install paper-search-mcp`, `npx -y @smithery/cli install @openags/paper-search-mcp --client claude`, `docker build -t paper-search-mcp .`
+### Dotenv file
 
-## Entry point / launch
+`.env` file supported for local dev; `.env.example` ships in repo.
 
-### command(s) users/hosts run
+### Host-side JSON config snippet
 
-`paper-search-mcp` (server console script) or `paper-search` (CLI).
-
-### wrapper scripts, launchers, stubs
-
-Smithery wrapper published.
-
-## Configuration surface
-
-### how config reaches the server
-
-`.env` file, environment variables, and Claude Desktop JSON `env` block. Provider API keys follow `PAPER_SEARCH_MCP_*` prefix pattern.
+Claude Desktop JSON `env` block injects per-provider keys into the launched server.
 
 ## Authentication
 
-### flow
+### Per-source independent API keys with graceful degradation
 
-Per-provider API keys, one email (Unpaywall).
-
-### where credentials come from
-
-env vars — `PAPER_SEARCH_MCP_UNPAYWALL_EMAIL` (required for Unpaywall), `_CORE_API_KEY`, `_SEMANTIC_SCHOLAR_API_KEY`, `_ZENODO_ACCESS_TOKEN`, `_GOOGLE_SCHOLAR_PROXY_URL`, `_IEEE_API_KEY`, `_ACM_API_KEY`.
+Per-provider API keys for each upstream source; some required (Unpaywall email), others optional. Server falls back per provider. Provider-side key surface includes free-and-paid mixes (Crossref free, IEEE/ACM paid) — keys are independent per upstream.
 
 ## Multi-tenancy
 
-### tenancy model
+### Single-user / single-tenant per process
 
 Single-user; per-provider credentials applied globally.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### PyPI via pip / pipx
 
-Tools — unified `search_papers`, `download_with_fallback`, plus platform-specific search/download/read across 20+ academic sources (arXiv, PubMed, bioRxiv, medRxiv, Google Scholar, Semantic Scholar, Crossref, OpenAlex, PMC, CORE, Europe PMC, dblp, OpenAIRE, CiteSeerX, DOAJ, BASE, Zenodo, HAL, SSRN, Unpaywall, optional Sci-Hub).
+`pip install paper-search-mcp` — package name `paper-search-mcp` on PyPI.
 
-## Observability
+### PyPI via uvx (zero-install runner)
 
-### logging destination + format, metrics, tracing, debug flags
+`uv tool install paper-search-mcp` and `uvx paper-search-mcp` — uvx is a recommended one-liner.
 
-Standard logging; end-to-end regression testing mentioned but no metrics/tracing surfaced.
+### Smithery registry
 
-## Host integrations shown in README or repo
+Registered install target via `npx -y @smithery/cli install @openags/paper-search-mcp --client claude`.
+
+### Docker / OCI image
+
+`docker build -t paper-search-mcp .` — Dockerfile present in repo.
+
+### Source clone with editable install
+
+Source clone + venv supported as a fallback install path.
+
+### Multi-channel publication
+
+Five distinct distribution channels — PyPI, uvx, Smithery, Docker, source clone — covering the major install surfaces simultaneously.
+
+## Entry point and launch
+
+### Console script via `[project.scripts]` / npm bin
+
+Two `[project.scripts]` entries — `paper-search-mcp` → `paper_search_mcp.server:main`; `paper-search` → `paper_search_mcp.cli:main`. Server and CLI share a core library.
+
+### `uvx <package>`
+
+`uvx paper-search-mcp` — primary host-config snippet shape.
+
+## Build and packaging
+
+### Hatchling + uv (Python)
+
+Build backend hatchling; uv as version-manager convention.
+
+### `uv.lock` committed
+
+`uv.lock` implied; not explicitly confirmed.
+
+### Optional-dependency fan-out
+
+`httpx[socks]` for SOCKS-proxy support; `pypdf` + `lxml` + `beautifulsoup4` in core deps for in-process PDF/HTML/XML handling.
+
+### Pin discipline (Python)
+
+`mcp[cli]>=1.6.0` pinned; `fastmcp` no version specified — loose pin signals follow-latest posture, with fragility risk.
+
+## Schema and types
+
+### Pydantic v2 models
+
+Pydantic via FastMCP / MCP SDK — schemas auto-derived from type hints.
+
+### Async model (cross-cutting)
+
+Async (`httpx` + `asyncio` mentioned); FastMCP-standard async tool signatures.
+
+### FastMCP auto-derivation from type hints
+
+FastMCP auto-derives schemas from Python type hints.
+
+## Container artifacts
+
+### Dockerfile (single-stage, build-from-source)
+
+Dockerfile present at repo root; `.env.example` for container env injection.
+
+## Test stack
+
+### pytest with async + coverage
+
+pytest (inferred) under `tests/`; end-to-end regression tests mentioned.
+
+### End-to-end protocol-conformance harness
+
+End-to-end regression tests mentioned for the unified tool surface across providers.
+
+## CI
+
+### GitHub Actions
+
+GitHub Actions workflows in `.github/workflows/`.
+
+## Host integration
 
 ### Claude Desktop
 
@@ -114,96 +150,40 @@ JSON snippet (standard `command/args/env`).
 
 Dedicated skill files under `claude-code/` directory.
 
-### Smithery
+### Smithery / Glama discovery
 
-Registered install target.
+Smithery is a registered install target.
 
-## Claude Code plugin wrapper
+## Repository layout
 
-### presence and shape
+### Single-package plus sibling host integrations
 
-`claude-code/` directory contains Claude Code skill files — explicit skill-layer integration rather than just host-config JSON.
+Single-package (`paper_search_mcp/`) plus `claude-code/` skill sibling, `tests/`, and `docs/` — Claude Code skills co-located with the server in the repo.
 
-## Tests
+## Developer ergonomics
 
-### presence, framework, location, notable patterns
+### Inspector/debug tooling references
 
-`tests/` directory; end-to-end regression tests mentioned.
+`mcp[cli]` dev inspector available for the server.
 
-## CI
+## Documentation surface
 
-### presence, system, triggers, what it runs
+### README as the canonical surface
 
-GitHub Actions workflows in `.github/workflows/`.
+README is the canonical install/setup surface.
 
-## Container / packaging artifacts
+## Claude Code plugin / skill wrapper
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+### `claude-code/` directory with skill files
 
-Dockerfile present; `.env.example` for container env injection.
+`claude-code/` directory contains Claude Code skill files — explicit skill-layer integration shipped in-tree alongside the MCP server (rather than just host-config JSON). First-class plugin wrapper co-located with server.
 
-## Example client / developer ergonomics
+## Release and lifecycle
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+### License — Permissive (MIT / Apache-2.0)
 
-`.env.example`, Claude Desktop JSON, Smithery config.
+MIT.
 
-## Repo layout
+### Active development
 
-### single-package / monorepo / vendored / other
-
-Single-package (`paper_search_mcp/`) + `claude-code/` skill sibling + `tests/` + `docs/`.
-
-## Notable structural choices
-
-Dual FastMCP + MCP[cli] declaration — likely using FastMCP for the server surface and `mcp[cli]` for dev/inspector tooling. Two console scripts (`paper-search-mcp` as server, `paper-search` as standalone CLI) — server and CLI share a core library. Distinct `claude-code/` directory ships Claude Code skills alongside the MCP server — unusual first-class plugin wrapper co-located with server.
-
-## Unanticipated axes observed
-
-Shipping Claude Code skills in-tree with a generic MCP server. 20+ backend providers multiplex through a common tool surface with uniform env-var prefix convention. Dual runtime (MCP server for agents, CLI for humans) from same codebase.
-
-## Python-specific
-
-### SDK / framework variant
-
-FastMCP (version not pinned) + `mcp[cli]>=1.6.0`. Version pin from `pyproject.toml` — `mcp[cli]>=1.6.0`; `fastmcp` no version specified. Import pattern observed — `fastmcp` top-level plus `mcp.server` CLI utilities.
-
-### Python version floor
-
-`requires-python` value — `>=3.10`.
-
-### Packaging
-
-Build backend — hatchling. Lock file present — `uv.lock` implied; not explicitly confirmed. Version manager convention — uv.
-
-### Entry point
-
-Two `[project.scripts]` entries — `paper-search-mcp` → `paper_search_mcp.server:main`; `paper-search` → `paper_search_mcp.cli:main`. Host-config snippet shape — `uvx paper-search-mcp`, `uv tool install`, `pip`, Docker.
-
-### Install workflow expected of end users
-
-First-class support for all mainstream paths — pip, pipx, uv tool install, uvx, source clone + venv, Docker. One-liner the README recommends — `uv tool install paper-search-mcp` or `pip install paper-search-mcp`.
-
-### Async and tool signatures
-
-Async (httpx + asyncio mentioned); FastMCP-standard.
-
-### Type / schema strategy
-
-Pydantic via FastMCP / MCP SDK. Schema auto-derived.
-
-### Testing
-
-pytest (inferred); end-to-end regression tests mentioned.
-
-### Dev ergonomics
-
-`.env.example` + `mcp[cli]` dev inspector.
-
-### Notable Python-specific choices
-
-`httpx[socks]` for SOCKS-proxy support — reflects real-world scraping/proxy needs for Google Scholar. `pypdf` + `lxml` + `beautifulsoup4` in core deps — paper ingestion does PDF parse and HTML/XML handling in-process rather than deferring to external services. Loose `fastmcp` pin (no version) — likely follows latest; potential fragility.
-
-## Gaps
-
-Exact `fastmcp` version pin (if any) not surfaced. `uv.lock` presence not explicitly confirmed. Content of `claude-code/` skills not inspected.
+37+ commits; active development.

@@ -1,175 +1,157 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/viant/mcp`. Viant Go MCP SDK — framework/library for building MCP servers in Go with built-in OAuth2/OIDC support and a standalone bridge binary alternative for non-Go consumers. 4 stars, Apache-2.0, default branch `main`, v0.14.0 (March 19, 2026).
 
-### url
+## Server runtime
 
-https://github.com/viant/mcp
+### Go with custom MCP implementation
 
-### stars
-
-4
-
-### last-commit
-
-March 19, 2026 (v0.14.0 release)
-
-### license
-
-Apache License 2.0
-
-### default branch
-
-main
-
-### one-line purpose
-
-Go MCP SDK (Viant) — framework for building MCP servers in Go.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Go (no explicit version constraint specified).
-
-### framework/SDK in use
-
-Anthropic's Model Context Protocol (MCP); JSON-RPC 2.0 communication base.
+Go SDK that hand-rolls protocol handling against JSON-RPC 2.0 base; consumers can either embed the library (`go get github.com/viant/mcp`) or run a packaged executable. Functional-options API (`WithStreamableURI`, `WithSSEURI`, `WithSSEMessageURI`, `WithRootRedirect`); separate `client.go`/`server.go` packages; out-of-process bridge binary for non-Go consumers; built-in OAuth2/OIDC support that most Python/TypeScript SDKs delegate to the host.
 
 ## Transport
 
-### supported transports
+### Streamable HTTP
 
-HTTP/SSE (Server-Sent Events), Streamable HTTP, Stdio.
+Streamable HTTP supported via `UseStreamableHTTP(true)` configuration; URI configured via `WithStreamableURI()`.
 
-### how selected
+### SSE (Server-Sent Events)
 
-Configurable via functional options: `WithStreamableURI()`, `WithSSEURI()`, `WithSSEMessageURI()`; separate entry points `stdioSrv.ListenAndServe()` and `srv.HTTP()`.
+HTTP/SSE transport — server entry point `srv.HTTP(context.Background(), ":4981").ListenAndServe()`. Configured via `WithSSEURI()` and `WithSSEMessageURI()` for the response and message endpoints.
 
-## Distribution
+### stdio
 
-### every mechanism observed
+stdio entry point `stdioSrv.ListenAndServe()`.
 
-go get, standalone bridge binary, source build.
+### Selection mechanism
 
-### published package name(s)
+Functional options (in-code configuration) — caller assembles the server with composable option functions (`WithStreamableURI()`, `WithSSEURI()`, `WithSSEMessageURI()`) before starting it. Suited to library/SDK projects where the consumer is another program rather than an end user.
 
-github.com/viant/mcp (Go module).
+### Custom or experimental transports
 
-### install commands shown in README
+SDK exposes a transport interface so consumers can plug in their own.
 
-`go get github.com/viant/mcp`
+## Capability surface
 
-## Entry point / launch
+### Tools plus resources plus prompts (full primitive coverage)
 
-### command(s) users/hosts run
+Server-side: resource management, prompting, tool invocation, subscriptions, logging, progress reporting, request cancellation. Client-side: roots, sampling, elicitation. Full spec coverage for both sides.
 
-Stdio: `stdioSrv.ListenAndServe()`, HTTP/SSE: `srv.HTTP(context.Background(), ":4981").ListenAndServe()`, Streamable HTTP: via `UseStreamableHTTP(true)` configuration.
+### Sampling and elicitation as client primitives
 
-### wrapper scripts, launchers, stubs
+SDK exposes the client-side MCP primitives (sampling, elicitation, roots) for applications building agents on top of MCP.
 
-Bridge binary available as standalone alternative to embedding Go package.
+## Configuration delivery
 
-## Configuration surface
+### Functional options at construction (code-level)
 
-### how config reaches the server
-
-Functional options pattern: transport-specific URI paths (`WithStreamableURI`, `WithSSEURI`, `WithSSEMessageURI`), root redirect routing (`WithRootRedirect`).
+The SDK is a library; configuration happens at compile/build time via constructor calls and option functions (`WithStreamableURI()`, `WithSSEURI()`, `WithSSEMessageURI()`, `WithRootRedirect()`). No external config — choices baked into the consuming program's source.
 
 ## Authentication
 
-### flow
+### OAuth 2.x with issuer + JWKS (HTTP-mode bolt-on)
 
-OAuth2/OIDC support with two modes: global resource protection via bearer tokens, fine-grained tool/resource control (experimental); client-side automatic token acquisition via "401 challenge, discovers protected resource metadata, acquires tokens and retries".
+Two modes: global resource protection via bearer tokens (any request requires a valid bearer token), and fine-grained per-tool/resource control (still flagged experimental). Bearer tokens validated against a configured OAuth issuer/JWKS. Built-in OAuth2/OIDC support unusual for an MCP SDK — most delegate auth to the host.
 
-### where credentials come from
+### OAuth 2.1 / OIDC delegated (browser consent, multi-tenant)
 
-OAuth2/OIDC discovery; bearer tokens in Authorization header.
+Client-side automatic token acquisition on a 401 response — the client discovers the protected resource metadata, acquires tokens, and retries (RFC 9728). Token presented via `Authorization: Bearer` header.
 
 ## Multi-tenancy
 
-### tenancy model
+### Per-request tenancy by inbound credential / bearer token
 
-Per-request via bearer token; OAuth2 discovery enables per-request tenant identification.
+Per-request via bearer token; OAuth2 discovery enables per-request tenant identification. Fine-grained authorization (experimental) suggests multi-user workspace scenarios are part of the design intent.
 
-## Capabilities exposed
+### N/A (library, not a runtime)
 
-### tools / resources / prompts / sampling / roots / logging / other
+Project ships scaffolding and primitives; tenancy is the consumer's concern. Library/SDK posture.
 
-Server: resource management, prompting, tool invocation, subscriptions, logging, progress reporting, request cancellation. Client: roots, sampling, elicitation.
+## Distribution channel
 
-## Observability
+### Go module via `go get` / `go install`
 
-### logging destination + format, metrics, tracing, debug flags
+`go get github.com/viant/mcp` for library consumption by other Go programs.
 
-`Logging()` method for setting log levels; Progress reporting and request cancellation capabilities.
+### Standalone bridge binary
 
-## Host integrations shown in README or repo
+Pre-built executable that wraps the library so non-Go programs can use it without embedding. Distributed alongside the Go-module library — non-Go tools (Python, Node, etc.) consume MCP servers backed by the library without needing a Go toolchain.
 
-### Claude Desktop
+## Entry point and launch
 
-Not explicitly documented.
+### SDK constructor + transport-method launch
 
-### Claude Code
+The server is a program the consumer wrote — `server.NewMCPServer()` returns a server value, then `stdioSrv.ListenAndServe()` (stdio), `srv.HTTP(context.Background(), ":4981").ListenAndServe()` (HTTP/SSE), or Streamable HTTP via `UseStreamableHTTP(true)`. The launcher is the consumer's `main`.
 
-Not documented.
+### Library import inside a user's handler
 
-### Other
+Consumers embed the library; for non-Go consumers, the bridge binary substitutes.
 
-No host-specific integration documentation.
+## Build and packaging
 
-## Claude Code plugin wrapper
+### Go modules (`go.mod` / `go.sum`)
 
-### presence and shape
+Go module distribution — `go.mod` and `go.sum` declare and lock dependencies; consumers run `go get github.com/viant/mcp` or build from source. Bridge binary built from the same module for non-Go consumers.
 
-Not present; this is a library/SDK for building MCP applications.
+## Container artifacts
 
-## Tests
+### No container artifacts
 
-### presence, framework, location, notable patterns
+Docker/containerization patterns not documented.
 
-Go stdlib testing; test files include `client.go` (client tests) and `server.go` (server tests) patterns; GitHub repository includes examples directory.
+## Test stack
+
+### Go stdlib testing
+
+Standard `testing` package; test files include `client.go` (client tests) and `server.go` (server tests) patterns. Examples directory (`/example`) demonstrates server implementation, authentication/authorization, client usage, and bridge binary.
 
 ## CI
 
-### presence, system, triggers, what it runs
+### GitHub Actions
 
 GitHub Actions configured; typical Go project structure implies test and lint workflows.
 
-## Container / packaging artifacts
+## Host integration
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+### No host integration documentation
 
-Not documented in provided content.
+SDK-style library project — consumer is another program, not a host. No host-specific docs.
 
-## Example client / developer ergonomics
+### Production reference implementation
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+`/example` directory points to real server implementations as references.
 
-Example code available in `/example` directory demonstrating server implementation, authentication/authorization, client usage, and bridge binary.
+## Observability
 
-## Repo layout
+### Pluggable logger sinks
 
-### single-package / monorepo / vendored / other
+`Logging()` method for setting log levels; progress reporting and request cancellation capabilities exposed as SDK primitives.
 
-Single-package library; structure: root-level `client.go`, `server.go`, `doc.go`; subdirectories for `/bridge`, `/client`, `/server`, `/internal`, `/docs`, `/example`.
+### Change-notification channels / JSON-RPC notifications
 
-## Notable structural choices
+Subscription primitives and progress reporting surface server-emitted notifications.
 
-Bridge binary provides standalone MCP-to-tool bridging without requiring Go embedding.
+## Repository layout
 
-OAuth2/OIDC support with automatic token discovery and refresh is built-in.
+### Library with subdirectories
 
-Separate client and server implementations with clear API boundaries.
+Go library layout: root-level `client.go`/`server.go`/`doc.go` plus subdirectories for `/bridge`, `/client`, `/server`, `/internal`, `/docs`, `/example`.
 
-Fine-grained resource/tool control is experimental but acknowledged.
+## Developer ergonomics
 
-## Unanticipated axes observed
+### Examples directory with many patterns
 
-OAuth2 automatic token acquisition on 401 response is an unusual client-side feature for MCP servers.
+`/example` directory demonstrating server implementation, authentication/authorization, client usage, and bridge binary — multiple runnable patterns covering the SDK's surface.
 
-Fine-grained authorization (experimental) suggests multi-user workspace scenarios being designed for.
+### Programmatic embedding API
 
-## Gaps
+The SDK is itself the embedding surface — consumers wire `server.NewMCPServer()` into their own programs.
 
-Specific Go version constraints not documented. CI/CD workflows not fully examined. Docker containerization patterns not documented. Language version tested in CI not confirmed.
+## Release and lifecycle
+
+### License — Permissive (MIT / Apache-2.0)
+
+Apache License 2.0.
+
+### Tagged release with version in changelog
+
+Standard semver tag (v0.14.0, March 19, 2026).

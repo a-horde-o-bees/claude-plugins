@@ -1,215 +1,137 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/voska/hass-mcp`. Home Assistant MCP server — Docker-first distribution; long-lived access token auth; aggressive Python 3.13 floor on a 287-star production server. MIT, default branch `master`, v0.1.1 (August 5, 2025).
 
-### url
+## Server runtime
 
-https://github.com/voska/hass-mcp
+### Python with raw MCP SDK
 
-### stars
-
-287
-
-### last-commit
-
-August 5, 2025 (v0.1.1 release)
-
-### license
-
-MIT (per README badges; pyproject.toml did not declare)
-
-### default branch
-
-master
-
-### one-line purpose
-
-Home Assistant MCP server — Docker-first distribution; long-lived access token auth; Python 3.13 floor.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Python 99.6% — `requires-python = ">=3.13"`.
-
-### framework/SDK in use
-
-raw `mcp[cli]>=1.4.1`.
-
-### pitfalls observed
-
-Python 3.13 floor — aggressive version requirement; most Python MCP servers target 3.10+. Python 3.13 requirement on a relatively popular (287 stars) production server — uncommon floor.
+Python 99.6%; `requires-python = ">=3.13"`. `mcp[cli]>=1.4.1` declared in pyproject.toml — older pin than awslabs sub-servers. Two-dep server (`mcp[cli]` + `httpx`) — REST client over Home Assistant's REST API, minimal abstraction. Likely async given httpx + MCP SDK. Pydantic arrives via `mcp[cli]` extra. Bare `app` module name (rather than conventional `hass_mcp`) — unusual naming suggesting template-derived structure.
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio (wrapped in Docker or uvx).
+stdio default; wrapped in Docker or uvx invocation.
 
-### how selected
+### Selection mechanism
 
-default stdio; Docker container runs the stdio server inside.
+Implicit single mode — stdio only.
 
-## Distribution
+## Capability surface
 
-### every mechanism observed
+### Tools-heavy domain wrapper / domain-tool catalog
 
-Docker Hub (`voska/hass-mcp:latest`); `uvx hass-mcp`.
+Tools for controlling Home Assistant entities, querying states, executing services, managing automations. Parent project (`homeassistant-ai/ha-mcp`) advertises 80+ tools; this variant is more focused — exact count not surfaced.
 
-### published package name(s)
+## Configuration delivery
 
-`hass-mcp` on PyPI (inferred from `uvx hass-mcp` install one-liner).
+### Environment variables
 
-### install commands shown in README
+`HA_URL` and `HA_TOKEN` env vars supply the Home Assistant endpoint and credential.
 
-`docker pull voska/hass-mcp:latest`; `uvx hass-mcp`.
+### Host-side JSON config snippet
 
-## Entry point / launch
-
-### command(s) users/hosts run
-
-`docker run -i --rm -e HA_URL -e HA_TOKEN voska/hass-mcp`; `uvx hass-mcp`.
-
-### wrapper scripts, launchers, stubs
-
-console script `hass-mcp` → `app.run:main`.
-
-## Configuration surface
-
-### how config reaches the server
-
-environment variables `HA_URL`, `HA_TOKEN`.
+Claude Desktop JSON snippet shown with Docker `command`/`args`; `HA_URL` + `HA_TOKEN` env block.
 
 ## Authentication
 
-### flow
+### Static API key / token via env var
 
-Home Assistant long-lived access token.
-
-### where credentials come from
-
-`HA_TOKEN` env var injected into the container or uvx process.
+Home Assistant long-lived access token, supplied via `HA_TOKEN` env var injected into the container or uvx process.
 
 ## Multi-tenancy
 
-### tenancy model
+### Single-user / single-tenant per process
 
-single-user per Home Assistant instance.
+Single-user per Home Assistant instance — one credential, one HA endpoint, one process.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### Docker / OCI image
 
-tools for controlling HA entities, querying states, executing services, managing automations — parent `homeassistant-ai/ha-mcp` advertises 80+ tools; this variant is more focused.
+Docker as the *primary* distribution channel — README leads with `docker pull voska/hass-mcp:latest`. Docker Hub at `voska/hass-mcp:latest`. Many Home Assistant users run HA in Docker already; bundling the MCP server in the same paradigm matches operator mental models.
 
-## Observability
+### PyPI via uvx (zero-install runner)
 
-### logging destination + format, metrics, tracing, debug flags
+`uvx hass-mcp` as secondary install path; published as `hass-mcp` on PyPI.
 
-not captured
+## Entry point and launch
 
-## Host integrations shown in README or repo
+### Docker container entrypoint
 
-### Claude Desktop
+`docker run -i --rm -e HA_URL -e HA_TOKEN voska/hass-mcp` — the primary documented launch shape. The container's entrypoint runs the stdio server with env vars pulled in.
 
-JSON snippet shown with Docker `command`/`args`; `HA_URL` + `HA_TOKEN` env.
+### Console script via `[project.scripts]` / npm bin
 
-## Claude Code plugin wrapper
+`hass-mcp` console script registered — wires to `app.run:main` (module is just `app`, not `hass_mcp`).
 
-### presence and shape
+### `uvx <package>`
 
-none shown
+`uvx hass-mcp` as alternative to Docker.
 
-## Tests
+## Build and packaging
 
-### presence, framework, location, notable patterns
+### Hatchling + uv (Python)
 
-pytest mentioned; GitHub Actions workflow directory present.
+Build backend: hatchling. Version manager convention: `uv` / `uvx`. `.python-version` file referenced.
+
+### Python version pinning
+
+`requires-python = ">=3.13"` — aggressive version requirement; most Python MCP servers target 3.10+. Uncommon floor for a production-popular (287 stars) server.
+
+## Schema and types
+
+### Pydantic v2 models
+
+Pydantic arrives via the `mcp[cli]` extra.
+
+## Container artifacts
+
+### Dockerfile (single-stage, build-from-source)
+
+Dockerfile present; produces the runtime image used in production.
+
+### Published Docker image
+
+Official image `voska/hass-mcp:latest` on Docker Hub.
+
+## Test stack
+
+### pytest with async + coverage
+
+pytest mentioned in README. Specifics not surfaced.
 
 ## CI
 
-### presence, system, triggers, what it runs
+### GitHub Actions
 
-GitHub Actions — details not extracted.
+GitHub Actions workflow directory present; details not extracted.
 
-## Container / packaging artifacts
+## Host integration
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+### Claude Desktop
 
-Dockerfile; official image `voska/hass-mcp:latest` on Docker Hub — Docker as the primary distribution channel.
+JSON snippet shown with Docker `command`/`args` shape; `HA_URL` + `HA_TOKEN` env block.
 
-## Example client / developer ergonomics
+## Observability
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+### None / unspecified
 
-Claude Desktop JSON example embedded in README.
+Logging destination/format not surfaced in extracted content.
 
-## Repo layout
+## Repository layout
 
-### single-package / monorepo / vendored / other
+### Single-package src-layout
 
-single-package (`app/` module).
+Single-package layout — `app/` module rather than conventional `hass_mcp/`.
 
-## Notable structural choices
+## Release and lifecycle
 
-Python 3.13 floor — aggressive version requirement; most Python MCP servers target 3.10+.
+### License — Permissive (MIT / Apache-2.0)
 
-Docker as the primary distribution channel — README leads with `docker pull` and shows the Claude Desktop config using Docker as the `command`.
+MIT (per README badges; pyproject.toml did not declare).
 
-Two-dep server (`mcp[cli]` + `httpx`) — REST client over HA's REST API, minimal abstraction.
+### Tagged release with version in changelog
 
-Non-`awslabs.` namespace but similar top-level module name pattern: `hass-mcp` binary → `app.run:main` (module is just `app`, not `hass_mcp`).
-
-## Unanticipated axes observed
-
-Docker-first distribution for home-automation servers — many users run HA in Docker already; bundling the MCP server in the same paradigm matches operator mental models.
-
-Python 3.13 requirement on a relatively popular (287 stars) production server — uncommon floor.
-
-Bare `app` module name rather than `hass_mcp` package — unusual naming; suggests template-derived structure.
-
-## Python-specific
-
-### SDK / framework variant
-
-raw `mcp[cli]>=1.4.1` — older pin than awslabs sub-servers (>=1.23.0). Version pin from pyproject.toml: `mcp[cli]>=1.4.1`, `httpx>=0.27.0`. Import pattern observed: `from mcp.server.fastmcp import FastMCP` is likely given `[cli]` extra; not confirmed.
-
-### Python version floor
-
-`requires-python` value: `>=3.13`.
-
-### Packaging
-
-build backend: hatchling. Lock file present: `.python-version` file referenced. Version manager convention: `uv` / `uvx`.
-
-### Entry point
-
-console script. Actual console-script name: `hass-mcp`. Host-config snippet shape: Docker-first (`"command": "docker"`); uvx as alternative.
-
-### Install workflow expected of end users
-
-`docker pull voska/hass-mcp:latest` (primary); `uvx hass-mcp` (secondary).
-
-### Async and tool signatures
-
-httpx + MCP SDK — likely async.
-
-### Type / schema strategy
-
-not captured — Pydantic arrives via `mcp[cli]` extra.
-
-### Testing
-
-pytest (per README mention).
-
-### Dev ergonomics
-
-not captured.
-
-### Notable Python-specific choices
-
-Very small dep set (2 runtime deps). Requires Python 3.13 — tracks modern Python features or standard library additions. Module name `app` (bare) vs conventional `hass_mcp` package.
-
-## Gaps
-
-what couldn't be determined: exact CI workflow, tool count, whether resources or prompts are used, pyproject license field (README shows MIT badge).
+v0.1.1 (August 5, 2025).

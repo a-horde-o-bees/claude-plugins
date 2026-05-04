@@ -1,201 +1,141 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/alexei-led/k8s-mcp-server`. Kubernetes tooling MCP server — wraps `kubectl`, `helm`, `istioctl`, `argocd` with Unix-pipe support (jq/grep/sed) for result filtering. 207 stars, MIT, default branch `master`, last release v1.4.2 on 2026-02-27.
 
-### url
+## Server runtime
 
-https://github.com/alexei-led/k8s-mcp-server
+### Python with raw MCP SDK
 
-### stars
-
-207
-
-### last-commit
-
-Feb 27, 2026 (v1.4.2).
-
-### license
-
-MIT
-
-### default branch
-
-master
-
-### one-line purpose
-
-Kubernetes tooling MCP server — wraps `kubectl`, `helm`, `istioctl`, `argocd` with Unix-pipe support (jq/grep/sed) for result filtering.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Python (96.2%), Dockerfile (2.9%), Makefile (0.9); Python 3.13+.
-
-### framework/SDK in use
-
-raw MCP Python SDK (Anthropic's Model Context Protocol SDK, not FastMCP).
+Direct use of Anthropic's `mcp` Python SDK (raw, not FastMCP per README). Python 3.13+ floor — an unusually high floor for April 2026. Python is 96.2% of the repo (Dockerfile 2.9%, Makefile 0.9%).
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio (default for Claude Desktop), streamable-http (recommended for remote), sse (deprecated).
+Default transport for Claude Desktop integration.
 
-### how selected
+### Streamable HTTP
+
+Recommended for remote deployment.
+
+### SSE (Server-Sent Events)
+
+Supported but documented as deprecated.
+
+### Selection mechanism
 
 CLI flags / environment configuration.
 
-## Distribution
+## Capability surface
 
-### every mechanism observed
+### Tools-heavy domain wrapper / domain-tool catalog
 
-GitHub Container Registry (ghcr.io), source clone.
+Tool wrappers around `kubectl`, `helm`, `istioctl`, `argocd` plus Unix piping support (`jq`, `grep`, `sed`) for result filtering — multiple cluster-tooling CLIs bundled behind a single MCP surface.
 
-### published package name(s)
+## Configuration delivery
 
-ghcr.io/alexei-led/k8s-mcp-server
+### Environment variables
 
-### install commands shown in README
+`K8S_CONTEXT`, `K8S_NAMESPACE`, `K8S_MCP_TIMEOUT`; security modes; cloud provider credentials (AWS/GCP/Azure). Security-mode configuration delivered as an environment variable rather than a CLI flag.
 
-Docker-first — `ghcr.io/alexei-led/k8s-mcp-server:latest`.
+### Mounted credentials
 
-## Entry point / launch
-
-### command(s) users/hosts run
-
-Docker container.
-
-### wrapper scripts, launchers, stubs
-
-Dockerfile as the primary launcher; Makefile present.
-
-## Configuration surface
-
-### how config reaches the server
-
-Environment variables — `K8S_CONTEXT`, `K8S_NAMESPACE`, `K8S_MCP_TIMEOUT`, security modes, cloud provider credentials (AWS/GCP/Azure); kubeconfig and cloud credentials mounted into the container.
+kubeconfig and cloud-provider credential files mounted into the container as volumes — host-managed credentials reach the containerized server through the volume mount surface.
 
 ## Authentication
 
-### flow
+### Mounted file credentials
 
-kubeconfig credentials inherited from mounted file; cloud provider credentials for managed clusters mounted as volumes.
-
-### where credentials come from
-
-Host-mounted kubeconfig + cloud provider credential files.
+kubeconfig credentials inherited from a mounted file; cloud-provider credentials for managed clusters mounted as volumes.
 
 ## Multi-tenancy
 
-### tenancy model
+### Single-user / single-tenant per process
 
-single-user; one container per kubeconfig/context.
+Single-user; one container per kubeconfig/context.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### Docker / OCI image
 
-Tool wrappers around `kubectl`, `helm`, `istioctl`, `argocd` plus Unix piping support (`jq`, `grep`, `sed`).
+GitHub Container Registry (`ghcr.io/alexei-led/k8s-mcp-server:latest`) is the canonical distribution channel. Docker-first README — README steers users toward the container over a pip install.
 
-## Observability
+### Source clone with editable install
 
-### logging destination + format, metrics, tracing, debug flags
+Source clone documented as a secondary path.
 
-Not surfaced in README.
+## Entry point and launch
 
-## Host integrations shown in README or repo
+### Docker container entrypoint
+
+Docker container is the primary launch surface — host-config snippet shape: `docker run` invocation passed via Claude Desktop's `command`/`args`.
+
+## Build and packaging
+
+### Hatchling + uv (Python)
+
+`pyproject.toml` with the `uv` package manager. Lock file implied via the uv-based workflow.
+
+### Python version pinning
+
+`requires-python` floor is 3.13+ — an aggressive modern-Python target.
+
+### System-level dependencies
+
+System binary required (CLI on PATH) — server depends on `kubectl`, `helm`, `istioctl`, `argocd` at the host level. Docker becomes the only self-contained distribution path; the package manager cannot install these.
+
+## Container artifacts
+
+### Dockerfile (single-stage, build-from-source)
+
+Dockerfile at repo root; ghcr.io image is the canonical distribution form.
+
+### Published Docker image
+
+`ghcr.io/alexei-led/k8s-mcp-server:latest` — pre-built image at a known registry.
+
+## Test stack
+
+### pytest with async + coverage
+
+`/tests/` directory present; pytest framework not directly verified.
+
+## CI
+
+### GitHub Actions
+
+`.github/workflows/` with `release.yml` and `ci.yml`.
+
+## Host integration
 
 ### Claude Desktop
 
 JSON `mcpServers` entry via `claude_desktop_config.json`.
 
-## Claude Code plugin wrapper
+## Repository layout
 
-### presence and shape
+### Single-package src-layout
 
-Not observed.
+Single package under `src/k8s_mcp_server/` with sibling `/tests/`, `/docs/`, `.github/workflows/`.
 
-## Tests
+## Documentation surface
 
-### presence, framework, location, notable patterns
+### README plus docs directory
 
-`/tests/` directory present; framework not surfaced.
+Supplementary `/docs/` directory alongside README.
 
-## CI
+## Developer ergonomics
 
-### presence, system, triggers, what it runs
+### Makefile / Makefile.toml
 
-GitHub Actions (`release.yml`, `ci.yml`).
+Makefile at repo root.
 
-## Container / packaging artifacts
+## Release and lifecycle
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+### License — Permissive (MIT / Apache-2.0)
 
-Dockerfile present; ghcr.io image is the canonical distribution.
+MIT.
 
-## Example client / developer ergonomics
+### Active development
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
-
-Makefile; documentation under `/docs/`.
-
-## Repo layout
-
-### single-package / monorepo / vendored / other
-
-Single package under `src/k8s_mcp_server/`; `/tests/`, `/docs/`, `.github/workflows/`.
-
-## Notable structural choices
-
-Docker-first distribution — README steers users toward container over pip install. Wraps CLI tools rather than calling the Kubernetes API directly; supports shell piping with `jq`/`grep`/`sed` for result filtering. Single maintainer with recent activity.
-
-## Unanticipated axes observed
-
-Decision dimensions this repo reveals: pinning to a very recent Python (3.13+) as a floor; security-mode configuration as an environment variable rather than a CLI flag; bundling multiple cluster tooling (`kubectl`/`helm`/`istioctl`/`argocd`) behind a single MCP surface.
-
-## Python-specific
-
-### SDK / framework variant
-
-raw `mcp` Python SDK. Version pin from pyproject.toml not surfaced. Import pattern not surfaced.
-
-### Python version floor
-
-3.13+
-
-### Packaging
-
-Build backend: pyproject.toml with uv package manager. Lock file: implied (uv-based workflow). Version manager convention: uv.
-
-### Entry point
-
-Not surfaced — primary entry is the Docker container. Console-script names not surfaced. Host-config snippet shape: Docker run in `command`/`args` of Claude Desktop JSON.
-
-### Install workflow expected of end users
-
-`docker run ghcr.io/alexei-led/k8s-mcp-server:latest`.
-
-### Async and tool signatures
-
-Not surfaced. asyncio/anyio usage not surfaced.
-
-### Type / schema strategy
-
-Not surfaced. Schema auto-derived vs hand-authored not surfaced.
-
-### Testing
-
-tests/ directory present; framework not surfaced. Fixture style not surfaced.
-
-### Dev ergonomics
-
-Makefile present.
-
-### Notable Python-specific choices
-
-Python 3.13+ is an unusually high floor for April 2026 MCP server work. uv lock file implies reproducible dev env; still ships primarily via Docker.
-
-## Gaps
-
-What couldn't be determined: exact async-vs-sync tool signatures, schema strategy, test framework specifics, console script name, logging mechanism.
+v1.4.2 released 2026-02-27; single-maintainer with recent activity.

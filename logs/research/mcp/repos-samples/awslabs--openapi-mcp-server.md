@@ -1,234 +1,151 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/awslabs/mcp/tree/main/src/openapi-mcp-server`. OpenAPI-driven MCP server — dynamically generates MCP tools, resources, and prompts from one or more OpenAPI specs at server start; multi-spec composition supported. Apache-2.0; default branch `main`; sub-package in awslabs/mcp monorepo (parent stars carry; per-server last-commit not captured individually).
 
-### url
+## Server runtime
 
-https://github.com/awslabs/mcp/tree/main/src/openapi-mcp-server
+### Python with FastMCP
 
-### stars
-
-parent monorepo
-
-### last-commit
-
-not captured individually
-
-### license
-
-Apache-2.0
-
-### default branch
-
-main
-
-### one-line purpose
-
-OpenAPI-driven MCP server — dynamically generates MCP tools, resources, and prompts from one or more OpenAPI specs at server start; multi-spec composition supported.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Python `>=3.10`.
-
-### framework/SDK in use
-
-FastMCP 2.x (`fastmcp>=3.2.2,<4`).
+Python `>=3.10` server on FastMCP 2.x (`fastmcp>=3.2.2,<4`). Pinned with caret-style upper bound (`,<4`); analogous bounded pins (`,<1`) appear elsewhere — a stricter compatibility stance than typical Python projects. Import pattern not captured; likely `from fastmcp import FastMCP`.
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio.
+stdio is the documented transport. Not configurable per README. (`uvicorn` appears as a runtime dep despite stdio transport — suggests an undocumented HTTP mode or internal HTTP client pool.)
 
-### how selected
+## Capability surface
 
-Not configurable per README.
+### Tools plus resources plus prompts (full primitive coverage)
 
-## Distribution
+Dynamically generated tools + resources + prompts. Operation-specific prompts and API-doc prompts auto-generated alongside tools — uses MCP prompts primitive more deeply than most servers.
 
-### every mechanism observed
+### Spec-driven dynamic tool generation
 
-PyPI with optional extras (`[yaml]`, `[prometheus]`, `[all]`).
+No hand-authored tool definitions; tools materialize at server start from parsed OpenAPI specs. GET-with-query-params is mapped to tools (not resources) — explicit deviation from MCP convention because LLMs use tools better than resources for parameterized search. Other GETs become resources; mutating operations become tools. Tool descriptions auto-enriched with response codes and parameter examples — claimed 70-75% token reduction vs naive rendering. A validation toggle accommodates non-compliant real-world specs.
 
-### published package name(s)
+### Tools plus toolset gating (dynamic)
 
-`awslabs.openapi-mcp-server`.
+Tag filtering via `--include-tags` / `--exclude-tags` reduces tool surface at mount time.
 
-### install commands shown in README
+## Configuration delivery
 
-- `pip install "awslabs.openapi-mcp-server"`
-- `pip install "awslabs.openapi-mcp-server[yaml]"`
-- `pip install "awslabs.openapi-mcp-server[prometheus]"`
-- `pip install "awslabs.openapi-mcp-server[all]"`
+### CLI flags
 
-## Entry point / launch
+CLI flags drive composition: `--api-name`, `--api-url`, `--spec-url`, `--additional-specs`, `--include-tags`, `--exclude-tags`. Per-spec auth configured via CLI or env.
 
-### command(s) users/hosts run
+### Environment variables
 
-`awslabs.openapi-mcp-server --api-name <name> --api-url <url> --spec-url <spec>`.
-
-### wrapper scripts, launchers, stubs
-
-Console script → `awslabs.openapi_mcp_server.server:main`.
-
-## Configuration surface
-
-### how config reaches the server
-
-CLI args (`--api-name`, `--api-url`, `--spec-url`, `--additional-specs`, `--include-tags`, `--exclude-tags`) and env vars; auth configured per-spec via CLI or env.
+Env vars layered alongside CLI for the same surface; auth config supplied per spec.
 
 ## Authentication
 
-### flow
+### Per-spec authentication
 
-Per-API auth — Basic, Bearer Token, API Key (header/query/cookie), AWS Cognito.
-
-### where credentials come from
-
-CLI args or env vars; different APIs in a multi-spec composition can use different auth configs.
+Each upstream API mounted into the server can carry its own auth config — Basic, Bearer Token, API Key (header/query/cookie), or AWS Cognito — supplied via CLI args or env vars. Different APIs in a multi-spec composition can use different auth configs; `boto3` enters core deps to support Cognito.
 
 ## Multi-tenancy
 
-### tenancy model
+### Multi-spec / multi-source composition
 
-Multi-spec composition — one server can host tools from multiple OpenAPI specs via `--additional-specs`, each with its own HTTP client and auth.
+Single server fronts multiple OpenAPI specs concurrently via `--additional-specs`; each spec has its own HTTP client and auth context. The server is positioned as a gateway between one MCP host and many SaaS APIs declared in its manifest.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### PyPI via pip / pipx
 
-Dynamically generated tools + resources + prompts — GET with query params becomes a tool (for LLM-friendly search); other GETs become resources; mutating operations become tools; operation-specific prompts and API doc prompts auto-generated.
+Standard `pip install "awslabs.openapi-mcp-server"` with optional extras: `[yaml]`, `[prometheus]`, `[all]`. Published name: `awslabs.openapi-mcp-server`.
 
-## Observability
+## Entry point and launch
 
-### logging destination + format, metrics, tracing, debug flags
+### Console script via `[project.scripts]` / npm bin
 
-`loguru`; optional Prometheus metrics via `[prometheus]` extra.
+Console script `awslabs.openapi-mcp-server` mapped to `awslabs.openapi_mcp_server.server:main`. Hosts launch with required CLI args inline: `awslabs.openapi-mcp-server --api-name <name> --api-url <url> --spec-url <spec>`.
 
-## Host integrations shown in README or repo
+## Build and packaging
 
-Aggregated in parent monorepo.
+### Hatchling + uv (Python)
 
-## Claude Code plugin wrapper
+Build backend: hatchling. `requires-python = ">=3.10"`. Version manager convention: `uv` / pip. Lock file not captured.
 
-### presence and shape
+### Optional-dependency fan-out
 
-None.
+`[yaml]`, `[prometheus]`, `[all]` extras separate optional capability surfaces from core install.
 
-## Tests
-
-### presence, framework, location, notable patterns
-
-Not captured.
-
-## CI
-
-### presence, system, triggers, what it runs
-
-Parent monorepo.
-
-## Container / packaging artifacts
-
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
-
-Not explicitly captured at sub-server level.
-
-## Example client / developer ergonomics
-
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
-
-CLI shape is itself the developer ergonomic — one command per spec to mount.
-
-## Repo layout
-
-### single-package / monorepo / vendored / other
-
-Sub-package in awslabs/mcp.
-
-## Notable structural choices
-
-Dynamic tool generation from OpenAPI specs — no hand-authored tool definitions; tools materialize at server start from the parsed spec.
-
-GET-with-query-params mapped to tools, not resources — explicit deviation from MCP convention because LLMs use tools better than resources for parameterized search.
-
-Multi-spec composition — a single server can front many APIs, each with independent auth and HTTP clients.
-
-Tag filtering via `--include-tags` / `--exclude-tags` — reduces tool-surface at mount time.
-
-Auto-enriched tool descriptions with response codes + parameter examples → claimed 70-75% token reduction vs naive rendering.
-
-Validation toggle for non-compliant specs (many real-world OpenAPI specs fail strict validation).
-
-Depends on both `fastmcp` and `boto3` (for Cognito auth) — boto3 is used beyond pure AWS-API servers.
-
-Version number in pyproject.toml was `0.9223372036854775807.9223372036854775807` — looks like an automated-release sentinel (int64 max), not a human-chosen version.
-
-## Unanticipated axes observed
-
-Spec-driven vs code-driven tool surface — a major design axis. Most MCP servers hand-author tool functions; this one generates them. Implications for docs drift (spec is source of truth), testing (every spec change is a contract change), and LLM behavior (tool descriptions come from OpenAPI `description` fields, quality varies).
-
-Multi-API composition as a core feature — not a workaround; `--additional-specs` is first-class.
-
-Token-cost awareness as a pyproject-level concern — README quantifies token reduction from description enrichment.
-
-Auth as per-spec, not per-server — each mounted spec has its own credential context, supporting "one gateway to many SaaS APIs" use case.
-
-Prompts generated per-operation alongside tools — uses MCP prompts primitive more deeply than most servers.
-
-## Python-specific
-
-### SDK / framework variant
-
-FastMCP 2.x (`fastmcp>=3.2.2,<4`). Import pattern not captured; likely `from fastmcp import FastMCP`.
-
-### Python version floor
-
-`requires-python = ">=3.10"`.
-
-### Packaging
-
-Build backend: hatchling. Lock file not captured. Version manager convention: `uv` / pip.
-
-### Entry point
-
-Console script `awslabs.openapi-mcp-server`. Host-config snippet shape: `pip install` + direct CLI invocation with args.
-
-### Install workflow expected of end users
-
-`pip install awslabs.openapi-mcp-server[all]`.
-
-### Async and tool signatures
-
-`httpx` + FastMCP 2 → async throughout is expected.
-
-### Type / schema strategy
-
-Pydantic v2; schemas derived from OpenAPI specs via `openapi-spec-validator` + `prance`. Schema auto-derived from external OpenAPI specs — the most extreme "schema is data" design in the sample.
-
-### Testing
-
-Not captured.
-
-### Dev ergonomics
-
-CLI composition; `prance` for spec parsing.
-
-### Notable Python-specific choices
-
-`prance` + `openapi-spec-validator` for OpenAPI parsing — non-trivial dependencies rarely seen in MCP servers.
-
-`tenacity` for retry logic on upstream HTTP calls.
-
-`cachetools` for in-process caching of spec/responses.
-
-`uvicorn` as a dependency despite stdio transport — suggests optional HTTP mode or internal HTTP client pool.
-
-`bcrypt` as a runtime dep — likely for Basic Auth credential hashing/storage.
+### Pin discipline (Python)
 
 Caret-pinned upper bounds (`,<4`, `,<1`) throughout — stricter compatibility stance than typical Python projects.
 
-## Gaps
+## Schema and types
 
-Whether the `uvicorn` dep indicates an undocumented HTTP transport, test coverage, actual runtime spec-caching strategy, how the "prompt generation" materializes (auto from OpenAPI tags?).
+### Pydantic v2 models
+
+Pydantic v2 used throughout.
+
+### Hand-authored tool schemas
+
+Schemas auto-derived from external OpenAPI specs via `openapi-spec-validator` + `prance` — the most extreme "schema is data" design in the corpus, registering tools with hand-built schema dicts at runtime rather than from Python type hints.
+
+### Async model (cross-cutting)
+
+`httpx` + FastMCP 2 — async throughout is expected.
+
+## Container artifacts
+
+### No container artifacts
+
+Not explicitly captured at sub-server level.
+
+## Observability
+
+### loguru (Python)
+
+`loguru` for application logging.
+
+### Prometheus metrics
+
+Optional Prometheus metrics endpoint via the `[prometheus]` install extra.
+
+## Caching and rate-limiting infrastructure
+
+### SQLite TTL cache
+
+`cachetools` for in-process caching of spec/responses. Cache is in-memory dict-based with TTL eviction (`cachetools` library), not the persistent SQLite-backed variant the path name suggests.
+
+## CI
+
+### Monorepo CI inheritance
+
+CI inherited from parent monorepo.
+
+## Repository layout
+
+### Monorepo of namespace-prefixed packages
+
+`src/openapi-mcp-server/` directory inside the parent multi-server monorepo, with its own `pyproject.toml`, console script, and PyPI release.
+
+## Host integration
+
+### Monorepo catalog
+
+Host integration aggregated in parent monorepo catalog.
+
+## Claude Code plugin / skill wrapper
+
+### Bare MCP server, no Claude Code wrapper
+
+None.
+
+## Release and lifecycle
+
+### License — Permissive (MIT / Apache-2.0)
+
+Apache-2.0.
+
+### Automated-release sentinel version
+
+Version field in pyproject.toml observed as `0.9223372036854775807.9223372036854775807` (int64 max) — automated-release sentinel rather than human-chosen number.
+
+### Active development
+
+Active via parent monorepo.

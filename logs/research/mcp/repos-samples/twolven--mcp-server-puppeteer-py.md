@@ -1,207 +1,125 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/twolven/mcp-server-puppeteer-py`. Puppeteer-themed Python MCP server wrapping Playwright (Python equivalent of Puppeteer per README) for browser automation. 17 stars, Apache-2.0, default branch `main`. Single-maintainer experimental repo with legacy `setup.py`-only packaging and a Python 3.8+ floor — the lowest in the corpus.
 
-### url
+## Server runtime
 
-https://github.com/twolven/mcp-server-puppeteer-py
+### Python with raw MCP SDK
 
-### stars
-
-17
-
-### last-commit
-
-Not explicitly extracted within budget
-
-### license
-
-Apache-2.0
-
-### default branch
-
-main
-
-### one-line purpose
-
-Puppeteer (Python) MCP server — legacy setup.py-only packaging; Python 3.8+ floor.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Python (100%); Python 3.8+.
-
-### framework/SDK in use
-
-Model Context Protocol SDK (Python); Playwright as browser engine (despite "puppeteer" in name — README notes Playwright is the Python equivalent).
+Direct use of Anthropic's `mcp` Python SDK without a higher-level framework wrapper. `setup.py` declares `mcp-server>=0.1.0` (the legacy pre-1.0 package name); `requirements.txt` lists `mcp` — ambiguous which package actually installs. No FastMCP. Tool handlers likely `async def` since Playwright is async Python; not confirmed via tests (none ship).
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio.
+stdio-only — launched as a script and wired into Claude Desktop's stdio JSON config.
 
-### how selected
+### Selection mechanism
 
-Stdio implicit — launched as a module via `python puppeteer.py` and wired into Claude Desktop's stdio JSON config.
+Implicit single mode — stdio only; transport not named in README, deduced from launch command shape.
 
-## Distribution
+## Capability surface
 
-### every mechanism observed
+### Tools-only, hand-curated narrow surface
 
-Source-only — clone and run; no PyPI package observed, no Docker artifact.
+Five tools — `puppeteer_navigate` (URL navigation with timeouts), `puppeteer_screenshot` (full-page or element), `puppeteer_click` (DOM interaction), `puppeteer_fill` (form input), `puppeteer_evaluate` (arbitrary JS execution in page). Minimum viable browser MCP; contrasts with larger browser-automation servers.
 
-### published package name(s)
+## Configuration delivery
 
-None observed.
+### Host-side JSON config snippet
 
-### install commands shown in README
-
-`pip install -r requirements.txt` and `playwright install` for browsers.
-
-## Entry point / launch
-
-### command(s) users/hosts run
-
-`python puppeteer.py`.
-
-### wrapper scripts, launchers, stubs
-
-Single-file entry — `puppeteer.py` at repo root.
-
-## Configuration surface
-
-### how config reaches the server
-
-CLI args / environment not documented in detail; per-tool parameters control behavior (timeouts, screenshot targets).
+Claude Desktop JSON config example shown in README — `"command": "python"` with `"args": ["path/to/puppeteer.py"]`. Per-tool parameters (timeouts, screenshot targets) handle behavior at call time; CLI args / env vars not documented in detail.
 
 ## Authentication
 
-### flow
+### None / implicit (local-resource gating)
 
-Not applicable — browser automation against public web.
-
-### where credentials come from
-
-Not applicable.
+No auth — browser automation against the public web. Playwright session state is the only "credentials" surface and lives outside the MCP server.
 
 ## Multi-tenancy
 
-### tenancy model
+### Single-user / single-tenant per process
 
-Single-user — one browser per process.
+One browser per process; single-user by construction.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### Source clone with editable install
 
-Five tools — `puppeteer_navigate` (URL navigation with timeouts), `puppeteer_screenshot` (full-page or element), `puppeteer_click` (DOM interaction), `puppeteer_fill` (form input), `puppeteer_evaluate` (arbitrary JS execution in page).
+Source-only — clone the repo, `pip install -r requirements.txt`, then `playwright install` for browsers. No PyPI publication, no Docker artifact.
 
-## Observability
+## Entry point and launch
 
-### logging destination + format, metrics, tracing, debug flags
+### Bare interpreter + script path
 
-"Detailed error handling and logging" claimed by README; destination not specified — likely stderr.
+`python puppeteer.py` directly — bare `python` on system PATH, fragile (depends on which interpreter is first found). Single-file entry at `puppeteer.py` at repo root.
 
-## Host integrations shown in README or repo
+### Console script via `[project.scripts]` / npm bin
 
-### Claude Desktop
+`setup.py` declares a `[console_scripts]` entry `mcp-server-puppeteer = mcp_server_puppeteer.server:main`, but the README runs `python puppeteer.py` directly — entry-point path and working entry-point diverge. Sign that the package was never installed/tested as a console script.
 
-JSON config example shown.
+## Build and packaging
 
-## Claude Code plugin wrapper
+### Setuptools (with `setup.py` or `setup.cfg`)
 
-### presence and shape
+Legacy `setup.py` packaging only — no `pyproject.toml`. `setup.py` declares `python_requires=">=3.8"` and a `[console_scripts]` entry that diverges from how the project is actually launched.
 
-Not present — no `.claude-plugin` directory observed.
+### Requirements-driven (legacy Python)
 
-## Tests
+`requirements.txt` alongside `setup.py`. No lock file. Plain pip-only workflow predating uv/pipx conventions.
 
-### presence, framework, location, notable patterns
+### Python version pinning
 
-Not observed — no tests/ directory surfaced.
+`requires-python = ">=3.8"` declared in `setup.py` — the lowest Python floor observed in the Python sample.
+
+### System-level dependencies
+
+Playwright pulls a browser binary at install time via `playwright install`. Multi-GB install footprint typical of browser-automation servers.
+
+## Container artifacts
+
+### No container artifacts
+
+No Dockerfile; users install on the host directly.
+
+## Test stack
+
+### No tests / not surfaced
+
+No tests/ directory observed. Reduces confidence in tool behavior across browser-engine updates.
 
 ## CI
 
-### presence, system, triggers, what it runs
+### None / absent
 
-Not observed — no `.github/workflows` surfaced.
+No `.github/workflows` observed.
 
-## Container / packaging artifacts
+## Host integration
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+### Claude Desktop
 
-Not observed.
+JSON config example shown in README — Claude Desktop is the primary documented host.
 
-## Example client / developer ergonomics
+## Observability
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+### Stderr logging (convention / SDK default)
 
-Claude Desktop sample config; `requirements.txt` for Python deps.
+"Detailed error handling and logging" claimed by README; destination not specified — likely stderr per stdio-server convention.
 
-## Repo layout
+## Repository layout
 
-### single-package / monorepo / vendored / other
+### Single-file script / monolith
 
-Single-file script repo — `puppeteer.py` plus `requirements.txt`.
+Single-file `puppeteer.py` at repo root plus `requirements.txt` and `setup.py`. The minimum viable layout.
 
-## Notable structural choices
+## Domain logic and embedded intelligence
 
-Deliberately non-headless browser mode for easier debugging — a design choice that trades production efficiency for interactive visibility during development.
+### Pass-through tool wrappers
 
-In-memory base64-encoded screenshot storage — screenshots flow through MCP responses without disk intermediate.
+Tools map to Playwright operations; in-memory base64-encoded screenshot storage flows through MCP responses without disk intermediate. Deliberately non-headless browser mode — a design choice that trades production efficiency for interactive visibility during development.
 
-Name ("puppeteer-py") reflects user-facing tool concept; implementation actually wraps Playwright. This is a terminology-vs-implementation asymmetry worth noting.
+## Release and lifecycle
 
-## Unanticipated axes observed
-
-Minimal surface — only 5 tools — contrasts with larger browser servers (executeautomation/mcp-playwright's richer surface). Useful as a reference minimum viable browser MCP.
+### License — Permissive (MIT / Apache-2.0)
 
 Apache-2.0 on a single-maintainer experimental repo; permissive license choice for community adoption.
-
-## Python-specific
-
-### SDK / framework variant
-
-Depends on `mcp-server>=0.1.0` (per setup.py — an older / pre-1.0 MCP package name); requirements.txt lists `mcp` — ambiguous which package actually installs. No fastmcp. Single-file `puppeteer.py` (setup.py points at `mcp_server_puppeteer.server:main`, but the repo actually runs `python puppeteer.py` — entry point and README are inconsistent).
-
-### Python version floor
-
-setup.py: `python_requires=">=3.8"` — lowest in the sample.
-
-### Packaging
-
-build backend: legacy setuptools via `setup.py` (no pyproject.toml). Lock file: none. Version manager convention: plain pip + `requirements.txt`.
-
-### Entry point
-
-`[console_scripts]` in setup.py: `mcp-server-puppeteer=mcp_server_puppeteer.server:main`. But README runs `python puppeteer.py` directly — entry-point path and working entry-point diverge. Host config: `"command": "python"`, `"args": ["path/to/puppeteer.py"]` — bare `python` on system PATH.
-
-### Install workflow expected of end users
-
-`pip install -r requirements.txt` + `playwright install`. Clone-from-source only; no PyPI publication. No uv/uvx/pipx/Docker.
-
-### Async and tool signatures
-
-Playwright is async Python; tools likely `async def`. No test framework to confirm.
-
-### Type / schema strategy
-
-Raw `mcp` SDK — hand-authored schemas likely.
-
-### Testing
-
-None.
-
-### Dev ergonomics
-
-None beyond `requirements.txt`.
-
-### Notable Python-specific choices
-
-Pre-modern packaging: `setup.py` + `requirements.txt` with no `pyproject.toml`. Python 3.8+ floor is the lowest in the Python sample — reflects the older `setup.py`-era layout. Inconsistent entry point — the README entry (`python puppeteer.py`) doesn't match setup.py's declared console script, indicating neither was tested against PyPI. Bare `python` in Claude Desktop config — fragile (relies on system PATH, specific venv activation).
-
-## Gaps
-
-Last commit date not extracted. Whether Python stdout is protected from log pollution (important for stdio JSON-RPC correctness) — not stated. No tests reduces confidence in tool behavior across browser-engine updates.

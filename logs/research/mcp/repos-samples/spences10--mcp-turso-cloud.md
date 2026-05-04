@@ -1,167 +1,105 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/spences10/mcp-turso-cloud`. Turso (libSQL) cloud MCP server — community-canonical (15 stars, MIT, default branch `main`); not under `tursodatabase/*`. v0.0.2 released March 20, 2025. TypeScript MCP that bridges Turso's two-tier credential model (org token mints per-database tokens) to MCP, with vector similarity search exposed as a first-class tool.
 
-### url
+## Server runtime
 
-https://github.com/spences10/mcp-turso-cloud
+### Node.js / TypeScript with official MCP SDK
 
-### stars
-
-15
-
-### last-commit
-
-v0.0.2 released March 20, 2025.
-
-### license
-
-MIT
-
-### default branch
-
-main
-
-### one-line purpose
-
-Turso (libsql) cloud MCP server — community-canonical (not under `tursodatabase/*`).
-
-## Language and runtime
-
-### language(s) + version constraints
-
-TypeScript (92.4%), JavaScript (7.6%); Node.js (version not stated).
-
-### framework/SDK in use
-
-Anthropic MCP TypeScript SDK; libSQL client for Turso.
+TypeScript (92.4%) / JavaScript (7.6%) on Node.js. Anthropic MCP TypeScript SDK + libSQL client for Turso. Compiled output at `dist/index.js`; `npm run build` for local compile.
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio (standard for npx-launched servers; not called out in README, inferred from consumption pattern).
+Stdio transport, standard for npx-launched servers — never explicitly named in README, inferred from the `npx -y mcp-turso-cloud` consumption pattern. Implicit single mode (no transport-selection mechanism).
 
-### how selected
+## Capability surface
 
-Implicit — only stdio via npx.
+### Domain-bundled tool set
 
-## Distribution
+Tools split into two groups: organization operations (list/create/delete databases, token generation) and database operations (list tables, `execute_read_only_query`, `execute_query` (destructive), schema inspection, vector similarity search). Vector similarity search exposed as first-class tool. No resources, prompts, sampling, or roots documented.
 
-### every mechanism observed
+### Read/write tool split
 
-npm (via npx).
+Explicit tool split between `execute_read_only_query` (SELECT/PRAGMA) and `execute_query` (DML/DDL) supports different approval workflows at the MCP-client layer.
 
-### published package name(s)
+## Configuration delivery
 
-`mcp-turso-cloud`.
+### Environment variables
 
-### install commands shown in README
-
-`npx -y mcp-turso-cloud`.
-
-## Entry point / launch
-
-### command(s) users/hosts run
-
-`npx -y mcp-turso-cloud` with env vars.
-
-### wrapper scripts, launchers, stubs
-
-Compiled `dist/index.js`; `npm run build` for local compile.
-
-## Configuration surface
-
-### how config reaches the server
-
-Env vars only — `TURSO_API_TOKEN` (required), `TURSO_ORGANIZATION` (required), `TURSO_DEFAULT_DATABASE` (optional), `TOKEN_EXPIRATION` (default 7 days), `TOKEN_PERMISSION` (default full-access).
+`TURSO_API_TOKEN` (required), `TURSO_ORGANIZATION` (required), `TURSO_DEFAULT_DATABASE` (optional), `TOKEN_EXPIRATION` (default 7 days), `TOKEN_PERMISSION` (default full-access). Env-only configuration surface.
 
 ## Authentication
 
-### flow
+### Static API key / token via env var
 
-Two-tier — org-level API token generates database-specific tokens automatically with configurable permission granularity.
+`TURSO_API_TOKEN` is an org-level Turso API token supplied via env var. Single credential per process. The server uses this token to mint short-lived per-database child tokens — see `Server-managed token rotation`.
 
-### where credentials come from
+### Server-managed token rotation
 
-Environment variables supplied by host configuration.
+Org-level `TURSO_API_TOKEN` is the long-lived secret; the server generates database-specific tokens automatically with configurable permission granularity. `TOKEN_EXPIRATION` (default 7 days) and `TOKEN_PERMISSION` (default full-access) parameterize the minted child tokens. Pushes child-token issuance into the server as a security-isolation primitive.
 
 ## Multi-tenancy
 
-### tenancy model
+### Sub-tenancy via child-credential generation
 
-Single organization per deployment; per-database token permissions provide isolation within that org.
+Server holds the organization-level `TURSO_API_TOKEN` and generates per-database child credentials with bounded scope (read-only or full) and expiration. Provides isolation within a single Turso organization rather than across organizations.
 
-## Capabilities exposed
+### Single connection per server instance
 
-### tools / resources / prompts / sampling / roots / logging / other
+Single organization per deployment; per-database token permissions provide isolation within that org, but the process is keyed to one `TURSO_ORGANIZATION`.
 
-Tools split into org operations (list/create/delete databases, token generation) and database operations (list tables, `execute_read_only_query`, `execute_query` (destructive), schema inspection, vector similarity search). No resources/prompts/sampling/roots documented.
+## Distribution channel
 
-## Observability
+### npm via npx / bunx
 
-### logging destination + format, metrics, tracing, debug flags
+Published to npm as `mcp-turso-cloud`. README install: `npx -y mcp-turso-cloud`.
 
-Not documented.
+## Entry point and launch
 
-## Host integrations shown in README or repo
+### `npx -y <package>` / `bunx`
 
-### Claude Desktop
+`npx -y mcp-turso-cloud` with env vars supplied via host config. Compiled `dist/index.js` runs after build.
 
-JSON config example.
+## Build and packaging
 
-### Cline
+### npm/Node toolchain
 
-JSON config example.
-
-### WSL
-
-Configuration guidance.
-
-## Claude Code plugin wrapper
-
-### presence and shape
-
-Not present.
-
-## Tests
-
-### presence, framework, location, notable patterns
-
-Not documented; no test framework visible in content fetched.
+`package.json` with `npm run build` for local compile. `dist/index.js` is the compiled output.
 
 ## CI
 
-### presence, system, triggers, what it runs
+### Renovate / Changeset tooling
 
-`.changeset/` (for changelog management) and `renovate.json` (dependency automation) present; explicit GitHub Actions workflows not confirmed within budget.
+`.changeset/` (changelog management) and `renovate.json` (dependency automation) present. Explicit GitHub Actions workflows not confirmed within budget.
 
-## Container / packaging artifacts
+## Repository layout
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+### Single-package with `.changeset/`
 
-None observed.
+Single-package TypeScript project with `.changeset/` and `renovate.json` — changeset-based release management.
 
-## Example client / developer ergonomics
+## Host integration
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+### Claude Desktop
 
-MCP client JSON config examples (Claude Desktop, Cline, WSL).
+JSON config example shown in README.
 
-## Repo layout
+### Windsurf / Goose / Qodo Gen / Cline / Kiro / Augment
 
-### single-package / monorepo / vendored / other
+Cline JSON config example shown.
 
-Single-package TypeScript project with `.changeset/` and `renovate.json`.
+### WSL configuration guidance
 
-## Notable structural choices
+WSL-specific configuration guidance documented.
 
-Explicit tool split between `execute_read_only_query` (SELECT/PRAGMA) and `execute_query` (DML/DDL) supports different approval workflows at the MCP-client layer. Automatic database-token generation from org token delegates short-lived-credential creation into the server. Vector similarity search exposed as first-class tool.
+## Release and lifecycle
 
-## Unanticipated axes observed
+### License — Permissive (MIT / Apache-2.0)
 
-`TOKEN_EXPIRATION` and `TOKEN_PERMISSION` promote short-lived child-token generation as a security primitive, uncommon among DB MCP servers.
+MIT licensed.
 
-## Gaps
+### Tagged release with version in changelog
 
-Transport never explicitly named in README — inferred stdio. Tests and CI details not confirmed. No container artifacts observed. Ownership/canonicality relative to Turso's corp repo not established within budget.
+v0.0.2 released March 20, 2025.

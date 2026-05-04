@@ -1,160 +1,37 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/Azure/azure-mcp`. C# MCP server for Azure cloud APIs. 1.2k stars, MIT, default branch `main` (read-only). Repository archived: GitHub archival flag set Feb 6, 2026; README body states "This repository is archived as of August 25, 2025." The two dates disagree — the August 2025 README notice predates the official GitHub-archived flag (Feb 2026); most likely the code stopped getting updates in Aug 2025 but the repo was formally archived four months later. Code consolidated into `microsoft/mcp` umbrella as the `Azure.Mcp.Server` component under `/servers/`.
 
-### url
+## Server runtime
 
-https://github.com/Azure/azure-mcp
+### .NET / C#
 
-### stars
+C# MCP server (78.6% C# in repo) compiled to a .NET binary, inherited by the successor `microsoft/mcp` umbrella (88% C# there).
 
-1.2k
+## Container artifacts
 
-### last-commit
+### Dockerfile (single-stage, build-from-source)
 
-ARCHIVED. Repo archival banner on GitHub page shows "archived by the owner on Feb 6, 2026." The README body itself states "This repository is archived as of August 25, 2025." The two dates disagree — the August 2025 README notice predates the official GitHub-archived flag (Feb 2026); most likely the code stopped getting updates in Aug 2025 but the repo was formally archived four months later.
+Dockerfile present at repo root.
 
-### license
+## Repository layout
 
-MIT
+### Umbrella consolidation
 
-### default branch
+Originally a per-domain Azure MCP repo collapsed into the `microsoft/mcp` org-level monorepo with `/servers/<name>/` subdirectories (Azure.Mcp.Server, Fabric.Mcp.Server) and `/core/` shared C# libraries. Transitional period observed — original repo archived (Feb 2026) months after code-freeze (Aug 2025) per README notice, with the gap signaling the redirect had to stabilize before formal archival.
 
-main (read-only)
+## Release and lifecycle
 
-### one-line purpose
+### Archived
 
-TBD — repo archived; technical surface redirected to microsoft/mcp.
+Repository marked archived by the maintainer. Code still functions; no further fixes. Two-stage archival pattern — README body declared archival (~Aug 2025) ahead of formal GitHub archival flag (Feb 2026), running the repo in "read-only maintenance" mode for months before the org-level archival.
 
-## Language and runtime
+## Host integration
 
-### language(s) + version constraints
+### VS Code / VS Code Insiders / Visual Studio family
 
-C# (78.6%)
+Successor `microsoft/mcp` documents VS Code, VS Code Insiders, Visual Studio 2022, and Eclipse integrations via the platform's marketplaces.
 
-### framework/SDK in use
+### JetBrains IDE
 
-.NET-based MCP server (inherited by successor)
-
-## Transport
-
-### supported transports
-
-Not extracted — README body only shows archival notice in the raw view.
-
-### how selected
-
-Not extracted (see successor).
-
-## Distribution
-
-### every mechanism observed
-
-Dockerfile present; other mechanisms not extractable from archival view.
-
-### published package name(s)
-
-Not extracted from archived surface.
-
-### install commands shown in README
-
-Redirects to successor.
-
-## Entry point / launch
-
-### command(s) users/hosts run
-
-Not extracted — see successor microsoft/mcp Azure.Mcp.Server.
-
-### wrapper scripts, launchers, stubs
-
-Not extracted.
-
-## Configuration surface
-
-### how config reaches the server
-
-Not extracted.
-
-## Authentication
-
-### flow
-
-Not extracted from archived repo; Azure credential chain via DefaultAzureCredential likely based on successor context — not verified here.
-
-### where credentials come from
-
-Not extracted.
-
-## Multi-tenancy
-
-### tenancy model
-
-Not extracted.
-
-## Capabilities exposed
-
-### tools / resources / prompts / sampling / roots / logging / other
-
-Not extracted from archival surface.
-
-## Observability
-
-### logging destination + format, metrics, tracing, debug flags
-
-Not extracted.
-
-## Host integrations shown in README or repo
-
-Not extracted from archival surface. Successor microsoft/mcp documents VS Code, Visual Studio 2022, IntelliJ IDEA, Eclipse, VS Code Insiders.
-
-## Claude Code plugin wrapper
-
-### presence and shape
-
-Not observed in directory listing of archived repo.
-
-## Tests
-
-### presence, framework, location, notable patterns
-
-Not extracted.
-
-## CI
-
-### presence, system, triggers, what it runs
-
-Not extracted.
-
-## Container / packaging artifacts
-
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
-
-Dockerfile present.
-
-## Example client / developer ergonomics
-
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
-
-Not extracted.
-
-## Repo layout
-
-### single-package / monorepo / vendored / other
-
-Not extracted from archival surface. In the successor, this code became the `Azure.Mcp.Server` component under `microsoft/mcp/servers/`.
-
-## Notable structural choices
-
-Archived with redirect to microsoft/mcp. The consolidation collapsed a per-domain repo into an umbrella Microsoft MCP monorepo that also hosts Fabric.Mcp.Server and shared C# tooling.
-
-## Unanticipated axes observed
-
-- Two-stage archival (code freeze ~Aug 2025 per README body; formal GitHub archival Feb 2026) — the gap is itself a decision signal: the repo ran in "read-only maintenance" mode for months before being archived at the org level, suggesting the redirect had to stabilize first.
-- Umbrella-repo consolidation pattern — an org moving from per-service MCP repos into a single company-wide MCP monorepo with shared C# core (the inverse of awslabs/mcp's per-service PyPI package strategy).
-
-## Gaps
-
-Whole technical surface (transports, install commands, config, auth, tests, CI, capabilities) — archived repo's README only carries the archival notice; reconstructing technical details requires fetching successor content at github.com/microsoft/mcp/tree/main/servers/Azure.Mcp.Server. Exact reason for the 4+ month gap between README-declared archival (Aug 2025) and GitHub archival flag (Feb 2026) — commit history might clarify.
-
-Canonical successor: `microsoft/mcp` — umbrella repo hosting Azure.Mcp.Server and Fabric.Mcp.Server under `/servers/`, shared libraries under `/core/`. ~3k stars, MIT, main branch. Distribution channels: NuGet, Docker (Dockerfile present), VS Code extensions, Visual Studio Marketplace, IntelliJ/Eclipse plugins. Transports: stdio (local), HTTP (remote). Hosts documented: VS Code, VS Code Insiders, Visual Studio 2022, IntelliJ IDEA, Eclipse. Last commit noted as 2026-04-14 (Fabric.Mcp.Server 1.0.0). Primary language C# (88%).
+Successor documents IntelliJ IDEA integration.

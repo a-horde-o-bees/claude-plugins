@@ -1,197 +1,165 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/upstash/context7`. Context7 documentation-context MCP server — vendor-hosted endpoint at `https://mcp.context7.com/mcp` backed by a private API/parsing/crawling pipeline; the public repo carries a Node monorepo for the CLI, plugin metadata, skills, and rules. 53,300 stars, MIT, default branch `master`.
 
-### url
+## Server runtime
 
-https://github.com/upstash/context7
+### TypeScript on Node with monorepo tooling
 
-### stars
+TypeScript (91.2%) + JavaScript (8.5%) Node.js monorepo built on pnpm workspaces. Multiple packages (CLI, plugins, skills, rules, docs) coexist under one repo. The MCP server itself is hosted; the public repo ships the npm CLI and integration metadata.
 
-53,300
+### Remote HTTP service (no local runtime)
 
-### last-commit
-
-April 20, 2026 (ctx7@0.3.13)
-
-### license
-
-MIT
-
-### default branch
-
-master
-
-### one-line purpose
-
-Context7 documentation-context MCP server — ships `.claude-plugin/marketplace.json`; hybrid public/private backend.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-TypeScript (91.2%), JavaScript (8.5%); Node.js (monorepo with pnpm workspaces).
-
-### framework/SDK in use
-
-MCP SDK, MCP CLI, REST API backend.
+The runtime lives on a vendor-hosted endpoint (`https://mcp.context7.com/mcp`) — no local language or framework executes on the user's machine. Backend architecture (API, parsing, crawling) is intentionally private; the public repo carries only client-side code and configs.
 
 ## Transport
 
-### supported transports
+### Hosted remote endpoint (vendor-operated)
 
-MCP (native), CLI + Skills (without MCP), HTTP (REST backend).
+`https://mcp.context7.com/mcp` is the canonical MCP endpoint; the host is configured to point at the URL rather than launching anything locally. OAuth at the HTTP boundary; rate limits and tenant scoping enforced server-side.
 
-### how selected
+### Selection mechanism
 
-installation via `npx ctx7 setup` handles OAuth and API-key setup; MCP mode for agents, CLI for direct use.
+Implicit single mode — hosted HTTP endpoint only.
 
-## Distribution
+## Capability surface
 
-### every mechanism observed
+### Tools plus resources
 
-npm (`npx ctx7 setup`), MCP HTTP endpoint (`https://mcp.context7.com/mcp`), CLI tool.
+Tools include `resolve-library-id` and `query-docs` (retrieves version-specific documentation from source). Resources back the surface as a library index and documentation cache.
 
-### published package name(s)
+### Bundled "agent SOPs" / vertical skill packs
 
-`@upstash/context7` (monorepo; individual packages in `/packages`).
+A `skills/` folder ships alongside the MCP server, providing opinionated workflow content beyond raw tools. A `rules/` folder ships parallel rule content.
 
-### install commands shown in README
+## Configuration delivery
 
-`npx ctx7 setup` (recommended, OAuth + API key); manual config via `https://mcp.context7.com/mcp`.
+### Hosted endpoint as primary delivery
 
-### pitfalls observed
+Configuration is the host's JSON snippet pointing at `https://mcp.context7.com/mcp`. The server itself has near-zero local config.
 
-one-command setup via npx with OAuth automation.
+### Host-side JSON config snippet
 
-## Entry point / launch
-
-### command(s) users/hosts run
-
-`npx ctx7 setup`, `ctx7 library <name> <query>`, `ctx7 docs <libraryId> <query>`.
-
-### wrapper scripts, launchers, stubs
-
-npx setup script handles OAuth flow.
-
-## Configuration surface
-
-### how config reaches the server
-
-OAuth flow via `npx ctx7 setup`; API key via `CONTEXT7_API_KEY` header (manual setup); Skills integration (client-specific).
+Manual setup uses a generic `mcpServers` JSON entry pointing at the endpoint URL with `CONTEXT7_API_KEY` header.
 
 ## Authentication
 
-### flow
+### OAuth setup-wizard flow
 
-OAuth (setup flow via npx); free API-key registration at context7.com/dashboard (optional, higher rate limits).
+`npx ctx7 setup` walks the user through OAuth and writes the resulting credentials into the host's config file. Removes manual JSON editing for users; per-user identity rather than per-process.
 
-### where credentials come from
+### API key (optional, for higher rate limits)
 
-OAuth callback or API key from dashboard.
+Free API-key registration at `context7.com/dashboard` is optional and lifts rate limits. Key passed via `CONTEXT7_API_KEY` header for manual setup paths.
 
 ## Multi-tenancy
 
-### tenancy model
+### Per-user / per-workspace via OAuth
 
-per-user OAuth token; API key per workspace.
+Per-user OAuth token tied to upstream account; API key per workspace. Hosted deployment maintains per-connection identity via OAuth.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### npm via npx / bunx
 
-tools: `resolve-library-id`, `query-docs` (retrieves version-specific documentation from source). resources: library index and documentation cache.
+`npx ctx7 setup` is the canonical install/setup path — single one-liner that handles OAuth and credential bootstrap. Published as `@upstash/context7` (monorepo).
 
-## Observability
+### Hosted endpoint (no install)
 
-### logging destination + format, metrics, tracing, debug flags
+`https://mcp.context7.com/mcp` — manual config path where the user pastes the URL into their host's MCP config without npm involvement. Vendor runs the runtime; patches propagate without user redeploys.
 
-not explicitly documented
+### Configs-only repo (no server artifact)
 
-### pitfalls observed
+The public repo's distribution role is shipping client config snippets, OAuth bootstrap, plugins, skills, and rules — the actual server is hosted remotely by the vendor.
 
-logging and observability strategy not documented.
+### `.claude-plugin/marketplace.json`
 
-## Host integrations shown in README or repo
+Marketplace metadata file shipped in-repo so the project surfaces in Claude's plugin marketplace. Distinct from a full plugin.json — marketplace discovery without installing as a plugin.
 
-### Claude Code
+## Entry point and launch
 
-native support documented.
+### URL configuration (no local launch)
 
-### Cursor
+For end users using the hosted endpoint, the entry point is the URL itself — no local launch.
 
-listed as a supported agent.
+### `npx -y <package>` / `bunx`
 
-### OpenAI Code
+`npx ctx7 setup`, `ctx7 library <name> <query>`, `ctx7 docs <libraryId> <query>` — npm-distributed CLI commands for OAuth setup and direct documentation queries.
 
-listed as a supported agent.
+## Build and packaging
 
-### Other agents
+### npm/Node toolchain
 
-27+ other agents (30+ total). MCP config via `https://mcp.context7.com/mcp` (manual) or `npx ctx7 setup`.
+`package.json` defines build/publish; pnpm workspaces orchestrate the monorepo. Configuration via `pnpm-workspace.yaml`, `tsconfig.json`, `eslint.config.js`, `prettier.config.mjs`. Changesets handle coordinated release versioning.
 
-## Claude Code plugin wrapper
+## Container artifacts
 
-### presence and shape
+### No container artifacts
 
-present; `.claude-plugin/marketplace.json` (marketplace metadata only, not full plugin.json).
+No Dockerfile at root — runtime is hosted; users don't run a local server.
 
-### pitfalls observed
+## Test stack
 
-`.claude-plugin/marketplace.json` (not `plugin.json`) — a marketplace-style integration separate from a plugin-wrapper install.
+### No tests / not surfaced
 
-## Tests
-
-### presence, framework, location, notable patterns
-
-present; monorepo test suite (`npm run test` in workspace).
+Test framework details not extracted from public README; monorepo `npm run test` referenced but specifics private.
 
 ## CI
 
-### presence, system, triggers, what it runs
+### GitHub Actions
 
-present; `.github/` present, `npm run lint`, `npm run format` scripts.
+`.github/` directory present; lint and format scripts (`npm run lint`, `npm run format`) run as CI steps.
 
-## Container / packaging artifacts
+## Host integration
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+### Claude Code
 
-no Dockerfile at root. Monorepo with pnpm workspaces and changesets (versioning).
+Native support documented; hosted MCP endpoint configurable via standard `.mcp.json` or via `npx ctx7 setup`.
 
-## Example client / developer ergonomics
+### Cursor
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+Listed as a supported agent.
 
-single-command setup: `npx ctx7 setup`. CLI for direct documentation queries. Skills documentation for specialized tasks. MCP Inspector support. Smithery registry config.
+### Codex CLI / Copilot CLI / Gemini CLI
 
-## Repo layout
+OpenAI Code listed as a supported agent — non-Anthropic agent CLIs that consume MCP.
 
-### single-package / monorepo / vendored / other
+### Multi-host catalog (30+ agents)
 
-monorepo with pnpm workspaces. Dirs: `/packages`, `/docs`, `/plugins`, `/skills`, `/rules`, `/public`, `/i18n`. Config: `pnpm-workspace.yaml`, `package.json`, `tsconfig.json`, `eslint.config.js`, `prettier.config.mjs`. Additional: `.changeset/`, `.claude-plugin/` (marketplace metadata).
+README documents support for 30+ different agent platforms with per-agent config snippets — the server is generic enough not to depend on host-specific features.
 
-## Notable structural choices
+### Smithery / Glama discovery
 
-monorepo supports multi-package ecosystem.
+Smithery registry config supported.
 
-one-command setup via npx with OAuth automation.
+### Inspector compatibility called out
 
-distinction between public MCP repo and private backend (API, parsing, crawling engines).
+MCP Inspector support documented as a verification surface.
 
-support for 30+ client platforms.
+## Observability
 
-marketplace metadata for Claude plugin discovery.
+### None / unspecified
 
-## Unanticipated axes observed
+Logging and observability strategy not documented in public README.
 
-hybrid architecture: public MCP client code + private backend — axis: disclosing vs withholding server implementation.
+## Repository layout
 
-`.claude-plugin/marketplace.json` (not `plugin.json`) — a marketplace-style integration separate from a plugin-wrapper install.
+### Monorepo with multiple published packages
 
-changesets-based coordinated release discipline in a monorepo.
+Multiple publishable packages coexist in one repo coordinated by `pnpm-workspace.yaml`; changesets handles version bumps and changelog generation. Expanded layout includes `/packages`, `/docs`, `/plugins`, `/skills`, `/rules`, `/public`, `/i18n` directories. The "MCP plus other agent-integration surfaces" pattern.
 
-ships both a "Skills" folder and a "rules" folder alongside the MCP server.
+## Claude Code plugin / skill wrapper
 
-## Gaps
+### `.claude-plugin/marketplace.json` only
 
-backend architecture details intentionally private (API, parsing, crawling). test/CI strategy not visible in public README. logging and observability strategy not documented. changelog/release notes not visible in README.
+Marketplace discovery metadata in `.claude-plugin/marketplace.json` without a full plugin.json. Lets the project surface in Claude's marketplace UI without becoming a full installable plugin — discovery hook on top of the existing hosted MCP server.
+
+## Release and lifecycle
+
+### License — Permissive (MIT / Apache-2.0)
+
+MIT — vendor-authored (Upstash) project optimized for adoption.
+
+### Vendor-internal release (no public pipeline)
+
+The public repo has the npm CLI release pipeline; the actual MCP server's deploy pipeline is invisible — vendor's internal infrastructure handles backend evolution.

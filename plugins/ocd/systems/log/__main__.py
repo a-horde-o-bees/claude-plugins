@@ -20,7 +20,8 @@ from pathlib import Path
 
 from tools import environment
 
-from .research._compliance import compliance_summary
+from .research._diff import diff_summary
+from .research._quantify import find_branch_points, render_table, write_tables
 from .research._sample_tools import (
     DuplicateHeadingError,
     check_no_duplicate_headings,
@@ -151,100 +152,144 @@ def _dispatch_research_sections(args: argparse.Namespace) -> int:
     return 0
 
 
-def _dispatch_research_content(args: argparse.Namespace) -> int:
-    """Print serialized section content from every sample containing the chain.
+def _dispatch_research_references(args: argparse.Namespace) -> int:
+    """List sample files containing a section at the given chain key.
 
-    `--size` short-circuits to a single integer (UTF-8 byte count of
-    section bodies summed across samples) — companion behavior so an
-    agent can budget cost before consuming.
+    Default — print filenames, one per line. Flags compose:
+
+    - `--count` — print just the integer count of matching files
+    - `--size` — print the total UTF-8 byte count of section bodies under
+      the chain across all samples (companion behavior so agents can
+      budget cost before consuming)
+    - `--show-content` — include each matching file's section body inline,
+      separated by `=== <filename> ===` markers
     """
     samples_dir = _resolve_samples_dir(args)
+
     if args.size:
         print(consolidate_section_size(args.chain, samples_dir))
         return 0
 
     results = consolidate_section(args.chain, samples_dir)
-    if not results:
-        print(f"No samples contain chain key {args.chain!r}")
+
+    if args.count:
+        print(len(results))
         return 0
-    for path, content in results:
-        print(f"=== {path} ===")
-        print(content)
-        print()
+
+    if not results:
+        print(f"No samples contain chain key {args.chain!r}", file=sys.stderr)
+        return 0
+
+    if args.show_content:
+        for path, content in results:
+            print(f"=== {path.name} ===")
+            print(content)
+            print()
+    else:
+        for path, _ in results:
+            print(path.name)
+
     return 0
 
 
-def _dispatch_research_compliance(args: argparse.Namespace) -> int:
-    """Compare every sample (and `_CONSOLIDATED.md` if present) against a template."""
-    samples_dir = _resolve_samples_dir(args)
-    template_path = Path(args.template).resolve() if args.template else samples_dir / "_TEMPLATE.md"
-    if not template_path.is_file():
-        print(f"Template not found: {template_path}", file=sys.stderr)
-        return 1
+def _resolve_consolidated_path(samples_dir: Path, override: str | None) -> Path:
+    """Find a `_CONSOLIDATED*.md` in samples_dir, or accept an explicit override.
 
-    summary = compliance_summary(samples_dir, template_path)
-    clean = sum(1 for r in summary.reports if r.is_clean)
-    total = len(summary.reports)
-    print(f"Samples: {total}    Clean: {clean}    With outliers: {total - clean}")
-    if summary.consolidated_report is None:
-        print("Consolidated: not present")
-    elif summary.consolidated_report.is_clean:
-        print("Consolidated: clean")
-    else:
-        cr = summary.consolidated_report
-        print(f"Consolidated: {len(cr.outliers)} outliers, {len(cr.out_of_order)} order violations")
-    print(f"Template: {template_path}")
+    Single-match auto-resolves; multi-match raises with available names;
+    no match raises with corrective guidance.
+    """
+    if override:
+        path = Path(override).resolve()
+        if not path.is_file():
+            raise _SubtopicResolutionError(f"Consolidated file not found: {path}")
+        return path
+
+    matches = sorted(samples_dir.glob("_CONSOLIDATED*.md"))
+    if not matches:
+        raise _SubtopicResolutionError(
+            f"No `_CONSOLIDATED*.md` found in {samples_dir} — "
+            f"pass --consolidated <path> or initialize one"
+        )
+    if len(matches) > 1:
+        names = ", ".join(m.name for m in matches)
+        raise _SubtopicResolutionError(
+            f"Multiple `_CONSOLIDATED*.md` files in {samples_dir}: {names}; "
+            f"pass --consolidated <path> to disambiguate"
+        )
+    return matches[0]
+
+
+def _dispatch_research_diff(args: argparse.Namespace) -> int:
+    """Diff sample heading trees against the running consolidated.
+
+    Reports growth candidates (chains in samples not yet in
+    consolidated — corpus signals tree should grow), pruning candidates
+    (chains in consolidated with no sample support), and well-supported
+    chains (in both).
+    """
+    samples_dir = _resolve_samples_dir(args)
+    consolidated_path = _resolve_consolidated_path(samples_dir, args.consolidated)
+
+    summary = diff_summary(samples_dir, consolidated_path)
+
+    print(f"Samples: {summary.sample_count}")
+    print(f"Consolidated: {consolidated_path}")
+    print(f"Chain keys in consolidated: {len(summary.consolidated_chains)}")
+    print(f"Chain keys in samples (union): {len(summary.chain_to_files)}")
+    print(f"Well-supported (in both): {len(summary.well_supported)}")
+    print(f"Growth candidates (in samples, not consolidated): {len(summary.growth_candidates)}")
+    print(f"Pruning candidates (in consolidated, not samples): {len(summary.pruning_candidates)}")
     print()
 
-    if summary.outlier_counts:
-        sorted_outliers = sorted(summary.outlier_counts.items(), key=lambda kv: -len(kv[1]))
-        print("Outliers — chain keys present in samples but not in template:")
-        for chain_key, files in sorted_outliers:
+    cap = None if args.show_all else 50
+
+    if summary.growth_candidates:
+        print("Growth candidates — chain keys in samples not yet in consolidated:")
+        sorted_growth = sorted(summary.growth_candidates.items(), key=lambda kv: -len(kv[1]))
+        shown = sorted_growth if cap is None else sorted_growth[:cap]
+        for chain_key, files in shown:
             print(f"  {len(files):3d}  {chain_key}")
-            if args.show_files:
-                for f in files:
-                    print(f"         {f.name}")
-        print()
-    else:
-        print("No outliers across the corpus.\n")
-
-    order_violations = [(r, v) for r in summary.reports for v in r.out_of_order]
-    if order_violations:
-        print("Order violations:")
-        for report, violation in order_violations:
-            ctx = f"{violation.chain_key}: " if violation.chain_key else ""
-            print(f"  {report.sample_path.name}: {ctx}'{violation.heading}' should come after "
-                  f"'{violation.expected_after}', not '{violation.appears_after}'")
+        if cap is not None and len(sorted_growth) > cap:
+            print(f"  ...({len(sorted_growth) - cap} more — pass --show-all)")
         print()
 
-    consolidated_outliers: list[str] = []
-    consolidated_order: list = []
-    if summary.consolidated_report is not None and not summary.consolidated_report.is_clean:
-        cr = summary.consolidated_report
-        consolidated_outliers = [o.chain_key for o in cr.outliers]
-        consolidated_order = list(cr.out_of_order)
-        if consolidated_outliers:
-            print("_CONSOLIDATED.md outliers:")
-            for chain_key in consolidated_outliers:
-                print(f"  {chain_key}")
-            print()
-        if consolidated_order:
-            print("_CONSOLIDATED.md order violations:")
-            for v in consolidated_order:
-                ctx = f"{v.chain_key}: " if v.chain_key else ""
-                print(f"  {ctx}'{v.heading}' should come after "
-                      f"'{v.expected_after}', not '{v.appears_after}'")
-            print()
+    if summary.pruning_candidates:
+        print("Pruning candidates — consolidated chain keys with no sample support:")
+        shown_prune = summary.pruning_candidates if cap is None else summary.pruning_candidates[:cap]
+        for chain_key in shown_prune:
+            print(f"  {chain_key}")
+        if cap is not None and len(summary.pruning_candidates) > cap:
+            print(f"  ...({len(summary.pruning_candidates) - cap} more — pass --show-all)")
 
-    if args.show_missing and summary.missing_counts:
-        print("Missing template chain keys (informational — sections are optional):")
-        sorted_missing = sorted(summary.missing_counts.items(), key=lambda kv: -kv[1])
-        for chain_key, count in sorted_missing:
-            print(f"  {count:3d}  {chain_key}")
+    return 0
 
-    sample_failure = bool(summary.outlier_counts) or bool(order_violations)
-    consolidated_failure = bool(consolidated_outliers) or bool(consolidated_order)
-    return 0 if not sample_failure and not consolidated_failure else 1
+
+def _dispatch_research_quantify(args: argparse.Namespace) -> int:
+    """Compute adoption tables for branching points in the consolidated.
+
+    Default — print rendered tables to stdout. `--write` inserts (or
+    replaces) tables in the consolidated in place, using sentinel
+    comments so the operation is idempotent.
+    """
+    samples_dir = _resolve_samples_dir(args)
+    consolidated_path = _resolve_consolidated_path(samples_dir, args.consolidated)
+
+    if args.write:
+        written = write_tables(consolidated_path, samples_dir)
+        print(f"Wrote {written} adoption table(s) into {consolidated_path}")
+        return 0
+
+    branch_points = find_branch_points(consolidated_path, samples_dir)
+    if not branch_points:
+        print(f"No branching points found in {consolidated_path}")
+        return 0
+
+    for bp in branch_points:
+        print(f"### {bp.parent_chain}")
+        print()
+        print(render_table(bp))
+
+    return 0
 
 
 def _add_samples_location_args(p: argparse.ArgumentParser) -> None:
@@ -295,10 +340,11 @@ def build_parser() -> argparse.ArgumentParser:
             "Verbs:\n"
             "  check        Verify a markdown file has no sibling-duplicate headings\n"
             "  sections     Print the chain-key tree; --count and --size add columns\n"
-            "  content      Print per-sample content under a given chain key; --size for byte count\n"
-            "  compliance   Diff every sample (and _CONSOLIDATED.md) against _TEMPLATE.md\n"
+            "  references   List sample files containing a section at a given chain key; --show-content includes bodies\n"
+            "  diff         Diff sample heading trees against the running _CONSOLIDATED*.md\n"
+            "  quantify     Compute adoption tables for branching points in _CONSOLIDATED*.md; --write inserts in place\n"
             "\n"
-            "Samples-directory locators (sections, content, compliance):\n"
+            "Samples-directory locators (sections, references, diff):\n"
             "  --subject <name>    <project>/logs/research/<name>/<subtopic>-samples/\n"
             "                        Auto-resolves single-subtopic subjects;\n"
             "                        multi-subtopic requires --subtopic <name>.\n"
@@ -311,12 +357,16 @@ def build_parser() -> argparse.ArgumentParser:
             "  log research sections --subject <name> --count\n"
             "  log research sections --subject <name> --count --size\n"
             "  log research sections --dir <path> --size\n"
-            "  log research content '<chain>' --subject <name>\n"
-            "  log research content '<chain>' --subject <name> --size\n"
-            "  log research content '<chain>' --dir <path>\n"
-            "  log research compliance --subject <name>\n"
-            "  log research compliance --subject <name> --show-missing --show-files\n"
-            "  log research compliance --dir <path> --template <template-path>"
+            "  log research references '<chain>' --subject <name>\n"
+            "  log research references '<chain>' --subject <name> --count\n"
+            "  log research references '<chain>' --subject <name> --show-content\n"
+            "  log research references '<chain>' --dir <path>\n"
+            "  log research diff --subject <name>\n"
+            "  log research diff --subject <name> --show-all\n"
+            "  log research diff --dir <path> --consolidated <path>\n"
+            "  log research quantify --subject <name>\n"
+            "  log research quantify --subject <name> --write\n"
+            "  log research quantify --dir <path> --consolidated <path> --write"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
@@ -342,46 +392,67 @@ def build_parser() -> argparse.ArgumentParser:
     r_sections.add_argument(
         "--size",
         action="store_true",
-        help="Add UTF-8 byte-count column (content cost when calling `content <chain>`)",
+        help="Add UTF-8 byte-count column (cost when calling `references <chain> --show-content`)",
     )
     r_sections.set_defaults(_dispatch=_dispatch_research_sections)
 
-    r_content = rsub.add_parser(
-        "content",
-        help="Print per-sample content under a chain key; --size for byte count only",
+    r_references = rsub.add_parser(
+        "references",
+        help="List sample files containing a section at the given chain key; --show-content includes bodies",
     )
-    _add_samples_location_args(r_content)
-    r_content.add_argument(
+    _add_samples_location_args(r_references)
+    r_references.add_argument(
         "chain",
         help="Chain key like 'Sample > Transport > Configuration' (' > ' separator)",
     )
-    r_content.add_argument(
+    r_references.add_argument(
+        "--count",
+        action="store_true",
+        help="Print just the integer count of matching files",
+    )
+    r_references.add_argument(
         "--size",
         action="store_true",
-        help="Print UTF-8 byte count instead of content (companion for budgeting)",
+        help="Print UTF-8 byte count of section bodies under the chain (companion for budgeting)",
     )
-    r_content.set_defaults(_dispatch=_dispatch_research_content)
+    r_references.add_argument(
+        "--show-content",
+        action="store_true",
+        help="Include each file's section body inline, separated by `=== <filename> ===` markers",
+    )
+    r_references.set_defaults(_dispatch=_dispatch_research_references)
 
-    r_compliance = rsub.add_parser(
-        "compliance",
-        help="Diff every sample under a directory against a template; report outliers",
+    r_diff = rsub.add_parser(
+        "diff",
+        help="Diff sample heading trees against the running consolidated; report growth and pruning candidates",
     )
-    _add_samples_location_args(r_compliance)
-    r_compliance.add_argument(
-        "--template",
-        help="Path to template markdown (default: <samples-dir>/_TEMPLATE.md)",
+    _add_samples_location_args(r_diff)
+    r_diff.add_argument(
+        "--consolidated",
+        help="Path to the consolidated markdown (default: glob `_CONSOLIDATED*.md` in samples dir)",
     )
-    r_compliance.add_argument(
-        "--show-missing",
+    r_diff.add_argument(
+        "--show-all",
         action="store_true",
-        help="Also list template chain keys missing across the corpus (informational)",
+        help="Print every growth/pruning candidate (default caps each list at 50)",
     )
-    r_compliance.add_argument(
-        "--show-files",
+    r_diff.set_defaults(_dispatch=_dispatch_research_diff)
+
+    r_quantify = rsub.add_parser(
+        "quantify",
+        help="Compute adoption tables for branching points in _CONSOLIDATED*.md; --write inserts in place",
+    )
+    _add_samples_location_args(r_quantify)
+    r_quantify.add_argument(
+        "--consolidated",
+        help="Path to the consolidated markdown (default: glob `_CONSOLIDATED*.md` in samples dir)",
+    )
+    r_quantify.add_argument(
+        "--write",
         action="store_true",
-        help="List the sample filenames where each outlier appears",
+        help="Insert/replace adoption tables in the consolidated in place (idempotent via sentinel comments)",
     )
-    r_compliance.set_defaults(_dispatch=_dispatch_research_compliance)
+    r_quantify.set_defaults(_dispatch=_dispatch_research_quantify)
 
     return parser
 

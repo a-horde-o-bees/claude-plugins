@@ -1,209 +1,121 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/shibuiwilliam/mcp-server-scikit-learn`. scikit-learn MCP server — model lifecycle (train → eval → persist) exposed as a tool surface; raw `mcp` Python SDK (not FastMCP); host-config uses `uv --directory=` rather than `uvx`. ~13 stars, MIT, default branch `main`. Last commit not surfaced.
 
-### url
+## Server runtime
 
-https://github.com/shibuiwilliam/mcp-server-scikit-learn
+### Python with raw MCP SDK
 
-### stars
-
-~13
-
-### last-commit
-
-not surfaced
-
-### license
-
-MIT
-
-### default branch
-
-main
-
-### one-line purpose
-
-scikit-learn MCP server — model-training and inference tools against local datasets.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Python 99.7%, Makefile 0.3%; Python version not explicitly surfaced.
-
-### framework/SDK in use
-
-raw `mcp` Python SDK (not FastMCP).
-
-### pitfalls observed
-
-Python version floor not surfaced.
+Raw `mcp` Python SDK (not FastMCP). Import pattern `mcp.server`. Python version floor not surfaced. Python 99.7% of repo, Makefile 0.3%.
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio (MCP default).
+stdio (MCP default); stdio-only.
 
-### how selected
+## Capability surface
 
-stdio-only
+### Tools-heavy domain wrapper / domain-tool catalog
 
-## Distribution
+Tools spanning the scikit-learn lifecycle: model training/evaluation, dataset handling, preprocessing, feature engineering, model persistence, cross-validation, hyperparameter tuning. Wraps an ML pipeline as a tool surface rather than a notebook flow.
 
-### every mechanism observed
+## Configuration delivery
 
-source clone + editable install (`pip install -e ".[dev]"`); `uv run` launch.
+### Host-side JSON config snippet
 
-### published package name(s)
-
-not confirmed on PyPI.
-
-### install commands shown in README
-
-`pip install -e ".[dev]"`.
-
-### pitfalls observed
-
-Whether PyPI publication exists not confirmed.
-
-## Entry point / launch
-
-### command(s) users/hosts run
-
-`uv --directory=src/mcp_server_scikit_learn run mcp-server-scikit-learn`.
-
-### wrapper scripts, launchers, stubs
-
-Makefile targets present (1 line in Makefile language).
-
-## Configuration surface
-
-### how config reaches the server
-
-MCP server JSON config (command/args) — no env-based config documented.
+MCP-server JSON config (command/args) — no env-based config documented.
 
 ## Authentication
 
-### flow
+### None / implicit (local-resource gating)
 
-none
-
-### where credentials come from
-
-N/A — operates on local data/models.
+No auth — operates on local data and models.
 
 ## Multi-tenancy
 
-### tenancy model
+### Single-user / single-tenant per process
 
-single-user
+Single-user.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### Source clone with editable install
 
-tools for model training/evaluation, dataset handling, preprocessing, feature engineering, model persistence, cross-validation, hyperparameter tuning.
+`pip install -e ".[dev]"` — source clone + editable install with dev tools via PEP 621 optional deps.
 
-## Observability
+### Source clone with `uv run` from source tree
 
-### logging destination + format, metrics, tracing, debug flags
+Host-config invocation uses `uv --directory=src/mcp_server_scikit_learn run mcp-server-scikit-learn` — path-anchored uv run from the source tree.
 
-not documented
+## Entry point and launch
 
-## Host integrations shown in README or repo
+### `uv --directory` from source
+
+Host-config invocation `uv --directory=src/mcp_server_scikit_learn run mcp-server-scikit-learn` — path-anchored launch from source directory rather than `uvx <package>` zero-install runner. Implies the package isn't meant for general distribution, more for developer-installed local runs.
+
+### Console script via `[project.scripts]` / npm bin
+
+`[project.scripts]` declares `mcp-server-scikit-learn` console script.
+
+## Build and packaging
+
+### Hatchling + uv (Python)
+
+uv-backed packaging; build backend not surfaced. `uv.lock` present.
+
+### `uv.lock` committed
+
+`uv.lock` file present.
+
+### Optional-dependency fan-out
+
+`.[dev]` install pattern — dev tools via PEP 621 optional deps, not a separate `requirements-dev.txt`.
+
+## Schema and types
+
+### Pydantic v2 models
+
+Pydantic via MCP SDK.
+
+## Test stack
+
+### pytest with async + coverage
+
+pytest invoked via `pytest -s -v tests/`; `tests/` directory.
+
+## CI
+
+### GitHub Actions
+
+GitHub Actions infrastructure present (specific triggers/jobs not extracted).
+
+## Host integration
 
 ### Claude Desktop
 
 JSON command/args snippet using `uv --directory=... run`.
 
-## Claude Code plugin wrapper
+## Repository layout
 
-### presence and shape
+### Single-package src-layout
 
-none observed
+Single-package src-layout: `src/mcp_server_scikit_learn/`.
 
-## Tests
+## Developer ergonomics
 
-### presence, framework, location, notable patterns
+### Makefile / Makefile.toml
 
-pytest (`pytest -s -v tests/`); `tests/` directory.
+Makefile present for developer commands.
 
-## CI
+## Documentation surface
 
-### presence, system, triggers, what it runs
+### README as the canonical surface
 
-GitHub Actions infra present (details not surfaced).
+README is the canonical surface.
 
-## Container / packaging artifacts
+## Release and lifecycle
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+### License — Permissive (MIT / Apache-2.0)
 
-not observed
-
-## Example client / developer ergonomics
-
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
-
-Makefile for developer commands.
-
-## Repo layout
-
-### single-package / monorepo / vendored / other
-
-single-package (`src/mcp_server_scikit_learn/`).
-
-## Notable structural choices
-
-Scopes scikit-learn around MCP: model lifecycle (train → eval → persist) becomes a tool surface rather than a notebook flow. Uses `uv --directory=...` in host config — unusual path-anchored invocation; implies no pip-installed console script for end users. `.[dev]` install pattern — dev tools via PEP 621 optional deps, not a separate requirements-dev file.
-
-## Unanticipated axes observed
-
-Exposing an ML training pipeline over MCP raises a state-lifecycle question (where do trained models persist? who owns them?) that the tool surface implicitly answers via `model_persistence` tools.
-
-## Python-specific
-
-### SDK / framework variant
-
-raw `mcp` SDK; version pin not surfaced; import pattern `mcp.server`.
-
-### Python version floor
-
-`requires-python` value not surfaced.
-
-### Packaging
-
-Build backend not surfaced (uv-backed). Lock file: `uv.lock` present. Version manager convention: uv.
-
-### Entry point
-
-`[project.scripts]` → `mcp-server-scikit-learn`; console-script name `mcp-server-scikit-learn`; host-config snippet shape `uv --directory=src/mcp_server_scikit_learn run mcp-server-scikit-learn`.
-
-### Install workflow expected of end users
-
-source clone + editable pip install; one-liner `pip install -e ".[dev]"`.
-
-### Async and tool signatures
-
-scikit-learn is sync-only; tools likely sync.
-
-### Type / schema strategy
-
-Pydantic via MCP SDK.
-
-### Testing
-
-pytest; fixture style not inspected.
-
-### Dev ergonomics
-
-Makefile present.
-
-### Notable Python-specific choices
-
-sync tool signatures likely throughout — sklearn is sync and wrapping it async would introduce threads; staying sync is the right call for this domain. `uv --directory=<path>` in host config rather than `uvx <package>` — suggests the package isn't meant for pip-install-everywhere distribution, more for developer-installed local runs.
-
-## Gaps
-
-Python version floor not surfaced. Whether PyPI publication exists not confirmed. Docker absence appears intentional but not stated.
+MIT.

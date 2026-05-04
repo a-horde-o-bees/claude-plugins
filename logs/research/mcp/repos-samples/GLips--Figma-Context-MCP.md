@@ -1,167 +1,129 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/GLips/Figma-Context-MCP`. Figma design-context MCP server — parses Figma URLs and extracts layout/styling metadata as structured context for code-generating AI agents. 14.4k stars, MIT, default branch `main`, latest release v0.10.1 (April 10, 2026). Effectively the canonical community Figma MCP server despite being unofficial; no first-party Figma-org repo surfaced. Marketing framing "Give your coding agent access to your Figma data" positions it as a design-to-code accelerator rather than a general Figma CRUD server.
 
-### url
+## Server runtime
 
-https://github.com/GLips/Figma-Context-MCP
+### Node.js / TypeScript with official MCP SDK
 
-### stars
-
-14.4k
-
-### last-commit
-
-Latest release v0.10.1, April 10, 2026.
-
-### license
-
-MIT
-
-### default branch
-
-main
-
-### one-line purpose
-
-Figma design-context MCP server — parses Figma URLs and extracts layout/styling metadata as structured context for code-generating AI agents.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-TypeScript (96.3%); Node.js runtime (implied — uses npx and pnpm); specific Node engines constraint not extracted within budget.
-
-### framework/SDK in use
-
-Model Context Protocol SDK (the canonical `@modelcontextprotocol/sdk` typescript SDK); build via tsup.
+TypeScript (96.3%) on the canonical `@modelcontextprotocol/sdk`; Node.js runtime (implied — uses npx and pnpm). Build via tsup. Specific Node engines constraint not extracted within budget.
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio; HTTP/SSE server mode also referenced (standalone server with PORT env var).
+Selectable via `--stdio` CLI flag.
 
-### how selected
+### Streamable HTTP
 
-`--stdio` CLI flag selects stdio; omission plus a `PORT` env var or port flag selects HTTP mode.
+HTTP/SSE server mode also referenced — standalone server with `PORT` env var. Selected by omitting `--stdio` and supplying a `PORT` env var or port flag.
 
-## Distribution
+### Selection mechanism
 
-### every mechanism observed
+CLI flag at startup — `--stdio` boolean; otherwise HTTP mode via `PORT` env var or port flag.
 
-npm (primary), npx execution, Cursor IDE configuration snippets.
+## Capability surface
 
-### published package name(s)
+### Tools-only, hand-curated narrow surface
 
-figma-developer-mcp
+Tools for parsing Figma file/frame/group URLs, extracting layout and styling metadata, and contextualizing design data for code generation. The server's job is scope-narrow — it turns Figma URLs into structured design context; it does not perform writes to Figma, sidestepping OAuth scope-escalation concerns.
 
-### install commands shown in README
+## Configuration delivery
 
-`npx -y figma-developer-mcp --figma-api-key=YOUR-KEY --stdio`
+### Environment variables
 
-## Entry point / launch
+`FIGMA_API_KEY`, `PORT`.
 
-### command(s) users/hosts run
+### CLI flags
 
-`npx -y figma-developer-mcp --figma-api-key=YOUR-KEY --stdio` (macOS/Linux); Windows wraps in `cmd /c`.
+`--figma-api-key`, `--stdio`, port flag.
 
-### wrapper scripts, launchers, stubs
+### Host-side JSON config snippet
 
-npm `bin` entry; tsup-built CLI; no separate launcher scripts observed.
-
-## Configuration surface
-
-### how config reaches the server
-
-CLI flags (`--figma-api-key`, `--stdio`, port flag); environment variables (`FIGMA_API_KEY`, `PORT`); host-level JSON config file for MCP clients.
+Host-level JSON config file for MCP clients (`.cursor/mcp.json`, Claude Desktop config) provides the launch command.
 
 ## Authentication
 
-### flow
+### Static API key / token via env var
 
-Static Figma personal access token supplied via CLI flag or environment variable; no OAuth flow.
-
-### where credentials come from
-
-User generates token via Figma's account token-management UI and passes it at launch.
+Static Figma personal access token supplied via CLI flag (`--figma-api-key`) or environment variable (`FIGMA_API_KEY`); no OAuth flow. User generates the token via Figma's account token-management UI.
 
 ## Multi-tenancy
 
-### tenancy model
+### Single-user / single-tenant per process
 
-Single-user — token is process-scoped. A given launch serves one Figma identity; no per-request switching observed.
+Token is process-scoped. A given launch serves one Figma identity; no per-request switching observed.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### npm via npx / bunx
 
-Tools for parsing Figma file/frame/group URLs, extracting layout and styling metadata, and contextualizing design data for code generation. Designed as the bridge that turns a Figma link into structured design context an AI coder can consume.
+Published to npm as `figma-developer-mcp`. Primary install command: `npx -y figma-developer-mcp --figma-api-key=YOUR-KEY --stdio`. Windows wraps in `cmd /c`.
 
-## Observability
+## Entry point and launch
 
-### logging destination + format, metrics, tracing, debug flags
+### `npx -y <package>` / `bunx`
 
-Not explicitly extracted within budget — likely stderr logging in stdio mode, but not confirmed.
+`npx -y figma-developer-mcp --figma-api-key=YOUR-KEY --stdio` (macOS/Linux); Windows wraps in `cmd /c`. npm `bin` entry; tsup-built CLI; no separate launcher scripts.
 
-## Host integrations shown in README or repo
+## Build and packaging
 
-### Cursor IDE
+### npm/Node toolchain
 
-Primary target, featured prominently.
+`package.json` defines build and bin entries; npm registry is the publish target. Build via tsup producing a CLI artifact. pnpm-managed.
+
+## Test stack
+
+### Vitest (TypeScript / Node)
+
+vitest configured. Specific location/coverage not extracted.
+
+## CI
+
+### GitHub Actions
+
+GitHub Actions workflows present; specific triggers and jobs not extracted within budget.
+
+## Host integration
+
+### Cursor
+
+Primary target; featured prominently in the README.
 
 ### Claude Desktop
 
 Referenced via MCP JSON config.
 
-### General MCP-compatible clients
+### Generic / host-agnostic snippet
 
-Via stdio.
+General MCP-compatible clients via stdio.
 
-## Claude Code plugin wrapper
+## Repository layout
 
-### presence and shape
+### Single-package source (language-conventional)
 
-Not present — no `.claude-plugin` directory observed in repo layout.
+Single-package — `/src`, `/scripts`, `tsconfig.json`, `eslint.config.js` at root; pnpm-managed.
 
-## Tests
+## Developer ergonomics
 
-### presence, framework, location, notable patterns
+### Linter and type-checker stack
 
-Present — vitest configured; specific location/coverage not extracted within budget.
+ESLint + Prettier signal an opinionated dev environment; consumers building plugins on top should expect pnpm workflows.
 
-## CI
+### `pre-commit` framework
 
-### presence, system, triggers, what it runs
+lefthook for git hooks.
 
-Present — GitHub Actions workflows exist; specific triggers and jobs not extracted within budget.
+### Sample MCP client configs in repo
 
-## Container / packaging artifacts
+Sample Cursor and Claude Desktop configs in README; pnpm scripts for dev/build.
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+## Documentation surface
 
-Not observed within budget.
+### README as the canonical surface
 
-## Example client / developer ergonomics
+README is the canonical documentation surface; per-host integration sections inside it.
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+### Per-host README integration sections
 
-pnpm scripts for dev/build; lefthook for git hooks; ESLint + Prettier; sample Cursor and Claude Desktop configs in README.
-
-## Repo layout
-
-### single-package / monorepo / vendored / other
-
-Single-package — `/src`, `/scripts`, tsconfig.json, eslint.config.js at root; pnpm-managed.
-
-## Notable structural choices
-
-TypeScript-heavy (96%) with tsup for build — typical modern TS CLI scaffolding. pnpm + lefthook + ESLint + Prettier signals an opinionated dev environment; consumers building plugins on top should expect pnpm workflows. The server's job is scope-narrow — it turns Figma URLs into structured context; it does not perform writes to Figma, which sidesteps OAuth scope-escalation concerns.
-
-## Unanticipated axes observed
-
-14.4k stars and 1.1k forks make this the dominant community Figma MCP — effectively canonical despite being unofficial. No first-party figma-org repo was surfaced in this research window. Marketing framing "Give your coding agent access to your Figma data" positions it as a design-to-code accelerator rather than a general Figma CRUD server.
-
-## Gaps
-
-Exact Node engines constraint, precise CI workflow triggers, and logging format not confirmed within budget. Whether the repo intends a future HTTP-only mode (given PORT env var) or leaves HTTP secondary to stdio is not documented in the extracted content.
+README has labeled sections per supported host (Cursor primary, Claude Desktop secondary, generic stdio).

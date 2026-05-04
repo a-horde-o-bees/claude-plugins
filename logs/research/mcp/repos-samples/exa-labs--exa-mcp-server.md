@@ -1,215 +1,197 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/exa-labs/exa-mcp-server`. Exa search MCP server — web search and content extraction; ships native Claude Desktop connector, `.claude-plugin/` wrapper, pre-built IDE installers, and vertical "skills" packs alongside the server. 4,300 stars, MIT, default branch `main`, last commit April 19, 2026.
 
-### url
+## Server runtime
 
-https://github.com/exa-labs/exa-mcp-server
+### Node.js / TypeScript with official MCP SDK
 
-### stars
-
-4,300
-
-### last-commit
-
-April 19, 2026
-
-### license
-
-MIT
-
-### default branch
-
-main
-
-### one-line purpose
-
-Exa search MCP server — web search and content extraction tools; ships `.claude-plugin/` and native Claude Desktop connector.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-TypeScript (97.9%); Node.js >=18.0.0.
-
-### framework/SDK in use
-
-MCP SDK ^1.12.1, exa-js ^2.8.0, Zod validation, jose (JWT).
+TypeScript (97.9%) on Node.js >=18.0.0 with MCP SDK ^1.12.1, exa-js ^2.8.0, Zod for validation, jose for JWT.
 
 ## Transport
 
-### supported transports
+### Hosted remote endpoint (vendor-operated)
 
-HTTP (remote MCP endpoint `https://mcp.exa.ai/mcp`), stdio, HTTP local.
+Primary endpoint is a vendor-hosted HTTPS service: `https://mcp.exa.ai/mcp`.
 
-### how selected
+### Streamable HTTP
 
-remote endpoint default; clients select via config.
+Local HTTP supported.
 
-## Distribution
+### stdio
 
-### every mechanism observed
+Local stdio supported via the npm package.
 
-npm (`exa-mcp-server`), remote HTTP endpoint, pre-built IDE installers (Cursor/VS Code), Docker.
+### Selection mechanism
 
-### published package name(s)
+Implicit default to remote endpoint; clients select via config — host points at the URL directly or runs the npm package locally.
 
-`exa-mcp-server` on npm.
+## Capability surface
 
-### install commands shown in README
+### Tools-only, hand-curated narrow surface
 
-`npm install exa-mcp-server`, remote URL `https://mcp.exa.ai/mcp`, one-click installers.
+`web_search_exa`, `web_fetch_exa`, `web_search_advanced_exa` — three search/fetch tools with advanced filtering by domain, date, content type.
 
-### pitfalls observed
+### Bundled "agent SOPs" / vertical skill packs
 
-Smithery registry packaging.
+Specialized skills directory: company research, code search, people research, financial reports, academic papers — vertical-specific research skills shipped alongside the server as first-class artifacts.
 
-## Entry point / launch
+## Configuration delivery
 
-### command(s) users/hosts run
+### Host-side JSON config snippet
 
-remote HTTP, local npm package, Docker.
+Client config files: Cursor `~/.cursor/mcp.json`, VS Code `.vscode/mcp.json`, Claude Desktop `~/Library/Application Support/Claude/claude_desktop_config.json`.
 
-### wrapper scripts, launchers, stubs
+### Environment variables
 
-Cursor/VS Code one-click installers.
-
-## Configuration surface
-
-### how config reaches the server
-
-client config files (Cursor `~/.cursor/mcp.json`, VS Code `.vscode/mcp.json`, Claude Desktop `~/Library/Application Support/Claude/claude_desktop_config.json`), `EXA_API_KEY` env var or URL parameter.
+`EXA_API_KEY`.
 
 ## Authentication
 
-### flow
+### Static API key / token via env var
 
-API key from dashboard.exa.ai.
-
-### where credentials come from
-
-environment variable `EXA_API_KEY` or URL parameter.
+`EXA_API_KEY` env var; key obtained from dashboard.exa.ai. Also supplied via URL parameter for the hosted endpoint.
 
 ## Multi-tenancy
 
-### tenancy model
+### Per-request tenancy by inbound credential / bearer token
 
-per-client multi-tenancy via HTTP endpoint; API key scoped to user account.
+Per-client multi-tenancy via the HTTP endpoint; API key scoped to the user's account on each request.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### npm via npx / bunx
 
-`web_search_exa`, `web_fetch_exa`, `web_search_advanced_exa`; advanced filtering by domain, date, content type. Specialized skills directory: company research, code search, people research, financial reports, academic papers.
+`npm install exa-mcp-server` — published as `exa-mcp-server` on npm.
 
-## Observability
+### Hosted endpoint (no install)
 
-### logging destination + format, metrics, tracing, debug flags
+Remote URL `https://mcp.exa.ai/mcp` — primary distribution, reduces setup friction.
 
-documentation references available but not detailed; presumed via service dashboard.
+### Pre-built host installer / one-click install URL
 
-### pitfalls observed
+Pre-built one-click installers for Cursor and VS Code.
 
-logging configuration details unclear.
+### Docker / OCI image
 
-## Host integrations shown in README or repo
+Dockerfile (Node.js-based) present.
+
+### Smithery registry
+
+Smithery registry packaging via `smithery.yaml`.
+
+## Entry point and launch
+
+### `npx -y <package>` / `bunx`
+
+Local npm package launch; `npx` flow for stdio.
+
+### URL configuration (no local launch)
+
+Remote HTTP endpoint launch — host config carries the URL; nothing executes locally.
+
+### Docker container entrypoint
+
+Docker as alternative launch path.
+
+## Build and packaging
+
+### npm/Node toolchain
+
+`package.json`, `tsconfig.json` — standard TS/Node tooling.
+
+## Schema and types
+
+### Zod (TypeScript)
+
+Zod for validation.
+
+## Container artifacts
+
+### Dockerfile (single-stage, build-from-source)
+
+Dockerfile present.
+
+### Vercel deployment config
+
+`vercel.json` deployment config — hosted-endpoint backend pattern.
+
+## Deployment topology
+
+### Hosted SaaS endpoint
+
+Primary deployment is a vendor-operated SaaS endpoint at `https://mcp.exa.ai/mcp`.
+
+## Host integration
 
 ### Claude Desktop
 
-native connector, no manual config.
+Native connector — no manual config needed. The lowest-friction host integration available; limited to vendor partnerships approved by host authors.
+
+### Native host connector
+
+Claude Desktop's built-in awareness of the server eliminates manual config — first-party native connector pattern.
 
 ### Cursor
 
-pre-built installer.
+Pre-built one-click installer.
 
-### VS Code
+### VS Code / VS Code Insiders / Visual Studio family
 
-pre-built installer.
+Pre-built one-click installer.
 
-### Codex
+### Codex CLI / Copilot CLI / Gemini CLI
 
-JSON `mcp.json` (host-dependent paths).
+Codex JSON `mcp.json` (host-dependent paths). Gemini CLI JSON `mcp.json`.
 
-### OpenCode
+### Windsurf / Goose / Qodo Gen / Cline / Kiro / Augment
 
-JSON `mcp.json` (host-dependent paths).
-
-### Antigravity
-
-JSON `mcp.json` (host-dependent paths).
-
-### Windsurf
-
-JSON `mcp.json` (host-dependent paths).
+JSON `mcp.json` integrations for Windsurf, Kiro, Roo Code (host-dependent paths).
 
 ### Zed
 
-JSON `mcp.json` (host-dependent paths).
+JSON `mcp.json` integration.
 
-### Gemini CLI
+### Cloudflare AI Playground / OpenAI Responses API / OpenAI Agents SDK
 
-JSON `mcp.json` (host-dependent paths).
+Documented integration with v0 by Vercel, OpenCode, Antigravity, Warp.
 
-### v0 by Vercel
+### First-party host extension manifest
 
-JSON `mcp.json` (host-dependent paths).
+`gemini-extension.json` declares first-class Gemini integration. `server.json` for additional host-integration metadata.
 
-### Warp
+## Claude Code plugin / skill wrapper
 
-JSON `mcp.json` (host-dependent paths).
+### `.claude-plugin/` wrapper
 
-### Kiro
+`.claude-plugin/plugin.json` with HTTP server config (type: http, url: `https://mcp.exa.ai/mcp?client=claude-code-plugin`, custom header `x-exa-source: claude-code-plugin`).
 
-JSON `mcp.json` (host-dependent paths).
+## Repository layout
 
-### Roo Code
+### Single-package source (language-conventional)
 
-JSON `mcp.json` (host-dependent paths).
+Single-package layout. Dirs: `src/`, `api/`, `skills/`, `public/`. Config: `package.json`, `tsconfig.json`, `Dockerfile`, `.claude-plugin/`. Integration configs: `gemini-extension.json`, `smithery.yaml`, `server.json`.
 
-## Claude Code plugin wrapper
+## Documentation surface
 
-### presence and shape
+### Per-host README integration sections
 
-present; `.claude-plugin/plugin.json` with HTTP server config (type: http, url: `https://mcp.exa.ai/mcp?client=claude-code-plugin`, custom header `x-exa-source: claude-code-plugin`).
+15+ host platforms with config snippets per host.
 
-## Tests
+### `llms.txt` / `llms-full.txt`
 
-### presence, framework, location, notable patterns
+`llm_mcp_docs.txt` shipped (411.7 KB) as in-repo doc designed for LLM ingestion.
 
-not explicitly documented.
+### `agents/` example directory
 
-## CI
+Skills directory with specialized research templates.
 
-### presence, system, triggers, what it runs
+## Release and lifecycle
 
-not explicitly documented.
+### License — Permissive (MIT / Apache-2.0)
 
-## Container / packaging artifacts
+MIT.
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+### Active development
 
-Dockerfile (Node.js-based); Vercel deployment config (`vercel.json`); no docker-compose.
-
-## Example client / developer ergonomics
-
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
-
-pre-built installers for Cursor/VS Code (one-click); native Claude Desktop connector (auto-config); skills directory with specialized research templates; `llm_mcp_docs.txt` (411.7 KB large documentation); Smithery registry config (`smithery.yaml`).
-
-## Repo layout
-
-### single-package / monorepo / vendored / other
-
-single-package. Dirs: `src/`, `api/`, `skills/`, `public/`. Config: `package.json`, `tsconfig.json`, `Dockerfile`, `.claude-plugin/`. Integration configs: `gemini-extension.json`, `smithery.yaml`, `server.json`.
-
-## Notable structural choices
-
-Remote HTTP endpoint as primary distribution (reduces setup friction). Native Claude Desktop connector (no manual config needed). Specialized skills for vertical use cases. High client compatibility (15+ platforms). Smithery registry packaging.
-
-## Unanticipated axes observed
-
-Native Claude Desktop connector vs JSON config for other clients — axis: host-native integration surface (deeplink/connector) vs config snippet. Vertical-specific research skills shipped alongside the server — axis: "skills" as first-class shipping artifact. Pre-built IDE installers (Cursor/VS Code one-click) — axis: distribution beyond package managers. `llm_mcp_docs.txt` shipped as in-repo doc designed for LLM ingestion.
-
-## Gaps
-
-testing/CI strategy not documented. logging configuration details unclear. rate limiting and plan tiers not documented in README.
+Active — last commit April 19, 2026.

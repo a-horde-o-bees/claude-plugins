@@ -1,161 +1,81 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/DaInfernalCoder/perplexity-mcp`. Perplexity search MCP server — exposes `search`, `reason`, `deep_research` tools with auto-complexity routing to Sonar Pro / Sonar Reasoning / Sonar Deep Research. 289 stars, MIT, default branch `main`, last commit November 1, 2025 ("Reasoning and Chat History"). Hackathon-winning design (1st @ Cline Hackathon).
 
-### url
+## Server runtime
 
-https://github.com/DaInfernalCoder/perplexity-mcp
+### Node.js with custom SDK composition
 
-### stars
-
-289
-
-### last-commit
-
-November 1, 2025 ("Reasoning and Chat History")
-
-### license
-
-MIT
-
-### default branch
-
-main
-
-### one-line purpose
-
-Perplexity search MCP server — exposes `search`, `reason`, `deep_research` tools with auto-complexity routing to Sonar Pro / Sonar Reasoning / Sonar Deep Research.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-JavaScript (94.7%), Dockerfile (5.3%); Node.js required.
-
-### framework/SDK in use
-
-MCP SDK, Anthropic Claude Agent SDK.
+JavaScript (94.7%) Node.js server combining the MCP SDK with the Anthropic Claude Agent SDK rather than using the MCP SDK alone. The compositional choice surfaces because the server is itself an agent-like layer that calls out to Perplexity Sonar models while exposing MCP tools.
 
 ## Transport
 
-### supported transports
+### Streamable HTTP
 
-HTTP (inferred from Anthropic Agent SDK usage).
+HTTP transport inferred from Anthropic Agent SDK usage; selection mechanism not explicitly documented in extract.
 
-### how selected
+## Capability surface
 
-not explicitly documented
+### Auto-routing across backends
 
-## Distribution
+Single logical tool (`search`) dispatches internally to one of multiple backend models (Sonar Pro / Sonar Reasoning / Sonar Deep Research) based on a complexity heuristic. Override parameter (`force_model`) lets the LLM bypass the heuristic when needed. Tools: `search` (Sonar Pro), `reason` (Sonar Reasoning Pro), `deep_research` (Sonar Deep Research).
 
-### every mechanism observed
+## Configuration delivery
 
-npx (recommended), source clone.
+### Environment variables
 
-### published package name(s)
+`PERPLEXITY_API_KEY` from environment.
 
-`perplexity-mcp` via `npx -y perplexity-mcp`.
+### CLI flags
 
-### install commands shown in README
+`--api-key`, `--cwd` parameter for `.env` path.
 
-`npx -y perplexity-mcp` (recommended) or git clone + `npm install`.
+### Dotenv file
 
-## Entry point / launch
-
-### command(s) users/hosts run
-
-`npx -y perplexity-mcp`
-
-### wrapper scripts, launchers, stubs
-
-none documented; direct npx invocation.
-
-## Configuration surface
-
-### how config reaches the server
-
-`.env` file, CLI args (`--api-key`), `--cwd` parameter for .env path.
+`.env` file loaded at startup. Resolution priority: CLI arg > env var > `.env` file.
 
 ## Authentication
 
-### flow
+### Static API key / token via env var
 
-API key (PERPLEXITY_API_KEY). Priority: CLI arg > env var > .env file.
-
-### where credentials come from
-
-CLI, environment, or `.env`.
+Perplexity API key (`PERPLEXITY_API_KEY`) supplied via CLI arg, environment variable, or `.env` file.
 
 ## Multi-tenancy
 
-### tenancy model
+### Single-user / single-tenant per process
 
-per-request context; assumes single-agent invocation.
+Per-request context; assumes single-agent invocation.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### npm via npx / bunx
 
-Tools: `search` (Sonar Pro), `reason` (Sonar Reasoning Pro), `deep_research` (Sonar Deep Research). Optional `force_model` parameter to override auto-complexity detection.
+Published to npm; recommended install is `npx -y perplexity-mcp`. Source clone with `npm install` is the alternative.
 
-## Observability
+### Smithery registry
 
-### logging destination + format, metrics, tracing, debug flags
+Smithery registry integration — `smithery.yaml` present in repo. Discovery/distribution via Smithery's MCP-aware catalog.
 
-not documented
+## Entry point and launch
 
-## Host integrations shown in README or repo
+### `npx -y <package>` / `bunx`
 
-MCP config files mentioned in generic terms; specifics not detailed.
+`npx -y perplexity-mcp` is the canonical launch idiom; no separate launcher scripts.
 
-## Claude Code plugin wrapper
+## Container artifacts
 
-### presence and shape
-
-not present
-
-## Tests
-
-### presence, framework, location, notable patterns
-
-not documented
-
-## CI
-
-### presence, system, triggers, what it runs
-
-not documented
-
-## Container / packaging artifacts
-
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+### Multi-stage Dockerfile
 
 Dockerfile present (multi-stage Node.js 18-Alpine).
 
-## Example client / developer ergonomics
+## Repository layout
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+### Single-package source (language-conventional)
 
-npx invocation simplicity emphasized; sample configuration in README.
+Single-package; dirs include `src/`, `examples/`, `memory-bank/`, `.roo/`; config files include `package.json`, `tsconfig.json`, `smithery.yaml`, `Dockerfile`.
 
-## Repo layout
+## Documentation surface
 
-### single-package / monorepo / vendored / other
+### README as the canonical surface
 
-single-package; dirs include `src/`, `examples/`, `memory-bank/`, `.roo/`; config files include `package.json`, `tsconfig.json`, `smithery.yaml`, `Dockerfile`.
-
-## Notable structural choices
-
-- hackathon-winning design (1st @ Cline Hackathon)
-- auto-complexity detection routes requests to the appropriate model
-- direct npx distribution simplifies adoption
-- chat history context preservation
-
-## Unanticipated axes observed
-
-- tool selection by query-complexity heuristic instead of explicit tool naming (one logical action, three backend models)
-- Smithery registry integration — an axis in its own right (discovery/distribution via Smithery)
-
-## Gaps
-
-CI/testing strategy not documented. Logging configuration not specified. Host integration details beyond MCP config unclear.
+README emphasizes npx invocation simplicity; sample configuration in README. Host integrations referenced in generic MCP-config terms; specifics not detailed.

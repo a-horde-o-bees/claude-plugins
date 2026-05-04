@@ -1,167 +1,97 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/riza-io/riza-mcp`. Riza code-interpreter MCP server — sandboxed code execution exposed as MCP tools, with separate save/run/edit/list patterns. 14 stars, default branch `main`.
 
-### url
+## Server runtime
 
-https://github.com/riza-io/riza-mcp
+### Node.js / TypeScript with official MCP SDK
 
-### stars
-
-14
-
-### last-commit
-
-Not explicitly displayed in provided content; repository appears active.
-
-### license
-
-Not specified in provided content (likely MIT or Apache 2.0; default for Riza projects).
-
-### default branch
-
-main
-
-### one-line purpose
-
-Riza code-interpreter MCP server — sandboxed code execution tool.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-JavaScript (72.2%), TypeScript (27.8%); Node.js runtime required.
-
-### framework/SDK in use
-
-Anthropic's Model Context Protocol (MCP) specification.
+JavaScript (72.2%), TypeScript (27.8%); Node.js runtime; Anthropic's Model Context Protocol (MCP) specification.
 
 ## Transport
 
-### supported transports
+### stdio
 
-Not explicitly specified in provided content; inferred as stdio or HTTP based on npm distribution pattern.
+Inferred as stdio based on npm distribution pattern; transports not explicitly specified in provided content.
 
-### how selected
+### Selection mechanism
 
 Standard MCP transport selection; details not documented.
 
-## Distribution
+## Capability surface
 
-### every mechanism observed
+### Single code-execution tool with sandbox
 
-NPM package registry, npx command.
+Six tools centered on sandboxed code execution: `create_tool` (save code as reusable tools), `fetch_tool` (retrieve saved tools with source code), `execute_tool` (run saved tools securely), `edit_tool` (modify existing tools), `list_tools` (view available tools), `execute_code` (run arbitrary code without saving). Isolated code execution is Riza's core value proposition.
 
-### published package name(s)
+### User-publishable tools
 
-`@riza-io/riza-mcp` (npm package).
+`create_tool` saves arbitrary code as reusable tools with `edit_tool` capability — separate patterns for saved vs. arbitrary code execution. The `edit_tool` operation modifies existing saved tools at runtime, making the saved-tool surface mutable rather than publish-once-and-immutable.
 
-### install commands shown in README
+## Configuration delivery
 
-`npx @riza-io/riza-mcp` (assumed from npm distribution pattern).
+### Environment variables
 
-## Entry point / launch
+`RIZA_API_KEY` environment variable for credentials.
 
-### command(s) users/hosts run
+### Host-side JSON config snippet
 
-Configured through Claude Desktop or adapted for other MCP clients via command-line invocation.
-
-### wrapper scripts, launchers, stubs
-
-None documented.
-
-## Configuration surface
-
-### how config reaches the server
-
-JSON configuration file (Claude Desktop format); environment variables for API credentials.
+Claude Desktop JSON configuration example.
 
 ## Authentication
 
-### flow
-
-API key authentication via environment variable.
-
-### where credentials come from
+### Static API key / token via env var
 
 Riza API key set via `RIZA_API_KEY` environment variable; "Get a free Riza API key in your Riza Dashboard".
 
 ## Multi-tenancy
 
-### tenancy model
+### Single-user / single-tenant per process
 
 Single-user per API key; multi-user via separate API keys.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### npm via npx / bunx
 
-Six primary tools: `create_tool` (save code as reusable tools), `fetch_tool` (retrieve saved tools with source code), `execute_tool` (run saved tools securely), `edit_tool` (modify existing tools), `list_tools` (view available tools), `execute_code` (run arbitrary code without saving).
+NPM package registry via npx; package name `@riza-io/riza-mcp`. `npx @riza-io/riza-mcp` (assumed from npm distribution pattern).
 
-## Observability
+## Entry point and launch
 
-### logging destination + format, metrics, tracing, debug flags
+### `npx -y <package>` / `bunx`
 
-No observability features documented.
+Configured through Claude Desktop or adapted for other MCP clients via command-line invocation; npm distribution pattern implies `npx`.
 
-## Host integrations shown in README or repo
+## Host integration
 
 ### Claude Desktop
 
 Yes; "Configure with Claude Desktop as below, or adapt as necessary for your MCP client".
 
-### Claude Code
-
-Not explicitly documented.
-
-### Other
+### Generic / host-agnostic snippet
 
 Adaptable for any MCP client.
 
-## Claude Code plugin wrapper
+## Claude Code plugin / skill wrapper
 
-### presence and shape
+### Bare MCP server, no Claude Code wrapper
 
 Not present; configuration-based integration only.
 
-## Tests
+## Documentation surface
 
-### presence, framework, location, notable patterns
+### README as the canonical surface
 
-Not documented in provided content.
+README contains Claude Desktop JSON configuration example; six documented tools with clear semantics.
 
-## CI
+## Repository layout
 
-### presence, system, triggers, what it runs
+### Single-package src-layout
 
-Not documented in provided content.
+Single server package with minimal structure: README.md, `/typescript/` directory containing implementation. Minimal repository structure suggests newer/actively developed project.
 
-## Container / packaging artifacts
+## Release and lifecycle
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+### Active development
 
-Not documented in provided content.
-
-## Example client / developer ergonomics
-
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
-
-Claude Desktop JSON configuration example; six documented tools with clear semantics.
-
-## Repo layout
-
-### single-package / monorepo / vendored / other
-
-Single server package with minimal structure: README.md, `/typescript/` directory containing implementation.
-
-## Notable structural choices
-
-Wraps Riza code interpreter API as MCP tools. Code execution patterns: `create_tool` (save), `execute_tool` (run saved), `execute_code` (run arbitrary without saving). Minimal repository structure suggests newer/actively developed project. Isolated code execution emphasis (Riza's core value proposition).
-
-## Unanticipated axes observed
-
-Code interpreter service integration pattern (not data/tool aggregation like other MCP servers). Separate patterns for saved vs. arbitrary code execution. Tool editing capability (`edit_tool`) unusual for MCP servers.
-
-## Gaps
-
-Transports not explicitly documented. License not specified in provided content. Test patterns not documented. CI/CD configuration not examined. Last commit date not confirmed. No information on TypeScript/JavaScript version constraints.
+Repository appears active; license not specified in provided content (likely MIT or Apache 2.0; default for Riza projects).

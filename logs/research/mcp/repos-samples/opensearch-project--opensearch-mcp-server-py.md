@@ -1,205 +1,159 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/opensearch-project/opensearch-mcp-server-py`. OpenSearch MCP server — YAML config, category-based tool gating; project-governed (not vendor-authored). 120 stars, Apache-2.0, default branch `main`, last commit March 24, 2026 (v0.9.0).
 
-### url
+## Server runtime
 
-https://github.com/opensearch-project/opensearch-mcp-server-py
+### Python with raw MCP SDK
 
-### stars
-
-120
-
-### last-commit
-
-March 24, 2026 (v0.9.0)
-
-### license
-
-Apache-2.0
-
-### default branch
-
-main
-
-### one-line purpose
-
-OpenSearch MCP server — YAML config, category-based tool gating; project-governed (not vendor-authored).
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Python 100%; version not explicitly surfaced.
-
-### framework/SDK in use
-
-Raw MCP Python SDK (Anthropic's Claude Agent SDK reference).
+Python 100% on the raw MCP Python SDK (Anthropic's Claude Agent SDK reference). Python version floor not surfaced in extract. `pyproject.toml` with uv (`uv.lock` present).
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio, SSE, streamable-http.
+stdio supported.
 
-### how selected
+### SSE (Server-Sent Events)
 
-CLI / config choice.
+SSE supported.
 
-## Distribution
+### Streamable HTTP
 
-### every mechanism observed
+Streamable HTTP supported.
 
-PyPI via pip.
+### Selection mechanism
 
-### published package name(s)
+CLI / config-file choice between stdio, SSE, and streamable HTTP.
 
-`opensearch-mcp-server-py`
+## Capability surface
 
-### install commands shown in README
-
-`pip install opensearch-mcp-server-py`
-
-## Entry point / launch
-
-### command(s) users/hosts run
-
-Console script (name inferred but not surfaced).
-
-### wrapper scripts, launchers, stubs
-
-Not surfaced.
-
-## Configuration surface
-
-### how config reaches the server
-
-YAML config file (`example_config.yml` present) plus environment variables `OPENSEARCH_DISABLED_CATEGORIES` and `OPENSEARCH_ENABLED_CATEGORIES` for tool filtering; CLI arguments for further customization.
-
-## Authentication
-
-### flow
-
-Basic auth, IAM roles (for AWS OpenSearch Service), header-based auth, mTLS.
-
-### where credentials come from
-
-Config file or environment.
-
-## Multi-tenancy
-
-### tenancy model
-
-Single-user per process; multiple auth schemes for different deployment targets.
-
-## Capabilities exposed
-
-### tools / resources / prompts / sampling / roots / logging / other
+### Tools-heavy domain wrapper / domain-tool catalog
 
 40+ tools — 9 core (enabled by default), 10 additional analysis (disabled by default), 21 Search Relevance Workbench (under `search_relevance` category), 2 Skills tools.
 
-## Observability
+### Capability gating flags (per-tool, per-category, write-mode)
 
-### logging destination + format, metrics, tracing, debug flags
+Category-based enable/disable tool gating via `OPENSEARCH_DISABLED_CATEGORIES` and `OPENSEARCH_ENABLED_CATEGORIES` env vars. Lets operators prune the 40-tool surface to just the core 9.
 
-Configuration available; specifics not surfaced.
+## Configuration delivery
 
-## Host integrations shown in README or repo
+### YAML manifest (declarative tool authoring)
+
+YAML config file (`example_config.yml` shipped in repo) is the primary configuration surface.
+
+### Environment variables
+
+`OPENSEARCH_DISABLED_CATEGORIES` and `OPENSEARCH_ENABLED_CATEGORIES` for tool filtering layered on top of the YAML config.
+
+### CLI flags
+
+CLI arguments for further customization beyond the config file.
+
+## Authentication
+
+### Multi-scheme upstream auth (basic / IAM / header / mTLS)
+
+Multiple auth schemes in one binary — basic auth, IAM roles (for AWS OpenSearch Service), header-based auth, mTLS. Covers self-hosted, managed AWS, and mutual-TLS deployments from the same server.
+
+## Multi-tenancy
+
+### Single-user / single-tenant per process
+
+Single-user per process; multiple auth schemes select the deployment target rather than partition tenants.
+
+## Distribution channel
+
+### PyPI via pip / pipx
+
+`pip install opensearch-mcp-server-py` — package name `opensearch-mcp-server-py`.
+
+## Entry point and launch
+
+### Console script via `[project.scripts]` / npm bin
+
+Console script registered via `[project.scripts]`; actual script name not surfaced in extract.
+
+## Build and packaging
+
+### Hatchling + uv (Python)
+
+Build backend `pyproject.toml` with `uv`; `uv.lock` committed alongside `pyproject.toml` for reproducible dev envs.
+
+### `uv.lock` committed
+
+`uv.lock` present in the repo.
+
+## Container artifacts
+
+### No container artifacts
+
+No Dockerfile in repo; the project distributes via pip/uv-based installs.
+
+## Test stack
+
+### pytest with async + coverage
+
+`tests/` directory present; framework not surfaced in extract.
+
+### Separate integration_tests/ directory
+
+`tests/` and `integration_tests/` distinct directories — integration tests likely run against a real OpenSearch instance.
+
+## CI
+
+### GitHub Actions
+
+GitHub Actions workflows in `.github/`.
+
+## Host integration
 
 ### Claude Desktop
 
 JSON `mcpServers` entry.
 
-### LangChain
+### LangChain integration
 
-Integration supported (per README).
+LangChain integration supported per README.
 
-## Claude Code plugin wrapper
+## Repository layout
 
-### presence and shape
+### Single-package src-layout
 
-Not observed.
+Single package under `src/`; separate `tests/` and `integration_tests/` directories; `docs/` directory.
 
-## Tests
+## Documentation surface
 
-### presence, framework, location, notable patterns
+### Split USER_GUIDE / DEVELOPER_GUIDE
 
-`tests/` and `integration_tests/` directories present.
+Formal docs split — `DEVELOPER_GUIDE.md` and `USER_GUIDE.md` shipped alongside README, with operator-facing config files (`example_config.yml`) as a deliverable artifact.
 
-## CI
+### README as the canonical surface
 
-### presence, system, triggers, what it runs
+README is supplemented by USER_GUIDE / DEVELOPER_GUIDE.
 
-GitHub Actions (`.github/`).
+## Developer ergonomics
 
-## Container / packaging artifacts
+### Sample MCP client configs in repo
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+`example_config.yml` shipped as a reference YAML config for operators.
 
-No Dockerfile in repo (notable absence).
+## Claude Code plugin / skill wrapper
 
-## Example client / developer ergonomics
+### Bare MCP server, no Claude Code wrapper
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+No `.claude-plugin/` or `.claude/skills/` wrapper observed.
 
-`example_config.yml`, `DEVELOPER_GUIDE.md`, `USER_GUIDE.md`.
+## Release and lifecycle
 
-## Repo layout
+### License — Permissive (MIT / Apache-2.0)
 
-### single-package / monorepo / vendored / other
+Apache-2.0.
 
-Single package under `src/`; separate `tests/` and `integration_tests/`; `docs/`.
+### Tagged release with version in changelog
 
-## Notable structural choices
+v0.9.0 released March 24, 2026.
 
-YAML config file as primary configuration surface (rarer than env-var-only in the MCP ecosystem). Category-based enable/disable tool gating via env vars — lets operators prune the 40-tool surface to just the core 9. Multiple auth schemes (basic, IAM, header, mTLS) in one binary — covers self-hosted, managed AWS, and mutual-TLS deployments. Separate `integration_tests/` directory distinct from unit `tests/` — suggests against-real-OpenSearch validation.
+### Active development
 
-## Unanticipated axes observed
-
-Enabled vs disabled tool categories as the capability-gating unit (category-level on/off, not per-tool). YAML-first configuration rather than env-var-first. Vendor/project-maintained Apache-licensed server with formal docs split (DEVELOPER_GUIDE + USER_GUIDE).
-
-## Python-specific
-
-### SDK / framework variant
-
-Raw MCP Python SDK. Version pin from `pyproject.toml`: not surfaced. Import pattern observed: not surfaced.
-
-### Python version floor
-
-`requires-python` value: not surfaced.
-
-### Packaging
-
-Build backend: `pyproject.toml` with uv (`uv.lock` present). Lock file present: `uv.lock`. Version manager convention: uv.
-
-### Entry point
-
-Inferred console script. Actual console-script name(s): not surfaced in README excerpt. Host-config snippet shape: not surfaced.
-
-### Install workflow expected of end users
-
-`pip install opensearch-mcp-server-py`
-
-### Async and tool signatures
-
-Not surfaced.
-
-### Type / schema strategy
-
-Modern Python type hints inferred. Schema auto-derived vs hand-authored: not surfaced.
-
-### Testing
-
-`tests/` directory present; framework not surfaced. Fixture style: not surfaced.
-
-### Dev ergonomics
-
-`DEVELOPER_GUIDE.md`.
-
-### Notable Python-specific choices
-
-Project-governed (OpenSearch project) Python MCP server — contrasts with community single-maintainer repos. `uv.lock` committed alongside pyproject for reproducible dev envs. No Dockerfile suggests the project expects pip/uv-based installs over container distribution.
-
-## Gaps
-
-Exact console-script name, `requires-python` pin, async/sync behavior, test framework, last-commit date before v0.9.0, Dockerfile existence (notable if absent).
+Active development — recent v0.9.0 release.

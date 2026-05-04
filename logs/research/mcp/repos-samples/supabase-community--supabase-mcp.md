@@ -1,189 +1,155 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/supabase-community/supabase-mcp`. Supabase MCP server — HTTP-only transport with OAuth 2.1, managed-cloud endpoint as primary distribution. 2.6k stars, Apache-2.0, default branch `main`. v0.7.0 released March 2, 2026. URL-query-parameter configuration surface and feature-grouped tool gating distinguish it from the stdio+env-var norm.
 
-### url
+## Server runtime
 
-https://github.com/supabase-community/supabase-mcp
+### Node.js / TypeScript with official MCP SDK
 
-### stars
-
-2.6k
-
-### last-commit
-
-v0.7.0, March 2, 2026
-
-### license
-
-Apache-2.0
-
-### default branch
-
-main
-
-### one-line purpose
-
-Supabase MCP server — HTTP-only transport with OAuth 2.1.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-TypeScript (99.5%); Node.js runtime.
-
-### framework/SDK in use
-
-Model Context Protocol TypeScript SDK; Supabase JS/management SDKs.
+TypeScript 99.5% on Node.js. Anthropic MCP TypeScript SDK + Supabase JS/management SDKs.
 
 ## Transport
 
-### supported transports
+### Streamable HTTP
 
-HTTP (primary — streaming HTTP MCP endpoint).
+HTTP is the canonical mode — primary streaming HTTP MCP endpoint. Managed endpoint: `https://mcp.supabase.com/mcp`. Local: `http://localhost:54321/mcp` (via Supabase CLI). Self-hosted supported. No stdio path documented.
 
-### how selected
+### Selection mechanism
 
-HTTP is the canonical mode. Managed endpoint: `https://mcp.supabase.com/mcp`. Local: `http://localhost:54321/mcp` (via Supabase CLI). Self-hosted supported. Configuration via URL query parameters rather than CLI flags.
+Implicit single mode — HTTP-only deployment. Configuration via URL query parameters rather than CLI flags or env vars.
 
-## Distribution
+## Capability surface
 
-### every mechanism observed
+### Tools-heavy domain wrapper / domain-tool catalog
 
-npm package; managed HTTP endpoint (no install required for cloud usage); Supabase CLI bundled variant.
+Tools grouped by feature category: account management (projects, organizations); documentation search; database operations (SQL, migrations, schema); debugging (logs, advisors); development (URLs, API keys, TypeScript generation); Edge Functions (list, deploy); branching (experimental, paid-plan feature); storage (disabled by default).
 
-### published package name(s)
+### Capability gating flags (per-tool, per-category, write-mode)
 
-`@supabase/mcp-server-supabase`
+`features` URL parameter enables/disables tool groups for granular surface control. `read_only` URL parameter restricts to read-only operations. Storage tools disabled by default (conservative posture on file-management powers); branching gated by paid-plan tier.
 
-### install commands shown in README
+## Configuration delivery
 
-For self-host via npm; for cloud usage, clients just point to the HTTPS URL.
+### URL query parameters on HTTP connection
 
-## Entry point / launch
-
-### command(s) users/hosts run
-
-Cloud: configure MCP client to hit `https://mcp.supabase.com/mcp?project_ref=...`. Local: rely on `supabase start` to expose `http://localhost:54321/mcp`. Self-host: npm package launch (details not fully extracted).
-
-### wrapper scripts, launchers, stubs
-
-URL-configuration driven rather than CLI-flag driven.
-
-## Configuration surface
-
-### how config reaches the server
-
-URL query parameters — `project_ref` (scope to a specific Supabase project), `read_only` (restrict to read-only operations), `features` (enable/disable tool groups).
+Three-axis pattern: `project_ref` (scope to a specific Supabase project), `read_only` (restrict to read-only operations), `features` (enable/disable tool groups). Query params fit HTTP transport naturally and embed scope, mode, and feature-toggle into the endpoint itself rather than into env vars or CLI flags.
 
 ## Authentication
 
-### flow
+### OAuth 2.1 / OIDC delegated (browser consent, multi-tenant)
 
-OAuth 2.1 — automatic prompt during client setup.
-
-### where credentials come from
-
-Browser-based OAuth consent; tokens managed by MCP client/host.
+OAuth 2.1 — automatic prompt during client setup. Browser-based OAuth consent; tokens managed by MCP client/host. Hosts with native MCP OAuth support handle the flow transparently.
 
 ## Multi-tenancy
 
-### tenancy model
+### Per-request tenant via URL parameter
 
-Workspace/project-keyed — `project_ref` URL parameter scopes each connection. OAuth identity × project ref combination defines the tenant boundary per session.
+Workspace/project-keyed via `project_ref` URL parameter — one deployment serves arbitrarily many Supabase projects. OAuth identity × project_ref combination defines the tenant boundary per session.
 
-## Capabilities exposed
+### Per-user / per-workspace via OAuth
 
-### tools / resources / prompts / sampling / roots / logging / other
+OAuth identity tied to a real upstream Supabase user account; each request executes under that user's permissions in the upstream system.
 
-Tools grouped by feature category: 1) Account management (projects, organizations); 2) Documentation search; 3) Database operations (SQL, migrations, schema); 4) Debugging (logs, advisors); 5) Development (URLs, API keys, TypeScript generation); 6) Edge Functions (list, deploy); 7) Branching (experimental, paid-plan feature); 8) Storage (disabled by default).
+## Distribution channel
 
-## Observability
+### npm via npx / bunx
 
-### logging destination + format, metrics, tracing, debug flags
+Self-host via npm: `@supabase/mcp-server-supabase` package.
 
-Not explicitly extracted within budget.
+### Hosted endpoint (no install)
 
-## Host integrations shown in README or repo
+For cloud usage clients just point to `https://mcp.supabase.com/mcp` — no install required.
+
+### Vendor-bundled (CLI subcommand)
+
+Supabase CLI bundled variant — `supabase start` exposes a local MCP endpoint at `http://localhost:54321/mcp`. Distribution piggybacks on existing Supabase CLI adoption.
+
+## Entry point and launch
+
+### URL configuration (no local launch)
+
+Cloud: configure MCP client to hit `https://mcp.supabase.com/mcp?project_ref=...`. URL-configuration driven rather than CLI-flag driven.
+
+### `npx -y <package>` / `bunx`
+
+Self-hosted launch via npm package; details not fully extracted within budget.
+
+## CI
+
+### GitHub Actions
+
+`.github/workflows` present; 32 releases on GitHub Releases.
+
+## Container artifacts
+
+### No container artifacts
+
+No Dockerfile in main repo. Self-hosted Supabase deployment documented separately. Managed cloud endpoint reduces need for containerization.
+
+## Host integration
 
 ### Cursor
 
 Listed as a supported host.
 
-### Claude
+### Claude Desktop
 
 Listed as a supported host.
 
-### Windsurf
+### Windsurf / Goose / Qodo Gen / Cline / Kiro / Augment
 
-Listed as a supported host.
+Windsurf listed as a supported host.
 
-### Vercel AI SDK
+### Vercel AI SDK native integration
 
-Native MCP client integration via `createToolSchemas()` export.
+Native MCP client integration via `createToolSchemas()` SDK export — first-class non-Claude integration. Doubles the repo as both an MCP server and an SDK; consumers can use Supabase's schema definitions without routing through MCP.
 
-## Claude Code plugin wrapper
+## Repository layout
 
-### presence and shape
+### Monorepo with multiple published packages
 
-Not explicitly observed; "Claude" is referenced as a host but wrapper layout not extracted.
+Monorepo: `/packages` (core packages), `/docs`, `/supabase` (Supabase config), `.github/workflows`, `mise.toml`, `pnpm-workspace.yaml`. pnpm-managed.
 
-## Tests
+## Safety and security posture
 
-### presence, framework, location, notable patterns
+### Read-only by default with explicit write flag
 
-Not fully extracted — biome.json config implies linting toolchain; specific test framework not identified in extracted content.
+`read_only` URL parameter as the gating mechanism for write operations.
 
-## CI
-
-### presence, system, triggers, what it runs
-
-GitHub Actions `.github/workflows` present; 32 releases on GitHub Releases.
-
-## Container / packaging artifacts
-
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
-
-No Dockerfile in main repo; self-hosted Supabase deployment documented separately. Managed cloud endpoint reduces need for containerization.
-
-## Example client / developer ergonomics
-
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
-
-`mise.toml` for dev environment; `createToolSchemas()` SDK export for Vercel AI SDK integration with TypeScript type inference.
-
-## Repo layout
-
-### single-package / monorepo / vendored / other
-
-Monorepo — `/packages` (core packages), `/docs`, `/supabase` (Supabase config), `.github/workflows`, `mise.toml`, `pnpm-workspace.yaml`, pnpm-managed.
-
-## Notable structural choices
-
-HTTP-first, managed-cloud-first — defaults to a hosted endpoint rather than local stdio process. Users can run locally or self-host but the primary path is cloud-managed.
-
-OAuth 2.1 rather than static API key — reflects Supabase's identity model; automatic consent prompt in client setup avoids manual token handling.
-
-URL query parameters as config surface — unusual for MCP; most servers use env vars or CLI flags. Query params fit HTTP transport naturally and embed scope (project, read-only, features) into the endpoint itself.
+### Lockdown / content-filter mode
 
 Prompt-injection mitigation — SQL results are wrapped with anti-injection instructions so LLMs resist following commands in returned data.
 
-Feature-grouped tools with granular enable/disable via `features` param — reduces tool surface exposure per deployment.
+## Deployment topology
 
-Storage tools disabled by default — conservative posture on file-management powers.
+### Hosted SaaS endpoint
 
-Vercel AI SDK native hook via exported tool schemas — first-class non-Claude integration, rare among MCPs surveyed.
+Managed-cloud-first — Supabase operates `https://mcp.supabase.com/mcp` as a hosted MCP service. Primary deployment topology. Self-hosted HTTP server supported as alternative.
 
-Branching as paid/experimental — explicit plan-tier gating surfaced through tool groups.
+### Self-hosted HTTP server
 
-## Unanticipated axes observed
+Self-host via npm package; same code as the SaaS variant.
 
-Managed-MCP-as-a-service model — Supabase offers the MCP endpoint as part of their cloud product; this is a different distribution stance from stdio-only servers. Structural reference for any vendor with existing SaaS infrastructure.
+## Developer ergonomics
 
-OAuth 2.1 suggests the MCP protocol's auth story is maturing past static keys; Supabase is an early adopter.
+### Devcontainer / mise / dev-environment manifests
 
-`createToolSchemas()` export doubles the repo as an SDK — consumers can use Supabase's schema definitions without routing through MCP, a composability choice.
+`mise.toml` for dev environment.
 
-## Gaps
+### Programmatic embedding API
 
-Self-hosted launch command and entry point not fully extracted. Exact test framework not identified. Last commit beyond v0.7.0 release date not confirmed. Dockerfile absence is explicit; container strategy relies on Supabase's own infra.
+`createToolSchemas()` SDK export lets Vercel-AI-SDK consumers use Supabase's tool schemas with TypeScript type inference, without routing through the MCP transport.
+
+## Release and lifecycle
+
+### License — Permissive (MIT / Apache-2.0)
+
+Apache-2.0 licensed.
+
+### Active development
+
+v0.7.0 released March 2, 2026; 32 releases on GitHub.
+
+### Tagged release with version in changelog
+
+Standard semver-tagged releases.

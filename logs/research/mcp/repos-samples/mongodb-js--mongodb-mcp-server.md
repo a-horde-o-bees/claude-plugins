@@ -1,114 +1,144 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/mongodb-js/mongodb-mcp-server`. MongoDB MCP server — wraps ~60 tools across DB ops, metadata, DDL, Atlas management, Atlas Stream Processing, and an Assistant KB search. ~1000 stars, Apache-2.0, default branch `main`, last commit v1.10.0 released April 20, 2026.
 
-### url
+## Server runtime
 
-https://github.com/mongodb-js/mongodb-mcp-server
+### Node.js / TypeScript with official MCP SDK
 
-### stars
-
-~1000
-
-### last-commit
-
-v1.10.0 released April 20, 2026
-
-### license
-
-Apache-2.0
-
-### default branch
-
-main
-
-### one-line purpose
-
-MongoDB MCP server — MongoDB collection/document operations.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-TypeScript (98.6%); Node.js `>=20.19.0` or `22.12.0+` or `23+`.
-
-### framework/SDK in use
-
-Anthropic MCP TypeScript SDK; internal argument parser.
+TypeScript (98.6%) on Anthropic's MCP TypeScript SDK; Node.js `>=20.19.0` or `22.12.0+` or `23+`. Uses an internal argument parser rather than a third-party CLI library.
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio (default), HTTP with SSE or JSON response modes.
+Default transport.
 
-### how selected
+### Streamable HTTP
 
-`TRANSPORT` env var / `--transport` flag; `HTTP_HOST`, `HTTP_PORT` for HTTP-mode binding.
+HTTP mode with JSON response mode supported. Bound via `HTTP_HOST`, `HTTP_PORT` env vars.
 
-## Distribution
+### SSE (Server-Sent Events)
 
-### every mechanism observed
+HTTP mode also supports SSE response mode.
 
-npm, npx, Docker image (`mongodb/mongodb-mcp-server:latest`).
+### Selection mechanism
 
-### published package name(s)
+`TRANSPORT` env var or `--transport` flag selects stdio vs HTTP at startup.
 
-`mongodb-mcp-server`
+## Capability surface
 
-### install commands shown in README
+### Tools-heavy domain wrapper / domain-tool catalog
 
-`npx -y mongodb-mcp-server@latest`; Docker pull.
+~60 tools spanning DB ops (find/aggregate/insert/update/delete/explain), metadata (list-databases/collections, schema, indexes), DDL (create/drop collection/db/index), Atlas management (clusters, projects, users, access lists, alerts), Atlas Stream Processing, and an Assistant KB search.
 
-## Entry point / launch
+### Tools plus resources
 
-### command(s) users/hosts run
+Resources include `config://config` (redacted), `debug://mongodb` (diagnostics), and `exported-data://{name}` (temporary exports). No prompts/sampling/roots.
 
-`mongodb-mcp-server` (npm bin) or `npx -y mongodb-mcp-server@latest` with flags.
+### Capability gating flags (per-tool, per-category, write-mode)
 
-### wrapper scripts, launchers, stubs
+`--readOnly` disables mutating tool surface. `DISABLED_TOOLS` env var also lets operators trim individual tools out of the catalog.
 
-Dockerfile for containerized launch; `deploy/` directory for Azure deployment.
+### Destructive-tool elicitation list
 
-## Configuration surface
+`CONFIRMATION_REQUIRED_TOOLS` lists tools (e.g., drop-database) that trigger MCP elicitation before destructive execution.
 
-### how config reaches the server
+## Configuration delivery
 
-Three sources — env vars prefixed `MDB_MCP_` (e.g., `CONNECTION_STRING`, `API_CLIENT_ID`, `READ_ONLY`, `DISABLED_TOOLS`, `LOGGERS`); camelCase CLI args (e.g., `--readOnly`, `--apiClientId`); JSON config file loaded via `MDB_MCP_CONFIG` env var.
+### Environment variables
+
+Env vars prefixed `MDB_MCP_` — `CONNECTION_STRING`, `API_CLIENT_ID`, `READ_ONLY`, `DISABLED_TOOLS`, `LOGGERS`, etc.
+
+### CLI flags
+
+camelCase CLI args — `--readOnly`, `--apiClientId`, `--indexCheck`, `--dryRun`, `--allowRequestOverrides`.
+
+### Sidecar config files (JSON / YAML / TOML / EDN)
+
+JSON config file referenced by `MDB_MCP_CONFIG` env var as a third configuration source alongside env and CLI.
+
+### HTTP request headers
+
+`--allowRequestOverrides=true` lets per-request headers and query params override server-wide config — powerful for HTTP multi-client setups.
 
 ## Authentication
 
-### flow
+### Database connection string
 
-MongoDB connection string (direct DB) or Atlas Service Account (Client ID/Secret) for Atlas API; IP allowlist required for API credentials; temporary auto-generated DB users with configurable TTL (default 4h).
+Direct DB access via MongoDB connection string in `MDB_MCP_CONNECTION_STRING`.
 
-### where credentials come from
+### Service-account credential pair to cloud API
 
-Environment variables, CLI args, or JSON config.
+Atlas Service Account using Client ID / Client Secret (`API_CLIENT_ID`, etc.) for Atlas API calls; IP allowlist required for the API credentials.
 
 ## Multi-tenancy
 
-### tenancy model
+### Single-user / single-tenant per process
 
-Single credential set per instance; HTTP transport supports externally-managed session IDs via `mcp-session-id` header when `EXTERNALLY_MANAGED_SESSIONS=true` — per-session, not per-tenant.
+Single credential set per server instance.
 
-## Capabilities exposed
+### Externally-managed sessions via header
 
-### tools / resources / prompts / sampling / roots / logging / other
+HTTP transport supports externally-managed session IDs via the `mcp-session-id` header when `EXTERNALLY_MANAGED_SESSIONS=true` — per-session, not per-tenant.
 
-~60 tools spanning DB ops (find/aggregate/insert/update/delete/explain), metadata (list-databases/collections, schema, indexes), DDL (create/drop collection/db/index), Atlas management (clusters, projects, users, access lists, alerts), Atlas Stream Processing, and an Assistant KB search. Resources: `config://config` (redacted), `debug://mongodb` (diagnostics), `exported-data://{name}` (temporary exports). No prompts/sampling/roots.
+## Distribution channel
 
-## Observability
+### npm via npx / bunx
 
-### logging destination + format, metrics, tracing, debug flags
+Published as `mongodb-mcp-server` on npm; install via `npx -y mongodb-mcp-server@latest`.
 
-Pluggable `LOGGERS` — `disk` (default `~/.mongodb/mongodb-mcp/.app-logs`), `mcp` (to client), `stderr`. `MCP_CLIENT_LOG_LEVEL` controls severity (default `debug`). Optional monitoring-server health endpoint (HTTP transport only).
+### Docker / OCI image
 
-## Host integrations shown in README or repo
+Published Docker image at `mongodb/mongodb-mcp-server:latest`.
 
-### VS Code (Insiders)
+## Entry point and launch
 
-Install badges provided.
+### Console script via `[project.scripts]` / npm bin
+
+`mongodb-mcp-server` registered as the npm bin; users run it directly after install.
+
+### `npx -y <package>` / `bunx`
+
+`npx -y mongodb-mcp-server@latest` with flags is the documented launch command.
+
+### Docker container entrypoint
+
+Docker image entrypoint launches the server inside a container.
+
+## Build and packaging
+
+### npm/Node toolchain
+
+Node ecosystem build — `package.json` plus TypeScript build step that produces a published npm package.
+
+## Container artifacts
+
+### Multi-stage Dockerfile
+
+Multi-stage Dockerfile in repo. `deploy/` directory holds Azure deployment guides.
+
+### Azure deployment artifacts
+
+`deploy/` directory with Azure deployment guides for hosting the server on Azure.
+
+## Test stack
+
+### Vitest (TypeScript / Node)
+
+Vitest configured via `vitest.config.ts`; tests live under `/tests`.
+
+## CI
+
+### GitHub Actions
+
+`.github/` directory present; specific workflow contents not extracted within budget.
+
+## Host integration
+
+### VS Code / VS Code Insiders / Visual Studio family
+
+Install badges provided for VS Code (Insiders).
 
 ### Cursor
 
@@ -118,58 +148,100 @@ Install badges provided.
 
 Config examples provided.
 
-### Copilot CLI
+### Codex CLI / Copilot CLI / Gemini CLI
 
-Supported.
+Copilot CLI supported via documented config.
 
-### OpenCode
+### Per-host README JSON snippets
 
-Supported.
+Per-host README sections; OpenCode also documented.
 
-## Claude Code plugin wrapper
+## Repository layout
 
-### presence and shape
+### Single-package with auxiliary folders
 
-Not present.
+Single-package layout with auxiliary folders — `src`, `tests`, `deploy`, `scripts`, `resources`, `eslint-rules`, `api-extractor`.
 
-## Tests
+## Safety and security posture
 
-### presence, framework, location, notable patterns
+### Read-only by default with explicit write flag
 
-Vitest (`vitest.config.ts`); tests under `/tests`.
+`--readOnly` flag disables the mutating tool surface so operators can run the server with no write surface exposed.
 
-## CI
+### Destructive-tool elicitation list
 
-### presence, system, triggers, what it runs
+`CONFIRMATION_REQUIRED_TOOLS` triggers MCP elicitation for destructive tools like drop-database before they execute.
 
-GitHub Actions in `.github/`; specific workflow contents not extracted within budget.
+### Index-scan rejection
 
-## Container / packaging artifacts
+`--indexCheck` rejects queries that would trigger collection scans — an unusual safety posture that gates an entire query class on index availability.
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+### Temporary-user lifecycle with TTL
 
-Multi-stage Dockerfile; `deploy/` with Azure guides.
+Temporary auto-generated DB users with configurable TTL (default 4h) instead of long-lived DB credentials.
 
-## Example client / developer ergonomics
+### Dry-run config dump
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+`--dryRun` dumps resolved config and exits without booting the server.
 
-`eslint-rules/` custom lint, `api-extractor/` for API docs, `scripts/` utilities, install badges for multiple hosts.
+## Domain logic and embedded intelligence
 
-## Repo layout
+### Embedded RAG / retrieval pipeline
 
-### single-package / monorepo / vendored / other
+Assistant/KB search tools embed MongoDB documentation retrieval into the same server, alongside the DB and Atlas tool surface.
 
-Single-package with auxiliary folders (`src`, `tests`, `deploy`, `scripts`, `resources`, `eslint-rules`, `api-extractor`).
+## Caching and rate-limiting infrastructure
 
-## Notable structural choices
+### Auto-cleanup of temporary export artifacts
 
-`--readOnly` disables mutating tool surface. `--indexCheck` rejects collection scans — an unusual safety posture. Tool-confirmation list (`CONFIRMATION_REQUIRED_TOOLS`) triggers MCP elicitation for destructive tools like drop-database. `--dryRun` dumps resolved config and exits without booting server. `--allowRequestOverrides=true` lets per-request headers/query params override config — powerful for HTTP multi-client setups. Temporary-user lifecycle with TTL instead of long-lived DB credentials. Export-artifact resource with auto-cleanup (default 5 min).
+Export-artifact resource (`exported-data://{name}`) with auto-cleanup (default 5 min) so temporary exports do not accumulate.
 
-## Unanticipated axes observed
+## Observability
 
-Assistant/KB search tools embed MongoDB documentation retrieval into the same server. Custom eslint rules shipped in repo suggest codebase-scale discipline. Monitoring server as a separable sidecar for HTTP mode.
+### Pluggable logger sinks
 
-## Gaps
+Pluggable `LOGGERS` config — `disk` (default `~/.mongodb/mongodb-mcp/.app-logs`), `mcp` (to client), `stderr`. Multiple sinks can be combined.
 
-Exact CI workflow triggers not extracted within budget. Specific Atlas Stream Processing tool surface not enumerated.
+### Env-var-controlled log level
+
+`MCP_CLIENT_LOG_LEVEL` controls severity (default `debug`).
+
+### Health endpoint
+
+Optional monitoring-server health endpoint, available only in HTTP transport mode — surfaces as a separable sidecar.
+
+## Developer ergonomics
+
+### Linter and type-checker stack
+
+Custom `eslint-rules/` shipped in repo suggest codebase-scale lint discipline. `api-extractor/` for API docs.
+
+### `scripts/` directory
+
+`scripts/` utilities folder for repo-internal tooling.
+
+## Documentation surface
+
+### Per-host README integration sections
+
+Install badges and per-host config examples for multiple hosts (VS Code Insiders, Cursor, Claude Desktop, Copilot CLI, OpenCode).
+
+## Claude Code plugin / skill wrapper
+
+### Bare MCP server, no Claude Code wrapper
+
+No `.claude-plugin/` or `.claude/skills/` wrapper present — standard MCP server.
+
+## Release and lifecycle
+
+### License — Permissive (MIT / Apache-2.0)
+
+Apache-2.0.
+
+### Tagged release with version in changelog
+
+v1.10.0 released April 20, 2026; semver-tagged releases.
+
+### Active development
+
+Ongoing development with recent v1.10.0 release.

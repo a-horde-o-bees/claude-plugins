@@ -1,167 +1,153 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/geropl/linear-mcp-go`. Linear issue-tracker MCP server (Go) with read-only-by-default safety posture and a `setup` subcommand that automates host configuration. 11 stars, MIT, default branch `main`, v1.15.0 released Oct 8, 2025.
 
-### url
+## Server runtime
 
-https://github.com/geropl/linear-mcp-go
+### Go with mark3labs/mcp-go SDK
 
-### stars
-
-11
-
-### last-commit
-
-v1.15.0 released Oct 8, 2025
-
-### license
-
-MIT
-
-### default branch
-
-main
-
-### one-line purpose
-
-Linear issue-tracker MCP server (Go) — pre-built binary releases on GitHub.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Go 98.6%; Go 1.23+.
-
-### framework/SDK in use
-
-mcp-go (Model Context Protocol Go SDK, mark3labs/mcp-go canonical).
+Go (98.6%) on `mark3labs/mcp-go` (canonical Go MCP SDK), Go 1.23+. Single-binary build artifact suiting cross-platform release-and-download distribution.
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio.
+Default and only documented transport; selected via the `serve` subcommand.
 
-### how selected
+### Selection mechanism
 
-Stdio default via `serve` subcommand.
+Subcommand verb — `./linear-mcp-go serve` selects stdio with no alternative transport offered.
 
-## Distribution
+## Capability surface
 
-### every mechanism observed
+### Read/write tool split
 
-GitHub Releases pre-built binaries (Linux, macOS, Windows), automated download script, `go install`, Docker (Dockerfile present).
+Read-only tools (default): `linear_search_issues`, `linear_get_user_issues`, `linear_get_issue`, `linear_get_issue_comments`, `linear_get_teams`. Write tools (flag-gated behind `--write-access`): `linear_create_issue` (supports parent-child / sub-issues, labels), `linear_update_issue`, `linear_add_comment`, `linear_reply_to_comment`, `linear_update_issue_comment`. URL-aware operations — accepts Linear comment URLs directly without manual ID extraction.
 
-### published package name(s)
+### Domain-bundled tool set
 
-Binary `linear-mcp-go`.
+10 tools total, organized by Linear's entity types (issues, comments, teams, users) with CRUD shape on each entity.
 
-### install commands shown in README
+## Configuration delivery
 
-Binary download script; `go install`.
+### Environment variables
 
-## Entry point / launch
+`LINEAR_API_KEY` (required) supplies the Linear credential.
 
-### command(s) users/hosts run
+### CLI flags
 
-`./linear-mcp-go serve` — read-only (default). `./linear-mcp-go serve --write-access` — with write. `./linear-mcp-go setup --tool=cline` — configures a target AI assistant. `./linear-mcp-go version`.
-
-### wrapper scripts, launchers, stubs
-
-`setup` subcommand automates host configuration; shell download script.
-
-## Configuration surface
-
-### how config reaches the server
-
-`LINEAR_API_KEY` env var (required); CLI flags `--write-access`, `--auto-approve`, `--tool`.
+`--write-access` enables write tools; `--auto-approve` marks specific tools as safe to run without per-call confirmation; `--tool` selects the host the `setup` subcommand configures (e.g., `--tool=cline`).
 
 ## Authentication
 
-### flow
+### Static API key / token via env var
 
-Static API key via `LINEAR_API_KEY` env var.
-
-### where credentials come from
-
-User supplies from Linear's API key management UI.
+Linear API key supplied via `LINEAR_API_KEY` environment variable; user provisions it from Linear's API key management UI.
 
 ## Multi-tenancy
 
-### tenancy model
+### Single-user / single-tenant per process
 
-Single-user — API key ties to one Linear workspace/user identity.
+API key ties to one Linear workspace/user identity; one process serves one user.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### Pre-built binary release
 
-Read-only (default): `linear_search_issues`, `linear_get_user_issues`, `linear_get_issue`, `linear_get_issue_comments`, `linear_get_teams`. Write (flag-gated): `linear_create_issue` (supports parent-child / sub-issues, labels), `linear_update_issue`, `linear_add_comment`, `linear_reply_to_comment`, `linear_update_issue_comment`. URL-aware operations — accepts Linear comment URLs directly without manual ID extraction.
+GitHub Releases publishes pre-built binaries for Linux, macOS, and Windows; an automated download script in the README installs the binary.
 
-## Observability
+### Go module via `go get` / `go install`
 
-### logging destination + format, metrics, tracing, debug flags
+`go install` documented as an alternative install path.
 
-Not extracted within budget; Go stdio servers typically log to stderr.
+### Docker / OCI image
 
-### pitfalls observed
+Dockerfile present in repo for containerized deployment.
 
-Logging destination and format not extracted.
+## Entry point and launch
 
-## Host integrations shown in README or repo
+### Subcommand verb
 
-### Cline
+`./linear-mcp-go serve` (read-only default), `./linear-mcp-go serve --write-access` (with write), `./linear-mcp-go setup --tool=cline` (configures a target AI assistant), `./linear-mcp-go version`. The `setup` subcommand replaces manual JSON config editing — a rare ergonomic among MCP servers.
 
-VSCode extension — primary, has dedicated `setup --tool=cline`.
+## Container artifacts
 
-### Other
+### Dockerfile (single-stage, build-from-source)
 
-reachable via MCP Registry; `--tool` flag extension point for more.
+Dockerfile present at repo root.
 
-## Claude Code plugin wrapper
+### Devcontainer for contributors
 
-### presence and shape
+`.devcontainer/` directory provides a dev environment.
 
-Not observed.
+## Test stack
 
-## Tests
+### Recorded HTTP fixtures (cassettes)
 
-### presence, framework, location, notable patterns
+go-vcr for recorded HTTP interactions; cassettes checked into `testdata/`. Live test workspace `linear.app/linear-mcp-go-test` for re-recording. Separate flags for re-record (`-record=true`) and write-op recording (`-recordWrites=true`) — full integration tests run offline against recorded fixtures, reproducible without Linear credentials.
 
-go-vcr for recorded HTTP interactions; cassettes checked into `testdata/`; live test workspace `linear.app/linear-mcp-go-test` for re-recording; separate flags for re-record (`-record=true`) and write-op recording (`-recordWrites=true`).
+### Go stdlib testing
+
+Go's standard testing package drives the suite.
 
 ## CI
 
-### presence, system, triggers, what it runs
+### GitHub Actions
 
-GitHub Actions — automated testing on pushes/PRs, automated releases on version tags.
+GitHub Actions runs automated testing on pushes/PRs and automated releases on version tags.
 
-## Container / packaging artifacts
+## Host integration
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+### Windsurf / Goose / Qodo Gen / Cline / Kiro / Augment
 
-Dockerfile present; `.devcontainer/` for dev environment.
+Cline (VSCode extension) is the primary integration with a dedicated `setup --tool=cline` subcommand.
 
-## Example client / developer ergonomics
+### Smithery / Glama discovery
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+Reachable via MCP Registry; the `--tool` flag is a scoped extension point that signals planned automation for additional hosts.
 
-`setup` subcommand replaces manual JSON config editing; `scripts/` directory for build/utility; `memory-bank/` for context/memory files.
+## Repository layout
 
-## Repo layout
-
-### single-package / monorepo / vendored / other
+### Single-package source (language-conventional)
 
 Single-package Go project — `cmd/` for command implementations, `pkg/` for core packages.
 
-## Notable structural choices
+## Safety and security posture
 
-Read-only-by-default safety posture — writes gated behind explicit `--write-access` flag rather than being the default. `setup` subcommand as an official install ergonomic — rare among MCP servers; most expect users to hand-edit JSON. Auto-approve configurability — users can mark specific tools as safe to run without per-call confirmation. Rate-limited API calls respect Linear's limits. go-vcr cassette testing means full integration tests run offline against recorded fixtures — reproducible without Linear credentials. Versioning via constant with build-time injection — standard Go release pattern.
+### Read-only by default with explicit write flag
 
-## Unanticipated axes observed
+Read-only is the default; writes require explicit `--write-access`. More conservative than most MCPs, which ship full capabilities unconditionally.
 
-The `setup --tool` flag is a scoped extension point — currently only `cline`, but the flag's existence signals a plan to automate other host configurations. `memory-bank/` directory suggests author uses Cline's memory-bank convention in their own workflow — evidence of dogfooding. Read-only default + explicit write flag is a more conservative posture than most MCPs, which tend to ship full capabilities unconditionally.
+### Per-tool auto-approve gating
 
-## Gaps
+`--auto-approve` flag lets users mark specific tools as safe to run without per-call confirmation, narrowing trust to declared tools.
 
-Logging destination and format not extracted. Whether HTTP transport is planned or stdio is deliberate. Precise test coverage of write operations (recorded-writes flag suggests coverage exists but extent not extracted).
+## Release and lifecycle
+
+### Tagged release with version in changelog
+
+Versioning via constant with build-time injection (standard Go release pattern); v1.15.0 released Oct 8, 2025.
+
+### License — Permissive (MIT / Apache-2.0)
+
+MIT license.
+
+### Active development
+
+Recent releases and active tagging cadence.
+
+## Developer ergonomics
+
+### Setup subcommands on the MCP binary
+
+`setup` subcommand automates host configuration, replacing manual JSON config editing for the supported `--tool` targets.
+
+### `scripts/` directory
+
+`scripts/` directory holds build/utility scripts.
+
+## Documentation surface
+
+### Agent-facing meta-documentation (CLAUDE.md, .cursorrules, .mcp.json)
+
+`memory-bank/` directory holds context/memory files — author dogfoods Cline's memory-bank convention in their own workflow.

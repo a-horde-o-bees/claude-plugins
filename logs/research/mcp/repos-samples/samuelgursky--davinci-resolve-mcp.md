@@ -1,221 +1,169 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/samuelgursky/davinci-resolve-mcp`. DaVinci Resolve MCP server — wraps Resolve's scripting API; ships a universal Python installer that auto-configures 10 MCP clients; two operating modes (27 compound tools vs 342 granular tools); absolute venv-Python paths in host configs. 833 stars, MIT, default branch `main`. Last commit March 16, 2026 (v2.1.0).
 
-### url
+## Server runtime
 
-https://github.com/samuelgursky/davinci-resolve-mcp
+### Python with raw MCP SDK
 
-### stars
-
-833
-
-### last-commit
-
-March 16, 2026 (v2.1.0).
-
-### license
-
-MIT
-
-### default branch
-
-main
-
-### one-line purpose
-
-DaVinci Resolve MCP server — universal installer across 10 hosts; two server modes (27 vs 342 tools) and absolute venv-Python host configs.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Python 99.2%; Python 3.10–3.12.
-
-### framework/SDK in use
-
-Model Context Protocol SDK; DaVinci Resolve Scripting API (the application's own Lua/Python API).
+Raw `mcp` Python SDK presumed (no FastMCP observed); not confirmed at source level. Bridges to DaVinci Resolve's own Python scripting API (Blackmagic `DaVinciResolveScript` module — a Lua-derived Python binding). Python 99.2% of repo.
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio.
+stdio implicit — server launched as `python src/server.py`. No HTTP/network mode documented.
 
-### how selected
+## Capability surface
 
-Stdio implicit — launched as `python src/server.py`.
+### Tools-heavy domain wrapper / domain-tool catalog
 
-## Distribution
+342 granular tools cover 324 API methods across 13 object classes: Resolve, ProjectManager, Project, MediaStorage, MediaPool, Folder, MediaPoolItem, Timeline, TimelineItem, Gallery, GalleryStillAlbum, Graph, ColorGroup. Domain decomposition by upstream-API object class. No explicit resources or prompts documented.
 
-### every mechanism observed
+### Tool-count modes (compound vs full)
 
-GitHub source-only; universal Python installer (`install.py`) auto-configures 10 MCP clients.
+Dual-mode architecture: compound mode exposes 27 aggregate tools; full mode (`--full` flag) exposes 342 granular tools. Lets users trade prompt-window efficiency against expressive power without re-installing. The dual-mode design exists specifically to counter context-window pressure on the 342-tool surface.
 
-### published package name(s)
+## Configuration delivery
 
-None on PyPI observed — distribution is source + installer.
+### CLI flags
 
-### install commands shown in README
+`--full` flag selects between compound (27 tools) and full (342 tools) modes at launch.
 
-`python install.py`.
+### Auto-generated host-config JSON files
 
-## Entry point / launch
+`install.py` automatically writes per-client JSON configuration files into 10 different MCP-client config locations.
 
-### command(s) users/hosts run
+### Host-side JSON config snippet
 
-`python src/server.py` (compound mode, 27 tools); `python src/server.py --full` (full mode, 342 tools).
-
-### wrapper scripts, launchers, stubs
-
-`install.py` — universal installer with flags `--clients`, `--dry-run`, `--no-venv`, `--full`.
-
-## Configuration surface
-
-### how config reaches the server
-
-Automatic via `install.py` (generates per-client JSON); manual JSON config in client-specific directories; CLI flags for mode selection.
+Manual JSON config in client-specific directories supported as an alternative to the installer; absolute venv-Python path + absolute script path required.
 
 ## Authentication
 
-### flow
+### Locally-running application IPC
 
-Not applicable — the server talks to a locally-running DaVinci Resolve instance via its scripting API; no auth layer.
-
-### where credentials come from
-
-Not applicable; requires Resolve configured with "External scripting using" set to "Local".
+Server talks to a locally-running DaVinci Resolve instance via Resolve's scripting API; Resolve must be configured with "External scripting using" set to "Local". No credential layer.
 
 ## Multi-tenancy
 
-### tenancy model
+### Single-user / single-tenant per process
 
-Single-user — bound to the local user's Resolve instance.
+Bound to the local user's running Resolve instance.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### Custom Python installer script
 
-27 compound tools (context-efficient) or 342 granular tools (power user), covering 324 API methods across 13 object classes: Resolve, ProjectManager, Project, MediaStorage, MediaPool, Folder, MediaPoolItem, Timeline, TimelineItem, Gallery, GalleryStillAlbum, Graph, ColorGroup. No explicit resources or prompts documented.
+Custom `install.py` (~34 KB) is the primary distribution vector — finds Resolve, creates a venv, installs deps, writes per-client JSON config for up to 10 MCP clients. No PyPI, no uvx, no Docker (intentional — must run on the Resolve host).
 
-## Observability
+## Entry point and launch
 
-### logging destination + format, metrics, tracing, debug flags
+### Bare interpreter + script path
 
-Not explicitly documented; test suite measures coverage but logging destination for the live server not extracted.
+`python src/server.py` (compound mode, 27 tools) or `python src/server.py --full` (full mode, 342 tools). README host-config snippet uses `"command": "/path/to/venv/bin/python"`, `"args": ["/path/to/davinci-resolve-mcp/src/server.py"]` — absolute venv-Python path plus absolute script path. No Python packaging entry point.
 
-### pitfalls observed
+## Build and packaging
 
-Logging destination/format for the live server not documented in extracted content.
+### Bare script (no build)
 
-## Host integrations shown in README or repo
+NO `pyproject.toml`, `setup.py`, or `requirements.txt` at top level. Custom `install.py` orchestrator creates a venv and installs dependencies — Python-installer-as-build-system rather than a standard packaging manifest. No lock file. Plain pip inside an installer-managed venv.
 
-### Claude Desktop
+### Python version pinning
 
-Supported via universal installer.
+Python 3.10–3.12 (inclusive upper bound — 3.13+ explicitly unsupported due to Resolve scripting-module ABI incompatibilities). The upper bound is driven by a binary-compat constraint on the upstream Resolve scripting module rather than a project preference.
 
-### Cursor
+## Test stack
 
-Supported via universal installer.
+### Live multi-phase suite against application
 
-### VS Code
-
-Supported via universal installer.
-
-### Windsurf
-
-Supported via universal installer.
-
-### Other 6 MCP clients
-
-Installer supports 10 clients total.
-
-## Claude Code plugin wrapper
-
-### presence and shape
-
-Not explicitly observed within extracted content.
-
-## Tests
-
-### presence, framework, location, notable patterns
-
-5-phase suite — read-only, destructive, media, AI/ML, advanced. 319/324 methods live-tested (98.5%); 319/319 pass rate claimed.
+5-phase live test suite against a running Resolve instance: read-only, destructive, media, AI/ML, advanced. 319 of 324 methods live-tested (98.5%); claimed 319/319 pass rate. Test framework not identified at source level.
 
 ## CI
 
-### presence, system, triggers, what it runs
+### GitHub Actions
 
 GitHub Actions referenced; specific triggers/jobs not extracted.
 
-## Container / packaging artifacts
+## Host integration
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+### Universal installer covering many hosts
 
-Not mentioned; Docker would be counterproductive since the server must run on the host with Resolve.
+`install.py` writes client-specific JSON config to 10 separate MCP-client config locations in a single invocation; flags `--clients`, `--dry-run`, `--no-venv`, `--full`. Eliminates the per-client setup step.
 
-## Example client / developer ergonomics
+### Claude Desktop
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+Supported via the universal installer.
 
-`install.py` orchestrates per-client configs; `examples/` directory; `docs/` directory.
+### Claude Code
 
-## Repo layout
+Supported via the universal installer.
 
-### single-package / monorepo / vendored / other
+### Cursor
 
-Single-package with support directories — `install.py`, `src/` (server.py, resolve_mcp_server.py, utils/), `tests/`, `docs/`, `examples/`.
+Supported via the universal installer.
 
-## Notable structural choices
+### VS Code / VS Code Insiders / Visual Studio family
 
-Dual-mode architecture — compound (27 aggregate tools) vs. full (342 granular tools) — lets users trade prompt-window efficiency against expressive power. Lazy connection — auto-reconnects and auto-launches Resolve on first tool call, smoothing the cold-start UX. Path-traversal protection — file-op tools validate paths stay within expected directories. Auto-cleanup — exports are deleted after response encoding, preventing disk bloat. Cross-platform sandbox handling — temp paths redirected for macOS/Linux/Windows. Universal installer that writes per-client configs (10 clients) is unusually ambitious for a single-purpose MCP. Platform requirements: macOS, Windows, Linux; DaVinci Resolve Studio 18.5+ (free edition unsupported); Python 3.10-3.12; Resolve must be running locally.
+Supported via the universal installer.
 
-## Unanticipated axes observed
+### Windsurf / Goose / Qodo Gen / Cline / Kiro / Augment
 
-Tool-surface explosion — 342 granular tools is one of the largest tool surfaces among MCPs surveyed; the dual-mode design exists specifically to counter context-window pressure. Free-edition exclusion is a real constraint — Resolve's scripting API is Studio-only; the MCP inherits that limitation. First-party vendor (Blackmagic Design) has no MCP; this third-party server is effectively canonical for 833-star community.
+Other 6 of 10 MCP clients covered by the installer (specific list not enumerated here).
 
-## Python-specific
+## Observability
 
-### SDK / framework variant
+### None / unspecified
 
-Raw `mcp` Python SDK presumed (no fastmcp observed); not confirmed at source level. Bridges to DaVinci Resolve's own Python scripting API (Blackmagic DaVinciResolveScript module).
+Logging destination/format for the live server not documented in extracted content; test suite measures coverage but the live-server log path was not surfaced.
 
-### Python version floor
+## Repository layout
 
-README states Python 3.10–3.12 (inclusive upper bound — 3.13+ explicitly unsupported due to Resolve ABI incompatibilities).
+### Single-package with auxiliary folders
 
-### Packaging
+`install.py`, `src/` (server.py, resolve_mcp_server.py, utils/), `tests/`, `docs/`, `examples/`. No standard Python package manifest at top level.
 
-NO pyproject.toml, NO setup.py, NO requirements.txt at top level. Uses a custom `install.py` (34 KB script) that creates a venv and installs dependencies. Lock file: none. Version manager convention: plain pip inside a venv managed by `install.py`.
+## Safety and security posture
 
-### Entry point
+### Workspace path enforcement (canonicalization)
 
-No Python packaging entry point — `python src/server.py` and `python src/server.py --full`. README host-config snippet: `"command": "/path/to/venv/bin/python"`, `"args": ["/path/to/davinci-resolve-mcp/src/server.py"]` — absolute venv-Python path + absolute script path.
+Path-traversal protection — file-op tools validate paths stay within expected directories.
 
-### Install workflow expected of end users
+### Auto-cleanup of temporary export artifacts
 
-`python install.py` — custom orchestrator that finds Resolve, creates venv, installs deps, writes per-client JSON config for up to 10 MCP clients. No PyPI, no uvx, no Docker (intentional — must run on Resolve host).
+Exports are deleted after response encoding, preventing disk bloat. (Cross-role: see *Caching and rate-limiting infrastructure — Auto-cleanup of temporary export artifacts*.)
 
-### Async and tool signatures
+## Caching and rate-limiting infrastructure
 
-Not inspected at source level; DaVinci Resolve's scripting API is synchronous (Lua-derived Python bindings).
+### Auto-cleanup of temporary export artifacts
 
-### Type / schema strategy
+Exports deleted after response encoding; cross-platform sandbox handling (temp paths redirected for macOS/Linux/Windows).
 
-Not observed; likely hand-authored given raw SDK usage and 324 API methods surfaced.
+## Developer ergonomics
 
-### Testing
+### Custom installer-orchestrator
 
-5-phase live test suite (read-only, destructive, media, AI/ML, advanced); 319/324 methods live-tested. Framework not identified (tests/ directory present but pytest not confirmed).
+`install.py` replaces both pip and uv roles — `--dry-run`, `--no-venv`, `--full`, `--clients` flags. Primary dev entry point.
 
-### Dev ergonomics
+### Examples directory with many patterns
 
-Custom `install.py` is the dev entry point — replaces both pip and uv roles. `--dry-run`, `--no-venv`, `--full`, `--clients` flags on installer.
+`examples/` directory plus `docs/` ship example flows.
 
-### Notable Python-specific choices
+## Documentation surface
 
-No pyproject.toml at all — outlier in the sample; installation is entirely orchestrated by a bespoke script. Absolute-venv-Python path in host config — the cost of not publishing to PyPI; hosts must know both the venv path and the script path. Python 3.10–3.12 range (upper bound) — one of the few repos with an upper bound driven by ABI compat (Resolve's binary scripting module). Installer-configures-10-MCP-clients — the `install.py` writes client-specific JSON to 10 separate config locations, a Python-ecosystem alternative to relying on uvx ubiquity.
+### README plus docs directory
 
-## Gaps
+README plus `docs/` and `examples/` subdirectories.
 
-Last commit confirmed but release cadence and precise CI triggers not extracted. Logging destination/format for the live server not documented in extracted content. Whether any hosted or remote variant exists (unlikely given local-Resolve dependency).
+## Release and lifecycle
+
+### License — Permissive (MIT / Apache-2.0)
+
+MIT.
+
+### Active development
+
+v2.1.0 released March 16, 2026.
+
+### Tagged release with version in changelog
+
+Tagged releases on GitHub.

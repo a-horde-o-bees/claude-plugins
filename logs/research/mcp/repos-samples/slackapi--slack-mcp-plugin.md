@@ -1,163 +1,123 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/slackapi/slack-mcp-plugin`. Slack MCP plugin — official first-party Slack MCP delivered as a remote HTTP service hosted at `mcp.slack.com`; the GitHub repo is configs-only (client OAuth metadata) with no server implementation. Stars not publicly available, license not specified (Slack proprietary assumed), default branch `main`. Last commit March 19, 2026.
 
-### url
+## Server runtime
 
-https://github.com/slackapi/slack-mcp-plugin
+### Remote HTTP service (no local runtime)
 
-### stars
-
-not publicly available
-
-### last-commit
-
-March 19, 2026.
-
-### license
-
-not specified (Slack proprietary assumed)
-
-### default branch
-
-main
-
-### one-line purpose
-
-Slack MCP plugin — configs-only repo; remote MCP service hosted at `mcp.slack.com`.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-not specified — remote HTTP service.
-
-### framework/SDK in use
-
-MCP (remote server).
+The runtime lives on a vendor-hosted endpoint at `mcp.slack.com`; there is no local language or framework — nothing executes on the user's machine. The repo carries only client config files and OAuth metadata.
 
 ## Transport
 
-### supported transports
+### Hosted remote endpoint (vendor-operated)
 
-HTTP (remote MCP endpoint).
+HTTP MCP endpoint at `https://mcp.slack.com/mcp`. Vendor operates the runtime.
 
-### how selected
+## Capability surface
 
-HTTP URL (`https://mcp.slack.com/mcp`).
+### Tools-heavy domain wrapper / domain-tool catalog
 
-## Distribution
+Tools: message search, direct messaging, thread access, canvas document create/export, user profile retrieval with custom fields. Domain-shaped Slack-API wrapper with vendor-native artifact creation (canvas documents).
 
-### every mechanism observed
+## Configuration delivery
 
-remote HTTP endpoint only; GitHub repo contains client config only.
+### Hosted endpoint as primary delivery
 
-### published package name(s)
+Configuration is the URL (`https://mcp.slack.com/mcp`) plus client-specific OAuth metadata; nothing locally configurable beyond client-side OAuth setup.
 
-remote server at `mcp.slack.com`; no local package.
+### Host-side JSON config snippet
 
-### install commands shown in README
-
-git clone for config review; manual setup via deeplink or Cursor MCP settings tab.
-
-## Entry point / launch
-
-### command(s) users/hosts run
-
-no local entry point; HTTP endpoint only.
-
-### wrapper scripts, launchers, stubs
-
-none
-
-## Configuration surface
-
-### how config reaches the server
-
-client-specific configs (Claude Code: clientId `1601185624273.8899143856786`, callbackPort 3118; Cursor: CLIENT_ID `3660753192626.8903469228982`); OAuth callback handling.
+Per-host config files shipped in repo: `.mcp.json` for Claude Code (clientId `1601185624273.8899143856786`, callbackPort 3118); `.cursor-mcp.json` for Cursor (CLIENT_ID `3660753192626.8903469228982`).
 
 ## Authentication
 
-### flow
+### OAuth 2.1 / OIDC delegated (browser consent, multi-tenant)
 
-OAuth 2.0; workspace admin approval required.
-
-### where credentials come from
-
-workspace OAuth; OAuth callback port-based flow.
+OAuth 2.0 workspace flow; workspace admin approval required. OAuth callback handled via callback port (3118 for Claude Code). Workspace-level OAuth scope.
 
 ## Multi-tenancy
 
-### tenancy model
+### Per-user / per-workspace via OAuth
 
-per-workspace OAuth token; workspace admin scope.
+Per-workspace OAuth token; workspace admin scope. Workspace is the tenant boundary.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### Hosted endpoint (no install)
 
-tools: message search, direct messaging, thread access, canvas document create/export, user profile retrieval with custom fields.
+User pastes the URL into their host's MCP config; nothing installs locally. Slack runs the runtime.
+
+### Configs-only repo (no server artifact)
+
+Repo ships only client config snippets and OAuth setup metadata; the actual server is hosted remotely. Distribution is "configure your client to point at our endpoint."
+
+## Entry point and launch
+
+### URL configuration (no local launch)
+
+No local entry point; HTTP endpoint URL plus per-client OAuth metadata is the entire launch surface.
+
+## Host integration
+
+### Claude Code
+
+OAuth config block with clientId and callbackPort documented in README; `.mcp.json` config file shipped.
+
+### Cursor
+
+OAuth config block with CLIENT_ID documented in README; `.cursor-mcp.json` config file shipped. Setup via deeplink (browser-based) or via Cursor's MCP settings tab.
+
+### `.claude-plugin/` directory in repo
+
+`.claude-plugin/` directory present in repo.
+
+### `.mcp.json` in project root
+
+`.mcp.json` shipped at repo root.
+
+### First-party host extension manifest
+
+Cursor-side `.cursor-plugin/` directory present alongside the Claude `.claude-plugin/` — multi-host plugin-wrapper layout, official first-party Slack MCP.
+
+### Vendor-specific companion config
+
+Configs-only repo *is* the companion config — vendor-specific OAuth setup metadata for each host.
 
 ## Observability
 
-### logging destination + format, metrics, tracing, debug flags
+### None / unspecified
 
-server-side only (not documented in repo).
+Server-side logging only; not documented in repo (server implementation isn't in repo).
 
-## Host integrations shown in README or repo
+## Repository layout
 
-### Claude Code CLI
+### Configs-only
 
-OAuth config with clientId and callbackPort (documented in README); MCP configuration files (`.mcp.json`).
+Configs-only repository (not a server implementation). Files: `.mcp.json`, `.cursor-mcp.json`, `CLAUDE.md`, `README.md`, `LICENSE`. Directories: `.claude-plugin/`, `.cursor-plugin/`, `.github/`, `commands/`, `skills/`. Server implementation lives at `mcp.slack.com`.
 
-### Cursor IDE
+## Documentation surface
 
-OAuth config with CLIENT_ID (documented in README); MCP configuration files (`.cursor-mcp.json`).
+### Agent-facing meta-documentation (CLAUDE.md, .cursorrules, .mcp.json)
 
-## Claude Code plugin wrapper
+`CLAUDE.md` shipped in repo; `.mcp.json` and `.cursor-mcp.json` carry agent-facing metadata.
 
-### presence and shape
+### Bundled `cursor_rules.md` / AI-guidance content
 
-not present; remote HTTP service (the repo is config-only).
+`commands/` and `skills/` directories ship client-side AI guidance content alongside the server-pointing configs.
 
-## Tests
+## Claude Code plugin / skill wrapper
 
-### presence, framework, location, notable patterns
+### `.claude-plugin/` wrapper
 
-not applicable (config-only repo).
+`.claude-plugin/` directory present in repo — first-party Slack ships the Claude Code plugin wrapper as part of the configs-only distribution.
 
-## CI
+## Release and lifecycle
 
-### presence, system, triggers, what it runs
+### Vendor-internal release (no public pipeline)
 
-not applicable
+Server runtime is vendor-operated; no public release pipeline. Repo updates track config/OAuth-metadata changes.
 
-## Container / packaging artifacts
+### Active development
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
-
-not applicable (remote service).
-
-## Example client / developer ergonomics
-
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
-
-deeplink for Cursor (browser-based setup); MCP settings tab in Cursor (manual config); Claude Code CLI example with OAuth config block; `CLAUDE.md` documentation.
-
-## Repo layout
-
-### single-package / monorepo / vendored / other
-
-config-only repository (not a server implementation); files: `.mcp.json`, `.cursor-mcp.json`, `CLAUDE.md`, `README.md`, `LICENSE`; dirs: `.claude-plugin/`, `.cursor-plugin/`, `.github/`, `commands/`, `skills/`.
-
-## Notable structural choices
-
-official first-party Slack MCP — Slack-hosted remote server. config-only GitHub repository (actual MCP server at `mcp.slack.com`). OAuth workspace integration. workspace admin approval required. ships configs for two IDEs (Claude Code, Cursor).
-
-## Unanticipated axes observed
-
-first-party MCP server delivered as remote HTTP endpoint with a separate configs-only GitHub repo — axis: publishing configs-as-product vs server-as-product. ships commands/ and skills/ directories alongside the configs — axis: bundling client-side skills with server integration. `.cursor-plugin/` alongside `.claude-plugin/` — axis: multi-host plugin-wrapper layout.
-
-## Gaps
-
-server implementation not in repo (remote service). license not specified. full Slack API capability surface not documented in config repo. rate limiting and quota handling not documented.
+Last commit March 19, 2026.

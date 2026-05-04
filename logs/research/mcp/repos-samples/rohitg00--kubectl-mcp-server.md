@@ -1,209 +1,229 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/rohitg00/kubectl-mcp-server`. kubectl MCP server — 253 tools across ~20 Kubernetes resource categories; dual Python/npm distribution; optional OAuth 2.1 (RFC 9728) bolt-on. 870 stars, MIT, default branch `main`, active on main; CNCF Landscape listing noted in README.
 
-### url
+## Server runtime
 
-https://github.com/rohitg00/kubectl-mcp-server
+### Python with FastMCP
 
-### stars
-
-870
-
-### last-commit
-
-active on main (exact date not surfaced on repo page).
-
-### license
-
-MIT
-
-### default branch
-
-main
-
-### one-line purpose
-
-kubectl MCP server — 253 tools covering the Kubernetes surface; dual Python/npm distribution; optional OAuth 2.1.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Python (81.2%), TypeScript (17.0%), Shell (0.8%); Python 3.9+.
-
-### framework/SDK in use
-
-FastMCP (references to FastMCP in configuration; also uses the underlying MCP Python SDK).
+Python (81.2%), TypeScript (17.0%), Shell (0.8%); Python 3.9+. FastMCP (specific major version not surfaced in README); also uses the underlying MCP Python SDK. FastMCP default applies for sync-vs-async (not surfaced at README level).
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio (default), SSE, streamable-http, HTTP.
+stdio is the default.
 
-### how selected
+### SSE (Server-Sent Events)
+
+SSE supported.
+
+### Streamable HTTP
+
+streamable-http supported.
+
+### HTTP with JSON response mode
+
+HTTP supported alongside streamable-http.
+
+### Selection mechanism
 
 CLI flags / environment variables; host/port configurable (default 0.0.0.0:8000 for HTTP modes).
 
-## Distribution
+## Capability surface
 
-### every mechanism observed
+### Tools-heavy domain wrapper / domain-tool catalog
 
-PyPI, npm (npx wrapper), Docker Hub, GitHub releases.
+253 tools across ~20 categories (pods, deployments, namespaces, services, storage, security, Helm, cost, browser automation); 8 resources; 8 prompts.
 
-### published package name(s)
+### Tools + resources + prompts + UI dashboards
 
-kubectl-mcp-server (PyPI), kubectl-mcp-server (npm).
+Maximal MCP surface — 253 tools, 8 resources, 8 prompts, plus 6 interactive dashboards (gated on `[ui]` install extra). 26 browser automation tools (optional).
 
-### install commands shown in README
+### Capability gating flags (per-tool, per-category, write-mode)
 
-`pip install kubectl-mcp-server[ui]`; `npx -y kubectl-mcp-server`; `docker pull rohitghumare64/kubectl-mcp-server:latest`.
+`--disable-destructive` safety flag suppresses destructive operations; `MCP_BROWSER_ENABLED` / `MCP_BROWSER_PROVIDER` env vars gate browser-automation sub-feature; optional `[ui]` extra gates dashboards.
 
-### pitfalls observed
+### Capability gating via tool subsets at install time
 
-Distributed via both PyPI and npm so npm-only hosts can still install without Python packaging knowledge.
+Optional-extra-gated feature bundles — `[ui]` extra enables dashboards; browser automation separate. Operator opts in to feature groups at install time.
 
-## Entry point / launch
+## Configuration delivery
 
-### command(s) users/hosts run
+### Environment variables
 
-`kubectl-mcp-server` (console script).
+`KUBECONFIG`, `MCP_DEBUG`, `MCP_LOG_FILE`, `MCP_BROWSER_ENABLED`, `MCP_BROWSER_PROVIDER`, `MCP_AUTH_ENABLED`, `MCP_AUTH_ISSUER`, `MCP_AUTH_AUDIENCE`.
 
-### wrapper scripts, launchers, stubs
+### CLI flags
 
-npm wrapper that invokes the Python package; Docker image entrypoint; optional `[ui]` extra for dashboards.
+`--disable-destructive`, transport/host/port options.
 
-## Configuration surface
+### Mounted credentials
 
-### how config reaches the server
-
-Environment variables (`KUBECONFIG`, `MCP_DEBUG`, `MCP_LOG_FILE`, `MCP_BROWSER_ENABLED`, `MCP_BROWSER_PROVIDER`, `MCP_AUTH_*`) plus CLI flags (`--disable-destructive`, transport/host/port options); consumes the kubeconfig file at `~/.kube/config`.
+Consumes the kubeconfig file at `~/.kube/config`.
 
 ## Authentication
 
-### flow
+### Delegated to upstream toolchain credentials
 
-kubeconfig-based for Kubernetes API; optional OAuth 2.1 layer (RFC 9728) for the MCP server itself.
+kubeconfig-based for Kubernetes API — server delegates to the kubectl-class credential model (`~/.kube/config`).
 
-### where credentials come from
+### Mounted file credentials
 
-kubeconfig file; OAuth issuer/audience/JWKS via `MCP_AUTH_ENABLED`, `MCP_AUTH_ISSUER`, `MCP_AUTH_AUDIENCE` env vars.
+Kubeconfig mounted/read from `~/.kube/config` at startup.
+
+### OAuth 2.x with issuer + JWKS (HTTP-mode bolt-on)
+
+Optional OAuth 2.1 layer (RFC 9728) for the MCP server itself, configured via env vars (`MCP_AUTH_ENABLED`, `MCP_AUTH_ISSUER`, `MCP_AUTH_AUDIENCE`). Layered on top of stdio/HTTP transports.
 
 ## Multi-tenancy
 
-### tenancy model
+### Single-user / single-tenant per process
 
-Single-user per process; optional OAuth layer suggests tenant support but documented as single kubeconfig context per server.
+Single kubeconfig context per server; optional OAuth layer suggests tenant support but documented as single kubeconfig per process.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### PyPI via pip / pipx
 
-253 tools across ~20 categories (pods, deployments, namespaces, services, storage, security, Helm, cost, browser automation); 8 resources; 8 prompts; 6 interactive dashboards (UI extra); 26 browser automation tools (optional).
+`pip install kubectl-mcp-server[ui]` documented; package name `kubectl-mcp-server` on PyPI.
 
-## Observability
+### npm via npx / bunx
 
-### logging destination + format, metrics, tracing, debug flags
+`npx -y kubectl-mcp-server` — npm wrapper that invokes the Python package; package name `kubectl-mcp-server` on npm.
 
-`MCP_DEBUG` + `MCP_LOG_FILE` environment toggles; no metrics/tracing documented.
+### Docker / OCI image
 
-## Host integrations shown in README or repo
+`docker pull rohitghumare64/kubectl-mcp-server:latest` from Docker Hub.
+
+### Pre-built binary release
+
+GitHub releases artifacts.
+
+### Cross-ecosystem packaging
+
+Distributed via both PyPI and npm so npm-only hosts can install without Python packaging knowledge — same conceptual artifact in two ecosystems.
+
+### Multi-channel publication
+
+Four parallel channels — PyPI, npm, Docker Hub, GitHub releases.
+
+## Entry point and launch
+
+### Console script via `[project.scripts]` / npm bin
+
+console script `kubectl-mcp-server`; host-config snippet shape `command: kubectl-mcp-server` or via npx in Node-first hosts.
+
+### `npx -y <package>` / `bunx`
+
+`npx -y kubectl-mcp-server` for Node-first hosts; npm wrapper invokes the Python package.
+
+### Docker container entrypoint
+
+Docker image entrypoint via `docker pull rohitghumare64/kubectl-mcp-server:latest`.
+
+## Build and packaging
+
+### Setuptools (with `setup.py` or `setup.cfg`)
+
+Build backend: setuptools (`setup.py`) — older setuptools convention rather than modern pyproject-only layout.
+
+### Optional-dependency fan-out
+
+`[ui]` extra for dashboards — install-time opt-in.
+
+## Schema and types
+
+### FastMCP auto-derivation from type hints
+
+FastMCP default (Pydantic-based) inferred; specifics not surfaced. Schema auto-derivation via FastMCP.
+
+## Container artifacts
+
+### Dockerfile (single-stage, build-from-source)
+
+Dockerfile present; Docker Hub image published.
+
+### Published Docker image
+
+`rohitghumare64/kubectl-mcp-server:latest` published to Docker Hub.
+
+## Test stack
+
+### pytest with async + coverage
+
+234+ passing tests, pytest-based; unit + integration + server-initialization suites; fixture style not surfaced.
+
+## CI
+
+### GitHub Actions
+
+GitHub Actions workflows under `.github/`.
+
+## Host integration
 
 ### Claude Desktop
 
 JSON `mcpServers` entry.
 
-### Cursor, Windsurf, GitHub Copilot, 15+ other MCP clients
+### Cursor
 
 JSON `mcpServers` entry (same shape).
 
-## Claude Code plugin wrapper
+### Windsurf / Goose / Qodo Gen / Cline / Kiro / Augment
 
-### presence and shape
+Windsurf supported via JSON `mcpServers` entry.
 
-not observed
+### VS Code / VS Code Insiders / Visual Studio family
 
-## Tests
+GitHub Copilot supported via JSON `mcpServers` entry.
 
-### presence, framework, location, notable patterns
+### Multi-host catalog (30+ agents)
 
-234+ passing tests, pytest-based; unit + integration + server-initialization suites.
+15+ other MCP clients supported via the same JSON `mcpServers` shape.
 
-## CI
+## Claude Code plugin / skill wrapper
 
-### presence, system, triggers, what it runs
+### Bare MCP server, no Claude Code wrapper
 
-GitHub Actions workflows under `.github/`.
+Not observed.
 
-## Container / packaging artifacts
+## Observability
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+### Debug toggle + log file path
 
-Dockerfile and Docker Hub image published.
+`MCP_DEBUG` + `MCP_LOG_FILE` environment toggles; no metrics/tracing documented.
 
-## Example client / developer ergonomics
+## Documentation surface
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+### README as the canonical surface
 
-JSON `mcpServers` sample configs for multiple clients; `--disable-destructive` safety flag; optional `[ui]` extra for dashboards.
+README hosts JSON `mcpServers` sample configs for multiple clients; CNCF Landscape listing noted.
 
-## Repo layout
+## Developer ergonomics
 
-### single-package / monorepo / vendored / other
+### Sample MCP client configs in repo
 
-Single-package Python library with npm publisher wrapper; modular submodules per resource kind (pods.py, deployments.py, helm.py, etc.), separate `resources/` and `prompts/` dirs.
+JSON `mcpServers` sample configs for multiple clients in README.
 
-## Notable structural choices
+## Repository layout
 
-Exposes very large surface area (253 tools) partitioned by Kubernetes resource kind. Ships a dedicated browser-automation sub-feature gated on `MCP_BROWSER_ENABLED`. Distributed via both PyPI and npm so npm-only hosts can still install without Python packaging knowledge. OAuth 2.1 option layered on top of stdio/HTTP transports.
+### Single-package with dual-ecosystem wrapper
 
-## Unanticipated axes observed
+Single-package Python library with npm publisher wrapper that invokes the Python entry point; modular submodules per resource kind (pods.py, deployments.py, helm.py, etc.), separate `resources/` and `prompts/` dirs.
 
-Dual-ecosystem publishing (Python + npm) for a single Python server. Optional-extra-gated feature bundles (`[ui]` enables dashboards; browser automation separate). RFC 9728 OAuth bolt-on for an otherwise local stdio server.
+## Safety and security posture
 
-## Python-specific
+### Destructive-action gating flag
 
-### SDK / framework variant
+`--disable-destructive` CLI flag suppresses destructive operations across the kubectl/Helm tool surface.
 
-FastMCP (specific major version not surfaced in README); version pin and import pattern not surfaced.
+## Release and lifecycle
 
-### Python version floor
+### License — Permissive (MIT / Apache-2.0)
 
-`requires-python` value: 3.9+.
+MIT.
 
-### Packaging
+### Active development
 
-Build backend: setuptools (setup.py). Lock file presence not surfaced. Version manager convention: pip/uv compatible; npm distribution pulls Python package.
-
-### Entry point
-
-console script `kubectl-mcp-server`; host-config snippet shape `command: kubectl-mcp-server` or via npx in Node-first hosts.
-
-### Install workflow expected of end users
-
-`pip install kubectl-mcp-server[ui]` (Python users); `npx -y kubectl-mcp-server` (npm users); `docker pull rohitghumare64/kubectl-mcp-server:latest` (container users).
-
-### Async and tool signatures
-
-Sync-vs-async not surfaced at README level; FastMCP default applies.
-
-### Type / schema strategy
-
-FastMCP default (Pydantic-based) inferred; specifics not surfaced. Schema auto-derivation via FastMCP.
-
-### Testing
-
-pytest (234+ tests); fixture style not surfaced.
-
-### Dev ergonomics
-
-not surfaced
-
-### Notable Python-specific choices
-
-Uses `setup.py` (older setuptools convention) rather than modern pyproject-only layout. CNCF Landscape listing noted in README.
-
-## Gaps
-
-Exact Python entry-point file path, requires-python metadata from pyproject, FastMCP major version pin, async-vs-sync tool signatures, last-commit date, Dockerfile base image.
+Active on main (exact date not surfaced); CNCF Landscape listing noted in README.

@@ -1,171 +1,117 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/paypal/paypal-mcp-server`. PayPal payments MCP server — JavaScript/npx distribution; OAuth 2.0 client-credentials auth; first-party PayPal-org release. 9 stars, Apache-2.0, default branch `main`, 9 total commits as of research.
 
-### url
+## Server runtime
 
-https://github.com/paypal/paypal-mcp-server
+### Node.js / TypeScript with official MCP SDK
 
-### stars
-
-9
-
-### last-commit
-
-Specific date not displayed; total commit count was 9 as of research.
-
-### license
-
-Apache-2.0
-
-### default branch
-
-main
-
-### one-line purpose
-
-PayPal payments MCP server — JavaScript/npx distribution; OAuth 2.0 auth.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-JavaScript (75.7%), TypeScript (15.8%), Shell (8.5%); Node.js 18+.
-
-### framework/SDK in use
-
-Model Context Protocol SDK (standard MCP TypeScript SDK, implied by npm package layout and MCP conventions).
+JavaScript (75.7%) with TypeScript (15.8%) and Shell (8.5%); Node.js 18+. Uses the standard MCP TypeScript SDK (implied by npm package layout and MCP conventions).
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio.
+stdio is the only documented transport — launched via `npx` and connected through host MCP config.
 
-### how selected
+### Selection mechanism
 
-Stdio is the default; launched via `npx` and connected through host MCP config.
+stdio default; no explicit selection mechanism (single-transport binary).
 
-## Distribution
+## Capability surface
 
-### every mechanism observed
+### Tools-heavy domain wrapper / domain-tool catalog
 
-npm package, npx direct execution, Claude Desktop configuration-file integration.
+30+ tools grouped by PayPal domain — Invoices (7), Payments & Refunds (5), Dispute Management (3), Shipment Tracking (2), Catalog Management (4), Subscription Management (8), Transaction Reporting (1).
 
-### published package name(s)
+### Capability gating flags (per-tool, per-category, write-mode)
 
-`@paypal/mcp`
+`--tools=all` flag selects the full surface; selective subsets supported via the same flag — capability scoping at launch time, an opt-in pattern for servers with large tool catalogs.
 
-### install commands shown in README
+## Configuration delivery
 
-`npx -y @paypal/mcp --tools=all`
+### Environment variables
 
-## Entry point / launch
+`PAYPAL_ACCESS_TOKEN` (required) for the merchant token; `PAYPAL_ENVIRONMENT` selects `SANDBOX` or `PRODUCTION` — sandbox/production routed by env var rather than separate entry points.
 
-### command(s) users/hosts run
+### CLI flags
 
-`npx -y @paypal/mcp --tools=all` (or with `--access-token`).
+`--tools=all` for tool selection; `--access-token` as an alternative to env var for token override.
 
-### wrapper scripts, launchers, stubs
+### Host-side JSON config snippet
 
-npm `bin` entry invoked via npx; Shell files present (8.5% of repo) suggest auxiliary scripts.
-
-## Configuration surface
-
-### how config reaches the server
-
-Environment variables for credentials and environment selection; CLI flags for tool selection and token override.
+Claude Desktop, Cursor, and Cline JSON `mcpServers` configuration snippets in README.
 
 ## Authentication
 
-### flow
+### OAuth 2.0 client credentials
 
-OAuth2 client credentials — bearer token generated, valid 3-8 hours (sandbox) or 8 hours (production). Server holds a single merchant's token for the session.
-
-### where credentials come from
-
-`PAYPAL_ACCESS_TOKEN` env var (required); `--access-token` CLI flag alternative; `PAYPAL_ENVIRONMENT` selects SANDBOX or PRODUCTION.
-
-### pitfalls observed
-
-Token lifetimes (3-8 hours sandbox, 8 hours production) mean long-lived sessions need refresh handling; not clear from surface whether server refreshes automatically or expects caller to rotate.
+OAuth2 client credentials flow — bearer token generated, valid 3-8 hours (sandbox) or 8 hours (production). Server holds a single merchant's token for the session. Token lifetime means long-lived sessions need refresh handling; not clear from surface whether server refreshes automatically or expects caller to rotate.
 
 ## Multi-tenancy
 
-### tenancy model
+### Single-user / single-tenant per process
 
 Single-merchant — token is process-scoped to one PayPal merchant account. No per-request tenancy or multi-merchant switching observed.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### npm via npx / bunx
 
-30+ tools grouped by domain — Invoices (7), Payments & Refunds (5), Dispute Management (3), Shipment Tracking (2), Catalog Management (4), Subscription Management (8), Transaction Reporting (1). `--tools=all` selects full surface; selective subsets likely supported via the same flag.
+`npx -y @paypal/mcp --tools=all` is the documented install/run path.
 
-## Observability
+## Entry point and launch
 
-### logging destination + format, metrics, tracing, debug flags
+### `npx -y <package>` / `bunx`
 
-Not explicitly documented within extracted content.
+`npx -y @paypal/mcp --tools=all` (or with `--access-token`). npm `bin` entry invoked via npx; Shell files (8.5% of repo) suggest auxiliary scripts.
 
-## Host integrations shown in README or repo
+## Test stack
 
-### Claude Desktop
-
-Primary — JSON config snippets.
-
-### Cursor
-
-Supported.
-
-### Cline
-
-Supported.
-
-## Claude Code plugin wrapper
-
-### presence and shape
-
-Not observed — no `.claude-plugin` directory surfaced in research.
-
-## Tests
-
-### presence, framework, location, notable patterns
+### Jest (TypeScript / Node)
 
 Jest configured; specific test layout not extracted within budget.
 
 ## CI
 
-### presence, system, triggers, what it runs
+### GitHub Actions
 
-GitHub Actions `.github/workflows` directory present; specific workflows not extracted within budget.
+`.github/workflows` directory present; specific workflows not extracted within budget.
 
-## Container / packaging artifacts
+## Host integration
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+### Claude Desktop
 
-Not observed within extracted content.
+Primary — JSON config snippets in README.
 
-## Example client / developer ergonomics
+### Cursor
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+Supported — JSON config snippet in README.
 
-ESLint config; Jest; Claude Desktop and Cursor sample configs in README.
+### Windsurf / Goose / Qodo Gen / Cline / Kiro / Augment
 
-## Repo layout
+Cline supported — JSON config snippet in README.
 
-### single-package / monorepo / vendored / other
+## Claude Code plugin / skill wrapper
+
+### Bare MCP server, no Claude Code wrapper
+
+No `.claude-plugin` directory observed.
+
+## Documentation surface
+
+### README as the canonical surface
+
+README provides Claude Desktop and Cursor sample configs; ESLint config also present.
+
+## Repository layout
+
+### Single-package source (language-conventional)
 
 Single-package Node.js project; mixed JS/TS (JS majority) with Shell auxiliary scripts.
 
-## Notable structural choices
+## Release and lifecycle
 
-Modular `--tools` selection lets users opt into sub-surfaces rather than exposing 30+ tools unconditionally — reduces prompt-window noise for users who only need invoicing or subscriptions. Sandbox/production are explicit env-var branches, not separate entry points — a single binary routes based on `PAYPAL_ENVIRONMENT`. First-party PayPal ownership — Apache-2.0, paypal-org namespace — makes this the canonical PayPal MCP despite modest star count.
+### License — Permissive (MIT / Apache-2.0)
 
-## Unanticipated axes observed
-
-Low star count (9) for a first-party vendor release suggests either early days or limited announcement; worth monitoring as a case of "official but unpromoted" servers. The `--tools` opt-in pattern is an example of capability scoping at launch time — a structural choice worth noting for MCPs with large tool surfaces.
-
-## Gaps
-
-Whether token auto-refresh is implemented or delegated to caller. CI workflow specifics and test coverage layout. Exact list of tools within each category (only counts observed). Whether HTTP transport is planned or stdio-only is intentional.
+Apache-2.0; first-party PayPal ownership in the paypal-org namespace makes this the canonical PayPal MCP despite modest star count (9).

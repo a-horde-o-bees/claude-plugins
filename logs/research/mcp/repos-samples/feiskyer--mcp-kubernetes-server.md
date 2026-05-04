@@ -1,110 +1,130 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/feiskyer/mcp-kubernetes-server`. Kubernetes MCP server — 50+ tools across kubectl/helm execution, read-only queries, write operations, delete operations, rollout/scaling; four-way verb-disable flags (kubectl/helm/write/delete) for fine-grained capability gating. 16 stars, Apache-2.0, default branch `main`, last commit May 11, 2025 (v0.1.11).
 
-### url
+## Server runtime
 
-https://github.com/feiskyer/mcp-kubernetes-server
+### Python with raw MCP SDK
 
-### stars
-
-16
-
-### last-commit
-
-May 11, 2025 (v0.1.11)
-
-### license
-
-Apache-2.0
-
-### default branch
-
-main
-
-### one-line purpose
-
-Kubernetes MCP server — four-way verb disable flags (read/write/delete/exec) for fine-grained capability gating.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Python 99.7%; Python 3.11+.
-
-### framework/SDK in use
-
-raw MCP Python SDK (Anthropic's Claude Agent SDK wrapper around the MCP protocol).
+Python (99.7%) on raw MCP Python SDK with Anthropic's Claude Agent SDK wrapper around the MCP protocol. `requires-python` value: 3.11+. Sync subprocess wrapping rather than the kubernetes-client async Python library — wraps kubectl/helm subprocess calls.
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio (default), SSE, streamable-http.
+Default mode.
 
-### how selected
+### SSE (Server-Sent Events)
 
-CLI flag `--transport`, plus `--host` and `--port` for network modes.
+Selectable transport.
 
-## Distribution
+### Streamable HTTP
 
-### every mechanism observed
+Selectable transport.
 
-PyPI (uvx), Docker (ghcr.io), source.
+### Selection mechanism
 
-### published package name(s)
+CLI flag at startup — `--transport`, plus `--host` and `--port` for network modes.
 
-mcp-kubernetes-server
+## Capability surface
 
-### install commands shown in README
+### Tools-heavy domain wrapper / domain-tool catalog
 
-`uvx mcp-kubernetes-server`; docker from ghcr.io.
+50+ tools across kubectl command execution, helm command execution, read-only queries, write operations (create/apply), delete operations, rollout/scaling.
 
-## Entry point / launch
+### Capability gating flags (per-tool, per-category, write-mode)
 
-### command(s) users/hosts run
+Four-way verb-disable CLI flags: `--disable-kubectl`, `--disable-helm`, `--disable-write`, `--disable-delete`. Granular per-capability toggles instead of a single read-only/full switch — per-verb enable/disable as an argument surface pattern.
 
-`python -m src.mcp_kubernetes_server.main` or console script via uvx.
+## Configuration delivery
 
-### wrapper scripts, launchers, stubs
+### Environment variables
 
-Dockerfile.
+`KUBECONFIG` for kubeconfig path.
 
-## Configuration surface
+### CLI flags
 
-### how config reaches the server
-
-environment variable `KUBECONFIG`; CLI flags `--disable-kubectl`, `--disable-helm`, `--disable-write`, `--disable-delete`, `--transport`, `--host`, `--port`.
+`--disable-kubectl`, `--disable-helm`, `--disable-write`, `--disable-delete`, `--transport`, `--host`, `--port`.
 
 ## Authentication
 
-### flow
+### Delegated to upstream toolchain credentials
 
-delegates to kubeconfig credentials; permissions check via kubectl's auth subsystem (`k8s_auth_can_i`, `k8s_auth_whoami`).
+Delegates to kubeconfig credentials. Permissions check via kubectl's auth subsystem (`k8s_auth_can_i`, `k8s_auth_whoami`). The server does not authenticate at all on its own — shells out to kubectl/helm which already know how to read their own credential file.
 
-### where credentials come from
+### Mounted file credentials
 
-kubeconfig file.
+Credentials read from kubeconfig file at startup.
 
 ## Multi-tenancy
 
-### tenancy model
+### Single-user / single-tenant per process
 
-single-user per process (single kubeconfig context).
+Single user per process — single kubeconfig context.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### PyPI via uvx (zero-install runner)
 
-50+ tools across command execution (kubectl, helm), read-only queries, write operations (create/apply), delete operations, rollout/scaling.
+`uvx mcp-kubernetes-server`; published as `mcp-kubernetes-server`.
 
-## Observability
+### Docker / OCI image
 
-### logging destination + format, metrics, tracing, debug flags
+ghcr.io image.
 
-not surfaced in README.
+### Source clone with editable install
 
-## Host integrations shown in README or repo
+Source available as alternative install.
+
+## Entry point and launch
+
+### Module invocation / `python -m <module>` fallback
+
+`python -m src.mcp_kubernetes_server.main`.
+
+### Console script via `[project.scripts]` / npm bin
+
+Console script via uvx; specific console-script name not surfaced.
+
+## Build and packaging
+
+### Hatchling + uv (Python)
+
+pyproject.toml with uv. Lock file: implied (uv). Version manager convention: uv.
+
+### Python version pinning
+
+`requires-python` value: 3.11+.
+
+## Container artifacts
+
+### Dockerfile (single-stage, build-from-source)
+
+Dockerfile present.
+
+### Published Docker image
+
+ghcr.io image.
+
+## Test stack
+
+### No tests / not surfaced
+
+Framework not surfaced. GitHub Actions `build.yml` suggests CI-driven tests; specific framework, fixture style, and patterns not surfaced in README.
+
+## CI
+
+### GitHub Actions
+
+GitHub Actions (`build.yml`).
+
+## Safety and security posture
+
+### Destructive-action gating flag
+
+Four-way verb-disable flags (kubectl/helm/write/delete) supply orthogonal denial axes — finer-grained than the binary read-only knob common elsewhere. Per-verb gating is a denial-ish denominator for capability gating.
+
+## Host integration
 
 ### Claude Desktop
 
@@ -114,100 +134,26 @@ JSON `mcpServers` entry.
 
 JSON `mcpServers` entry.
 
-### GitHub Copilot
+### VS Code / VS Code Insiders / Visual Studio family
 
-JSON `mcpServers` entry.
+GitHub Copilot JSON `mcpServers` entry.
 
-### ChatGPT Copilot
+### Codex CLI / Copilot CLI / Gemini CLI
 
-JSON `mcpServers` entry.
+ChatGPT Copilot JSON `mcpServers` entry.
 
-## Claude Code plugin wrapper
+## Repository layout
 
-### presence and shape
+### Single-package src-layout
 
-not observed.
+Single package under `src/mcp_kubernetes_server/`.
 
-## Tests
+## Release and lifecycle
 
-### presence, framework, location, notable patterns
+### License — Permissive (MIT / Apache-2.0)
 
-GitHub Actions `build.yml` suggests CI-driven tests; framework not surfaced.
+Apache-2.0.
 
-## CI
+### Tagged release with version in changelog
 
-### presence, system, triggers, what it runs
-
-GitHub Actions (`build.yml`).
-
-## Container / packaging artifacts
-
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
-
-Dockerfile present; ghcr.io image.
-
-## Example client / developer ergonomics
-
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
-
-not surfaced in README excerpt.
-
-## Repo layout
-
-### single-package / monorepo / vendored / other
-
-single package under `src/mcp_kubernetes_server/`.
-
-## Notable structural choices
-
-Granular per-capability CLI toggles (`--disable-kubectl`, `--disable-helm`, `--disable-write`, `--disable-delete`) instead of a single read-only/full switch. Apache-2.0 license (rarer for independent-maintainer MCP servers, which skew MIT).
-
-## Unanticipated axes observed
-
-Per-verb enable/disable as an argument surface pattern (kubectl vs helm vs write vs delete split into four independent flags).
-
-## Python-specific
-
-### SDK / framework variant
-
-raw `mcp` Python SDK. Version pin from pyproject.toml: not surfaced. Import pattern observed: not surfaced.
-
-### Python version floor
-
-`requires-python` value: 3.11+.
-
-### Packaging
-
-build backend: pyproject.toml with uv. lock file present: implied (uv). version manager convention: uv.
-
-### Entry point
-
-module entry `src.mcp_kubernetes_server.main`. actual console-script name(s): not surfaced. host-config snippet shape: uvx.
-
-### Install workflow expected of end users
-
-`uvx mcp-kubernetes-server`.
-
-### Async and tool signatures
-
-sync — wraps kubectl/helm subprocess calls. asyncio/anyio usage: not surfaced; the underlying kubectl/helm wrapping is synchronous subprocess.
-
-### Type / schema strategy
-
-not surfaced. schema auto-derived vs hand-authored: not surfaced.
-
-### Testing
-
-not surfaced. fixture style: not surfaced.
-
-### Dev ergonomics
-
-not surfaced.
-
-### Notable Python-specific choices
-
-Sync subprocess wrapping rather than using the kubernetes-client async Python library. Four-way verb disable flags is a denial-ish denominator for capability gating.
-
-## Gaps
-
-specific schema strategy, test framework, logging destination, async behavior, last-commit date after v0.1.11.
+v0.1.11 released May 11, 2025.

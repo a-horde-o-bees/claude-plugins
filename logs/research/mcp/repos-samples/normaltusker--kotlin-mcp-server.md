@@ -1,225 +1,229 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/normaltusker/kotlin-mcp-server`. Kotlin/Android dev-assistant MCP server — Python server (despite the name) carrying both `mcp` and `fastmcp`; single-file 112 KB monolith installed via `install.py`. 28 stars, AGPL-3.0, default branch `main`, 99 commits on main.
 
-### url
+## Server runtime
 
-https://github.com/normaltusker/kotlin-mcp-server
+### Python with both MCP SDK and FastMCP declared
 
-### stars
-
-28
-
-### last-commit
-
-Recent (99 commits on main branch; specific date not in provided content).
-
-### license
-
-AGPL-3.0
-
-### default branch
-
-main
-
-### one-line purpose
-
-Kotlin/Android dev-assistant MCP server — Python server (despite the name) carrying both `mcp` and `fastmcp`; single-file 112 KB monolith installed via `install.py`.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Python 3.8+ (3.9+ recommended); supporting Kotlin (3.5%), TypeScript (1.7%) components.
-
-### framework/SDK in use
-
-Anthropic's Claude Agent SDK with Model Context Protocol (MCP); Python 3.8+ standard library.
-
-### pitfalls observed
-
-Specific Python version tested in CI not documented (`pyproject.toml` specifies py38-py312).
+Both `mcp>=1.0.0` (labeled "Official MCP SDK") and `fastmcp>=2.0.0` declared in `requirements.txt` — mixed dependency profile. Anthropic's Claude Agent SDK referenced. Python 3.8+ floor (3.9+ recommended). Black target range `py38-py312` — broad tested range.
 
 ## Transport
 
-### supported transports
+### stdio
 
-Stdio (standard MCP protocol), HTTP via REST API bridge (`vscode_bridge.py`), IDE-native integration (VS Code, JetBrains, Claude Desktop).
+Standard MCP stdio protocol.
 
-### how selected
+### REST API bridge alongside MCP
 
-Entry point selection via installation mode: portable (direct), system (CLI), or module (`python -m`).
+HTTP REST API bridge via `vscode_bridge.py` on port 8080 (configurable) for IDE-native integration outside the MCP client.
 
-## Distribution
+### Selection mechanism
 
-### every mechanism observed
+Entry-point selection via installation mode — portable (direct), system (CLI), or module (`python -m`). Bridge runs as a separate process on its own port.
 
-Source distribution via interactive installer (`install.py`), direct Python execution, Python module invocation.
+## Capability surface
 
-### published package name(s)
+### Tools-heavy domain wrapper / domain-tool catalog
 
-Not published to PyPI; installed from source only.
+32 tools across categories — Core Development (7), UI Development (4), Architecture & Patterns (6), Security & Compliance (4), AI/ML Integration (3), File Management (2), API Integration (4), Testing (2), Git Tools (4), Quality of Life (7).
 
-### install commands shown in README
+## Configuration delivery
 
-`python3 install.py` (interactive automated setup); direct execution from project directory; Python module mode.
+### Environment variables
 
-## Entry point / launch
+`PROJECT_PATH`, `WORKSPACE_PATH`, `MCP_ENCRYPTION_PASSWORD`, plus compliance-mode env vars.
 
-### command(s) users/hosts run
+### Auto-generated host-config JSON files
 
-Primary: `kotlin_mcp_server.py` (unified server with 32 tools); callable via: direct execution, system command (`kotlin-android-mcp`), Python module (`python -m kotlin_mcp_server`).
+Installer (`install.py`) writes ready-to-paste `mcp_config_claude.json`, `mcp_config_vscode.json`, `mcp_config.json` per supported host.
 
-### wrapper scripts, launchers, stubs
+### Dotenv file
 
-None documented; HTTP bridge via `vscode_bridge.py` for REST API access on port 8080 (configurable).
-
-## Configuration surface
-
-### how config reaches the server
-
-Three mechanisms: (1) Interactive automated setup (`install.py`); (2) Environment variables (`PROJECT_PATH`, `WORKSPACE_PATH`, `MCP_ENCRYPTION_PASSWORD`, compliance modes); (3) Auto-generated IDE config files (`mcp_config_claude.json`, `mcp_config_vscode.json`, `mcp_config.json`); optional `.env` file for advanced AI/security customization.
+Optional `.env` file for advanced AI/security customization.
 
 ## Authentication
 
-### flow
+### Multi-scheme client auth (API key / OAuth / JWT / Basic / Bearer)
 
-Multiple external API authentication schemes: API Keys, OAuth 2.0, JWT tokens, Basic HTTP, Bearer tokens; server-side rate limiting, circuit breaker, audit logging.
-
-### where credentials come from
-
-Environment variables, configuration files, IDE config files (auto-generated).
+Multiple external API authentication schemes supported — API Keys, OAuth 2.0, JWT tokens, Basic HTTP, Bearer tokens. Server-side rate limiting, circuit breaker, and audit logging layered on top.
 
 ## Multi-tenancy
 
-### tenancy model
+### Workspace-scoped sandboxing within a single tenant
 
-Single-user per workspace; workspace-specific via `WORKSPACE_PATH` environment variable; audit logging suggests multi-tenant awareness.
+Single-user per workspace; workspace-specific via `WORKSPACE_PATH` environment variable. Audit logging suggests multi-tenant awareness even within the single-user model.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### Custom Python installer script
 
-32 comprehensive tools across categories: Core Development (7), UI Development (4), Architecture & Patterns (6), Security & Compliance (4), AI/ML Integration (3), File Management (2), API Integration (4), Testing (2), Git Tools (4), Quality of Life (7).
+Installation via `python3 install.py` — interactive automated installer with three modes (portable/system/module). Replaces both pip and uvx for the end user.
 
-## Observability
+### Source clone with editable install
 
-### logging destination + format, metrics, tracing, debug flags
+`pip install -r requirements.txt` for manual install from a clone. No PyPI publication.
 
-Audit logging for security events (GDPR, HIPAA modes mentioned); no explicit metrics or tracing documented in provided content.
+## Entry point and launch
 
-## Host integrations shown in README or repo
+### Bare interpreter + script path
 
-### Claude Desktop
+`python3 kotlin_mcp_server.py` — direct interpreter + script invocation.
 
-Yes; auto-generated config file `mcp_config_claude.json`.
+### Module invocation / `python -m <module>` fallback
 
-### Claude Code
+`python3 -m kotlin_mcp_server` — module mode.
 
-Not explicitly mentioned.
+### Console script via `[project.scripts]` / npm bin
 
-### Cursor
+`kotlin-android-mcp` registered as a system command after install.
 
-Yes; auto-generated config file `mcp_config_vscode.json` (shared with VS Code).
+### Multiple entry points per transport
 
-### VS Code
+Three invocation modes selectable by installation type; HTTP REST bridge via `vscode_bridge.py` runs as a separate launch path.
 
-Yes; auto-generated config file `mcp_config_vscode.json`.
+## Build and packaging
 
-### JetBrains IDEs
+### Requirements-driven (legacy Python)
 
-Yes; native support documented.
+`requirements.txt` is the primary dependency manifest; no lock file confirmed; build backend not directly extracted from `pyproject.toml`.
 
-### Other
+### Python version pinning
 
-HTTP REST bridge for custom client integration.
+Black target range `py38-py312` — broad tested range. README floor: Python 3.8+ (3.9+ recommended). `pyproject.toml` declares broad compatibility.
 
-## Claude Code plugin wrapper
+## Schema and types
 
-### presence and shape
+### Hand-authored tool schemas
 
-Not present; this is a standalone server with IDE integration configs auto-generated.
+MyPy strict type checking enforced. Hand-authored schemas likely given the raw MCP SDK usage alongside FastMCP.
 
-## Tests
+### Async model (cross-cutting)
 
-### presence, framework, location, notable patterns
+pytest + pytest_asyncio in `pyproject.toml` tool config; async tool execution stated in README ("modular architecture with 6 specialized modules").
 
-Testing framework configured in `pyproject.toml` (pytest, pytest_asyncio); test files excluded from coverage metrics; MyPy strict type checking enforced.
+## Container artifacts
+
+### Dockerfile (single-stage, build-from-source)
+
+Docker support mentioned for portability in overview; specific Dockerfile content not provided.
+
+### Docker Compose for local dev
+
+`docker-compose.yml` for containerized deployment — `docker-compose up -d kotlin-mcp-server`.
+
+## Test stack
+
+### pytest with async + coverage
+
+pytest + pytest-asyncio configured in `pyproject.toml`. `pytest.ini` at root + `pyproject.toml` config — dual-config layout. Test files excluded from coverage metrics.
+
+### MyPy strict + Bandit security scans alongside tests
+
+MyPy strict type checking enforced. Bandit security scans excluding tests.
+
+### Linter/formatter test gate
+
+Black formatting (100-char line limit), isort import sorting enforced as part of lint surface.
 
 ## CI
 
-### presence, system, triggers, what it runs
+### GitHub Actions
 
-GitHub Actions implied by `pyproject.toml`; Black formatting (100-char line limit), isort import sorting, MyPy strict type checking, Bandit security scans (excluding tests).
+GitHub Actions implied by `pyproject.toml` tool config (Black, isort, MyPy strict, Bandit).
 
-## Container / packaging artifacts
+## Host integration
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+### Claude Desktop
 
-Docker support mentioned for portability in overview; no specific Dockerfile content provided.
+Auto-generated `mcp_config_claude.json` config file.
 
-## Example client / developer ergonomics
+### VS Code / VS Code Insiders / Visual Studio family
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+Auto-generated `mcp_config_vscode.json` config file.
 
-Interactive `install.py` handles configuration; auto-generated config files for Claude Desktop, VS Code, Cursor, generic MCP clients; 32 tools with clear categorization.
+### Cursor
 
-## Repo layout
+Uses the same auto-generated `mcp_config_vscode.json` file as VS Code.
 
-### single-package / monorepo / vendored / other
+### JetBrains IDE
 
-Single-package Python server; primary file: `kotlin_mcp_server.py` (unified 32-tool server); supporting: `vscode_bridge.py` (HTTP REST bridge); config: `pyproject.toml`, `.env` (optional); installed via: `install.py`.
+Native support documented.
 
-## Notable structural choices
+### Generic / host-agnostic snippet
 
-Unified monolithic server v2.0 architecture evolved from template-based generation; maintains backward compatibility. Intelligent proxy system enables "complete, context-aware implementations" rather than stubs. Interactive installer with automated IDE configuration generation (Claude Desktop, VS Code, Cursor, generic). LSP-like capabilities suggest advanced IDE integration patterns. 32-tool design suggests comprehensive Kotlin/Android development support. V2.0 introduced proxy architecture with intelligent transformations.
+Auto-generated `mcp_config.json` for generic MCP clients.
 
-## Unanticipated axes observed
+## Repository layout
 
-Android/Kotlin-specific MCP server (rare specialization; most servers are language-agnostic). Circuit breaker and rate limiting for external API calls in MCP context. Intelligent proxy system (v2.0 evolution) suggests sophisticated server architecture patterns. Tool count (32) unusually high; suggests comprehensive domain coverage. Audit logging for security/compliance (GDPR, HIPAA modes mentioned).
+### Single-file script / monolith
 
-## Python-specific
+Single-package Python server centered on `kotlin_mcp_server.py` — a unified 112 KB monolith with 32 tools. Supporting files: `vscode_bridge.py` (HTTP REST bridge); `pyproject.toml`, `.env` (optional); installed via `install.py`.
 
-### SDK / framework variant
+## Safety and security posture
 
-Both `mcp>=1.0.0` (labeled "Official MCP SDK") AND `fastmcp>=2.0.0` in `requirements.txt`. Import pattern: mixed — both SDKs pulled in.
+### Workspace path enforcement (canonicalization)
 
-### Python version floor
+Workspace-specific access via `WORKSPACE_PATH` env var. Audit logging for security/compliance modes (GDPR, HIPAA mentioned).
 
-README: Python 3.8+ (3.9+ recommended). black target range: `py38-py312` — broad tested range. `pyproject.toml` declares broad compatibility.
+### Audit logging for compliance modes
 
-### Packaging
+Audit logging for security events with GDPR and HIPAA compliance modes mentioned in the README.
 
-Build backend: not directly extracted (`pyproject.toml` only exposed lint/test tool config in fetch). Lock file: none confirmed (`requirements.txt` primary). Version manager convention: plain pip; `python3 install.py` installer orchestrates.
+## Domain logic and embedded intelligence
 
-### Entry point
+### Deterministic optimization layered on top of raw ops
 
-Three invocation modes: `python3 kotlin_mcp_server.py`, `kotlin-android-mcp` (system install), `python3 -m kotlin_mcp_server` (module). HTTP REST bridge via `vscode_bridge.py`.
+Intelligent proxy system (v2.0 evolution) provides "complete, context-aware implementations" rather than stubs — sophisticated server architecture pattern that layers analysis on top of raw IDE ops.
 
-### Install workflow expected of end users
+## Caching and rate-limiting infrastructure
 
-`python3 install.py` (interactive installer, 3 modes: portable/system/module). `pip install -r requirements.txt` for manual. Docker Compose: `docker-compose up -d kotlin-mcp-server`.
+### Token-bucket rate limiter
 
-### Async and tool signatures
+Server-side rate limiting for external API calls.
 
-pytest + pytest_asyncio in `pyproject.toml` tool config. Async tool execution stated in README ("modular architecture with 6 specialized modules").
+### Circuit breaker for external calls
 
-### Type / schema strategy
+Circuit breaker for external API calls in MCP context — protects against upstream failures cascading into the server.
 
-MyPy strict type checking enforced. Hand-authored schemas likely given raw MCP SDK usage.
+## Observability
 
-### Testing
+### Audit logging for compliance modes
 
-pytest + pytest-asyncio. `pytest.ini` at root + `pyproject.toml` config — dual-config layout. Bandit security scans excluding tests.
+Audit logging for security events surfaces both as observability and as compliance posture (GDPR, HIPAA modes).
 
-### Dev ergonomics
+### None / unspecified
 
-Interactive `install.py` is the primary dev ergonomics. `docker-compose.yml` for containerized deployment. Multiple auto-generated IDE config files (`mcp_config_claude.json`, etc.).
+No explicit metrics or tracing documented in extract.
 
-### Notable Python-specific choices
+## Developer ergonomics
 
-Carries both mcp + fastmcp as dependencies — unusual; most repos pick one. `python3 install.py`-driven installation — similar to samuelgursky/davinci-resolve-mcp pattern of bespoke installer scripts replacing pip. Broad Python version range (3.8-3.12 targeted) — inclusive floor for compatibility. AGPL-3.0 license uncommon in MCP sample (mostly MIT/Apache). Massive single-file `kotlin_mcp_server.py` (~112 KB) — monolith architecture.
+### Custom installer-orchestrator
 
-## Gaps
+Interactive `install.py` is the primary dev-ergonomics surface — handles environment setup, dependency install, and per-host config file generation across Claude Desktop, VS Code, Cursor, generic MCP clients.
 
-Specific Python version tested in CI not documented (`pyproject.toml` specifies py38-py312). Docker/Dockerfile details not provided (mentioned for portability but not detailed). HTTP bridge transport implementation details not specified. V2.0 proxy architecture not fully explained in provided content.
+### Sample MCP client configs in repo
+
+Auto-generated config files (`mcp_config_claude.json`, `mcp_config_vscode.json`, `mcp_config.json`) ship as part of the install flow.
+
+## Documentation surface
+
+### README as the canonical surface
+
+README documents the 32 tools and installation modes.
+
+## Claude Code plugin / skill wrapper
+
+### Bare MCP server, no Claude Code wrapper
+
+No `.claude-plugin/` or `.claude/skills/` wrapper. Standalone server with auto-generated IDE integration configs.
+
+## Release and lifecycle
+
+### License — Copyleft (AGPL-3.0)
+
+AGPL-3.0 — strong network-copyleft license; derivatives served over a network must remain open under the same terms.
+
+### Active development
+
+99 commits on main; recent activity signaled by ongoing development.

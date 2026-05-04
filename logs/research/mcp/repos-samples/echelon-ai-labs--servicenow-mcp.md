@@ -1,203 +1,105 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/echelon-ai-labs/servicenow-mcp`. ServiceNow MCP server — 60+ tools across incidents, service catalog, change requests, agile, workflows, knowledge bases, user management; stdio and SSE ship as separate console scripts. 241 stars, MIT, default branch `main`.
 
-### url
+## Server runtime
 
-https://github.com/echelon-ai-labs/servicenow-mcp
+### Python with raw MCP SDK
 
-### stars
-
-241
-
-### last-commit
-
-not captured
-
-### license
-
-MIT
-
-### default branch
-
-main
-
-### one-line purpose
-
-ServiceNow MCP server — 60+ tools across incidents, service catalog, change requests, agile, workflows, knowledge bases; stdio and SSE ship as separate console scripts.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Python 99.4%; requires Python 3.11 or higher.
-
-### framework/SDK in use
-
-raw `mcp` Python SDK; Starlette for SSE transport.
-
-### pitfalls observed
-
-Python 3.11 floor — a touch more modern than awslabs' 3.10.
+Python (99.4%) on raw `mcp` Python SDK; Starlette as the SSE web framework. `requires-python >=3.11`. Likely import pattern `from mcp.server import Server`.
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio (standard mode) and Server-Sent Events (SSE) via a web server.
+Default mode, invoked as `python -m servicenow_mcp.cli`.
 
-### how selected
+### SSE (Server-Sent Events)
 
-separate console script (`servicenow-mcp-sse`) vs stdio CLI module (`python -m servicenow_mcp.cli`).
+SSE mode via Starlette web server, invoked as `servicenow-mcp-sse --instance-url=... --username=... --password=...`.
 
-## Distribution
+### Selection mechanism
 
-### every mechanism observed
+Separate console scripts per transport — distinct binaries for stdio (`python -m servicenow_mcp.cli`) vs SSE (`servicenow-mcp-sse`). Architecturally split rather than env-var-switched.
 
-clone + `pip install -e .`; Docker (Dockerfile present).
+## Capability surface
 
-### published package name(s)
+### Tools-heavy domain wrapper / domain-tool catalog
 
-not captured from README
+60+ tools across nine functional areas: Incident management, Service catalog, Change requests, Agile management, Workflows, Script includes, Changesets, Knowledge bases, User management. Very broad enterprise-ITSM surface.
 
-### install commands shown in README
+## Configuration delivery
 
-`git clone ... && python -m venv .venv && pip install -e .`
+### CLI flags
 
-## Entry point / launch
+SSE mode takes `--instance-url`, `--username`, `--password` and similar.
 
-### command(s) users/hosts run
+### Environment variables
 
-stdio: `python -m servicenow_mcp.cli`. SSE: `servicenow-mcp-sse --instance-url=... --username=... --password=...`.
-
-### wrapper scripts, launchers, stubs
-
-separate console script for SSE mode with CLI args.
-
-## Configuration surface
-
-### how config reaches the server
-
-CLI args (SSE mode) or env vars (both modes) — `SERVICENOW_INSTANCE_URL`, `SERVICENOW_USERNAME`, `SERVICENOW_PASSWORD`, `SERVICENOW_AUTH_TYPE`.
+`SERVICENOW_INSTANCE_URL`, `SERVICENOW_USERNAME`, `SERVICENOW_PASSWORD`, `SERVICENOW_AUTH_TYPE`. Both stdio and SSE modes accept env vars.
 
 ## Authentication
 
-### flow
+### Multi-method selector
 
-three methods — Basic Auth (username/password), OAuth (client credentials), API Key.
-
-### where credentials come from
-
-CLI args or env vars; `SERVICENOW_AUTH_TYPE` selects mechanism.
+Three auth methods — Basic Auth (username/password), OAuth client credentials, API Key — with `SERVICENOW_AUTH_TYPE` env var as the selector. Common where the upstream is enterprise SaaS whose customers mandate different auth shapes.
 
 ## Multi-tenancy
 
-### tenancy model
+### Single-user / single-tenant per process
 
-single ServiceNow instance per deployment (via env/URL).
+Single ServiceNow instance per deployment (via env/URL).
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### Source clone with editable install
 
-60+ tools across: Incident management, Service catalog, Change requests, Agile management, Workflows, Script includes, Changesets, Knowledge bases, User management.
+`git clone ... && python -m venv .venv && pip install -e .` is the documented install. Plain `pip install -e .` workflow with stdlib `venv`; no uv/uvx workflow declared.
 
-## Observability
+### Docker / OCI image
 
-### logging destination + format, metrics, tracing, debug flags
+Dockerfile present. Specific image publication not captured.
 
-not captured
+## Entry point and launch
 
-## Host integrations shown in README or repo
+### Module invocation / `python -m <module>` fallback
 
-Not captured per host.
+stdio mode: `python -m servicenow_mcp.cli`.
 
-## Claude Code plugin wrapper
+### Console script via `[project.scripts]` / npm bin
 
-### presence and shape
+SSE mode: `servicenow-mcp-sse` console script with CLI args.
 
-none
+### Multiple entry points per transport
 
-## Tests
+Two separate entry points for different transports — `python -m servicenow_mcp.cli` (stdio) vs `servicenow-mcp-sse` (SSE) — architecturally split rather than env-var-switched.
 
-### presence, framework, location, notable patterns
+## Build and packaging
 
-`tests/` directory present.
+### Python version pinning
 
-## CI
+`requires-python >=3.11`.
 
-### presence, system, triggers, what it runs
+## Container artifacts
 
-not captured — no mention.
+### Dockerfile (single-stage, build-from-source)
 
-## Container / packaging artifacts
+Dockerfile present at repo root.
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+## Test stack
 
-Dockerfile.
+### pytest with async + coverage
 
-## Example client / developer ergonomics
+`tests/` directory present. Framework specifics not captured beyond presence. Starlette suggests async for the SSE path.
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+## Repository layout
 
-CLI arg shape for SSE mode.
+### Single-package src-layout
 
-## Repo layout
+Single-package layout under `servicenow_mcp/`.
 
-### single-package / monorepo / vendored / other
+## Release and lifecycle
 
-single-package (`servicenow_mcp/`).
+### License — Permissive (MIT / Apache-2.0)
 
-## Notable structural choices
-
-Two separate entry points for different transports — `python -m servicenow_mcp.cli` (stdio) vs `servicenow-mcp-sse` (SSE); architecturally split rather than env-var-switched. Starlette as the SSE web framework — an explicit choice; many other servers use FastAPI + uvicorn. Three auth mechanisms in one server (Basic, OAuth, API Key) — selector is `SERVICENOW_AUTH_TYPE` env var. 60+ tools across 9 functional areas — very broad enterprise-ITSM surface. Python 3.11 floor — a touch more modern than awslabs' 3.10.
-
-## Unanticipated axes observed
-
-Transport split across separate console scripts — unlike servers that switch transport via env var/CLI flag, this one ships two distinct binaries. A cleaner separation but more install-time ceremony. Multi-auth support as a first-class feature — enterprise SaaS servers often need it because different customer deployments mandate different auth; most community servers pick one. ServiceNow MCP leans enterprise here. Starlette standalone for SSE rather than FastAPI — reveals Starlette as a viable sub-FastAPI layer for MCP servers that want HTTP transport without full REST framework overhead. Enterprise-tool density — 60+ tools in 9 functional areas; enterprise platforms generate more surface area than consumer SaaS does.
-
-## Python-specific
-
-### SDK / framework variant
-
-raw `mcp` Python SDK. Version pin from pyproject.toml: not captured (pyproject not read directly). Import pattern observed: likely `from mcp.server import Server`.
-
-### Python version floor
-
-`requires-python` value: `>=3.11`.
-
-### Packaging
-
-Build backend: not captured. Lock file present: not captured. Version manager convention: pip (`pip install -e .`).
-
-### Entry point
-
-Both — `__main__`-style module invocation (`python -m servicenow_mcp.cli`) and a console script (`servicenow-mcp-sse`). Actual console-script name(s): `servicenow-mcp-sse`. Host-config snippet shape: stdio — `python -m servicenow_mcp.cli`; SSE — `servicenow-mcp-sse` with CLI args.
-
-### Install workflow expected of end users
-
-`pip install -e .` after clone.
-
-### Async and tool signatures
-
-not captured; Starlette suggests async for SSE path.
-
-### Type / schema strategy
-
-not captured
-
-### Testing
-
-tests/ directory present.
-
-### Dev ergonomics
-
-not captured
-
-### Notable Python-specific choices
-
-Plain `pip install -e .` installation workflow — more conservative than the uv/uvx-heavy trend among newer servers. Separate CLI entry for each transport — the opposite of `AlwaysSany/deepl-fastmcp-python-server`'s one-binary multi-transport model.
-
-## Gaps
-
-Exact pyproject dependencies, console-script vs entry-point details, CI presence, test framework specifics, Docker image publication, OAuth specifics.
+MIT.

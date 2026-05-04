@@ -1,217 +1,193 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/datalayer/jupyter-mcp-server`. Jupyter notebook MCP server — 16+ tools for notebook/cell CRUD and execution; runs standalone or mounts as a Jupyter Server extension. ~1,000 stars; BSD-3-Clause; default branch `main`; active (206 commits on main); v1.0.0 released.
 
-### url
+## Server runtime
 
-https://github.com/datalayer/jupyter-mcp-server
+### Python with raw MCP SDK
 
-### stars
-
-~1,000
-
-### last-commit
-
-active (206 commits on main); v1.0.0 released
-
-### license
-
-BSD-3-Clause
-
-### default branch
-
-main
-
-### one-line purpose
-
-Jupyter notebook MCP server — 16+ tools for notebook/cell CRUD and execution; runs standalone or mounts as a Jupyter Server extension.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Python (71.9%), Jupyter Notebook (27.3%); `requires-python >= 3.10`.
-
-### framework/SDK in use
-
-raw `mcp[cli] >= 1.10.1`; also pulls FastAPI/uvicorn for HTTP surface.
+Python (71.9% of repo), Jupyter Notebook (27.3%). Raw `mcp[cli] >= 1.10.1`; also pulls FastAPI/uvicorn for HTTP surface. Import pattern: `mcp.server` / `mcp.server.fastmcp` (via `mcp[cli]`). `requires-python >= 3.10`. Async (tornado/fastapi under the hood); pytest suite is async. Heavy web stack (`jupyter_server`, `tornado>=6.1`, `fastapi`, `uvicorn`) reflects that this server brokers a live Jupyter kernel rather than a stateless data layer.
 
 ## Transport
 
-### supported transports
+### Streamable HTTP
 
-Streamable HTTP (primary), STDIO (alternative).
+Streamable HTTP is the primary transport.
 
-### how selected
+### stdio
 
-CLI launcher flag / config; MCP client JSON picks the transport via the command shape.
+stdio is the alternative transport.
 
-## Distribution
+### Selection mechanism
 
-### every mechanism observed
+CLI launcher flag / config; the MCP client JSON picks the transport via the command shape.
 
-PyPI (`pip install jupyter-mcp-server`), uvx (`uvx jupyter-mcp-server@latest`), Docker (`datalayer/jupyter-mcp-server:latest`).
+## Capability surface
 
-### published package name(s)
-
-`jupyter-mcp-server`.
-
-### install commands shown in README
-
-`pip install jupyter-mcp-server`; `uvx jupyter-mcp-server@latest`; Docker pull.
-
-### pitfalls observed
-
-Depends on a companion package `jupyter-mcp-tools>=0.1.6` — tool definitions are factored out into a separate PyPI project.
-
-## Entry point / launch
-
-### command(s) users/hosts run
-
-`jupyter-mcp-server` console script, or `uvx jupyter-mcp-server@latest`.
-
-### wrapper scripts, launchers, stubs
-
-Jupyter Server extension config under `jupyter-config/`; server can run standalone or as Jupyter extension.
-
-## Configuration surface
-
-### how config reaches the server
-
-environment variables — `JUPYTER_URL`, `JUPYTER_TOKEN`, `ALLOW_IMG_OUTPUT`, `DOCUMENT_ID`, plus `MCP_TOKEN` in v1.0.0+.
-
-## Authentication
-
-### flow
-
-token-based.
-
-### where credentials come from
-
-`JUPYTER_TOKEN` (for the upstream Jupyter server) and `MCP_TOKEN` (for the MCP interface, v1.0.0+); breaking change from 0.x.
-
-## Multi-tenancy
-
-### tenancy model
-
-per-notebook — `DOCUMENT_ID` and `use_notebook` tool switch targets at runtime; single JupyterLab instance per server process.
-
-## Capabilities exposed
-
-### tools / resources / prompts / sampling / roots / logging / other
+### Tools-heavy domain wrapper / domain-tool catalog
 
 16+ tools — file listing, kernel listing, JupyterLab connection, notebook CRUD (use/read/restart), cell ops (execute/insert/delete/overwrite), full-notebook run, selected-cell fetch.
 
-## Observability
+## Configuration delivery
 
-### logging destination + format, metrics, tracing, debug flags
+### Environment variables
 
-OpenTelemetry api+sdk (>=1.24.0) as core deps — instrumented out of the box.
+`JUPYTER_URL`, `JUPYTER_TOKEN`, `ALLOW_IMG_OUTPUT`, `DOCUMENT_ID`. v1.0.0+ adds `MCP_TOKEN` distinct from `JUPYTER_TOKEN`.
 
-### pitfalls observed
+### Host-side JSON config snippet
 
-OpenTelemetry baked into core deps rather than optional — every installation ships observability.
+Claude Desktop JSON config snippet (uvx form) and generic MCP-client snippets documented; Docker run examples included.
 
-## Host integrations shown in README or repo
+## Authentication
 
-### Claude Desktop
+### Static API key / token via env var
 
-JSON config snippet (uvx form).
+Token-based auth: `JUPYTER_TOKEN` for the upstream Jupyter server; `MCP_TOKEN` for the MCP interface (v1.0.0+).
 
-### Other MCP clients
+### Layered auth (protocol-level + upstream-level)
 
-generic JSON snippet; Docker run examples.
+v1.0.0 introduced `MCP_TOKEN` as a dedicated MCP-level token separate from the Jupyter-level `JUPYTER_TOKEN` — auth split by protocol layer; breaking change from 0.x. Operator can independently control "who can talk to MCP" vs "what MCP does upstream against Jupyter."
 
-### JupyterLab
+## Multi-tenancy
 
-installable as Jupyter Server extension (jupyter-config/).
+### Single connection per server instance
 
-## Claude Code plugin wrapper
+Single JupyterLab instance per server process.
 
-### presence and shape
+### Connection-lifecycle as a knob
 
-none observed.
+`DOCUMENT_ID` env var plus `use_notebook` tool switches the active notebook target at runtime — per-notebook switchable session within a single Jupyter connection. Refinement proposed for an explicit "per-notebook switchable session" path.
 
-## Tests
+## Distribution channel
 
-### presence, framework, location, notable patterns
+### PyPI via pip / pipx
+
+`pip install jupyter-mcp-server`.
+
+### PyPI via uvx (zero-install runner)
+
+`uvx jupyter-mcp-server@latest`.
+
+### Docker / OCI image
+
+`datalayer/jupyter-mcp-server:latest` on Docker Hub.
+
+### Multi-channel publication
+
+PyPI + uvx + Docker — multi-channel publication.
+
+## Entry point and launch
+
+### Console script via `[project.scripts]` / npm bin
+
+`[project.scripts]` declares `jupyter-mcp-server` mapped to `jupyter_mcp_server.CLI:server`.
+
+### `uvx <package>`
+
+Host-config snippet: `uvx jupyter-mcp-server@latest`.
+
+### Mounted into another runtime as an extension
+
+Server can run as a Jupyter Server extension (mounts inside the Jupyter process); extension scaffolding under `jupyter-config/`. Dual role: standalone MCP server or in-process extension of Jupyter.
+
+## Build and packaging
+
+### Hatchling + uv (Python)
+
+Build backend: hatchling (~1.21). Version manager convention: standard PyPI; uvx-runnable.
+
+### Optional-dependency fan-out
+
+`test` extra pulls jupyter components and collab tools; `lint` and `typing` extras provided; `mcp` CLI usable via `mcp[cli]` extra.
+
+## Schema and types
+
+### Pydantic v2 models
+
+Pydantic via the MCP SDK; FastAPI models for the HTTP layer; schema auto-derived.
+
+### Async model (cross-cutting)
+
+Async (tornado/fastapi under the hood); pytest suite is async.
+
+## Container artifacts
+
+### Dockerfile (single-stage, build-from-source)
+
+Dockerfile present.
+
+### Published Docker image
+
+Official image on Docker Hub (`datalayer/jupyter-mcp-server`).
+
+## Test stack
+
+### pytest with async + coverage
 
 pytest with `test` extra pulling jupyter components and collab tools; `tests/` directory; `pytest.ini` present.
 
 ## CI
 
-### presence, system, triggers, what it runs
+### GitHub Actions
 
 GitHub Actions in `.github/`.
 
-## Container / packaging artifacts
+## Repository layout
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+### Single-package, organized subdirectories
 
-Dockerfile + official image on Docker Hub (`datalayer/jupyter-mcp-server`).
+Single-package (`jupyter_mcp_server/`) plus `jupyter-config/` extension scaffolding plus `docs/`.
 
-## Example client / developer ergonomics
+### Sibling-package factoring
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+Depends on companion package `jupyter-mcp-tools>=0.1.6` — tool definitions are factored out into a separate PyPI project. Splits the protocol harness from the tool catalog as an explicit reuse pattern.
 
-Claude Desktop and other host JSONs; Jupyter-lab launch with token documented.
+## Host integration
 
-## Repo layout
+### Claude Desktop
 
-### single-package / monorepo / vendored / other
+JSON config snippet (uvx form).
 
-single-package (`jupyter_mcp_server/`) + `jupyter-config/` extension scaffolding + `docs/`.
+### Generic / host-agnostic snippet
 
-## Notable structural choices
+Generic JSON snippet documented; Docker run examples.
 
-Dual role: runs as standalone MCP server or as Jupyter Server extension (mounts inside Jupyter process). OpenTelemetry baked into core deps rather than optional — every installation ships observability. Depends on a companion package `jupyter-mcp-tools>=0.1.6` — tool definitions are factored out into a separate PyPI project.
+### JupyterLab as a host
 
-## Unanticipated axes observed
+Installable as Jupyter Server extension (`jupyter-config/`) — JupyterLab itself is the host.
 
-Server-as-extension vs server-as-standalone is a deployment axis. Sibling-package factoring of tool definitions (jupyter-mcp-tools) is an unusual reuse pattern in MCP land. v1.0.0 introduced a dedicated MCP-level token separate from the Jupyter-level token (auth split by protocol layer).
+## Observability
 
-## Python-specific
+### OpenTelemetry instrumentation
 
-### SDK / framework variant
+`opentelemetry-api` and `opentelemetry-sdk` (>=1.24.0) as core deps — instrumented out of the box. OTel baked into core deps rather than optional; every installation ships observability.
 
-raw `mcp[cli]` SDK; version pin: `mcp[cli] >= 1.10.1`; import pattern: `mcp.server` / `mcp.server.fastmcp` (via `mcp[cli]`).
+## Claude Code plugin / skill wrapper
 
-### Python version floor
+### Bare MCP server, no Claude Code wrapper
 
-`requires-python` value: `>=3.10`.
+None observed.
 
-### Packaging
+## Developer ergonomics
 
-build backend: hatchling (~1.21); lock file presence not confirmed; version manager convention: standard PyPI; uvx-runnable.
+### Sample MCP client configs in repo
 
-### Entry point
+Claude Desktop and other host JSONs in README; Jupyter-lab launch with token documented.
 
-`[project.scripts]` → `jupyter_mcp_server.CLI:server`; actual console-script name: `jupyter-mcp-server`; host-config snippet shape: `uvx jupyter-mcp-server@latest`.
+### Linter and type-checker stack
 
-### Install workflow expected of end users
+`lint` and `typing` extras provided.
 
-pip, uvx, Docker all first-class; one-liner: `pip install jupyter-mcp-server`; `uvx jupyter-mcp-server@latest`.
+## Release and lifecycle
 
-### Async and tool signatures
+### Tagged release with version in changelog
 
-async (tornado/fastapi under the hood); pytest suite is async.
+v1.0.0 released; v1.0.0 introduced breaking changes (split tokens, dedicated MCP-level auth).
 
-### Type / schema strategy
+### Active development
 
-Pydantic via MCP SDK; FastAPI models for HTTP layer; schema auto-derived.
+206 commits on main; ongoing project.
 
-### Testing
+### License — Permissive (BSD-3-Clause)
 
-pytest (via `test` extra); fixture style not inspected.
-
-### Dev ergonomics
-
-`lint` and `typing` extras provided; `mcp` CLI usable via `mcp[cli]` extra.
-
-### Notable Python-specific choices
-
-Heavy web stack in deps (`jupyter_server`, `tornado>=6.1`, `fastapi`, `uvicorn`) — reflects that this server brokers a live Jupyter kernel rather than a stateless data layer. `opentelemetry-api/sdk` are hard deps — server is designed for production observability out of the box.
-
-## Gaps
-
-`uv.lock` presence not confirmed (repo uses hatchling but unclear on uv use). Exact content of `jupyter-mcp-tools` helper package not inspected. Full list of 16+ tools beyond categories not enumerated.
+BSD-3-Clause — permissive license with explicit attribution and non-endorsement clauses. Functionally similar to MIT/Apache (commercial-friendly, no copyleft) but distinguished by the legal text, particularly the requirement that the project's name and contributors not be used to endorse derivative products without permission.

@@ -1,175 +1,131 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/ppl-ai/modelcontextprotocol`. Perplexity MCP server (official Perplexity-AI org slug `ppl-ai`) — search-augmented answering across four product tiers (search, ask, research, reason). 2.1k stars, MIT, default branch `main`, 133 total commits.
 
-### url
+## Server runtime
 
-https://github.com/ppl-ai/modelcontextprotocol
+### Node.js / TypeScript with official MCP SDK
 
-### stars
-
-2.1k
-
-### last-commit
-
-Not explicitly extracted; 133 total commits.
-
-### license
-
-MIT
-
-### default branch
-
-main
-
-### one-line purpose
-
-Perplexity MCP server (official, org slug differs from brand) — search-augmented answering. The user brief referenced `perplexityai/modelcontextprotocol`; the resolved canonical repo is `ppl-ai/modelcontextprotocol` (Perplexity AI's GitHub org uses the `ppl-ai` slug).
-
-## Language and runtime
-
-### language(s) + version constraints
-
-TypeScript (95.2%); Node.js runtime.
-
-### framework/SDK in use
-
-Model Context Protocol TypeScript SDK.
+TypeScript (95.2%); Node.js runtime; standard MCP TypeScript SDK.
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio (default); HTTP server deployment also supported.
+stdio is the default transport.
 
-### how selected
+### Streamable HTTP
 
-HTTP mode uses `PORT` and `BIND_ADDRESS` env vars plus CORS support; otherwise stdio.
+HTTP server deployment supported; `PORT` and `BIND_ADDRESS` env vars plus CORS support enable shared-server deployments where multiple clients hit one process.
 
-## Distribution
+### Selection mechanism
 
-### every mechanism observed
+HTTP mode is selected by setting `PORT` and `BIND_ADDRESS` env vars; otherwise stdio default — implicit-default selection via env var presence.
 
-npm package with quick-install badges; Dockerfile included for containerized deployment.
+## Capability surface
 
-### published package name(s)
+### Tools-only, hand-curated narrow surface
 
-`@perplexity-ai/mcp-server`
+Four tools mapping 1:1 to Perplexity product tiers — `perplexity_search` (web search via Search API), `perplexity_ask` (conversational AI with sonar-pro model), `perplexity_research` (deep research via sonar-deep-research), `perplexity_reason` (advanced reasoning via sonar-reasoning-pro). Tool boundaries mirror Perplexity model variants rather than low-level API endpoints.
 
-### install commands shown in README
+## Configuration delivery
 
-`npx -y @perplexity-ai/mcp-server`
+### Environment variables
 
-## Entry point / launch
+`PERPLEXITY_API_KEY` (required), `PERPLEXITY_TIMEOUT_MS` (default 300000ms), `PERPLEXITY_BASE_URL`, `PORT`, `BIND_ADDRESS`, plus proxy configuration. `PERPLEXITY_PROXY` takes priority over standard `HTTPS_PROXY`/`HTTP_PROXY` — Perplexity-specific proxy overrides system-wide settings, recognizing corporate/enterprise environments where a specific proxy needs to override system defaults.
 
-### command(s) users/hosts run
+### Host-side JSON config snippet
 
-`npx -y @perplexity-ai/mcp-server`
-
-### wrapper scripts, launchers, stubs
-
-npm bin entry; quick-install badges for Cursor, VS Code, Claude Desktop, Kiro, Windsurf.
-
-## Configuration surface
-
-### how config reaches the server
-
-Environment variables dominate — `PERPLEXITY_API_KEY` (required), `PERPLEXITY_TIMEOUT_MS` (default 300000ms), `PERPLEXITY_BASE_URL`, `PORT`, `BIND_ADDRESS`, proxy configuration.
+Quick-install badges in README for Cursor, VS Code, Claude Desktop, Kiro, Windsurf.
 
 ## Authentication
 
-### flow
+### Static API key / token via env var
 
-Static API key via `PERPLEXITY_API_KEY` env var.
-
-### where credentials come from
-
-User obtains key from Perplexity API Portal.
+`PERPLEXITY_API_KEY` env var; user obtains key from Perplexity API Portal.
 
 ## Multi-tenancy
 
-### tenancy model
+### Single-user / single-tenant per process
 
-Single-user — API key is process-scoped; per-request tenancy is Perplexity-account-level.
+API key is process-scoped; per-request tenancy is Perplexity-account-level.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### npm via npx / bunx
 
-Four tools — `perplexity_search` (web search via Search API), `perplexity_ask` (conversational AI with sonar-pro model), `perplexity_research` (deep research via sonar-deep-research), `perplexity_reason` (advanced reasoning via sonar-reasoning-pro).
+`npx -y @perplexity-ai/mcp-server` is the documented install command.
 
-## Observability
+### Docker / OCI image
 
-### logging destination + format, metrics, tracing, debug flags
+Dockerfile included for containerized deployment.
 
-Log level controlled via `PERPLEXITY_LOG_LEVEL` env var; destination not explicitly extracted.
+## Entry point and launch
 
-## Host integrations shown in README or repo
+### `npx -y <package>` / `bunx`
 
-### Cursor
+`npx -y @perplexity-ai/mcp-server`; npm bin entry. Quick-install badges for Cursor, VS Code, Claude Desktop, Kiro, Windsurf.
 
-Quick-install badge.
+## Test stack
 
-### VS Code
+### Vitest (TypeScript / Node)
 
-Quick-install badge.
+vitest configured; specific layout not extracted within budget.
+
+## CI
+
+### GitHub Actions
+
+GitHub Actions workflows present; specific jobs not extracted within budget.
+
+## Container artifacts
+
+### Dockerfile (single-stage, build-from-source)
+
+Dockerfile included.
+
+## Host integration
 
 ### Claude Desktop
 
 Quick-install badge.
 
-### Kiro
+### Cursor
 
 Quick-install badge.
 
-### Windsurf
+### VS Code / VS Code Insiders / Visual Studio family
 
 Quick-install badge.
 
-## Claude Code plugin wrapper
+### Windsurf / Goose / Qodo Gen / Cline / Kiro / Augment
 
-### presence and shape
+Windsurf and Kiro quick-install badges.
+
+## Claude Code plugin / skill wrapper
+
+### Bare MCP server, no Claude Code wrapper
 
 Not explicitly observed within extracted content.
 
-## Tests
+## Documentation surface
 
-### presence, framework, location, notable patterns
+### README as the canonical surface
 
-vitest configured; specific layout not extracted.
+README hosts per-host quick-install badges and integration guidance; HTTP mode with CORS for shared deployments documented.
 
-## CI
+## Repository layout
 
-### presence, system, triggers, what it runs
-
-GitHub Actions workflows present; specific jobs not extracted.
-
-## Container / packaging artifacts
-
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
-
-Dockerfile included.
-
-## Example client / developer ergonomics
-
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
-
-Per-host quick-install badges in README; HTTP mode with CORS for shared deployments.
-
-## Repo layout
-
-### single-package / monorepo / vendored / other
+### Single-package src-layout
 
 Single-package TypeScript project; source in `/src`.
 
-## Notable structural choices
+## Release and lifecycle
 
-Optional `strip_thinking` parameter removes reasoning tags from Perplexity output — token-saving feature that gives caller control over output verbosity. Proxy configuration layering — `PERPLEXITY_PROXY` takes priority over standard `HTTPS_PROXY`/`HTTP_PROXY`, so the Perplexity-specific proxy overrides system-wide settings. Four-tool surface aligns with Perplexity's product tiers (search, ask, research, reason) — tool boundaries mirror Perplexity model variants rather than low-level API endpoints. HTTP mode plus CORS enables shared-server deployments where multiple clients hit one process.
+### License — Permissive (MIT / Apache-2.0)
 
-## Unanticipated axes observed
+MIT.
 
-First-party vendor MCP where the tool surface maps 1:1 to product/model offerings — a cleaner pattern than low-level REST wrapping. Proxy hierarchy recognizes corporate/enterprise environments where a specific proxy needs to override system defaults.
+### Active development
 
-## Gaps
-
-Last commit date and release cadence not confirmed. Whether HTTP mode supports authentication beyond env-var key (e.g., per-request API keys) not extracted. Exact tool argument schemas not extracted within budget.
+133 total commits; brand-canonical (org slug differs from brand: `ppl-ai` rather than `perplexityai`).

@@ -1,213 +1,183 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/ClickHouse/mcp-clickhouse`. ClickHouse MCP server — runs SQL, lists databases/tables, and queries an embedded chDB engine against ClickHouse clusters. 757 stars, Apache-2.0, default branch `main`, 71 commits.
 
-### url
+## Server runtime
 
-https://github.com/ClickHouse/mcp-clickhouse
+### Python with FastMCP
 
-### stars
-
-757
-
-### last-commit
-
-71 commits on main; specific date not surfaced
-
-### license
-
-Apache-2.0
-
-### default branch
-
-main
-
-### one-line purpose
-
-ClickHouse MCP server — run SQL, list databases/tables, and query an embedded chDB engine against ClickHouse clusters.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Python (98.7%); uv-managed.
-
-### framework/SDK in use
-
-FastMCP (MCP Server SDK)
+Python (98.7%) on FastMCP 2.x — `fastmcp>=2.0.0,<3.0.0` in pyproject.toml. `fastmcp.json` present for FastMCP-native config. `requires-python = ">=3.10"`. Tool signatures appear synchronous (`def`) in README examples; FastMCP handles the async boundary.
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio (default), HTTP, SSE.
+Default transport.
 
-### how selected
+### Streamable HTTP
 
-`CLICKHOUSE_MCP_SERVER_TRANSPORT` env var (stdio/http/sse).
+Selectable via `CLICKHOUSE_MCP_SERVER_TRANSPORT=http`.
 
-## Distribution
+### SSE (Server-Sent Events)
 
-### every mechanism observed
+Selectable via `CLICKHOUSE_MCP_SERVER_TRANSPORT=sse`.
 
-PyPI (`mcp-clickhouse`, `mcp-clickhouse[chdb]` extra), Docker.
+### Selection mechanism
 
-### published package name(s)
+Environment variable — `CLICKHOUSE_MCP_SERVER_TRANSPORT=stdio|http|sse`.
 
-mcp-clickhouse
+## Capability surface
 
-### install commands shown in README
+### Tools-heavy domain wrapper / domain-tool catalog
 
-`pip install mcp-clickhouse`; `pip install 'mcp-clickhouse[chdb]'`.
+Tools — `run_query` (SQL), `list_databases`, `list_tables` (paginated, filterable), `run_chdb_select_query` (against embedded chDB). Resources/prompts not listed explicitly. Paginated/filtered `list_tables` is a deliberate scalability axis.
 
-## Entry point / launch
+### Capability gating flags (per-tool, per-category, write-mode)
 
-### command(s) users/hosts run
+`CLICKHOUSE_ALLOW_WRITE_ACCESS` and a separate `CLICKHOUSE_ALLOW_DROP` env var gate destructive operations in two steps. Read-only default at both MCP-layer and SQL-layer (`readonly=1` setting).
 
-`mcp-clickhouse` script or `python3 -m mcp_clickhouse.main`.
+## Configuration delivery
 
-### wrapper scripts, launchers, stubs
+### Environment variables
 
-Dockerfile; `test-services/` Docker Compose for local dev.
+`CLICKHOUSE_HOST`, `CLICKHOUSE_USER`, `CLICKHOUSE_PASSWORD` (required); `CLICKHOUSE_SECURE`, `CLICKHOUSE_VERIFY` (TLS); `CLICKHOUSE_MCP_SERVER_TRANSPORT`; `CLICKHOUSE_ALLOW_WRITE_ACCESS`, `CLICKHOUSE_ALLOW_DROP`; `CLICKHOUSE_MCP_AUTH_TOKEN`, `CLICKHOUSE_MCP_AUTH_DISABLED`; `CHDB_ENABLED`, `CHDB_DATA_PATH`; `MCP_MIDDLEWARE_MODULE`.
 
-## Configuration surface
+### Framework-native config file
 
-### how config reaches the server
-
-Environment variables — `CLICKHOUSE_HOST`, `CLICKHOUSE_USER`, `CLICKHOUSE_PASSWORD` (required); `CLICKHOUSE_SECURE`, `CLICKHOUSE_VERIFY` (TLS); `CLICKHOUSE_MCP_SERVER_TRANSPORT`; `CLICKHOUSE_ALLOW_WRITE_ACCESS`, `CLICKHOUSE_ALLOW_DROP`; `CLICKHOUSE_MCP_AUTH_TOKEN`, `CLICKHOUSE_MCP_AUTH_DISABLED`; `CHDB_ENABLED`, `CHDB_DATA_PATH`; `MCP_MIDDLEWARE_MODULE`. `fastmcp.json` for FastMCP-level config.
+`fastmcp.json` for FastMCP-level config alongside the env-var surface.
 
 ## Authentication
 
-### flow
+### None / implicit (local-resource gating)
 
-stdio — none. HTTP/SSE — bearer token required (generated via `uuidgen` or `openssl`). Dev override via `CLICKHOUSE_MCP_AUTH_DISABLED=true`.
+stdio mode requires no auth — process boundary is the trust boundary.
 
-### where credentials come from
+### Bearer token over HTTP/SSE
 
-`CLICKHOUSE_MCP_AUTH_TOKEN` env var; ClickHouse credentials also via env vars.
+HTTP/SSE require a bearer token, generated via `uuidgen` or `openssl` and supplied via `CLICKHOUSE_MCP_AUTH_TOKEN`. Dev-mode override via `CLICKHOUSE_MCP_AUTH_DISABLED=true` lets authors run unauthenticated locally without code changes.
+
+### Database connection string
+
+ClickHouse credentials supplied via env vars (`CLICKHOUSE_HOST`, `CLICKHOUSE_USER`, `CLICKHOUSE_PASSWORD`).
 
 ## Multi-tenancy
 
-### tenancy model
+### Per-request tenancy via middleware
 
-Per-request tenant possible — custom middleware can override connection settings per request via `CLIENT_CONFIG_OVERRIDES_KEY` in context state.
+HTTP-mode server allows per-request connection overrides through middleware-managed context state — incoming request can carry connection settings via `CLIENT_CONFIG_OVERRIDES_KEY` in context state. Closest the corpus comes to true multi-tenancy among DB MCP servers.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### PyPI via pip / pipx
 
-Tools — `run_query` (SQL), `list_databases`, `list_tables` (paginated, filterable), `run_chdb_select_query` (against embedded chDB). Resources/prompts not listed explicitly.
+Published to PyPI as `mcp-clickhouse`. `pip install mcp-clickhouse`; optional `[chdb]` extra (`pip install 'mcp-clickhouse[chdb]'`) swaps in embedded analytics engine.
 
-## Observability
+### PyPI via uvx (zero-install runner)
 
-### logging destination + format, metrics, tracing, debug flags
+`uv run --with mcp-clickhouse --python 3.10 mcp-clickhouse` documented as the recommended one-liner with on-demand install and pinned Python.
 
-Example middleware (`example_middleware.py`) demonstrates request logging, tool-call tracking, performance measurement.
+### Docker / OCI image
 
-## Host integrations shown in README or repo
+Dockerfile present for containerized deployment.
 
-### Claude Desktop
+## Entry point and launch
 
-Standard MCP config expected.
+### Console script via `[project.scripts]` / npm bin
 
-### Other editors/CLIs
+`[project.scripts]`: `mcp-clickhouse = "mcp_clickhouse.main:main"`. README host-config snippet: `"command": "uv"`, `"args": ["run", "--with", "mcp-clickhouse", "--python", "3.10", "mcp-clickhouse"]`.
 
-Not enumerated in fetched content. Integration details less emphasized than the runtime config surface.
+### Module invocation / `python -m <module>` fallback
 
-## Claude Code plugin wrapper
+`python3 -m mcp_clickhouse.main` shown as alternative invocation.
 
-### presence and shape
+## Build and packaging
 
-Not present.
+### Hatchling + uv (Python)
 
-## Tests
+Build backend: `hatchling.build`. uv-managed (uv.lock likely).
 
-### presence, framework, location, notable patterns
+### Optional-dependency fan-out
 
-pytest; tests under `tests/` with separate suites for ClickHouse (`test_tool.py`) and chDB (`test_chdb_tool.py`); `test-services/` Docker Compose spins up a ClickHouse instance for integration tests.
+Optional `[chdb]` extra swaps in embedded chDB engine — cleanly separates the two analytics backends via Python extras.
+
+## Schema and types
+
+### FastMCP auto-derivation from type hints
+
+FastMCP-style auto-derived schema from Python signatures.
+
+## Container artifacts
+
+### Dockerfile (single-stage, build-from-source)
+
+Dockerfile at repo root.
+
+### Docker-Compose backend for end-to-end tests
+
+`test-services/` Docker Compose spins up a ClickHouse instance for integration tests.
+
+## Test stack
+
+### pytest with async + coverage
+
+pytest + pytest-asyncio in dev extras. Tests under `tests/` with separate suites for ClickHouse (`test_tool.py`) and chDB (`test_chdb_tool.py`). Fixture style uses Docker Compose-backed integration services (`test-services/`) alongside unit tests.
 
 ## CI
 
-### presence, system, triggers, what it runs
+### GitHub Actions
 
-GitHub Actions in `.github/workflows/`; specifics not extracted.
+`.github/workflows/` present; specifics not extracted.
 
-## Container / packaging artifacts
+## Host integration
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+### Claude Desktop
 
-Dockerfile; `test-services/` Docker Compose for local test infra.
+Standard MCP `mcpServers` config snippet expected; integration details less emphasized in the README than the runtime config surface.
 
-## Example client / developer ergonomics
+## Observability
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+### Request lifecycle hooks for telemetry
 
-`example_middleware.py`, `test-services/`, `fastmcp.json`.
+Example middleware (`example_middleware.py`) demonstrates request logging, tool-call tracking, and performance measurement — extensibility shape rather than fixed observability.
 
-## Repo layout
+## Repository layout
 
-### single-package / monorepo / vendored / other
+### Single-package src-layout
 
 Single-package Python — `mcp_clickhouse/`, `tests/`, `test-services/`, `.github/workflows/`, `fastmcp.json`, `pyproject.toml`.
 
-## Notable structural choices
+## Safety and security posture
 
-- Dual-engine — standalone ClickHouse client and embedded chDB engine can run together
-- Progressive trust: `CLICKHOUSE_ALLOW_WRITE_ACCESS` plus a separate `CLICKHOUSE_ALLOW_DROP` gate destructive operations in two steps
-- Read-only default at both MCP-layer and SQL-layer (`readonly=1` setting)
-- Middleware-first extensibility — `MCP_MIDDLEWARE_MODULE` lets users inject interceptors for tool calls, resource reads, prompts, listings without forking
-- Per-request connection overrides via middleware-managed context state — closest thing to multi-tenancy among DB MCP servers
-- Paginated/filtered `list_tables` — deliberate scalability axis absent from smaller servers
+### Progressive trust gating
 
-## Unanticipated axes observed
+`CLICKHOUSE_ALLOW_WRITE_ACCESS` plus a separate `CLICKHOUSE_ALLOW_DROP` gate destructive operations in two steps — finer-grained than the binary read-only knob common elsewhere.
 
-- Middleware plugin system intercepting MCP protocol events is an unusual architectural axis — most MCP servers expose no such extension point
-- Two-flag destructive-operation gating (`WRITE_ACCESS` + `DROP`) is more granular than typical read-only toggles
-- Dual-engine chDB integration collapses "embedded analytics" and "server-backed analytics" into one MCP surface
+## Extension points
 
-## Python-specific
+### Middleware module slot
 
-### SDK / framework variant
+`MCP_MIDDLEWARE_MODULE` env var loads a user-authored Python module that intercepts FastMCP protocol events (tool calls, resource reads, prompts, listings) and can mutate context state (e.g., per-request connection overrides) or implement cross-cutting concerns. The closest thing in the corpus to a true plugin architecture for an MCP server.
 
-FastMCP 2.x — `fastmcp>=2.0.0,<3.0.0` in pyproject.toml. Import via FastMCP server idiom (`fastmcp.json` also present for FastMCP-native config).
+### Sample example middleware
 
-### Python version floor
+`example_middleware.py` demonstrates how to extend the server via a configured middleware module — both documentation and a test of the middleware extension point.
 
-`requires-python = ">=3.10"`. CI matrix not extracted.
+## Developer ergonomics
 
-### Packaging
+### MCP framework dev config
 
-Build backend: `hatchling.build`. Lock file: uv.lock likely (uv-managed per Language section). Version manager convention: `uv`.
+`fastmcp.json` in repo for FastMCP-native dev config.
 
-### Entry point
+### Linter and type-checker stack
 
-`[project.scripts]`: `mcp-clickhouse = "mcp_clickhouse.main:main"`. Console script: `mcp-clickhouse`. README host-config snippet: `"command": "uv"`, `"args": ["run", "--with", "mcp-clickhouse", "--python", "3.10", "mcp-clickhouse"]` — uv-run with on-demand install, pinned Python; alternative `python3 -m mcp_clickhouse.main` also shown.
+ruff configured (line-length 100). No Makefile observed.
 
-### Install workflow expected of end users
+### Sample example middleware
 
-`uv run` (recommended), `pip install mcp-clickhouse`, optional `[chdb]` extra; Docker image. One-liner: `uv run --with mcp-clickhouse --python 3.10 mcp-clickhouse`.
+`example_middleware.py` demonstrates middleware extension.
 
-### Async and tool signatures
+## Documentation surface
 
-Tool signatures appear synchronous (`def`) in README examples; FastMCP handles the async boundary. No explicit asyncio usage surfaced.
+### README as the canonical surface
 
-### Type / schema strategy
-
-FastMCP-style auto-derived schema from Python signatures (inferred from FastMCP 2.x usage).
-
-### Testing
-
-pytest + pytest-asyncio in dev extras. Fixture style uses Docker Compose-backed integration services (`test-services/`) alongside unit tests.
-
-### Dev ergonomics
-
-`fastmcp.json` in repo for FastMCP-native dev config; `example_middleware.py` demonstrates middleware extension. No Makefile observed; ruff configured (line-length 100).
-
-### Notable Python-specific choices
-
-- Middleware plugin slot — `MCP_MIDDLEWARE_MODULE` env var loads a user-authored Python module that intercepts FastMCP protocol events
-- Optional extra `[chdb]` swaps in embedded chDB engine — cleanly separates the two analytics backends via Python extras
-
-## Gaps
-
-Last commit date not directly surfaced. CI workflow specifics not extracted. Host-integration (Claude Desktop/Cursor/VS Code) examples less prominent than runtime config in the README.
+README.md carrying purpose, install, config; host-integration examples less prominent than runtime config.

@@ -1,205 +1,131 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/sajal2692/mcp-weaviate`. Weaviate vector-DB MCP server — exposes connection checks, schema info, collection listing, object retrieval, and semantic/keyword/hybrid search; multi-tenancy is a per-call argument rather than server config. ~5 stars, MIT, default branch `main`. Last release v0.2.0 (2025-09-03).
 
-### url
+## Server runtime
 
-https://github.com/sajal2692/mcp-weaviate
+### Python with FastMCP
 
-### stars
-
-~5
-
-### last-commit
-
-v0.2.0 (2025-09-03).
-
-### license
-
-MIT
-
-### default branch
-
-main
-
-### one-line purpose
-
-Weaviate vector-DB MCP server — tenancy passed as a tool argument (per-call), not server config.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Python 100%; version via `.python-version`.
-
-### framework/SDK in use
-
-FastMCP (exact version pin not surfaced).
+Python (100% of repo) on FastMCP. Import pattern `from fastmcp import FastMCP`. Exact FastMCP version pin not surfaced; weaviate-client async surface implies tools are likely async.
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio (default), streamable-http.
+Default transport.
 
-### how selected
+### Streamable HTTP
 
-CLI argument / env config.
+Supported alongside stdio.
 
-## Distribution
+### Selection mechanism
 
-### every mechanism observed
+CLI argument or env config selects between stdio and streamable-http.
 
-PyPI via uvx (`uvx mcp-weaviate`).
+## Capability surface
 
-### published package name(s)
+### Tools-only, hand-curated narrow surface
 
-`mcp-weaviate`.
+11 tools: connection checks, schema info, collection listing, object retrieval, plus semantic/keyword/hybrid search variants (each with a per-tenant variant).
 
-### install commands shown in README
+## Configuration delivery
 
-`uvx mcp-weaviate --help`.
+### Environment variables
 
-## Entry point / launch
-
-### command(s) users/hosts run
-
-`uvx mcp-weaviate`.
-
-### wrapper scripts, launchers, stubs
-
-entry at `src.main`.
-
-## Configuration surface
-
-### how config reaches the server
-
-Environment variables for API keys and Weaviate connection parameters.
+Environment variables carry API keys (OpenAI, Cohere optional, WCS) and Weaviate connection parameters.
 
 ## Authentication
 
-### flow
+### Per-source independent API keys with graceful degradation
 
-API keys for embedding providers and Weaviate Cloud.
+Two embedding providers supported (OpenAI, Cohere); Cohere is optional — server degrades gracefully when the Cohere key is absent.
 
-### where credentials come from
+### Static API key / token via env var
 
-OpenAI / Cohere (optional) / WCS API keys via env vars.
+WCS / OpenAI / Cohere keys supplied via environment variables; standard env-var credential pattern.
 
 ## Multi-tenancy
 
-### tenancy model
+### Per-call tenancy argument
 
-Multi-tenancy supported — README explicitly calls out multi-tenancy as a feature of the search tools; tenancy becomes an argument, not a server-config dimension.
+Multi-tenancy is a first-class feature of the search tools — tenant identifier is a tool argument, not a server-config dimension. README explicitly calls out multi-tenancy as a feature; tool signatures expose per-tenant search variants — every search/retrieval tool takes a `tenant` parameter consistently rather than relying on an env-var-pinned tenant.
 
-### pitfalls observed
+## Distribution channel
 
-First-class multi-tenancy in tool signatures — rare across Python MCP servers which typically treat tenancy as external config.
+### PyPI via uvx (zero-install runner)
 
-## Capabilities exposed
+Published to PyPI as `mcp-weaviate`; installed via `uvx mcp-weaviate` — README shows `uvx mcp-weaviate --help` as the install command.
 
-### tools / resources / prompts / sampling / roots / logging / other
+## Entry point and launch
 
-11 tools — connection checks, schema info, collection listing, object retrieval, semantic/keyword/hybrid search (with per-tenant variants).
+### Console script via `[project.scripts]` / npm bin
 
-## Observability
+`[project.scripts]` declares `mcp-weaviate` → `src.main` (src-layout style); host-config snippet shape `uvx mcp-weaviate`.
 
-### logging destination + format, metrics, tracing, debug flags
+### `uvx <package>`
 
-not surfaced
+Primary user invocation is `uvx mcp-weaviate`.
 
-## Host integrations shown in README or repo
+## Build and packaging
 
-### Claude Desktop
+### Hatchling + uv (Python)
 
-implied via `uvx` command pattern.
+uv-backed packaging; `uv.lock` likely present (not directly verified). Build backend not surfaced in extract.
 
-## Claude Code plugin wrapper
+### Python version pinning
 
-### presence and shape
+`.python-version` file present; exact value not extracted.
 
-none observed
+## Schema and types
 
-## Tests
+### FastMCP auto-derivation from type hints
 
-### presence, framework, location, notable patterns
+Pydantic-backed schema auto-derived from Python signatures via FastMCP.
 
-pytest via `uv run pytest`; `tests/` directory.
+### Async model (cross-cutting)
+
+Tools likely async — weaviate-client exposes an async surface.
+
+## Test stack
+
+### pytest with async + coverage
+
+`pytest` via `uv run pytest`; `tests/` directory.
 
 ## CI
 
-### presence, system, triggers, what it runs
+### GitHub Actions
 
 GitHub Actions workflow present.
 
-## Container / packaging artifacts
+## Host integration
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+### Claude Desktop
 
-none observed
+Implied via `uvx` command pattern — README does not show explicit host snippets but `uvx mcp-weaviate` plugs into any host with a JSON command/args slot.
 
-## Example client / developer ergonomics
+## Repository layout
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+### Single-package src-layout
 
-`uv run ruff check`, `uv run mypy`.
+`src/`-layout single-package; `[project.scripts]` entry uses `src.main` style (implicit src-package root requiring src-layout build-backend support).
 
-## Repo layout
+## Developer ergonomics
 
-### single-package / monorepo / vendored / other
+### Linter and type-checker stack
 
-single-package (`src/`).
+`uv run ruff check` and `uv run mypy` as separate developer commands.
 
-## Notable structural choices
+### `uv run <tool>` invocations
 
-First-class multi-tenancy in tool signatures — rare across Python MCP servers which typically treat tenancy as external config. Supports two embedding providers (OpenAI, Cohere) with Cohere as optional — graceful degradation if Cohere key absent.
+Each developer tool invoked via `uv run <tool>` rather than a Makefile or task runner.
 
-## Unanticipated axes observed
+## Release and lifecycle
 
-Exposing per-tenant search tools as a first-class MCP concept — tenancy becomes an argument, not a server-config dimension.
+### License — Permissive (MIT / Apache-2.0)
 
-## Python-specific
+MIT.
 
-### SDK / framework variant
+### Active development
 
-FastMCP; version pin not surfaced; import pattern `from fastmcp import FastMCP`.
-
-### Python version floor
-
-`requires-python` value via `.python-version` (exact value not read).
-
-### Packaging
-
-Build backend not surfaced (uv-backed). Lock file: `uv.lock` likely. Version manager convention: uv.
-
-### Entry point
-
-`[project.scripts]` (name: `mcp-weaviate`) → `src.main` style; console-script name `mcp-weaviate`; host-config snippet `uvx mcp-weaviate`.
-
-### Install workflow expected of end users
-
-uvx primary; one-liner `uvx mcp-weaviate --help`.
-
-### Async and tool signatures
-
-weaviate-client has async surface; likely async.
-
-### Type / schema strategy
-
-Pydantic via FastMCP.
-
-### Testing
-
-pytest; fixture style not inspected.
-
-### Dev ergonomics
-
-ruff + mypy as separate `uv run` commands.
-
-### Notable Python-specific choices
-
-Source entry uses `src.main` style rather than a package name — suggests `src/` is an implicit package root, which requires src-layout support in the build backend.
-
-## Gaps
-
-Exact FastMCP version pin not read. Python floor not confirmed. No pyproject.toml content verified.
+v0.2.0 released 2025-09-03.

@@ -1,171 +1,185 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/googleapis/mcp-toolbox`. Google APIs MCP toolbox — declarative tool authoring via YAML manifest, 5 distribution channels, HTTP-first on port 5000 across 8+ databases. 14.7k stars, Apache-2.0, default branch `main`, v1.1.0 released 2026-04-13, 1,798 commits, vendor-authored (Google).
 
-### url
+## Server runtime
 
-https://github.com/googleapis/mcp-toolbox
+### Go with custom MCP implementation
 
-### stars
-
-14.7k
-
-### last-commit
-
-v1.1.0 released 2026-04-13; 1,798 total commits.
-
-### license
-
-Apache-2.0
-
-### default branch
-
-main
-
-### one-line purpose
-
-Google APIs MCP toolbox — 5 distribution channels (Docker, Go install, source, Homebrew, binary); HTTP-first on port 5000.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Go (96.1%). Go module versioning; specific Go version not extracted.
-
-### framework/SDK in use
-
-Custom Go implementation for the MCP toolbox; `server.json` for MCP capability declaration.
+Go (96.1%) with a custom MCP implementation; `server.json` declares MCP capability metadata. Single-binary build artifact. Specific Go version constraint not extracted from `go.mod`.
 
 ## Transport
 
-### supported transports
+### Streamable HTTP
 
-HTTP MCP server on port 5000 at `/mcp` endpoint. Stdio not explicitly documented in the fetched view — server appears HTTP-first.
+HTTP MCP server bound to port 5000 at `/mcp` endpoint — HTTP-first, diverging from the stdio-first convention common elsewhere. Stdio transport not surfaced in the fetched view.
 
-### how selected
+### Selection mechanism
 
-HTTP is the default mode when the binary runs.
+Implicit default — HTTP is the default mode when the binary runs.
 
-## Distribution
+## Capability surface
 
-### every mechanism observed
+### Tools plus resources plus prompts (full primitive coverage)
 
-GitHub release binaries (Linux AMD64, macOS ARM64/Intel, Windows AMD64); Docker (`us-central1-docker.pkg.dev/database-toolbox/toolbox/toolbox:$VERSION`); `go install github.com/googleapis/mcp-toolbox@v1.1.0`; Homebrew (`brew install mcp-toolbox`); NPM shim (`npx @toolbox-sdk/server --config tools.yaml`).
+Tools, toolsets, and prompts declared in the YAML manifest. `sources` abstract database connections. A `prompts` section surfaces first-class MCP prompt support beyond tools — most MCP servers concentrate on tools; this one surfaces the prompts capability too.
 
-### published package name(s)
+### Spec-driven dynamic tool generation
 
-`mcp-toolbox` Go module; `@toolbox-sdk/server` npm shim; Homebrew formula `mcp-toolbox`.
+YAML manifest is the primary configuration surface — sources, tools, toolsets, and prompts all live in `tools.yaml`, so admins configure by editing YAML rather than writing code. Declarative tool authoring without writing code is a different authoring surface from code-defined MCP servers.
 
-### install commands shown in README
+## Configuration delivery
 
-Each of the five distribution mechanisms above is shown.
+### YAML manifest (declarative tool authoring)
 
-## Entry point / launch
+Primary configuration via `tools.yaml` defining sources, tools, toolsets, and prompts.
 
-### command(s) users/hosts run
+### CLI flags
 
-`./toolbox --config "tools.yaml"`. Docker and npm shim variants run the same binary.
+`--config "tools.yaml"` points at the manifest; `--disable-reload` opts out of dynamic reloading.
 
-### wrapper scripts, launchers, stubs
+### Sidecar config files (JSON / YAML / TOML / EDN)
 
-`@toolbox-sdk/server` (npm) wraps the Go binary.
+`tools.yaml` is the canonical artifact; `gemini-extension.json` ships in-repo for Gemini host integration.
 
-## Configuration surface
+### Runtime reconfiguration tool
 
-### how config reaches the server
-
-Primary: YAML manifest (`tools.yaml`) defining sources, tools, toolsets, and prompts. CLI flag `--config` points at the manifest. Dynamic reloading is on by default; `--disable-reload` opts out.
+Dynamic reloading is on by default — config changes propagate without restart, with `--disable-reload` as the opt-out. Unusual for MCP servers, which typically re-exec; implies state that survives across configuration changes, a different lifecycle assumption.
 
 ## Authentication
 
-### flow
+### Multi-scheme upstream auth (basic / IAM / header / mTLS)
 
-Delegates to database auth schemes. Integrated authentication includes IAM for Google Cloud, plus standard credentials for PostgreSQL, MySQL, SQL Server, Oracle, MongoDB, Redis, Elasticsearch, and others.
+Delegates to per-source database auth schemes — IAM for Google Cloud (uses ambient/ADC credentials), plus standard credentials for PostgreSQL, MySQL, SQL Server, Oracle, MongoDB, Redis, Elasticsearch, and others. Configured per-source within `tools.yaml`.
 
-### where credentials come from
+### Cloud-native identity / credential chain
 
-Configured within `tools.yaml` per-source; Google Cloud IAM uses ambient/ADC credentials.
+Google Cloud IAM uses ambient/ADC (Application Default Credentials) chain.
 
 ## Multi-tenancy
 
-### tenancy model
+### Multi-spec / multi-source composition
 
-Configuration is per-process; the manifest can declare multiple sources, effectively multi-database but not multi-user. HTTP endpoint serves any connected MCP client.
+Configuration is per-process; the manifest declares multiple sources, effectively multi-database but not multi-user. HTTP endpoint serves any connected MCP client.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### Pre-built binary release
 
-Tools, toolsets, and prompts declared in the YAML manifest. `sources` abstract database connections. A `prompts` section suggests first-class MCP prompt support beyond tools.
+GitHub release binaries (Linux AMD64, macOS ARM64/Intel, Windows AMD64).
 
-## Observability
+### Docker / OCI image
 
-### logging destination + format, metrics, tracing, debug flags
+`us-central1-docker.pkg.dev/database-toolbox/toolbox/toolbox:$VERSION`.
 
-Not explicitly extracted; standard Go stderr logging likely.
+### Go module via `go get` / `go install`
 
-## Host integrations shown in README or repo
+`go install github.com/googleapis/mcp-toolbox@v1.1.0`.
 
-### Gemini CLI
+### Homebrew formula
 
-First-party integration; a `gemini-extension.json` ships in-repo.
+`brew install mcp-toolbox` — Homebrew formula available; tap source unspecified.
 
-### Google Antigravity
+### npm package wrapping native binary
 
-Listed as compatible client.
+NPM shim `@toolbox-sdk/server` wraps the Go binary — cross-ecosystem glue letting node-oriented hosts run a Go server by name. `npx @toolbox-sdk/server --config tools.yaml`.
 
-### Claude Code
+### Multi-channel publication
 
-Listed as compatible client.
+Five distribution channels (binary, Docker, go install, Homebrew, npm shim) make cross-ecosystem discoverability a deliberate goal.
 
-### Codex
+## Entry point and launch
 
-Listed as compatible client.
+### Native binary
 
-## Claude Code plugin wrapper
+`./toolbox --config "tools.yaml"`. Docker and npm shim variants run the same binary.
 
-### presence and shape
+### Docker container entrypoint
 
-Not observed. `gemini-extension.json` is the only host-specific config file shipped.
+Docker variant runs the same binary inside a container.
 
-## Tests
+## Build and packaging
 
-### presence, framework, location, notable patterns
+### npm/Node toolchain
 
-`/tests` directory. Go testing conventions implied.
+`@toolbox-sdk/server` npm shim packaged separately as Node-ecosystem distribution.
+
+## Container artifacts
+
+### Dockerfile (single-stage, build-from-source)
+
+Dockerfile present at repo root.
+
+## Test stack
+
+### Go stdlib testing
+
+`/tests` directory; Go testing conventions implied. `.golangci.yaml` for lint.
 
 ## CI
 
-### presence, system, triggers, what it runs
+### GitHub Actions
 
-`.ci/` plus `.github/workflows/` directories. `.golangci.yaml` for lint.
+`.github/workflows/` directory present; `.ci/` directory holds additional CI configuration.
 
-## Container / packaging artifacts
+### Multi-system CI
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+Both `.ci/` and `.github/workflows/` directories suggest multi-system CI orchestration.
 
-Dockerfile present. Homebrew formula available (external tap inferred from `brew install mcp-toolbox`).
+## Host integration
 
-## Example client / developer ergonomics
+### Codex CLI / Copilot CLI / Gemini CLI
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+Gemini CLI is the first-party integration; a `gemini-extension.json` ships in-repo.
 
-`tools.yaml` is the canonical artifact. `server.json` describes MCP capabilities. `.hugo/` directory suggests docs site infrastructure.
+### First-party host extension manifest
 
-## Repo layout
+`gemini-extension.json` is a host-specific extension manifest reflecting the project's origin at Google.
 
-### single-package / monorepo / vendored / other
+### Claude Code
+
+Listed as a compatible client.
+
+### Generic / host-agnostic snippet
+
+Other hosts (Google Antigravity, Codex) consume the generic HTTP endpoint; listed as compatible clients.
+
+## Repository layout
+
+### Single-package source (language-conventional)
 
 Single Go module. Top-level: `/cmd`, `/docs`, `/internal`, `/tests`, `/.ci`, `/.github`, `/.hugo`, `/.gemini`. `.gitmodules` present (submodules used).
 
-## Notable structural choices
+## Documentation surface
 
-YAML manifest is the primary configuration surface — sources, tools, toolsets, and prompts all live in `tools.yaml`, so admins configure by editing YAML rather than writing code. Dynamic reloading is on by default — config changes propagate without restart, with `--disable-reload` as the opt-out — unusual for MCP servers, which typically re-exec. The same binary speaks to 8+ databases via the `sources` abstraction; tool authoring is declarative on top of that. Five distribution channels (binary, Docker, go install, Homebrew, npm shim) make cross-ecosystem discoverability a deliberate goal. HTTP-first transport at `:5000/mcp` diverges from the stdio-first convention common elsewhere. Gemini-first integration shows up as a `gemini-extension.json` and `.gemini/` directory, reflecting the project's origin at Google; other hosts consume the generic HTTP endpoint.
+### GitHub Pages / hosted docs site
 
-## Unanticipated axes observed
+`.hugo/` directory suggests Hugo-driven hosted docs site infrastructure.
 
-Declarative tool authoring via YAML manifest — admins define tools without writing code, a different authoring surface from code-defined MCP servers. Prompts as a first-class manifest concept alongside tools — most MCP servers concentrate on tools; this one surfaces the prompts capability too. Hot reloading as a built-in — implies state that survives across configuration changes, a different lifecycle assumption. NPM shim (`@toolbox-sdk/server`) wrapping a Go binary — cross-ecosystem glue that lets node-oriented hosts run a Go server by name.
+### README plus docs directory
 
-## Gaps
+`/docs` directory present alongside README.
 
-Exact Go version constraint in `go.mod` not extracted. Whether stdio transport is supported is unclear (only HTTP at port 5000 was surfaced). Full list of supported database sources beyond those named is not enumerated. Homebrew formula source (tap or core) is unspecified. Specific contents of `server.json` are not extracted.
+## Release and lifecycle
+
+### Tagged release with version in changelog
+
+v1.1.0 released 2026-04-13; 1,798 total commits.
+
+### License — Permissive (MIT / Apache-2.0)
+
+Apache-2.0 license.
+
+### Active development
+
+Active vendor-authored development at Google.
+
+## Deployment topology
+
+### Self-hosted HTTP server
+
+HTTP-first on port 5000 — operator runs the binary as a long-running HTTP server.
+
+### Containerized local process
+
+Docker variant supports containerized local runs.

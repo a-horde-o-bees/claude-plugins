@@ -1,239 +1,187 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/microsoft/playwright-mcp`. Playwright browser MCP server — accessibility-tree-driven browser automation, 80+ structured tools across categories, Microsoft-authored. 31.1k stars, Apache-2.0, default branch `main`, v0.0.70 released 2026-04-01.
 
-### url
+## Server runtime
 
-https://github.com/microsoft/playwright-mcp
+### Node.js / TypeScript with official MCP SDK
 
-### stars
-
-31.1k
-
-### last-commit
-
-v0.0.70 released 2026-04-01
-
-### license
-
-Apache-2.0
-
-### default branch
-
-main
-
-### one-line purpose
-
-Playwright browser MCP server — accessibility-tree-driven browser automation; Microsoft-authored.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-TypeScript (62.2%). Node.js runtime; version constraint not extracted.
-
-### framework/SDK in use
-
-Playwright + Model Context Protocol SDK. Programmatic Node.js API exposes `createConnection()`.
+TypeScript (62.2%) on Node.js (specific version constraint not extracted), built on the Playwright + Model Context Protocol SDK. Programmatic Node.js API exposes `createConnection()` for embedding the server inside another Node process as a library.
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio (default); SSE over HTTP when `--port` is set.
+Default transport.
 
-### how selected
+### SSE (Server-Sent Events)
+
+Activated when `--port <n>` is set; uses HTTP-based SSE for streaming.
+
+### Selection mechanism
 
 CLI flag — presence of `--port <n>` flips to SSE/HTTP; absence defaults to stdio.
 
-## Distribution
+## Capability surface
 
-### every mechanism observed
+### Tools-heavy domain wrapper / domain-tool catalog
 
-npm + npx, Docker (`mcr.microsoft.com/playwright/mcp`). Docker multi-arch. No Homebrew/binary releases.
+80+ structured tools wrapping Playwright browser-automation operations. Categories: Core automation (click, type, navigate, screenshot, snapshot); Tab management; Network (mocking, state inspection, route management — opt-in); Storage (cookies, localStorage, sessionStorage — opt-in); DevTools (tracing, video, element highlight, debugging — opt-in). Emphasis on accessibility-tree snapshots over screenshots for token-efficiency.
 
-### published package name(s)
+### Capability gating via tool subsets at install time
 
-`@playwright/mcp`
+`--caps=vision`, `--caps=pdf`, `--caps=testing` are opt-in capability groups that unlock tool subsets — vision (coordinate-based interactions), PDF (page-to-PDF conversion), testing (assertions, locator generation). Gates groups of related tools as a unit, distinct from per-tool toggles. The author explicitly frames this as a different gating axis than `--toolsets` / `--read-only` style flags.
 
-### install commands shown in README
+## Configuration delivery
 
-`npx @playwright/mcp@latest`; `docker run -i --rm --init --pull=always mcr.microsoft.com/playwright/mcp`. Docker service mode exposes port 8931.
+### CLI flags with paired env-var equivalents
 
-## Entry point / launch
+50+ CLI flags, each with a matching `PLAYWRIGHT_MCP_*` env-var equivalent. Browser controls: `--browser`, `--headless`, `--executable-path`, `--user-data-dir`. Network: `--allowed-origins`, `--blocked-origins`, `--proxy-server`. Timeouts: `--timeout-action`, `--timeout-navigation`. Advanced: `--cdp-endpoint`, `--init-page`, `--init-script`, `--caps`.
 
-### command(s) users/hosts run
+### Sidecar config files (JSON / YAML / TOML / EDN)
 
-`npx @playwright/mcp@latest` (stdio), `npx @playwright/mcp@latest --port 8931` (SSE/HTTP)
-
-### wrapper scripts, launchers, stubs
-
-`createConnection()` programmatic API for embedding in Node apps
-
-## Configuration surface
-
-### how config reaches the server
-
-50+ CLI flags and matching env vars; JSON config file via `--config`. Browser: `--browser`, `--headless`, `--executable-path`, `--user-data-dir`. Network: `--allowed-origins`, `--blocked-origins`, `--proxy-server`. Timeouts: `--timeout-action`, `--timeout-navigation`. Advanced: `--cdp-endpoint`, `--init-page`, `--init-script`, `--caps`. Every flag has a `PLAYWRIGHT_MCP_*` env-var equivalent.
+JSON config file supplied via `--config` flag.
 
 ## Authentication
 
-### flow
+### None / implicit (local-resource gating)
 
-None. README explicitly states "Playwright MCP is not a security boundary." Storage-state files support session persistence (not auth).
-
-### where credentials come from
-
-N/A
+No auth at the MCP layer. README explicitly states "Playwright MCP is not a security boundary" — non-auth is a stated design posture rather than an oversight. Storage-state files support browser session persistence (not auth).
 
 ## Multi-tenancy
 
-### tenancy model
+### Single-user / single-tenant per process
 
-Single-user per process
+Single-user per process.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### npm via npx / bunx
 
-80+ structured tools with role-based permissions in categories: Core automation (click, type, navigate, screenshot, snapshot); Tab management; Network (mocking, state inspection, route management — opt-in); Storage (cookies, localStorage, sessionStorage — opt-in); DevTools (tracing, video, element highlight, debugging — opt-in); Vision (coordinate-based interactions — opt-in via `--caps=vision`); PDF (page-to-PDF conversion — opt-in via `--caps=pdf`); Testing (assertions, locator generation — opt-in via `--caps=testing`). Emphasis on accessibility-tree snapshots over screenshots for token-efficiency.
+`npx @playwright/mcp@latest` — published as `@playwright/mcp`.
 
-## Observability
+### Docker / OCI image
 
-### logging destination + format, metrics, tracing, debug flags
+`mcr.microsoft.com/playwright/mcp` (multi-arch). `docker run -i --rm --init --pull=always mcr.microsoft.com/playwright/mcp`. Docker service mode exposes port 8931.
 
-`--init-script` lets users inject instrumentation. Tracing and video are capability toggles rather than observability per se.
+## Entry point and launch
 
-## Host integrations shown in README or repo
+### `npx -y <package>` / `bunx`
 
-### Claude Desktop
+`npx @playwright/mcp@latest` (stdio); `npx @playwright/mcp@latest --port 8931` (SSE/HTTP).
 
-listed as supported client
+### Programmatic embedding via library function
 
-### Claude Code
+`createConnection()` programmatic API for embedding inside a Node process as a library, blurring server/client lines.
 
-listed as supported client
+### Docker container entrypoint
 
-### VS Code
+`docker run -i --rm --init --pull=always mcr.microsoft.com/playwright/mcp`.
 
-listed as supported client
+## Build and packaging
 
-### Cursor
+### npm/Node toolchain
 
-listed as supported client
+`@playwright/mcp` published on npm.
 
-### Windsurf
+### System-level dependencies
 
-listed as supported client
+Browser runtime (Playwright) — server depends on a browser binary that Playwright fetches as part of its install step. Multi-GB install footprint; container distribution becomes significantly more attractive than bare npm.
 
-### Cline
+## Container artifacts
 
-listed as supported client
+### Dockerfile (single-stage, build-from-source)
 
-### Goose
+Dockerfile present; multi-arch image on `mcr.microsoft.com/playwright/mcp`.
 
-listed as supported client
+### Vendor-namespaced image
 
-### Junie
+Image lives in Microsoft's container registry (`mcr.microsoft.com`) rather than the public `mcp/*` namespace.
 
-listed as supported client
+### Multi-architecture image publishing
 
-### Copilot
+Multi-arch publication on the vendor registry.
 
-listed as supported client
+### Published Docker image
 
-### Factory
+Pre-built image at `mcr.microsoft.com/playwright/mcp`.
 
-listed as supported client
+## Test stack
 
-### Gemini CLI
+### No tests / not surfaced
 
-listed as supported client
-
-### LM Studio
-
-listed as supported client
-
-### Kiro
-
-listed as supported client
-
-### opencode
-
-listed as supported client
-
-### Qodo Gen
-
-listed as supported client
-
-### Warp
-
-listed as supported client
-
-### Codex
-
-listed as supported client
-
-### Antigravity
-
-listed as supported client
-
-### Amp
-
-listed as supported client
-
-### pitfalls observed
-
-JSON snippet pattern shared across hosts (stdio command + args). No host-specific plugin wrapper in repo.
-
-## Claude Code plugin wrapper
-
-### presence and shape
-
-Not observed in fetched view.
-
-## Tests
-
-### presence, framework, location, notable patterns
-
-`.github/workflows` present. Test setup not deeply extracted; Playwright's own test harness likely used given the project heritage.
+`.github/workflows` present; specific test setup not deeply extracted. Playwright's own test harness likely used given project heritage.
 
 ## CI
 
-### presence, system, triggers, what it runs
+### GitHub Actions
 
-GitHub Actions. 60 releases, indicating an active release pipeline.
+GitHub Actions present; 60 releases indicate an active release pipeline.
 
-### pitfalls observed
+### Release-cut workflow on tag push
 
-CI workflow specifics not extracted.
+Active release pipeline pushing tagged releases.
 
-## Container / packaging artifacts
+## Observability
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+### None / unspecified
 
-Dockerfile; multi-arch image on `mcr.microsoft.com/playwright/mcp`.
+`--init-script` lets users inject instrumentation; tracing and video are capability toggles rather than observability per se. Project-level shaping not documented.
 
-## Example client / developer ergonomics
+## Safety and security posture
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+### Explicit non-security stance
 
-CONTRIBUTING.md + SECURITY.md. `createConnection()` enables programmatic embedding.
+README states "Playwright MCP is not a security boundary"; `--allow-unrestricted-file-access` is documented as the escape hatch. The project opts out of enforcement and signals risky modes deliberately.
 
-## Repo layout
+### Capability-scoped tool exposure (install-time)
 
-### single-package / monorepo / vendored / other
+Risky tool families (vision-coordinate clicks, PDF generation, testing-mode assertions) are gated behind `--caps=<group>` opt-in. Server runs without them by default.
 
-Monorepo with `/packages`.
+## Host integration
 
-## Notable structural choices
+### Per-host README JSON snippets
 
-Accessibility snapshots as primary perception model — token-efficient versus screenshot/vision. Vision is opt-in via `--caps=vision`, not default. `--caps=<cap>` as a capability-gating pattern: pdf, vision, testing are opt-in capability groups that unlock tool subsets — a different gating axis than the `--toolsets`/`--read-only` model used by github-mcp-server. Security posture explicitly disclaimed ("not a security boundary") rather than implemented; `--allow-unrestricted-file-access` is the escape hatch. Programmatic embedding as first-class — `createConnection()` means this MCP server can run inside host processes as a library, not just as an external subprocess.
+Documented support for 20+ MCP-aware hosts/agents: Claude Desktop, Claude Code, VS Code, Cursor, Windsurf, Cline, Goose, Junie, Copilot, Factory, Gemini CLI, LM Studio, Kiro, opencode, Qodo Gen, Warp, Codex, Antigravity, Amp. Same JSON snippet pattern shared across hosts (stdio command + args). No host-specific plugin wrapper in repo.
 
-## Unanticipated axes observed
+### Multi-host catalog (30+ agents)
 
-Capability groups (`--caps`) as an install-time surface for trimming tool exposure — distinct from per-tool toggles. Shapes token usage and security posture. Storage-state persistence (browser sessions) as a non-auth state-carrying mechanism — state portability between runs. Embeddability — this MCP server can be a Node library inside another process, blurring server/client lines. Accessibility-tree-first interaction model as a design commitment, not a fallback — reverses the default assumption that browser automation needs visual models.
+20+ different agent platforms documented with config snippets; the server is generic enough to not depend on host-specific features.
 
-## Gaps
+## Repository layout
 
-Exact Node.js version constraint. Whether any authentication layer can be added via the programmatic API. CI workflow specifics.
+### Monorepo of independent servers
+
+Monorepo with `/packages` directory.
+
+## Developer ergonomics
+
+### Programmatic embedding API
+
+`createConnection()` enables embedding the server inside another Node process as a library. First-class non-subprocess integration path.
+
+## Documentation surface
+
+### README as the canonical surface
+
+README primary; CONTRIBUTING.md and SECURITY.md alongside.
+
+## Release and lifecycle
+
+### License — Permissive (MIT / Apache-2.0)
+
+Apache-2.0 license.
+
+### Active development
+
+60 releases; active release pipeline; v0.0.70 released 2026-04-01.
+
+### Tagged release with version in changelog
+
+Standard semver tags (v0.0.70).
+
+## Claude Code plugin / skill wrapper
+
+### Bare MCP server, no Claude Code wrapper
+
+No `.claude-plugin/` directory observed in fetched view.

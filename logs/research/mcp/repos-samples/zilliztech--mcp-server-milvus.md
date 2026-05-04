@@ -1,114 +1,126 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/zilliztech/mcp-server-milvus`. Milvus vector-DB MCP server — env-over-CLI precedence; launched from source tree via `uv run`. ~228 stars, Apache-2.0, default branch `main`. Vendor-authored (Zilliz) but distributed as source-tree `uv run` rather than via PyPI as the canonical path.
 
-### url
+## Server runtime
 
-https://github.com/zilliztech/mcp-server-milvus
+### Python with FastMCP
 
-### stars
-
-~228
-
-### last-commit
-
-active (35 commits total)
-
-### license
-
-Apache-2.0
-
-### default branch
-
-main
-
-### one-line purpose
-
-Milvus vector-DB MCP server — env-over-CLI precedence; launched from source tree via `uv run`.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Python, `requires-python >= 3.10`.
-
-### framework/SDK in use
-
-FastMCP 2.x (`fastmcp >= 2.14.1`).
+Python with FastMCP 2.x — `fastmcp >= 2.14.1` (lower-bound, not pinned). `requires-python >= 3.10`. Import pattern `fastmcp` top-level package. Tool handlers mix sync/async per FastMCP defaults; `pymilvus` client calls generally sync.
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio (default), SSE.
+stdio default for Claude Desktop integration.
 
-### how selected
+### SSE (Server-Sent Events)
 
-CLI flag / env var; README shows separate JSON configs for each mode.
+SSE supported as alternative HTTP-based streaming transport. README shows separate JSON configs for stdio and SSE modes.
 
-## Distribution
+### Selection mechanism
 
-### every mechanism observed
+CLI flag / env var — README shows separate JSON configs for each mode rather than a single multi-mode launcher.
 
-source clone + `uv run`; PyPI package available (`mcp-server-milvus` implied by script name), but README leads with `uv run src/mcp_server_milvus/server.py`.
+## Capability surface
 
-### published package name(s)
+### Domain-bundled tool set
 
-`mcp-server-milvus`.
+~15 tools — text search, vector search, hybrid search, similarity search, query, collection CRUD (list/create/load/release/info), insert, delete. Curated multi-tool surface organized by operation class.
 
-### install commands shown in README
+## Configuration delivery
 
-`uv run src/mcp_server_milvus/server.py --milvus-uri http://localhost:19530`.
+### Dotenv file
 
-## Entry point / launch
+`.env` file is the highest-priority configuration source — explicitly inverts the more common "CLI overrides env" order. Likely a bias toward reproducible host-config-driven deployments at the cost of overriding CLI invocations.
 
-### command(s) users/hosts run
+### CLI flags
 
-`uv run src/mcp_server_milvus/server.py --milvus-uri ...`, or console script `mcp-server-milvus`.
+`--milvus-uri`, `--milvus-token`, `--milvus-db` flags supported but lower-priority than `.env`.
 
-### wrapper scripts, launchers, stubs
+### Environment variables
 
-none observed.
+`MILVUS_URI`, `MILVUS_TOKEN`, `MILVUS_DB` env vars.
 
-## Configuration surface
+### Host-side JSON config snippet
 
-### how config reaches the server
-
-`.env` file (takes priority over CLI args), CLI args, env vars — `MILVUS_URI`, `MILVUS_TOKEN`, `MILVUS_DB`.
-
-### pitfalls observed
-
-`.env` explicitly given priority over CLI args — inverse of the more common "CLI overrides env" order; likely a bias toward reproducible host-config-driven deployments.
+Claude Desktop and Cursor JSON snippets shown for stdio and SSE variants.
 
 ## Authentication
 
-### flow
+### Static API key / token via env var
 
-optional token.
-
-### where credentials come from
-
-`MILVUS_TOKEN` env var.
+Optional Milvus token via `MILVUS_TOKEN` env var.
 
 ## Multi-tenancy
 
-### tenancy model
+### Single-user / single-tenant per process
 
-single-user — server bound to one Milvus URI/DB.
+Server bound to one Milvus URI/DB per process.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### Source clone with `uv run` from source tree
 
-~15 tools — text search, vector search, hybrid search, similarity search, query, collection CRUD (list/create/load/release/info), insert, delete.
+Server launched from a checked-out source tree via `uv run src/mcp_server_milvus/server.py --milvus-uri http://localhost:19530`. Unusual for a vendor-official server — README leads with this rather than `uvx`. Forces consumers to clone the repository.
 
-## Observability
+### PyPI via uvx (zero-install runner)
 
-### logging destination + format, metrics, tracing, debug flags
+`mcp-server-milvus` PyPI package available (implied by console-script registration), but README leads with the source-tree path.
 
-FastMCP-standard logging; no explicit metrics/tracing.
+## Entry point and launch
 
-## Host integrations shown in README or repo
+### Source-tree `uv run`
+
+`"command": "uv"` with `run src/mcp_server_milvus/server.py --milvus-uri ...` as args. Launches against a checked-out source path rather than an installed package.
+
+### Console script via `[project.scripts]` / npm bin
+
+`[project.scripts]` declares `mcp-server-milvus` mapped to `mcp_server_milvus.server:main`. Available as alternative once installed via uvx/pip.
+
+### Click-based CLI wrapper (Python)
+
+Uses `click` for CLI arg parsing despite FastMCP providing its own `fastmcp` CLI — server is launched via a plain Python entry point rather than via FastMCP's launcher.
+
+## Build and packaging
+
+### Hatchling + uv (Python)
+
+Build backend: hatchling (wheel from `src/mcp_server_milvus`). Version manager convention: uv (lock file committed).
+
+### `uv.lock` committed
+
+`uv.lock` present — modern uv-first reproducibility convention.
+
+### Python version pinning
+
+`requires-python = ">=3.10"`.
+
+## Schema and types
+
+### FastMCP auto-derivation from type hints
+
+Tool function signatures with type hints become MCP tool input schemas automatically; Pydantic via FastMCP.
+
+## Container artifacts
+
+### No container artifacts
+
+No Docker artifacts despite Milvus typically being consumed containerized.
+
+## Test stack
+
+### No tests / not surfaced
+
+No explicit test suite visible in README; no dedicated test directory surfaced.
+
+## CI
+
+### None / absent
+
+Not observed in surfaced content (presence unverified).
+
+## Host integration
 
 ### Claude Desktop
 
@@ -116,100 +128,28 @@ JSON config snippets (stdio and SSE variants).
 
 ### Cursor
 
-`.cursor/` directory present; dedicated JSON snippet.
+`.cursor/` directory present; dedicated JSON snippet shown.
 
-## Claude Code plugin wrapper
+## Observability
 
-### presence and shape
+### Stderr logging (convention / SDK default)
 
-none observed
+FastMCP-standard logging; no explicit metrics/tracing.
 
-## Tests
+## Repository layout
 
-### presence, framework, location, notable patterns
+### Single-package src-layout
 
-no explicit test suite visible in README (no dedicated test directory surfaced).
+Single-package — `src/mcp_server_milvus/`.
 
-## CI
+## Developer ergonomics
 
-### presence, system, triggers, what it runs
+### Linter and type-checker stack
 
-none observed in surfaced content.
+`ruff` pinned in project-level dependencies (rather than a dev extra) — blurs lint tooling into runtime install.
 
-### pitfalls observed
+## Release and lifecycle
 
-CI workflow presence unverified.
+### License — Permissive (MIT / Apache-2.0)
 
-## Container / packaging artifacts
-
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
-
-none observed.
-
-## Example client / developer ergonomics
-
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
-
-Claude Desktop and Cursor JSON snippets; `.env` example.
-
-## Repo layout
-
-### single-package / monorepo / vendored / other
-
-single-package (`src/mcp_server_milvus/`).
-
-## Notable structural choices
-
-`.env` explicitly given priority over CLI args — inverse of the more common "CLI overrides env" order; likely a bias toward reproducible host-config-driven deployments.
-
-Uses `click` for CLI arg parsing despite FastMCP providing its own `fastmcp` CLI — server is launched via a plain Python entry point rather than via FastMCP's launcher.
-
-## Unanticipated axes observed
-
-env-vs-CLI precedence is a real axis — most servers do CLI > env; this repo does env > CLI.
-
-## Python-specific
-
-### SDK / framework variant
-
-FastMCP 2.x. Version pin from pyproject.toml: `fastmcp >= 2.14.1` (lower-bound, not pinned). Import pattern: `fastmcp` top-level package.
-
-### Python version floor
-
-`requires-python` value: `>=3.10`.
-
-### Packaging
-
-build backend: hatchling (wheel from `src/mcp_server_milvus`). Lock file present: `uv.lock` present. Version manager convention: uv (lock file committed).
-
-### Entry point
-
-`[project.scripts]` -> `mcp_server_milvus.server:main`. Actual console-script name: `mcp-server-milvus`. Host-config snippet shape: `uv run` pointing at a checked-out source path (unusual — most servers use `uvx <package>`).
-
-### Install workflow expected of end users
-
-source clone + `uv run` against tree; or (implicitly) `uvx mcp-server-milvus`. One-liner: `uv run src/mcp_server_milvus/server.py --milvus-uri http://localhost:19530`.
-
-### Async and tool signatures
-
-FastMCP-standard (mix); `pymilvus` client calls generally sync.
-
-### Type / schema strategy
-
-Pydantic via FastMCP; schema auto-derived from type hints.
-
-### Testing
-
-none observed.
-
-### Dev ergonomics
-
-ruff pinned in project deps (unusual — most projects put ruff in dev-only extra).
-
-### Notable Python-specific choices
-
-`ruff` in project-level dependencies rather than a dev extra — blurs lint tooling into runtime install, adding weight for end users. Source-tree `uv run` is the primary launch method; unusual for a vendor-official MCP server.
-
-## Gaps
-
-No Docker artifacts despite Milvus typically being consumed containerized. Test suite presence/absence not conclusively verified from the root. CI workflow presence unverified.
+Apache-2.0; vendor-authored (Zilliz).

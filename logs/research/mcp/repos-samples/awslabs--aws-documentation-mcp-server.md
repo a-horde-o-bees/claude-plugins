@@ -1,219 +1,141 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/awslabs/mcp/tree/main/src/aws-documentation-mcp-server`. AWS documentation MCP server — fetches and converts AWS docs to markdown; partition-scoped tools differ between global AWS and China partitions. Apache-2.0, default branch `main`, sub-server inside the awslabs/mcp monorepo.
 
-### url
+## Server runtime
 
-https://github.com/awslabs/mcp/tree/main/src/aws-documentation-mcp-server
+### Python with raw MCP SDK
 
-### stars
-
-parent monorepo (awslabs/mcp)
-
-### last-commit
-
-not captured individually
-
-### license
-
-Apache-2.0
-
-### default branch
-
-main
-
-### one-line purpose
-
-AWS documentation MCP server — fetches and converts AWS docs to markdown; partition-scoped tools differ between global AWS and China partitions.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Python `>=3.10`.
-
-### framework/SDK in use
-
-raw `mcp[cli]>=1.23.0` — no fastmcp dependency.
+Direct use of `mcp[cli]>=1.23.0` — no FastMCP dependency. Author works against `mcp.server` primitives. Import pattern likely `from mcp.server import Server` (raw SDK convention). `httpx` is sync-or-async; async likely given network-bound work. Schemas likely hand-authored on raw `mcp` SDK. Minimalist dependency set (6 runtime deps).
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio primary; Docker runs stdio inside a container.
+stdio is the primary transport; Docker runs stdio inside a container.
 
-### how selected
+### Selection mechanism
 
-Default stdio; Docker wrapping is a distribution choice, not a transport change.
+Implicit single mode — stdio.
 
-## Distribution
+## Capability surface
 
-### every mechanism observed
-
-PyPI (`awslabs.aws-documentation-mcp-server`); `uvx`; Windows `.exe` via `uv tool run`; Docker image.
-
-### published package name(s)
-
-`awslabs.aws-documentation-mcp-server`.
-
-### install commands shown in README
-
-- `uvx awslabs.aws-documentation-mcp-server@latest`
-- `uv tool run --from awslabs.aws-documentation-mcp-server@latest awslabs.aws-documentation-mcp-server.exe` (Windows)
-- `docker build -t mcp/aws-documentation .`
-
-## Entry point / launch
-
-### command(s) users/hosts run
-
-`awslabs.aws-documentation-mcp-server` (console script).
-
-### wrapper scripts, launchers, stubs
-
-`awslabs.aws-documentation-mcp-server` → `awslabs.aws_documentation_mcp_server.server:main`; Windows `.exe` variant.
-
-## Configuration surface
-
-### how config reaches the server
-
-Minimal — User-Agent via env var for corporate proxies; partition selection (global vs China) likely env-configured.
-
-## Authentication
-
-### flow
-
-None required — fetches public AWS documentation.
-
-### where credentials come from
-
-N/A.
-
-## Multi-tenancy
-
-### tenancy model
-
-Not applicable — stateless read-only fetching of public docs; any number of instances can run without conflict.
-
-## Capabilities exposed
-
-### tools / resources / prompts / sampling / roots / logging / other
+### Tools-only, hand-curated narrow surface
 
 Tools — `read_documentation` (URL → markdown), `search_documentation` (global partition only), `read_sections`, `recommend`, `get_available_services` (China partition only).
 
-## Observability
+### Partition-scoped tool gating
 
-### logging destination + format, metrics, tracing, debug flags
+Same binary exposes a different tool set depending on AWS partition — global AWS exposes search/recommend; China partition exposes service discovery (`get_available_services`).
 
-`loguru` for structured logging.
+## Configuration delivery
 
-## Host integrations shown in README or repo
+### Environment variables
 
-Host-specific configs covered in parent monorepo catalog, not sub-server README.
+Minimal env-var surface — User-Agent override env var for corporate proxies; partition selection (global vs China) likely env-configured. Partition-switching mechanism not directly captured.
 
-## Claude Code plugin wrapper
+## Authentication
 
-### presence and shape
+### None / implicit (local-resource gating)
 
-None at sub-server level.
+No auth required — fetches public AWS documentation. Stateless read-only against public upstream.
 
-## Tests
+## Multi-tenancy
 
-### presence, framework, location, notable patterns
+### Stateless read-only (any number of instances)
 
-pytest with `--cov --cov-branch`; live integration test flag `--run-live` gates tests that hit real AWS docs.
+Not applicable — stateless read-only fetching of public docs; any number of instances can run without conflict.
 
-## CI
+## Distribution channel
 
-### presence, system, triggers, what it runs
+### PyPI via uvx (zero-install runner)
 
-Parent monorepo CI; details not extracted per sub-server.
+Published as `awslabs.aws-documentation-mcp-server` on PyPI; canonical install `uvx awslabs.aws-documentation-mcp-server@latest`.
 
-## Container / packaging artifacts
+### Windows .exe variant
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+Explicit Windows entry — `uv tool run --from awslabs.aws-documentation-mcp-server@latest awslabs.aws-documentation-mcp-server.exe`.
 
-Dockerfile present; no compose.
+### Docker / OCI image
 
-## Example client / developer ergonomics
+Dockerfile present; `docker build -t mcp/aws-documentation .`.
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+## Entry point and launch
 
-`--run-live` pytest flag for integration; no Inspector launcher.
+### Console script via `[project.scripts]` / npm bin
 
-## Repo layout
+Console script `awslabs.aws-documentation-mcp-server` → `awslabs.aws_documentation_mcp_server.server:main`.
 
-### single-package / monorepo / vendored / other
+### `uvx <package>`
 
-Sub-package in awslabs/mcp monorepo.
+Host-config snippet shape: `uvx awslabs.aws-documentation-mcp-server@latest`.
 
-## Notable structural choices
+## Build and packaging
 
-Pure read-only documentation bridge — no AWS credentials, no mutation.
+### Hatchling + uv (Python)
 
-Splits tools by AWS partition: global has search/recommend; China has service discovery — partition-specific tool gating.
+Build backend: hatchling. Version manager convention: uv / uvx.
 
-HTML-to-markdown conversion as a core value-add — uses `markdownify` + `beautifulsoup4`.
-
-Uses `httpx` (async HTTP) + User-Agent handling for corporate firewalls that block browser UAs.
-
-No framework above raw `mcp` SDK — the server is deliberately minimal.
-
-## Unanticipated axes observed
-
-Partition-scoped tool surface — same binary exposes different tools depending on which AWS partition is targeted (global vs cn-*); most servers expose a single fixed tool set.
-
-No-auth MCP servers as a design category — documentation/search servers form a distinct "credential-free" family.
-
-Corporate proxy support as a first-class concern — User-Agent override baked in; reveals an operational constraint specific to enterprise Python deployments.
-
-Partition-variant Windows `.exe` entry via `uv tool run` — Windows distribution pattern documented explicitly.
-
-## Python-specific
-
-### SDK / framework variant
-
-raw `mcp[cli]>=1.23.0`. Import pattern not captured; raw `mcp` suggests `from mcp.server import Server` pattern.
-
-### Python version floor
+### Python version pinning
 
 `requires-python = ">=3.10"`.
 
-### Packaging
+## Schema and types
 
-Build backend: hatchling. Lock file not captured. Version manager convention: `uv` / `uvx`.
+### Hand-authored tool schemas
 
-### Entry point
+Raw `mcp` SDK without FastMCP — tool handlers register explicit input schema dicts; schemas hand-authored. `pydantic>=2.10.6` declared for structured payloads.
 
-Console script `awslabs.aws-documentation-mcp-server`. Host-config snippet shape: `uvx awslabs.aws-documentation-mcp-server@latest`.
+### Pydantic v2 models
 
-### Install workflow expected of end users
+`pydantic>=2.10.6` for structured payloads.
 
-`uvx awslabs.aws-documentation-mcp-server@latest`.
+## Container artifacts
 
-### Async and tool signatures
+### Dockerfile (single-stage, build-from-source)
 
-`httpx` is sync-or-async; likely async given network-bound work.
+Dockerfile at sub-package root.
 
-### Type / schema strategy
+## Test stack
 
-`pydantic>=2.10.6`. Schema likely hand-authored tool handlers given raw `mcp` SDK.
+### pytest with async + coverage
 
-### Testing
+pytest with `--cov --cov-branch` — branch-coverage enforcement.
 
-pytest with coverage and branch coverage; custom `--run-live` flag.
+### Branch coverage enforcement
 
-### Dev ergonomics
+`--cov --cov-branch` for branch-level coverage measurement, beyond statement coverage.
 
-Not extracted.
+### Live integration test gating
 
-### Notable Python-specific choices
+Custom `--run-live` pytest flag gates tests that hit real AWS docs; default test runs stay offline.
 
-Minimalist dependency set (6 runtime deps) compared to AWS-API sibling's 13+ — reflects narrower surface.
+## CI
 
-`markdownify` for HTML→markdown conversion is an unusual dependency in MCP servers and a reusable building block.
+### Monorepo CI inheritance
 
-`beautifulsoup4` for selective HTML parsing.
+Parent monorepo runs CI; per-sub-server CI not extracted.
 
-## Gaps
+## Host integration
 
-Exact tool handler signatures, whether async is used throughout, specifics of the corporate-proxy User-Agent logic, partition-switching mechanism.
+### Monorepo catalog
+
+Host-specific configs covered in parent monorepo catalog, not sub-server README.
+
+## Observability
+
+### loguru (Python)
+
+`loguru` for structured logging.
+
+## Repository layout
+
+### Monorepo of namespace-prefixed packages
+
+Sub-package inside the awslabs/mcp monorepo. Each sub-package has its own `pyproject.toml` and PyPI release.
+
+## Release and lifecycle
+
+### License — Permissive (MIT / Apache-2.0)
+
+Apache-2.0.

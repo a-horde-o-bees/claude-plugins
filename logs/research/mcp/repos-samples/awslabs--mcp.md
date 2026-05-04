@@ -1,241 +1,203 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/awslabs/mcp`. AWS Labs MCP monorepo — 40+ per-service MCP servers packaged as namespace-prefixed PyPI packages (`awslabs.*`); preview aggregator bundles SOPs + CloudTrail audit. 8.8k stars; Apache-2.0; default branch `main`; 1,474 commits on main, actively maintained.
 
-### url
+## Server runtime
 
-https://github.com/awslabs/mcp
+### Python with both MCP SDK and FastMCP declared
 
-### stars
-
-8.8k
-
-### last-commit
-
-Not explicitly dated in fetched view; 1,474 commits on main, actively maintained.
-
-### license
-
-Apache-2.0
-
-### default branch
-
-main
-
-### one-line purpose
-
-AWS Labs MCP monorepo — 40+ per-service MCP servers packaged as namespace-prefixed PyPI packages (`awslabs.*`); preview aggregator bundles SOPs + CloudTrail audit.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Python. Version constraints not extracted within budget; `pyproject.toml` per server.
-
-### framework/SDK in use
-
-FastMCP (inferred from `FASTMCP_LOG_LEVEL` env var convention).
+Python; sampled server (`src/aws-api-mcp-server/pyproject.toml`) lists both `mcp>=1.23.0` and `fastmcp>=3.0.1` as dependencies — FastMCP 3.x runs the server surface while raw `mcp` provides developer tooling and lower-level hooks. Import pattern is FastMCP (inferred from `FASTMCP_LOG_LEVEL` env var convention referenced in README). Per-server pyproject.toml; consistency across the monorepo not exhaustively verified.
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio only (per repo notice). SSE was removed on 2025-05-26; "Streamable HTTP" planned replacement is listed as in-development.
+stdio is the only shipping transport (per repo notice). SSE was removed on 2025-05-26; "Streamable HTTP" planned replacement is listed as in-development. Not selectable.
 
-### how selected
+## Capability surface
 
-Not selectable — stdio is the single shipping mode.
+### Tools-only, hand-curated narrow surface
 
-## Distribution
+Tools per service. Each sub-server presents a focused tool catalog scoped to its AWS service.
 
-### every mechanism observed
+### Bundled "agent SOPs" / vertical skill packs
 
-PyPI + uvx; Docker images; source install from GitHub. No npm/Homebrew/binary releases noted.
+The preview `AWS MCP Server` (aggregated tier) additionally bundles "pre-built Agent SOPs" (structured operating procedures) alongside the raw tool surface — opinionated workflows shipped as a first-class artifact.
 
-### published package name(s)
+## Configuration delivery
 
-`awslabs.<service>-mcp-server` naming convention on PyPI (e.g. `awslabs.aws-documentation-mcp-server`). 40+ servers under this namespace.
+### Environment variables
 
-### install commands shown in README
-
-`uvx awslabs.aws-documentation-mcp-server@latest` (canonical shown example); Docker variants per-server.
-
-## Entry point / launch
-
-### command(s) users/hosts run
-
-`uvx awslabs.<service>-mcp-server@latest` for most servers; Docker `docker run` variants per server.
-
-### wrapper scripts, launchers, stubs
-
-Per-server entry; no umbrella launcher. `aws-mcp-server` (in preview) positioned as an aggregated entry point.
-
-## Configuration surface
-
-### how config reaches the server
-
-Env-var-centric: `AWS_PROFILE`, `AWS_REGION`, per-service vars (e.g., `BEDROCK_KB_RERANKING_ENABLED`), and `FASTMCP_LOG_LEVEL`. Host config passes these via the host's `env` block.
+Env-var-centric: `AWS_PROFILE`, `AWS_REGION`, per-service vars (e.g., `BEDROCK_KB_RERANKING_ENABLED`), `FASTMCP_LOG_LEVEL`. Host config passes these via the host's `env` block.
 
 ## Authentication
 
-### flow
+### Cloud-native identity / credential chain
 
-AWS standard credential chain — delegates to `AWS_PROFILE`, AWS SSO, instance roles, env credentials via the AWS SDK. No MCP-level auth layer.
-
-### where credentials come from
-
-`~/.aws/credentials`, `~/.aws/config`, env vars, or instance metadata — whatever the AWS SDK chain resolves.
+AWS standard credential chain — `AWS_PROFILE`, AWS SSO, instance roles, env credentials via the AWS SDK. No MCP-level auth layer. Resolves from `~/.aws/credentials`, `~/.aws/config`, env vars, or instance metadata as the SDK chain dictates.
 
 ## Multi-tenancy
 
-### tenancy model
+### Single-user / single-tenant per process
 
 Single-user per process; tenancy effectively equals the active AWS profile/region at launch.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### PyPI via uvx (zero-install runner)
 
-Tools per service. The preview `AWS MCP Server` additionally bundles "pre-built Agent SOPs" (structured operating procedures) and CloudTrail audit integration.
+Primary distribution: `uvx awslabs.<service>-mcp-server@latest`. Namespace-prefixed PyPI packages: `awslabs.<service>-mcp-server` naming convention (e.g., `awslabs.aws-documentation-mcp-server`). 40+ servers under this namespace.
 
-## Observability
+### Docker / OCI image
 
-### logging destination + format, metrics, tracing, debug flags
+Per-server Docker images; `docker run` variants documented per-server.
 
-`FASTMCP_LOG_LEVEL` env var; CloudTrail audit logging called out for the preview aggregated server. No tracing/metrics documented at this layer.
+### Source clone with editable install
 
-## Host integrations shown in README or repo
+From-source via GitHub clone for development.
 
-### Kiro
+### Pre-built host installer / one-click install URL
 
-One-click install button in README.
+One-click install buttons per host: Kiro, Cursor, VS Code, Cline with Amazon Bedrock, Windsurf, Claude Code — shifts configuration burden from copy-paste JSON to deep links.
 
-### Cursor
+## Entry point and launch
 
-One-click install button.
+### `uvx <package>`
 
-### VS Code
+Host config: `"command": "uvx"`, `"args": ["awslabs.<service>-mcp-server@latest"]`, plus `"env": {"AWS_PROFILE": "..."}`. Per-server entry; no umbrella launcher (the preview `aws-mcp-server` is positioned as an aggregated entry point).
 
-One-click install button.
+### Console script via `[project.scripts]` / npm bin
 
-### Cline with Amazon Bedrock
+`[project.scripts]`: `"awslabs.aws-api-mcp-server" = "awslabs.aws_api_mcp_server.server:main"` (sampled) — quoted-name script with dot-in-name lets the dotted console-script name match the dotted PyPI package name.
 
-One-click install button.
+## Build and packaging
 
-### Windsurf
+### Hatchling + uv (Python)
 
-One-click install button.
+Build backend: `hatchling.build` (sampled server). Per-server pyproject.toml; each subdir is its own uv project. Lock file presumed `uv.lock` per server (not confirmed). Sampled `requires-python = ">=3.10"`.
 
-### Claude Code
+## Schema and types
 
-One-click install button.
+### FastMCP auto-derivation from type hints
 
-### Claude Desktop
+FastMCP auto-derived schemas likely throughout; raw `mcp` available for lower-level hooks where needed.
 
-Not surfaced as a named integration target in the overview, though stdio JSON snippets are implicit per-server.
+### Async model (cross-cutting)
 
-## Claude Code plugin wrapper
+`pytest-asyncio` in dev deps with `asyncio_mode = "auto"` — fully async. Custom `live` marker for API-calling tests.
 
-### presence and shape
+## Container artifacts
 
-Not observed in top-level listing. Host integration is via one-click button text rather than a shipped plugin wrapper.
+### Per-server Dockerfile in monorepo
 
-## Tests
+Dockerfile per server (multiple) under each `src/<service>/` directory.
 
-### presence, framework, location, notable patterns
+### Devcontainer for contributors
 
-Tests present per-server. Codecov badge present → coverage tracked. Specific framework not extracted.
+`.devcontainer/` configuration at repo root for contributor onboarding.
+
+## Test stack
+
+### pytest with async + coverage
+
+pytest + pytest-asyncio + pytest-cov + pytest-mock per-server. `python_files = "test_*.py"`, `python_classes = "Test*"`, `testpaths = ["tests"]`. Codecov badge across the repo. Coverage tracked.
 
 ## CI
 
-### presence, system, triggers, what it runs
+### GitHub Actions
 
-GitHub Actions (`.github/workflows`). `.ruff.toml` (lint), `.pre-commit-config.yaml` (hooks), `.secrets.baseline` (secret scan), OSSF Scorecard present.
+`.github/workflows/` configured. `.ruff.toml` (lint), `.pre-commit-config.yaml` (hooks), `.secrets.baseline` (secret scan), OSSF Scorecard integration.
 
-## Container / packaging artifacts
+### Pre-commit hooks
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+`.pre-commit-config.yaml` enforces local checks before commit.
 
-Dockerfile per server (multiple). `.devcontainer/` configuration at root for dev workflow.
+### Secret-scan baseline
 
-## Example client / developer ergonomics
+`.secrets.baseline` records known-allowed strings.
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+### OSSF Scorecard
 
-Per-server READMEs; one-click install URLs are the canonical ergonomic path. Devcontainer for contributors.
+OSSF Scorecard integration emits a security posture rating.
 
-## Repo layout
+### Codecov integration
 
-### single-package / monorepo / vendored / other
+Codecov badge present; coverage tracked via the CI workflow.
 
-Monorepo. `src/<service>/` directory per server, 40+ servers. Central dev config at repo root.
+## Deployment topology
 
-## Notable structural choices
+### Local stdio process per session
 
-Wholesale SSE removal with a bridge to future Streamable HTTP — deliberate transport-narrowing rather than maintaining both during transition.
+Default: stdio child process launched by the MCP host.
 
-Namespace-prefixed PyPI packages (`awslabs.*`) — prevents collision with other AWS-adjacent packages and makes provenance scannable from the package name alone.
+## Host integration
 
-One-click install buttons per host as a primary README surface — shifts the configuration burden from copy-paste JSON to deep links.
+### Per-host README JSON snippets
 
-Preview-tier "aggregated" server (AWS MCP Server) bundling SOPs — suggests a direction where per-service servers become composable primitives under a curated orchestrator.
+Per-host JSON config documented per sub-server.
 
-## Unanticipated axes observed
+### Windsurf / Goose / Qodo Gen / Cline / Kiro / Augment
 
-Deprecation and removal as a versioning signal: SSE removal dated and documented in-repo rather than behind a changelog.
+Per-host one-click install URLs in README for Kiro, Cursor, VS Code, Cline with Amazon Bedrock, Windsurf, and Claude Code — bypass JSON copy-paste entirely for the supported hosts.
 
-"Agent SOPs" as a first-class concept shipped alongside tools — not just raw API surface, but opinionated workflows.
+### Claude Code
 
-One-click install URL protocol — integration surface that bypasses JSON entirely for supported hosts.
+One-click install button surfaces alongside the per-host buttons; JSON-snippet path implicit per sub-server.
 
-## Python-specific
+### Cursor
 
-### SDK / framework variant
+One-click install button in README.
 
-Dual: raw `mcp>=1.23.0` AND `fastmcp>=3.0.1` (sampled from `src/aws-api-mcp-server/pyproject.toml`). FastMCP 3.x. Import pattern: FastMCP (inferred from `FASTMCP_LOG_LEVEL` env var convention referenced in README).
+### VS Code / VS Code Insiders / Visual Studio family
 
-### Python version floor
+One-click install button in README.
 
-Sampled server: `requires-python = ">=3.10"`. Per-server pyproject.toml; likely consistent across the monorepo.
+## Observability
 
-### Packaging
+### Env-var-controlled log level
 
-Build backend: `hatchling.build` (sampled server). Lock file presumed `uv.lock` per server or at root (not confirmed). Version manager convention: `uv` — each subdir is its own uv project.
+`FASTMCP_LOG_LEVEL` env var sets log severity at startup.
 
-### Entry point
+### CloudTrail audit logging
 
-`[project.scripts]`: `"awslabs.aws-api-mcp-server" = "awslabs.aws_api_mcp_server.server:main"` (sampled) — quoted-name script with dot-in-name. Namespace-prefixed: `awslabs.<service>-mcp-server`. README canonical host-config: `"command": "uvx"`, `"args": ["awslabs.<service>-mcp-server@latest"]` + `"env": {"AWS_PROFILE": "..."}`.
+Audit-tier logging called out for the preview aggregated server (`AWS MCP Server`); CloudTrail captures who called what tool when. No tracing/metrics documented at this layer.
 
-### Install workflow expected of end users
+## Repository layout
 
-`uvx awslabs.<service>-mcp-server@latest` (primary); Docker images per server; from-source via GitHub clone. One-click install buttons per host (Kiro, Cursor, VS Code, Windsurf, Cline, Claude Code).
+### Monorepo of namespace-prefixed packages
 
-### Async and tool signatures
+Many sub-packages under `src/<service>/` each with their own `pyproject.toml`, all sharing the `awslabs.*` namespace prefix. Central dev tooling at root (ruff, pre-commit, secrets baseline). Each sub-package independently published and installable via uvx. Approximately 40+ servers under this namespace.
 
-pytest-asyncio in dev deps; `asyncio_mode = "auto"` — fully async. Custom `live` marker for API-calling tests.
+## Developer ergonomics
 
-### Type / schema strategy
+### Devcontainer / mise / dev-environment manifests
 
-FastMCP auto-derived likely; raw `mcp` for lower-level hooks.
+`.devcontainer/` for contributor onboarding.
 
-### Testing
+### Linter and type-checker stack
 
-pytest + pytest-asyncio + pytest-cov + pytest-mock (per-server). `python_files = "test_*.py"`, `python_classes = "Test*"`, `testpaths = ["tests"]`. Codecov badge across repo.
+`.ruff.toml` at root; ruff configured as primary linter.
 
-### Dev ergonomics
+### `pre-commit` framework
 
-`.devcontainer/` for contributor onboarding. `.pre-commit-config.yaml`, `.secrets.baseline`, `.ruff.toml` at root. OSSF Scorecard integration.
+`.pre-commit-config.yaml` orchestrates lint/format/secret-scan hooks at commit time.
 
-### Notable Python-specific choices
+## Claude Code plugin / skill wrapper
 
-Monorepo with per-server pyproject.toml — each server is its own uv-managed Python package.
+### Bare MCP server, no Claude Code wrapper
 
-Quoted script name with dots (`"awslabs.aws-api-mcp-server"`) is valid pyproject syntax but rare — enables a dotted console-script name to match the PyPI package name.
+No top-level Claude Code wrapper observed; integration via one-click install button text rather than a shipped plugin wrapper.
 
-Namespace-prefixed PyPI packages (`awslabs.*`) and matching dotted console scripts — structural convention for monorepo-of-packages.
+## Release and lifecycle
 
-Central dev tooling at root (ruff, pre-commit, secrets-baseline) with per-server pyproject for deps — classic uv workspace layout (though not confirmed as `[tool.uv.workspace]`).
+### License — Permissive (MIT / Apache-2.0)
 
-## Gaps
+Apache-2.0.
 
-Exact last-commit date — not surfaced in fetched view. Whether any single server opts out of stdio-only (e.g. a hosted variant). Full enumeration of the 40+ servers with domain tags. Whether root pyproject.toml declares `[tool.uv.workspace]` (not inspected).
+### Dated deprecation in repo
+
+SSE removal documented in-repo with a date (2025-05-26) — wholesale transport removal with a documented bridge to future Streamable HTTP, signaled clearly to consumers.
+
+### Active development
+
+8.8k stars; 1,474 commits on main; ongoing maintenance.

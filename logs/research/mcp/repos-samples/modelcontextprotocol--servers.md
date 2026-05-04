@@ -1,116 +1,182 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/modelcontextprotocol/servers`. Official MCP reference-servers monorepo — TypeScript and Python reference servers (Everything, Fetch, Filesystem, Git, Memory, Sequential Thinking, Time) deliberately use raw `mcp` SDK rather than FastMCP. 84.2k stars, MIT (existing) / Apache-2.0 (new contributions), default branch `main`, last commit 2026-01-27 (release tag 2026.1.26).
 
-### url
+## Server runtime
 
-https://github.com/modelcontextprotocol/servers
+### Python with raw MCP SDK
 
-### stars
+Python reference servers (git, fetch, time) deliberately use raw `mcp` SDK exclusively — no FastMCP. git pins `mcp>=1.0.0`; fetch pins `mcp>=1.1.3`. Import pattern uses the low-level `Server` class from `mcp` package. Python 3.10+ across the three sampled Python servers. Demonstrates the "pre-FastMCP" authoring style and prioritizes low-level SDK coverage over developer convenience.
 
-84.2k
+### Node.js / TypeScript with official MCP SDK
 
-### last-commit
-
-2026-01-27 (release tag 2026.1.26)
-
-### license
-
-MIT for existing code; Apache-2.0 for new contributions.
-
-### default branch
-
-main
-
-### one-line purpose
-
-Official MCP reference-servers monorepo — Python (git, fetch, time) deliberately use raw `mcp` SDK rather than FastMCP; TypeScript reference servers alongside.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-TypeScript ~69%, Python ~19%, JavaScript ~10%. Per-server: TS servers ship via npm; Python servers target Python 3.x via uv/uvx.
-
-### framework/SDK in use
-
-Official `@modelcontextprotocol/sdk` (TypeScript) and `mcp` Python SDK (server-fetch, server-git use the Python SDK exposed as `mcp-server-*` modules).
+TypeScript reference servers (Everything, Filesystem, Memory, Sequential Thinking) use the official `@modelcontextprotocol/sdk`; ~69% TypeScript across the repo. Distributed via npm.
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio across all reference servers; individual servers do not document non-stdio modes (fetch, git, filesystem READMEs describe stdio integration only via host config).
+stdio across all reference servers; individual servers do not document non-stdio modes. Each reference server starts in stdio mode when launched by its entry command.
 
-### how selected
+### Selection mechanism
 
-Not exposed — each reference server starts in stdio mode when launched by its entry command; no transport flag.
+Implicit single mode — stdio only; no transport flag.
 
-## Distribution
+## Capability surface
 
-### every mechanism observed
+### Tools-only, hand-curated narrow surface
 
-npm + npx (TS servers), PyPI + pip + uvx (Python servers), Docker images under `mcp/*` tag (per-server Dockerfiles). No Homebrew, no binary releases.
+Tools-focused across the reference set. Filesystem: 13 tools (9 read + 4 write). Git: 12 tools. Fetch: 1 `fetch` tool. Resources and prompts not prominent in the individual READMEs consulted.
 
-### published package name(s)
+### MCP Roots participation
 
-`@modelcontextprotocol/server-filesystem`, `@modelcontextprotocol/server-memory`, `@modelcontextprotocol/server-everything`, `@modelcontextprotocol/server-sequentialthinking` (npm); `mcp-server-git`, `mcp-server-fetch`, `mcp-server-time` (PyPI). Docker tags `mcp/filesystem`, `mcp/git`, `mcp/fetch`.
+Filesystem reference server implements the MCP Roots protocol — receives directory boundaries from the host and adapts file access accordingly. The only reference server consulted that interacts with the protocol's client-provided root-directory mechanism.
 
-### install commands shown in README
+### Read/write tool split
 
-`npx -y @modelcontextprotocol/server-memory`, `uvx mcp-server-git`, `pip install mcp-server-git`, `docker run -i --rm --mount type=bind,src=/path,dst=/projects mcp/filesystem /projects`.
+Filesystem split into 9 read tools and 4 write tools.
 
-## Entry point / launch
+## Configuration delivery
 
-### command(s) users/hosts run
+### CLI flags
 
-TS — `npx -y @modelcontextprotocol/server-<name>` with positional args (filesystem takes directory paths). Python — `uvx mcp-server-<name>` or `python -m mcp_server_<name>` (e.g., `--repository` flag for git).
+Filesystem takes positional directory paths; git takes `--repository`; fetch takes `--user-agent`, `--ignore-robots-txt`, `--proxy-url`.
 
-### wrapper scripts, launchers, stubs
+### Environment variables
 
-None — package entry points are the launcher. Dockerfile per server provides alt launch.
+Small number used (e.g., `PYTHONIOENCODING=utf-8` noted for Windows in fetch).
 
-## Configuration surface
+### Host-supplied protocol-level config (MCP Roots)
 
-### how config reaches the server
+Filesystem additionally supports MCP Roots for dynamic directory updates from the host.
 
-Mix of positional CLI args (filesystem paths), flag CLI args (`--repository`, `--user-agent`, `--ignore-robots-txt`, `--proxy-url`), and a small number of env vars (e.g. `PYTHONIOENCODING=utf-8` noted for Windows in fetch). Filesystem additionally supports MCP Roots protocol for dynamic directory updates from the host.
+### Host-side JSON config snippet
+
+Each server README includes copy-paste JSON snippets for Claude Desktop and often VS Code.
 
 ## Authentication
 
-### flow
+### None / implicit (local-resource gating)
 
-None across the reference servers. Filesystem gates access via directory allowlist; git via repo path; fetch respects robots.txt by default.
+No auth across the reference servers. Filesystem gates access via directory allowlist; git via repo path; fetch respects robots.txt by default.
 
-### where credentials come from
+### Domain-level access gate (not auth)
 
-N/A.
+Filesystem allowlist, repo path, robots.txt — what can be accessed without identifying the caller.
 
 ## Multi-tenancy
 
-### tenancy model
+### Single-user / single-tenant per process
 
 Single-user local process per host session.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### npm via npx / bunx
 
-Tools across the board. Filesystem: 13 tools (9 read + 4 write). Git: 12 tools. Fetch: 1 `fetch` tool. Filesystem additionally implements MCP Roots protocol. Resources and prompts not prominent in the individual READMEs consulted.
+`npx -y @modelcontextprotocol/server-memory` — packages: `@modelcontextprotocol/server-filesystem`, `@modelcontextprotocol/server-memory`, `@modelcontextprotocol/server-everything`, `@modelcontextprotocol/server-sequentialthinking`.
+
+### PyPI via uvx (zero-install runner)
+
+`uvx mcp-server-git` — Python packages `mcp-server-git`, `mcp-server-fetch`, `mcp-server-time`.
+
+### PyPI via pip / pipx
+
+`pip install mcp-server-git` as alternative install path for Python servers.
+
+### Docker / OCI image
+
+Per-server Dockerfiles; images published to Docker Hub as `mcp/<server-name>` (`mcp/filesystem`, `mcp/git`, `mcp/fetch`). `docker run -i --rm --mount type=bind,src=/path,dst=/projects mcp/filesystem /projects`.
+
+### Multi-channel publication
+
+TypeScript servers via npm; Python servers via PyPI; both via Docker — each reference server multi-published.
+
+## Entry point and launch
+
+### `npx -y <package>` / `bunx`
+
+TS — `npx -y @modelcontextprotocol/server-<name>` with positional args (filesystem takes directory paths).
+
+### `uvx <package>`
+
+`uvx mcp-server-<name>` — canonical uvx pattern with args like `--repository` for git.
+
+### Module invocation / `python -m <module>` fallback
+
+`python -m mcp_server_<name>` — alternative documented path.
+
+### Console script via `[project.scripts]` / npm bin
+
+`[project.scripts]`: `mcp-server-git = "mcp_server_git:main"`, `mcp-server-fetch = "mcp_server_fetch:main"`. README host-config snippet uses `"command": "uvx"`, `"args": ["mcp-server-git", "--repository", "/path"]`.
+
+### Docker container entrypoint
+
+`docker run -i --rm --mount type=bind,src=/path,dst=/projects mcp/<name> ...`.
+
+## Build and packaging
+
+### Hatchling + uv (Python)
+
+`build-backend = "hatchling.build"` across sampled Python servers; each is a standalone uv package (per-subdir pyproject); `uv` as the version manager convention.
+
+### npm/Node toolchain
+
+TypeScript servers ship via npm; centralized `package.json`/`package-lock.json` at root for shared lint/build tooling; individual servers buildable in isolation.
+
+### Python version pinning
+
+`requires-python = ">=3.10"` across the three Python servers sampled.
+
+## Schema and types
+
+### Hand-authored tool schemas
+
+Low-level `mcp` SDK — hand-authored JSON schemas for tools. pyright for typing.
+
+### Async model (cross-cutting)
+
+Mixed — fetch is fully async (`pytest-asyncio>=0.21.0` + `asyncio_mode = "auto"`); git uses pytest only with no asyncio declared.
+
+## Container artifacts
+
+### Per-server Dockerfile in monorepo
+
+Each server in the monorepo has its own Dockerfile (e.g., `src/filesystem/Dockerfile`, `src/git/Dockerfile`, `src/fetch/Dockerfile`); images publish to Docker Hub under `mcp/<name>`.
+
+### Published Docker image
+
+Pre-built images at `mcp/<server-name>` on Docker Hub.
+
+## Test stack
+
+### pytest with async + coverage
+
+pytest + pytest-asyncio (fetch); pytest only (git). `testpaths = ["tests"]`, `python_files = "test_*.py"`. Each Python server has its own `tests/` directory.
+
+## CI
+
+### GitHub Actions
+
+`.github/workflows/` present; specific workflows not fully enumerated within budget.
 
 ## Observability
 
-### logging destination + format, metrics, tracing, debug flags
+### Stderr logging (convention / SDK default)
 
-Not documented at the reference-server level. Each server logs to stderr per SDK default.
+Each server logs to stderr per SDK default; not documented further at the reference-server level.
 
-## Host integrations shown in README or repo
+## Host integration
+
+### Per-host README JSON snippets
+
+Each server README includes copy-paste JSON snippets for Claude Desktop and often VS Code.
 
 ### Claude Desktop
 
-JSON snippet for `claude_desktop_config.json` under `mcpServers.<name>` with `command`/`args` — top README + each server README.
+Top README + each server README ship JSON for `claude_desktop_config.json` under `mcpServers.<name>` with `command`/`args`.
 
-### VS Code
+### VS Code / VS Code Insiders / Visual Studio family
 
 `mcp.json` workspace/user config snippets in per-server READMEs (git).
 
@@ -118,100 +184,60 @@ JSON snippet for `claude_desktop_config.json` under `mcpServers.<name>` with `co
 
 `settings.json` snippet in per-server README (git).
 
-### Zencoder
+### Generic / host-agnostic snippet
 
-Mentioned (git README).
+Generic listing of "clients that support MCP" in top-level README without per-tool snippets. Mentions Zencoder.
 
-### Other
+## Repository layout
 
-Generic listing of "clients that support MCP" in top-level README without per-tool snippets.
+### Cross-language monorepo / mixed-language layout
 
-## Claude Code plugin wrapper
+Cross-language monorepo with TypeScript and Python as first-class peers in one repo. `src/<server>/` per reference server (Everything, Fetch, Filesystem, Git, Memory, Sequential Thinking, Time). Archived servers physically moved out to a sibling `servers-archived` repo. Root has shared `package.json`, `tsconfig.json`, `.npmrc`; Python servers are self-contained Python packages inside the same directory tree. Each server has its own distribution channel (npm vs PyPI) and its own Docker image.
 
-### presence and shape
+### Per-subserver README in monorepo
 
-`.mcp.json` present at repo root (mentioned by repo listing). No `.claude-plugin/` directory.
+Each server has its own README documenting install path (npx vs uvx vs pip vs Docker).
 
-## Tests
+## Developer ergonomics
 
-### presence, framework, location, notable patterns
+### Linter and type-checker stack
 
-`.github/` workflows present but per-server test infrastructure not prominent in individual READMEs; each server is small enough that test infrastructure is minimal/per-package.
+pyright>=1.1.389, ruff>=0.7.3 pinned across Python servers.
 
-## CI
+### Sample MCP client configs in repo
 
-### presence, system, triggers, what it runs
+Each server README includes copy-paste JSON snippets for Claude Desktop and often VS Code.
 
-GitHub Actions present under `.github/workflows`. Specific workflows not fully enumerated within budget.
+## Documentation surface
 
-## Container / packaging artifacts
+### Per-host README integration sections
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+Each server README has labeled sections per supported host showing canonical config snippets.
 
-Per-server Dockerfile (e.g. `src/filesystem/Dockerfile`, `src/git/Dockerfile`, `src/fetch/Dockerfile`). Images published to Docker Hub as `mcp/<server-name>`. No Helm, compose, or brew formula observed.
+### README as the canonical surface
 
-## Example client / developer ergonomics
+Top-level README plus per-server READMEs.
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+## Claude Code plugin / skill wrapper
 
-Each server README includes copy-paste JSON snippets for Claude Desktop and often VS Code. Top-level `package.json`/`package-lock.json` suggests centralized lint/build tooling; individual servers buildable in isolation.
+### Bare MCP server, no Claude Code wrapper
 
-## Repo layout
+`.mcp.json` present at repo root; no `.claude-plugin/` directory.
 
-### single-package / monorepo / vendored / other
+## Release and lifecycle
 
-Monorepo. `src/<server>/` per reference server (Everything, Fetch, Filesystem, Git, Memory, Sequential Thinking, Time). Archived servers moved out to a sibling `servers-archived` repo. Root has shared `package.json`, `tsconfig.json`, `.npmrc`; Python servers are self-contained Python packages inside the same directory tree.
+### Dual-license relicensing gate
 
-## Notable structural choices
+Existing code stays MIT; new contributions land under Apache-2.0 — a deliberate relicensing-forward strategy.
 
-Heterogeneous per-server implementations: TS and Python live side-by-side with independent package manifests. No forced uniformity — each server README documents its own install path (npx vs uvx vs pip vs Docker). Per-server Dockerfile with published `mcp/<name>` image — a consistent convention across servers even though language stack differs. Filesystem takes the unusual step of implementing MCP Roots — the only reference server consulted that interacts with the protocol's client-provided root-directory mechanism. Active vs archived split enforced by repository: archived servers physically moved out rather than flagged in-place, keeping the monorepo reference-set curated. License mixed: existing code stays MIT; new contributions land under Apache-2.0 — a deliberate relicensing-forward strategy rather than a relicense of existing material.
+### Tagged release with version in changelog
 
-## Unanticipated axes observed
+Release tag 2026.1.26.
 
-Cross-language monorepo convention: TS and Python as first-class peers in one repo, each with its own distribution channel (npm vs PyPI) and its own Docker image, rather than a single-language monorepo. Forces readers/hosts to handle multiple runtime stacks. Relicensing via contribution gate: dual-license strategy (MIT existing / Apache-2.0 new) as a migration mechanism without touching prior commits. Reference vs hosted split: repo is positioned as a showcase/reference set, not a product; archived content is physically excised to keep the demonstration sharp.
+### Active development
 
-## Python-specific
+Active reference set; ongoing maintenance with active vs archived split (archived servers physically moved out rather than flagged in-place).
 
-### SDK / framework variant
+### Archived
 
-Python reference servers (git, fetch, time) use raw `mcp` SDK exclusively — no fastmcp. git: `mcp>=1.0.0`; fetch: `mcp>=1.1.3`. Import pattern: low-level `Server` class from `mcp` package.
-
-### Python version floor
-
-All three Python servers sampled: `requires-python = ">=3.10"`.
-
-### Packaging
-
-Build backend: `hatchling.build` across sampled Python servers. Lock file: each Python server is a standalone uv package (per-subdir pyproject). Version manager convention: `uv`.
-
-### Entry point
-
-`[project.scripts]`: `mcp-server-git = "mcp_server_git:main"`, `mcp-server-fetch = "mcp_server_fetch:main"`. README host-config snippet: `"command": "uvx"`, `"args": ["mcp-server-git", "--repository", "/path"]` — canonical uvx pattern. Alternative: `python -m mcp_server_<name>` also documented.
-
-### Install workflow expected of end users
-
-`uvx mcp-server-<name>` (primary), `pip install mcp-server-<name>` (alternative), Docker `mcp/<name>`. Separate PyPI and npm distribution paths for the monorepo's two language stacks.
-
-### Async and tool signatures
-
-fetch: `pytest-asyncio>=0.21.0` + `asyncio_mode = "auto"` — fully async. git: pytest only (no asyncio declared).
-
-### Type / schema strategy
-
-Low-level `mcp` SDK — hand-authored JSON schemas for tools. pyright for typing.
-
-### Testing
-
-pytest + pytest-asyncio (fetch); pytest only (git). `testpaths = ["tests"]`, `python_files = "test_*.py"`. Each Python server has its own `tests/` directory.
-
-### Dev ergonomics
-
-pyright + ruff pinned across servers (pyright>=1.1.389, ruff>=0.7.3). Each Python server has its own Dockerfile published as `mcp/<name>`.
-
-### Notable Python-specific choices
-
-These are canonical reference Python MCP servers using the raw `mcp` SDK — demonstrate the "pre-FastMCP" authoring style. Consistent per-server pyproject.toml layout — hatchling + uv + raw mcp SDK + pyright + ruff + pytest. Python and TypeScript peers in one monorepo, each using its own distribution (PyPI vs npm) and its own Docker image. Reference-quality Python servers deliberately NOT using FastMCP — suggests the reference set prioritizes low-level SDK coverage over developer convenience.
-
-## Gaps
-
-Exact last-commit date (only the release tag 2026.1.26 was visible). Specific CI workflow contents (what tests/lints run per server) — would need `.github/workflows/*.yml` fetches. Whether any server supports non-stdio transports — not called out in the three READMEs (filesystem, git, fetch) checked. Full enumeration of published npm and PyPI packages for all seven servers — budget covered three in depth.
+`servers-archived` sibling repo holds excised reference servers — the repository keeps its demonstration set sharp by physically moving archived content out.

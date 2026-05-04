@@ -1,213 +1,131 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/awslabs/mcp/tree/main/src/bedrock-kb-retrieval-mcp-server`. AWS Bedrock knowledge-base MCP server — boto3-direct KB discovery, NL querying, data-source filtering, and region/permission-gated reranking; tag-scoped access. Apache-2.0; default branch `main`; sub-package in awslabs/mcp monorepo (parent stars carry; per-server last-commit not captured individually).
 
-### url
+## Server runtime
 
-https://github.com/awslabs/mcp/tree/main/src/bedrock-kb-retrieval-mcp-server
+### Python with raw MCP SDK
 
-### stars
-
-parent monorepo (awslabs/mcp)
-
-### last-commit
-
-not captured individually
-
-### license
-
-Apache-2.0
-
-### default branch
-
-main
-
-### one-line purpose
-
-AWS Bedrock knowledge-base MCP server — boto3-direct KB discovery, NL querying, data-source filtering, and region/permission-gated reranking; tag-scoped access.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Python `>=3.10`.
-
-### framework/SDK in use
-
-raw `mcp[cli]>=1.23.0` — no fastmcp.
+Python `>=3.10` server using the raw `mcp[cli]>=1.23.0` SDK directly — no FastMCP wrapper. Runtime dependency surface is one of the leanest observed: 4 packages — `boto3>=1.37.24`, `loguru>=0.7.3`, `mcp[cli]>=1.23.0`, `pydantic>=2.11.1`. boto3 is sync by nature so handlers are likely sync; no `httpx` is used because boto3 owns all network I/O.
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio.
+stdio is the only supported transport. Default; not configurable from the README.
 
-### how selected
+## Capability surface
 
-Default; not configurable from README.
+### Tools-only, hand-curated narrow surface
 
-## Distribution
+Tools-only surface — knowledge-base discovery, data-source listing, natural-language KB querying, result filtering by data source, and result reranking. No resources, prompts, sampling, or roots.
 
-### every mechanism observed
+### Capability probing and conditional surfacing
 
-PyPI `awslabs.bedrock-kb-retrieval-mcp-server`; `uvx`; Windows `.exe`; Docker.
+Reranking is conditional on AWS region and IAM permissions — feature gate via capability probing at start, rather than failing at tool-call time.
 
-### published package name(s)
+## Configuration delivery
 
-`awslabs.bedrock-kb-retrieval-mcp-server`.
+### Environment variables
 
-### install commands shown in README
-
-- `uvx awslabs.bedrock-kb-retrieval-mcp-server@latest`
-- `uv tool run --from awslabs.bedrock-kb-retrieval-mcp-server@latest awslabs.bedrock-kb-retrieval-mcp-server.exe`
-- `docker build -t awslabs/bedrock-kb-retrieval-mcp-server .`
-
-## Entry point / launch
-
-### command(s) users/hosts run
-
-`awslabs.bedrock-kb-retrieval-mcp-server`.
-
-### wrapper scripts, launchers, stubs
-
-Console script → `awslabs.bedrock_kb_retrieval_mcp_server.server:main`.
-
-## Configuration surface
-
-### how config reaches the server
-
-Env vars — `AWS_PROFILE`, `AWS_REGION`, `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY`/`AWS_SESSION_TOKEN`, `KB_INCLUSION_TAG_KEY`.
+Configuration via env vars: `AWS_PROFILE`, `AWS_REGION`, `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` / `AWS_SESSION_TOKEN` (including STS), and `KB_INCLUSION_TAG_KEY` for tag-scope override.
 
 ## Authentication
 
-### flow
+### Cloud-native identity / credential chain
 
-AWS credential chain via configured profile or direct env credentials (including STS session tokens).
-
-### where credentials come from
-
-Standard AWS resolution.
+AWS standard credential chain — configured profile, direct env credentials, or STS session tokens — resolved by the AWS SDK. No MCP-level auth on top.
 
 ## Multi-tenancy
 
-### tenancy model
+### Single-user / single-tenant per process
 
-Single-user per deployment; knowledge-base scoping via AWS tag (`mcp-multirag-kb=true` by default, overridable via `KB_INCLUSION_TAG_KEY`).
+Single-user per deployment — one AWS credential context per process.
 
-## Capabilities exposed
+### Tag-based resource scoping
 
-### tools / resources / prompts / sampling / roots / logging / other
+Knowledge-base scoping enforced server-side via AWS tag filters: only knowledge bases tagged with `mcp-multirag-kb=true` (default; overridable via `KB_INCLUSION_TAG_KEY`) are surfaced. Tag enforcement happens at the server, not in LLM prompts.
 
-Tools — knowledge-base discovery, data-source listing, natural-language KB querying, result filtering by data source, result reranking (region/permission-gated).
+## Distribution channel
+
+### PyPI via uvx (zero-install runner)
+
+`uvx awslabs.bedrock-kb-retrieval-mcp-server@latest` — published on PyPI as `awslabs.bedrock-kb-retrieval-mcp-server` and runnable through uvx without prior install.
+
+### Windows .exe variant
+
+Documented Windows path: `uv tool run --from awslabs.bedrock-kb-retrieval-mcp-server@latest awslabs.bedrock-kb-retrieval-mcp-server.exe`.
+
+### Docker / OCI image
+
+Dockerfile present; documented build: `docker build -t awslabs/bedrock-kb-retrieval-mcp-server .`.
+
+## Entry point and launch
+
+### Console script via `[project.scripts]` / npm bin
+
+Console script `awslabs.bedrock-kb-retrieval-mcp-server` mapped to `awslabs.bedrock_kb_retrieval_mcp_server.server:main`. Quoted dotted name in `[project.scripts]` matches the dotted PyPI package name.
+
+## Build and packaging
+
+### Hatchling + uv (Python)
+
+Build backend: hatchling. Version manager convention: `uv`. `requires-python = ">=3.10"`. Lock file presence not captured.
+
+## Schema and types
+
+### Pydantic v2 models
+
+Pydantic v2.11 for structured payloads with the raw `mcp` SDK.
+
+## Container artifacts
+
+### Dockerfile (single-stage, build-from-source)
+
+Per-server Dockerfile under `src/bedrock-kb-retrieval-mcp-server/`.
 
 ## Observability
 
-### logging destination + format, metrics, tracing, debug flags
+### loguru (Python)
 
-`loguru`.
+`loguru` for application logging.
 
-## Host integrations shown in README or repo
+## Repository layout
 
-Aggregated in parent monorepo.
+### Monorepo of namespace-prefixed packages
 
-## Claude Code plugin wrapper
+Sub-package inside the `awslabs/mcp` monorepo of `awslabs.*` namespace-prefixed PyPI packages.
 
-### presence and shape
+## Domain logic and embedded intelligence
 
-None.
+### Pass-through tool wrappers
 
-## Tests
-
-### presence, framework, location, notable patterns
-
-Not captured from README.
+Uses boto3 directly (`boto3>=1.37.24`) — thin SDK wrapper, no AWS CLI wrapping (unlike the aws-api sibling). Tools map onto Bedrock KB API operations.
 
 ## CI
 
-### presence, system, triggers, what it runs
+### Monorepo CI inheritance
 
-Parent monorepo.
+CI inherited from parent monorepo; no workflow at sub-server level.
 
-## Container / packaging artifacts
+## Host integration
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+### Monorepo catalog
 
-Dockerfile.
+Host integrations aggregated in the parent monorepo's catalog rather than per-sub-server.
 
-## Example client / developer ergonomics
+## Claude Code plugin / skill wrapper
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+### Bare MCP server, no Claude Code wrapper
 
-Not captured.
+No Claude Code plugin or skill wrapper at this sub-package.
 
-## Repo layout
+## Release and lifecycle
 
-### single-package / monorepo / vendored / other
+### License — Permissive (MIT / Apache-2.0)
 
-Sub-package in awslabs/mcp.
+Apache-2.0.
 
-## Notable structural choices
+### Active development
 
-Uses boto3 directly (`boto3>=1.37.24`) — no AWS CLI wrapping, unlike the aws-api sibling.
-
-Tag-based KB scoping — only knowledge bases tagged with `mcp-multirag-kb=true` are surfaced; scoping is enforced server-side via AWS tag filters, not by the LLM.
-
-Extremely lean dependency set: 4 runtime deps (boto3, loguru, mcp, pydantic).
-
-Reranking is conditional on region and IAM permissions — feature gate via capability probing.
-
-## Unanticipated axes observed
-
-Tag-driven resource scoping as an MCP pattern — AWS tags become the access-control boundary for which KBs the server can see. A novel solution to "too many resources in the account" without building app-level access control.
-
-Capability-probing at start — reranking only exposed when region + perms allow, rather than failing at tool-call time.
-
-boto3-direct vs CLI-wrap split inside the same monorepo — two design styles coexist; this sub-server represents the "thin SDK wrapper" style.
-
-## Python-specific
-
-### SDK / framework variant
-
-raw `mcp[cli]>=1.23.0`. Version pins from pyproject.toml: `mcp[cli]>=1.23.0`, `boto3>=1.37.24`, `pydantic>=2.11.1`, `loguru>=0.7.3`. Import pattern not captured; raw SDK pattern.
-
-### Python version floor
-
-`requires-python = ">=3.10"`.
-
-### Packaging
-
-Build backend: hatchling. Lock file not captured. Version manager convention: `uv`.
-
-### Entry point
-
-Console script `awslabs.bedrock-kb-retrieval-mcp-server`. Host-config snippet shape: `uvx awslabs.bedrock-kb-retrieval-mcp-server@latest`.
-
-### Install workflow expected of end users
-
-`uvx awslabs.bedrock-kb-retrieval-mcp-server@latest`.
-
-### Async and tool signatures
-
-boto3 is sync by nature — likely sync handlers.
-
-### Type / schema strategy
-
-Pydantic v2.11.
-
-### Testing
-
-Not captured.
-
-### Dev ergonomics
-
-Not captured.
-
-### Notable Python-specific choices
-
-One of the leanest Python MCP server dep sets observed (4 runtime deps).
-
-No httpx — boto3 owns all network I/O, which keeps the stack consistent with AWS SDK conventions.
-
-## Gaps
-
-Async/sync pattern in handlers, specific reranker API used, tag-filter implementation details, test presence.
+Default branch `main`; active maintenance via parent monorepo.

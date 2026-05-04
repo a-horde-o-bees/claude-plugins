@@ -1,167 +1,129 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/ahmedmustahid/postgres-mcp-server`. PostgreSQL read-only MCP server — exposes tables and schema as resources and runs read-only SQL queries over stdio or Streamable HTTP. 30 stars, MIT, default branch `main`.
 
-### url
+## Server runtime
 
-https://github.com/ahmedmustahid/postgres-mcp-server
+### Node.js / TypeScript with official MCP SDK
 
-### stars
-
-30
-
-### last-commit
-
-Not surfaced from landing page within budget.
-
-### license
-
-MIT
-
-### default branch
-
-main
-
-### one-line purpose
-
-PostgreSQL read-only MCP server — exposes tables and schema as resources and runs read-only SQL queries over stdio or Streamable HTTP.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-TypeScript (71.8%), JavaScript, Node.js; a `pyproject.toml` is also present suggesting a secondary Python surface.
-
-### framework/SDK in use
-
-Anthropic MCP TypeScript SDK (StreamableHTTPServerTransport, StdioServerTransport).
+TypeScript/JavaScript server (TS 71.8% in the repo) on the Anthropic MCP TypeScript SDK — uses `StreamableHTTPServerTransport` and `StdioServerTransport` classes from the SDK. A sibling `pyproject.toml` is also present in this TS-majority repo, suggesting a secondary Python surface (purpose not explained in README).
 
 ## Transport
 
-### supported transports
+### stdio
 
-HTTP (streamable) and stdio.
+stdio supported; selected by passing `stdio` as a positional subcommand (`npx @ahmedmustahid/postgres-mcp-server stdio`).
 
-### how selected
+### Streamable HTTP
 
-Positional subcommand — `npx @ahmedmustahid/postgres-mcp-server` (HTTP default) vs `npx @ahmedmustahid/postgres-mcp-server stdio`.
+HTTP (streamable) supported and is the default mode. Bound to a configurable port (default 3000). Supports stateful sessions but not per-request tenant switching.
 
-## Distribution
+### Selection mechanism
 
-### every mechanism observed
+Subcommand verb — positional `stdio` argument selects stdio mode; absence selects HTTP default.
 
-npm (npx), Docker, Podman.
+## Capability surface
 
-### published package name(s)
+### Tools plus resources
 
-@ahmedmustahid/postgres-mcp-server
+Resources — "Database Tables" (public-schema listing), "Database Schema" (column info as queryable URIs). Tool — read-only SQL query execution. Splits read access along MCP primitive lines.
 
-### install commands shown in README
+## Configuration delivery
 
-`npx @ahmedmustahid/postgres-mcp-server`; `npx @ahmedmustahid/postgres-mcp-server stdio`.
+### Environment variables
 
-## Entry point / launch
+`POSTGRES_USERNAME`, `POSTGRES_PASSWORD`, `POSTGRES_HOST`, `POSTGRES_DATABASE`, `POSTGRES_URL`, `PORT` (default 3000), `HOST`, `NODE_ENV`, `CORS_ORIGIN`.
 
-### command(s) users/hosts run
+### Dotenv file
 
-`npx @ahmedmustahid/postgres-mcp-server [stdio]`.
+`.env` is the documented configuration delivery surface — env vars loaded from `.env` at startup.
 
-### wrapper scripts, launchers, stubs
+### Connection URI scheme
 
-Dockerfile and docker-compose.yml; Makefile.
-
-## Configuration surface
-
-### how config reaches the server
-
-Environment variables via `.env` — `POSTGRES_USERNAME`, `POSTGRES_PASSWORD`, `POSTGRES_HOST`, `POSTGRES_DATABASE`, `POSTGRES_URL`, `PORT` (default 3000), `HOST`, `NODE_ENV`, `CORS_ORIGIN`.
+`POSTGRES_URL` accepted as a single-string URI alongside discrete `POSTGRES_USERNAME`/`POSTGRES_PASSWORD`/`POSTGRES_HOST`/`POSTGRES_DATABASE` flags — convenience for the standard PostgreSQL URI idiom.
 
 ## Authentication
 
-### flow
+### Database connection string
 
-Standard PostgreSQL authentication via credentials in env vars.
-
-### where credentials come from
-
-`.env` file / environment variables.
+Standard PostgreSQL authentication via credentials in env vars (`POSTGRES_*`) or as a connection URI.
 
 ## Multi-tenancy
 
-### tenancy model
+### HTTP-stateful, single-tenant
 
-Single database per server; HTTP transport supports stateful sessions but not per-request tenant switching.
+Single database per server instance; HTTP transport supports stateful sessions but not per-request tenant switching.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### npm via npx / bunx
 
-Resources — "Database Tables" (public-schema listing), "Database Schema" (column info). Tool — read-only SQL query execution.
+Published as `@ahmedmustahid/postgres-mcp-server` on npm; canonical invocation `npx @ahmedmustahid/postgres-mcp-server [stdio]`.
+
+### Docker / OCI image
+
+Dockerfile and `docker-compose.yml` present; Podman explicitly called out as an alternative.
+
+## Entry point and launch
+
+### `npx -y <package>` / `bunx`
+
+`npx @ahmedmustahid/postgres-mcp-server` (HTTP default) or `npx @ahmedmustahid/postgres-mcp-server stdio` (stdio).
+
+### Subcommand verb
+
+Positional `stdio` subcommand selects transport mode at launch.
+
+## Build and packaging
+
+### npm/Node toolchain
+
+`package.json` defines build/bin entries; npm registry is the publish target.
+
+## Container artifacts
+
+### Dockerfile (single-stage, build-from-source)
+
+Dockerfile at repo root.
+
+### Docker Compose for local dev
+
+`docker-compose.yml` orchestrates the server alongside its backing PostgreSQL service for local development.
 
 ## Observability
 
-### logging destination + format, metrics, tracing, debug flags
+### `--verbose` flag
 
-`--verbose` flag available.
+Boolean `--verbose` CLI flag.
 
-## Host integrations shown in README or repo
+## Host integration
 
 ### Claude Desktop
 
-Supported with JSON config example.
+JSON config example included.
 
-### MCP Inspector
+### Inspector compatibility called out
 
-Explicitly referenced.
-
-### Other editors/CLIs
-
-Not mentioned.
-
-## Claude Code plugin wrapper
-
-### presence and shape
-
-Not present.
-
-## Tests
-
-### presence, framework, location, notable patterns
-
-Not detailed in README within budget.
-
-## CI
-
-### presence, system, triggers, what it runs
-
-Not detailed in README within budget.
-
-## Container / packaging artifacts
-
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
-
-Dockerfile and docker-compose.yml present; Podman also called out.
+MCP Inspector explicitly referenced.
 
 ## Example client / developer ergonomics
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+### Makefile / Makefile.toml
 
-Makefile present; Claude Desktop config example; "Show sales table from last year" example query.
+Makefile present at repo root.
 
-## Repo layout
+### Sample MCP client configs in repo
 
-### single-package / monorepo / vendored / other
+Claude Desktop config example shipped in README; "Show sales table from last year" example query as user-facing onboarding.
 
-Mixed single-package — primarily Node/TS (`src/`, `package.json`) with a sibling `pyproject.toml` and `images/` directory.
+## Repository layout
 
-## Notable structural choices
+### Single-package source (language-conventional)
 
-Dual transport (HTTP streamable + stdio) in one package with subcommand selection. Graceful shutdown and error handling highlighted in README. Presence of both `package.json` and `pyproject.toml` in a TS-majority repo is unusual — possibly a parallel Python variant or docs-generation tool.
+Primarily Node/TS layout (`src/`, `package.json`) with sibling `pyproject.toml` and `images/` directory — mixed-language surfacing in a TS-majority repo.
 
-## Unanticipated axes observed
+## Release and lifecycle
 
-CORS origin configuration surfaces at the MCP layer, which is HTTP-transport-specific and rare. Explicit HTTP session statefulness as a design axis.
+### License — Permissive (MIT / Apache-2.0)
 
-## Gaps
-
-Last-commit date not surfaced. Tests and CI details not extracted within budget. Purpose of `pyproject.toml` in a TS-dominant repo not explained in README.
+MIT.

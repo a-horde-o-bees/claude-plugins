@@ -1,110 +1,110 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/HenkDz/postgresql-mcp-server`. PostgreSQL MCP server — 17 consolidated meta-tools (down from 46 atomic tools) covering CRUD/SQL execution, schema analysis, and monitoring. 178 stars, AGPLv3, default branch `main`, 33 total commits.
 
-### url
+## Server runtime
 
-https://github.com/HenkDz/postgresql-mcp-server
+### Node.js / TypeScript with official MCP SDK
 
-### stars
-
-178
-
-### last-commit
-
-33 total commits; exact date not surfaced from landing page.
-
-### license
-
-AGPLv3
-
-### default branch
-
-main
-
-### one-line purpose
-
-PostgreSQL MCP server — 17 consolidated meta-tools (down from 46 atomic tools) covering CRUD/SQL execution, schema analysis, and monitoring.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-TypeScript (96.6%), Node.js runtime.
-
-### framework/SDK in use
-
-Anthropic MCP TypeScript SDK.
+TypeScript (96.6%) on the Anthropic MCP TypeScript SDK; Node.js runtime.
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio (Node executable launched by host).
+Default; Node executable launched by host. No alternative transport documented.
 
-### how selected
+## Capability surface
 
-Default stdio; no alternative transport documented.
+### Tools-heavy domain wrapper / domain-tool catalog
 
-## Distribution
+17 tools organized into 3 categories — 8 consolidated meta-tools, 4 CRUD/SQL execution tools, 5 specialized analysis/monitoring tools.
 
-### every mechanism observed
+### Tool consolidation as design pressure
 
-npm (global or npx), Smithery registry, Docker image (Docker Hub), Git clone.
+Originally 46 atomic tools, consolidated down to 17 meta-tools as an explicit design response to LLM discovery and parameter-validation pressure — too many narrow tools confuse model selection; broader meta-tools with more parameters work better.
 
-### published package name(s)
+### Tool catalog as data file
 
-@henkey/postgres-mcp-server
+`POSTGRES_TOOLS_CONFIG` env var pointing at a `tools.json` config file enables per-tool enablement — explicit surface-reduction knob rather than requiring code fork.
 
-### install commands shown in README
+## Configuration delivery
 
-`npm install -g @henkey/postgres-mcp-server`; `npx @henkey/postgres-mcp-server`; `npx -y @smithery/cli install @HenkDz/postgresql-mcp-server`; `docker pull henkey/postgres-mcp:latest`.
+### CLI flags
 
-## Entry point / launch
+`--connection-string` flag.
 
-### command(s) users/hosts run
+### Environment variables
 
-Node executable `/build/index.js` invoked via npx or docker, with connection-string argument.
+`POSTGRES_CONNECTION_STRING` and `POSTGRES_TOOLS_CONFIG`.
 
-### wrapper scripts, launchers, stubs
+### Per-tool enablement file
 
-Docker entrypoint script; npm bin entry.
+Optional `tools.json` config file (referenced by `POSTGRES_TOOLS_CONFIG` env var) toggles individual tools on/off.
 
-## Configuration surface
+### Connection URI scheme
 
-### how config reaches the server
-
-CLI flag `--connection-string`; environment variables `POSTGRES_CONNECTION_STRING` and `POSTGRES_TOOLS_CONFIG`; optional `tools.json` config file for per-tool enablement.
+`POSTGRES_CONNECTION_STRING` packs host, port, credentials, and TLS into one URL.
 
 ## Authentication
 
-### flow
+### Database connection string
 
-Standard PostgreSQL authentication.
-
-### where credentials come from
-
-Embedded in connection string (`user:password@host:port/database`), supplied via flag or env var.
+Standard PostgreSQL authentication; credentials embedded in connection string (`user:password@host:port/database`), supplied via `--connection-string` flag or `POSTGRES_CONNECTION_STRING` env var.
 
 ## Multi-tenancy
 
-### tenancy model
+### Single connection per server instance
 
 Single connection per server instance; no per-request tenant switching documented.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### npm via npx / bunx
 
-17 tools organized into 3 categories — 8 consolidated meta-tools, 4 CRUD/SQL execution tools, 5 specialized analysis/monitoring tools. Originally 46 tools, consolidated down.
+Published as `@henkey/postgres-mcp-server`. `npm install -g @henkey/postgres-mcp-server` for global install; `npx @henkey/postgres-mcp-server` for direct launch.
 
-## Observability
+### Smithery registry
 
-### logging destination + format, metrics, tracing, debug flags
+`npx -y @smithery/cli install @HenkDz/postgresql-mcp-server` — Smithery-mediated install.
 
-Not surfaced in README within budget.
+### Docker / OCI image
 
-## Host integrations shown in README or repo
+`docker pull henkey/postgres-mcp:latest` from Docker Hub.
+
+### Source clone with editable install
+
+Git clone documented as alternative.
+
+## Entry point and launch
+
+### Built JS file (`node build/index.js`)
+
+Node executable `/build/index.js` invoked via npx or docker, with connection-string argument. npm bin entry; Docker entrypoint script.
+
+## Build and packaging
+
+### npm/Node toolchain
+
+`package.json` defines build and bin entries; npm registry is the publish target. TypeScript compiled to a `build/` JS output.
+
+## Container artifacts
+
+### Dockerfile (single-stage, build-from-source)
+
+Dockerfile present at repo root with entrypoint script.
+
+### Published Docker image
+
+Pre-built image at Docker Hub (`henkey/postgres-mcp`).
+
+## CI
+
+### GitHub Actions
+
+`.github/workflows/` present; specific workflows not extracted within budget.
+
+## Host integration
 
 ### Claude Desktop
 
@@ -114,54 +114,30 @@ JSON config example provided.
 
 Documented as an MCP client target.
 
-### Other editors/CLIs
+### Smithery / Glama discovery
 
-Not explicitly mentioned.
+`@smithery/cli install` command documented for cross-host install.
 
-## Claude Code plugin wrapper
+## Repository layout
 
-### presence and shape
-
-Not present.
-
-## Tests
-
-### presence, framework, location, notable patterns
-
-Not explicitly surfaced within budget.
-
-## CI
-
-### presence, system, triggers, what it runs
-
-`.github/workflows/` present; specific workflows not extracted within budget.
-
-## Container / packaging artifacts
-
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
-
-Dockerfile present, entrypoint script, published image on Docker Hub (`henkey/postgres-mcp`).
-
-## Example client / developer ergonomics
-
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
-
-Claude Desktop JSON config; Smithery CLI recipe; `docs/` directory present.
-
-## Repo layout
-
-### single-package / monorepo / vendored / other
+### Single-package source (language-conventional)
 
 Single-package TypeScript project (`src/`, `docs/`, `.github/workflows/`, `build/`).
 
-## Notable structural choices
+## Documentation surface
 
-Tool consolidation from 46 atomic tools to 17 meta-tools as an explicit design response to LLM discovery and parameter-validation pressure. `POSTGRES_TOOLS_CONFIG` / `tools.json` enables per-tool enablement — explicit surface-reduction knob. Docker-first packaging alongside npm.
+### README plus docs directory
 
-## Unanticipated axes observed
+`docs/` directory present alongside README.md.
 
-Per-tool configuration via a separate JSON config is an unusual explicit axis — most servers either expose all tools or require a code fork. AGPLv3 license is uncommon for MCP servers; most are MIT/Apache — has copyleft implications for hosts embedding it.
+## Release and lifecycle
 
-## Gaps
+### License — Copyleft (AGPL-3.0)
 
-Exact last-commit date not surfaced. Test framework and specific CI workflows not extracted within budget. Logging/observability details not surfaced.
+AGPLv3 license — uncommon for MCP servers (most are MIT/Apache). Carries network-copyleft implications for hosts embedding the server in a hosted product: derivative works distributed over a network must remain open. Distinct from MIT/Apache (no copyleft) and CC BY-NC-SA (forbids commercial use); AGPLv3 permits commercial adoption but ties the source-disclosure obligation to network use as well as redistribution.
+
+## Extension points
+
+### Per-tool enablement file
+
+`tools.json` config file (referenced by `POSTGRES_TOOLS_CONFIG` env var) toggles individual tools without code changes — lets deployers shrink the LLM-visible surface for safety or focus, and lets the same server image serve multiple deployment profiles.

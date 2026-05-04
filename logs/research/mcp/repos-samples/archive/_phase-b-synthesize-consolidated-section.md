@@ -13,9 +13,9 @@ Per-section synthesis instructions for populating `_CONSOLIDATED.md`. A spawned 
 ### Orient
 
 1. Read `logs/research/{subject}/{subtopic-or-discovered}-samples/_TEMPLATE.md` — canonical heading tree, sub-purpose vocabulary, and per-section purpose statements
-2. Read `logs/research/{subject}/{subtopic-or-discovered}-samples/_CONSOLIDATED.md` — confirm that each {chain} in the assignment list resolves to an empty `##` section
+2. Read `logs/research/{subject}/{subtopic-or-discovered}-samples/_CONSOLIDATED.md` in full — this is **input context**, not a work-selection lookup. Note which sections are already populated (prior bins or hand-authored) and what themes/observations they surface. Your synthesis may need to reference, extend, or cross-link with that prior content
 
-> A section is **empty** when its `## Heading` is followed only by `###` sub-headings and blank lines (no body text at any depth) before the next `##` heading or EOF. If an assigned chain's section is already populated, skip it and surface to caller in the report — do not overwrite.
+> The orchestrator owns work selection; the agent owns synthesis. Section emptiness is **not a signal** for whether to proceed — every assigned chain in {chains} gets synthesized. If an assigned chain's section is already populated, the agent **extends or refines** that content (preserve what's load-bearing; integrate new findings; never wholesale-overwrite without surfacing in the report).
 
 ### For each chain in {chains}
 
@@ -85,20 +85,26 @@ Per-section synthesis instructions for populating `_CONSOLIDATED.md`. A spawned 
 
 ### Write
 
-17. Locate the heading in `_CONSOLIDATED.md` matching the chain's leaf (depth-2 `##` for top-level chains; depth-3 `###` for sub-purpose chains). Replace the empty block (heading + body up to the next sibling/parent heading) with the synthesized content
+17. Locate the heading in `_CONSOLIDATED.md` matching the chain's leaf (depth-2 `##` for top-level chains; depth-3 `###` for sub-purpose chains). Write the synthesized content into the chain's section block:
+    - **If the section is empty:** populate it with the synthesized content
+    - **If the section is already populated:** extend or refine — preserve content that's load-bearing (named patterns, denominator framings, useful exemplars), integrate new findings, harmonize style; never wholesale-overwrite without explicit reasoning surfaced in the report
+
 18. Heading text and level remain unchanged — verbatim from `_TEMPLATE.md` for both the leaf heading and any nested sub-purposes
-19. Verify compliance:
+
+19. **Cross-section writes are permitted** — if synthesizing your assigned chain surfaces an observation that genuinely belongs in another section (the corpus's freeform catch-alls — `## Notable structural choices`, `## Unanticipated axes observed`, `## Gaps`), write the observation there too. The bin assignment names what you SOURCE FROM, not the only place you can write. Surface every cross-section write in the report so the orchestrator can audit
+
+20. Verify compliance:
     1. bash: `ocd-run log research compliance --subject {subject}` — append `--subtopic {subtopic}` only when multi-subtopic
     2. If `Consolidated:` line reports outliers or order violations: revert this chain's content; record the failure in the report; continue to the next chain in {chains}
     3. Else: chain accepted
 
 ### Continue
 
-20. If more chains remain in {chains}: Go to step 3. Process next chain
-21. Else: proceed to Report
+21. If more chains remain in {chains}: Go to step 3. Process next chain
+22. Else: proceed to Report
 
 ## Report when returning to caller
 
-- **Sections synthesized this spawn** — ordered list of `## {name}` headings populated
-- **Section abandoned mid-work** (if any) — heading and reason: context tight, source unconsumable (corpus too large for one synthesis pass), compliance failure (and which check failed)
-- **Notable corpus observations** the orchestrator should know — patterns spanning multiple sections, outliers worth re-examining, template-revision concerns surfaced during synthesis
+- **Chains synthesized this spawn** — ordered list of chain keys processed, with per-chain status: `populated` (section was empty, now filled), `extended` (section had prior content, integrated new findings), or `failed` (compliance failure, source unconsumable, etc.)
+- **Cross-section writes** — list of `<destination chain> <observation summary>` for every write made outside an assigned chain's section
+- **Notable corpus observations** the orchestrator should know — patterns spanning multiple sections, outliers worth re-examining, template-revision concerns surfaced during synthesis, instructions ambiguities worth surfacing

@@ -1,210 +1,105 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/DiversioTeam/clickup-mcp`. ClickUp task-management MCP server — 28 tools covering task CRUD, discovery, assignments, bulk ops, time tracking, analytics, and user management. 3 stars, MIT, default branch `main`. Test-density vs popularity skew — 62 pytest tests on a 3-star repo, well above average for its popularity tier.
 
-### url
+## Server runtime
 
-https://github.com/DiversioTeam/clickup-mcp
+### Python with raw MCP SDK
 
-### stars
-
-3
-
-### last-commit
-
-not captured
-
-### license
-
-MIT
-
-### default branch
-
-main
-
-### one-line purpose
-
-ClickUp task-management MCP server — 28 tools covering task CRUD, discovery, assignments, bulk ops, time tracking, analytics, and user management.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Python 100%; `requires-python = ">=3.10"`.
-
-### framework/SDK in use
-
-raw `mcp>=0.1.0` (very old pin) + `click` for CLI wrapping.
+Python 100% on raw `mcp>=0.1.0` (extremely loose pin) with `click` for CLI wrapping. Pin is unusual — most projects pin much tighter. Other pyproject.toml dependencies: `httpx>=0.27.0`, `pydantic>=2.0.0`, `pydantic-settings>=2.0.0`, `platformdirs>=4.0.0`, `python-dotenv>=1.0.0`, `click>=8.1.0`, `rich>=13.0.0`. Import pattern likely `from mcp.server import Server` given raw SDK. `requires-python = ">=3.10"`. Async likely (httpx + pytest-asyncio).
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio (default MCP transport implied).
+Default MCP transport; no alternative documented.
 
-### how selected
+## Capability surface
 
-default
+### Domain-bundled tool set
 
-## Distribution
+28 tools organized by entity-type and operation class — task management, discovery, assignments, navigation, bulk operations, time tracking, analytics, user management.
 
-### every mechanism observed
+## Configuration delivery
 
-`uvx --from git+https://github.com/DiversioTeam/clickup-mcp clickup-mcp` — install from git URL.
+### Environment variables
 
-### published package name(s)
+`CLICKUP_MCP_API_KEY` env var as alternative credential path.
 
-no PyPI publication documented
+### Persistent OS-native config
 
-### install commands shown in README
-
-`uvx --from git+https://github.com/DiversioTeam/clickup-mcp clickup-mcp`; `uv run clickup-mcp`.
-
-## Entry point / launch
-
-### command(s) users/hosts run
-
-`uvx clickup-mcp` (after install-from-git); `uv run clickup-mcp`. Subcommands: `uvx clickup-mcp set-api-key YOUR_KEY`, `check-config`, `test-connection`, `--debug`.
-
-### wrapper scripts, launchers, stubs
-
-console script `clickup-mcp` → `clickup_mcp.__main__:main`.
-
-## Configuration surface
-
-### how config reaches the server
-
-Persistent config via `platformdirs` — API key stored via `set-api-key` subcommand. Env var alternative: `CLICKUP_MCP_API_KEY`.
+Config persisted via `platformdirs` to a platform-appropriate directory (`~/.config/` on Linux, `%APPDATA%` on Windows) by the `set-api-key` subcommand of the same binary — unlike the dominant "env var only" pattern. Survives across launches without per-host env-var setup. Unusual in this corpus.
 
 ## Authentication
 
-### flow
+### Static API key / token via env var
 
-ClickUp personal API token (generated from Settings → Apps → API).
-
-### where credentials come from
-
-either `set-api-key` subcommand (persisted via `platformdirs`) or `CLICKUP_MCP_API_KEY` env var.
+ClickUp personal API token (generated from Settings → Apps → API). Supplied either via `set-api-key` subcommand (persisted via `platformdirs`) or via `CLICKUP_MCP_API_KEY` env var.
 
 ## Multi-tenancy
 
-### tenancy model
+### Single-user / single-tenant per process
 
-single workspace per API key; personal-token scope.
+Single workspace per API key; personal-token scope.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### Install-from-git via uvx
 
-28 tools covering task management, discovery, assignments, navigation, bulk operations, time tracking, analytics, user management.
+`uvx --from git+https://github.com/DiversioTeam/clickup-mcp clickup-mcp` is the primary install path. No PyPI publication; the git URL becomes the effective package index.
 
-## Observability
+## Entry point and launch
 
-### logging destination + format, metrics, tracing, debug flags
+### Console script via `[project.scripts]` / npm bin
 
-`--debug` flag; `rich` used for formatted output.
+Console script `clickup-mcp` declared in `[project.scripts]` pointing to `clickup_mcp.__main__:main` rather than `clickup_mcp.server:main` — `__main__.py`-based entry. Host-config snippet shape: `uvx clickup-mcp` (after git-install).
 
-## Host integrations shown in README or repo
+### Subcommand verb
 
-Not captured per host in extract.
+The binary exposes management subcommands beyond running the server: `set-api-key`, `check-config`, `test-connection`, `--debug`. Mode is verb-selectable; the same console script handles both the server protocol and a separate CLI for configuration.
 
-## Claude Code plugin wrapper
+## Build and packaging
 
-### presence and shape
+### Hatchling + uv (Python)
 
-none
+Build backend: hatchling. Version manager convention: `uv` / `uvx`. Lock file presence not captured.
 
-## Tests
+## Schema and types
 
-### presence, framework, location, notable patterns
+### Pydantic v2 models
 
-62 pytest tests; pytest + pytest-asyncio + pytest-cov in dev deps.
+`pydantic>=2.0.0` for validation; `pydantic-settings>=2.0.0` for typed config (env + file loading).
+
+## Test stack
+
+### pytest with async + coverage
+
+pytest + pytest-asyncio + pytest-cov in dev deps; 62 tests in the suite.
 
 ## CI
 
-### presence, system, triggers, what it runs
+### GitHub Actions
 
 GitHub Actions CI workflow present.
 
-## Container / packaging artifacts
+## Repository layout
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+### Single-package src-layout
 
-not mentioned
+Single-package (`clickup_mcp/` with `__main__.py`).
 
-## Example client / developer ergonomics
+## Observability
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+### `--verbose` flag
 
-`set-api-key`, `check-config`, `test-connection` subcommands — strong CLI ergonomics for setup.
+`--debug` flag escalates log verbosity; `rich` used for formatted CLI output (relevant for the management subcommands rather than the MCP server protocol itself).
 
-## Repo layout
+## Developer ergonomics
 
-### single-package / monorepo / vendored / other
+### Setup subcommands on the MCP binary
 
-single-package (`clickup_mcp/` with `__main__.py`).
+The same console script that runs the MCP server protocol exposes management subcommands (`set-api-key`, `check-config`, `test-connection`) for credential setup and connectivity verification. Doubles the binary as a config CLI; uses `rich` and `click` for human-facing output. Pattern echoes `kubectl config`-style CLIs.
 
-## Notable structural choices
+### Linter and type-checker stack
 
-- `platformdirs`-based persistent config — API key stored in OS-appropriate config dir (`~/.config/` / `%APPDATA%` / etc.) via `set-api-key` subcommand; unlike the dominant "env var only" pattern
-- Management subcommands on the MCP binary (`set-api-key`, `check-config`, `test-connection`) — the MCP server command doubles as a config CLI, echoing patterns like `kubectl config`
-- `__main__.py`-based entry — console script points at `clickup_mcp.__main__:main` rather than `clickup_mcp.server:main`
-- `rich` for terminal output — the CLI-facing subcommands use rich formatting; reflects the dual-mode (server + management CLI) nature
-- Install-from-git — `uvx --from git+...` as the primary install path, no PyPI
-- 62 pytest tests on a 3-star repo — well above average test density for its popularity tier
-
-## Unanticipated axes observed
-
-- MCP-server binary as a management CLI — the same console script handles both the server protocol and a separate CLI for configuration. A richer pattern than one-binary-one-purpose
-- OS-native config persistence via `platformdirs` — competes with `.env` files and env vars; reveals three distinct credential-storage conventions in the sample
-- `uvx --from git+...` as a distribution channel — bypasses PyPI entirely; the git URL becomes the effective package index
-- Test-density vs popularity skew — low stars with high test count suggests an internal/team project published without a marketing push; star counts should not be read as a proxy for engineering quality
-
-## Python-specific
-
-### SDK / framework variant
-
-raw `mcp>=0.1.0` — extremely loose pin. Version pins from pyproject.toml: `mcp>=0.1.0`, `httpx>=0.27.0`, `pydantic>=2.0.0`, `pydantic-settings>=2.0.0`, `platformdirs>=4.0.0`, `python-dotenv>=1.0.0`, `click>=8.1.0`, `rich>=13.0.0`. Import pattern likely `from mcp.server import Server` given raw SDK.
-
-### Python version floor
-
-`requires-python = ">=3.10"`
-
-### Packaging
-
-Build backend: hatchling. Lock file presence not captured. Version manager convention: `uv` / `uvx`.
-
-### Entry point
-
-`__main__.py` module entry: `clickup-mcp = clickup_mcp.__main__:main`. Console script name: `clickup-mcp`. Host-config snippet shape: `uvx clickup-mcp` (after git-install).
-
-### Install workflow expected of end users
-
-`uvx --from git+https://github.com/DiversioTeam/clickup-mcp clickup-mcp`
-
-### Async and tool signatures
-
-httpx + pytest-asyncio → async likely.
-
-### Type / schema strategy
-
-Pydantic v2 + pydantic-settings for typed config.
-
-### Testing
-
-pytest + pytest-asyncio + pytest-cov; 62 tests. Fixture style not captured.
-
-### Dev ergonomics
-
-ruff + mypy + subcommand CLI (`set-api-key`, `check-config`, `test-connection`).
-
-### Notable Python-specific choices
-
-- `pydantic-settings` for typed-config pattern (env + file loading)
-- `platformdirs` for cross-platform config directory resolution
-- `rich` + `click` for a polished CLI layer on top of the MCP server
-- Very loose `mcp>=0.1.0` pin — unusual; most projects pin much tighter
-
-## Gaps
-
-Docker presence, exact mcp SDK patterns, whether the server uses resources/prompts primitives, update cadence.
+ruff + mypy configured.

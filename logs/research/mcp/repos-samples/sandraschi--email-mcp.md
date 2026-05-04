@@ -1,213 +1,225 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/sandraschi/email-mcp`. Email MCP server — SMTP/IMAP plus 10+ transactional-email APIs and 5 local-test servers and 4 webhook integrations behind a single tool surface; FastMCP 3.x; ships a separate Vite + Uvicorn web dashboard for monitoring; mixed Python + Rust packaging with `Cargo.toml` for MCPB signing. 1 star, MIT, default branch `master`. Last commit not extracted.
 
-### url
+## Server runtime
 
-https://github.com/sandraschi/email-mcp
+### Python with FastMCP
 
-### stars
-
-1
-
-### last-commit
-
-Not explicitly extracted within budget.
-
-### license
-
-MIT
-
-### default branch
-
-master
-
-### one-line purpose
-
-Email MCP server — SMTP/IMAP plus transactional-email APIs; FastMCP 3.x; Cargo.toml alongside pyproject.toml for MCPB signing.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Python (46.9%) + web assets; Python 3.12+.
-
-### framework/SDK in use
-
-FastMCP 3.1.0+ (Python MCP framework).
+Python on FastMCP 3.x — `fastmcp>=3.1.0,<4` in `pyproject.toml`, pinning to the 3.x major. Import pattern: `from fastmcp import FastMCP` (inferred). Tools are async with connection pooling per README; pytest-asyncio in test extras.
 
 ## Transport
 
-### supported transports
-
-stdio.
-
-### how selected
+### stdio
 
 Stdio default; README emphasizes hardened stdout/stderr isolation for JSON-RPC correctness.
 
-## Distribution
+## Capability surface
 
-### every mechanism observed
+### Tools-heavy domain wrapper / domain-tool catalog
 
-PyPI package (`uvx email-mcp`), MCPB bundle for Claude Desktop, Zed extension, GitHub clone.
+6 core tools: `send_email`, `check_inbox`, `email_status`, `configure_service`, `list_services`, `email_help`. Optional tools include `suggest_email_subject` and `email_agentic_assist` (sampling). Many backends behind one interface — SMTP/IMAP (Gmail, Outlook, Yahoo, iCloud, ProtonMail), transactional APIs (SendGrid, Mailgun, Resend, Postmark, SES), local testing (MailHog, Mailpit, MailCatcher, Inbucket), webhooks (Slack, Discord, Telegram, GitHub).
 
-### published package name(s)
+### Tools plus prompts (no resources)
 
-`email-mcp`.
+Ships at least one prompt (`email_compose_request`) alongside tools; no resources observed.
 
-### install commands shown in README
+### Sampling and elicitation as client primitives
 
-`uv run email-mcp` (dev); `uvx email-mcp` (ad-hoc).
+`email_agentic_assist` invokes MCP sampling.
 
-## Entry point / launch
+## Configuration delivery
 
-### command(s) users/hosts run
+### Environment variables
 
-`uv run email-mcp` or `uvx email-mcp`.
+Environment variables dominate — SMTP/IMAP servers/ports/credentials, per-provider API keys (SendGrid, Mailgun, Resend, Postmark, SES), local-testing flags, mailing-list file paths.
 
-### wrapper scripts, launchers, stubs
+### Runtime reconfiguration tool
 
-PowerShell scripts (`build.ps1`, `start.ps1`); Justfile recipes for operations; entry point is `email_mcp.server` module.
-
-## Configuration surface
-
-### how config reaches the server
-
-Environment variables dominate — SMTP/IMAP servers/ports/credentials, per-provider API keys, local-testing flags, mailing-list files; `configure_service()` tool for runtime (re)configuration without restart.
+`configure_service()` tool reconfigures the active backend at runtime without process restart — runtime flexibility instead of restart-to-reload.
 
 ## Authentication
 
-### flow
+### Multi-provider credential bundles
 
-Multi-backend — SMTP/IMAP with app passwords, per-provider API keys (SendGrid, Mailgun, Resend, Postmark, SES), ProtonMail Bridge, webhook integrations. Dynamic service switching via tool call.
-
-### where credentials come from
-
-Environment variables per service; runtime overrides via `configure_service`.
+Multi-backend credential bundle: SMTP/IMAP with app passwords; per-provider API keys for SendGrid, Mailgun, Resend, Postmark, SES; ProtonMail Bridge integration; webhook tokens. All credentials supplied via env vars per service; runtime overrides via `configure_service`. Dynamic service switching via tool call.
 
 ## Multi-tenancy
 
-### tenancy model
+### Single-user / single-tenant per process
 
-Single-user — one set of mail credentials per process, though multiple providers can be configured simultaneously and selected per-send. Not designed for per-request tenancy.
+Single-user — one set of mail credentials per process; multiple providers can be configured simultaneously and selected per send. Not designed for per-request tenancy.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### PyPI via uvx (zero-install runner)
 
-Tools (6 core): `send_email`, `check_inbox`, `email_status`, `configure_service`, `list_services`, `email_help`. Optional: `suggest_email_subject`, `email_agentic_assist` (sampling), prompts (`email_compose_request`), skills. Supported backends: SMTP/IMAP (Gmail, Outlook, Yahoo, iCloud, ProtonMail), transactional APIs (SendGrid, Mailgun, Resend, SES, Postmark), local testing (MailHog, Mailpit, MailCatcher, Inbucket), webhooks (Slack, Discord, Telegram, GitHub).
+Published on PyPI as `email-mcp`; primary install command `uvx email-mcp`.
 
-## Observability
+### MCPB bundle / Desktop Extension manifest
 
-### logging destination + format, metrics, tracing, debug flags
+`.mcpb` bundle for Claude Desktop drag-and-drop install; `manifest.json` in repo. MCPB-first distribution stance.
 
-Separate monitoring/ directory with health + metrics; web dashboard (Vite + Uvicorn on ports 10812/10813) for monitoring and control; zero-tolerance `print` policy in core handlers to keep stdout clean.
+### Zed extension
 
-## Host integrations shown in README or repo
+Zed editor extension supported.
 
-### Claude Desktop
+## Entry point and launch
 
-MCPB bundle, `manifest.json`.
+### Console script via `[project.scripts]` / npm bin
 
-### Cursor IDE
+`[project.scripts]`: `schip-mcp-email = "email_mcp.server:main"` — the `schip-mcp-email` console-script name does not match the package/distribution name `email-mcp`. README invocations: `uv run email-mcp` (dev), `uvx email-mcp` (ad-hoc).
 
-`mcp.json`.
+### `uvx <package>`
 
-### Glama discovery
+Primary user invocation `uvx email-mcp`.
 
-`glama.json`.
+## Build and packaging
 
-### Zed
+### Hatchling + uv (Python)
 
-Extension supported.
+Build backend `hatchling.build`; lock file `uv.lock` present; version manager convention `uv`.
 
-## Claude Code plugin wrapper
+### `uv.lock` committed
 
-### presence and shape
+`uv.lock` present in repo.
 
-Not explicitly observed — MCPB bundle targets Claude Desktop, not Claude Code plugin layout.
+### Python version pinning
 
-## Tests
+`requires-python = ">=3.12"`. CI matrix tests 3.10/3.11/3.12, looser than the requires-python floor (mismatch between declared floor and tested matrix).
 
-### presence, framework, location, notable patterns
+## Schema and types
 
-pytest (`pytest.ini` at root); `tests/` directory; multi-Python CI matrix (3.10/3.11/3.12).
+### FastMCP auto-derivation from type hints
+
+FastMCP 3.x auto-derives schemas from type hints; Annotated patterns likely (not directly verified).
+
+### Async model (cross-cutting)
+
+Async tools with connection pooling per README; pytest-asyncio in test extras.
+
+## Container artifacts
+
+### `.mcpbignore` for bundle packaging
+
+MCPB is the packaging format; no Dockerfile present. `.mcpbignore`-style bundle packaging implied by MCPB layout.
+
+### No container artifacts
+
+No Dockerfile.
+
+## Test stack
+
+### pytest with async + coverage
+
+pytest + pytest-asyncio + pytest-cov in `test` extra. Separate `test` and `dev` extras. `pytest.ini` at root coexists with `pyproject.toml` (legacy dual-config pattern). `tests/` directory.
+
+### MyPy strict + Bandit security scans alongside tests
+
+CI runs Ruff (lint), MyPy (type), Bandit (security) alongside pytest; webapp uses Biome for the JS side.
 
 ## CI
 
-### presence, system, triggers, what it runs
+### GitHub Actions
 
-GitHub Actions — test matrix across Python versions, linting (Ruff), type checking (MyPy), security scanning (Bandit); webapp uses Biome.
+GitHub Actions configured.
 
-## Container / packaging artifacts
+### Build + test + supply-chain scan
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+CI runs the test matrix across Python versions plus linting (Ruff), type checking (MyPy), and security scanning (Bandit). Webapp side uses Biome.
 
-No Dockerfile; MCPB is the packaging format used.
+## Host integration
 
-## Example client / developer ergonomics
+### Claude Desktop
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+MCPB bundle with `manifest.json`.
 
-Justfile recipes; PowerShell scripts; per-host config samples (`manifest.json`, `mcp.json`, `glama.json`); `examples/` directory.
+### Cursor
 
-## Repo layout
+`mcp.json` config file.
 
-### single-package / monorepo / vendored / other
+### Smithery / Glama discovery
 
-Multi-directory single-repo with distinct concerns — `src/email_mcp/` core, `mcp-server/` packaging, `webapp/` monitoring dashboard, `monitoring/` health/metrics, `tests/`, `examples/`, `scripts/`, `.github/workflows/`.
+`glama.json` for Glama discovery.
 
-## Notable structural choices
+### Zed
 
-Author's "Industrial Quality Stack" / "SOTA 14.1" framing — heavy investment in test/lint/security tooling for a personal project. Separate web dashboard (Vite + Uvicorn) as a monitoring companion, not bundled into MCP server but shipped in the same repo. Dynamic service reconfiguration via `configure_service` tool — runtime flexibility instead of restart-to-reload. Mailing-list presets via JSON files — bulk-send use case pre-wired. Multi-backend unified surface — the same `send_email` tool dispatches to SMTP or API providers based on configuration, hiding backend heterogeneity from the LLM caller.
+Zed extension ships in repo.
 
-## Unanticipated axes observed
+### MCPB / DXT bundle manifest
 
-One of the more backend-rich servers surveyed — 10+ transactional providers + 5 local test servers + 4 webhook integrations all behind a single tool interface. Reference case for "many backends, one interface" MCP design. Zed editor integration is rarely seen — most servers target Claude Desktop and Cursor only. Author self-labels quality tiers; may be idiosyncratic marketing rather than signal of deeper engineering.
+`manifest.json` for the MCPB / Desktop Extension bundle.
 
-## Python-specific
+## Observability
 
-### SDK / framework variant
+### Companion monitoring dashboard
 
-FastMCP 3.x — `fastmcp>=3.1.0,<4` in pyproject.toml (highest FastMCP floor in the sample); import pattern: FastMCP 3.x (`from fastmcp import FastMCP` inferred).
+Separate `monitoring/` directory with health + metrics; web dashboard built with Vite + Uvicorn on ports 10812/10813 for monitoring and control. Shipped in the same repo but not bundled into the MCP server itself.
 
-### Python version floor
+### Suppressed stdout / discipline-only
 
-`requires-python = ">=3.12"` — tied with crystaldba for highest in the sample. CI matrix: 3.10 / 3.11 / 3.12 (README claims — note the matrix is looser than requires-python).
+Zero-tolerance `print` policy in core handlers to keep stdout clean for JSON-RPC.
 
-### Packaging
+## Repository layout
 
-Build backend: `hatchling.build`. Lock file: `uv.lock` present. Version manager convention: `uv`. Additional: `Cargo.toml` present (Rust side for MCPB packaging presumably).
+### Multi-directory single-repo (ancillary services)
 
-### Entry point
+Multi-directory single-repo with distinct concerns — `src/email_mcp/` (core), `mcp-server/` (packaging), `webapp/` (monitoring dashboard, Vite + Uvicorn), `monitoring/` (health/metrics), `tests/`, `examples/`, `scripts/`, `.github/workflows/`.
 
-`[project.scripts]`: `schip-mcp-email = "email_mcp.server:main"` — note the non-obvious `schip-mcp-email` name (not `email-mcp`). README run commands: `uv run email-mcp` (dev), `uvx email-mcp` (ad-hoc); MCPB drag-and-drop for Claude Desktop.
+## Safety and security posture
 
-### Install workflow expected of end users
+### None / not surfaced
 
-`uvx email-mcp` (primary), `.mcpb` bundle drag-and-drop, manual `claude_desktop_config.json` edit. Requires `uv` installed.
+Author's "Industrial Quality Stack" / "SOTA 14.1" framing markets quality discipline but no specific safety posture is enforced beyond standard env-var credential handling.
 
-### Async and tool signatures
+## Developer ergonomics
 
-Tools are async with connection pooling (per README). pytest-asyncio in test extras.
+### Justfile recipes
 
-### Type / schema strategy
+Justfile recipes for build/start operations.
 
-FastMCP 3.x auto-derives; Annotated patterns likely (not confirmed).
+### PowerShell + batch scripts
 
-### Testing
+`build.ps1`, `start.ps1`, `build_mcpb.bat` — Windows-first dev posture.
 
-pytest + pytest-asyncio + pytest-cov in `test` extra. Separate `test` and `dev` extras. `pytest.ini` at root (alongside pyproject — legacy dual-config).
+### Linter and type-checker stack
 
-### Dev ergonomics
+Ruff + MyPy + Bandit (Python); Biome (webapp).
 
-Justfile recipes (one of the few in the sample). PowerShell scripts (`build.ps1`, `start.ps1`, `build_mcpb.bat`) — Windows-first dev posture. Separate web dashboard built with Vite + uvicorn.
+### Sample MCP client configs in repo
 
-### Notable Python-specific choices
+Per-host config samples shipped: `manifest.json`, `mcp.json`, `glama.json`.
 
-Mixed Python + Rust packaging — `Cargo.toml` alongside `pyproject.toml`, likely for MCPB bundle signing. Console script name `schip-mcp-email` does not match the package name `email-mcp` — unusual (most pyproject entries match package name). Python 3.12 floor is among the highest; CI matrix tests 3.10+ which mismatches the requires-python floor. Justfile for task running — very uncommon in MCP-server sample. MCPB-first distribution (Claude Desktop drag-and-drop) with `manifest.json` in repo.
+### Examples directory with many patterns
 
-## Gaps
+`examples/` directory present.
 
-Last commit date and release cadence not extracted. Whether backends share a common abstraction internally or are per-provider adapters is not documented externally. Only 1 star — adoption is nascent; community validation is limited.
+## Documentation surface
+
+### README as the canonical surface
+
+README is the main documentation surface; per-host integration sections embed JSON snippets.
+
+### Per-host README integration sections
+
+README shows per-host config blocks for Claude Desktop, Cursor, Glama, Zed.
+
+## Claude Code plugin / skill wrapper
+
+### Bare MCP server, no Claude Code wrapper
+
+No `.claude-plugin/` directory; MCPB bundle targets Claude Desktop, not Claude Code plugin layout.
+
+## Release and lifecycle
+
+### License — Permissive (MIT / Apache-2.0)
+
+MIT.
+
+### MCPB bundle signing
+
+`Cargo.toml` alongside `pyproject.toml` is attributed to MCPB bundle signing tooling.
+
+### Active development
+
+Heavy dev tooling investment; release cadence not extracted.

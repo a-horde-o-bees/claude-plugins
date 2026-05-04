@@ -1,209 +1,137 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/hannesrudolph/sqlite-explorer-fastmcp-mcp-server`. SQLite explorer MCP server — single-script Python server installed via `fastmcp install`; pre-`pyproject.toml`-era layout pinned to FastMCP 0.4.1. 104 stars, default branch `main`, 9 total commits. License not surfaced.
 
-### url
+## Server runtime
 
-https://github.com/hannesrudolph/sqlite-explorer-fastmcp-mcp-server
+### Python with FastMCP (pre-2.x era)
 
-### stars
-
-104
-
-### last-commit
-
-Not surfaced from landing page; repo reports 9 total commits on main.
-
-### license
-
-Not surfaced on landing page fetch; file LICENSE not confirmed within budget.
-
-### default branch
-
-main
-
-### one-line purpose
-
-SQLite explorer MCP server — single script installed via `fastmcp install`; pre-`pyproject.toml`-era layout pinned to FastMCP 0.4.1.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Python (100% of repo), Python 3.6+.
-
-### framework/SDK in use
-
-FastMCP.
+Python (100% of repo). `requirements.txt` pins `fastmcp==0.4.1` — FastMCP 1.x (pre-2.x era), reference case for "how the FastMCP ecosystem looked before the 2.0 split". Import pattern: `from fastmcp import FastMCP` or `from mcp.server.fastmcp import FastMCP` (README implies in-SDK FastMCP).
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio (default for FastMCP-installed servers).
+Default for FastMCP-installed servers.
 
-### how selected
+### Selection mechanism
 
-Implicit — FastMCP CLI installer wires stdio transport; no explicit flag documented.
+Implicit default — FastMCP CLI installer wires stdio transport; no explicit flag documented.
 
-## Distribution
+## Capability surface
 
-### every mechanism observed
-
-Git clone from source; FastMCP CLI install (`fastmcp install`); UV-based environment execution; no PyPI/npm/Docker artifacts observed.
-
-### published package name(s)
-
-None — unpublished repo-only server.
-
-### install commands shown in README
-
-`fastmcp install sqlite_explorer.py --name "SQLite Explorer" -e SQLITE_DB_PATH=/path/to/db`.
-
-## Entry point / launch
-
-### command(s) users/hosts run
-
-`fastmcp install sqlite_explorer.py` then host launches via its configured MCP command; direct run also possible via `uv` with fastmcp + uvicorn.
-
-### wrapper scripts, launchers, stubs
-
-Single-file `sqlite_explorer.py` script; no additional launcher.
-
-## Configuration surface
-
-### how config reaches the server
-
-Environment variable `SQLITE_DB_PATH` (required); no CLI flags or config files documented.
-
-## Authentication
-
-### flow
-
-None — local SQLite file access, no credentials.
-
-### where credentials come from
-
-Not applicable for local SQLite.
-
-## Multi-tenancy
-
-### tenancy model
-
-Single-user, single-database — one SQLite file per server instance pinned via env var.
-
-## Capabilities exposed
-
-### tools / resources / prompts / sampling / roots / logging / other
+### Tools-only, hand-curated narrow surface
 
 Tools only — `read_query` (SELECT with validation and row limits), `list_tables`, `describe_table`. No resources, prompts, sampling, or roots.
 
-## Observability
+## Configuration delivery
 
-### logging destination + format, metrics, tracing, debug flags
+### Environment variables
 
-None documented; README notes "progress output suppression for clean JSON responses" as a deliberate behavior.
+`SQLITE_DB_PATH` (required) — no CLI flags or config files documented.
 
-## Host integrations shown in README or repo
+## Authentication
+
+### None / implicit (local-resource gating)
+
+None — local SQLite file access, no credentials. The host's process boundary is the trust boundary.
+
+## Multi-tenancy
+
+### Single-user / single-tenant per process
+
+Single-user, single-database — one SQLite file per server instance pinned via env var.
+
+## Distribution channel
+
+### Source clone with editable install
+
+Git clone from source; no PyPI/npm/Docker artifacts observed — unpublished repo-only server.
+
+### SDK CLI installer
+
+`fastmcp install sqlite_explorer.py --name "SQLite Explorer" -e SQLITE_DB_PATH=/path/to/db` — uses the FastMCP CLI installer, which registers the server with Claude Desktop directly. Distinct from `uvx` or manual config-editing.
+
+## Entry point and launch
+
+### Bare interpreter + script path
+
+Single-file `sqlite_explorer.py` script; no installable console script.
+
+### Source-tree `uv run`
+
+Cline config: `"command": "uv"`, `"args": ["run", "--with", "fastmcp", "--with", "uvicorn", "fastmcp", "run", "/path/to/sqlite_explorer.py"]`.
+
+## Build and packaging
+
+### Requirements-driven (legacy Python)
+
+NO `pyproject.toml` — only `requirements.txt` + single `sqlite_explorer.py`. Build backend not applicable (no package build). No lock file. Pip/venv version manager convention (no uv-native layout). Pre-`pyproject.toml`-era layout.
+
+### Python version pinning
+
+README states Python 3.6+ (likely optimistic; FastMCP 0.4.1 itself probably needs 3.10).
+
+## Schema and types
+
+### FastMCP auto-derivation from type hints
+
+FastMCP-decorated functions; schema auto-derived from Python type hints. fastmcp==0.4.1 supports both sync and async decorators.
+
+## Host integration
 
 ### Claude Desktop
 
-Supported via FastMCP CLI install.
+Supported via FastMCP CLI install (`fastmcp install` registers with Claude Desktop directly).
 
-### Cline (VS Code)
+### Windsurf / Goose / Qodo Gen / Cline / Kiro / Augment
 
-Manual MCP configuration example provided.
+Cline (VS Code) — manual MCP configuration example provided.
 
-### Other editors/CLIs
+## Test stack
 
-Not mentioned.
-
-## Claude Code plugin wrapper
-
-### presence and shape
-
-Not present — no `.claude-plugin` directory or Claude Code specific wiring observed.
-
-## Tests
-
-### presence, framework, location, notable patterns
+### No tests / not surfaced
 
 No tests observed in repo.
 
 ## CI
 
-### presence, system, triggers, what it runs
+### None / absent
 
 No `.github/workflows` observed.
 
-## Container / packaging artifacts
+## Container artifacts
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+### No container artifacts
 
 None observed.
 
-## Example client / developer ergonomics
+## Repository layout
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
-
-Sample Cline VSCode JSON config shown; FastMCP CLI install as the primary dev ergonomic.
-
-## Repo layout
-
-### single-package / monorepo / vendored / other
+### Single-file script / monolith
 
 Single-file script with requirements and docs — minimal single-package layout.
 
-## Notable structural choices
+## Safety and security posture
 
-Single-file server script (`sqlite_explorer.py`) keeps the surface tiny. Read-only posture enforced at the tool layer (query validation + row caps), not DB-level. Minimal dependency: FastMCP only.
+### Tool-layer query validation
 
-## Unanticipated axes observed
+Read-only posture enforced at the tool layer (SELECT-only validation + row caps), not DB-level.
 
-Docs explicitly flag "progress output suppression" as a design concern, reflecting stdio-protocol cleanliness pressure.
+## Observability
 
-## Python-specific
+### Suppressed stdout / discipline-only
 
-### SDK / framework variant
+README notes "progress output suppression for clean JSON responses" as a deliberate design behavior — stdio-protocol cleanliness pressure.
 
-FastMCP 1.x (pre-2.x era) — `requirements.txt` pins `fastmcp==0.4.1`. Import pattern: FastMCP 1.x (`from fastmcp import FastMCP` or `from mcp.server.fastmcp import FastMCP`) — README implies in-SDK FastMCP.
+## Documentation surface
 
-### Python version floor
+### `llms.txt` / `llms-full.txt`
 
-README states Python 3.6+ (likely optimistic; FastMCP 0.4.1 itself probably needs 3.10).
+Repo bundles `fastmcp-documentation.txt` + `mcp-documentation.txt` — embedded LLM-context docs.
 
-### Packaging
+## Developer ergonomics
 
-NO pyproject.toml — only `requirements.txt` + single `sqlite_explorer.py`. Build backend: not applicable (no package build). Lock file: none. Version manager convention: pip/venv (no uv-native layout).
+### MCP framework dev config
 
-### Entry point
-
-No `[project.scripts]` — script is run directly via `fastmcp install sqlite_explorer.py` or `fastmcp run`. README's Cline config: `"command": "uv"`, `"args": ["run", "--with", "fastmcp", "--with", "uvicorn", "fastmcp", "run", "/path/to/sqlite_explorer.py"]`.
-
-### Install workflow expected of end users
-
-`fastmcp install sqlite_explorer.py --name "SQLite Explorer" -e SQLITE_DB_PATH=/path/to/db` — uses the FastMCP CLI installer. No pip-install path; repo is clone + FastMCP-CLI-managed.
-
-### Async and tool signatures
-
-FastMCP-decorated functions; source not inspected. fastmcp==0.4.1 supports both sync and async decorators.
-
-### Type / schema strategy
-
-FastMCP auto-derived from type hints.
-
-### Testing
-
-None.
-
-### Dev ergonomics
-
-`fastmcp install` is the only dev tool surfaced. Uses `fastmcp-documentation.txt` + `mcp-documentation.txt` in repo — embedded LLM-context docs.
-
-### Notable Python-specific choices
-
-Pre-`pyproject.toml`-era layout: `requirements.txt` + single script + no packaging. Pinned to FastMCP 0.4.1 — significantly behind the 2.x/3.x current frontier; reference case for "how the FastMCP ecosystem looked before the 2.0 split". `fastmcp install` registers the server with Claude Desktop directly — demonstrates FastMCP's own CLI install mechanism, distinct from `uvx` or manual config-editing.
-
-## Gaps
-
-Exact license file contents not confirmed within budget. Commit date/last-commit metadata not surfaced from landing page. No CI, tests, or container artifacts to inspect.
+`fastmcp install` is the only dev tool surfaced.

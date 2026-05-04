@@ -1,159 +1,153 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/cyanheads/perplexity-mcp-server`. Perplexity MCP server (TypeScript) — `perplexity_search` and `perplexity_deep_research` tools with optional JWT/OAuth on HTTP transport. 22 stars; Apache-2.0; default branch `main`; last commit July 22, 2025 (inferred from pushed_at).
 
-### url
+## Server runtime
 
-https://github.com/cyanheads/perplexity-mcp-server
+### Node.js / TypeScript with official MCP SDK
 
-### stars
-
-22
-
-### last-commit
-
-July 22, 2025
-
-### license
-
-Apache-2.0
-
-### default branch
-
-main
-
-### one-line purpose
-
-Perplexity MCP server (TypeScript) — `perplexity_search` and `perplexity_deep_research` tools with optional JWT/OAuth on HTTP transport.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-TypeScript ^5.8.3; Node.js >=18.0.0.
-
-### framework/SDK in use
-
-MCP SDK ^1.15.0, Hono (HTTP transport), Zod validation.
+TypeScript ^5.8.3 on the official MCP SDK ^1.15.0. Node.js >=18.0.0. Hono for HTTP transport; Zod for validation.
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio (default), HTTP (configurable host 127.0.0.1, port 3010).
+stdio is the default transport.
 
-### how selected
+### Streamable HTTP
 
-environment config, validated via Zod.
+HTTP transport with configurable host (127.0.0.1) and port (3010).
 
-## Distribution
+### Selection mechanism
 
-### every mechanism observed
+Environment-config-driven selection, validated via Zod.
 
-npm (source clone + build).
+## Capability surface
 
-### published package name(s)
+### Tools-only, hand-curated narrow surface
 
-not found on npm registry.
+Two tools: `perplexity_search` (fast search-augmented) and `perplexity_deep_research` (multi-source exhaustive). Auto-complexity detection drives tool selection between them.
 
-### install commands shown in README
+## Configuration delivery
 
-`git clone`, `npm install`, `npm run build`, `npm start`.
+### Environment variables
 
-## Entry point / launch
+Transport type and logging level configurable via env vars.
 
-### command(s) users/hosts run
+### Dotenv file
 
-`npm start`.
+`.env` file supported as config source, validated by Zod.
 
-### wrapper scripts, launchers, stubs
+### CLI flags
 
-npm build script compiles TS to `dist/`.
-
-## Configuration surface
-
-### how config reaches the server
-
-`.env` file validated by Zod; transport type and logging level configurable.
+CLI args alongside env and `.env` for credentials.
 
 ## Authentication
 
-### flow
+### Static API key / token via env var
 
-API key (PERPLEXITY_API_KEY) plus optional JWT or OAuth 2.1 for HTTP transport.
+`PERPLEXITY_API_KEY` env var carries the upstream API credential. Sourced from environment variable, CLI args, or `.env` file.
 
-### where credentials come from
+### JWT
 
-environment variable, CLI args, or `.env` file.
+Optional JWT for HTTP transport — multi-client capability when HTTP is selected.
+
+### OAuth 2.x with issuer + JWKS (HTTP-mode bolt-on)
+
+Optional OAuth 2.1 for HTTP transport. JWT and OAuth are alternatives layered atop the upstream API key, both gated by HTTP transport.
 
 ## Multi-tenancy
 
-### tenancy model
+### Single-user / single-tenant per process
 
-per-user single instance; JWT/OAuth enables multi-client support in HTTP mode.
+Per-user single instance by default. JWT/OAuth in HTTP mode enables multi-client support — a typically single-user server gains multi-client posture when the auth gate is enabled.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### Source clone with editable install
 
-`perplexity_search` (fast search-augmented), `perplexity_deep_research` (multi-source exhaustive).
+Source-only distribution: `git clone`, `npm install`, `npm run build`, `npm start`. Published npm package not found on registry — the project is consumed as a source clone.
 
-## Observability
+## Entry point and launch
 
-### logging destination + format, metrics, tracing, debug flags
+### npm scripts (start/start:stdio/start:http)
 
-structured, configurable with file rotation (centralized utilities).
+`npm start` runs the built artifact; `npm run build` compiles TypeScript to `dist/`.
 
-## Host integrations shown in README or repo
+### Built JS file (`node build/index.js`)
 
-### Cline
+Compiled artifact in `dist/`; npm build script handles compilation.
 
-MCP client config documented.
+## Build and packaging
 
-## Claude Code plugin wrapper
+### npm/Node toolchain
 
-### presence and shape
+`package.json` with build scripts; multi-stage Docker for optimized image.
 
-not present; MCP server designed for compatible clients.
+## Schema and types
 
-## Tests
+### Zod (TypeScript)
 
-### presence, framework, location, notable patterns
+Zod schema validation for config; runtime validation across transport selection and `.env` parsing.
 
-present; `npm test` runs TypeScript noEmit type checks.
+## Container artifacts
+
+### Multi-stage Dockerfile
+
+Dockerfile present — multi-stage Node.js 18-Alpine build for optimized image.
+
+## Test stack
+
+### TypeScript noEmit type-check as the test command
+
+`npm test` runs TypeScript noEmit type checks.
 
 ## CI
 
-### presence, system, triggers, what it runs
+### GitHub Actions
 
-not explicitly documented in README; `.github/` present.
+`.github/` present but CI workflows not explicitly documented in README.
 
-## Container / packaging artifacts
+## Repository layout
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+### Single-package, organized subdirectories
 
-Dockerfile present (multi-stage Node.js 18-Alpine build).
+Single-package Node.js/TS. Dirs: `.github/`, `src/`, `docs/`. Config files: `package.json`, `tsconfig.json`, `Dockerfile`.
 
-## Example client / developer ergonomics
+## Host integration
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+### Windsurf / Goose / Qodo Gen / Cline / Kiro / Augment
 
-clone + build pattern; sample config in README.
+Cline MCP client config documented.
 
-## Repo layout
+## Observability
 
-### single-package / monorepo / vendored / other
+### File-based logging
 
-single-package Node.js/TS; dirs: `.github/`, `src/`, `docs/`; config files: `package.json`, `tsconfig.json`, `Dockerfile`.
+Structured logging configurable with file rotation (centralized utilities).
 
-## Notable structural choices
+### Env-var-controlled log level
 
-Clean separation of stdio/HTTP transports via Hono. Structured logging with file rotation for production. Zod schema validation for config. Multi-stage Docker for optimized image.
+Log level configurable via env var.
 
-## Unanticipated axes observed
+## Claude Code plugin / skill wrapper
 
-Optional JWT/OAuth for HTTP mode (multi-client support in a typically single-user server). Auto-complexity detection for tool selection.
+### Bare MCP server, no Claude Code wrapper
 
-## Gaps
+Not present; MCP server designed for compatible clients.
 
-Exact last commit date inferred from pushed_at (July 22, 2025); no changelog. CI/CD strategy not documented. Published npm package name not found — source-only distribution.
+## Developer ergonomics
+
+### Sample MCP client configs in repo
+
+Sample config in README; clone + build pattern documented.
+
+## Release and lifecycle
+
+### Active development
+
+Last commit July 22, 2025 (inferred from pushed_at).
+
+### License — Permissive (MIT / Apache-2.0)
+
+Apache-2.0.

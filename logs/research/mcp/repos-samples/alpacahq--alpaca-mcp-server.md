@@ -1,217 +1,163 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/alpacahq/alpaca-mcp-server`. Alpaca trading MCP server — ~60 tools across accounts, orders, positions, watchlists, market/crypto/options data, corporate actions, and news; paper-trading by default. 670 stars, MIT, default branch `main`, vendor-authored (Alpaca).
 
-### url
+## Server runtime
 
-https://github.com/alpacahq/alpaca-mcp-server
+### Python with FastMCP
 
-### stars
-
-670
-
-### last-commit
-
-not captured
-
-### license
-
-MIT
-
-### default branch
-
-main
-
-### one-line purpose
-
-Alpaca trading MCP server — ~60 tools across accounts, orders, positions, watchlists, market/crypto/options data, corporate actions, and news; paper-trading by default.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Python 96.8%; `requires-python = ">=3.10"`.
-
-### framework/SDK in use
-
-FastMCP 2.x (`fastmcp>=2.0.0`) — README notes "complete rewrite built with FastMCP and OpenAPI".
+Python server (96.8% Python) on FastMCP 2.x — `fastmcp>=2.0.0` declared in `pyproject.toml`. README notes the server is a "complete rewrite built with FastMCP and OpenAPI." Likely import `from fastmcp import FastMCP`. Async likely throughout given `httpx` + FastMCP 2 conventions; not directly verified. No `alpaca-py` SDK dependency — handles HTTPS + auth directly via `httpx`. Minimal runtime dep set: `fastmcp`, `httpx`, `python-dotenv`, `click`.
 
 ## Transport
 
-### supported transports
+### stdio
 
-stdio (default); streamable-http (configurable port, default localhost:8000).
+stdio default.
 
-### how selected
+### Streamable HTTP
+
+Configurable port (default `localhost:8000`).
+
+### Selection mechanism
 
 CLI flag / env var on launch.
 
-## Distribution
+## Capability surface
 
-### every mechanism observed
+### Tools-heavy domain wrapper / domain-tool catalog
 
-PyPI (`alpaca-mcp-server`); `uvx`; Docker (`docker build -t mcp/alpaca:latest .`).
+~60 tools total across 10 categories — Account & Portfolio (7), Trading/Orders (8), Positions (6), Watchlists (7), Assets & Market Info (7), Stock Data (8), Crypto Data (7), Options Data (7), Corporate Actions (2), News (1). Tools-only surface (no resources/prompts surfaced).
 
-### published package name(s)
+## Configuration delivery
 
-`alpaca-mcp-server`
+### Environment variables
 
-### install commands shown in README
-
-`uvx alpaca-mcp-server`
-
-## Entry point / launch
-
-### command(s) users/hosts run
-
-`uvx alpaca-mcp-server`
-
-### wrapper scripts, launchers, stubs
-
-console script `alpaca-mcp-server` → `alpaca_mcp_server.cli:main`.
-
-## Configuration surface
-
-### how config reaches the server
-
-Environment variables in MCP client config — `ALPACA_API_KEY`, `ALPACA_SECRET_KEY`, `ALPACA_PAPER_TRADE`.
+`ALPACA_API_KEY`, `ALPACA_SECRET_KEY`, `ALPACA_PAPER_TRADE` injected by the MCP client config.
 
 ## Authentication
 
-### flow
+### Static API key / token via env var
 
-Alpaca API key + secret pair.
-
-### where credentials come from
-
-env vars injected by the MCP client.
+Alpaca API key + secret pair via `ALPACA_API_KEY` / `ALPACA_SECRET_KEY` env vars.
 
 ## Multi-tenancy
 
-### tenancy model
+### Single-user / single-tenant per process
 
-single-user per key pair.
+One key pair per process.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### PyPI via uvx (zero-install runner)
 
-Tools only — grouped: Account & Portfolio (7), Trading/Orders (8), Positions (6), Watchlists (7), Assets & Market Info (7), Stock Data (8), Crypto Data (7), Options Data (7), Corporate Actions (2), News (1). ~60 tools total across 10 categories.
+Published to PyPI as `alpaca-mcp-server`; canonical install command `uvx alpaca-mcp-server`.
 
-## Observability
+### Docker / OCI image
 
-### logging destination + format, metrics, tracing, debug flags
+`docker build -t mcp/alpaca:latest .` from the in-repo Dockerfile.
 
-not captured
+## Entry point and launch
 
-## Host integrations shown in README or repo
+### Console script via `[project.scripts]` / npm bin
+
+Console script `alpaca-mcp-server` → `alpaca_mcp_server.cli:main`.
+
+### `uvx <package>`
+
+Host-config snippet shape: `uvx alpaca-mcp-server`.
+
+### Click-based CLI wrapper (Python)
+
+Click-based CLI (`alpaca_mcp_server.cli:main`) wraps FastMCP's runner, suggesting richer argument handling than typical bare `fastmcp.run()` invocation despite FastMCP having its own runner.
+
+## Build and packaging
+
+### Hatchling + uv (Python)
+
+Build backend: hatchling. Pin discipline: `fastmcp>=2.0.0`, `httpx>=0.27.0`, `python-dotenv>=1.0.0`, `click>=8.1.0`. Version manager convention: uv / uvx.
+
+### Python version pinning
+
+`requires-python = ">=3.10"`.
+
+### Pin discipline (Python)
+
+Loose pins (`>=` floors) on `fastmcp`, `httpx`, `python-dotenv`, `click` — minimal-ceremony posture.
+
+## Schema and types
+
+### FastMCP auto-derivation from type hints
+
+FastMCP-auto-derived schemas via Pydantic at registration time (per FastMCP convention).
+
+## Container artifacts
+
+### Dockerfile (single-stage, build-from-source)
+
+Dockerfile at repo root.
+
+## Test stack
+
+### pytest with async + coverage
+
+Multi-layered tests — integrity tests, server-construction tests, paper-API integration tests; pytest + pytest-asyncio declared as dev deps.
+
+### Linter/formatter test gate
+
+ruff + mypy + pytest dev stack.
+
+## CI
+
+### GitHub Actions
+
+GitHub Actions on every PR.
+
+## Host integration
 
 ### Claude Desktop
 
-`claude_desktop_config.json` path for Mac/Windows.
+`claude_desktop_config.json` paths shown for Mac/Windows.
 
 ### Cursor
 
 `~/.cursor/mcp.json`.
 
-### VS Code
+### VS Code / VS Code Insiders / Visual Studio family
 
 `.vscode/mcp.json`.
 
-### PyCharm
+### JetBrains IDE
 
-Settings → Tools → MCP.
+PyCharm via Settings → Tools → MCP — explicitly documented integration path.
 
-### Gemini CLI
+### Codex CLI / Copilot CLI / Gemini CLI
 
-`settings.json`.
+Gemini CLI via `settings.json`.
 
-## Claude Code plugin wrapper
+## Documentation surface
 
-### presence and shape
+### Per-host README integration sections
 
-None at this level; listed in Claude Desktop config format.
+Comprehensive host-specific config snippets in README — 5 distinct host integration sections (Claude Desktop, Cursor, VS Code, PyCharm, Gemini CLI).
 
-## Tests
+## Repository layout
 
-### presence, framework, location, notable patterns
+### Single-package src-layout
 
-Multi-layered — integrity tests, server construction tests, paper-API integration tests; pytest + pytest-asyncio declared as dev deps.
+Single-package layout under `alpaca_mcp_server/`.
 
-## CI
+## Safety and security posture
 
-### presence, system, triggers, what it runs
+### Sandbox-mode default
 
-GitHub Actions on every PR.
+Paper-trading mode as default — `ALPACA_PAPER_TRADE=true` default. Safer posture for LLM-driven trading; production mode is opt-in.
 
-## Container / packaging artifacts
+## Release and lifecycle
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+### License — Permissive (MIT / Apache-2.0)
 
-Dockerfile.
+MIT.
 
-## Example client / developer ergonomics
+### Active development
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
-
-Comprehensive host-specific config snippets in README.
-
-## Repo layout
-
-### single-package / monorepo / vendored / other
-
-Single-package (`alpaca_mcp_server/`).
-
-## Notable structural choices
-
-Official vendor-published server — published by Alpaca itself; operates as their canonical MCP entry. Built on FastMCP + OpenAPI-derived generation — README notes the server is a rewrite using an OpenAPI-based approach, aligning with how `awslabs.openapi-mcp-server` works but presumably pre-generated rather than dynamic. Paper-trading mode as default (`ALPACA_PAPER_TRADE=true` default) — safer posture for LLM-driven trading. Minimal dependency set — only `fastmcp`, `httpx`, `python-dotenv`, `click` at runtime; no Alpaca SDK dependency (likely hand-rolled HTTPS calls). Host-integration coverage — 5 different MCP clients documented in README (Claude Desktop, Cursor, VS Code, PyCharm, Gemini CLI) — broader than any other repo seen in this pass.
-
-## Unanticipated axes observed
-
-Vendor-authored vs community-authored MCP server as a trust dimension — the vendor's own MCP server comes with a credibility signal that derivative servers don't. Paper-mode-as-default — mutation-capable MCP server with a sandbox default; a safety pattern other trading/finance servers should emulate. Broad host-config documentation — PyCharm MCP support documented, which is less widely advertised than Claude Desktop. Click-based CLI wrapper around FastMCP — `alpaca_mcp_server.cli:main` suggests richer argument handling than typical `fastmcp.run()` entry.
-
-## Python-specific
-
-### SDK / framework variant
-
-FastMCP 2.x (`fastmcp>=2.0.0`). Version pin from pyproject.toml: `fastmcp>=2.0.0`, `httpx>=0.27.0`, `python-dotenv>=1.0.0`, `click>=8.1.0`. Import pattern: likely `from fastmcp import FastMCP`; CLI wrapper via `click`.
-
-### Python version floor
-
-`>=3.10`
-
-### Packaging
-
-Build backend: hatchling. Lock file: not captured. Version manager convention: `uv` / `uvx`.
-
-### Entry point
-
-Console script via click. Console-script name: `alpaca-mcp-server`. Host-config snippet shape: `uvx alpaca-mcp-server`.
-
-### Install workflow expected of end users
-
-`uvx alpaca-mcp-server`.
-
-### Async and tool signatures
-
-`httpx` + FastMCP 2 → async likely.
-
-### Type / schema strategy
-
-Not captured directly; FastMCP-auto-derived.
-
-### Testing
-
-pytest + pytest-asyncio. Fixture style not captured.
-
-### Dev ergonomics
-
-ruff + mypy + pytest dev stack.
-
-### Notable Python-specific choices
-
-No `alpaca-py` SDK dependency — handles HTTPS + auth directly via `httpx`. `click` for CLI orchestration, despite FastMCP having its own runner. Version 2.0.1 at time of capture — active maintenance.
-
-## Gaps
-
-What couldn't be determined: exact last commit date, streamable-http auth flow (none? API key? shared secret?), whether there's a Docker Hub published image, OpenAPI spec origin (internal or published), exact async usage.
+Version 2.0.1 at time of capture — vendor-authored (Alpaca) gives long-term maintenance signal.

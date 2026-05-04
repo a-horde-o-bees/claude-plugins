@@ -1,171 +1,135 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/hugoduncan/mcp-clj`. Clojure MCP SDK — minimal-deps framework for building MCP servers in Clojure with Polylith-style modular architecture; ships built-in `clj-eval` and `ls` tools. 58 stars, EPL-2.0, default branch `master`, v0.1.66 released November 5, 2025.
 
-### url
+## Server runtime
 
-https://github.com/hugoduncan/mcp-clj
+### Clojure with hand-rolled MCP and minimal deps
 
-### stars
-
-58
-
-### last-commit
-
-November 5, 2025 (v0.1.66 release)
-
-### license
-
-EPL-2.0 (Eclipse Public License 2.0)
-
-### default branch
-
-master
-
-### one-line purpose
-
-Clojure MCP SDK — framework for building MCP servers in Clojure.
-
-## Language and runtime
-
-### language(s) + version constraints
-
-Clojure (99.7%); Java runtime required.
-
-### framework/SDK in use
-
-Anthropic's Model Context Protocol (MCP) version 2024-11-05; Clojure standard library.
-
-### pitfalls observed
-
-Specific Java version constraints not mentioned.
+Clojure (99.7%) targeting MCP version 2024-11-05 with `org.clojure/data.json` as effectively the only dependency. Java runtime required (specific Java version constraints not mentioned). Polylith-style modular layout (bases, components, projects). Self-contained Clojure REPL evaluation surface.
 
 ## Transport
 
-### supported transports
+### stdio
 
-Stdio (recommended for Claude Desktop), SSE/HTTP (default port 3001, customizable), In-memory (testing).
+Recommended for Claude Desktop; selected via `:stdio-server` profile.
 
-### how selected
+### SSE (Server-Sent Events)
 
-Selected at launch via CLI profile: `:stdio-server`, `:sse-server`; custom port via `--port` flag.
+SSE/HTTP transport; default port 3001, customizable via `--port` flag. Selected via `:sse-server` profile.
 
-## Distribution
+### In-memory / in-process channel
 
-### every mechanism observed
+In-memory transport documented for testing — unusual; non-network transport for protocol behavior tests independent of network/IO.
 
-Git dependency, direct CLI usage, source build.
+### Selection mechanism
 
-### published package name(s)
+CLI profile at launch — `:stdio-server`, `:sse-server`; custom port via `--port` flag (e.g., `clj -M:sse-server --port 8080`).
 
-Not on Clojars; Git-based dependency only.
+## Capability surface
 
-### install commands shown in README
+### Tools-only, hand-curated narrow surface
 
-Via Git dependency in `deps.edn` or direct invocation: `clj -M:stdio-server`, `clj -M:sse-server`.
+Built-in tools: `clj-eval` (evaluate Clojure expressions), `ls` (list files with gitignore support, including depth/limit options). Two-tool minimal interface — distinct from larger Clojure-MCP wrappers with 50+ tools.
 
-## Entry point / launch
+### Runtime tool registration API
 
-### command(s) users/hosts run
+Custom tools can be added dynamically via API — extension surface for consumers building atop the SDK.
 
-`clj -M:stdio-server` (stdio transport), `clj -M:sse-server` (HTTP-based), `clj -M:sse-server --port 8080` (custom port).
+## Configuration delivery
 
-### wrapper scripts, launchers, stubs
-
-None documented.
-
-## Configuration surface
-
-### how config reaches the server
+### Host-side JSON config snippet
 
 Claude Desktop integration via `claude_desktop_config.json`; bash interpreter, project path, and environment variables specified in config.
 
 ## Authentication
 
-### flow
+### None / implicit (local-resource gating)
 
-No explicit authentication mechanism documented.
-
-### where credentials come from
-
-Not applicable; assumes transport-layer security.
+No explicit authentication mechanism documented — assumes transport-layer security and the host process boundary as the trust boundary.
 
 ## Multi-tenancy
 
-### tenancy model
+### Single-user / single-tenant per process
 
-Single-user; not applicable.
+Single-user; not applicable to a REPL-driven local SDK.
 
-## Capabilities exposed
+## Distribution channel
 
-### tools / resources / prompts / sampling / roots / logging / other
+### Source clone with editable install
 
-Built-in tools: `clj-eval` (evaluate Clojure expressions), `ls` (list files with gitignore support, including depth/limit options); custom tools can be added dynamically via API.
+Git dependency in `deps.edn` or direct invocation; not on Clojars — Git-based dependency only.
 
-## Observability
+## Entry point and launch
 
-### logging destination + format, metrics, tracing, debug flags
+### Language-tool launcher
 
-No explicit observability documented in provided content.
+`clj -M:stdio-server` (stdio), `clj -M:sse-server` (HTTP-based), `clj -M:sse-server --port 8080` (custom port).
 
-## Host integrations shown in README or repo
+### Profile-driven launcher
 
-### Claude Desktop
+Each transport mode is a `deps.edn` profile (`:stdio-server`, `:sse-server`) — caller selects via `clj -M:profile`.
 
-Yes; sample `claude_desktop_config.json` configuration provided.
+## Repository layout
 
-### Claude Code
+### Polylith components (Clojure)
 
-Not explicitly documented.
+Polylith-style component architecture: `bases/`, `components/`, `projects/`, with supporting: `design/`, `dev/`, `development/`, `doc/`, `spec/`, `scripts/`. Configuration: `deps.edn`, `tests.edn`, `cliff.toml`, `.cljstyle`. Tooling: `.clj-kondo/`, `.github/`, `.claude/`, `.mcp-vector-search/`. Advanced modular organization for component reuse across multiple deliverables.
 
-### Other
+## Test stack
 
-Not documented.
-
-## Claude Code plugin wrapper
-
-### presence and shape
-
-Not present; server-only implementation.
-
-## Tests
-
-### presence, framework, location, notable patterns
+### Clojure-native testing
 
 Test configuration via `tests.edn`; testing investigation notes present; clj-kondo linting configuration for code quality.
 
 ## CI
 
-### presence, system, triggers, what it runs
+### GitHub Actions
 
-GitHub Actions likely configured; cliff.toml for release notes generation.
+GitHub Actions likely configured (`.github/` present); `cliff.toml` for release notes generation.
 
-## Container / packaging artifacts
+## Container artifacts
 
-### Dockerfile, docker-compose, Helm, systemd, brew formula, etc.
+### No container artifacts
 
 Not documented.
 
-## Example client / developer ergonomics
+## Host integration
 
-### MCP Inspector launcher, curl stubs, make targets, dev scripts, sample configs
+### Claude Desktop
+
+Sample `claude_desktop_config.json` configuration provided.
+
+## Documentation surface
+
+### README as the canonical surface
 
 README includes representative usage patterns: server creation, custom tool implementation, client connection, JSON-based tool invocation; Claude Desktop configuration example.
 
-## Repo layout
+### Agent-facing meta-documentation (CLAUDE.md, .cursorrules, .mcp.json)
 
-### single-package / monorepo / vendored / other
+`.claude/` directory present in repo.
 
-Polylith-style component architecture: `bases/`, `components/`, `projects/`, with supporting: `design/`, `dev/`, `development/`, `doc/`, `spec/`, `scripts/`; configuration: `deps.edn`, `tests.edn`, `cliff.toml`, `.cljstyle`; tooling: `.clj-kondo/`, `.github/`, `.claude/`, `.mcp-vector-search/`.
+## Release and lifecycle
 
-## Notable structural choices
+### License — Weak copyleft (EPL-2.0)
 
-Minimal dependencies — only `org.clojure/data.json`. Self-contained Clojure REPL evaluation without external dependencies. Polylith-style modular architecture (bases, components, projects). Three transport modes (stdio, SSE/HTTP, in-memory). Custom tool dynamic registration via API. Vector search integration (`.mcp-vector-search/` directory).
+EPL-2.0 (Eclipse Public License 2.0). Weak copyleft — source-disclosure obligation attaches only to modified EPL-licensed files. Commercial use permitted. The canonical license for Clojure-world projects.
 
-## Unanticipated axes observed
+### Tagged release with version in changelog
 
-Extremely minimal dependencies (only data.json) for a full MCP implementation. Vector search integration suggests semantic/similarity search capabilities. Polylith architecture (bases/components/projects) is advanced modular organization. Two-tool minimal interface (clj-eval, ls) vs. 50+ tools in clojure-mcp. In-memory transport for testing (unusual).
+v0.1.66 released November 5, 2025; `cliff.toml` for release-notes generation.
 
-## Gaps
+### Active development
 
-Specific Clojure version constraints not documented. Vector search implementation details not explained (`.mcp-vector-search/`). Custom tool registration API not fully documented. Test framework and patterns not examined (tests.edn exists but not detailed). Specific Java version constraints not mentioned. Port 3001 default not explained in provided content.
+Recent release cadence.
+
+## Developer ergonomics
+
+### `scripts/` directory
+
+`scripts/` directory holds project scripts.
+
+### Linter and type-checker stack
+
+`clj-kondo` linting configuration; `.cljstyle` for style.
