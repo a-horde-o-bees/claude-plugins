@@ -27,7 +27,7 @@ This same instruction set serves staged merging — intermediate mergers consumi
 
 ### Orient
 
-1. Read `logs/research/breadth-then-depth/METHODOLOGY.md` — operating philosophy
+1. Read `logs/research/breadth-then-depth/METHODOLOGY.md` and `ARCHITECTURE.md` — operational reference and tree-shape overview
 2. Read each partial in {input-partials}, in order. Note the functional roles each identified, the implementation paths under each role, and the canonical naming each chose
 
 > Do NOT read raw sample files. Partials carry the qualitative synthesis; raw samples would duplicate evidence already abstracted and inflate context. Use `ocd-run log research references "<chain>" --subject {subject}` only when a specific claim needs verification (e.g., when two partials assign incompatible categorizations and you need to inspect to arbitrate).

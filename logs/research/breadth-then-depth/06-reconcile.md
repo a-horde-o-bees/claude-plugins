@@ -27,7 +27,7 @@ This same instruction set serves any reconciliation pass — runs after each nor
 
 ### Orient
 
-1. Read `logs/research/breadth-then-depth/METHODOLOGY.md` — operating philosophy
+1. Read `logs/research/breadth-then-depth/METHODOLOGY.md` and `ARCHITECTURE.md` — operational reference and tree-shape overview
 2. Read `logs/research/{subject}/{subtopic-or-discovered}-samples/{consolidated-file}` — the current canonical tree you'll be updating
 3. Read each refinement report in {refinement-reports}
 

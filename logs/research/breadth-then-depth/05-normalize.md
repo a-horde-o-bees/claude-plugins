@@ -4,7 +4,7 @@ Per-bin agent instructions for the breadth-then-depth methodology's convergence 
 
 The phase goal is **convergence**: after one or more cycles, sample heading trees mirror the consolidated's role tree, so chain-key queries via `references` resolve cleanly. Sample content (the factual claims) is preserved; only the structure changes.
 
-> **Dispatch default: sequential.** One bin at a time. See METHODOLOGY.md "Resource budgeting and dispatch" for budget calibration and the rationale for sequential default. Batch-parallel (3-4 concurrent) is opt-in when wall-clock matters and platform tolerance is known.
+> **Dispatch default: sequential.** One bin at a time. See METHODOLOGY.md "Resource budgeting and dispatch" for budget calibration. Batch-parallel (3-4 concurrent) is opt-in when wall-clock matters and platform tolerance is known.
 
 ## Variables
 
@@ -39,7 +39,7 @@ Unmapped content goes in the refinement report, not in the sample file. Samples 
 
 ### Orient
 
-1. Read `logs/research/breadth-then-depth/METHODOLOGY.md` — operating philosophy
+1. Read `logs/research/breadth-then-depth/METHODOLOGY.md` and `ARCHITECTURE.md` — operational reference and tree-shape overview
 2. Read `logs/research/{subject}/{subtopic-or-discovered}-samples/_CONSOLIDATED_breadth-then-depth.md` — the canonical tree your samples must mirror
 3. bash: `plugins/ocd/bin/ocd-run log research sections logs/research/{subject}/{subtopic-or-discovered}-samples/_CONSOLIDATED_breadth-then-depth.md` — the role tree at chain-key granularity, useful as a reference
 

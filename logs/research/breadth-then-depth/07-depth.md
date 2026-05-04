@@ -29,7 +29,7 @@ The phase goal is **description sharpening that the per-bin lens couldn't surfac
 
 ### Orient
 
-1. Read `logs/research/breadth-then-depth/METHODOLOGY.md` — operating philosophy (skim; you've likely seen it)
+1. Read `logs/research/breadth-then-depth/METHODOLOGY.md` and `ARCHITECTURE.md` — operational reference and tree-shape overview (skim if you've seen them)
 2. Read `logs/research/{subject}/{subtopic-or-discovered}-samples/{consolidated-file}` and locate the section at {role-chain}. Note:
     - Role-level description (the prose under `## <role>` before the first `### <path>`)
     - Each path's heading and description

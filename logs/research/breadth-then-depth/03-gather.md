@@ -4,7 +4,7 @@ Per-bin agent instructions for the breadth-then-depth methodology. Each agent wo
 
 The phase goal is **functional decomposition**: identify the functional parts each sample exhibits, the implementation choice for each part, and a qualitative description of what each path is and how it's used. Coverage of branching paths matters; quantification does not (deferred to the final pass).
 
-> **Dispatch default: sequential.** One bin at a time. See METHODOLOGY.md "Resource budgeting and dispatch" for budget calibration and the rationale for sequential default. Batch-parallel (3-4 concurrent) is opt-in when wall-clock matters and platform tolerance is known.
+> **Dispatch default: sequential.** One bin at a time. See METHODOLOGY.md "Resource budgeting and dispatch" for budget calibration. Batch-parallel (3-4 concurrent) is opt-in when wall-clock matters and platform tolerance is known.
 
 ## Variables
 
@@ -29,7 +29,8 @@ These are the methodology's load-bearing principles. Re-read whenever in doubt.
 
 ### Orient
 
-1. Read `logs/research/breadth-then-depth/METHODOLOGY.md` — the methodology is your operating philosophy; pay close attention to the "Tree shape" section
+1. Read `logs/research/breadth-then-depth/ARCHITECTURE.md` — tree shape and phase-component overview (the "Tree shape (schema)" section is critical for this phase)
+2. Read `logs/research/breadth-then-depth/METHODOLOGY.md` — operational reference
 2. **Do not read** `_CONSOLIDATED_breadth-then-depth.md` or any other partial. You're working fresh; the merger will combine your partial with others later
 
 ### Initialize your partial
