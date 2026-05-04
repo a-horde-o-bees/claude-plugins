@@ -12,7 +12,7 @@ Identify the **functional parts** that come together to form a sample project, e
 
 Quantification is deferred to a final pass. The qualitative tree must converge (structure stable, paths well-described) before counting which paths are most-adopted.
 
-The methodology corrects two failures observed in earlier consolidation approaches archived alongside subject-specific consolidateds:
+The methodology corrects two specific failures of earlier consolidation approaches:
 
 - **Functional decomposition vs technical attributes.** Earlier methodology categorized by language and technology (Python / TypeScript / Docker). That conflates implementation choice with function — the same tool serves different purposes in different projects. Python is one option for the *server runtime* role; Docker fills *distribution channel*, *test stack*, and *deployment artifact* in different samples. The categorization tree must be organized by ROLE, not by tool. Tools are choices within roles
 - **Qualitative consolidation vs evidence enumeration.** Earlier methodology required inline citations after every observation, inflating output 3-5× and treating consolidation as evidence-list reproduction. The consolidated should describe each implementation path qualitatively (one canonical description per path) — not enumerate which samples exemplify it. Provenance is dynamic via the `references` verb; inline citations are noise

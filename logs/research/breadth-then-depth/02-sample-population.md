@@ -27,7 +27,7 @@ The methodology derives the consolidated tree from these samples. The sample-pop
 
 **The research-objective checklist is flat.** Use a list of dimensions to investigate ("transport, auth, distribution, …") with no prescribed nesting. Per-sample structure is a thinking aid for the researcher, not a contract with downstream phases. Pass 2 normalize will rewrite samples to mirror the converged consolidated tree anyway, so initial structure is throwaway scaffolding.
 
-> **Critical anti-pattern to avoid.** A nested heading-tree template (e.g., `## Transport > ### Wire protocol > #### Selection mechanism`) encourages researchers to keep filling deeper headings even when there's nothing distinguishing to say. The original mcp `_TEMPLATE.md` (now archived) functioned as both checklist AND schema, conflating the two roles. Keep the checklist flat; the structure is for downstream synthesis to determine.
+> **Critical anti-pattern to avoid.** A nested heading-tree template (e.g., `## Transport > ### Wire protocol > #### Selection mechanism`) encourages researchers to keep filling deeper headings even when there's nothing distinguishing to say. An earlier mcp template functioned as both checklist AND schema, conflating the two roles. Keep the checklist flat; the structure is for downstream synthesis to determine.
 
 ## Process
 
