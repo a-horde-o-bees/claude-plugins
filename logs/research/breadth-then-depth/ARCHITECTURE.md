@@ -8,6 +8,16 @@ A research methodology that produces a consolidated tree of functional parts and
 
 For operational instructions, see `METHODOLOGY.md`. For design decisions and rationale, see `decisions.md`. For each phase's agent instructions, see the numbered phase files.
 
+## Scope
+
+This methodology is explicitly scoped to **gathering and consolidating sample data within one subtopic**:
+
+- **In scope.** Producing one `_CONSOLIDATED_breadth-then-depth.md` per `{subject}/{subtopic}-samples/` folder, from the entity samples within. The output is a per-subtopic functional decomposition with adoption tables
+- **Out of scope: cross-subtopic synthesis.** When a subject has multiple subtopics (e.g., `mcp/repos-samples/` plus a hypothetical `mcp/clients-samples/`), each is consolidated independently. Combining those consolidateds into a subject-level synthesis (RESEARCH.md, ANALYSIS.md) is a separate process. It consumes this methodology's output but uses different procedures and is not addressed here
+- **Out of scope: general context gathering.** Subjects often have a `{subject}/context/` folder with specs, official docs, related research, or other supporting material that informs the research without itself being sampled. This methodology does not consolidate context content. Context is research input that may inform target selection (Phase 01) and entity research (Phase 02), but is not part of the corpus the methodology decomposes
+
+The methodology is one component of a research subject's broader workflow. Other processes — cross-subtopic synthesis, context gathering, user-facing analysis authoring — sit alongside it and consume its output, but each has its own discipline.
+
 ## Phases
 
 The system runs as a numbered sequence of ten phases, grouped into five stages.
