@@ -23,9 +23,12 @@ The synthesizer reads commits since the last tag and produces both the CHANGELOG
 1. Preconditions:
     1. {current-branch} = bash: `git rev-parse --abbrev-ref HEAD`
     2. If {current-branch} ≠ `main`: Exit to user: releases cut from main; currently on {current-branch}
-    3. Run `git diff --quiet && git diff --cached --quiet` — if non-zero exit: Exit to user: working tree has uncommitted changes — clean before releasing
-    4. bash: `git fetch origin main --quiet`
-    5. If `git rev-parse HEAD` ≠ `git rev-parse origin/main`: Exit to user: local main not aligned with origin/main — pull or push first
+    3. bash: `git diff --quiet` — if non-zero exit: Exit to user: working tree has unstaged changes — clean before releasing
+    4. bash: `git diff --cached --quiet` — if non-zero exit: Exit to user: working tree has staged changes — clean before releasing
+    5. bash: `git fetch origin main --quiet`
+    6. {head-sha} = bash: `git rev-parse HEAD`
+    7. {origin-sha} = bash: `git rev-parse origin/main`
+    8. If {head-sha} ≠ {origin-sha}: Exit to user: local main not aligned with origin/main — pull or push first
 2. Resolve project methodology:
     1. {release-md-path} = `.claude/ocd/git/release.md`
     2. If {release-md-path} does not exist:
