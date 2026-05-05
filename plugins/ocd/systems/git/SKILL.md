@@ -1,7 +1,7 @@
 ---
 name: git
 description: Manage local git history — commit topic-grouped changes, push a branch to origin, watch GitHub Actions, bundle the full commit-push-CI cycle as a checkpoint, and cut tagged releases with synthesized CHANGELOG entries. Sandbox-based feature lifecycle (new, pack, open, close, unpack, list) lives under /ocd:sandbox.
-argument-hint: "<commit | push --branch <branch-name> | ci [--branch <branch-name>] | checkpoint [--branch <branch-name>] [--no-ci] | release <version>>"
+argument-hint: "<commit | push --branch <branch-name> | ci [--branch <branch-name>] | checkpoint [--branch <branch-name>] [--no-ci] | release [<version>]>"
 allowed-tools:
   - Bash(git *)
   - Bash(gh run *)
@@ -15,7 +15,7 @@ Manage local git history. Five verbs:
 - `push` sends a branch to the remote
 - `ci` watches GitHub Actions runs for the latest commit on a branch
 - `checkpoint` bundles commit + push + ci into one call
-- `release` cuts a tagged release — synthesizes CHANGELOG from commit history, bumps manifest per project methodology, commits + tags + pushes after a mandatory review gate
+- `release` cuts a tagged release — synthesizes CHANGELOG and recommends the next version from commit history per project methodology, then bumps manifest, commits, tags, and pushes after a mandatory review gate. Version is optional; provide it only to override the recommendation
 
 Each verb's sub-flow is in its own component file (`_commit.md`, `_push.md`, `_ci.md`, `_checkpoint.md`, `_release.md`). The dispatch below loads only the component for the requested verb, keeping invocation context minimal. The `release` flow further calls `_release_bootstrap.md` (first-time methodology dialogue) and `Spawn:`s `_release_synthesize.md` (CHANGELOG synthesizer) on demand.
 

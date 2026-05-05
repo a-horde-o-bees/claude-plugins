@@ -1,14 +1,14 @@
 # Release Synthesize
 
-> Spawned-agent component that reads commit history since the last tag and synthesizes a Keep-a-Changelog-formatted entry for the new release, with cross-commit deconfliction so add→refactor→retire chains collapse to net-state rather than three separate entries.
+> Spawned-agent component that reads commit history since the last tag and produces (1) a Keep-a-Changelog-formatted entry for the new release, with cross-commit deconfliction so add→refactor→retire chains collapse to net-state rather than three separate entries, and (2) a recommended next version derived from the bump-axis decision rules in the project methodology.
 
-The agent runs in isolated context with only the inputs it needs. Returns a markdown section ready to insert into `CHANGELOG.md`.
+The agent runs in isolated context with only the inputs it needs. Returns the recommended version, the bump-axis rationale, and a markdown section ready to insert into `CHANGELOG.md`.
 
 ### Variables
 
 - {commit-range} — git log range to read (e.g., `v0.1.0..HEAD`, or `HEAD` for first release)
-- {version} — target version string for the section heading
-- {methodology} — full content of the project's `.claude/ocd/git/release.md` so the synthesizer understands the project's CHANGELOG format and what counts as a user-facing change
+- {current-version} — current manifest version string (the synthesizer applies the bump rule against this)
+- {methodology} — full content of the project's `.claude/ocd/git/release.md` so the synthesizer understands the project's CHANGELOG format, what counts as a user-facing change, and which kinds of change drive each bump axis
 
 ### Rules
 
@@ -16,9 +16,10 @@ The agent runs in isolated context with only the inputs it needs. Returns a mark
 - Categorize per the methodology's CHANGELOG format (e.g., Keep a Changelog: Added / Changed / Fixed / Removed; only include categories that have entries)
 - Skip non-user-facing commits — internal refactors, test infrastructure, doc fixes that don't change behavior, version-bump-only commits. Surface ambiguous calls explicitly rather than silently dropping or including
 - Each entry is one line summarizing the net change; a few sentences if the change requires elaboration
-- Section heading: `## [{version}] - YYYY-MM-DD` using today's UTC date
+- Section heading: `## [{recommended-version}] - YYYY-MM-DD` using today's UTC date
 - Entries reference user-facing artifacts (skill names, MCP tools, file paths consumers see), not internal modules or private symbols
 - Do not invent changes; every entry must trace to actual commits in {commit-range}
+- Apply the methodology's bump-axis decision rules to recommend the next version — categorized changes are the input, the rules decide which axis bumps. Surface uncertainty explicitly when categories straddle axes (e.g., Removed entries that may or may not be user-visible breaks)
 
 ### Process
 
@@ -50,17 +51,26 @@ The agent runs in isolated context with only the inputs it needs. Returns a mark
     - **Removed** — capabilities that no longer exist
     - Skip categories with no entries
 
-7. Compose the section:
-    1. Heading: `## [{version}] - YYYY-MM-DD`
+7. Recommend the next version:
+    1. Read the methodology's bump-axis decision rules (e.g., "y bump for new user-facing capabilities; x bump for breaking changes; z bump for fixes only")
+    2. Map the categorized changes from step 6 against those rules — pick the highest-precedence axis any category triggers (typically: x > y > z)
+    3. Compute {recommended-version} by applying the bump to {current-version} per the methodology's reset rules (e.g., "y bump resets z to 0")
+    4. Compose {bump-axis-rationale} — one or two sentences naming which categories drove the chosen axis (e.g., "y-bump: Added entries for new `/ocd:transcripts report` verb and `/ocd:git release` skill; no Removed or breaking Changed entries triggered x")
+
+8. Compose the CHANGELOG section:
+    1. Heading: `## [{recommended-version}] - YYYY-MM-DD`
     2. Optional one-line lead paragraph if the release has a coherent theme (e.g., "Skill-orchestrated reports + Q#/letter prompt convention")
     3. Categorized bullets per step 6
     4. Bullets concise but specific — name the thing, name the user-visible effect
 
-8. Flag ambiguity:
+9. Flag ambiguity:
     1. If commits suggest a change but the user-facing effect is unclear, include the bullet but prefix or annotate with `(needs review: <reason>)` so the operator catches it during the review gate
-    2. Better to surface uncertainty than to confidently mis-categorize
+    2. If bump-axis decision is ambiguous (e.g., a Changed entry could be breaking or non-breaking), pick the more conservative axis (higher impact = larger bump) and flag the rationale with `(needs review: ...)` so the operator can override
+    3. Better to surface uncertainty than to confidently mis-categorize or mis-bump
 
-9. Return to caller:
+10. Return to caller:
+    - {recommended-version} = computed next version per methodology rules
+    - {bump-axis-rationale} = one-or-two-sentence justification for the chosen axis
     - {changelog-entry} = composed markdown section
     - {commits-considered} = count of commits in {commit-range}
     - {commits-deconflicted} = count of pairs/chains that collapsed
@@ -68,4 +78,4 @@ The agent runs in isolated context with only the inputs it needs. Returns a mark
 
 ### Report
 
-Return the composed CHANGELOG section as the primary deliverable. Surface deconfliction and ambiguity counts so the caller knows how much synthesis judgment was applied.
+Return the recommended version, bump-axis rationale, and composed CHANGELOG section as the primary deliverables. Surface deconfliction and ambiguity counts so the caller knows how much synthesis judgment was applied.
