@@ -38,11 +38,59 @@ The `ocd/*` rules are ~26.6K of that. Two empirical role-research agent runs (Sp
 
 Both directions cut the per-agent floor. Path 1 is content reorganization; Path 2 is structural and would benefit every plugin that ships memory rules. Path 2 likely requires Anthropic-side coordination (Claude Code's memory loader) since the conditional-include hook doesn't exist today; Path 1 is plugin-internal.
 
+## What's auto-inherited vs. on-demand
+
+After the rules removal in job-search (with the user-level plugin install retained), per-agent inheritance from the OCD plugin is much smaller than the rules-files alone. Categorizing what `/context` shows for OCD-attributable cost:
+
+**Auto-inherits to every spawned agent:**
+
+| Item | Tokens | Notes |
+|---|---|---|
+| `.claude/rules/ocd/*.md` | 26.6K (before removal) | Heaviest; fully removable per project |
+| Skills metadata for discovery | ~1.5K | All OCD skills (sandbox, transcripts, retrospective, git, log, refactor, needs-map, setup, check, navigator, ocd-pdf) |
+| MCP server instructions blocks | ~400 | The `## plugin:ocd:navigator` + `## plugin:ocd:transcripts` usage-guidance text blocks |
+
+**Loaded on-demand only (no inheritance cost):**
+
+- MCP tool schemas (parameter docs for each `mcp__plugin_ocd_*` tool) — `/context` notes "MCP tools · /mcp (loaded on-demand)"; agents fetch via `ToolSearch` only when needed
+- Full skill SKILL.md content — only loads when the skill is invoked; the 1.5K is metadata for discovery (skill names + brief descriptions), not the procedure body
+- Hook command bodies — loaded by Claude Code when a hook matcher fires, not by the agent
+
+**Skills metadata breakdown** (from `/skills`, all OCD plugin):
+
+| Skill | Tokens |
+|---|---|
+| sandbox | 144 |
+| transcripts | 143 |
+| retrospective | 98 |
+| git | 67 |
+| log | 65 |
+| refactor | 64 |
+| needs-map | 62 |
+| setup | 40 |
+| check | 28 |
+| navigator | 25 |
+| ocd-pdf | 14 |
+| Discovery-registry overhead | ~750 |
+| **Total** | **~1.5K** |
+
+The biggest win — by ~30x — is on the rules files. The skills metadata + MCP instructions floor cost (~2K combined) is small enough that uninstalling the plugin at user level wouldn't move the needle meaningfully if the rules weren't already loading.
+
 ## Workaround in the meantime
 
-In job-search the project-level `.claude/rules/ocd/` + `.claude/conventions/ocd/` + `.claude/ocd/` directories were removed entirely (2026-05-05). User-level plugin install at `~/.claude/plugins/cache/...` was retained so skills (`/ocd:pdf`, `/ocd:retrospective`) and MCP servers (navigator, transcripts) still load on demand. This is destructive — the project loses access to the rule content as guidance — but it's the only project-side lever available.
+In job-search the project-level `.claude/rules/ocd/` + `.claude/conventions/ocd/` + `.claude/ocd/` directories were removed entirely (2026-05-05). User-level plugin install at `~/.claude/plugins/cache/...` was retained so skills (`/ocd:pdf`, `/ocd:retrospective`) and MCP servers (navigator, transcripts) still register on demand. This is destructive at the rule-content level — the project loses access to that guidance — but it's the only project-side lever available.
+
+Empirical floor change in job-search after rules removal:
+
+| | Before | After |
+|---|---|---|
+| Memory files (project-attributable) | 33.1K | 6.6K (just CLAUDE.md + MEMORY.md + user-global) |
+| Skills metadata | 1.5K | 1.5K |
+| MCP server instructions | ~400 | ~400 |
+| **Project-attributable inherited** | **~35K** | **~8.5K** |
 
 ## Constraints to remember during investigation
 
 - Memory rules exist for a reason: they're agent-facing discipline that fires reliably across sessions. Wholesale "load less" can quietly turn into "discipline drifts." Reduction must preserve the trigger-strength of the guidance.
 - The user-level vs project-level split matters. A plugin used across many projects shouldn't make every project pay for its full memory footprint; the right axis is *what task is the agent doing*, not *which project is this*.
+- Skills + MCP-tool descriptions are already on-demand (the plugin's existing structure); the rules files are the outlier in that they auto-inherit by being placed in `.claude/rules/`. The same on-demand discipline could apply to rules if the loader supported it.
