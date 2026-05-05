@@ -1,20 +1,20 @@
 ---
 name: transcripts
 description: Query Claude Code session transcripts as structured data — projects, sessions, exchanges (user_msg + agent response groups), with time accounting, full chat content, and persistent per-exchange purpose summaries. Backed by a SQLite DB ingested from ~/.claude/projects/. Default-lean output; opt into detail (messages, metrics, timeframes) via --show. Auto-syncs new lines on every query. Same operations are available agent-side as MCP tools (transcripts.* — projects_list, sessions_query, exchanges_query, purposes_set/clear, schema_describe, sql_query).
-argument-hint: "<projects | sessions [--project X | --all-projects] [--from D --to D] [--show timeframes bytes] | exchanges [--project X | --session Y [--range R] | --all-projects] [--from D --to D] [--show messages active breakdown metrics timeframes] | purposes-set <session> <json> | purposes-clear <session> <exchange ...> | settings [<key> [<value>]] | reset>"
+argument-hint: "<projects | sessions [--project X | --all-projects] [--from D --to D] [--show timeframes bytes] | exchanges [--project X | --session Y [--range R] | --all-projects] [--from D --to D] [--show messages active breakdown metrics timeframes] | purposes-set <session> <json> | purposes-clear <session> <exchange ...> | report [<format> [--project X | --all-projects] [--from D --to D]] | settings [<key> [<value>]] | reset>"
 allowed-tools:
   - Bash(ocd-run transcripts:*)
 ---
 
 # /transcripts
 
-Query Claude Code session transcripts. The skill is a thin wrapper over `ocd-run transcripts`; output is JSON throughout for direct agent consumption. The same operations are exposed agent-side via the `transcripts` MCP server — reach for MCP tools when the agent needs the data inline; reach for this skill when the user wants to drive from chat.
+Query Claude Code session transcripts. Most verbs are thin wrappers over `ocd-run transcripts` and emit JSON for direct agent consumption; `report` is skill-orchestrated and emits markdown. The data verbs are also exposed agent-side via the `transcripts` MCP server — reach for MCP tools when the agent needs the data inline; reach for this skill when the user wants to drive from chat.
 
 ## Process Model
 
 The DB is initialized on `/ocd:setup init` (or on-demand via `transcripts reset`). Every verb other than `reset` auto-syncs new transcript lines from `~/.claude/projects/` before querying — there is no separate ingest step.
 
-Seven verbs:
+Eight verbs:
 
 | Verb | Effect |
 |------|--------|
@@ -23,10 +23,11 @@ Seven verbs:
 | `exchanges` | Per-exchange rows; default-lean ({project, session, exchange, purpose}); `--show` opts into messages/active/breakdown/metrics/timeframes |
 | `purposes-set` | Batch upsert per-exchange purpose summaries from a JSON map |
 | `purposes-clear` | Batch clear per-exchange purpose summaries |
+| `report` | List available report formats (no args); generate the named format with `<format>` (currently: `time-blocks`). Skill-orchestrated, not a passthrough |
 | `settings` | Show or update persistent config; lists derived stats |
 | `reset` | Backup the DB and recreate empty schema |
 
-Output is always JSON. Errors emit `{"error": "..."}` on stderr with exit code 1.
+Passthrough verbs emit JSON; errors arrive on stderr as `{"error": "..."}` with exit code 1. `report` emits markdown per its format component file.
 
 `exchanges` returns an array. Default row is lean — opt into detail via `--show`:
 
@@ -93,7 +94,7 @@ Default scope on `sessions` and `exchanges` is the current project. `--all-proje
 
 ## Rules
 
-- Output is always JSON — no text formatting toggle.
+- Passthrough verbs emit JSON only — no text formatting toggle. `report` emits markdown per its format component file.
 - `--range` is only meaningful with `--session`; ignored otherwise.
 - `--show` accepts space-separated bucket names; unknown values raise a validation error.
 - `purposes-set` JSON map keys must coerce to integer exchange numbers (e.g. `'{"5": "...", "12": "..."}'`).
@@ -106,7 +107,7 @@ Default scope on `sessions` and `exchanges` is the current project. `--all-proje
 2. {verb} = first token of $ARGUMENTS
 3. {verb-args} = remainder of $ARGUMENTS after {verb}
 
-> Each verb maps 1:1 to an `ocd-run transcripts` subcommand. Output is JSON; pass through stdout for downstream consumption.
+> Most verbs pass straight through to an `ocd-run transcripts` subcommand. `report` is skill-orchestrated — it dispatches to a format-specific component file that drives a multi-step workflow.
 
 4. If {verb} is `projects`:
     1. bash: `ocd-run transcripts projects`
@@ -120,10 +121,16 @@ Default scope on `sessions` and `exchanges` is the current project. `--all-proje
     1. bash: `ocd-run transcripts purposes-clear {verb-args}`
 9. Else if {verb} is `settings`:
     1. bash: `ocd-run transcripts settings {verb-args}`
-10. Else if {verb} is `reset`:
+10. Else if {verb} is `report`:
+    1. {format} = first token of {verb-args}
+    2. {format-args} = remainder of {verb-args} after {format}
+    3. If not {format}: Exit to user: available report formats — `time-blocks`
+    4. Else if {format} is `time-blocks`: Call: `_report-time-blocks.md` ({format-args} = {format-args})
+    5. Else: Exit to user: unrecognized format {format} — expected `time-blocks`
+11. Else if {verb} is `reset`:
     1. bash: `ocd-run transcripts reset`
-11. Else: Exit to user: unrecognized verb {verb} — expected projects, sessions, exchanges, purposes-set, purposes-clear, settings, or reset
+12. Else: Exit to user: unrecognized verb {verb} — expected projects, sessions, exchanges, purposes-set, purposes-clear, report, settings, or reset
 
 ### Report
 
-Pass through the CLI's stdout. JSON in all cases. Errors arrive on stderr with `{"error": "..."}` and exit code 1.
+Passthrough verbs (`projects`, `sessions`, `exchanges`, `purposes-set`, `purposes-clear`, `settings`, `reset`) emit JSON on stdout; errors arrive on stderr with `{"error": "..."}` and exit code 1. The `report` verb is skill-orchestrated and emits markdown rendered per the format component file (e.g., `_report-time-blocks.md`).

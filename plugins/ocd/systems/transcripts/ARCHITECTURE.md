@@ -6,23 +6,24 @@ Internal structure of the transcripts system: ingests Claude Code JSONL session 
 
 ```
 systems/transcripts/
-  SKILL.md           — Slash-command workflow definition (user-facing CLI wrapper)
-  README.md          — User-facing install/use/config docs
-  ARCHITECTURE.md    — This file
-  __init__.py        — Facade re-exporting internal modules
-  __main__.py        — CLI dispatch (7 verbs, JSON output) — agent-debug surface mirroring the MCP server
-  server.py          — FastMCP adapter exposing the same operations as MCP tools (transcripts.*)
-  _server_helpers.py — Shared MCP _ok/_err + CLAUDE_PROJECT_DIR bootstrap
-  _db.py             — SCHEMA + connection + project-name encoding
-  _init.py           — Plugin contract: ready / ensure_ready / init / reset / status
-  _ingest.py         — JSONL event collection + auto-sync
-  _purposes.py       — Per-exchange purpose summary CRUD + batch wrappers (writes the purpose column on `exchanges`)
-  _scope.py          — projects() / sessions() / exchanges() data layer with `show` opt-in detail buckets
-  _settings.py       — Single-row settings table with typed columns + metadata schema
-  _stats.py          — Derived statistics (avg_user_time) computed on demand
+  SKILL.md                  — Slash-command workflow definition (8 verbs incl. skill-orchestrated `report`)
+  README.md                 — User-facing install/use/config docs
+  ARCHITECTURE.md           — This file
+  _report-time-blocks.md    — Report format component — full process spec for `report time-blocks`
+  __init__.py               — Facade re-exporting internal modules
+  __main__.py               — CLI dispatch for the 7 passthrough verbs (JSON output) — agent-debug surface mirroring the MCP server
+  server.py                 — FastMCP adapter exposing the passthrough operations as MCP tools (transcripts.*)
+  _server_helpers.py        — Shared MCP _ok/_err + CLAUDE_PROJECT_DIR bootstrap
+  _db.py                    — SCHEMA + connection + project-name encoding
+  _init.py                  — Plugin contract: ready / ensure_ready / init / reset / status
+  _ingest.py                — JSONL event collection + auto-sync
+  _purposes.py              — Per-exchange purpose summary CRUD + batch wrappers (writes the purpose column on `exchanges`)
+  _scope.py                 — projects() / sessions() / exchanges() data layer with `show` opt-in detail buckets
+  _settings.py              — Single-row settings table with typed columns + metadata schema
+  _stats.py                 — Derived statistics (avg_user_time) computed on demand
 ```
 
-JSON output throughout — agent-consumable. Every verb other than `reset` calls `sync()` before querying so the DB is current at every read.
+Passthrough verbs (`projects`, `sessions`, `exchanges`, `purposes-set`, `purposes-clear`, `settings`, `reset`) emit JSON — agent-consumable; every verb other than `reset` calls `sync()` before querying so the DB is current at every read. The `report` verb is skill-orchestrated — the dispatcher in `SKILL.md` `Call:`s a format-specific component (`_report-time-blocks.md` today) which drives a multi-step workflow ending in markdown output. Report formats are not exposed via the CLI passthrough surface or the MCP server.
 
 ## Pipeline
 
@@ -31,9 +32,11 @@ JSON output throughout — agent-consumable. Every verb other than `reset` calls
 | Init / status / reset | `_init.py` | Uses `tools.db.rectify` for schema-aware deploy and `tools.db.reset_db` for the destructive verb |
 | Ingest | `_ingest.py:sync` | Walks `~/.claude/projects/`, processes parent + nested JSONLs, INSERT OR IGNORE on `(file, line)` |
 | Query | `_scope.py` | `projects()` / `sessions()` / `exchanges()` over the events table and views; default-lean output, opt into detail via `show` buckets |
+| Annotation | `_purposes.py` | Per-exchange purpose CRUD; batch upsert/clear preserves other annotation columns on the `exchanges` table |
 | Config | `_settings.py` | Single-row `settings` table; one typed column per setting |
 | Stats | `_stats.py` | On-demand callables (no caching) |
-| Surface | `__main__.py`, `server.py` | CLI and MCP both delegate to the library functions above; same JSON shape from either surface |
+| Surface — passthrough | `__main__.py`, `server.py` | CLI and MCP both delegate to the library functions above; same JSON shape from either surface |
+| Surface — report | `SKILL.md` dispatcher → format component (`_report-time-blocks.md`) | Skill-orchestrated; reads exchange content, generates and persists purposes, consolidates into blocks, renders markdown. Not exposed via CLI passthrough or MCP |
 
 ## Database
 
