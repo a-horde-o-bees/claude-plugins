@@ -16,12 +16,12 @@ Note any pre-first-release convention (e.g., "track 0.0.z until first 0.1.0 cut"
 
 ## Manifest paths
 
-List every file that carries a version string the release skill must update. The skill reads this list to know what to bump.
+List every file that carries a version string the release skill must update. The skill reads this list to know what to bump. Common manifests by ecosystem: `package.json` (npm), `Cargo.toml` (Rust), `pyproject.toml` (Python), `*.gemspec` (Ruby), `plugin.json` (Claude Code plugins). A project may version multiple manifests in lockstep (e.g., a multi-plugin marketplace) or a single primary file.
 
-- `path/to/primary-manifest.json`
+- `path/to/primary-manifest.<ext>`
 - (additional manifests if present)
 
-If the project uses a glob (e.g., `plugins/*/.claude-plugin/plugin.json` for multi-plugin marketplaces), document the glob and how each match is treated.
+If the project uses a glob to enumerate manifests (e.g., `plugins/*/.claude-plugin/plugin.json` for a multi-plugin marketplace), document the glob and how each match is treated.
 
 ## Auto-bump (out of release scope)
 
@@ -35,14 +35,17 @@ If no auto-bump exists, state `N/A`.
 
 ## Bump axis decision rules
 
-When does each axis bump? Project-specific definitions of breaking, feature, patch.
+When does each axis bump? The project's specific definitions of breaking, feature, patch.
 
-For semver:
-- **`x` (major)** — describe what counts as breaking
-- **`y` (minor)** — describe what counts as a feature
-- **`z` (patch)** — describe what counts as a patch (or note "auto-incremented per commit; not part of release flow")
+For semver, recommended defaults:
 
-For other schemes, document the equivalent.
+- **`x` (major)** — breaking change to a public consumer-facing surface: removed or renamed APIs, schema breaks, contract changes existing consumers can't accommodate without modification
+- **`y` (minor)** — new consumer-facing capability: new features, new APIs, new behaviors visible to consumers without breaking existing usage
+- **`z` (patch)** — bug fixes and internal changes that don't alter consumer-facing behavior. If the project uses a per-commit auto-bump (see Auto-bump above), document `z` as "auto-incremented per commit; not part of release flow" instead
+
+When categories straddle (e.g., a Changed entry could be breaking or non-breaking), pick the more conservative axis (larger bump) and surface the rationale at review time. Adjust these defaults to match this project's specific definition of breaking/feature/patch.
+
+For other schemes (CalVer, custom), document the equivalent decision rules.
 
 ## Commit + tag conventions
 
@@ -94,6 +97,11 @@ Project-specific gates that must pass before a release can proceed.
 
 ## Install command for users
 
-How users install/pin to a tagged release. Helps `/ocd:git release` produce a useful post-release report.
+How users install or pin to a tagged release. Helps `/ocd:git release` produce a useful post-release report. Examples by ecosystem:
 
-Example: `/plugin marketplace add <org>/<repo>@v<x.y.z>`
+- Claude Code plugin marketplace: `/plugin marketplace add <org>/<repo>@v<x.y.z>`
+- npm: `npm install <package>@<x.y.z>`
+- pip: `pip install <package>==<x.y.z>`
+- cargo: `cargo install <crate> --version <x.y.z>`
+
+Document the command(s) consumers should run to pin to a specific release.
