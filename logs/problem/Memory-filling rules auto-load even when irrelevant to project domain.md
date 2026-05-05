@@ -89,6 +89,18 @@ Empirical floor change in job-search after rules removal:
 | MCP server instructions | ~400 | ~400 |
 | **Project-attributable inherited** | **~35K** | **~8.5K** |
 
+## Adjacent context-cost optimizations
+
+The same load-only-when-relevant axis applies beyond memory rules — agents pay token cost on any content that ships into context regardless of whether the current task touches it. Two project-wide surfaces worth auditing alongside the memory-rules investigation:
+
+### Prose-style workflows that should be PFN
+
+Anywhere a workflow is described as prose ("first do X, then Y, then if Z, do W..."), PFN would compress ~30–50% and sharpen the structure. Agents reading PFN can rely on numbered-step atomicity, indentation scoping, and mechanism prefixes; agents reading prose must parse intent each time. Sweep candidates: README operational sections, ARCHITECTURE.md execution-flow descriptions, CLAUDE.md procedures that drift into prose, skill workflows that mix PFN with prose paragraphs. The PFN spec itself loads once per session; converting prose to PFN amortizes that cost across more workflows.
+
+### Conditional sub-flows that should extract via Spawn: / Call:
+
+When a workflow component runs a sub-flow only on certain paths (specific verb, runtime condition, optional argument), inlining the sub-flow forces every invocation to load it. Extracting to a component file (`_subflow.md`) and invoking via `Spawn: Call:` (isolated agent context) or `Call:` (caller's context, on-demand) means callers that don't traverse the path never read the content. Same on-demand discipline the memory-rules investigation is targeting, applied at workflow-component granularity. Sweep candidates: long `_*.md` files with conditional branches that pull in optional-path content; SKILL.md files where the dispatcher already loads the whole verb table even though only one verb fires per invocation (current pattern uses `Call:` correctly for this — but worth confirming no skill carries inline branches that should be extracted).
+
 ## Constraints to remember during investigation
 
 - Memory rules exist for a reason: they're agent-facing discipline that fires reliably across sessions. Wholesale "load less" can quietly turn into "discipline drifts." Reduction must preserve the trigger-strength of the guidance.
