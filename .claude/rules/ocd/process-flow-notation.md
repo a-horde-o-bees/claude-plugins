@@ -11,7 +11,7 @@ Structured programming for agent workflows. Indentation scopes blocks. Required 
 
 ## Steps
 
-Numbered steps are ordered execution. Each step is an action or construct.
+Numbered steps are ordered execution. Each step is an atomic action or construct — do not compound multiple steps into one call, and do not write compound commands inside a single step. Sequential structure is the contract.
 
 ```
 1. Read configuration
