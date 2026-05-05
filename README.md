@@ -18,18 +18,18 @@ Use at your own discretion. If something breaks, the LICENSE applies.
 
 One marketplace, two channels. You pick the channel by pinning (or not pinning) a ref when you add the marketplace.
 
-### Stable channel (recommended once a release ships)
+### Stable channel (recommended)
 
-Pins to a tagged release. No stable release has been cut yet — this section will list a `@v<x.y.z>` pin once the first release tag is published.
+Pins to a tagged release. Latest stable: `v0.1.0` (cut 2026-04-22).
 
 ```
-/plugin marketplace add a-horde-o-bees/claude-plugins@v<x.y.z>
+/plugin marketplace add a-horde-o-bees/claude-plugins@v0.1.0
 /plugin install ocd@a-horde-o-bees
 ```
 
 ### Dev channel (current — tracks main)
 
-Tracks `main`. Ships with tests, CI configs, and in-flight changes. `plugin.json` auto-bumps on every commit so Claude Code's reload detection fires; the version is pre-release (`0.0.z`) until the first real release is cut.
+Tracks `main`. Ships with tests, CI configs, and in-flight changes. `plugin.json` auto-bumps on every commit so Claude Code's reload detection fires; current version is `0.1.z` between tagged releases.
 
 ```
 /plugin marketplace add a-horde-o-bees/claude-plugins
@@ -154,7 +154,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for marketplace structure, shared infrast
 Plugin versions follow `x.y.z` semver in `plugin.json`. Tags live on `main`; no release branches.
 
 - **Pre-first-release.** `plugin.json` tracks `0.0.z` until the first `v0.1.0` tag is cut. A pre-commit hook bumps `z` on every commit that touches the plugin tree so Claude Code's reload detection fires for users tracking main.
-- **Release cut.** Bump `y`, reset `z = 0`, commit with only `plugin.json` staged (the auto-bump skips plugin.json-only commits), tag `v<x.y.0>` on that commit. `scripts/release.sh` automates the sequence.
+- **Release cut.** `/ocd:git release <version>` — synthesizes a CHANGELOG entry from commit history since the last tag, presents the draft and proposed bump for review, then on approval bumps the manifest, commits, tags, and pushes main + tag.
 - **Patch release.** Tag any main commit as `v<current-version>`; no edit required because `z` already auto-increments per commit. The tag is the "deliberate release" signal.
 
 ## License

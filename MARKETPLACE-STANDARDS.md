@@ -32,7 +32,7 @@ Graduated from the former `claude-marketplace--diff.md` alignment audit once ali
 
 **Standard.** Option E — plain `x.y.z` semver in `plugin.json`. Tags live on `main`; no release branches. Pre-commit hook auto-bumps `z` on commits that stage changes to the plugin tree (excluding plugin.json-only commits). Release cut = bump `y`, reset `z = 0`, commit with only `plugin.json` staged (hook skips bump), tag `v<x.y.0>` on that commit. Patch release = tag a specific main commit as `v<current-version>`; no edit required because `z` already increments per commit.
 
-**Why.** Tags-on-main is 14/14 dominant among tagged repos. No release branches matches 13/14. Auto-bump `z` per commit is a specific deviation (most repos hold at last-release version between tags) that preserves Claude Code's reload detection for dev-channel users tracking main. `scripts/release.sh` automates the release-cut sequence.
+**Why.** Tags-on-main is 14/14 dominant among tagged repos. No release branches matches 13/14. Auto-bump `z` per commit is a specific deviation (most repos hold at last-release version between tags) that preserves Claude Code's reload detection for dev-channel users tracking main. The `/ocd:git release <version>` skill drives the release-cut sequence — synthesizes a CHANGELOG from commit history since the last tag, presents the draft + proposed bump for review, then on approval bumps the manifest, commits, tags, and pushes.
 
 ## Plugin-component registration
 
@@ -117,7 +117,7 @@ Graduated from the former `claude-marketplace--diff.md` alignment audit once ali
 
 ## Release automation
 
-**Standard.** `.github/workflows/release.yml` triggered on `push: tags: ['v*']`. Gates: verify tag format matches `^v\d+\.\d+\.\d+$`, verify `plugin.json` version at tag commit equals the tag's version (Option E — no release-branch check). On success: run tests, create GitHub Release via `gh release create --generate-notes`. `scripts/release.sh` automates the operator-side release-cut sequence (bump plugin.json, print next steps).
+**Standard.** `.github/workflows/release.yml` triggered on `push: tags: ['v*']`. Gates: verify tag format matches `^v\d+\.\d+\.\d+$`, verify `plugin.json` version at tag commit equals the tag's version (Option E — no release-branch check). On success: run tests, create GitHub Release via `gh release create --generate-notes`. The operator-side release-cut sequence is driven by the `/ocd:git release <version>` skill, which reads project methodology from `.claude/ocd/git/release.md`, synthesizes a CHANGELOG entry from commit history, presents for review, and on approval handles bump + commit + tag + push.
 
 **Why.** Tag-sanity gates (format + version alignment) match 2/6 tag-triggered repos. `gh release create --generate-notes` is the 3/6 dominant source for release body text.
 

@@ -18,7 +18,7 @@ Plugin internals (see per-plugin ARCHITECTURE.md)
 
 | Plugin | Status | Purpose | Architecture |
 |--------|--------|---------|-------------|
-| [ocd](plugins/ocd/) | Pre-release (dev channel only) | Deterministic enforcement of permissions, rules, and structural conventions with agent-facing project navigation | [ARCHITECTURE.md](plugins/ocd/ARCHITECTURE.md) |
+| [ocd](plugins/ocd/) | Released (latest stable: `v0.1.0`; dev channel tracks main) | Deterministic enforcement of permissions, rules, and structural conventions with agent-facing project navigation | [ARCHITECTURE.md](plugins/ocd/ARCHITECTURE.md) |
 
 Plugins are independent systems — each has its own manifest, hooks, skills, rules, and tests. Tagged releases live on `main`; no release branches.
 
@@ -82,8 +82,9 @@ Templates live per-system in plugin source — project-wide rules in `plugins/<p
 | Script | Purpose |
 |--------|---------|
 | `scripts/auto_init.py` | Auto-init orchestrator — rectifies deployed state against current templates, called by `/checkpoint` |
-| `scripts/release.sh` | Release-cut automation — bumps `y`, resets `z = 0`, tags main, pushes |
 | `scripts/validate-manifests.py` | Validate marketplace + plugin manifests; invoked by CI |
+
+Release cuts are driven by `/ocd:git release <version>` — see CLAUDE.md for the operational flow and `plugins/ocd/systems/git/_release.md` for the workflow definition.
 
 These are dev-only — maintainers' tooling, not shipped to plugin consumers.
 
@@ -119,7 +120,7 @@ claude-plugins/
 ├── tools/                       — project-level development tooling (testing orchestration, setup)
 ├── plugins/
 │   └── ocd/                     — ocd plugin (own system, see plugins/ocd/ARCHITECTURE.md)
-├── scripts/                     — shared development scripts (auto_init, release, manifest validator, test delegator)
+├── scripts/                     — shared development scripts (auto_init, manifest validator)
 ├── tests/                       — project-level integration tests (dev-only)
 ├── logs/                        — project log entries (decisions, friction, problems, ideas)
 └── research/                    — external research notes (dev-only)
