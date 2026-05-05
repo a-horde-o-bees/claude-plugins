@@ -13,3 +13,7 @@ build/
 
 # Auto-init DB backups awaiting schema reconciliation — non-empty means work in flight
 .claude/pre-sync/
+
+# Transcripts DB grows on every session use (auto-syncs ~/.claude/projects/) — purely local
+.claude/ocd/transcripts/*.db
+.claude/ocd/transcripts/*.db.backup-*
