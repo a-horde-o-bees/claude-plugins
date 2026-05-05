@@ -1,204 +1,293 @@
-# anthropics/claude-plugins-official
+# Sample
 
-## Identification
+Mirrors of `https://github.com/anthropics/claude-plugins-official`. Anthropic-managed curated directory mixing in-repo internal plugins (`/plugins`), thin MCP-wrapper external plugins (`/external_plugins`), and SHA-pinned upstream references in the marketplace manifest. 17,422 stars; default branch `main`; last commit 2026-04-20 (`777db5c` — "Add liquid-skills plugin (#1507)"); 145 plugin entries.
 
-- **URL**: https://github.com/anthropics/claude-plugins-official
-- **Stars**: 17,422
-- **Last commit date**: 2026-04-20 (commit `777db5c` — "Add liquid-skills plugin (#1507)")
-- **Default branch**: `main`
-- **License**: not declared at repo level (GitHub API `license: null`); each plugin directory ships its own `LICENSE` file (the Apache-2.0 body, 11,358 bytes identical across internal plugins) — README explicitly says "Please see each linked plugin for the relevant LICENSE file"
-- **Sample origin**: primary (Anthropic-owned aggregator marketplace)
-- **One-line purpose**: "A curated directory of high-quality plugins for Claude Code." — Anthropic-managed directory mixing in-repo internal plugins (`/plugins`), thin MCP-wrapper external plugins (`/external_plugins`), and SHA-pinned upstream references in the marketplace manifest.
+## Marketplace manifest layout
 
-## 1. Marketplace discoverability
+### Mixed-provenance composition
 
-- **Manifest layout**: single `.claude-plugin/marketplace.json` at repo root (74,104 bytes, 1,724 lines, 145 plugin entries)
-- **Marketplace-level metadata**: top-level fields — `$schema`, `name: "claude-plugins-official"`, `description`, `owner: {name: "Anthropic", email: "support@anthropic.com"}`, `plugins: [...]`. No `metadata` wrapper object.
-- **`metadata.pluginRoot`**: absent (no `metadata` object at all; plugin entries use per-entry `source` paths like `./plugins/<name>`)
-- **Per-plugin discoverability**: `category` present on 118/145 entries; `tags` on only 3 entries (all set to `["community-managed"]`); `keywords` on 1 entry (stagehand). 27 entries carry no `category`. Categories used: `automation`, `database`, `deployment`, `design`, `development` (60), `learning`, `location`, `math`, `monitoring`, `productivity` (26), `security`, `testing`.
-- **`$schema`**: present — `https://anthropic.com/claude-code/marketplace.schema.json`
-- **Reserved-name collision**: no (`claude-plugins-official` is not a reserved name per `docs-plugin-marketplaces.md`)
-- **Pitfalls observed**: 27 of 145 entries omit `category`, which degrades the `/plugin > Discover` browsing experience. The `tags` field (3 entries) and `keywords` field (1 entry) are inconsistently adopted; the docs reference `keywords` and `tags` as optional plugin-level fields but there's no project-wide convention about which to use.
+Single `.claude-plugin/marketplace.json` at repo root (74,104 bytes, 1,724 lines, 145 plugin entries) hosting in-repo plugin directories under `./plugins/*` (48 string-source entries into `/plugins` or `/external_plugins`), SHA-pinned subdirectories of external repos (`git-subdir` with `sha`), clone-the-whole-repo entries (`url` with no `path` — 72 of these), and a lone `github` shorthand entry (`stagehand`, via `{source: "github", repo: "browserbase/agent-browse"}`). Anthropic-authored content gets full review and code in the repo; partner content is distributed by SHA-pinned reference.
 
-## 2. Plugin source binding
+### `$schema` declaration on marketplace.json
 
-- **Source format(s) observed** (per-entry `source` in marketplace.json): `url` 72, `string` (relative path) 48, `git-subdir` 24, `github` 1. No `npm` sources. The 48 string sources all start with `./plugins/<name>` or `./external_plugins/<name>` — relative paths into the repo.
-- **`strict` field**: default-implicit `true` on 131/145 entries; `strict: false` explicit on 14 entries (all 12 `*-lsp` plugins plus `netsuite-suitecloud` and `stagehand`). No `strict: true` written explicitly.
-- **`skills` override on marketplace entry**: present on 2 entries (`netsuite-suitecloud` carves 3 specific skills out of `packages/agent-skills`; `stagehand` declares `./.claude/skills/browser-automation`). Both are `strict: false`, confirming the docs pattern that `strict: false` lets the marketplace entry carve component subsets from an upstream repo.
-- **Version authority**: divided. 13 entries have a `version` field on the marketplace entry (all 12 LSP plugins at `1.0.0` plus `stagehand` at `0.1.0`); the rest rely on `plugin.json`. Among internal plugins where both could be set, only `ralph-loop`, `code-simplifier`, `claude-code-setup`, `claude-md-management`, and `learning-output-style` carry `version: "1.0.0"` in `plugin.json`. Most internal `plugin.json` files omit `version` entirely. Drift risk is real: marketplace-entry `version` and `plugin.json` `version` can disagree, and nothing validates them against each other.
-- **Pitfalls observed**: Source kind `url` (72 entries) uses `url` as the value of `source.source` — per `docs-plugin-marketplaces.md` this is the generic clone-any-URL form; `github` appears only once (`stagehand`, via `{source: "github", repo: "browserbase/agent-browse"}`), so the `github` shorthand is effectively unused. The `git-subdir` entries carry a `sha` field that is actively maintained by the `bump-plugin-shas.yml` workflow (see §14) — this is the only source kind with reproducible pinning.
+Marketplace declares `$schema: "https://anthropic.com/claude-code/marketplace.schema.json"`. No CI step validates against the schema directly; field is editor-assistance only.
 
-## 3. Channel distribution
+### Top-level `metadata` wrapper variants
 
-- **Channel mechanism**: no split. A single `marketplace.json` on `main` is the only distribution. No tags, no release branches (0 tags, 0 releases observed via `gh api`).
-- **Channel-pinning artifacts**: absent. No `stable-tools` / `latest-tools` style dual-marketplace. Users installing this marketplace always get whatever is on `main`.
-- **Pitfalls observed**: Consumers have no pinning mechanism — `/plugin install X@claude-plugins-official` fetches from `main` tip. For `git-subdir` sources this is partially mitigated by the SHA pins the bump workflow maintains (so *upstream* plugin code is reproducible once pinned), but the marketplace manifest itself has no channel.
+Flat top-level fields only — `$schema`, `name: "claude-plugins-official"`, `description`, `owner: {name: "Anthropic", email: "support@anthropic.com"}`, `plugins: [...]`. No `metadata` wrapper object.
 
-## 4. Version control and release cadence
+## Plugin source binding
 
-- **Default branch name**: `main`
-- **Tag placement**: none (0 tags)
-- **Release branching**: none — flat `main`-only model. Active branches are all PR feature branches like `add-liquid-skills`, `add-plugin/aikido` (≥30 visible in first page).
-- **Pre-release suffixes**: none observed (no tags at all)
-- **Dev-counter scheme**: absent
-- **Pre-commit version bump**: no
-- **Pitfalls observed**: Zero release infrastructure — no CHANGELOG, no tags, no GitHub releases. All state lives on `main`. For a first-party marketplace of this scale (145 plugins), the lack of any release pinning mechanism is notable.
+### `url` clone with `sha` pin
 
-## 5. Plugin-component registration
+72 of 145 plugin entries use source kind `url` (clone-any-URL form). The `git-subdir` subset (24 entries) carries `sha` fields actively maintained by the `bump-plugin-shas.yml` workflow — only source kind in this manifest with reproducible pinning.
 
-- **Reference style in plugin.json**: default discovery — every internal `plugin.json` examined (12 samples) declares only `name`, `description`, `author`, and occasionally `version`. No plugin uses explicit `skills`, `commands`, `agents`, `hooks`, `mcpServers`, or `lspServers` path arrays in `plugin.json`. All component wiring relies on the default-discovery conventions (`commands/*.md`, `agents/*.md`, `skills/*/SKILL.md`, `hooks/hooks.json`, `.mcp.json`). The only registrations that *do* use explicit config objects live on the marketplace entry, not in plugin.json: `lspServers: {...}` on the 12 LSP plugins and `skills: [...]` on 2 plugins.
-- **Components observed** (across all internal + external plugins):
-    - skills — yes (skill-creator, plugin-dev, frontend-design, mcp-server-dev, etc.)
-    - commands — yes (commit-commands, code-review, ralph-loop, example-plugin)
-    - agents — yes (feature-dev, code-simplifier, pr-review-toolkit, plugin-dev, hookify)
-    - hooks — yes, 5 plugins (hookify, ralph-loop, security-guidance, explanatory-output-style, learning-output-style)
-    - .mcp.json — yes (example-plugin with `{example-server: {type: http, url: ...}}`; all 15 external plugins carry a `.mcp.json` at plugin root)
-    - .lsp.json — no (LSP servers declared only in marketplace entry's `lspServers` field, not via `.lsp.json`)
-    - monitors — no (no `monitors.json` observed anywhere)
-    - bin — no (no `bin/` directory on any internal or external plugin)
-    - output-styles — indirect. Two plugins named `explanatory-output-style` and `learning-output-style` emulate the unshipped output-style feature via `SessionStart` hooks that emit `hookSpecificOutput.additionalContext`. No `output-styles/` directory.
-- **Agent frontmatter fields used**: observed on `feature-dev/agents/code-architect.md`: `name`, `description`, `tools`, `model`, `color`. Example: `model: sonnet`, `color: green`, `tools: Glob, Grep, LS, Read, NotebookRead, WebFetch, TodoWrite, WebSearch, KillShell, BashOutput`.
-- **Agent tools syntax**: plain tool names separated by commas — not permission-rule syntax like `Bash(uv run *)`. No tool uses the permission-pattern form in the sample examined.
-- **Pitfalls observed**: `session-report/` contains no `.claude-plugin/plugin.json` at all — the marketplace entry for it is strict-default and the plugin directory ships only `LICENSE` and `skills/`. Per `docs-plugins-reference.md`, `plugin.json` is required (at minimum with a `name` field) for a plugin to load under strict mode, so either this plugin relies on an undocumented tolerance in the loader or it fails to load cleanly. Either way, it breaks the pattern followed by every other internal plugin. The 12 LSP plugin directories (clangd-lsp, pyright-lsp, etc.) also have no `.claude-plugin/plugin.json` — for those the marketplace entry is `strict: false` with full `lspServers` config, which is the intended "entry-is-entire-definition" shape.
+### Relative source pointing to subdirectory
 
-## 6. Dependency installation
+48 entries use string-form relative sources, all starting with `./plugins/<name>` or `./external_plugins/<name>` — relative paths into the repo.
 
-- **Applicable**: no — no plugin in this repo installs Python/Node/etc. packages at session start. The marketplace is content-only (skills, commands, agents, hooks, MCP wrappers). External-plugin MCP servers that are runtime-fetched (`npx @playwright/mcp@latest`, `uvx --from git+... serena`) do their own install ad-hoc via the MCP launcher, not via a plugin-install hook.
-- **Dep manifest format**: none
-- **Install location**: not applicable
-- **Install script location**: not applicable
-- **Change detection**: not applicable
-- **Retry-next-session invariant**: not applicable
-- **Failure signaling**: not applicable
-- **Runtime variant**: ad-hoc runtime fetch via MCP command strings only. `playwright` uses `command: npx, args: [@playwright/mcp@latest]`; `serena` uses `command: uvx, args: [--from, git+https://github.com/oraios/serena, serena, start-mcp-server]`; `terraform` uses `command: docker, args: [run, ..., hashicorp/terraform-mcp-server:0.4.0]`. These are not plugin-managed installs; they are launcher commands the MCP runtime invokes each session.
-- **Alternative approaches**: `npx`/`uvx` ad-hoc (on the external MCP plugins, as above)
-- **Version-mismatch handling**: none
-- **Pitfalls observed**: There is no `SessionStart` dep-install convention here to mirror what `docs-plugins-reference.md` describes as the worked example pattern. The repo's hooks are all content-injection (explanatory/learning SessionStart) or rule-evaluation (hookify, security-guidance PreToolUse), not dependency management.
+### `git-subdir` into upstream
 
-## 7. Bin-wrapped CLI distribution
+24 entries use `git-subdir` source kind, each carrying a `sha` field actively maintained by the bump workflow. This is the only source kind in this manifest with reproducible pinning across time.
 
-- **Applicable**: no — no `bin/` directory exists in any internal or external plugin. Confirmed by iterating all 34 internal plugin directories and all 15 external plugin directories.
-- **`bin/` files**: none
-- **Shebang convention**: not applicable (hook scripts do use shebangs — `#!/usr/bin/env bash` and `#!/usr/bin/env python3` — but these are invoked via `command: bash "${CLAUDE_PLUGIN_ROOT}/...` or `python3 ${CLAUDE_PLUGIN_ROOT}/...` from `hooks.json`, not as bin entrypoints)
-- **Runtime resolution**: `${CLAUDE_PLUGIN_ROOT}` is used in every `hooks.json` observed (hookify, ralph-loop, security-guidance, explanatory-output-style, learning-output-style) — always as `python3 ${CLAUDE_PLUGIN_ROOT}/hooks/<file>.py` or `bash "${CLAUDE_PLUGIN_ROOT}/hooks/<file>.sh"`
-- **Venv handling (Python)**: not applicable (no managed venv; hooks just call `python3` from the user PATH)
-- **Platform support**: not applicable
-- **Permissions**: not applicable
-- **SessionStart relationship**: not applicable
-- **Pitfalls observed**: Hookify's Python hooks import from `core.*` and `utils.*` inside the plugin by adding `CLAUDE_PLUGIN_ROOT` to `sys.path` at the top of each hook script — a pattern that works but relies on `CLAUDE_PLUGIN_ROOT` being set, with a fallback that silently suppresses `ImportError` and emits `systemMessage` via JSON before `sys.exit(0)`.
+### `source: github` with explicit coords or `ref` pinning
 
-## 8. User configuration
+One entry (`stagehand`) uses the `github` shorthand: `{source: "github", repo: "browserbase/agent-browse"}`. Effectively unused — 1 of 145 entries.
 
-- **`userConfig` present**: no (0 matches searching marketplace.json for `userConfig`; no `plugin.json` examined declares it)
-- **Field count**: none
-- **`sensitive: true` usage**: not applicable
-- **Schema richness**: not applicable
-- **Reference in config substitution**: not applicable to `${user_config.*}` / `CLAUDE_PLUGIN_OPTION_*` — but external MCP plugins do use `${ENV_VAR}` substitution directly, bypassing `userConfig`. Examples: `external_plugins/github/.mcp.json` uses `Authorization: "Bearer ${GITHUB_PERSONAL_ACCESS_TOKEN}"`; `external_plugins/terraform/.mcp.json` passes `TFE_TOKEN=${TFE_TOKEN}` via `docker run -e`. These env vars are expected to exist in the user's shell environment, not declared by the plugin.
-- **Pitfalls observed**: By relying on bare `${ENV}` substitution instead of `userConfig`, the external plugins provide no discoverable schema — a user installing `github` has to read `.mcp.json` (or `README.md`) to learn that `GITHUB_PERSONAL_ACCESS_TOKEN` must be set. `userConfig` with `sensitive: true` would surface this as a configurable field with secret handling, but the convention in this repo is to skip it.
+### Skill-carving via shared root + `skills` override
 
-## 9. Tool-use enforcement
+Two entries with `skills` override on the marketplace entry: `netsuite-suitecloud` carves 3 specific skills out of `packages/agent-skills`; `stagehand` declares `./.claude/skills/browser-automation`. Both are `strict: false`, confirming the docs pattern that `strict: false` lets the marketplace entry carve component subsets from an upstream repo.
 
-- **PreToolUse hooks**: 2 plugins.
-    - `hookify/hooks/hooks.json` — PreToolUse with no matcher (fires on all tools); runs `python3 ${CLAUDE_PLUGIN_ROOT}/hooks/pretooluse.py`, timeout 10s. Purpose: evaluates user-defined rules from `.claude/hookify.*.local.md` files.
-    - `security-guidance/hooks/hooks.json` — PreToolUse with `matcher: "Edit|Write|MultiEdit"`, runs `python3 ${CLAUDE_PLUGIN_ROOT}/hooks/security_reminder_hook.py` (no timeout declared). Purpose: warns about security issues in file edits.
-- **PostToolUse hooks**: 1 plugin. `hookify/hooks/hooks.json` — PostToolUse with no matcher, `posttooluse.py`, timeout 10s.
-- **PermissionRequest/PermissionDenied hooks**: absent across all inspected hooks.json files.
-- **Output convention**: stdout JSON (`{"systemMessage": "..."}`). Hookify scripts `json.dumps(result)` to stdout, including error paths. Ralph-loop's Stop hook emits JSON via `jq -n` with `{decision: "block", reason: $prompt, systemMessage: $msg}` for its in-session prompt re-injection.
-- **Failure posture**: fail-open, uniformly. Every hookify hook wraps `main()` in `try/except` and exits 0 regardless, with comments like `# ALWAYS exit 0 - never block operations due to hook errors`. Ralph-loop's stop-hook also exits 0 on every error path, printing to stderr but never blocking. Security-guidance is the only one without visible top-level error wrapping (the script body was not fetched but the hook registration has no timeout — if it hangs, Claude Code waits).
-- **Top-level try/catch wrapping**: observed on all hookify hooks (`pretooluse.py`, `posttooluse.py`, `stop.py`, `userpromptsubmit.py`); each also wraps the initial import in its own try/except that emits a `systemMessage` on ImportError.
-- **Pitfalls observed**: Ralph-loop's Stop hook uses `decision: "block"` with the prior prompt as the `reason` to implement an in-session re-run loop — a non-obvious use of the Stop hook's block protocol to implement long-running agentic loops. Timeouts are inconsistent: hookify declares 10s, ralph-loop and security-guidance declare none.
+### `strict` field default
 
-## 10. Session context loading
+131/145 entries take the implicit-true default (no `strict` key). 14 entries set `strict: false` explicit (all 12 `*-lsp` plugins plus `netsuite-suitecloud` and `stagehand`). No `strict: true` is written explicitly.
 
-- **SessionStart used for context**: yes — 2 plugins (`explanatory-output-style`, `learning-output-style`) use `SessionStart` to inject a large instruction blob via `hookSpecificOutput.additionalContext`. These emulate the deprecated "explanatory" and "learning" Claude Code output styles.
-- **UserPromptSubmit for context**: hookify registers a `userpromptsubmit.py` hook, but its purpose is rule evaluation (user-defined rules from `.local.md`), not context injection.
-- **`hookSpecificOutput.additionalContext` observed**: yes — verbatim in both `explanatory-output-style/hooks-handlers/session-start.sh` and `learning-output-style/hooks-handlers/session-start.sh`. The shell script is a here-doc that prints the JSON to stdout and exits 0.
-- **SessionStart matcher**: none declared on either plugin — fires on all SessionStart sub-events (`startup|clear|compact`), per docs default.
-- **Pitfalls observed**: The `hooks-handlers/` directory name is a local convention for these two plugins (distinct from `hooks/` which holds `hooks.json`). The convention separates the registration (`hooks/hooks.json`) from the handler scripts (`hooks-handlers/*.sh`) — unusual layout vs. the more common "hooks.json alongside its scripts in hooks/" pattern used by hookify and ralph-loop.
+## Per-plugin discoverability metadata
 
-## 11. Live monitoring and notifications
+### Mixed-by-origin metadata
 
-- **`monitors.json` present**: no
-- **Monitor count + purposes**: none
-- **`when` values used**: not applicable
-- **Version-floor declaration**: not applicable
-- **Pitfalls observed**: No monitors anywhere in the repo; the documented monitor feature is unused by this first-party marketplace.
+Different field sets per provenance tier in the same `plugins[]` array — `category` is present on 118/145 entries; `tags` on only 3 entries (all set to `["community-managed"]`); `keywords` on 1 entry (stagehand). 27 entries carry no `category`. Categories used: `automation`, `database`, `deployment`, `design`, `development` (60), `learning`, `location`, `math`, `monitoring`, `productivity` (26), `security`, `testing`. The 27 `category`-less entries degrade the `/plugin > Discover` browsing experience; `tags` (3 entries) and `keywords` (1 entry) are inconsistently adopted across siblings.
 
-## 12. Plugin-to-plugin dependencies
+## Version coordination
 
-- **`dependencies` field present**: no (0 matches in any plugin.json examined; 0 in marketplace.json entries)
-- **Entries**: none
-- **`{plugin-name}--v{version}` tag format observed**: no — not applicable since no tags exist in this repo at all (plus the marketplace is single-manifest, so the per-plugin tag pattern from `docs-plugin-dependencies.md` doesn't fit this layout)
-- **Pitfalls observed**: Given the LSP "umbrella" concept (12 LSP plugins that each wrap one language server), a `dependencies` chain would be a natural fit (e.g., one user-installs `typescript-lsp` which depends on a shared base). Instead each LSP plugin is independent and flat.
+### Marketplace-side pin via source ref
 
-## 13. Testing and CI
+13 entries have a `version` field on the marketplace entry (12 LSP plugins at `1.0.0` plus `stagehand` at `0.1.0`); the rest rely on `plugin.json`. Among internal plugins where both could be set, only `ralph-loop`, `code-simplifier`, `claude-code-setup`, `claude-md-management`, and `learning-output-style` carry `version: "1.0.0"` in `plugin.json`; most internal `plugin.json` files omit `version` entirely. For external entries (`url` and `git-subdir`), upstream `plugin.json` versions are not surfaced — the source-side `sha` (where present) is the version contract; consumer pinning surface is the source ref.
 
-- **Test framework**: none (no `tests/` directory at repo root; no per-plugin `tests/` observed; `pytest.ini` / `pyproject.toml` absent at root)
-- **Tests location**: not applicable
-- **Pytest config location**: not applicable
-- **Python dep manifest for tests**: not applicable
-- **CI present**: yes (4 workflow files in `.github/workflows/`)
-- **CI file(s)**: `bump-plugin-shas.yml`, `close-external-prs.yml`, `validate-frontmatter.yml`, `validate-marketplace.yml`
-- **CI triggers**:
-    - `validate-marketplace.yml` — `pull_request` scoped to `paths: ['.claude-plugin/marketplace.json']`
-    - `validate-frontmatter.yml` — `pull_request` scoped to `paths: ['**/agents/*.md', '**/skills/*/SKILL.md', '**/commands/*.md']`
-    - `bump-plugin-shas.yml` — `schedule: cron '23 7 * * 1'` (Monday 07:23 UTC) and `workflow_dispatch` with `plugin`, `max_bumps` (default 20), `dry_run` (default true) inputs
-    - `close-external-prs.yml` — `pull_request_target: [opened]`, gated on `vars.DISABLE_EXTERNAL_PR_CHECK != 'true'`
-- **CI does**: (a) marketplace JSON validation + alphabetical-sort check via bun+TS, (b) frontmatter validation across agents/skills/commands via bun+TS with custom YAML pre-quoting of glob special chars, (c) weekly SHA bump PR for outdated `git-subdir` pins, (d) auto-close PRs from non-Anthropic-members pointing them to the submission form. No tests, no linting.
-- **Matrix**: none (all jobs run `ubuntu-latest`, no matrix)
-- **Action pinning**: tag-based. `actions/checkout@v4`, `oven-sh/setup-bun@v2`, `actions/create-github-app-token@v1`, `actions/github-script@v7`. No SHA pinning.
-- **Caching**: none (no `actions/cache`; `setup-bun` handles its own install but with no explicit cache key)
-- **Test runner invocation**: not applicable (validators run directly: `bun .github/scripts/validate-marketplace.ts` and `bun .github/scripts/check-marketplace-sorted.ts`)
-- **Pitfalls observed**: Zero test coverage of plugin content — frontmatter is checked structurally (name + description present on agents/commands; description OR `when_to_use` on skills) but there is no runtime test that a skill loads, a command parses, or a hook runs without error. The bump workflow uses a GitHub App token (`app-id: 2812036`) rather than `GITHUB_TOKEN` because org policy forbids `GITHUB_TOKEN` from creating PRs — this secret sharing across `-internal` and `-official` is called out in the workflow comment.
+### No plugin-level version
 
-## 14. Release automation
+`session-report/` plugin directory has no `.claude-plugin/plugin.json` (confirmed by direct API fetches of both `plugins/session-report/.claude-plugin/plugin.json` and `plugins/session-report/.claude-plugin/`, both 404); ships only `LICENSE` and `skills/`. The 12 LSP plugin directories also have no `.claude-plugin/plugin.json` — for those the marketplace entry is `strict: false` with full `lspServers` config (the intended "entry-is-entire-definition" shape). Marketplace-entry `version` and `plugin.json` `version` can disagree, with no validation to align them.
 
-- **`release.yml` (or equivalent) present**: no
-- **Release trigger**: not applicable
-- **Automation shape**: not applicable (no release process). The closest analogue is `bump-plugin-shas.yml` which opens an automated PR to refresh `git-subdir` SHA pins — this is dependency-refresh automation, not release automation. Mechanism: Python `discover_bumps.py` script queries GitHub for the latest commit on each pinned ref (respecting `path` scope for subdirs), sorts by oldest-pinned-first ("prevents starvation under the cap"), applies up to `--max 20` bumps, then a bot-signed PR is opened with label `sha-bump`.
-- **Tag-sanity gates**: not applicable
-- **Release creation mechanism**: not applicable
-- **Draft releases**: not applicable
-- **CHANGELOG parsing**: not applicable (no CHANGELOG.md in repo)
-- **Pitfalls observed**: The bump workflow has a concurrency group `bump-plugin-shas` with `cancel-in-progress: false`, and a first step that `gh pr list --label sha-bump --state open --jq 'length'` to skip if an open PR already exists — so at most one open bump PR can accumulate at a time. The workflow pushes with `--force-with-lease` onto a date-stamped branch `auto/bump-shas-$(date +%Y%m%d)`.
+## Channel distribution
 
-## 15. Marketplace validation
+### No pinning surface
 
-- **Validation workflow present**: yes (`validate-marketplace.yml`, `validate-frontmatter.yml`)
-- **Validator**: bun + plain TS (no zod). `validate-marketplace.ts` is ~65 lines: parses JSON, checks object shape, verifies `plugins` is an array, iterates requiring `name`/`description`/`source` per entry, tracks duplicates in a `Set`. `check-marketplace-sorted.ts` enforces case-insensitive alphabetical order on `plugins[].name` with a `--fix` flag that rewrites the file in place. `validate-frontmatter.ts` uses the `yaml` package with a pre-processing pass (`quoteSpecialValues`) that quotes unquoted values containing `{}[]*&#!|>%@\``  so glob patterns like `**/*.{ts,tsx}` parse, then per-type validation: agents require `name`+`description`, commands require `description`, skills require `description` or `when_to_use`. Nested `skills/<name>/agents/` etc. are explicitly excluded (treated as skill content, not plugin components).
-- **Trigger**: `pull_request` only, path-scoped — each validator runs only when its relevant files change
-- **Frontmatter validation**: yes (agents, skills/SKILL.md, commands)
-- **Hooks.json validation**: no (no schema validation of `hooks.json`)
-- **Pitfalls observed**: `validate-marketplace.ts` doesn't validate the shape of `source` (doesn't check that `source` is either a string or an object with a valid `source` discriminator); it only checks that the field is truthy. So a malformed `{source: {typo: "github"}}` object would pass. The validator also doesn't check that the referenced path (for relative sources) exists in the repo. The alphabetical-sort check is strict and automated — every new PR that adds a plugin must place it in the correct sorted position or CI fails with a `--fix` suggestion.
+Single `marketplace.json` on `main` is the only distribution. No tags, no release branches (0 tags, 0 releases observed via `gh api`). Consumers have no pinning mechanism — `/plugin install X@claude-plugins-official` fetches from `main` tip. For `git-subdir` sources this is partially mitigated by the SHA pins the bump workflow maintains (so upstream plugin code is reproducible once pinned), but the marketplace manifest itself has no channel.
 
-## 16. Documentation
+### SHA pinning per external entry
 
-- **`README.md` at repo root**: present — ~50 lines (1,881 bytes equivalent short-form). Covers structure (`/plugins` vs `/external_plugins`), install command, contribution split (Anthropic-internal vs submission-form external), plugin structure skeleton, and a pointer to official docs.
-- **`README.md` per plugin**: present on all 34 internal plugins checked; also present on external plugins where carried (but external plugin directories generally hold only `.claude-plugin/plugin.json` + `.mcp.json` — e.g., `asana/`, `github/`, `playwright/` show no README at that level). Mixed — internal plugins always ship a README; thin external MCP wrappers usually do not.
-- **`CHANGELOG.md`**: absent (0 matches)
-- **`architecture.md`**: absent (0 matches)
-- **`CLAUDE.md`**: absent (0 matches)
-- **Community health files**: none observed at root (no `SECURITY.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`; the README's "Contributing" section serves in place of CONTRIBUTING.md). GitHub repo custom properties indicate L2/L3 repo protection enabled but no files surface in `.github/`.
-- **LICENSE**: absent at repo root; each plugin carries its own `LICENSE` file (Apache-2.0 boilerplate, identical 11,358 bytes across internal plugins). GitHub API `license: null`.
-- **Badges / status indicators**: absent (README has no badges, no CI-status shields)
-- **Pitfalls observed**: The pattern "LICENSE per plugin, none at root" is explicit per README's "Please see each linked plugin for the relevant LICENSE file." External plugins often omit LICENSE entirely — these inherit by reference from the upstream repo they wrap. The lack of a repo-level LICENSE causes GitHub to report `license: null` even though Apache-2.0 files are present throughout.
+For external `git-subdir`-sourced plugins, the `sha` field on each entry acts as a per-plugin pin — the marketplace itself tracks HEAD but each external plugin is frozen at the SHA the maintainer chose. Effectively a per-entry channel pin without a global stable/latest split.
 
-## 17. Novel axes
+## Tag and release lifecycle
 
-- **Strict-false as "config carrier for hollow plugin directories"**: 12 of the 14 `strict: false` entries (all `*-lsp` plugins) use the marketplace entry to carry the *entire* plugin definition — the plugin directory itself holds only `README.md` + `LICENSE`, no `plugin.json`, no `skills/`, no `commands/`. The marketplace entry's `lspServers` block is literally the whole plugin. This is a deliberate structural choice: one umbrella `-lsp` plugin per language with LSP config declared centrally in marketplace.json, installable as its own unit but with no separately-versioned plugin body. This goes beyond the docs-described "carving skills" use case for `strict: false`.
-- **Hybrid internal/external distribution model**: a single marketplace.json mixes (a) in-repo plugin directories under `./plugins/*` (48 string-source entries into `/plugins` or `/external_plugins`), (b) SHA-pinned subdirectories of external repos (`git-subdir` with `sha`), (c) clone-the-whole-repo entries (`url` with no `path` — 72 of these), and (d) a lone `github` shorthand. The Anthropic-authored content gets full review + code in the repo; partner content is distributed by SHA-pinned reference. Both surface uniformly through `/plugin install X@claude-plugins-official`.
-- **SHA-drift remediation via scheduled bot PR**: the `bump-plugin-shas.yml` + `discover_bumps.py` pair implements a specific contract — "oldest-pinned first" fairness (`-age_days` sort), single-PR-at-a-time concurrency (label-based check), and a cap of 20 bumps per run. Failures to fetch (404, 422 "No commit found for SHA" on force-pushed refs) are categorized as "dead" without blocking other bumps. This is a reusable recipe for keeping a pinned-source marketplace fresh at predictable cadence.
-- **External-PR bouncer as organizational policy**: `close-external-prs.yml` runs on `pull_request_target: [opened]`, checks author's collaborator permission level via `repos.getCollaboratorPermissionLevel`, and auto-closes + comments on any PR from a non-admin/non-write user, redirecting to a submission form. Explicitly disableable via `vars.DISABLE_EXTERNAL_PR_CHECK`. This is organizational access control implemented as a workflow rather than as repo branch-protection rules.
-- **Output-style emulation via SessionStart `additionalContext`**: `explanatory-output-style` and `learning-output-style` rebuild the unshipped "output style" feature as plugins by emitting the entire instruction blob through `hookSpecificOutput.additionalContext` on SessionStart. Essentially, plugins as one-shot system-prompt modifiers. The plugin directory is just a wrapper around a single bash here-doc. Demonstrates that the hooks API can subsume a missing first-class feature.
-- **Stop-hook prompt re-injection loop (ralph-loop)**: uses `decision: "block"` with `reason: <previous-prompt-text>` to re-feed the same prompt into the agent on each Stop, implementing a self-referential work loop with iteration counters stored in `.claude/ralph-loop.local.md` (markdown with YAML frontmatter), session isolation via `CLAUDE_CODE_SESSION_ID`, and a `<promise>TAG</promise>` escape protocol. Non-obvious use of the hook API as a control-flow primitive.
-- **Alphabetical-sort enforcement in CI**: `check-marketplace-sorted.ts` runs on every PR that touches `marketplace.json` and fails with a `--fix` command hint if the 145-entry `plugins` array isn't in case-insensitive alphabetical order. Treats the manifest like a sorted registry and uses CI rather than pre-commit hook to enforce it.
-- **Frontmatter pre-quoter for glob patterns**: `validate-frontmatter.ts`'s `quoteSpecialValues` function pre-processes frontmatter text to quote unquoted values containing YAML special chars so that glob patterns like `**/*.{ts,tsx}` parse without authors having to hand-quote them. Small convenience that shifts the burden from author to tooling.
+### No tags at all
 
-## 18. Gaps
+Repo has zero tags. "Release" means whatever `main` currently holds; rolling back requires checking out a specific commit. No CHANGELOG.md, no GitHub releases. Active branches are all PR feature branches (e.g., `add-liquid-skills`, `add-plugin/aikido`, ≥30 visible in first page).
 
-- Did not fetch every plugin's `README.md` body — statements about which plugins ship README files rely on directory listings only; a README could be present with unusual casing or naming.
-- Did not examine `security-guidance/hooks/security_reminder_hook.py` source — failure-posture claim (no top-level try/except wrapping) is inferred from the absence of `timeout` in its hooks.json registration and from it being the only one in this sample I didn't open, not from the script body itself. Would resolve by fetching that single file.
-- Did not enumerate every internal plugin's skill list — for the skill-enabled plugins only `skill-creator` was opened in depth; claims about other skill-shipping plugins (plugin-dev, mcp-server-dev, frontend-design, playground, etc.) rely on directory structure and marketplace entry metadata.
-- GitHub Code Search API returned 404/auth errors for cross-repo queries, so the `userConfig` / `architecture.md` / `CHANGELOG.md` absence claims rely on raw-file fetches of specific paths plus directory listings, not on an exhaustive content-search. A missing file in a non-standard location could be overlooked. Would resolve by a full recursive tree API call at the repo root.
-- Did not inspect the 72 `url`-source partner plugins' upstream repos — no claim is made about what those plugins actually ship, only about how they are referenced in this marketplace's manifest.
-- None remaining — session-report's lack of `plugin.json` was confirmed by direct API fetches (both `plugins/session-report/.claude-plugin/plugin.json` and `plugins/session-report/.claude-plugin/` return 404).
+## Plugin-component registration
+
+### Default convention discovery
+
+Every internal `plugin.json` examined (12 samples) declares only `name`, `description`, `author`, and occasionally `version`. No plugin uses explicit `skills`, `commands`, `agents`, `hooks`, `mcpServers`, or `lspServers` path arrays in `plugin.json`. All component wiring relies on default-discovery conventions (`commands/*.md`, `agents/*.md`, `skills/*/SKILL.md`, `hooks/hooks.json`, `.mcp.json`).
+
+### Marketplace-entry-only definition (no `plugin.json`)
+
+Two shapes both used here. `session-report/` ships no `plugin.json` — its marketplace entry is strict-default and the directory holds only `LICENSE` and `skills/` (likely silent-load-failure). 12 LSP plugin directories (clangd-lsp, pyright-lsp, etc.) also ship no `plugin.json` — for those the marketplace entry is `strict: false` with a full `lspServers: {...}` block carrying the entire plugin definition; the plugin directory holds only `README.md` + `LICENSE`.
+
+## Component composition
+
+### Skills (universal)
+
+Skills ship across many internal plugins — skill-creator, plugin-dev, frontend-design, mcp-server-dev, and others.
+
+### Commands
+
+Commands present in plugins like commit-commands, code-review, ralph-loop, example-plugin.
+
+### Agents
+
+Agents ship in plugins like feature-dev, code-simplifier, pr-review-toolkit, plugin-dev, hookify.
+
+### Hooks
+
+Hooks present in 5 plugins: hookify, ralph-loop, security-guidance, explanatory-output-style, learning-output-style.
+
+### MCP servers
+
+`example-plugin` carries `.mcp.json` with `{example-server: {type: http, url: ...}}`; all 15 external plugins ship a `.mcp.json` at plugin root.
+
+### Composition shapes
+
+LSP-server-only "hollow" plugin shape applies to all 12 `*-lsp` plugin directories. Output-style emulation via SessionStart `additionalContext` is used by `explanatory-output-style` and `learning-output-style` (no `output-styles/` directory exists; the docs feature is rebuilt as a SessionStart hook emitting the entire instruction blob).
+
+## Skill authoring conventions
+
+### Standard frontmatter
+
+Skills ship with the standard frontmatter set; no plugin in this repo uses non-standard frontmatter fields like `disable-model-invocation` or `context: fork`.
+
+## Agent declaration conventions
+
+### Standard fields plus model / color
+
+Observed on `feature-dev/agents/code-architect.md`: `name`, `description`, `tools`, `model`, `color`. Example values: `model: sonnet`, `color: green`, `tools: Glob, Grep, LS, Read, NotebookRead, WebFetch, TodoWrite, WebSearch, KillShell, BashOutput`.
+
+### Plain tool-name list
+
+Agents declare `tools:` as plain comma-separated names (`Glob, Grep, LS, Read, NotebookRead, WebFetch, TodoWrite, WebSearch, KillShell, BashOutput`) rather than permission-rule syntax like `Bash(uv run *)`. No tool uses the permission-pattern form in the sample examined.
+
+## Server runtime (MCP)
+
+### Runtime-fetched server via `npx -y`
+
+`playwright` external plugin uses `command: npx, args: [@playwright/mcp@latest]`.
+
+### Pinned PyPI wheel via `uvx`
+
+`serena` external plugin uses `command: uvx, args: [--from, git+https://github.com/oraios/serena, serena, start-mcp-server]`.
+
+### Docker-launched MCP server
+
+`terraform` external plugin uses `command: docker, args: [run, ..., hashicorp/terraform-mcp-server:0.4.0]` (pinned tag).
+
+## Bin entry mechanism
+
+### No bin entry / direct invocation
+
+No `bin/` directory exists in any internal or external plugin (confirmed by iterating all 34 internal plugin directories and all 15 external plugin directories). Hook scripts use shebangs (`#!/usr/bin/env bash`, `#!/usr/bin/env python3`) but are invoked from `hooks.json` via `command: bash "${CLAUDE_PLUGIN_ROOT}/...` or `python3 ${CLAUDE_PLUGIN_ROOT}/...`, not as bin entrypoints. Hookify's Python hooks import from `core.*` and `utils.*` inside the plugin by adding `CLAUDE_PLUGIN_ROOT` to `sys.path` at the top of each hook script.
+
+## Plugin-runtime root resolution
+
+### Two-tier env-var-first fallback
+
+Every `hooks.json` observed uses `${CLAUDE_PLUGIN_ROOT}` — always as `python3 ${CLAUDE_PLUGIN_ROOT}/hooks/<file>.py` or `bash "${CLAUDE_PLUGIN_ROOT}/hooks/<file>.sh"` (hookify, ralph-loop, security-guidance, explanatory-output-style, learning-output-style).
+
+## Dependency installation
+
+### Delegated to PyPI runner (`uvx`)
+
+External-plugin MCP servers use ad-hoc runtime fetch via the MCP launcher rather than plugin-managed install. `serena` is fetched via `uvx --from git+https://github.com/oraios/serena, serena, start-mcp-server`.
+
+### No managed install — pure shell/markdown
+
+Marketplace is content-only (skills, commands, agents, hooks, MCP wrappers); no plugin installs Python/Node packages at session start. External-plugin MCP servers that are runtime-fetched (`npx @playwright/mcp@latest`, `uvx --from git+... serena`) do their own install ad-hoc via the MCP launcher, not via a plugin-install hook.
+
+## User configuration and authentication
+
+### No userConfig, env-var only
+
+External plugins use bare `${ENV}` substitution directly, bypassing `userConfig`. `external_plugins/github/.mcp.json` uses `Authorization: "Bearer ${GITHUB_PERSONAL_ACCESS_TOKEN}"`; `external_plugins/terraform/.mcp.json` passes `TFE_TOKEN=${TFE_TOKEN}` via `docker run -e`. These env vars are expected to exist in the user's shell environment, not declared by the plugin. A user installing `github` has to read `.mcp.json` (or `README.md`) to learn that `GITHUB_PERSONAL_ACCESS_TOKEN` must be set.
+
+## Session context loading
+
+### `additionalContext` payload at SessionStart
+
+`explanatory-output-style/hooks-handlers/session-start.sh` and `learning-output-style/hooks-handlers/session-start.sh` are bash scripts using a here-doc that prints JSON to stdout with `hookSpecificOutput.additionalContext` carrying the entire instruction blob. Used to emulate the deprecated "explanatory" and "learning" Claude Code output styles. SessionStart matcher absent on either plugin — fires on all sub-events. The `hooks-handlers/` directory name is a local convention for these two plugins (distinct from `hooks/` which holds `hooks.json`); separates the registration (`hooks/hooks.json`) from the handler scripts.
+
+## SessionStart matcher scope
+
+### Empty matcher (all sub-events)
+
+`explanatory-output-style` and `learning-output-style` SessionStart hooks declare no matcher, firing on all sub-events (`startup|clear|compact`).
+
+## Tool-use enforcement
+
+### Hook-only enforcement (frontmatter is documentation)
+
+Two plugins register PreToolUse hooks. `hookify/hooks/hooks.json` runs PreToolUse with no matcher (fires on all tools); runs `python3 ${CLAUDE_PLUGIN_ROOT}/hooks/pretooluse.py`, timeout 10s; evaluates user-defined rules from `.claude/hookify.*.local.md` files. `security-guidance/hooks/hooks.json` runs PreToolUse with `matcher: "Edit|Write|MultiEdit"`, runs `python3 ${CLAUDE_PLUGIN_ROOT}/hooks/security_reminder_hook.py` (no timeout declared); warns about security issues in file edits. Hookify also registers a PostToolUse with no matcher, `posttooluse.py`, timeout 10s. PermissionRequest/PermissionDenied hooks are absent across all inspected hooks.json files.
+
+## Hook output contract
+
+### `systemMessage` for human-readable summaries
+
+Hookify scripts `json.dumps(result)` to stdout, emitting `{"systemMessage": "..."}` JSON on every code path including error paths. Used for completion-event reports.
+
+### `decision: "block"` for gating
+
+Ralph-loop's Stop hook emits JSON via `jq -n` with `{decision: "block", reason: $prompt, systemMessage: $msg}` for in-session prompt re-injection — refusing the Stop event so the prompt re-feeds into the agent.
+
+## Hook failure posture
+
+### Fail-open posture with explicit comment contract
+
+Every hookify hook wraps `main()` in `try/except` and exits 0 regardless, with comments like `# ALWAYS exit 0 - never block operations due to hook errors`. Top-level try/catch wrapping observed on all hookify hooks (`pretooluse.py`, `posttooluse.py`, `stop.py`, `userpromptsubmit.py`); each also wraps the initial import in its own try/except that emits a `systemMessage` on ImportError. Ralph-loop's stop-hook also exits 0 on every error path, printing to stderr but never blocking. Security-guidance is the only one without visible top-level error wrapping (the script body was not fetched but the hook registration has no timeout — if it hangs, Claude Code waits).
+
+## Hook timeout and async philosophy
+
+### Differentiated per-hook timeouts
+
+Hookify declares 10s timeouts on PreToolUse and PostToolUse; ralph-loop and security-guidance declare none. Inconsistent across plugins.
+
+## State persistence
+
+### Plugin-local `.local.md` with YAML frontmatter
+
+Ralph-loop's Stop hook uses `decision: "block"` with `reason: <previous-prompt-text>` to re-feed the same prompt into the agent on each Stop, implementing a self-referential work loop. Iteration counters stored in `.claude/ralph-loop.local.md` (markdown body with YAML frontmatter); session isolation via `CLAUDE_CODE_SESSION_ID`; a `<promise>TAG</promise>` escape protocol for breaking out of the loop.
+
+## Plugin-to-plugin coordination
+
+### `dependencies` field absent
+
+No `plugin.json` declares the schema-level `dependencies` field. The 12 LSP plugins are independent and flat — given the LSP "umbrella" concept, a `dependencies` chain would be a natural fit (e.g., one user-installs `typescript-lsp` which depends on a shared base) but is unused.
+
+## Testing
+
+### No tests
+
+No `tests/` directory at repo root; no per-plugin `tests/` observed; `pytest.ini` / `pyproject.toml` absent at root. Quality control is review-time on PRs.
+
+## CI workflow shape
+
+### Multi-workflow split by trigger and concern
+
+4 workflow files in `.github/workflows/`: `bump-plugin-shas.yml`, `close-external-prs.yml`, `validate-frontmatter.yml`, `validate-marketplace.yml`. Triggers split per concern: `validate-marketplace.yml` on `pull_request` scoped to `paths: ['.claude-plugin/marketplace.json']`; `validate-frontmatter.yml` on `pull_request` scoped to `paths: ['**/agents/*.md', '**/skills/*/SKILL.md', '**/commands/*.md']`; `bump-plugin-shas.yml` on `schedule: cron '23 7 * * 1'` (Monday 07:23 UTC) and `workflow_dispatch` with `plugin`, `max_bumps` (default 20), `dry_run` (default true) inputs; `close-external-prs.yml` on `pull_request_target: [opened]`, gated on `vars.DISABLE_EXTERNAL_PR_CHECK != 'true'`.
+
+### Single PR-gatekeeper workflow
+
+`close-external-prs.yml` triggers on `pull_request_target: [opened]`, gated on `vars.DISABLE_EXTERNAL_PR_CHECK != 'true'`. Uses `actions/github-script` to check the PR author's collaborator permission level via `repos.getCollaboratorPermissionLevel`; auto-closes and comments on any PR from a non-admin/non-write user, redirecting to a submission form. Org-wide submission gating implemented as a workflow rather than as repo branch-protection rules.
+
+### Action-pinning conventions
+
+All actions tag-based: `actions/checkout@v4`, `oven-sh/setup-bun@v2`, `actions/create-github-app-token@v1`, `actions/github-script@v7`. No SHA pinning. No `actions/cache`; `setup-bun` handles its own install with no explicit cache key. Matrix is none — all jobs run `ubuntu-latest`.
+
+## Marketplace validation
+
+### Schema-and-shape validators in TS
+
+`validate-marketplace.yml` runs `bun .github/scripts/validate-marketplace.ts` and `bun .github/scripts/check-marketplace-sorted.ts`. `validate-marketplace.ts` is ~65 lines: parses JSON, checks object shape, verifies `plugins` is an array, iterates requiring `name`/`description`/`source` per entry, tracks duplicates in a `Set`. Plain TS, no zod. Validates field presence, not shape — `source` must be truthy but its discriminator isn't checked (a malformed `{source: {typo: "github"}}` object would pass). Validator also doesn't check that the referenced path (for relative sources) exists in the repo.
+
+### Frontmatter validation by grep
+
+`validate-frontmatter.yml` runs `validate-frontmatter.ts` using the `yaml` package with a pre-processing pass (`quoteSpecialValues`) that quotes unquoted values containing `{}[]*&#!|>%@\`` so glob patterns like `**/*.{ts,tsx}` parse. Per-type validation: agents require `name`+`description`, commands require `description`, skills require `description` or `when_to_use`. Nested `skills/<name>/agents/` etc. are explicitly excluded (treated as skill content, not plugin components). PR-only triggers, path-scoped so each validator fires only on relevant changes.
+
+### Alphabetical-sort enforcement
+
+`check-marketplace-sorted.ts` enforces case-insensitive alphabetical order on `plugins[].name` with a `--fix` flag that rewrites the file in place. Runs on every PR that touches `marketplace.json`. Treats the manifest like a sorted registry; CI rather than pre-commit hook is the enforcement point. New PRs adding a plugin must place it in the correct sorted position or CI fails with a `--fix` suggestion.
+
+## Source-pin maintenance
+
+### Scheduled bot-PR with fairness ordering
+
+`bump-plugin-shas.yml` workflow runs on cron (Monday 07:23 UTC) and `workflow_dispatch`. Python `discover_bumps.py` script queries GitHub for the latest commit on each pinned ref (respecting `path` scope for subdirs), sorts by oldest-pinned-first ("prevents starvation under the cap"), applies up to `--max 20` bumps per run (configurable via `max_bumps` input, default 20), then a bot-signed PR is opened with label `sha-bump`. Concurrency group `bump-plugin-shas` with `cancel-in-progress: false`. First step does `gh pr list --label sha-bump --state open --jq 'length'` to skip if an open PR already exists — at most one open bump PR can accumulate at a time. Pushes with `--force-with-lease` onto a date-stamped branch `auto/bump-shas-$(date +%Y%m%d)`. Failures to fetch (404, 422 "No commit found for SHA" on force-pushed refs) are categorized as "dead" without blocking other bumps. Uses a GitHub App token (`app-id: 2812036`) rather than `GITHUB_TOKEN` because org policy forbids `GITHUB_TOKEN` from creating PRs.
+
+## Release automation
+
+### No release automation / manual
+
+No `release.yml`, no release process. No CHANGELOG.md in repo. No tag-sanity gates, no release-creation mechanism, no draft releases, no CHANGELOG parsing. The closest analogue is `bump-plugin-shas.yml`, which is dependency-refresh automation, not release automation.
+
+## Documentation surface
+
+### README only
+
+Repo `README.md` is ~50 lines (1,881 bytes equivalent short-form). Covers structure (`/plugins` vs `/external_plugins`), install command, contribution split (Anthropic-internal vs submission-form external), plugin structure skeleton, and a pointer to official docs.
+
+### Per-plugin README mixed coverage
+
+Per-plugin README present on all 34 internal plugins checked; also present on external plugins where carried (but external plugin directories generally hold only `.claude-plugin/plugin.json` + `.mcp.json` — e.g., `asana/`, `github/`, `playwright/` show no README at that level). Internal plugins always ship a README; thin external MCP wrappers usually do not.
+
+### CHANGELOG and ARCHITECTURE absent at root
+
+No `CHANGELOG.md` (0 matches), no `architecture.md` (0 matches), no `CLAUDE.md` (0 matches).
+
+## License declaration
+
+### No repo-root LICENSE; per-skill LICENSE only
+
+LICENSE absent at repo root; each plugin carries its own `LICENSE` file (Apache-2.0 boilerplate, identical 11,358 bytes across internal plugins). README explicitly says "Please see each linked plugin for the relevant LICENSE file." External plugins often omit LICENSE entirely (these inherit by reference from the upstream repo they wrap). GitHub API `license: null`.
+
+## Community health files
+
+### Anti-contribution with auto-close gatekeeper
+
+`close-external-prs.yml` workflow on `pull_request_target: [opened]` checks the PR author's collaborator permission level via the GitHub API and auto-closes any PR from non-admin/non-write users with a comment redirecting to a submission form. Disableable via `vars.DISABLE_EXTERNAL_PR_CHECK` repo variable. README's "Contributing" section serves in place of CONTRIBUTING.md; no `SECURITY.md`, `CONTRIBUTING.md`, or `CODE_OF_CONDUCT.md` at root. GitHub repo custom properties indicate L2/L3 repo protection enabled.

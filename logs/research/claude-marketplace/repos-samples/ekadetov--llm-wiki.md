@@ -1,571 +1,225 @@
 # Sample
 
-## Identification
+Mirrors `https://github.com/ekadetov/llm-wiki`. Single-plugin marketplace — Claude Code plugin for persistent, compounding knowledge bases in Obsidian, applying Karpathy's LLM Wiki pattern. MIT license. Last commit 2026-04-06 (`5e49545a` — docs fix to WALKTHROUGH.md); default branch `main`; 53 stars. Sample origin: dep-management.
 
-### URL
+## Marketplace manifest layout
 
-https://github.com/ekadetov/llm-wiki
+### Self-referential single-plugin marketplace at repo root
 
-### Stars
+Single `.claude-plugin/marketplace.json` at repo root with one plugin entry (`llm-wiki`) whose source is `"./"` — marketplace and plugin share the same repo root. Manifest has only top-level `name`, `owner`, `plugins`; no `metadata` wrapper, no top-level `description`.
 
-53
+### Top-level `metadata` wrapper variants
 
-### Last commit date
+Flat top-level fields only — `name`, `owner`, `plugins`. No `metadata` wrapper, no `metadata.description`, no `metadata.pluginRoot`, no `$schema`. Minimal scaffolding.
 
-2026-04-06 (`5e49545a` — docs fix to WALKTHROUGH.md)
+## Plugin source binding
 
-### Default branch
+### Relative source pointing to repo root (`./`)
 
-main
+`"source": "./"` — marketplace and plugin are the same repo root. Co-located root is the simplest possible binding.
 
-### License
+### `strict` field default
 
-MIT (SPDX `MIT`, per GitHub license API + LICENSE file)
+No `strict` key present; default (implicit true) applies. No `skills` override on marketplace entry.
 
-### Sample origin
+## Source layout
 
-dep-management
+### Single tree (plugin equals repo)
 
-### One-line purpose
+Plugin manifest at `.claude-plugin/`; components at conventional top-level directories (`commands/`, `skills/wiki/SKILL.md`, `hooks/hooks.json`).
 
-"LLM Wiki — Claude Code plugin for persistent, compounding knowledge bases in Obsidian" (from repo description + README: builds knowledge bases inside Obsidian using Karpathy's LLM Wiki pattern)
+## Per-plugin discoverability metadata
 
-## 1. Marketplace discoverability
+### No discoverability fields on marketplace entry
 
-### Manifest layout
+Marketplace plugin entry has only `name`, `source`, `description`; no `category`, `tags`, or `keywords`. Marketplace consumer scanning categories would not see this plugin at all.
 
-single `.claude-plugin/marketplace.json` at repo root
+### `$schema` absence on per-plugin manifests
 
-### Marketplace-level metadata
+`$schema` absent on `marketplace.json` and `plugin.json`.
 
-none — manifest has only top-level `name`, `owner`, `plugins`; no `metadata` wrapper, no top-level `description`
+## Version coordination
 
-### `metadata.pluginRoot`
+### Single source of truth (`plugin.json` only)
 
-absent
+`"version": "2.0.0"` lives in `plugin.json`; `marketplace.json` declares no version. Eliminates drift risk by construction.
 
-### Per-plugin discoverability
+## Channel distribution
 
-none — plugin entry has only `name`, `source`, `description`; no `category`, `tags`, or `keywords`
+### No pinning surface
 
-### `$schema`
+No tags exist (`gh api .../tags` returns `[]`); no GitHub releases. Single main branch. No multiple marketplace files, no tag-based channels. The only ref to pin against is a commit SHA or `main`.
 
-absent
+## Tag and release lifecycle
 
-### Reserved-name collision
+### No tags at all
 
-no — plugin name is `llm-wiki`
+`gh api repos/ekadetov/llm-wiki/tags` returns `[]`. Default branch `main`; only `main` exists. No release branching, no pre-release suffixes. Commit history shows a manual `chore: bump version to 2.0.0` (e810af03) — human bump, not automation. Repo has version-jump history (`feat!:` breaking commits followed by manual version bumps) but zero tags and zero releases. The version in `plugin.json` is the only signal and moves with main. No `.pre-commit-config.yaml`, no `.husky/`, no `.github/` directory.
 
-### Pitfalls observed
+## Plugin-component registration
 
-marketplace.json and plugin.json are minimal to the point that nothing signals discoverability — no category surface, no keywords, no version advertised at the marketplace layer. A marketplace consumer scanning categories would not see this plugin at all.
+### Default convention discovery
 
-## 2. Plugin source binding
+`plugin.json` has no component path fields (only `name`, `version`, `description`, `author`). Components located by Claude Code's conventional layout: `commands/*.md`, `skills/*/SKILL.md`, `hooks/hooks.json`.
 
-### Source format(s) observed
+## Component composition
 
-relative (`"source": "./"`) — the marketplace and the plugin are the same repo root
+### Skills (universal)
 
-### `strict` field
+`skills/wiki/SKILL.md` with `references/` subdir holding `compilation-guide.md` (1898 bytes) and `frontmatter-schemas.md` (1102 bytes).
 
-default (implicit true) — no `strict` key present
+### Commands
 
-### `skills` override on marketplace entry
+`commands/wiki.md` present.
 
-absent
+### Hooks
 
-### Version authority
+`hooks/hooks.json` — single SessionStart entry for dep install. No `.mcp.json`, no `.lsp.json`, no agents, no monitors, no bin, no output-styles.
 
-`plugin.json` only — `"version": "2.0.0"` lives in `plugin.json`; marketplace.json declares no version
+## Dependency installation
 
-### Pitfalls observed
+### SessionStart hook → npm install local to plugin
 
-none — co-located root is the simplest possible binding. Relative source with no strict override means the full plugin directory is consumed as-is.
+Plugin ships a SessionStart hook running `bash "${CLAUDE_PLUGIN_ROOT}/scripts/install-deps.sh"` (1590 bytes, registered in `hooks/hooks.json`). Installs `@tobilu/qmd` and `@marp-team/marp-cli` via `npm install`. Packages land in `${CLAUDE_PLUGIN_DATA}/node_modules/`. The skill references `${CLAUDE_PLUGIN_DATA}/node_modules/.bin/qmd` and `.bin/marp`. No committed `package.json`, `package-lock.json`, or `requirements.txt` — the install script writes a minimal `{"private":true}` package.json into `${CLAUDE_PLUGIN_DATA}` on first run. Authoritative declaration of the two dependencies lives inline in the install script (`npm install @tobilu/qmd @marp-team/marp-cli`).
 
-## 3. Channel distribution
+## Install change detection
 
-### Channel mechanism
+### Three-gate idempotency
 
-no split — single main branch, users presumably pin via `@ref` if they want; no multiple marketplace files or tag-based channels observed
+`scripts/deps-version.txt` (repo-committed, value `1.0.0`) is compared to `${CLAUDE_PLUGIN_DATA}/deps-version.txt` using `diff -q`. A sentinel file `${CLAUDE_PLUGIN_DATA}/.deps-ok` gates success. Only when all three conditions hold (sentinel exists, destination version file exists, `diff -q` reports no difference) does the script skip install. Any mismatch re-triggers npm install. Each gate is cheap and catches a different corruption mode (aborted install, partial file write, upstream version bump). Together they form a stricter check than any single mechanism.
 
-### Channel-pinning artifacts
+## Install trigger and lifecycle
 
-absent — no `stable-tools`/`latest-tools` style, no dev-counter split
+### SessionStart direct invocation
 
-### Pitfalls observed
+The `hooks.json` SessionStart entry has no `matcher` key, so it fires on all sub-events (startup, clear, compact). Since `diff -q` is idempotent this is fine, but every `/clear` re-runs the install check.
 
-no tags exist in the repo (`gh api .../tags` returned empty) and no GitHub releases exist either, so there is no stable ref a consumer could pin to other than a commit SHA or `main`.
+## Install failure posture
 
-## 4. Version control and release cadence
+### `rm` stamp on failure (retry next session)
 
-### Default branch name
+Explicit `rm -f "${SENTINEL}" "${VERSION_DST}"` on npm failure guarantees the next session retries. The repo-committed version file (`VERSION_SRC`) is never removed. Removing only the sentinel would still detect a corrupted-install state on next session (sentinel absence forces re-install); the script deletes both to be safe.
 
-main
+### Silent fail-open (`exit 0` always, retry every hook)
 
-### Tag placement
+`set +e` explicitly disables exit-on-error; script header comment documents `MUST NEVER exit non-zero — that blocks sessions`. All `|| exit 0` fallthroughs and a final unconditional `exit 0`. Human-readable progress and error messages go to stderr via `echo ... >&2`. The graceful-degradation message `"Wiki will work without qmd/marp."` is the explicit fail-open contract to the user. `set +e` plus `|| exit 0` scattered throughout means any mkdir, cd, or cp failure silently degrades — a read-only `${CLAUDE_PLUGIN_DATA}` would exit 0 with no trace, leaving the skill to fall back to `index.md`-only mode without surfacing why.
 
-none — `gh api repos/ekadetov/llm-wiki/tags` returns `[]`
+## User configuration and authentication
 
-### Release branching
+### Hard-coded path as missing userConfig
 
-none — only `main` branch exists
+`plugin.json` declares no `userConfig`. The README hard-codes `~/ObsidianVault/03-Resources/` as the vault path. The skill's directory walk enforces this prose convention. Users with a vault at any other path must symlink or change their layout. This is what a `userConfig` field would naturally hold.
 
-### Pre-release suffixes
+## Session context loading
 
-none observed — version is `2.0.0`, no suffix
+### Dependency install only (no context emission)
 
-### Dev-counter scheme
+The single SessionStart hook runs `install-deps.sh` for dep management only; it does not emit `hookSpecificOutput.additionalContext`, `systemMessage`, or any context payload. No `UserPromptSubmit`.
 
-absent — single semver value in plugin.json
+## SessionStart matcher scope
 
-### Pre-commit version bump
+### Empty matcher (all sub-events)
 
-no evidence — no `.pre-commit-config.yaml`, no `.husky/`, no `.github/` directory at all. Commit history shows a manual `chore: bump version to 2.0.0` (e810af03) which is a human bump, not automation
+The `hooks.json` SessionStart entry has no `matcher` key, so it fires on all sub-events (startup, clear, compact). Idempotency check runs more often than strictly necessary; each invocation is cheap (three `test -f` + one `diff -q`) so it's not a correctness problem, just redundant work.
 
-### Pitfalls observed
+## Tool-use enforcement
 
-repo has a version-jump history (`feat!:` breaking commits followed by a manual `chore: bump version to 2.0.0`) but zero tags and zero releases. Nothing fixes `2.0.0` to a specific commit from a consumer's perspective — the version in `plugin.json` is the only signal, and it moves with main.
+### No enforcement (observational only)
 
-## 5. Plugin-component registration
+`hooks/hooks.json` contains only a SessionStart entry. No PreToolUse, PostToolUse, PermissionRequest, or PermissionDenied hooks. Plugin consciously does not gate tool use.
 
-### Reference style in plugin.json
+## Hook handler runtime
 
-default discovery — `plugin.json` has no component path fields at all (only `name`, `version`, `description`, `author`). Components are located by Claude Code's conventional layout: `commands/*.md`, `skills/*/SKILL.md`, `hooks/hooks.json`
+### Bash scripts at conventional path
 
-### Components observed
+`scripts/install-deps.sh` uses `#!/usr/bin/env bash`. `scripts/lint-wiki.py` (a content linter for the wiki, not a hook) uses `#!/usr/bin/env python3` and is stdlib-only.
 
-    - skills: yes (`skills/wiki/SKILL.md` with `references/` subdir holding `compilation-guide.md` + `frontmatter-schemas.md`)
-    - commands: yes (`commands/wiki.md`)
-    - agents: no
-    - hooks: yes (`hooks/hooks.json` — single SessionStart entry for dep install)
-    - `.mcp.json`: no
-    - `.lsp.json`: no
-    - monitors: no
-    - bin: no
-    - output-styles: no
+## Hook failure posture
 
-### Agent frontmatter fields used
+### Silent fail-open (`exit 0` always, retry every hook)
 
-not applicable (no agents)
+`install-deps.sh` opens with `set +e` and ends with unconditional `exit 0`. Header comment documents the contract `MUST NEVER exit non-zero — that blocks sessions`.
 
-### Agent tools syntax
+## Live monitoring
 
-not applicable
+### `monitors.json` absent
 
-### Pitfalls observed
+No `monitors.json` present.
 
-pure reliance on conventional discovery — `plugin.json` carries zero component declarations, so adding/removing a component requires no manifest edit. This is the minimum-configuration shape.
+## Plugin-to-plugin coordination
 
-## 6. Dependency installation
+### `dependencies` field absent
 
-### Applicable
+`plugin.json` has no `dependencies` key. Single-plugin marketplace with no tags at all.
 
-yes — plugin ships a SessionStart hook that installs Node packages
+## Testing
 
-### Dep manifest format
+### No tests
 
-package.json — but generated at runtime, not checked in. `install-deps.sh` writes `{"private":true}` into `${CLAUDE_PLUGIN_DATA}/package.json` on first run. There is no committed `package.json`, `package-lock.json`, or `requirements.txt` in the repo.
+Repo contains no `tests/`, no `*_test.py`, no `test_*.py`, no `spec.*` files. No test framework, no linting, no manifest validation, no CI. `scripts/lint-wiki.py` is a user-facing content linter for the wiki data, not a self-test of the plugin. A broken `marketplace.json` or `hooks.json` would only surface at user install time.
 
-### Install location
+## CI workflow shape
 
-`${CLAUDE_PLUGIN_DATA}` — packages land in `${CLAUDE_PLUGIN_DATA}/node_modules/`, and the SKILL.md references `${CLAUDE_PLUGIN_DATA}/node_modules/.bin/qmd` and `.bin/marp`
+### No CI
 
-### Install script location
+`gh api .../contents/.github` returns 404; no `.github/` directory of any kind.
 
-`scripts/install-deps.sh` (1590 bytes, invoked via `bash "${CLAUDE_PLUGIN_ROOT}/scripts/install-deps.sh"` from `hooks/hooks.json`)
+## Marketplace validation
 
-### Change detection
+### No validation
 
-combined **version file + `diff -q`** — `scripts/deps-version.txt` (repo-committed, value `1.0.0`) is compared to `${CLAUDE_PLUGIN_DATA}/deps-version.txt` using `diff -q`. A sentinel file `${CLAUDE_PLUGIN_DATA}/.deps-ok` gates success. Only when all three conditions hold (sentinel exists, destination version file exists, `diff -q` reports no difference) does the script skip install. Any mismatch re-triggers npm install.
+No CI step validates manifest shape, version agreement, or frontmatter conformance. Marketplace and plugin manifests are hand-edited and trust-on-commit.
 
-### Retry-next-session invariant
+## Release automation
 
-`rm` on failure — explicit `rm -f "${SENTINEL}" "${VERSION_DST}"` on npm failure guarantees the next session retries. The repo-committed version file (`VERSION_SRC`) is never removed.
+### No release automation / manual
 
-### Failure signaling
+No `release.yml`, no automation. Version bumps are manual commits. `chore: bump version to 2.0.0` (e810af03 commit) is the only release marker. There is no way to pin to `v2.0.0` as a ref — only commit SHA. No CHANGELOG.md.
 
-`set +e` explicitly disables exit-on-error; script documents `MUST NEVER exit non-zero — that blocks sessions` as a header comment. All `|| exit 0` fallthroughs and a final unconditional `exit 0`. Human-readable progress and error messages go to stderr via `echo ... >&2`. The graceful-degradation message `"Wiki will work without qmd/marp."` is the explicit fail-open contract to the user.
+## Documentation surface
 
-### Runtime variant
+### README + WALKTHROUGH.md as architecture-adjacent
 
-Node npm — `npm install @tobilu/qmd @marp-team/marp-cli`. No uv, pip, bun, or alternative PM in this flow.
+`README.md` at repo root (3390 bytes) — installation, prerequisites, per-command usage with examples, wiki structure diagram, Obsidian/qmd integration notes, uninstall. `WALKTHROUGH.md` (17052 bytes) — long-form tutorial covering the Karpathy pattern, wiki structure, active-wiki detection, schema contract, per-command walkthroughs. Substantial enough to be architecture-adjacent, but framed as user tutorial rather than internal design. No `architecture.md`. No CHANGELOG.
 
-### Alternative approaches
+### No CLAUDE.md
 
-none observed — no PEP 723, no `npx`/`uvx` ad-hoc. The skill does reference `env -u BUN_INSTALL` to force Node over Bun when invoking qmd, which is a runtime-selection guard rather than an alternative install path.
+No `CLAUDE.md` at repo root. The plugin generates a `CLAUDE.md` template inside each created wiki's root at `~/ObsidianVault/03-Resources/<name>/CLAUDE.md` (documented in WALKTHROUGH.md as the wiki schema contract) — user-data scaffolding, not a plugin-level governance doc.
 
-### Version-mismatch handling
+### Plugin scaffolds CLAUDE.md as user-data schema
 
-version file contents compared byte-for-byte via `diff -q`. There is no Python minor tracking and no Node ABI tracking. The `deps-version.txt` bump is the authoritative trigger — changing its content forces a re-install regardless of what npm would otherwise decide.
+The plugin scaffolds a `CLAUDE.md` inside each created wiki directory as part of `wiki init`. This `CLAUDE.md` is not the plugin's own governance doc — it is user data that becomes the schema contract for subsequent skill invocations. The skill's "active wiki detection" walks up looking for `CLAUDE.md` + `wiki/` as co-present markers. CLAUDE.md functioning as per-subdirectory schema anchor.
 
-### Pitfalls observed
+## License declaration
 
-the `diff -q` + sentinel + version file combination is a three-gate idempotency check (sentinel exists AND dest version file exists AND matches source). Removing only the sentinel on failure but leaving the version file behind would cause a subsequent corrupted-install state to still be detected (sentinel absence alone would force re-install); the script deletes both to be safe. `set +e` at the top with `|| exit 0` scattered throughout means any mkdir, cd, or cp failure silently degrades — e.g., a read-only `${CLAUDE_PLUGIN_DATA}` would exit 0 with no trace, leaving the skill to fall back to `index.md`-only mode without surfacing why.
+### Single repo-level license
 
-## 7. Bin-wrapped CLI distribution
+LICENSE present at repo root (MIT, 1065 bytes; SPDX `MIT` from GitHub).
 
-### Applicable
+## Community health files
 
-no — plugin does not ship any `bin/` wrappers. It invokes `${CLAUDE_PLUGIN_DATA}/node_modules/.bin/qmd` and `.bin/marp` directly from npm's install output and exposes them as shell variables inside the skill (`QMD="env -u BUN_INSTALL ${CLAUDE_PLUGIN_DATA}/node_modules/.bin/qmd"`). No repo-owned bin directory.
+### Community health files absent
 
-### `bin/` files
+No `SECURITY.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, no `.github/ISSUE_TEMPLATE`. README has no Shields.io badges.
 
-not applicable
-
-### Shebang convention
-
-not applicable for bin (install-deps.sh itself uses `#!/usr/bin/env bash`; lint-wiki.py uses `#!/usr/bin/env python3`)
-
-### Runtime resolution
-
-not applicable — npm places the binaries; the skill resolves them by absolute path under `${CLAUDE_PLUGIN_DATA}`
-
-### Venv handling (Python)
-
-not applicable — lint-wiki.py uses only Python stdlib (`os`, `re`, `sys`); no venv is created, system `python3` is assumed
-
-### Platform support
-
-not applicable
-
-### Permissions
-
-not applicable
-
-### SessionStart relationship
-
-not applicable — SessionStart populates `node_modules/`, which the skill references by path; no bin-wrapper pointer-file indirection
-
-### Pitfalls observed
-
-none from the bin-wrapper axis, but adjacent observation: `scripts/lint-wiki.py` is a repo script called from the skill (inferred from the `lint` operation), not a bin-exported CLI — so it bypasses the "how do I ship a CLI" question entirely.
-
-## 8. User configuration
-
-### `userConfig` present
-
-no
-
-### Field count
-
-none
-
-### `sensitive: true` usage
-
-not applicable
-
-### Schema richness
-
-not applicable
-
-### Reference in config substitution
-
-not applicable — no `${user_config.*}` or `CLAUDE_PLUGIN_OPTION_*` references in any file examined
-
-### Pitfalls observed
-
-the README hard-codes `~/ObsidianVault/03-Resources/` as the vault path. This should be a `userConfig` field; instead it is a prose convention enforced by the skill's directory walk. Users with a vault at any other path must symlink or change their layout.
-
-## 9. Tool-use enforcement
-
-### PreToolUse hooks
-
-none — `hooks/hooks.json` contains only a SessionStart entry
-
-### PostToolUse hooks
-
-none
-
-### PermissionRequest/PermissionDenied hooks
-
-absent
-
-### Output convention
-
-not applicable (no tool-enforcement hooks)
-
-### Failure posture
-
-not applicable
-
-### Top-level try/catch wrapping
-
-not applicable
-
-### Pitfalls observed
-
-none — plugin consciously does not gate tool use.
-
-## 10. Session context loading
-
-### SessionStart used for context
-
-no — the single SessionStart hook runs `install-deps.sh` for dep management only; it does not emit `hookSpecificOutput.additionalContext`
-
-### UserPromptSubmit for context
-
-no
-
-### `hookSpecificOutput.additionalContext` observed
-
-no
-
-### SessionStart matcher
-
-none — the `hooks.json` SessionStart entry has no `matcher` key, so it fires on all sub-events (startup, clear, compact). Since `diff -q` is idempotent this is fine, but it does mean every `/clear` re-runs the install check.
-
-### Pitfalls observed
-
-SessionStart's lack of a matcher means the idempotency check runs more often than strictly necessary. Each invocation is cheap (three `test -f` + one `diff -q`) so this is not a correctness problem, just redundant work.
-
-## 11. Live monitoring and notifications
-
-### `monitors.json` present
-
-no
-
-### Monitor count + purposes
-
-none
-
-### `when` values used
-
-not applicable
-
-### Version-floor declaration
-
-not applicable
-
-### Pitfalls observed
-
-none.
-
-## 12. Plugin-to-plugin dependencies
-
-### `dependencies` field present
-
-no
-
-### Entries
-
-none — `plugin.json` has no `dependencies` key
-
-### `{plugin-name}--v{version}` tag format observed
-
-not applicable (single-plugin marketplace, no tags at all)
-
-### Pitfalls observed
-
-none.
-
-## 13. Testing and CI
-
-### Test framework
-
-none — repo contains no `tests/`, no `*_test.py`, no `test_*.py`, no `spec.*` files
-
-### Tests location
-
-not applicable
-
-### Pytest config location
-
-not applicable
-
-### Python dep manifest for tests
-
-not applicable
-
-### CI present
-
-no — `gh api .../contents/.github` returns 404; there is no `.github/` directory of any kind
-
-### CI file(s)
-
-none
-
-### CI triggers
-
-not applicable
-
-### CI does
-
-not applicable
-
-### Matrix
-
-none
-
-### Action pinning
-
-not applicable
-
-### Caching
-
-not applicable
-
-### Test runner invocation
-
-not applicable
-
-### Pitfalls observed
-
-zero automated verification. The plugin ships with no tests, no linting, no manifest validation, and no CI. `scripts/lint-wiki.py` is a user-facing content linter for the wiki data, not a self-test of the plugin. A broken `marketplace.json` or `hooks.json` would only surface at user install time.
-
-## 14. Release automation
-
-### `release.yml` (or equivalent) present
-
-no
-
-### Release trigger
-
-not applicable
-
-### Automation shape
-
-not applicable — no automation; version bumps are manual commits
-
-### Tag-sanity gates
-
-not applicable
-
-### Release creation mechanism
-
-not applicable
-
-### Draft releases
-
-not applicable
-
-### CHANGELOG parsing
-
-not applicable — no `CHANGELOG.md`
-
-### Pitfalls observed
-
-manual version management with no tag convention means there is no way to pin to `v2.0.0` as a ref — the only way to reach the 2.0.0 commit is by SHA (e810af03 bumped the version in plugin.json, but that commit is not tagged).
-
-## 15. Marketplace validation
-
-### Validation workflow present
-
-no
-
-### Validator
-
-not applicable
-
-### Trigger
-
-not applicable
-
-### Frontmatter validation
-
-not applicable
-
-### Hooks.json validation
-
-not applicable
-
-### Pitfalls observed
-
-no validator. Marketplace and plugin manifests are hand-edited and trust-on-commit.
-
-## 16. Documentation
-
-### `README.md` at repo root
-
-present (3390 bytes — installation, prerequisites, per-command usage with examples, wiki structure diagram, Obsidian/qmd integration notes, uninstall)
-
-### `README.md` per plugin
-
-not applicable (single-plugin, repo root IS the plugin root)
-
-### `CHANGELOG.md`
-
-absent
-
-### `architecture.md`
-
-absent
-
-### `CLAUDE.md`
-
-absent at repo root — but note: the plugin generates a `CLAUDE.md` template **inside each created wiki's root** at `~/ObsidianVault/03-Resources/<name>/CLAUDE.md` (documented in WALKTHROUGH.md as the wiki schema contract). This is user-data scaffolding, not a plugin-level governance doc.
-
-### Community health files
-
-none — no `SECURITY.md`, no `CONTRIBUTING.md`, no `CODE_OF_CONDUCT.md`, no `.github/ISSUE_TEMPLATE`
-
-### LICENSE
-
-present (MIT, 1065 bytes; SPDX `MIT` from GitHub)
-
-### Badges / status indicators
-
-absent (README has no shield badges)
-
-### Additional document
-
-`WALKTHROUGH.md` (17052 bytes) — long-form tutorial covering the Karpathy pattern, wiki structure, active-wiki detection, schema contract, per-command walkthroughs. Substantial enough to be architecture-adjacent, but framed as user tutorial rather than internal design.
-
-### Pitfalls observed
-
-no `architecture.md` and no CHANGELOG means the rationale for the v1→v2 split (visible in the commit history as `feat!: split ingest into ingest + compile operations` and `refactor!: move log.md from wiki/ to topic root`) lives only in commit messages. A user upgrading across the major bump has no user-facing migration guide — the WALKTHROUGH describes the current state only.
-
-## 17. Novel axes
+## Novel and cross-cutting concerns
 
 ### Generated-package.json pattern
 
-the SessionStart script writes a minimal `{"private":true}` `package.json` into `${CLAUDE_PLUGIN_DATA}` on first run rather than shipping one. This keeps the plugin repo free of Node-ecosystem noise (no lockfile, no `node_modules/` in gitignore, no dependency drift) while still letting npm operate on a valid project. The authoritative declaration of the two dependencies lives inline in the install script (`npm install @tobilu/qmd @marp-team/marp-cli`), not in a manifest.
-
-### Three-gate idempotency combination
-
-`sentinel file existence` AND `dest version file existence` AND `diff -q version file match` — each gate is cheap and each catches a different corruption mode (aborted install, partial file write, upstream version bump). Together they form a stricter check than any single mechanism.
-
-### Bun-avoidance runtime guard
-
-the skill's qmd invocation wraps every call in `env -u BUN_INSTALL ${CLAUDE_PLUGIN_DATA}/node_modules/.bin/qmd`. This is a runtime environment sanitization specifically for a sqlite-vec incompatibility — Bun's bundled SQLite lacks extension loading, so when `BUN_INSTALL` is set, qmd fails to load its vector index. Worth noting as a plugin-side defense against user-environment contamination.
-
-### Plugin-generates-CLAUDE.md-as-user-schema
-
-the plugin scaffolds a `CLAUDE.md` inside each created wiki directory as part of `wiki init`. This CLAUDE.md is not the plugin's own governance doc — it is *user data* that becomes the schema contract for subsequent skill invocations. The skill's "active wiki detection" walks up looking for `CLAUDE.md` + `wiki/` as co-present markers. CLAUDE.md functioning as per-subdirectory schema anchor is a distinctive use of the filename.
+The SessionStart install script writes a minimal `{"private":true}` `package.json` into `${CLAUDE_PLUGIN_DATA}` on first run rather than shipping one. Keeps the plugin repo free of Node-ecosystem noise (no committed lockfile, no `node_modules/` gitignore, no committed dep manifest) while still giving npm a valid project to operate on. Authoritative dep declaration lives inline in the install script's `npm install <pkg>` command.
 
 ### Graceful-degradation via fallback tool
 
-qmd is not required — when `${CLAUDE_PLUGIN_DATA}/node_modules/.bin/qmd` is not executable (because SessionStart install failed), the skill falls back to manual `wiki/index.md` read + grep. This is a documented fail-soft path inside the skill itself, not an install retry — the plugin works (in reduced mode) even if dependency install permanently fails. Aligns with the install script's fail-open stance.
+When `${CLAUDE_PLUGIN_DATA}/node_modules/.bin/qmd` is not executable (because SessionStart install failed), the skill falls back to manual `wiki/index.md` read + grep. Documented fail-soft path inside the skill itself, not an install retry — the plugin works (in reduced mode) even if dependency install permanently fails. Aligns with the install script's fail-open stance.
 
-### No-metadata, no-tags, no-releases minimalism
+## Cross-role tools
 
-the repo ships the minimum viable marketplace shape — no `metadata.*` wrapper, no `category`/`tags`/`keywords`, no `$schema`, no git tags, no GitHub releases, no CHANGELOG. A user would find this plugin only by direct URL or owner search. This is a data point on the opposite end of the discoverability spectrum from marketplaces that use `metadata.pluginRoot` and rich per-plugin taxonomies.
+### `${CLAUDE_PLUGIN_DATA}`
 
-## 18. Gaps
+Install destination for npm-managed deps. The skill references `${CLAUDE_PLUGIN_DATA}/node_modules/.bin/qmd` and `.bin/marp` directly from npm's install output. Bun-avoidance runtime guard wraps the qmd invocation in `env -u BUN_INSTALL ${CLAUDE_PLUGIN_DATA}/node_modules/.bin/qmd` — Bun's bundled SQLite lacks extension loading, so when `BUN_INSTALL` is set, qmd fails to load its vector index.
 
-### lint-wiki.py invocation path
+## PATH augmentation and host-project setup
 
-I read the head of lint-wiki.py and confirmed it is a stdlib-only wiki content linter, but I did not verify from the SKILL.md exactly which command section calls it. The skill's `lint` operation presumably shells out to `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/lint-wiki.py <wiki-dir>` but I did not fetch the `## lint` section body to confirm. Resolution: fetch the `## lint` section of SKILL.md (~lines ~300-400 of the 542-line file).
+### Runtime-environment sanitization at invocation site
 
-### Middle of SKILL.md (commands init/ingest/compile/query/remove)
-
-I sampled the opening (active wiki detection, qmd availability) and the closing (frontmatter schemas, index/log format, rules). The ~400 middle lines describing per-operation procedures were not fetched. Resolution: one or two more WebFetches covering `## init`, `## ingest`, `## compile`, `## query`, `## remove` sections if any operation embeds hidden infrastructure assumptions (e.g., exec permissions, additional write paths).
-
-### WALKTHROUGH.md full body
-
-I sampled the first ~80 lines which covered introduction, Obsidian rationale, and wiki structure. Later sections (Part 3+) were not read and may document install-troubleshooting, Marp slide export, or behavior under qmd absence in more detail. Resolution: two more WebFetches by line range.
-
-### compilation-guide.md and frontmatter-schemas.md (skill references/)
-
-confirmed present by directory listing but contents not fetched. They are component files under `skills/wiki/references/` (1898 + 1102 bytes) loaded via the skill's reference mechanism. Resolution: direct raw fetches from GitHub (low cost, ~3KB combined).
-
-### Release/tag absence verification
-
-I relied on empty responses from `gh api .../tags` and `gh api .../releases`. GitHub API can paginate; I did not check for a non-default ref format. Resolution: `gh api` with `--paginate` or direct check of `git/refs/tags`. Low probability of missed tags given the small repo and the command/release history both pointing at plain commits.
-
-### License header scan
-
-LICENSE file confirmed present (MIT per GitHub's license API). I did not read the file body to verify year and copyright holder — unlikely to matter for pattern verification.
-
-### `package.json`/`package-lock.json` absence
-
-verified by full recursive tree listing — no Node manifest in the repo. Confirmed rather than gap; noted here to be explicit that the dep-management pattern relies on a runtime-generated manifest.
+The skill's qmd invocation wraps every call in `env -u BUN_INSTALL ${CLAUDE_PLUGIN_DATA}/node_modules/.bin/qmd`. Runtime environment sanitization specifically for a sqlite-vec incompatibility — Bun's bundled SQLite lacks extension loading.

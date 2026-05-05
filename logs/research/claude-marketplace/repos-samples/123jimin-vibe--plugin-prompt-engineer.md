@@ -1,215 +1,213 @@
-# 123jimin-vibe/plugin-prompt-engineer
+# Sample
 
-## Identification
+Mirrors of `https://github.com/123jimin-vibe/plugin-prompt-engineer`. Single-plugin repo for prompt-engineering tools (token counter, LLM invocation with Q&A mode, prompt playground); plugin lives at `plugin/` (not at repo root). MIT-licensed; in active development per the README admonition.
 
-- **URL**: https://github.com/123jimin-vibe/plugin-prompt-engineer
-- **Stars**: 0
-- **Last commit date**: 2026-04-11 (commit `7e9e336d`, "Update hypotheses.md")
-- **Default branch**: main
-- **License**: MIT (SPDX `MIT`)
-- **Sample origin**: dep-management
-- **One-line purpose**: "Claude Code plugin for prompt engineering" (repo description; README body adds token-counter, LLM invocation with Q&A mode, and a "prompt playground" — all marked as in-active-development).
+## Marketplace manifest layout
 
-## 1. Marketplace discoverability
+### No marketplace manifest (plugin source repo only)
 
-- **Manifest layout**: no marketplace manifest — this is a single-plugin repo, not a marketplace. Repo root `.claude-plugin/` does not exist; only `plugin/.claude-plugin/plugin.json` is present. Plugin lives at `plugin/` (non-conventional — most single-plugin repos put `.claude-plugin/` at repo root).
-- **Marketplace-level metadata**: not applicable (no marketplace.json).
-- **`metadata.pluginRoot`**: not applicable (no marketplace.json).
-- **Per-plugin discoverability**: `plugin.json` contains only `name`, `description`, `version` — no category/tags/keywords.
-- **`$schema`**: absent.
-- **Reserved-name collision**: no.
-- **Pitfalls observed**: a marketplace consumer adding this repo must use `source: { source: "github", repo: "123jimin-vibe/plugin-prompt-engineer", path: "plugin" }` (or equivalent subdir pointer) rather than expect a root-level plugin; there is no marketplace.json to self-advertise. README is a stub (162 bytes) with just headings and an "active development" caution — no installation instructions.
+The repo carries only `plugin/.claude-plugin/plugin.json`; no `marketplace.json` exists anywhere. The plugin lives at `plugin/` rather than at repo root. A marketplace consumer adding this repo must author a `source: { source: "github", repo: "123jimin-vibe/plugin-prompt-engineer", path: "plugin" }` entry by hand. README is a 162-byte stub with four headings (`# Prompt Engineer`, `## Token Counter`, `## LLM Invocation`, `## Prompt Playground`) and an "active development" caution, no install instructions.
 
-## 2. Plugin source binding
+## Plugin source binding
 
-- **Source format(s) observed**: not applicable — repo publishes a plugin, not a marketplace entry. Only the plugin's own `plugin.json` is present; no `source:` field is declared anywhere.
-- **`strict` field**: not applicable (no marketplace entry in this repo).
-- **`skills` override on marketplace entry**: not applicable.
-- **Version authority**: `plugin/.claude-plugin/plugin.json` only (currently `0.0.17`). The separate `plugin/pyproject.toml` has its own `version = "0.0.1"` that is never bumped — it's used only by pip-install for package metadata; the plugin version is what `ensure-deps.py` reads. Drift risk is immaterial here because the pyproject version is never referenced by anything user-facing.
-- **Pitfalls observed**: the `pyproject.toml` version at `0.0.1` while `plugin.json` is `0.0.17` could confuse someone skimming the package. The plugin treats `plugin.json.version` as the single source of truth for install-detection; `pyproject.toml.version` is effectively a dummy.
+### Direct git install (no marketplace.json in source repo)
 
-## 3. Channel distribution
+No `marketplace.json` is shipped in the repo, so users either install via `claude plugin install github:123jimin-vibe/plugin-prompt-engineer` or rely on a separate marketplace aggregator referencing this repo. The plugin's own `plugin/.claude-plugin/plugin.json` is at `0.0.17`; a separate `plugin/pyproject.toml` carries `version = "0.0.1"` that is never bumped — used only by pip for package metadata, not user-facing.
 
-- **Channel mechanism**: no split. Users pin via git `@ref` in their marketplace entry — tags `v0.0.1` through `v0.0.17` are all monotonic on `main` (tag chain is a linear ancestor of HEAD).
-- **Channel-pinning artifacts**: absent.
-- **Pitfalls observed**: no stable-vs-latest carve-out exists, so consumers choosing `@main` vs `@v0.0.17` get dev vs last-tag in the normal way. The in-active-development caution in README suggests `@main` is unstable.
+## Per-plugin discoverability metadata
 
-## 4. Version control and release cadence
+### Bare-minimum (name, version, description only)
 
-- **Default branch name**: main
-- **Tag placement**: on main — tags `v0.0.1`..`v0.0.17` each sit on a linear chain in `main`'s history (confirmed via `compare/v0.0.17...main` → main is 14 commits ahead, 0 behind).
-- **Release branching**: none (tag-on-main). No `release/*` branches exist — only `main` is listed in branches.
-- **Pre-release suffixes**: none observed.
-- **Dev-counter scheme**: present but flat — all versions are `0.0.z` monotonic with z incrementing on each tagged bump (17 tags across `0.0.1`..`0.0.17`). No `0.0.z` dev + `x.y.z` release-branch split; `0.0.z` is the only lane.
-- **Pre-commit version bump**: no automated hook observed. The bumps appear to be manual commits titled "Update plugin.json" — e.g. the `v0.0.17` commit message is literally `Update plugin.json`. No `.pre-commit-config.yaml` or `.githooks/` present.
-- **Pitfalls observed**: there is no release automation, no tag-sanity gate, and no pre-release suffix convention. Human discipline (name the commit "Update plugin.json", tag immediately) is the only safeguard against a drift between the committed plugin.json version and the tag name.
+`plugin/.claude-plugin/plugin.json` declares only `{name, description, version}` — no `category`, `tags`, `keywords`, `author`, or `repository`. No marketplace entry exists in this repo to mirror or extend these.
 
-## 5. Plugin-component registration
+### `$schema` absence on per-plugin manifests
 
-- **Reference style in plugin.json**: default discovery only — `plugin.json` contains `{name, description, version}` and nothing else. All components are discovered by convention from the plugin root.
-- **Components observed**:
-    - skills: yes (`plugin/skills/invoke-llm/`, `plugin/skills/token-counter/`)
-    - commands: no
-    - agents: yes (`plugin/agents/prompt-engineer.md`)
-    - hooks: yes (`plugin/hooks/hooks.json`)
-    - .mcp.json: no
-    - .lsp.json: no
-    - monitors: no
-    - bin: no
-    - output-styles: no
-- **Agent frontmatter fields used**: `name`, `description`, `model`. Only one agent (`prompt-engineer.md`) observed. `model: inherit` is used — no `tools`, `skills`, `memory`, `background`, or `isolation` fields declared.
-- **Agent tools syntax**: not applicable — no `tools` field on the agent.
-- **Pitfalls observed**: skills use `${CLAUDE_SKILL_DIR}/scripts/<name>.py` in their SKILL.md bodies, paired with instruction "Run with the plugin venv at `${CLAUDE_PLUGIN_DATA}/venv`". The agent relies on skill invocation for any script execution; it has no direct `tools` restrictions.
+`$schema` is absent from `plugin.json`. Editor schema-completion is unavailable.
 
-## 6. Dependency installation
+## Version coordination
 
-- **Applicable**: yes. Python deps via uv-less pip + venv pattern.
-- **Dep manifest format**: `pyproject.toml` at `plugin/pyproject.toml`. Dependencies: `anthropic>=0.45`, `openai>=1.0`, `tiktoken>=0.7`. `requires-python = ">=3.11"`. The plugin root itself is pip-installed as an editable-style package (`[tool.setuptools.packages.find] include = ["lib", "lib.*"]`) so scripts can `from lib.llm import ...`.
-- **Install location**: `${CLAUDE_PLUGIN_DATA}/venv` (virtualenv) and `${CLAUDE_PLUGIN_DATA}/installed-version` (version sentinel file).
-- **Install script location**: `plugin/scripts/ensure-deps.py`, invoked from `plugin/hooks/hooks.json`'s SessionStart hook as `python "${CLAUDE_PLUGIN_ROOT}/scripts/ensure-deps.py"`.
-- **Change detection**: **version file stamp**. On each SessionStart, `ensure-deps.py`:
-    1. Reads current plugin version from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json` via `json.loads(...)["version"]`.
-    2. Reads the last-installed version from `${CLAUDE_PLUGIN_DATA}/installed-version` (a plain text file containing a single version string like `0.0.17`).
-    3. If the file exists and its stripped content equals the current version: return immediately (no-op — "up to date").
-    4. Otherwise: create venv if missing (`venv.create(venv_dir, with_pip=True)`), `pip install --upgrade <plugin_root>`, then **write the new version to `installed-version` only on pip-install success**.
+### Single source of truth (`plugin.json` only)
 
-    The stamp file is treated as authoritative: its absence or mismatched content triggers a reinstall. No hashing of `pyproject.toml`, no mtime, no diff of the dep list itself — the plugin version bump *is* the reinstall trigger. That makes `plugin.json.version` a double-duty field: semver for users and install-staleness signal for the ensure-deps script.
-- **Retry-next-session invariant**: `rm` on failure — the `try/except` in `install()` wraps the pip-install + version-file-write in a single block; on any exception it calls `version_file.unlink(missing_ok=True)` and re-raises. This guarantees a half-installed venv is not remembered as "done" — next SessionStart will see the missing stamp and retry.
-- **Failure signaling**: on failure the exception propagates (non-zero exit). On success the script prints `{"systemMessage": "prompt-engineer plugin dependencies installed (v<version>)."}` to stdout so the host surfaces the install event in the session transcript. Silent on no-op (already up-to-date). `hooks.json` sets `statusMessage: "prompt-engineer: Installing dependencies..."` for the pre-exec status line.
-- **Runtime variant**: Python `pip` (not uv) + stdlib `venv`. Deliberately avoids external tooling — only Python stdlib + pip inside the created venv.
-- **Alternative approaches**: none — pip-installs the plugin as a package so `lib/` becomes importable. No PEP 723 scripts, no `uvx`, no pointer-file pattern.
-- **Version-mismatch handling**: none beyond the stamp-file mechanism. The script does not pin to a specific Python ABI — it relies on `sys.platform` only to pick `Scripts/pip` (Windows) vs `bin/pip` (everything else). If the host Python minor version changes, the stale venv would not be detected (the version stamp is plugin version, not Python version); the user would have to manually wipe `${CLAUDE_PLUGIN_DATA}/venv`.
-- **Pitfalls observed**:
-    - The ensure-deps script docstring explicitly calls itself "reusable across any Claude Code plugin that ships a `pyproject.toml`" — it is a reference implementation that could be copy-pasted, but the emit_system_message hard-codes the `prompt-engineer` name.
-    - `subprocess.run(..., check=True)` with no stdout/stderr capture means pip's chatty output streams through the SessionStart hook console.
-    - t0004 in `worklog/archive/task/` targeted adding `"async": true` to the SessionStart hook ("initial installation takes ~40s"); the deployed `hooks.json` does *not* have `async: true` yet — the archived task predates or was abandoned. Users hitting first install wait ~40s synchronously.
-    - The version-file approach treats any plugin bump (e.g. a README edit bump) as a full reinstall — including pure-metadata changes that don't touch deps.
+`plugin/.claude-plugin/plugin.json` `version` is the only user-facing version (`0.0.17`); `plugin/pyproject.toml.version = "0.0.1"` is consumed only by pip metadata and drifts harmlessly because `ensure-deps.py` reads `plugin.json.version` for install-detection. Users who want to pin do so at the git-ref level (`@v0.0.17`).
 
-## 7. Bin-wrapped CLI distribution
+## Channel distribution
 
-- **Applicable**: no. Skills invoke Python scripts directly via `python "<script>"` inside the plugin venv; there is no `bin/` directory, no shebang wrappers, no standalone CLI.
-- **`bin/` files**: not applicable.
-- **Shebang convention**: not applicable (scripts are invoked by the venv's python, not by shebang).
-- **Runtime resolution**: not applicable.
-- **Venv handling (Python)**: invoked indirectly — the PreToolUse `allow-skill-scripts.py` hook validates that `parts[0]` (the python executable in the Bash command) is inside `${CLAUDE_PLUGIN_DATA}/venv` before auto-approving. The expected invocation shape is `<venv-python> <skill-script-path>`.
-- **Platform support**: not applicable.
-- **Permissions**: not applicable.
-- **SessionStart relationship**: not applicable.
-- **Pitfalls observed**: the scripts themselves (e.g. `plugin/skills/invoke-llm/scripts/invoke.py`) have no shebang. They can only be run as `<venv-python> invoke.py`. Users cannot chmod-exec them.
+### Linear `0.0.z` dev counter
 
-## 8. User configuration
+All releases are `0.0.z` monotonic with z incrementing per tagged bump (17 tags `v0.0.1`..`v0.0.17`). No `x.y.z` release-branch split; `0.0.z` is the only lane. `@main` vs `@v0.0.17` resolution is the only pinning surface. README's "active development" admonition implies `@main` is unstable.
 
-- **`userConfig` present**: no.
-- **Field count**: none.
-- **`sensitive: true` usage**: not applicable.
-- **Schema richness**: not applicable.
-- **Reference in config substitution**: not applicable. API keys are read from shell environment variables (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`) via `plugin/lib/apikey.py`'s `require_api_key()`; there is no plugin-config surface to substitute. SKILL.md documents the env var names directly.
-- **Pitfalls observed**: no `sensitive: true` flag because the plugin never asks the user for the key through plugin config — it assumes shell-level env vars. A user who has not exported `ANTHROPIC_API_KEY` gets a "variable needs to be configured" exit from `require_api_key()`.
+## Tag and release lifecycle
 
-## 9. Tool-use enforcement
+### Tag-on-main, single branch
 
-- **PreToolUse hooks**: 1, matcher `"Bash"`, purpose: auto-allow plugin skill-script invocations. The hook command is an inline bash one-liner doing a `case` fast-path string match on raw stdin (`*/.claude/*/prompt-engineer/*/skills/*/scripts/*`); only on match does it pipe into Python's `allow-skill-scripts.py` validator.
-- **PostToolUse hooks**: none.
-- **PermissionRequest/PermissionDenied hooks**: absent.
-- **Output convention**: stdout JSON only on allow (`{"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "allow", "permissionDecisionReason": "Plugin skill script invocation"}}`); silent (empty stdout, exit 0) for non-matches. No stderr noise. Deny decisions are never emitted — the hook is "pessimistic" (per script docstring): if validation fails, it exits with no opinion rather than deny, letting the normal permission flow ask the user.
-- **Failure posture**: fail-open from the user's perspective — a bug in the validator means the user is asked normally rather than blocked. Malformed JSON stdin, missing env vars (well — missing env vars raise `RuntimeError`, which exits non-zero), or path-resolve failures (`OSError`, `ValueError` on `Path.resolve(strict=True)`) all silently return.
-- **Top-level try/catch wrapping**: per-helper try/except around `Path.resolve(strict=True)` calls, not a top-level wrapper. `main()` will propagate exceptions from `RuntimeError` on missing env vars.
-- **Pitfalls observed**:
-    - `d0004` (decision log) documents that the *original* matcher attempt was `Bash(.*/invoke-llm/scripts/invoke\.py.*)` which never fired because Claude Code's hook matcher tests only the bare tool name, not the input; the permission-rules `Tool(pattern)` syntax is a separate code path. The fix was to flatten matcher to `"Bash"` and do the path filter inline in bash — fast-path for 99% of unrelated Bash calls.
-    - The here-string `<<< "$input"` is used instead of `echo "$input" | ...` to safely pass JSON with embedded quotes.
-    - The validator hard-codes `prompt-engineer` in the bash `case` pattern, making it non-portable across plugin renames.
+Tags `v0.0.1`..`v0.0.17` each sit on a linear chain in `main`'s history (confirmed via `compare/v0.0.17...main` → main is 14 commits ahead, 0 behind). Only `main` is listed in branches; no `release/*` branches exist. Bumps are manual commits titled "Update plugin.json"; no `.pre-commit-config.yaml` or `.githooks/` present. No `gh release create`, no GitHub Releases entries (`releases` API returns `[]`) — only bare git tags. Release discipline is entirely human: commit titled `Update plugin.json` → push → `git tag vX.Y.Z && git push --tags`.
 
-## 10. Session context loading
+## Plugin-component registration
 
-- **SessionStart used for context**: no — only for dep install (see purpose 6).
-- **UserPromptSubmit for context**: no (hook is absent).
-- **`hookSpecificOutput.additionalContext` observed**: no.
-- **SessionStart matcher**: none declared — the hook entry has no `matcher` field, so it fires on all SessionStart sub-events (startup, resume, clear, compact per Claude Code's reference).
-- **Pitfalls observed**: ensure-deps re-runs on every sub-event including `compact`, which is wasted work on the no-op path but cheap (file-read + string compare). No additional context is injected; this plugin is purely skill + hook based.
+### Default convention discovery
 
-## 11. Live monitoring and notifications
+`plugin/.claude-plugin/plugin.json` carries only `{name, description, version}` and no component arrays. All components are discovered by convention from `plugin/skills/`, `plugin/agents/`, and `plugin/hooks/hooks.json` at the plugin root.
 
-- **`monitors.json` present**: no.
-- **Monitor count + purposes**: none.
-- **`when` values used**: not applicable.
-- **Version-floor declaration**: not applicable.
-- **Pitfalls observed**: none — monitors are simply not used.
+## Component composition
 
-## 12. Plugin-to-plugin dependencies
+### Skills (universal)
 
-- **`dependencies` field present**: no.
-- **Entries**: none.
-- **`{plugin-name}--v{version}` tag format observed**: not applicable (single-plugin repo; tag format is plain `v0.0.z`).
-- **Pitfalls observed**: none.
+Two skills: `plugin/skills/invoke-llm/` and `plugin/skills/token-counter/`. SKILL.md bodies invoke scripts via `${CLAUDE_SKILL_DIR}/scripts/<name>.py` paired with the instruction "Run with the plugin venv at `${CLAUDE_PLUGIN_DATA}/venv`".
 
-## 13. Testing and CI
+### Agents
 
-- **Test framework**: Python `unittest` (module-level classes), executed via `pytest` runner.
-- **Tests location**: `tests/` at repo root, mirroring `plugin/` structure — e.g. `plugin/scripts/allow-skill-scripts.py` → `tests/scripts/test_allow_skill_scripts.py`; `plugin/lib/llm.py` → `tests/lib/test_llm.py`. Subdirs: `tests/lib/`, `tests/scripts/`, `tests/skills/invoke_llm/`, `tests/skills/token_counter/` (note skills dirs use underscore in tests but hyphen in plugin path; tests use `importlib.util.spec_from_file_location` to load hyphen-named modules).
-- **Pytest config location**: none — no `pytest.ini`, no `[tool.pytest.ini_options]` in `pyproject.toml`, no `setup.cfg`. `pyrightconfig.json` exists for type checking only. Test invocation relies on pytest's default discovery.
-- **Python dep manifest for tests**: `pyproject.toml` at `plugin/pyproject.toml` lists runtime deps; there is no `requirements-dev.txt` or dev-dep group declared. Tests use `unittest.mock` from stdlib, so the runtime deps suffice.
-- **CI present**: no. No `.github/workflows/` directory exists (404 on `.github` contents).
-- **CI file(s)**: none.
-- **CI triggers**: not applicable.
-- **CI does**: not applicable.
-- **Matrix**: not applicable.
-- **Action pinning**: not applicable.
-- **Caching**: not applicable.
-- **Test runner invocation**: `python -m pytest tests/ -v` per `worklog/spec/infra/s0004-testing.md`. No wrapper script. `.claude/settings.json` allow-lists `Bash(python -m pytest *)`.
-- **Pitfalls observed**:
-    - No CI means nothing verifies the version-bump → tag → install-pathway integration; failures show up on user `SessionStart` only.
-    - Tests load modules with hyphens in filenames (`allow-skill-scripts.py`) via `importlib.util.spec_from_file_location` per an explicit convention documented in `s0004-testing.md` — this is load-bearing because pytest's standard import machinery can't handle the hyphen. The testing spec also mandates "tests must be written **without reading the implementation** — only the function signatures and docstrings" as a discipline rule.
-    - `tests/lib/test_llm.py` pre-registers `lib.apikey` into `sys.modules` manually before loading the module under test, so tests work outside the plugin venv — a notable workaround to avoid needing the plugin venv for development.
+One agent: `plugin/agents/prompt-engineer.md`. Frontmatter declares `name`, `description`, `model: inherit`. No `tools`, `skills`, `memory`, `background`, or `isolation` fields. Body is two lines after frontmatter — relies on skill invocation for any script execution.
 
-## 14. Release automation
+### Hooks
 
-- **`release.yml` (or equivalent) present**: no.
-- **Release trigger**: not applicable.
-- **Automation shape**: not applicable. Releases are bare git tags on main — no `gh release create`, no GitHub Releases entries (confirmed `releases` API returns `[]`).
-- **Tag-sanity gates**: none. Nothing verifies `plugin.json.version` matches the tag name.
-- **Release creation mechanism**: manual `git tag vX.Y.Z && git push --tags` implied by the history. The `releases` API endpoint returns 0 entries, so no GitHub Release objects exist — only bare tags.
-- **Draft releases**: not applicable.
-- **CHANGELOG parsing**: not applicable (no CHANGELOG.md).
-- **Pitfalls observed**: the release discipline is entirely human: commit titled `Update plugin.json` → push → tag. A mismatched tag name (e.g., `git tag v0.0.18` when plugin.json says `0.0.17`) would deploy a version that install-detection can't distinguish from a prior install. The `installed-version` stamp matches plugin.json, not the tag, so as long as plugin.json is correct the install works — the tag is purely a git convenience for consumers pinning with `@v0.0.17`.
+`plugin/hooks/hooks.json` registers a SessionStart hook for dependency install plus a single PreToolUse `"Bash"` matcher hook auto-allowing skill-script invocations.
 
-## 15. Marketplace validation
+## Skill authoring conventions
 
-- **Validation workflow present**: no.
-- **Validator**: not applicable.
-- **Trigger**: not applicable.
-- **Frontmatter validation**: no — nothing checks that SKILL.md or agent YAML frontmatter is well-formed or contains required fields.
-- **Hooks.json validation**: no — nothing checks hooks.json shape. `d0003` (superseded by `d0004`) was a manual investigation into why skill-scoped matchers didn't fire; a validator would not have caught this (it's a semantic runtime bug, not a schema error).
-- **Pitfalls observed**: the repo relies on pyright (`pyrightconfig.json` → `pythonVersion: "3.14"`, `extraPaths: ["plugin"]`, `include: ["plugin", "tests"]`) for Python type checking, but this runs only in the developer's editor — there is no enforced pre-commit gate or CI check for anything.
+### Standard frontmatter
 
-## 16. Documentation
+SKILL.md frontmatter declares standard fields. Skill bodies prescribe invocation as `<venv-python> "${CLAUDE_SKILL_DIR}/scripts/<name>.py"` using the venv at `${CLAUDE_PLUGIN_DATA}/venv`.
 
-- **`README.md` at repo root**: present but **stub-only** — 162 bytes, consisting of four markdown headings (`# Prompt Engineer`, `## Token Counter`, `## LLM Invocation`, `### Q&A Mode`, `## Prompt Playground`) and a `> [!CAUTION]` admonition reading "This repository is currently in active development." No content under any heading. No install/usage instructions.
-- **`README.md` per plugin**: absent. The `plugin/` directory has no README; nor do `plugin/skills/<name>/`. Each SKILL.md serves as the skill's docs.
-- **`CHANGELOG.md`**: absent.
-- **`architecture.md`**: absent in the conventional sense, but `worklog/spec/` functions as a scattered architecture reference: `s0001-prompt-engineer-plugin.md` (top-level), `s0003-python-environment.md`, `s0004-testing.md`, `s0006-invoke-llm.md`, `s0007-exams.md`, `s0008-llm-providers.md`, `s0009-hooks.md`, `s0010-prompt-engineer-agent.md` etc.
-- **`CLAUDE.md`**: absent.
-- **Community health files**: none — no `SECURITY.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`.
-- **LICENSE**: present — MIT (1089 bytes).
-- **Badges / status indicators**: absent.
-- **Pitfalls observed**: the public-facing documentation is effectively absent (stub README + no per-plugin README). The project's substantive documentation lives entirely inside `worklog/` (specs, decisions, archived tasks) — an internal developer log, not a user-facing doc. A new consumer has no guidance on how to install or configure the plugin; they must infer from `plugin.json`, `hooks.json`, and the SKILL.md files.
+## Agent declaration conventions
 
-## 17. Novel axes
+### Minimal frontmatter (name, description)
 
-- **Worklog as a primary design artifact**: the `worklog/` directory is a first-class, numerically-keyed spec/decision/task ledger — not the one-offs I've seen in most repos. Structure: `worklog/archive/task/t0001..t0011-<slug>.md` (completed tasks, 11 archived), `worklog/decision/d0001..d0004-<slug>.md` (4 ADRs), `worklog/spec/<category>/s0001..s0010-<slug>.md` (10 specs split by category — infra / lib / skill / top-level). Each decision doc uses TOML-fence frontmatter with `id`, `title`, `relates_to`, `supersedes` keys (`d0004` supersedes `d0003` with explicit tracking). This is a deliberate long-form design practice built into the repo layout — tasks move from spec → task → archived-task lifecycle, and decisions cross-link. Noteworthy as a reference for how a plugin repo can embed design-decision history inside the repo rather than rely on PRs/issues.
-- **`lab/` compression experiments**: the repo contains a substantial `lab/compression/` experimental directory with TOML config files, JSONL data files (`document.jsonl`, `paragraph.jsonl`, `sentence.jsonl`), per-granularity analysis docs (`doc/01..16`, `para/01..20`, `sent/01..20`), and results (`results/*.jsonl`) — appears to be an active research effort on prompt/context compression that's part of the repo but not shipped in the plugin. This is a "research living with the product" organization.
-- **`exams/` directory**: top-level `exams/token-counter/basic-usage.toml` suggests an evaluation corpus for skill outputs — a structured test-by-example mechanism external to the unit tests. Minimally populated but indicates intent.
-- **"Pessimistic no-opinion" hook design**: the `allow-skill-scripts.py` docstring explicitly states the design discipline — "every check that fails exits 0 with no output (no opinion, does not auto-allow). Only an exact match produces an allow." This is a consciously chosen safer default than fail-open-with-allow or deny-on-uncertainty; it defers to the normal permission flow for anything unclear. Worth lifting as a convention for other hook authors.
-- **Bash fast-path + Python validator hook shape**: the inline `case "$input" in <pattern>) python validator ;; esac` pattern in `hooks.json` — avoiding Python startup for 99% of unrelated Bash calls while keeping full-strength validation for matches — is a substantive design pattern documented in `d0004`. The here-string `<<< "$input"` for JSON-safe piping is a subtle detail worth codifying.
-- **Plugin root is a pip-installable package**: `plugin/pyproject.toml` declares `[tool.setuptools.packages.find] include = ["lib", "lib.*"]` so scripts can use `from lib.llm import invoke as llm_invoke`. The ensure-deps script pip-installs `str(plugin_root)` against the venv, not just the deps — this is how `lib/` becomes importable from skill scripts. This is an alternative to PYTHONPATH manipulation or sys.path.insert gymnastics and is worth naming as a distinct pattern.
-- **Plugin version double-duty as install-staleness trigger**: using `plugin.json.version` as both the user-facing semver and the single "reinstall needed?" signal — rather than a separate content hash or `requirements.txt` mtime — is a clean simplification that's worth calling out. The cost is that a no-op plugin version bump (e.g., a README-only fix) triggers a full `pip install --upgrade`, which the repo appears to accept.
-- **`statusMessage` vs `systemMessage` distinction**: the hooks.json SessionStart entry sets `statusMessage: "prompt-engineer: Installing dependencies..."` (shown during execution), while `ensure-deps.py` emits `{"systemMessage": "..."}` on success (shown after). Two surfaces, two stages.
+The single agent (`prompt-engineer.md`) carries `name`, `description`, `model: inherit` — no `tools` field, no orchestration knobs (`background`, `isolation`, `effort`, `maxTurns`). Body is a 2-line stub. Has no direct tool restrictions; delegates entirely to skills.
 
-## 18. Gaps
+## Server runtime (MCP)
 
-- **Plan for async SessionStart**: `worklog/archive/task/t0004-async-session-start.md` documents adding `"async": true` to the SessionStart hook but the currently deployed `hooks.json` does not contain that field. Whether t0004 was abandoned, whether a follow-up changed course, or whether `async` doesn't need to appear in the config (e.g. automatic) — I couldn't resolve from visible files. Git log of `plugin/hooks/hooks.json` would clarify.
-- **Actual `invoke.py` + `count.py` sizes and shebangs**: I saw only the first ~60–100 lines of each; whether they fully absent shebangs (as implied) vs have some other exec convention would need the full file. The SKILL.md phrasing ("Run with the plugin venv at `${CLAUDE_PLUGIN_DATA}/venv`") and the allow-skill-scripts validator shape (which expects `parts[0]` to be a venv python) both indicate no shebang, but I didn't read the final lines.
-- **Exams directory purpose**: `exams/` contains `token-counter/basic-usage.toml` but no docs on how exams are run. `worklog/spec/infra/s0007-exams.md` presumably defines this; I didn't fetch it.
-- **`lab/compression/` experiment goal**: unclear whether it's a planned future skill, a writeup, or a one-off research artifact. `lab/compression/hypotheses.md` and `findings.md` would resolve.
-- **Any consumer of this plugin as a marketplace source**: without a marketplace.json in this repo, it's unclear whether the author maintains a separate marketplace repo that references `123jimin-vibe/plugin-prompt-engineer` — a cross-repo reference would determine the `source:` format actually in use.
-- **Prompt-engineer agent's deployment shape**: the agent file is tiny (2-line body after frontmatter) and `model: inherit`. Unclear if it's a stub under active development (README caution supports this) or a deliberate thin agent that delegates entirely to skills.
-- **Whether `pyproject.toml.version = "0.0.1"` is a bug**: it's possible the author intentionally freezes it because nothing consumes it; alternatively it may be an oversight. A commit-log review of `plugin/pyproject.toml` would clarify intent.
+### No bin entry / direct invocation
+
+No MCP server registered. Skills invoke Python scripts directly via `<venv-python> <script>` inside the plugin venv; there is no `bin/` directory, no shebang wrappers, no standalone CLI. Scripts (e.g. `plugin/skills/invoke-llm/scripts/invoke.py`) have no shebang and can only be run as `<venv-python> invoke.py`.
+
+## Bin entry mechanism
+
+### No bin entry / direct invocation
+
+No `bin/` directory; no user-PATH binary. Skill scripts are invoked indirectly — the PreToolUse `allow-skill-scripts.py` hook validates that `parts[0]` (the python executable in the Bash command) is inside `${CLAUDE_PLUGIN_DATA}/venv` before auto-approving. Expected invocation shape is `<venv-python> <skill-script-path>`.
+
+## Dependency installation
+
+### Pip + stdlib venv (no `uv`)
+
+Python deps installed into `${CLAUDE_PLUGIN_DATA}/venv` via stdlib `venv` + pip during a SessionStart hook. `plugin/scripts/ensure-deps.py` is invoked from `plugin/hooks/hooks.json`'s SessionStart hook as `python "${CLAUDE_PLUGIN_ROOT}/scripts/ensure-deps.py"`. `plugin/pyproject.toml` declares dependencies `anthropic>=0.45`, `openai>=1.0`, `tiktoken>=0.7` and `requires-python = ">=3.11"`. The plugin root is pip-installed as a package (`[tool.setuptools.packages.find] include = ["lib", "lib.*"]`) so skill scripts can `from lib.llm import ...`. The script does not pin to a specific Python ABI; uses `sys.platform` only to pick `Scripts/pip` (Windows) vs `bin/pip` (other). Avoids `uv` — only Python stdlib + pip inside the created venv. `subprocess.run(..., check=True)` with no stdout/stderr capture lets pip's chatty output stream through the SessionStart hook console.
+
+## Install change detection
+
+### Plugin-version stamp file
+
+On each SessionStart, `ensure-deps.py` reads the current plugin version from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json` via `json.loads(...)["version"]`, reads the last-installed version from `${CLAUDE_PLUGIN_DATA}/installed-version` (a plain text file containing a single version string like `0.0.17`), and if the file exists and its stripped content equals the current version: returns immediately (no-op). Otherwise creates the venv if missing (`venv.create(venv_dir, with_pip=True)`), `pip install --upgrade <plugin_root>`, then writes the new version to `installed-version` only on pip-install success. No hashing of `pyproject.toml`, no mtime, no diff of the dep list — `plugin.json.version` doubles as semver and reinstall trigger; any plugin bump (including README-only edits) triggers a full reinstall.
+
+## Install trigger and lifecycle
+
+### SessionStart direct invocation
+
+`hooks.json` registers `ensure-deps.py` directly on SessionStart with `statusMessage: "prompt-engineer: Installing dependencies..."` for the pre-exec status line. SessionStart sub-event matcher is absent; the hook fires on all sub-events (startup, resume, clear, compact). On the no-op path the cost is a file-read + string compare. First install takes ~40s synchronously — `worklog/archive/task/t0004-async-session-start.md` proposed adding `"async": true` but the deployed `hooks.json` does not have it.
+
+## Install failure posture
+
+### `rm` stamp on failure (retry next session)
+
+The `try/except` in `install()` wraps the pip-install + version-file-write in a single block; on any exception it calls `version_file.unlink(missing_ok=True)` and re-raises. A half-installed venv is not remembered as "done" — the next SessionStart sees the missing stamp and retries. On failure the exception propagates (non-zero exit). On success the script prints `{"systemMessage": "prompt-engineer plugin dependencies installed (v<version>)."}` to stdout. Silent on no-op (already up-to-date).
+
+## User configuration and authentication
+
+### Out-of-band env vars (no `userConfig`)
+
+`plugin.json` has no `userConfig` block. API keys are read from shell environment variables `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY` via `plugin/lib/apikey.py`'s `require_api_key()`; SKILL.md documents the env var names directly. A user who has not exported `ANTHROPIC_API_KEY` gets a "variable needs to be configured" exit from `require_api_key()`. No `sensitive: true` flag because the plugin never asks the user for the key through plugin config.
+
+## Session context loading
+
+### Dependency install only (no context emission)
+
+The SessionStart hook is purely for `ensure-deps.py` execution. No `additionalContext`, no `systemMessage` for context, no UserPromptSubmit hook. The plugin emits no model-facing context — purely skill + hook based.
+
+## SessionStart matcher scope
+
+### Empty matcher (all sub-events)
+
+The SessionStart hook entry has no `matcher` field, so it fires on all sub-events including `compact`. On the no-op path this is wasted work but cheap (file-read + string compare).
+
+## Tool-use enforcement
+
+### Auto-allow plugin's own scripts
+
+One PreToolUse hook with matcher `"Bash"`. Inline bash one-liner does a `case` fast-path string match on raw stdin (`*/.claude/*/prompt-engineer/*/skills/*/scripts/*`); only on match does it pipe into Python's `allow-skill-scripts.py` validator. Validator uses `Path.resolve(strict=True)` for traversal-resistance and exits with no output ("pessimistic no-opinion") on any uncertainty, deferring to the normal permission flow. The here-string `<<< "$input"` is used instead of `echo "$input" | ...` to safely pass JSON with embedded quotes. Decision log `d0004` documents that the *original* matcher attempt was `Bash(.*/invoke-llm/scripts/invoke\.py.*)`, which never fired because Claude Code's hook matcher tests only the bare tool name; the fix flattened matcher to `"Bash"` and did the path filter inline. The validator hard-codes `prompt-engineer` in the bash `case` pattern.
+
+## Hook output contract
+
+### JSON-only stdout, no stderr-human parallel
+
+Allow path emits `{"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "allow", "permissionDecisionReason": "Plugin skill script invocation"}}` on stdout. Non-matches emit empty stdout, exit 0. No stderr noise. Deny decisions are never emitted.
+
+## Hook failure posture
+
+### Silent fail-open (`exit 0` always, retry every hook)
+
+Per-helper `try/except` around `Path.resolve(strict=True)` calls. Malformed JSON stdin and path-resolve failures (`OSError`, `ValueError`) silently return. Missing env vars raise `RuntimeError`, exiting non-zero — propagated by `main()`. From the user's perspective, a bug in the validator means the user is asked normally rather than blocked.
+
+## Testing
+
+### Python unittest under pytest discovery
+
+Tests use Python `unittest` (module-level classes), executed via `pytest` runner. Tests located in `tests/` at repo root, mirroring `plugin/` structure — `plugin/scripts/allow-skill-scripts.py` → `tests/scripts/test_allow_skill_scripts.py`; `plugin/lib/llm.py` → `tests/lib/test_llm.py`. Subdirs: `tests/lib/`, `tests/scripts/`, `tests/skills/invoke_llm/`, `tests/skills/token_counter/` (skills dirs use underscore in tests but hyphen in plugin path; tests use `importlib.util.spec_from_file_location` to load hyphen-named modules per the explicit convention in `worklog/spec/infra/s0004-testing.md`). No `pytest.ini`, no `[tool.pytest.ini_options]` in `pyproject.toml`, no `setup.cfg`. `pyrightconfig.json` exists for type checking only. Test invocation: `python -m pytest tests/ -v`. `.claude/settings.json` allow-lists `Bash(python -m pytest *)`. Tests use stdlib `unittest.mock`; runtime deps suffice. `tests/lib/test_llm.py` pre-registers `lib.apikey` into `sys.modules` manually before loading the module under test, so tests work outside the plugin venv. The testing spec mandates "tests must be written **without reading the implementation** — only the function signatures and docstrings".
+
+## CI workflow shape
+
+### No CI
+
+No `.github/workflows/` directory exists (`.github` contents return 404). Nothing verifies the version-bump → tag → install-pathway integration; failures show up on user `SessionStart` only.
+
+## Marketplace validation
+
+### No validation
+
+No validation workflow. Nothing checks that SKILL.md or agent YAML frontmatter is well-formed or contains required fields. Nothing checks `hooks.json` shape. The repo relies on pyright (`pyrightconfig.json` → `pythonVersion: "3.14"`, `extraPaths: ["plugin"]`, `include: ["plugin", "tests"]`) for Python type checking, but this runs only in the developer's editor.
+
+## Release automation
+
+### No release automation / manual
+
+Releases are bare git tags on main — no `gh release create`, no GitHub Releases entries (confirmed `releases` API returns `[]`). Manual `git tag vX.Y.Z && git push --tags`. The `installed-version` stamp matches `plugin.json.version`, not the tag, so as long as `plugin.json` is correct the install works regardless of tag-name discipline.
+
+## Documentation surface
+
+### Stub README only
+
+`README.md` at repo root is 162 bytes, consisting of four markdown headings (`# Prompt Engineer`, `## Token Counter`, `## LLM Invocation`, `### Q&A Mode`, `## Prompt Playground`) and a `> [!CAUTION]` admonition reading "This repository is currently in active development." No content under any heading. No install/usage instructions. The `plugin/` directory has no README; `plugin/skills/<name>/` has no README — each SKILL.md serves as the skill's docs. No `CHANGELOG.md`. No `architecture.md`.
+
+### Internal developer log as primary architecture doc
+
+`worklog/` is a first-class, numerically-keyed spec/decision/task ledger. Structure: `worklog/archive/task/t0001..t0011-<slug>.md` (11 archived completed tasks), `worklog/decision/d0001..d0004-<slug>.md` (4 ADRs), `worklog/spec/<category>/s0001..s0010-<slug>.md` (10 specs split by category — infra / lib / skill / top-level). Decision docs use TOML-fence frontmatter with `id`, `title`, `relates_to`, `supersedes` keys (`d0004` supersedes `d0003` with explicit tracking). Tasks move from spec → task → archived-task lifecycle.
+
+## License declaration
+
+### Single repo-level license
+
+LICENSE at repo root, MIT (1089 bytes); SPDX `MIT` declared in `plugin.json`.
+
+## Community health files
+
+### Community health files absent
+
+No `SECURITY.md`, no `CONTRIBUTING.md`, no `CODE_OF_CONDUCT.md`, no `.github/ISSUE_TEMPLATE/`. No badges or status indicators in README.
+
+## Cross-role tools
+
+### Python (stdlib + pip + uv)
+
+Python stdlib + pip; no `uv`. `requires-python = ">=3.11"`. Stdlib `venv` creates the venv; pip installs the plugin and its declared deps.
+
+### `${CLAUDE_PLUGIN_ROOT}` env var
+
+Used to locate the plugin source — `ensure-deps.py` reads `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json` for the canonical version; the SessionStart hook command is `python "${CLAUDE_PLUGIN_ROOT}/scripts/ensure-deps.py"`.
+
+### `${CLAUDE_PLUGIN_DATA}`
+
+Used as the venv install location (`${CLAUDE_PLUGIN_DATA}/venv`) and the version-stamp location (`${CLAUDE_PLUGIN_DATA}/installed-version`). The PreToolUse `allow-skill-scripts.py` validates that the python executable in a Bash command is inside `${CLAUDE_PLUGIN_DATA}/venv` before auto-approving.
+
+### `plugin.json.version`
+
+Doubles as user-facing semver and install-staleness signal — the field is both displayed to users and read by `ensure-deps.py` to decide whether the cached venv is current. A no-op bump (e.g., README-only fix) triggers a full `pip install --upgrade`.
+</content>
+</invoke>

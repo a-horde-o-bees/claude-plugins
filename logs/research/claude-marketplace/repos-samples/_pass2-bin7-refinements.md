@@ -1,0 +1,79 @@
+# Pass 2 Refinements — Bin 7
+
+Proposed refinements to `_CONSOLIDATED_breadth-then-depth.md` from rewriting samples in this bin. The reconciler integrates accepted refinements into the next consolidated revision.
+
+## Proposed new paths
+
+> Format: `<role> > <new-path>` — supporting samples — qualitative description draft
+
+(none from this bin — every observed fact mapped to an existing role/path with at most a description sharpening)
+
+## Proposed description sharpenings
+
+> Format: `<role> > <existing-path>` — what the existing description misses; supporting samples; sharpening suggestion
+
+- `Dependency installation > Version-stamped persistent install with back-symlink` — `Lykhoyda/rn-dev-agent` exhibits the pattern with two refinements not currently surfaced in the description: (a) the dangling-symlink cleanup pre-scan (`[ -L "$DIR/node_modules" ] && [ ! -d "$DIR/node_modules" ] && rm -f`) before falling back to local install, (b) the stamp-flip-flop guard that skips the persistent path when Node is unavailable so `CURRENT_VERSION === "unknown"` cannot be written as a stamp. The current description names "version stamp" and "two problems at once" but doesn't enumerate the dangling-symlink-cleanup and stamp-flip-flop guards as explicit refinements that distinguish a robust implementation from a naive one.
+
+- `Bin entry mechanism > Git-symlink bin wrappers (mode 120000)` — `Lykhoyda/rn-dev-agent` shows the pattern in detail (7 wrappers all symlinked to `../scripts/*.sh`). Worth surfacing in the description: scripts use `dirname "$0"`-based plugin-root resolution that transparently resolves through the symlink, and one observed defect — a target script (`scripts/snapshot_state.sh`) lacks the executable bit while its `bin/` symlink is exposed, breaking direct exec on strict-perm systems. The constraint "target file must have executable bit set" is currently noted but the asymmetric-permission failure mode is implicit; making it explicit would help readers spot the bug class.
+
+- `Tool-use enforcement > PostToolUseFailure post-hoc diagnostic hook` — `Lykhoyda/rn-dev-agent` exhibits the canonical form. Description currently names "CDP session is not active" type diagnostics; could sharpen by noting the hook inspects multiple environment / process states (active flag file, port availability, simulator boot state, adb device presence) to compose a single targeted diagnostic. The specific environment-probe set is what makes the hook valuable vs a generic "tool failed" message.
+
+- `Documentation surface > Astro Starlight docs site with auto-generated MDX` — `Lykhoyda/rn-dev-agent` is a clean example (path-filtered `deploy-docs.yml`, `docs-site/scripts/generate-bp-docs.mjs` and `generate-tool-docs.mjs` generators). Description currently names the pattern but doesn't surface that the generators read in-plugin source files (`skills/<skill>/references/*.md` for best-practice rules; MCP tool registrations) — i.e., the docs site is a derived view of the plugin's own content. This is what differentiates it from a hand-maintained docs site.
+
+- `Plugin-component registration > Default convention discovery` — `REPOZY/superpowers-optimized` shows a runtime-divergence case: the Claude `.claude-plugin/plugin.json` uses default discovery while sibling Codex (`.codex-plugin/plugin.json`) and Cursor (`.cursor-plugin/plugin.json`) manifests explicitly set `"skills": "./skills/"` (and Cursor adds `"agents": "./agents/"`) because those runtimes require explicit paths. The current description mentions this constraint at the end ("Fails when the plugin must satisfy a runtime that requires explicit paths"); could sharpen to note that the same source tree may need *both* default-discovery (for Claude) and explicit-paths (for Codex/Cursor) in parallel manifests, not as an either/or choice.
+
+- `Channel distribution > SessionStart self-update` — `REPOZY/superpowers-optimized` adds a refinement worth absorbing: the soft auto-update channel is dual-mode by install detection — when the plugin is a git clone (Codex / OpenCode / self-hosted), the hook does `git fetch` + `git merge --ff-only origin/main`; when installed via a marketplace (Claude / Cursor), the same hook instead emits a "run `/plugin update`" notice. One hook, two install-mode behaviors. The current description names the git-clone branch but not the marketplace-install branch.
+
+- `Session context loading > Release-notes-as-context` — `REPOZY/superpowers-optimized` instantiates the pattern with a 116 KB `RELEASE-NOTES.md` whose section-selection logic must be precise to avoid flooding the prompt. Description currently mentions "100+ KB" and "off-by-one would flood." Worth adding: the file replaces a conventional `CHANGELOG.md` entirely (no separate CHANGELOG ships); the hook extracts the *current* release's "What's New" after a successful fast-forward merge (so it only fires post-update, not on every session start); injection happens via `hookSpecificOutput.additionalContext`. The "post-update only" trigger condition is what keeps the cost bounded.
+
+- `SessionStart matcher scope > SessionStart sub-event matcher (\`startup|clear|compact\` excluding resume)` — `REPOZY/superpowers-optimized` is the canonical example. Description names the pattern; could add: the same plugin uses *two SessionStart entries with different matchers* — the expensive synchronous routing/map injection scoped to `startup|clear|compact`, and a cheap async `context-engine.js` with no matcher (fires on all sub-events including `resume`). The contrast — one matcher-scoped, one unscoped, in the same hooks.json — is what makes the pattern instructive.
+
+- `Hook handler runtime > Node \`.mjs\` files invoked via \`node\`` — `REPOZY/superpowers-optimized` adds a "zero-dependency Node hooks" subcase where every hook is `.js` invoked via `node`, capped at Node built-ins (`fs`, `path`, `crypto`, `child_process`) by explicit policy. Hooks share *no* `node_modules/` because the plugin ships none. Could sharpen by noting Node hooks split into two postures: (a) ESM with `node_modules/` adjacent (the current description), (b) zero-dep stdlib-only Node hooks (this case). The cross-link to `Zero dependencies / stdlib only` would surface the policy-driven version.
+
+## Proposed new roles
+
+> Format: `<new-role>` — what role this is, why it doesn't fit any existing role, supporting samples
+
+(none from this bin)
+
+## Proposed bucket splits
+
+> Format: `<role> > <existing-path>` — why it should split, into what, supporting samples
+
+(none from this bin)
+
+## Structural concerns
+
+> Anything that's hard to fit cleanly under any role/path; questions for the reconciler
+
+- **`Lykhoyda/rn-dev-agent` `.githooks/pre-commit` is version-sync.** The pre-commit hook only invokes `scripts/sync-versions.sh` — no ruff, no pytest, no manifest schema check. Existing path `Pre-commit hook auto-sync (consistency, not increment)` under Version coordination matches this exactly. The path `Pre-commit and pre-push hooks (git) > Multi-tool pre-commit including pytest` does not match (pytest isn't run; the only check is version-sync). This left no path to map under the `Pre-commit and pre-push hooks (git)` role for Lykhoyda — I omitted that role from the sample. Reconciler may want to consider whether `Pre-commit and pre-push hooks (git)` should carry a "Single-purpose pre-commit (version-sync only)" path, or accept that single-purpose pre-commit hooks are best categorized by *what they enforce* (Version coordination) rather than by *the mechanism* (git hooks).
+
+- **`Lykhoyda/rn-dev-agent` Experience Engine seed-YAML pattern.** The plugin ships `seed-experience/*.yaml` files (`common-failures.yaml`, `expo-gotchas.yaml`, `platform-quirks.yaml`, `recovery-playbook.yaml`) initialized into `$HOME/.claude/rn-agent/` by `ensure-experience-engine.sh`, plus a runtime experience-tracking system gated by `memory: true` agent frontmatter. Currently I placed under `State persistence > Skill-side experience seeds with stateful HOME directory` — that path matches almost exactly, but I'm flagging because the path's prose is generic and rn-dev-agent is its primary instantiation. Reconciler may want to pull more rn-dev-agent specifics into the path description.
+
+- **`Lykhoyda/rn-dev-agent` `CLAUDE-MD-TEMPLATE.md`.** A repo-root file whose prose purpose ("template a user copies into their RN project's CLAUDE.md") matches `Documentation surface > CLAUDE.md template shipped for consumer projects`. I placed there. Slight friction: the consolidated path describes "telling Claude how to use us" generically; rn-dev-agent's template is RN-project-specific (it teaches Claude about the consumer's RN app, not about the plugin). The path covers the pattern but not the specificity. May not warrant a new path; flagging for visibility.
+
+- **`Lykhoyda/rn-dev-agent` per-plugin counts hardcoded in three places.** README says "53 MCP tools", `detect-rn-project.sh` banner says "51 MCP tools", `collect-feedback.sh` greps `index.ts` for the actual count. Three drift surfaces for a single derived value. Doesn't fit cleanly under any current path — `Plain-stdout context banner` mentions "Hard-coded counts in the banner... drift from other hard-coded counts elsewhere" which is the closest match. I placed under that path for the banner-side count and added the README/script drift as a corollary in the same section. The deeper pattern — "agent-readable count repeated across N surfaces with no single source" — could merit a sharpening on `Plain-stdout context banner` or be treated as a corpus-level documentation-drift signal.
+
+- **`REPOZY/superpowers-optimized` `plugin.universal.yaml` source-of-truth compiled by external `hookbridge` tool.** Existing path `Multi-runtime fan-out (single source compiled to N artifacts)` under Version coordination matches almost exactly — I placed there. The path's prose already mentions the compiler-not-vendored issue and observed drift; rn-dev-agent's case adds nothing the prose doesn't already cover. No refinement needed.
+
+- **`REPOZY/superpowers-optimized` `RELEASE-NOTES.md` 116 KB replacing CHANGELOG.md.** Existing path `RELEASE-NOTES.md consumed by SessionStart hook` matches. I placed there. Path prose says "100+ KB"; the actual sample is 116 KB. Not material — the path covers the pattern.
+
+- **`REPOZY/superpowers-optimized` four-file cross-session memory stack.** The plugin ships `context-snapshot.json`, `project-map.md`, `session-log.md`, `state.md`, `known-issues.md` — five files actually. Best fit is `State persistence > File-based memory stack with auto-gitignore`. I placed there. Path prose currently lists the files generically (a snapshot, structure-cache, decision-history, task-snapshot, error-solution map); reconciler may want to enumerate them more precisely with REPOZY's specific filenames as the canonical reference.
+
+- **`REPOZY/superpowers-optimized` zero-dep Node policy across all hooks.** Best fit is `Zero dependencies / stdlib only` (Dependency installation), but that path's prose is mostly Python-focused. I placed there. Reconciler may want to broaden the prose to surface that the same posture applies to Node plugins where every hook is capped at Node built-ins. Cross-reference to `Hook handler runtime > Node .mjs files` could absorb the Node-specific subcase.
+
+- **`REPOZY/superpowers-optimized` polyglot `run-hook.cmd` extensionless-filename trick.** Existing path `Polyglot CMD/bash wrapper for cross-platform hook invocation` matches. I placed there. Path prose mentions the extensionless-filename Windows workaround already; no refinement needed.
+
+- **`REPOZY/superpowers-optimized` env-var + INI-config knob pattern (`SP_NO_COMPRESS`, `SUPERPOWERS_AUTO_UPDATE`, `~/.config/superpowers/update.conf`).** Existing path `Env-var + INI-config knob pattern` matches almost exactly with the same example values. I placed there. No refinement.
+
+- **`REPOZY/superpowers-optimized` fork-provenance preserved in every author field.** No clear path under Author identity and provenance. Current paths cover owner-rename, plugin-name vs repo-name drift, personal-email, but not "fork preserves upstream attribution in every manifest." Could be a new path under Author identity and provenance: "Fork-attribution discipline — every author field reads `<original author>, forked by <new owner>` so attribution propagates with every manifest copy." I left it out as a refinement candidate to avoid speculating about whether it's broadly observed; the single sample doesn't establish a corpus pattern.
+
+- **`NoelClay/academic-research-mcp-plugin` `isolation: worktree` agent frontmatter.** Existing path `Rich behavior fields (background, isolation, memory)` covers `isolation: worktree` and notes its harness-uncertainty. I placed there. NoelClay's case adds the specific "worktree isolation on a research/teaching agent that downloads PDFs and writes reports — semantics ambiguous when the consumer is not a git repo." The path's prose already captures the harness-uncertainty; could add the consumer-not-git-repo edge case as a sharpening but it's minor.
+
+- **`NoelClay/academic-research-mcp-plugin` fully-qualified MCP tool names in agent `tools` list AND wildcard in command's `allowed-tools` in same plugin.** Two different conventions for the same kind of access scoping in one plugin. Best fit is `Agent declaration conventions > Fully-qualified MCP tool names` for the agent side, and the command side hits `Skill authoring conventions > allowed-tools with permission-rule syntax` (or its plain-tool variant — actually the wildcard `mcp__academic-search__*` on the command is permission-rule syntax). The "two conventions in one plugin" observation is already in the consolidated's `Fully-qualified MCP tool names` description. No refinement needed.
+
+- **`NoelClay/academic-research-mcp-plugin` non-English content (Korean) in persona/report templates.** No clear path. The plugin's persona prompt and report template are Korean while skill/agent instructions remain English. `Native-language-first templates` under Agent declaration conventions covers the Chinese case — Korean is symmetric. I considered placing Korean persona/report text under that path but the path is specifically about agent template body language, not embedded prompt text inside hook scripts. Defer to reconciler whether to broaden the path or add a sibling. Listed under structural concerns rather than a forced fit.
+
+- **`NoelClay/academic-research-mcp-plugin` PDF parser reaches into `$CLAUDE_PLUGIN_DATA/node_modules` from `$CLAUDE_PLUGIN_ROOT`.** Source code in `$CLAUDE_PLUGIN_ROOT/src/parsers/pdf-parser.js` reads `path.join(process.env.CLAUDE_PLUGIN_DATA || ".", "node_modules", "pdf-parse")`, splitting code from deps along the ROOT/DATA boundary without standard Node resolution. Best fit is `Plugin/state separation > ${CLAUDE_PLUGIN_ROOT} for code, ${CLAUDE_PLUGIN_DATA} for state` — that's exactly the principle in action. I placed there. Path prose covers the principle generically; the specific "Node `require()` reaching across the boundary via `path.join`" is one tactical realization. No new path needed.
+
+- **Per-sample identification metadata (URL, stars, last-commit date, default branch, license, sample origin) doesn't fit the role tree.** As noted in earlier bins. I retained the one-line preamble convention identifying the entity URL and a one-line description; left out star count, last-commit date, default branch, and license unless those are necessary to interpret a specific role finding (e.g., License finding is preserved in the License declaration role). Per-sample-origin tag (e.g., "dep-management + bin-wrapper") is also dropped — that's selection-time provenance, not a fact about the entity's choices. Defer to reconciler if a structured preamble would help.

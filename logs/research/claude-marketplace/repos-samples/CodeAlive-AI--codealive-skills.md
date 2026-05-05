@@ -1,188 +1,302 @@
-# CodeAlive-AI/codealive-skills
+# Sample
 
-## Identification
+Mirrors of `https://github.com/CodeAlive-AI/codealive-skills`. Agent skill + Claude Code plugin providing semantic code search and AI-powered codebase Q&A across indexed repositories via the CodeAlive REST API. MIT-licensed; 10 stars at sample time; current tip is `v2.0.5` (commit `c9229b4c`, 2026-04-18) on the `main` branch.
 
-- **URL**: https://github.com/CodeAlive-AI/codealive-skills
-- **Stars**: 10
-- **Last commit date**: 2026-04-18 (commit `c9229b4c` — "Fix 2.0.4 description and add CLAUDE.md clarifying the skill is not MCP")
-- **Default branch**: `main`
-- **License**: MIT
-- **Sample origin**: primary (community)
-- **One-line purpose**: Agent skill + Claude Code plugin providing semantic code search and AI-powered codebase Q&A across indexed repositories via the CodeAlive REST API.
+## Marketplace manifest layout
 
-## 1. Marketplace discoverability
+### Self-referential single-plugin marketplace at repo root
 
-- **Manifest layout**: single `.claude-plugin/marketplace.json` at repo root.
-- **Marketplace-level metadata**: `metadata.{description, version}` wrapper — `metadata.description = "CodeAlive integrations for AI coding agents"`, `metadata.version = "1.0.0"`. No `pluginRoot`.
-- **`metadata.pluginRoot`**: absent (plugin lives at repo root, `source: "./"`).
-- **Per-plugin discoverability**: none on the marketplace entry; `plugin.json` carries `keywords: ["code-search", "codebase", "semantic-search", "code-intelligence"]`. No `category` or `tags` fields. Repo-level GitHub topics are present (`agent-skills`, `ai-coding`, `codealive`, `semantic-search`, `skill-md`, `skills`) but those are not marketplace discoverability surfaces.
-- **`$schema`**: absent on both marketplace.json and plugin.json.
-- **Reserved-name collision**: no.
-- **Pitfalls observed**: marketplace-level `metadata.version: "1.0.0"` is decoupled from plugin.json `version: "2.0.5"` and does not track — it has been left at 1.0.0 across every release cut. The marketplace doesn't appear to enforce a relationship, but a reader comparing the two will see a drift that is almost certainly unintentional (marketplace-level version is rarely surfaced to users).
+`.claude-plugin/marketplace.json` at repo root with one plugin entry pointing at `"./"` (plugin lives at repo root). No `metadata.pluginRoot`.
 
-## 2. Plugin source binding
+### Top-level `metadata` wrapper variants
 
-- **Source format(s) observed**: relative — `"source": "./"` (plugin is the repo).
-- **`strict` field**: `strict: false` explicit on the single plugin entry. With `pluginRoot` absent and `source: "./"`, `strict: false` is semantically unnecessary for normal discovery — strict only matters when carving components out of a source tree that has non-standard layout. Likely reflects copy-paste / defensive hedging rather than a specific carve.
-- **`skills` override on marketplace entry**: absent. No per-component carve is performed — `strict: false` is set without an accompanying override array.
-- **Version authority**: `plugin.json` only (`2.0.5`). The marketplace entry has no `version`. Git tags (`v2.0.5` etc.) match plugin.json one-to-one — CLAUDE.md documents "bump plugin.json, then annotate a tag matching vX.Y.Z" as the release step.
-- **Pitfalls observed**: `strict: false` without a corresponding override looks like unused ceremony — it is either (a) a hedge against future component additions outside the default discovery roots, or (b) an artifact from before skills/agents/hooks were moved under canonical paths. Either way a reader cannot tell from the manifest what `strict: false` protects.
+`metadata.{description, version}` wrapper — `metadata.description: "CodeAlive integrations for AI coding agents"`, `metadata.version: "1.0.0"`.
 
-## 3. Channel distribution
+## Plugin source binding
 
-- **Channel mechanism**: no split — users pin via `@ref` if they want a specific version, otherwise `/plugin install codealive@codealive-marketplace` resolves to the head of `main`. There is a single long-lived branch (`main`) plus one feature branch (`COD-XXX-search-surface-split`).
-- **Channel-pinning artifacts**: absent. No `stable-*`/`latest-*` marketplaces, no dev-counter split, no release-branch family.
-- **Pitfalls observed**: mixing "Claude Code plugin" and "universal skill via npx skills" distribution modes — the skill can also be installed via `npx skills add CodeAlive-AI/codealive-skills@codealive-context-engine`, a separate distribution channel outside Claude Code's marketplace. This is a channel in the skills.sh sense, not in the Claude marketplace sense, but reading the README a user could conflate them.
+### Relative source pointing to repo root (`./`)
 
-## 4. Version control and release cadence
+`"source": "./"` on the marketplace entry; plugin root and repo root are the same path.
 
-- **Default branch name**: `main`.
-- **Tag placement**: on `main` — tags `v1.0.0 … v2.0.5` all point at commits that are ancestors of `main`. No release branches.
-- **Release branching**: none (tag-on-main).
-- **Pre-release suffixes**: none observed — all ten tags are plain `vX.Y.Z`.
-- **Dev-counter scheme**: absent.
-- **Pre-commit version bump**: no. Version bump is manual per CLAUDE.md step 2 ("Bump `.claude-plugin/plugin.json` version").
-- **Pitfalls observed**: ten git tags (`v1.0.0`, `v1.1.0`, `v1.2.0`, `v1.2.1`, `v1.3.0`, `v2.0.0`, `v2.0.1`, `v2.0.3`, `v2.0.4`, `v2.0.5`) but only seven GitHub Releases (stops at `v2.0.1`) — `v2.0.3`/`v2.0.4`/`v2.0.5` are tags without published Releases, and `v2.0.2` is a skipped number with no tag and no release. Release-notes UX is a manual step that has fallen behind the tag cadence. Observed pattern, not inferred — API lists ten tags and seven releases.
+### `strict` field default
 
-## 5. Plugin-component registration
+`strict: false` is set explicitly on the single plugin entry. With `pluginRoot` absent and `source: "./"`, `strict: false` is semantically unnecessary for normal discovery — strict only matters when carving components out of a non-standard layout. No `skills` override on the entry. Likely defensive ceremony or copy-paste; cannot be inferred from manifest content alone whether (a) hedge against future component additions or (b) artifact from before skills/agents/hooks were moved under canonical paths.
 
-- **Reference style in plugin.json**: default discovery only — plugin.json is minimal manifest metadata (name, description, version, author, homepage, repository, license, keywords). No `skills`, `agents`, `hooks`, `mcpServers`, `commands` fields. Claude Code picks up components via convention directories (`skills/`, `agents/`, `hooks/hooks.json`).
-- **Components observed**: skills yes (`skills/codealive-context-engine/`), commands no, agents yes (`agents/codealive-context-explorer.md`), hooks yes (`hooks/hooks.json` + `hooks/scripts/check_auth.sh`), `.mcp.json` no, `.lsp.json` no, monitors no, bin no, output-styles no.
-- **Agent frontmatter fields used**: `name`, `description`, `tools`, `model`, `skills`. On `codealive-context-explorer`: `tools: Bash, Read, Grep, Glob`; `model: haiku`; `skills: [codealive-context-engine]`.
-- **Agent tools syntax**: plain tool names (`Bash, Read, Grep, Glob`) — no permission-rule syntax like `Bash(uv run *)`.
-- **Pitfalls observed**: SKILL.md and the subagent both describe the five Python scripts in prose + fenced code blocks. The subagent references scripts with a bare `python scripts/datasources.py` path and notes "If the path fails, check `${CLAUDE_PLUGIN_ROOT}/skills/codealive-context-engine/scripts/`" — a soft fallback rather than a deterministic resolution, which makes the agent responsible for retrying with the right CWD.
+## Per-plugin discoverability metadata
 
-## 6. Dependency installation
+### Keywords-only on plugin.json
 
-- **Applicable**: yes for the runtime skill (one-time interactive `setup.py`), no for a sessionized dep-install hook. The skill's Python scripts use only the stdlib (`urllib.request`, `subprocess`, `json`, `platform`) — no third-party runtime deps.
-- **Dep manifest format**: none. No `requirements.txt`, `pyproject.toml`, `setup.py`-as-packaging (`setup.py` at the skill root is a standalone interactive configurator, not a packaging manifest). CI installs `pytest pytest-cov` via `pip` inline.
-- **Install location**: n/a (no venv). Setup stores the API key in the OS credential store (macOS Keychain / Linux Secret Service / Windows Credential Manager). No Python packages are installed anywhere.
-- **Install script location**: `skills/codealive-context-engine/setup.py` — user-invoked, not hook-invoked. Documented via README: `python setup.py`.
-- **Change detection**: n/a.
-- **Retry-next-session invariant**: n/a.
-- **Failure signaling**: SessionStart hook (`check_auth.sh`) signals missing credential via `hookSpecificOutput.additionalContext` JSON on stdout, nudging the agent to run `python setup.py`. `exit 0` always — fail-open, non-blocking.
-- **Runtime variant**: Python stdlib only. No uv, no pip, no npm. The agent/user invokes `python scripts/*.py` directly using whatever `python` is on PATH.
-- **Alternative approaches**: N/A — the "no deps" posture is itself the alternative. Nothing to install.
-- **Version-mismatch handling**: none. No Python minimum-version pin in any manifest; CI uses Python 3.11 but there is no floor declaration.
-- **Pitfalls observed**: `setup.py` at `skills/codealive-context-engine/setup.py` shares a name with the Python packaging sentinel `setup.py`. It is not a distutils/setuptools script — it is a CLI tool. A Python tooling agent could mistake it for a package install entry point and run `python setup.py install`. The file itself opens with `"""CodeAlive Context Engine — Setup\n\nStores the API key…"""` so context disambiguates on read, but the naming collision is real.
+Marketplace entry carries minimal metadata (`name`, `version`, `source`, `description`); `keywords` lives exclusively in `plugin.json` as `["code-search", "codebase", "semantic-search", "code-intelligence"]`. No `category` or `tags` on the marketplace surface.
 
-## 7. Bin-wrapped CLI distribution
+### Repo-level GitHub topics
 
-- **Applicable**: no. No `bin/` directory. The plugin ships Python scripts the agent invokes directly (`python scripts/search.py`) and a `hooks/scripts/check_auth.sh` hook; neither is a "bin" in the `${CLAUDE_PLUGIN_ROOT}/bin/` sense.
-- **`bin/` files**: none.
-- **Shebang convention**: n/a for bin. For context: the auth hook uses `#!/bin/bash`; Python scripts use `#!/usr/bin/env python3`; plugin-bridge shell scripts use `#!/usr/bin/env bash`.
-- **Runtime resolution**: n/a. `check_auth.sh` resolves plugin root via `${CLAUDE_PLUGIN_ROOT:-$(dirname "$(dirname "$(dirname "$0")")")}` — a defensive two-way resolution so the script works whether Claude Code sets the env var or not.
-- **Venv handling (Python)**: no venv. Python scripts run under system Python.
-- **Platform support**: n/a.
-- **Permissions**: `100755` (executable) on all `.sh` files per git tree mode listing. `.gitattributes` forces `eol=lf` for `*.sh` to prevent CRLF-from-Windows breaking shebangs on WSL/Linux.
-- **SessionStart relationship**: n/a.
-- **Pitfalls observed**: no bin to distribute, but the two-way plugin-root resolution in `check_auth.sh` is a template other hooks can copy — `${CLAUDE_PLUGIN_ROOT:-$(dirname "$(dirname "$(dirname "$0")")")}` works when invoked directly for debugging and under Claude Code's harness.
+GitHub repo topics declared on the GitHub repo itself: `agent-skills`, `ai-coding`, `codealive`, `semantic-search`, `skill-md`, `skills`. Drives GitHub search but not Claude Code's marketplace UI.
 
-## 8. User configuration
+### `$schema` absence on per-plugin manifests
 
-- **`userConfig` present**: no.
-- **Field count**: none.
-- **`sensitive: true` usage**: not applicable.
-- **Schema richness**: not applicable.
-- **Reference in config substitution**: not applicable.
-- **Pitfalls observed**: the plugin does handle a secret (API key) but chose OS credential store + env var (`CODEALIVE_API_KEY` / `CODEALIVE_BASE_URL`) over `userConfig`. This is a deliberate design choice — credentials stay out of `settings.json` and are shared across all skill-aware agents on the machine (README: "The key is stored once and shared across all agents on the same machine"). A `userConfig` field would have fragmented storage per-agent.
+`$schema` absent on both marketplace.json and plugin.json.
 
-## 9. Tool-use enforcement
+## Version coordination
 
-- **PreToolUse hooks**: none.
-- **PostToolUse hooks**: none.
-- **PermissionRequest/PermissionDenied hooks**: absent.
-- **Output convention**: SessionStart hook emits JSON on stdout (`hookSpecificOutput` envelope). No stderr usage.
-- **Failure posture**: fail-open — `exit 0` unconditionally, even when no credential is found. The hook's role is to inject guidance into additionalContext, not to block the session.
-- **Top-level try/catch wrapping**: n/a (bash script). Uses `|| true` on each credential lookup to avoid `set -e`-style propagation, but `set -e` is not set, so each failure is swallowed independently.
-- **Pitfalls observed**: the hook probes macOS Keychain, Linux Secret Service, and WSL-to-Windows Credential Manager in order and treats any discovery as success. The WSL branch sets `KEY="windows-credential-store"` (a sentinel, not the real value) because it cannot read the actual credential from bash — the real value is read at Python runtime via `powershell.exe` P/Invoke. A hook author copying this pattern must know the sentinel is intentional; it looks like a bug until you trace the runtime path.
+### Single source of truth (`plugin.json` only)
 
-## 10. Session context loading
+`plugin.json.version` (`2.0.5`) is the user-facing version of record; the marketplace entry has no `version` field. Git tags (`v2.0.5` etc.) match `plugin.json` one-to-one — `CLAUDE.md` documents "bump plugin.json, then annotate a tag matching vX.Y.Z" as the release step. Marketplace-level `metadata.version: "1.0.0"` is decoupled from `plugin.json` and has been left at `1.0.0` across every release cut — drift surface but not a single-source-of-truth violation since the marketplace metadata version is rarely surfaced to users.
 
-- **SessionStart used for context**: yes — but only conditionally. `check_auth.sh` injects `additionalContext` only when the API key is missing; when present, no context is injected.
-- **UserPromptSubmit for context**: no.
-- **`hookSpecificOutput.additionalContext` observed**: yes — exactly the Claude Code SessionStart output envelope documented in the plugin-reference hooks page.
-- **SessionStart matcher**: `startup` only (not `startup|clear|compact` or empty).
-- **Pitfalls observed**: matcher `startup` means `/clear` and `/compact` do not re-trigger the auth check. If the user adds a credential mid-session, the skill won't see the updated state until the next fresh session. Likely intentional — the "missing-key" message is a one-shot nudge, not a status line — but worth noting because other plugins using the same pattern for continuous reminders would need `startup|clear|compact`.
+## Channel distribution
 
-## 11. Live monitoring and notifications
+### Single channel — tag-on-main with git-ref pinning
 
-- **`monitors.json` present**: no.
-- **Monitor count + purposes**: none.
-- **`when` values used**: not applicable.
-- **Version-floor declaration**: not applicable.
-- **Pitfalls observed**: not applicable.
+No channel split — users pin via `@ref` if they want a specific version, otherwise `/plugin install codealive@codealive-marketplace` resolves to the head of `main`. Single long-lived branch (`main`) plus one feature branch (`COD-XXX-search-surface-split`). No `stable-*`/`latest-*` marketplaces, no dev-counter split, no release-branch family.
 
-## 12. Plugin-to-plugin dependencies
+### Multi-channel via parallel distribution paths
 
-- **`dependencies` field present**: no.
-- **Entries**: none.
-- **`{plugin-name}--v{version}` tag format observed**: not applicable — single-plugin marketplace, tags are plain `vX.Y.Z`.
-- **Pitfalls observed**: not applicable.
+The skill is also installable via `npx skills add CodeAlive-AI/codealive-skills@codealive-context-engine` (skills.sh) — a separate distribution channel outside Claude Code's marketplace. Two distribution channels for the same artifact, each with its own consumer base.
 
-## 13. Testing and CI
+## Tag and release lifecycle
 
-- **Test framework**: pytest with pytest-cov.
-- **Tests location**: `tests/` at repo root (`tests/helpers.py`, `tests/test_cli_smoke.py`, `tests/test_setup_and_client.py`). Tests cross the skill boundary — they import from `skills/codealive-context-engine/scripts/lib/` via `sys.path.insert` and `importlib.util.spec_from_file_location`.
-- **Pytest config location**: none — no `pyproject.toml`, no `pytest.ini`, no `setup.cfg`. CI invokes pytest with inline flags: `python -m pytest tests -v --cov=skills --cov-report=term-missing`.
-- **Python dep manifest for tests**: none — CI inline-installs `pytest pytest-cov` via `pip install`.
-- **CI present**: yes.
-- **CI file(s)**: `.github/workflows/ci.yml`.
-- **CI triggers**: `push: branches: [main]`, `pull_request: branches: [main]`.
-- **CI does**: installs pytest + pytest-cov, runs `python -m pytest tests -v --cov=skills --cov-report=term-missing`. No linting, no manifest validation, no release automation.
-- **Matrix**: none — single job `ubuntu-latest` × Python `3.11`.
-- **Action pinning**: SHA — `actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2`, `actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0`. Both SHA-pinned with tag comments.
-- **Caching**: none — neither the built-in `setup-python` cache input nor an explicit `actions/cache` step. Fresh pip install each run.
-- **Test runner invocation**: direct `python -m pytest …` with inline flags. No wrapper script.
-- **Pitfalls observed**: no lint, no type-check, no manifest validation in CI — only runtime tests. The dependency-install strategy of "no manifest, CI pins pytest inline" means CI's pytest version floats; a pytest release with a breaking API change could surface as a CI failure with no pinned-version paper trail. Coverage output is `term-missing` only — no codecov or artifact upload, so coverage trend is not tracked across commits.
+### Tag-on-main, single branch
 
-## 14. Release automation
+Default branch `main`. Ten tags (`v1.0.0` through `v2.0.5`) all point at commits that are ancestors of `main`. No release branches. All tags are plain `vX.Y.Z` (no pre-release suffixes). Version bump is manual per `CLAUDE.md` step 2 ("Bump `.claude-plugin/plugin.json` version").
 
-- **`release.yml` (or equivalent) present**: no.
-- **Release trigger**: not applicable (no release workflow). Releases are cut manually: bump `plugin.json` → commit → annotate tag `vX.Y.Z` → push main and tag → write release notes in GitHub UI (sometimes).
-- **Automation shape**: not applicable.
-- **Tag-sanity gates**: none — no workflow verifies tag on main, no workflow verifies tag matches `plugin.json` version.
-- **Release creation mechanism**: manual GitHub UI. For seven of ten tags a Release exists with a one-line title ("v2.0.1 — Sharpen semantic vs grep search guidance"). Three recent tags (`v2.0.3`, `v2.0.4`, `v2.0.5`) have no corresponding Release.
-- **Draft releases**: no — all seven existing Releases have `draft: false`, `prerelease: false`.
-- **CHANGELOG parsing**: no — repo has no `CHANGELOG.md` file (confirmed 404 on `main`).
-- **Pitfalls observed**: the tag-release drift (10 tags, 7 Releases, missing `v2.0.2` number) is a direct symptom of manual release cutting without automation. The release-notes UX is manual and has fallen behind. CLAUDE.md's release steps document the manual process but include no validation — nothing prevents shipping a tag whose `plugin.json` version doesn't match.
+### Tag-on-main with manual GitHub Release
 
-## 15. Marketplace validation
+Tags live on `main`; releases are not triggered by tag push but by manual `gh release create` (or web UI). Ten git tags (`v1.0.0`, `v1.1.0`, `v1.2.0`, `v1.2.1`, `v1.3.0`, `v2.0.0`, `v2.0.1`, `v2.0.3`, `v2.0.4`, `v2.0.5`) but only seven GitHub Releases (stops at `v2.0.1`) — `v2.0.3`/`v2.0.4`/`v2.0.5` are tags without published Releases, and `v2.0.2` is a skipped number with no tag and no release. Release-notes UX is a manual step that has fallen behind the tag cadence — consequence of the manual step being load-bearing.
 
-- **Validation workflow present**: no.
-- **Validator**: none.
-- **Trigger**: not applicable.
-- **Frontmatter validation**: no.
-- **Hooks.json validation**: no.
-- **Pitfalls observed**: the marketplace.json and plugin.json are hand-maintained without schema validation. No pre-commit hook. The minimal CI scope reflects a "runtime is tested, manifests are trusted" posture — relies on plugin-install failures to catch malformed JSON.
+## Plugin-component registration
 
-## 16. Documentation
+### Default convention discovery
 
-- **`README.md` at repo root**: present (~4.4 KB) — installation options (skills.sh, Claude Code plugin, MCP server, plugin-bridge), setup instructions, API key storage table per-OS, usage examples.
-- **`README.md` per plugin**: n/a (single plugin, skill has `SKILL.md` at `skills/codealive-context-engine/SKILL.md` ~13 KB; `tools/plugin-bridge/README.md` ~3.5 KB for the auxiliary bridge tool).
-- **`CHANGELOG.md`**: absent (404 on main).
-- **`architecture.md`**: absent.
-- **`CLAUDE.md`**: at repo root (~2.4 KB) — positions the skill against MCP ("the skill is NOT an MCP wrapper"), documents release procedure, writing-guidance for the SKILL.md description field.
-- **Community health files**: LICENSE present. No `SECURITY.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `.github/ISSUE_TEMPLATE/`, `.github/PULL_REQUEST_TEMPLATE.md`.
-- **LICENSE**: present (MIT, SPDX `MIT`).
-- **Badges / status indicators**: absent — no CI badge, no version badge, no license badge on the README.
-- **Pitfalls observed**: no CHANGELOG and seven-of-ten tags have GitHub Releases — release-history discoverability is partial. A user who wants to know what changed in `v2.0.5` must `git log v2.0.4..v2.0.5`. Release names duplicate the tag prefix (`v2.0.1 — Sharpen semantic vs grep search guidance`) rather than using `generate_release_notes`.
+`plugin.json` is minimal manifest metadata (name, description, version, author, homepage, repository, license, keywords). No `skills`, `agents`, `hooks`, `mcpServers`, `commands` fields. Claude Code picks up components via convention directories (`skills/`, `agents/`, `hooks/hooks.json`).
 
-## 17. Novel axes
+## Component composition
 
-- **Multi-agent skills distribution, single source of truth**: the README enumerates ten "SKILL.md-compatible" agents (Claude Code, Cursor, GitHub Copilot, Windsurf, Gemini CLI, Codex, Goose, Amp, Roo Code, OpenCode, OpenClaw) each with their own project-scope and user-scope skills directory conventions. The repo is simultaneously (a) a Claude Code plugin marketplace via `.claude-plugin/marketplace.json`, and (b) a universal skill distributable via `npx skills add CodeAlive-AI/codealive-skills@codealive-context-engine` (skills.sh). CLAUDE.md explicitly frames this: "the description is read by many agents in many contexts" — the skill description has to work for Claude Code, Codex, Cursor, and others simultaneously. Pattern candidate for marketplace-as-cross-host-distribution.
-- **Plugin-bridge as cross-agent cache symlinker**: `tools/plugin-bridge/` is an auxiliary bash toolkit (install script + `launchd` plist template + update script + uninstall script + README) that keeps a symlink from `~/.codex/skills/codealive-context-engine` (or any other agent's skills dir, via env-var override) pointed at `~/.claude/plugins/cache/codealive-marketplace/codealive/<latest-version>/skills/codealive-context-engine`. This converts Claude Code's versioned plugin cache into a live source for non-Claude agents, automatically relinking on `claude plugin update` via `launchd` `WatchPaths`. Linux equivalent is a `systemd --user` path unit described inline in the README. No other researched repo ships cross-agent plugin-cache synchronization. Pattern candidate for inter-agent artifact reuse.
-- **OS-credential-store preference over `userConfig` for secrets**: deliberately avoids `userConfig.sensitive: true` in favor of macOS Keychain / Linux Secret Service / Windows Credential Manager via a one-time `python setup.py` interactive wizard. The justification (README) is cross-agent sharing: "the key is stored once and shared across all agents on the same machine." Pattern candidate alongside the `userConfig` patterns section — when secrets must be shared across tools, `userConfig` is the wrong surface.
-- **WSL-aware credential lookup with sentinel pass-through**: the SessionStart hook (`check_auth.sh`) detects WSL via `grep -qi microsoft /proc/version` and probes Windows Credential Manager through `cmd.exe /c cmdkey /list:codealive-api-key`. Since bash can't read the credential value across the WSL boundary, the hook stores the sentinel string `"windows-credential-store"` to signal "credential exists, defer actual read to Python runtime via `powershell.exe`". Clever but fragile pattern — novel enough to mention.
-- **Skill description authored for multi-agent matching**: CLAUDE.md explicitly prescribes description-writing rules ("include concrete trigger verbs/nouns users actually say", "1024 char hard limit, aim 300-500", "don't bake in anti-patterns against failure modes of one session — read by many agents in many contexts"). Pattern candidate for the `description` discoverability axis — SKILL.md-level discovery isn't just a Claude Code concern when the skill targets multiple hosts.
-- **Subagent + skill composition**: `agents/codealive-context-explorer.md` invokes the skill via `skills: [codealive-context-engine]` frontmatter and downgrades the model to `haiku` to keep exploration cheap. This is an explicit token-cost optimization — offload iterative searches to a cheaper model so the caller's expensive-model conversation stays short. Pattern candidate for cost-aware subagent design.
+### Skills (universal)
 
-## 18. Gaps
+One skill: `skills/codealive-context-engine/` with `SKILL.md` (~13 KB).
 
-- `CHANGELOG.md` is absent — cannot observe whether the project has a prose changelog discipline outside git-tag release notes, or whether changelog-entry authoring was explicitly rejected as a practice. Source to resolve: ask maintainer or check PR history for deleted-CHANGELOG commits.
-- No `CODEALIVE_BASE_URL` / `CODEALIVE_API_KEY` behavior is directly observed end-to-end — `setup.py` normalizes and verifies but its integration with the credential store (Keychain write, secret-tool write) happens in branches of the script I only skimmed. I read enough to confirm reads; writes look symmetric but I did not fetch the writer code in detail. Source to resolve: fetch `setup.py` tail (lines ~80-end) and the Linux/Windows write paths.
-- Release automation is absent in workflows, and CLAUDE.md's release prescription is manual — I did not verify whether a local script (e.g., a `scripts/release.sh` at the repo root) automates bump + tag. The recursive tree listing showed no such script at root, so I'm confident it's purely manual, but haven't checked deleted/historical files.
-- The ten tag names are observed from the `/tags` API; I did not verify that every tag's tree contents match the version in its `plugin.json` (i.e., no drift between tag and manifest). A sampling check would confirm the "tag matches plugin.json" invariant is held across history.
-- The `COD-XXX-search-surface-split` feature branch was listed but not inspected — it may contain work-in-progress patterns that would affect future-state observation. Source to resolve: `gh api repos/CodeAlive-AI/codealive-skills/compare/main...COD-XXX-search-surface-split`.
-- `plugin.json`'s `keywords` are not a Claude Code marketplace discoverability surface per the plugin-reference docs (which list `category`/`tags`); `keywords` appears to be npm-style convention. Whether Claude's marketplace indexes it is not documented — marked as an observation (keywords field present, role unclear).
-- The `strict: false` intent is inferred. Confirming source: ask the maintainer or check commit that introduced it.
+### Agents
+
+One agent: `agents/codealive-context-explorer.md`.
+
+### Hooks
+
+`hooks/hooks.json` plus `hooks/scripts/check_auth.sh` — a SessionStart-only hook (auth check / setup nudge).
+
+## Skill authoring conventions
+
+### Standard frontmatter
+
+`skills/codealive-context-engine/SKILL.md` carries standard frontmatter. `CLAUDE.md` explicitly prescribes description-writing rules: "include concrete trigger verbs/nouns users actually say", "1024 char hard limit, aim 300-500", "don't bake in anti-patterns against failure modes of one session — read by many agents in many contexts."
+
+### Multi-host description tuning
+
+The skill description is authored to work simultaneously for ten "SKILL.md-compatible" agents enumerated in README (Claude Code, Cursor, GitHub Copilot, Windsurf, Gemini CLI, Codex, Goose, Amp, Roo Code, OpenCode, OpenClaw) — each with its own project-scope and user-scope skills directory conventions. `CLAUDE.md` codifies the multi-host posture: "the description is read by many agents in many contexts."
+
+## Agent declaration conventions
+
+### `skills:` array delegating to skill packages
+
+`agents/codealive-context-explorer.md` declares `tools: Bash, Read, Grep, Glob`, `model: haiku`, and `skills: [codealive-context-engine]` to grant the subagent access to the skill. Cheap-model selection (`haiku`) is an explicit token-cost optimization — offload iterative searches so the caller's expensive-model conversation stays short.
+
+### Plain tool-name list
+
+`tools: Bash, Read, Grep, Glob` (comma-separated bare names). No permission-rule syntax like `Bash(uv run *)`.
+
+## Cross-platform skill publishing
+
+### Multi-runtime install via npm bootstrap
+
+The skill is installable via `npx skills add CodeAlive-AI/codealive-skills@codealive-context-engine` (skills.sh) into runtime-specific directories (`~/.claude`, `~/.cursor`, `~/.codex`, `~/.windsurf`, etc.). Same source ships as a Claude Code marketplace plugin AND as a multi-runtime skill bundle through npm.
+
+## Bin entry mechanism
+
+### No bin entry / direct invocation
+
+No `bin/` directory. The plugin ships Python scripts the agent invokes directly (`python scripts/search.py`) and a `hooks/scripts/check_auth.sh` hook. SKILL.md and the subagent reference scripts with `python scripts/datasources.py` and note "If the path fails, check `${CLAUDE_PLUGIN_ROOT}/skills/codealive-context-engine/scripts/`" — a soft fallback rather than a deterministic resolution.
+
+## Plugin-runtime root resolution
+
+### Two-tier env-var-first fallback
+
+`hooks/scripts/check_auth.sh` resolves plugin root via `${CLAUDE_PLUGIN_ROOT:-$(dirname "$(dirname "$(dirname "$0")")")}` — a defensive two-way resolution so the script works whether Claude Code sets the env var or not. Pattern reusable as a template for other hooks.
+
+## Dependency installation
+
+### Zero dependencies / stdlib only
+
+The skill's Python scripts use only the stdlib (`urllib.request`, `subprocess`, `json`, `platform`) — no third-party runtime deps. No `requirements.txt`, no `pyproject.toml`, no `setup.py`-as-packaging (the file at the skill root named `setup.py` is a standalone interactive configurator, not a packaging manifest). No venv. The agent/user invokes `python scripts/*.py` directly using whatever `python` is on PATH. CI installs `pytest pytest-cov` via inline `pip install`.
+
+### One-time interactive setup with OS credential store
+
+`skills/codealive-context-engine/setup.py` is a user-invoked interactive configurator. Stores the API key in the OS credential store (macOS Keychain / Linux Secret Service / Windows Credential Manager). No Python packages are installed anywhere. README invokes via `python setup.py`. The shared-name with the Python packaging sentinel `setup.py` is an authoring-collision risk — a Python-tooling agent could mistake it for a distutils/setuptools entry and run `python setup.py install`. The file's docstring (`"""CodeAlive Context Engine — Setup\n\nStores the API key…"""`) disambiguates on read.
+
+## Install change detection
+
+### No change detection
+
+No SessionStart-driven dep install; deps are not managed.
+
+## Install trigger and lifecycle
+
+### User-invoked one-shot installer
+
+`setup.py` at `skills/codealive-context-engine/setup.py` — user-invoked, not hook-invoked. README documents `python setup.py`.
+
+## Install failure posture
+
+### Silent fail-open (`exit 0` always, retry every hook)
+
+`check_auth.sh` (SessionStart) signals missing credential via `hookSpecificOutput.additionalContext` JSON on stdout, nudging the agent to run `python setup.py`. `exit 0` always — fail-open, non-blocking.
+
+## User configuration and authentication
+
+### OS-level secret storage
+
+The plugin handles a secret (API key) but chose OS credential store + env var (`CODEALIVE_API_KEY` / `CODEALIVE_BASE_URL`) over `userConfig`. README: "The key is stored once and shared across all agents on the same machine." A `userConfig` field would have fragmented storage per-agent. macOS Keychain / Linux Secret Service / Windows Credential Manager (via WSL probing for cross-boundary access).
+
+### No userConfig, env-var only
+
+`plugin.json` contains no `userConfig` block. Configuration lives in `CODEALIVE_API_KEY` / `CODEALIVE_BASE_URL` env vars; secrets stay out of `settings.json`.
+
+## Tool-use enforcement
+
+### No enforcement (observational only)
+
+No PreToolUse hooks, no PostToolUse hooks, no PermissionRequest/PermissionDenied hooks. The single SessionStart hook is observational (auth check / setup nudge), not gating.
+
+## Hook handler runtime
+
+### Bash scripts at conventional path
+
+`hooks/scripts/check_auth.sh` opens with `#!/bin/bash`. Uses `|| true` on each credential lookup to avoid `set -e`-style propagation, but `set -e` is not set, so each failure is swallowed independently. Probes macOS Keychain (`security find-generic-password ...`), Linux Secret Service (`secret-tool lookup ...`), and WSL-to-Windows Credential Manager (`grep -qi microsoft /proc/version` then `cmd.exe /c cmdkey /list:codealive-api-key`) in order.
+
+## Hook output contract
+
+### `additionalContext` for context injection
+
+SessionStart hook emits JSON on stdout via the `hookSpecificOutput` envelope when the API key is missing — exactly the Claude Code SessionStart output envelope documented in the plugin-reference hooks page. No stderr usage.
+
+## Hook failure posture
+
+### Fail-open with always-exit-0
+
+`check_auth.sh` exits 0 unconditionally, even when no credential is found. The hook's role is to inject guidance into additionalContext, not to block the session.
+
+## Session context loading
+
+### Conditional `additionalContext` for setup nudge
+
+`check_auth.sh` injects `additionalContext` only when the API key is missing; when present, no context is injected. The "missing-key" message is a one-shot nudge, not a status line. WSL branch uses a sentinel `KEY="windows-credential-store"` because bash can't read the actual credential value across the WSL boundary — the real value is read at Python runtime via `powershell.exe`. A hook author copying this pattern must know the sentinel is intentional; it looks like a bug until the runtime path is traced.
+
+## SessionStart matcher scope
+
+### Explicit subset
+
+Matcher is `startup` only (not `startup|clear|compact` or empty). `/clear` and `/compact` do not re-trigger the auth check — if the user adds a credential mid-session, the skill won't see the updated state until the next fresh session.
+
+## Live monitoring
+
+### `monitors.json` absent
+
+No `monitors.json`. No monitor count. No version-floor declaration in README.
+
+## Plugin-to-plugin coordination
+
+### `dependencies` field absent
+
+No `dependencies` field on `plugin.json`. Single-plugin marketplace; tag format is plain `vX.Y.Z`.
+
+## Testing
+
+### pytest with optional inline cov
+
+Tests at `tests/` (repo root): `tests/helpers.py`, `tests/test_cli_smoke.py`, `tests/test_setup_and_client.py`. Tests cross the skill boundary — they import from `skills/codealive-context-engine/scripts/lib/` via `sys.path.insert` and `importlib.util.spec_from_file_location`.
+
+### pytest with sys.path manipulation
+
+Tests use `sys.path.insert` and `importlib.util.spec_from_file_location` to import from `skills/codealive-context-engine/scripts/lib/` because the lib isn't a packaged module. No `pyproject.toml`, no `pytest.ini`, no `setup.cfg`.
+
+### Centralized `tests/` placement
+
+Tests placed at `tests/` repo root, not co-located with skill source. CI invokes pytest with inline flags: `python -m pytest tests -v --cov=skills --cov-report=term-missing`. CI inline-installs `pytest pytest-cov` via `pip install`.
+
+## CI workflow shape
+
+### Single workflow, sparse coverage
+
+`.github/workflows/ci.yml` triggers `push: branches: [main]`, `pull_request: branches: [main]`. Single job `ubuntu-latest` × Python `3.11` (no matrix). Installs pytest + pytest-cov, runs `python -m pytest tests -v --cov=skills --cov-report=term-missing`. No linting, no manifest validation, no release automation. Direct `python -m pytest` invocation; no wrapper script. The dependency-install strategy of "no manifest, CI pins pytest inline" means CI's pytest version floats; a pytest release with a breaking API change could surface as a CI failure with no pinned-version paper trail. Coverage output is `term-missing` only — no codecov or artifact upload, so coverage trend is not tracked across commits.
+
+### Action-pinning conventions
+
+SHA pinning with tag comments: `actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2`, `actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0`. No caching — neither the built-in `setup-python` cache input nor an explicit `actions/cache` step.
+
+## Marketplace validation
+
+### No validation
+
+No validation workflow, no validator. Marketplace.json and plugin.json are hand-maintained without schema validation. No pre-commit hook. Frontmatter has no automated validation. "Runtime is tested, manifests are trusted" posture — relies on plugin-install failures to catch malformed JSON.
+
+## Release automation
+
+### No release automation / manual
+
+No `release.yml`. Releases are cut manually: bump `plugin.json` → commit → annotate tag `vX.Y.Z` → push main and tag → write release notes in GitHub UI (sometimes). Tag-release drift (10 tags, 7 Releases, missing `v2.0.2` number) is a direct symptom. CLAUDE.md's release steps document the manual process but include no validation — nothing prevents shipping a tag whose `plugin.json` version doesn't match. Release names duplicate the tag prefix (`v2.0.1 — Sharpen semantic vs grep search guidance`) rather than using `generate_release_notes`.
+
+## Documentation surface
+
+### Comprehensive single README + ad-hoc CLAUDE.md
+
+`README.md` at repo root (~4.4 KB) — installation options (skills.sh, Claude Code plugin, MCP server, plugin-bridge), setup instructions, API key storage table per-OS, usage examples. `CLAUDE.md` at repo root (~2.4 KB) — positions the skill against MCP ("the skill is NOT an MCP wrapper"), documents release procedure, writing-guidance for the SKILL.md description field. SKILL.md (`skills/codealive-context-engine/SKILL.md` ~13 KB). `tools/plugin-bridge/README.md` ~3.5 KB for the auxiliary bridge tool. No `architecture.md`. No `CHANGELOG.md` (404 on main).
+
+## License declaration
+
+### LICENSE file present + SPDX in manifests (single source agreement)
+
+`LICENSE` present at repo root (MIT, SPDX `MIT`). SPDX `MIT` declared in `plugin.json` `license` field.
+
+## Community health files
+
+### Bare minimum (LICENSE only)
+
+`LICENSE` present. No `SECURITY.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `.github/ISSUE_TEMPLATE/`, `.github/PULL_REQUEST_TEMPLATE.md`. No CI badge, version badge, or license badge on README.
+
+## Cross-platform discipline
+
+### POSIX `/bin/sh` discipline in hot path
+
+Auth hook uses `#!/bin/bash`. Python scripts use `#!/usr/bin/env python3`. Plugin-bridge shell scripts use `#!/usr/bin/env bash`. `.gitattributes` forces `eol=lf` for `*.sh` to prevent CRLF-from-Windows breaking shebangs on WSL/Linux. `.sh` files are mode `100755`.
+
+### Dual-fallback OS detection
+
+`check_auth.sh` probes macOS (`security find-generic-password`), then Linux (`secret-tool lookup`), then WSL (`grep -qi microsoft /proc/version` → `cmd.exe /c cmdkey`). Each platform branch is independently failure-tolerant via `|| true`.
+
+## Cross-ecosystem distribution
+
+### Cross-agent skill via `npx skills`
+
+The skill is installable via `npx skills add CodeAlive-AI/codealive-skills@codealive-context-engine` (skills.sh) outside Claude Code's marketplace. Same skill folder doubles as a Claude Code plugin and a skills.sh-distributable. README enumerates ten "SKILL.md-compatible" agent runtimes the skill supports.
+
+## PATH augmentation and host-project setup
+
+### None (plugin operates standalone)
+
+Plugin does not modify host PATH. Auxiliary `tools/plugin-bridge/` ships its own bash toolkit (install script + `launchd` plist template + update script + uninstall script) for cross-agent symlink management — opt-in, not part of plugin install.
+
+## Cross-role tools
+
+### Python (stdlib + pip + uv)
+
+Python is the runtime for skill scripts (`urllib.request`, `subprocess`, `json`, `platform`, all stdlib), for `setup.py` (interactive configurator), and for tests. No `uv`, no third-party runtime deps. CI uses Python 3.11.
+
+### bash
+
+`hooks/scripts/check_auth.sh` (`#!/bin/bash`); plugin-bridge scripts (`#!/usr/bin/env bash`).
+
+### `${CLAUDE_PLUGIN_ROOT}` env var
+
+Used in `hooks/scripts/check_auth.sh`'s defensive plugin-root resolution and referenced in SKILL.md's path-fallback guidance.
+
+### `hookSpecificOutput.additionalContext`
+
+SessionStart auth hook emits via the `hookSpecificOutput.additionalContext` envelope when credential is missing.
+

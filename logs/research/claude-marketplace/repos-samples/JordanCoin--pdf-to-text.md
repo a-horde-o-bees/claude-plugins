@@ -1,197 +1,227 @@
-# JordanCoin/pdf-to-text
+# Sample
 
-## Identification
+Mirrors of `https://github.com/JordanCoin/pdf-to-text`. Single-plugin Claude Code companion that wraps a WASM PDF-extraction engine (`glyph_api`) behind an MCP server, with a bin-script update poller invoked from a SKILL.md preamble.
 
-- **URL**: https://github.com/JordanCoin/pdf-to-text
-- **Stars**: 0
-- **Last commit date**: 2026-04-12 (commit `a2504a2` — "Add marketplace.json for plugin discovery")
-- **Default branch**: main
-- **License**: none declared at API level (no LICENSE file); `plugin.json` asserts `"license": "UNLICENSED"`; README says "Plugin wrapper: MIT. Extraction engine: proprietary." — three different answers
-- **Sample origin**: dep-management + bin-wrapper
-- **One-line purpose**: "Extract clean text from any PDF — even the ones Chrome mangles. Claude Code companion for the PDF to Text Chrome extension." (from `plugin.json.description` / README)
+## Marketplace manifest layout
 
-## 1. Marketplace discoverability
+### Self-referential single-plugin marketplace at repo root
 
-- **Manifest layout**: single `.claude-plugin/marketplace.json` at repo root, with a single plugin entry `source: "./"` pointing at the same repo root (self-referential single-plugin marketplace)
-- **Marketplace-level metadata**: top-level `name` + `owner.name` only; no `metadata.{description, version, pluginRoot}` wrapper
-- **`metadata.pluginRoot`**: absent
-- **Per-plugin discoverability**: `keywords` only — `["pdf", "extraction", "markdown", "text", "wasm"]`. No `category`, no `tags`. (plugin.json also has `keywords` that differ slightly: adds `"unicode"`, omits nothing — so two keyword lists that drift)
-- **`$schema`**: absent
-- **Reserved-name collision**: no
-- **Pitfalls observed**: Marketplace-entry `keywords` and plugin.json `keywords` drift — marketplace has 5, plugin.json has 6 (`"unicode"` extra). Single source of truth violated at the keyword level. Also: marketplace-entry `description` and plugin.json `description` are *different* strings (marketplace: "Extract clean text from any PDF — even the ones Chrome mangles. Claude Code companion for the PDF to Text Chrome extension." / plugin.json: "Extract clean text from any PDF — even the ones Chrome mangles. 7-level cascade resolves broken Unicode mappings locally via WASM. Returns plain text, basic markdown, or structured markdown with TOC and headings.") — marketplace entry should reference plugin.json, not duplicate.
+`.claude-plugin/marketplace.json` co-located with `.claude-plugin/plugin.json` at repo root. Marketplace entry sets `source: "./"` (trailing slash mandatory) — marketplace and plugin payload share the same repo root. Top-level metadata is just `name` + `owner.name`; no `metadata` wrapper, no `metadata.{description, version, pluginRoot}`. `$schema` field absent.
 
-## 2. Plugin source binding
+### Custom non-schema fields on marketplace entries
 
-- **Source format(s) observed**: `source: "./"` (relative) — self-reference to the repo root
-- **`strict` field**: not present (defaults to implicit true)
-- **`skills` override on marketplace entry**: absent
-- **Version authority**: both `plugin.json` (`"version": "0.1.0"`) and marketplace entry (`"version": "0.1.0"`) — drift risk. Additionally, a third copy lives in top-level `VERSION` (`0.1.0`), and a fourth in `mcp-server/package.json` (`"version": "0.1.0"`), and a fifth hardcoded in `mcp-server/src/index.ts` (`version: "0.1.0"`). Five-way drift surface.
-- **Pitfalls observed**: Version duplicated five times with no generation/sync mechanism. `plugin.json.repository` points at `https://github.com/JordanCoin/glyph-api` (a different repo) — the plugin advertises a repo URL that does not exist (verified 404 on `gh api repos/JordanCoin/glyph-api`).
+Marketplace-entry `description` and `plugin.json.description` are different strings: marketplace carries `"Extract clean text from any PDF — even the ones Chrome mangles. Claude Code companion for the PDF to Text Chrome extension."`; `plugin.json` carries the longer `"Extract clean text from any PDF — even the ones Chrome mangles. 7-level cascade resolves broken Unicode mappings locally via WASM. Returns plain text, basic markdown, or structured markdown with TOC and headings."` Two declared descriptions for the same plugin with no sync.
 
-## 3. Channel distribution
+## Plugin source binding
 
-- **Channel mechanism**: no split — users install via `/plugin install pdf-to-text@JordanCoin/pdf-to-text` and pin to whatever `main` resolves to at install time
-- **Channel-pinning artifacts**: absent (no `stable-*` / `latest-*` pattern, no release branches, no tags)
-- **Pitfalls observed**: The repo ships its own update-check mechanism (`bin/update-check`) that bypasses the marketplace channel concept entirely — it polls `github.com/JordanCoin/glyph-api/releases/latest` (a separate, currently-missing repo) rather than the plugin's own marketplace entry. So "update" means "engine update," not "plugin update." The plugin code itself is effectively whatever `main` currently holds.
+### Relative source pointing to repo root (`./`)
 
-## 4. Version control and release cadence
+Marketplace entry `source: "./"` resolves the plugin payload at the same path as the marketplace itself. `strict` field absent (defaults to implicit true). No `skills` override on the entry. Trailing slash present (bare `"."` would fail validation).
 
-- **Default branch name**: main
-- **Tag placement**: none — zero tags exist
-- **Release branching**: none
-- **Pre-release suffixes**: n/a — no releases of any kind
-- **Dev-counter scheme**: absent — all version strings are static `0.1.0` across five locations with no counter or bump mechanism
-- **Pre-commit version bump**: no
-- **Pitfalls observed**: The `bin/update-check` script assumes semver releases exist on a *different* repo (`JordanCoin/glyph-api`). That repo returns 404, so `curl -sf` will fail, the script's silent-on-network-error branch fires, and no update notice ever surfaces. Effectively the update pipeline is wired to an endpoint that does not exist yet.
+## Per-plugin discoverability metadata
 
-## 5. Plugin-component registration
+### Keywords-only on plugin.json
 
-- **Reference style in plugin.json**: default discovery — `plugin.json` declares no component paths; Claude Code auto-discovers via standard directory conventions (`skills/`, `hooks/hooks.json`, `.mcp.json` at repo root)
-- **Components observed**:
-    - skills — yes (`skills/extract-pdf/SKILL.md`)
-    - commands — no
-    - agents — no
-    - hooks — yes (`hooks/hooks.json` with a single `SessionStart` command)
-    - `.mcp.json` — yes (at repo root, registers one stdio server `pdf-to-text`)
-    - `.lsp.json` — no
-    - monitors — no
-    - bin — yes (`bin/update-check`, 100755)
-    - output-styles — no
-- **Agent frontmatter fields used**: not applicable (no agents)
-- **Agent tools syntax**: not applicable
-- **Pitfalls observed**: `.mcp.json` points at `${CLAUDE_PLUGIN_ROOT}/mcp-server/dist/index.js`, but `mcp-server/dist/` is listed in `.gitignore` and no built artifact is committed. No `SessionStart`-equivalent hook builds the TypeScript either — `install-engine.sh` downloads the WASM payload but never runs `tsc` on `mcp-server/src`. So the MCP server will fail to load on fresh install unless the user manually runs `npm install && npm run build` inside `mcp-server/`. README does not mention this step.
+Marketplace entry's only discoverability surface is `keywords: ["pdf", "extraction", "markdown", "text", "wasm"]` — no `category`, no `tags`. `plugin.json` independently carries a 6-entry `keywords` array (adds `"unicode"`). Two keyword lists for the same plugin with no sync between them — drift surface where the marketplace surface and plugin.json surface advertise different terms.
 
-## 6. Dependency installation
+### `$schema` absence on per-plugin manifests
 
-- **Applicable**: yes
-- **Dep manifest format**: `mcp-server/package.json` (Node, `@modelcontextprotocol/sdk ^1.12.1`, `typescript ^5.7.0`, `@types/node ^22.0.0`). No Python manifest. Additionally, runtime-downloaded WASM payload (not a package manager — raw file download from GitHub Releases).
-- **Install location**: `${CLAUDE_PLUGIN_DATA}` with fallback to `$HOME/.config/pdf-to-text` (see install-engine.sh line 4). Three-level fallback in `bin/update-check` is actually two-level: `${CLAUDE_PLUGIN_DATA:-$HOME/.config/pdf-to-text}` (note: README claim of "three-level fallback" as described in the task brief is not matched by the code — the WASM install/state directory is strictly two candidates; the three-level pattern appears only in `_PLUGIN_DIR` resolution within SKILL.md's preamble: `${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." ... && pwd || echo "$HOME/.config/pdf-to-text")}` — that's the three-tier chain).
-- **Install script location**: `hooks/install-engine.sh` (fired by `hooks/hooks.json` `SessionStart`). Additionally `bin/update-check` (not a hook — invoked from the skill preamble).
-- **Change detection**: version file stamp — compares `${PLUGIN_DIR}/VERSION` against `${INSTALL_DIR}/.version`; exits 0 when equal. No sha256/md5 verification on downloaded WASM.
-- **Retry-next-session invariant**: partial tmp files are cleaned up on failure (`rm -f "${WASM_FILE}.tmp" ...`). The committed-version file `${INSTALL_DIR}/.version` is only written on full success, so re-running `SessionStart` retries the download. Corrective guidance in stderr tells user to `delete ${INSTALL_DIR} and restart your session`.
-- **Failure signaling**: `set -euo pipefail` + human-readable stderr + exit 1 on download failure; success path prints to stdout `[pdf-to-text] Engine v${TARGET_VERSION} ready`. No JSON `systemMessage`, no `continue: false`, no structured hook output — human text only.
-- **Runtime variant**: WASM — binary payload is `glyph_api_bg.wasm` + `glyph_api.js` wrapper + `markdown.js` companion, downloaded from `https://github.com/JordanCoin/glyph-api/releases/download/v${VERSION}/`. Consumed from Node via `WebAssembly.Module` + `initSync({ module })`.
-- **Alternative approaches**: none — no `npx`/`uvx`, no PEP 723, no pointer file. The WASM files are written directly to the install dir and imported by absolute path at MCP-server startup.
-- **Version-mismatch handling**: exact-match only (`INSTALLED_VERSION = TARGET_VERSION` check); any inequality triggers full re-download of all three files. No semver-range matching. Engine and plugin share `VERSION`, so engine downgrade tied to plugin downgrade.
-- **Pitfalls observed**: (1) `hooks/hooks.json` runs `install-engine.sh` on every SessionStart regardless of matcher — no `matcher: "startup"` narrowing, so sub-events like `clear` / `compact` also re-run the check (cheap since it no-ops when versions match, but unnecessary). (2) WASM download targets a release URL on a repo (`JordanCoin/glyph-api`) that currently 404s — fresh installs will fail with "Install failed. extract_pdf unavailable until engine is installed." (3) The MCP server's `wasm-extract.ts` expects `glyph_api.js` to be a JS wrapper it can `await import(paths.js)`, but `initSync({ module: new WebAssembly.Module(wasmBytes) })` reads the raw `.wasm` separately — so both files are needed and downloaded atomically. (4) No sha256 check on downloads means a compromised mirror or MITM delivers arbitrary WASM. (5) No `mcp-server/dist/` build step in any hook.
+`$schema` field absent from both `marketplace.json` and `plugin.json`. No editor schema-completion or ahead-of-time validation; reactive detection (install errors) is the only feedback channel.
 
-## 7. Bin-wrapped CLI distribution
+## Version coordination
 
-- **Applicable**: yes (one bin script — `bin/update-check`)
-- **`bin/` files**: `bin/update-check` — polls GitHub Releases for newer engine version, writes status cache, emits `UPGRADE_AVAILABLE <old> <new>` / `JUST_UPGRADED <old> <new>` / nothing. Invoked from `skills/extract-pdf/SKILL.md` preamble, not from `hooks.json`.
-- **Shebang convention**: `#!/usr/bin/env bash` with `set -euo pipefail`
-- **Runtime resolution**: `${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}` — env var first, script-relative fallback (two-tier). The SKILL.md preamble adds a third tier (`|| echo "$HOME/.config/pdf-to-text"`) but that is on the *skill* side, not the bin script itself.
-- **Venv handling (Python)**: not applicable (bash + Node, no Python)
-- **Platform support**: POSIX-ish — uses `stat -f %m` (BSD/macOS) with `|| stat -c %Y` (GNU/Linux) fallback. `date +%s`, `awk`, `grep`, `sed`, `curl` all expected. No Windows support path. No `.cmd` / `.ps1` pair.
-- **Permissions**: 100755 (git tree mode blob — executable)
-- **SessionStart relationship**: none direct — `SessionStart` runs `install-engine.sh` (separate script). `bin/update-check` runs from the skill preamble, a different invocation point. They share the `CLAUDE_PLUGIN_DATA`/`$HOME/.config/pdf-to-text` state directory: `install-engine.sh` writes `${INSTALL_DIR}/.version` and `${INSTALL_DIR}/just-upgraded-from`; `update-check` reads both and also writes `last-update-check`, `update-snoozed`.
-- **Pitfalls observed**: (1) The cross-platform `stat` fallback uses `echo 0` as the final fallback, which makes `CACHE_AGE` a huge number on systems where both stat forms fail — the subsequent `-lt 3600` / `-lt 43200` comparisons would always be false, defeating the cache and hitting GitHub on every session. Not a correctness bug but a silent cache disable. (2) `update-check` references a `SNOOZE_FILE` and parses a 3-field snooze record (`version level epoch`), but no code in the repo *writes* that file — the snooze feature is half-implemented (read path exists, write path does not; presumably the agent is supposed to write it after the "ask user to snooze" dialog, but the skill doesn't prescribe that). (3) Shebang says `bash`, but `update-check`'s cache check uses `grep -q "^UP_TO_DATE"` against a string with a leading newline if the file has trailing blanks — generally robust but relies on `head -1`.
+### Multi-site sprawl (5+ locations)
 
-## 8. User configuration
+Version `0.1.0` appears in five locations: `plugin.json`, `marketplace.json` entry, top-level `VERSION` file, sub-package `mcp-server/package.json`, and a hardcoded `version: "0.1.0"` literal in `mcp-server/src/index.ts`. No bump script, no sync mechanism, no CI gate, no pre-commit hook — every location is hand-edited per release. The `plugin.json.repository` field points to `https://github.com/JordanCoin/glyph-api`, a sibling repo that returns 404 (`gh api repos/JordanCoin/glyph-api` — verified missing); manifest declares a vapor URL.
 
-- **`userConfig` present**: no
-- **Field count**: none
-- **`sensitive: true` usage**: not applicable
-- **Schema richness**: not applicable
-- **Reference in config substitution**: no `${user_config.*}` references anywhere
-- **Pitfalls observed**: none — the plugin has no configurable surface. Install location is controlled exclusively by `CLAUDE_PLUGIN_DATA` (set by the Claude Code harness) with a hardcoded `$HOME/.config/pdf-to-text` fallback, not through `userConfig`.
+## Channel distribution
 
-## 9. Tool-use enforcement
+### No pinning surface
 
-- **PreToolUse hooks**: none
-- **PostToolUse hooks**: none
-- **PermissionRequest/PermissionDenied hooks**: absent
-- **Output convention**: not applicable (no tool-use hooks)
-- **Failure posture**: not applicable
-- **Top-level try/catch wrapping**: not applicable
-- **Pitfalls observed**: The only hook is `SessionStart`. The MCP server itself does have `main().catch((err) => { console.error("Fatal:", err); process.exit(1); })` top-level, and tool executors throw typed errors (`Failed to download PDF: ${status}`, `PDF too large`, `Either 'url' or 'path' is required`) — but that's MCP-server defensive code, not Claude Code hook enforcement.
+No tags exist (zero `gh api repos/JordanCoin/pdf-to-text/tags`). No release branches, no `stable-*` / `latest-*` channel manifests, no GitHub Releases on this repo. The plugin's effective version is whatever `main` HEAD currently points at; `/plugin install pdf-to-text@JordanCoin/pdf-to-text` resolves there. Consumers track HEAD with no other handle.
 
-## 10. Session context loading
+### Self-update advisory channel
 
-- **SessionStart used for context**: no — used only for dep install (see purpose 6)
-- **UserPromptSubmit for context**: no
-- **`hookSpecificOutput.additionalContext` observed**: no
-- **SessionStart matcher**: none (bare `hooks` array with no `matcher` field) — fires on all SessionStart sub-events (startup, clear, compact)
-- **Pitfalls observed**: The skill's Preamble-run-first block is the closest analogue to session-start context loading, but it runs on *skill invocation*, not on session load. That means `UPGRADE_AVAILABLE` / `JUST_UPGRADED` messages only surface when the user triggers the skill, not proactively at session start. The `just-upgraded-from` marker, written by `install-engine.sh` during `SessionStart`, therefore sits unread until the first time the user touches a PDF-related workflow after an engine upgrade — a notification that could be stale by hours.
+`bin/update-check` polls `https://api.github.com/repos/JordanCoin/glyph-api/releases/latest` (a separate engine-binary repo) for engine versions, separate from the marketplace channel. The poller's target repo currently returns 404; the script's silent-on-network-error branch fires, so no update notice ever surfaces in practice. Update wiring exists in code but is bound to a non-existent endpoint.
 
-## 11. Live monitoring and notifications
+## Tag and release lifecycle
 
-- **`monitors.json` present**: no
-- **Monitor count + purposes**: none
-- **`when` values used**: not applicable
-- **Version-floor declaration**: absent
-- **Pitfalls observed**: The update-notification pattern (check version, emit `UPGRADE_AVAILABLE`, ask user to upgrade) is implemented entirely through the skill preamble rather than through a monitor. This works for the skill's own flow but means agents not invoking `/pdf-to-text:extract-pdf` never see the notice.
+### No tags at all
 
-## 12. Plugin-to-plugin dependencies
+Zero tags on the repo. No `vX.Y.Z` series, no pre-release tags, no GitHub Releases. Effective release process is commit-to-main with no version increment — every version-bearing site stays frozen at `0.1.0`. CHANGELOG.md absent.
 
-- **`dependencies` field present**: no
-- **Entries**: none
-- **`{plugin-name}--v{version}` tag format observed**: not applicable (single-plugin, zero tags)
-- **Pitfalls observed**: none
+## Plugin-component registration
 
-## 13. Testing and CI
+### Default convention discovery
 
-- **Test framework**: none
-- **Tests location**: not applicable (no `tests/` directory, no test files)
-- **Pytest config location**: not applicable
-- **Python dep manifest for tests**: not applicable
-- **CI present**: no (no `.github/` directory — `gh api repos/JordanCoin/pdf-to-text/contents/.github` returns 404)
-- **CI file(s)**: none
-- **CI triggers**: not applicable
-- **CI does**: not applicable
-- **Matrix**: not applicable
-- **Action pinning**: not applicable
-- **Caching**: not applicable
-- **Test runner invocation**: not applicable
-- **Pitfalls observed**: Zero automated verification. No validation that `marketplace.json` parses, no schema check on `plugin.json`, no smoke test that `install-engine.sh` succeeds, no build verification that `mcp-server/src/index.ts` compiles, no round-trip test that the MCP server registers tools and responds. The "release" process is commit-to-main with all quality assurance manual.
+`plugin.json` declares no component paths. Claude Code auto-discovers via standard directory conventions: `skills/extract-pdf/SKILL.md`, `hooks/hooks.json` (single `SessionStart` command), `.mcp.json` at repo root (registers one stdio server `pdf-to-text`), and `bin/update-check` (mode 100755). No commands, no agents, no `.lsp.json`, no monitors, no output-styles.
 
-## 14. Release automation
+### `.mcp.json` sibling file
 
-- **`release.yml` (or equivalent) present**: no
-- **Release trigger**: not applicable
-- **Automation shape**: not applicable — the plugin's "release" is whatever `main` points at (no tags, no GitHub Releases on this repo). The WASM engine is expected to ship releases on a *separate* repo (`JordanCoin/glyph-api`), which itself has no releases yet.
-- **Tag-sanity gates**: not applicable
-- **Release creation mechanism**: not applicable
-- **Draft releases**: not applicable
-- **CHANGELOG parsing**: not applicable
-- **Pitfalls observed**: The update system design (`update-check` polls `api.github.com/repos/JordanCoin/glyph-api/releases/latest`) assumes a companion repo exists and cuts semver releases. Neither condition currently holds. The plugin ships with a dangling update pipeline — code is written, infrastructure is not.
+`.mcp.json` at repo root registers a single stdio MCP server `pdf-to-text`. Server entry invokes `node ${CLAUDE_PLUGIN_ROOT}/mcp-server/dist/index.js`. Build-target directory `mcp-server/dist/` is gitignored and no hook builds it; consumed at startup by name without the plugin shipping a precompiled artifact.
 
-## 15. Marketplace validation
+## Bin entry mechanism
 
-- **Validation workflow present**: no
-- **Validator**: not applicable
-- **Trigger**: not applicable
-- **Frontmatter validation**: no
-- **Hooks.json validation**: no
-- **Pitfalls observed**: See §13 — no automated checks on any manifest file.
+### Skill-invoked update poller
 
-## 16. Documentation
+`bin/update-check` (~bash, mode 100755, `#!/usr/bin/env bash` + `set -euo pipefail`) polls GitHub Releases for engine-version updates and emits one of `UPGRADE_AVAILABLE <old> <new>` / `JUST_UPGRADED <old> <new>` / nothing on stdout. Not registered in `plugin.json`'s component fields. Invoked from a `## Preamble (run first)` block embedded in `skills/extract-pdf/SKILL.md` — the agent reads the skill body, shells out per the prose instructions, parses output, and conditionally surfaces a notification. Polling cadence gated by a cache file with a TTL (`-lt 3600` and `-lt 43200` thresholds for two cache stages). Snooze sub-feature is half-implemented: read path parses a `$SNOOZE_FILE` carrying a 3-field record (`version level epoch`) and uses a `case` on level to pick escalating durations (24h → 48h → 7d), but no script in the repo writes the file. Two-phase install + notify pipeline: `install-engine.sh` writes a one-shot `just-upgraded-from` marker on engine upgrade; `update-check` reads that marker exactly once and `rm -f`s it after emission, so the upgrade notice is captured without a persistent status flag.
 
-- **`README.md` at repo root**: present (2547 bytes) — install command, tool list, usage examples, format reference, privacy statement, license
-- **`README.md` per plugin**: same file serves (single-plugin repo)
-- **`CHANGELOG.md`**: absent
-- **`architecture.md`**: absent
-- **`CLAUDE.md`**: absent
-- **Community health files**: none (no `SECURITY.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`)
-- **LICENSE**: absent as a file — README asserts "Plugin wrapper: MIT. Extraction engine: proprietary." but no `LICENSE` file commits the MIT text or anything else; `plugin.json` says `"UNLICENSED"`; GitHub API license field returns null
-- **Badges / status indicators**: absent
-- **Pitfalls observed**: License claim is asserted in prose only, without an SPDX-identifiable file — GitHub UI and tooling will report the repo as unlicensed regardless of the README claim. Three license statements across three locations all disagree (README: MIT+proprietary; plugin.json: UNLICENSED; GitHub: null). README does not document the `mcp-server/` build prerequisite (`npm install && npm run build`) that a fresh clone requires before the MCP server will load.
+### `${CLAUDE_PLUGIN_DATA}` with HOME fallback
 
-## 17. Novel axes
+`update-check` resolves install dir as `${CLAUDE_PLUGIN_DATA:-$HOME/.config/pdf-to-text}` — two-tier env-var-first fallback. Cross-platform `stat` chain `stat -f %m || stat -c %Y || echo 0` (BSD-form, GNU-form, literal zero) — final `echo 0` produces an epoch in the deep past, making subsequent `-lt 3600` / `-lt 43200` cache-freshness comparisons always evaluate to false on systems where both stat forms fail (silent cache-disable rather than hard error). State directory holds `.version`, `just-upgraded-from`, `last-update-check`, `update-snoozed` files — sentinels shared with `install-engine.sh`.
 
-- **Self-referential single-plugin marketplace**: `source: "./"` lets one repo be both the marketplace and the plugin — user runs `/plugin install pdf-to-text@JordanCoin/pdf-to-text` which resolves the repo as a marketplace, then discovers the plugin at `./`. Not unique to this repo but a minimal-footprint pattern worth calling out.
-- **WASM payload as a dep-install target**: most dep-install hooks install package-manager-managed runtimes (Python venv, Node modules). This one downloads three raw files (`.wasm` + `.js` wrapper + companion `markdown.js`) from GitHub Releases directly, no package manager. Pattern: *release-as-CDN* — GitHub Releases substituting for PyPI/npm/crates.io.
-- **Cross-repo release pipeline**: plugin code and engine binaries live in different repos (this repo ships the Claude Code wrapper; `JordanCoin/glyph-api` is expected to ship engine binaries). `VERSION` in the plugin repo pins the engine version the install script will download. So plugin releases are gated by engine releases — an unusual coupling to document as a pattern variant of "plugin distributes a binary it didn't build."
-- **Skill-preamble as update poller**: rather than wiring update-check into `SessionStart` or `monitors.json`, this plugin runs `bin/update-check` from a bash block embedded in the skill's SKILL.md body (`## Preamble (run first)`). The agent is instructed to shell out, read the output, and conditionally surface a notification. Novel because it embeds polling logic into documentation text that the model must parse and act on, rather than in a structured hook contract.
-- **Three-tier `${CLAUDE_PLUGIN_ROOT}` fallback in skill preamble**: `${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." 2>/dev/null && pwd || echo "$HOME/.config/pdf-to-text")}` — three-level resolution (env var, script-relative dirname, hardcoded user-config path). The last tier is *the data dir, not a plugin dir*, which is semantically wrong for anything that needs to read SKILL.md siblings — but works by coincidence because the skill preamble only invokes `$_PLUGIN_DIR/bin/update-check` and `$_PLUGIN_DIR/hooks/install-engine.sh`, and if those paths don't exist the `2>/dev/null || true` swallows errors. Worth flagging as a pattern that works only because failures are silent.
-- **Two-phase install + notify pipeline**: `install-engine.sh` writes a one-shot `just-upgraded-from` marker file; `update-check` reads that file *exactly once* and `rm -f`s it after emission. Pattern captures "something changed since last check" without needing a persistent status flag. Clever but fragile — if the skill preamble runs and the marker is read before the user sees it, the upgrade notice is lost.
-- **Snooze mechanism with escalating duration** (24h → 48h → 7d): `update-check` parses a `$SNOOZE_FILE` with `version level epoch` and uses a `case` on level to pick the duration. Read path is implemented; write path is not present in the repo. Partial feature — reading design intent, not actual functionality.
+## Plugin-runtime root resolution
 
-## 18. Gaps
+### Two-tier env-var-first fallback
 
-- **`mcp-server/` build mechanism**: `.mcp.json` runs `node ${CLAUDE_PLUGIN_ROOT}/mcp-server/dist/index.js`, but `dist/` is gitignored and no hook builds it. Cannot determine from static inspection how a real install arrives at a working MCP server — possibly the author intended the marketplace to fetch a prebuilt artifact, or `install-engine.sh` is missing a `npm ci && npm run build` step, or the plugin simply doesn't work out of the box today. Would need to actually `/plugin install` it against a live Claude Code to see whether the harness auto-compiles TypeScript or whether the install silently fails. Source to resolve: run the install, or inspect any CI/release logs (none exist).
-- **`glyph-api` release cadence and layout**: `install-engine.sh` expects `https://github.com/JordanCoin/glyph-api/releases/download/v${TARGET_VERSION}/glyph_api_bg.wasm` etc. That repo 404s — no evidence of what the release artifacts actually look like, whether they exist on a different name, or whether the plugin has ever successfully installed. Source to resolve: creation of the `glyph-api` repo + first release, or contacting the author.
-- **Platform coverage for `bin/update-check` `stat` fallback**: the `stat -f %m || stat -c %Y || echo 0` chain is untested across FreeBSD/Alpine/busybox variants. Without a test matrix, unknown whether cache actually functions on environments other than macOS and GNU/Linux. Source to resolve: CI matrix (absent) or manual environment testing.
-- **License reconciliation**: README says MIT-for-wrapper, plugin.json says UNLICENSED, no LICENSE file, GitHub reports null. Cannot determine the author's actual intent. Source to resolve: direct question or explicit `LICENSE` file.
-- **Snooze write path**: `update-check` reads `$SNOOZE_FILE` but nothing in the repo writes it. Unknown whether the author intends the agent itself to write the snooze file based on user response, whether there's a planned companion script, or whether the feature was abandoned mid-implementation. Source to resolve: issue tracker (empty — `open_issues_count: 0`) or commit-message archaeology on future work.
-- **Repository-field misdirection**: `plugin.json.repository: "https://github.com/JordanCoin/glyph-api"` claims a repository that does not exist. Cannot determine whether this is aspirational (planned), a stale copy from the engine repo's own plugin.json, or a mistake. Source to resolve: author confirmation or emergence of the `glyph-api` repo.
+`bin/update-check` resolves plugin root as `${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}` — env var first, script-relative fallback.
+
+### Three-tier with hardcoded data-dir terminal fallback
+
+`skills/extract-pdf/SKILL.md` preamble resolves `_PLUGIN_DIR` as `${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." 2>/dev/null && pwd || echo "$HOME/.config/pdf-to-text")}` — env var, script-relative dirname, hardcoded user-config path. Last tier is the data dir, not a plugin code dir, semantically wrong for code that needs to read SKILL.md siblings — works only because the skill preamble's downstream invocations (`$_PLUGIN_DIR/bin/update-check`, `$_PLUGIN_DIR/hooks/install-engine.sh`) wrap their bodies in `2>/dev/null || true`, which swallows the resulting path errors.
+
+## Dependency installation
+
+### Hook-driven WASM payload
+
+`SessionStart` hook fires `hooks/install-engine.sh` (no matcher narrowing — runs on `startup`, `clear`, `compact`). Script downloads three raw artifacts (`glyph_api_bg.wasm`, `glyph_api.js` wrapper, `markdown.js` companion) from `https://github.com/JordanCoin/glyph-api/releases/download/v${VERSION}/`, no package manager. Install dir resolves as `${CLAUDE_PLUGIN_DATA:-$HOME/.config/pdf-to-text}`. The MCP server's `wasm-extract.ts` consumes the payload via `await import(paths.js)` for the JS wrapper and `initSync({ module: new WebAssembly.Module(wasmBytes) })` for the raw `.wasm` — both files needed and downloaded atomically. No sha256 check on downloads; trust is implicit in HTTPS plus GitHub Releases. Engine repo (`JordanCoin/glyph-api`) currently 404s — fresh installs will fail with `Install failed. extract_pdf unavailable until engine is installed.` Plugin's `VERSION` file pins the engine version to download — engine release must precede plugin install success, and engine + plugin share a release cadence by construction.
+
+## Install change detection
+
+### Existence-plus-version-compare
+
+`install-engine.sh` reads `${PLUGIN_DIR}/VERSION` and `${INSTALL_DIR}/.version`; exits 0 when equal. Any inequality triggers full re-download of all three artifacts. Exact-match only — no semver-range matching. Engine and plugin share `VERSION`, so engine downgrade is tied to plugin downgrade.
+
+## Install trigger and lifecycle
+
+### SessionStart direct invocation
+
+`hooks/hooks.json` declares one `SessionStart` hook running `${CLAUDE_PLUGIN_ROOT}/hooks/install-engine.sh` synchronously. No matcher narrowing — fires on every SessionStart sub-event (startup, clear, compact). Cheap when versions already match (no-op exit 0); unnecessary recomputation on `clear` and `compact`.
+
+## Install failure posture
+
+### Implicit retry via late-write cache marker
+
+`install-engine.sh` cleans up partial tmp files on failure (`rm -f "${WASM_FILE}.tmp" ...`); writes `${INSTALL_DIR}/.version` only on full success. Re-running `SessionStart` retries the download cleanly because no version-stamp persisted. Corrective stderr message tells user `delete ${INSTALL_DIR} and restart your session`. `set -euo pipefail` halts on any failing command. Failure signal is human-readable stderr + `exit 1` + corrective hints — no JSON `systemMessage`, no `continue: false`, no structured hook output.
+
+## User configuration and authentication
+
+### No userConfig, env-var only
+
+`plugin.json` declares no `userConfig` block. Install location controlled by `CLAUDE_PLUGIN_DATA` (set by Claude Code) with hardcoded `$HOME/.config/pdf-to-text` fallback. No `${user_config.*}` substitution anywhere. No configurable surface for the user — install path is the only relevant axis and it's host-controlled.
+
+## Session context loading
+
+### Dependency install only (no context emission)
+
+The single `SessionStart` hook runs `install-engine.sh`; emits nothing as `additionalContext` or `systemMessage`. The skill preamble (`bin/update-check` invocation) is the closest analogue to session-start context loading, but it runs on skill invocation, not on session load. `UPGRADE_AVAILABLE` / `JUST_UPGRADED` messages surface only when the user triggers the skill. The `just-upgraded-from` marker, written by `install-engine.sh` during `SessionStart`, sits unread until the first PDF-related skill invocation after an engine upgrade.
+
+## SessionStart matcher scope
+
+### Empty matcher (all sub-events)
+
+`hooks/hooks.json` declares the SessionStart hook with no `matcher` field — fires on `startup`, `clear`, `compact`. Sub-events that could no-op (cheap version-compare exit) fire anyway.
+
+## Tool-use enforcement
+
+### No enforcement (observational only)
+
+No `PreToolUse`, `PostToolUse`, `PermissionRequest`, or `PermissionDenied` hooks. Only hook is `SessionStart`. The MCP server itself wraps its top-level entry with `main().catch((err) => { console.error("Fatal:", err); process.exit(1); })` and tool executors throw typed errors (`Failed to download PDF: ${status}`, `PDF too large`, `Either 'url' or 'path' is required`) — defensive code inside the MCP server, not Claude Code hook enforcement.
+
+## Live monitoring
+
+### `monitors.json` absent
+
+No `monitors.json` file. Update-notification mechanism instead lives in the skill preamble: agent shells out to `bin/update-check`, parses output, surfaces a notice. Version-floor declaration absent — README states no minimum Claude Code version.
+
+## Plugin-to-plugin coordination
+
+### `dependencies` field absent
+
+`plugin.json` has no `dependencies` field. Single-plugin repo with no cross-plugin contracts. The `<plugin-name>--v<version>` tag format is not exercised — no tags exist at all.
+
+## Testing
+
+### No tests
+
+No `tests/` directory, no test files, no test framework. Zero automated verification: `marketplace.json` not parsed by CI, `plugin.json` not schema-checked, `install-engine.sh` not smoke-tested, `mcp-server/src/index.ts` not compile-checked, MCP server registration not exercised. Quality assurance is manual; "release" is whatever `main` currently points at.
+
+## CI workflow shape
+
+### No CI
+
+No `.github/` directory exists (`gh api repos/JordanCoin/pdf-to-text/contents/.github` returns 404). No workflows, no triggers, no matrix, no action-pinning, no caching. All quality assurance is manual.
+
+## Marketplace validation
+
+### No validation
+
+No `claude plugin validate` invocation, no JSON-parse checks on `marketplace.json` or `plugin.json`, no shell-syntax checks on hook scripts, no frontmatter validation. Defects in any manifest reach consumers because no test job catches them.
+
+## Release automation
+
+### No release automation / manual
+
+No `release.yml`, no tag-trigger workflow. The plugin repo cuts no releases. The expected companion repo `JordanCoin/glyph-api` (which `install-engine.sh` polls for engine artifacts) returns 404 — neither repo has a release, so the installed pipeline is wired to an endpoint that does not exist yet. Plugin code is committed but distribution infrastructure is incomplete.
+
+## Documentation surface
+
+### Stub README only
+
+`README.md` at repo root, ~2.5 KB — install command, tool list, usage examples, format reference, privacy statement, license claim. Same file serves the single plugin (no per-plugin README). `CHANGELOG.md` absent. `architecture.md` absent. `CLAUDE.md` absent. README does not document the `mcp-server/` build prerequisite (`npm install && npm run build` required before the MCP server loads, since `mcp-server/dist/` is gitignored and no hook builds it). Install precondition exists but is documented nowhere — fresh installs silently fail at MCP startup.
+
+### No CLAUDE.md
+
+No `CLAUDE.md` at repo root or per plugin. No agent-targeted operational doc; agent context comes only from SKILL.md.
+
+## License declaration
+
+### Three-way disagreement
+
+README asserts `"Plugin wrapper: MIT. Extraction engine: proprietary."` `plugin.json` declares `"license": "UNLICENSED"`. No `LICENSE` file at repo root; GitHub API returns license: null. Three sources disagreeing across README prose, manifest field, and SPDX-detectable file. GitHub UI and tooling report the repo as unlicensed regardless of the README claim.
+
+## Community health files
+
+### Community health files absent
+
+`SECURITY.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `.github/ISSUE_TEMPLATE/`, `.github/PULL_REQUEST_TEMPLATE.md` all absent. No `.github/` directory exists at all.
+
+## Cross-platform discipline
+
+### POSIX with `stat` portability fallback
+
+`bin/update-check` uses `stat -f %m || stat -c %Y || echo 0` — BSD-form (macOS), GNU-form (Linux), literal-zero terminal fallback. Final `echo 0` is a silent cache-disable on systems where both stat forms fail (the resulting epoch is so far in the past that subsequent freshness comparisons always evaluate false). Behavior on busybox, Alpine, FreeBSD unverified.
+
+## Cross-ecosystem distribution
+
+### Single-ecosystem (Claude only)
+
+Only Claude Code manifests in the tree. No `.codex-plugin/`, no `.cursor-plugin/`, no Gemini extension. Plugin manifest, hook scripts, and the MCP server scoped to Claude Code's plugin protocol.
+
+## Native artifact distribution
+
+### On-demand GitHub-release download
+
+WASM payload + JS wrapper + `markdown.js` companion are downloaded from a GitHub Releases endpoint (`https://github.com/JordanCoin/glyph-api/releases/download/v${VERSION}/`) on first SessionStart. Pattern: release-as-CDN, where GitHub Releases substitutes for npm/PyPI. Cross-repo coupling — plugin's `VERSION` file pins the upstream-repo release the install script will fetch.
+
+## Cross-role tools
+
+### `${CLAUDE_PLUGIN_ROOT}` env var
+
+Resolves the plugin install location for `bin/update-check` (env-var-first, script-relative fallback) and the SKILL.md preamble (env-var-first, script-relative second tier, hardcoded data dir third tier).
+
+### `${CLAUDE_PLUGIN_DATA}`
+
+Resolves the engine install / state directory for both `install-engine.sh` and `bin/update-check`, with `$HOME/.config/pdf-to-text` as fallback.
+
+### `plugin.json.version`
+
+Drives install-staleness comparison: `install-engine.sh` reads `${PLUGIN_DIR}/VERSION` (which is the same string as `plugin.json.version`) and compares to `${INSTALL_DIR}/.version`. Same string also appears in `marketplace.json` entry, top-level `VERSION` file, sub-package `mcp-server/package.json`, and a hardcoded source-code literal — five-site sprawl with no sync.
+
+### GitHub Releases
+
+Substrate for the on-demand WASM/JS payload distribution (`glyph-api` repo Releases endpoint) and for the engine-version polling (`bin/update-check` curls `releases/latest` from the same endpoint). Both consumers point at a repo that currently returns 404.
+
+### bash
+
+Hot-path runtime for `bin/update-check` and `hooks/install-engine.sh`. Both use `#!/usr/bin/env bash` + `set -euo pipefail` (or equivalent) with cross-platform `stat` fallback and POSIX `[ -f ]` existence checks. No `.cmd` / `.ps1` siblings — POSIX-only.

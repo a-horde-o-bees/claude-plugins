@@ -1,0 +1,73 @@
+# Pass 2 Refinements — Bin 4
+
+Proposed refinements to `_CONSOLIDATED_breadth-then-depth.md` from rewriting samples in this bin. The reconciler integrates accepted refinements into the next consolidated revision.
+
+## Proposed new paths
+
+> Format: `<role> > <new-path>` — supporting samples — qualitative description draft
+
+- `Per-plugin discoverability metadata > Category + keywords on plugin.json (no tags)` — `Chulf58/FORGE` — `plugin.json` carries both `category` and `keywords` arrays but no `tags` field on either marketplace or plugin entry. Distinct from `Keywords-only on plugin.json` (which has only keywords) and from `Category-only` (no keywords). Distinct from `Category + tags pair` (no keywords). The mid-richness pattern of category+keywords-without-tags is a discoverable position the consolidated currently lacks; FORGE chose this two-axis form over either single-axis or three-axis. Forces a reader to either pick the closest existing path (compromising specificity) or to escalate.
+
+- `Tag and release lifecycle > Tag-release count drift (more tags than published releases)` — `CodeAlive-AI/codealive-skills` — Ten git tags but only seven published GitHub Releases; the manual `gh release create` step has fallen behind the tag cadence. Distinct from `Tag-on-main with manual GitHub Release` (which describes the manual mechanism but not the drift outcome) and from `Single lifetime tag with drift` (where main advances past one tag). The tag-vs-release count delta is its own observable: tags exist for `v2.0.3`/`v2.0.4`/`v2.0.5` but no Release was cut for them. Worth surfacing as a discrete drift mode separate from the underlying mechanism.
+
+- `Plugin-component registration > Marketplace.json env-field workaround in plugin.json` — `CronusL-1141/AI-company` — Distinct sub-case of `Settings.json env-field workaround` but at the plugin.json layer: plugin `settings.json` declares `"env": {"<KEY>": "<value>"}` but Claude Code silently ignores plugin-settings env fields per in-code comment ("Plugin settings.json env field is NOT supported by CC (only 'agent' key works)"). The hook works around by writing the env var directly to `~/.claude/settings.json`. The existing `Settings.json env-field workaround` path in *User configuration and authentication* covers this — but the *registration* angle (declaring the env in plugin.json's settings.json and discovering it doesn't work) might warrant separate framing. Could also be a description sharpening on the existing path.
+
+- `Novel and cross-cutting concerns > Agent pipeline with human gates as first-class structure` — `Chulf58/FORGE` — The plugin is a *pipeline state machine* with explicit Gate #1 (plan approval) and Gate #2 (implementation approval) checkpoints between agent waves. `hooks/gate-enforcement.js` and `hooks/gate-sync.js` hard-enforce gate transitions on Agent/Write/Edit tool calls. Workflow state modeled via hooks rather than relying on skill prose to guide the agent. The constituent mechanisms are mapped under existing roles (`Workflow-state gate (PreToolUse Write|Edit)`, `PreToolUse Agent routing/gate enforcement`, `PostToolUse doc-size guard + state sync`) but the *pipeline-state-machine-as-plugin-shape* is a coherent design that the consolidated could surface explicitly.
+
+- `Novel and cross-cutting concerns > Risk-surface rule in operational docs` — `Chulf58/FORGE` — `CLAUDE.md` defines a "risk surface" (shell / child_process / fs writes outside .pipeline / auth / network / new MCP tools / schema changes / merge boundaries) that deterministically mandates specific reviewer agents regardless of pipeline mode. User-facing policy language for dispatching security reviewers, not a hook pattern. Distinct from agent-frontmatter `tools` declaration and from PreToolUse hook enforcement — this is in-prose policy in CLAUDE.md as the routing surface.
+
+- `Novel and cross-cutting concerns > Plugin-bridge as cross-agent cache symlinker` — `CodeAlive-AI/codealive-skills` — `tools/plugin-bridge/` is an auxiliary bash toolkit (install script + `launchd` plist template + update script + uninstall script) that keeps a symlink from `~/.codex/skills/<name>` (or any other agent's skills dir) pointed at `~/.claude/plugins/cache/<marketplace>/<plugin>/<latest-version>/skills/<name>`. Converts Claude Code's versioned plugin cache into a live source for non-Claude agents, automatically relinking on `claude plugin update` via `launchd` `WatchPaths`. Linux equivalent is a `systemd --user` path unit described inline. Pattern candidate for inter-agent artifact reuse.
+
+- `Novel and cross-cutting concerns > WSL-aware credential lookup with sentinel pass-through` — `CodeAlive-AI/codealive-skills` — SessionStart hook detects WSL via `grep -qi microsoft /proc/version` and probes Windows Credential Manager through `cmd.exe /c cmdkey /list:<key>`. Since bash can't read the credential value across the WSL boundary, the hook stores a sentinel string ("windows-credential-store") to signal "credential exists, defer actual read to Python runtime via `powershell.exe`". Clever but fragile; novel enough to mention as a cross-platform credential pattern.
+
+- `Novel and cross-cutting concerns > Plugin-runs-its-own-HTTP-server` — `CronusL-1141/AI-company` — The plugin isn't a thin MCP wrapper — it expects a FastAPI server process running on localhost (default port 8000 with `api_port.txt` dynamic-port-discovery fallback). Hooks become HTTP event producers for a dashboard rather than in-process policy layers. React dashboard on port 3000 served by FastAPI. Already partially captured by `Persistent FastAPI server with React dashboard UI` under *Sidecar daemon and IPC lifecycle*; could be the cross-cutting framing of that pattern at the plugin-shape level.
+
+- `Novel and cross-cutting concerns > Hook-as-classifier pattern (offloaded to sidecar)` — `CronusL-1141/AI-company` — `permission_denied_recovery.py` calls a plugin-server endpoint (`POST /api/hooks/diagnose_denial`) to classify the denial into one of four retry strategies. The hook offloads policy decisions to the sidecar server, keeping the hook script thin and allowing policy updates without redistributing the plugin. Distinct from in-hook rule engines because the policy lives outside the hook's own version; bumping the rules requires no plugin redistribution.
+
+- `Novel and cross-cutting concerns > Restart-required-for-MCP first-run pattern` — `CronusL-1141/AI-company` — `auto_install.py` writes `additionalContext: "Please restart Claude Code to activate MCP tools. This is a one-time setup."` via `hookSpecificOutput` on first install success. Surfaces the required restart back into the Claude context rather than leaving the user to guess at a bootstrap-ordering problem (MCP server needs the package on sys.path before Claude Code starts the server process). Worth naming as a pattern alongside the `Conditional additionalContext for setup nudge` path in *Session context loading*.
+
+- `Novel and cross-cutting concerns > Large workflow-reminder hook` — `CronusL-1141/AI-company` — `workflow_reminder.py` is 54 KB — large enough to represent a non-trivial rules engine in the hook layer. Pattern of "thick local hook, thin sidecar server" for the subset of reminders that don't need HTTP. The local-vs-sidecar split is itself a design choice worth surfacing — every event sends two subprocesses on every tool call (workflow_reminder + send_event), pre/post phase.
+
+## Proposed description sharpenings
+
+> Format: `<role> > <existing-path>` — what the existing description misses; supporting samples; sharpening suggestion
+
+- `Marketplace manifest layout > Duplicated marketplace manifest at root and nested` — `CronusL-1141/AI-company` — current description names "deliberate cross-host duplicate (Claude + Copilot)" and "vestigial duplicate" subcases (per bin1). CronusL adds a third variant: nested-as-version-drift-source — root manifest at `0.6.0`, nested at `1.3.4`. The nested manifest matches the live plugin version but isn't read by the marketplace installer; root manifest reaches the marketplace UI but is stale. The duplication is the substrate enabling the version drift. Sharpening: name the "nested manifest matches live plugin while root manifest lags" pattern as a recurring failure mode of the duplication, alongside the existing two subcases.
+
+- `Marketplace-entry facets plus duplicated keywords on plugin.json` — `CronusL-1141/AI-company` — current description names category+tags on marketplace + keywords on plugin.json. CronusL has a category on the *root* marketplace and tags on the *nested* marketplace (not on plugin.json) — the duplication is between two marketplace manifest copies, not between marketplace and plugin.json. Sharpening: add the "duplicated marketplace manifests carry different facet sets, with only one consumed" sub-case where category is on the discovered manifest but tags are on the unread duplicate, so tags effectively don't reach the marketplace UI.
+
+- `Dependency installation > Coexisting redundant install paths` — `CronusL-1141/AI-company` — current path documents "rejected-but-retained alternatives." Sharpening worth absorbing: the three install paths in CronusL each use *different change-detection mechanisms* (`auto_install.py` uses `import` existence; `bootstrap.py` uses `diff -q` against marker; `install-deps.sh` uses bash `set -e` plus copy after success). When the redundant paths each carry distinct invariants, a reader picking the wrong one for reference will copy the wrong invariant. Sharpening: name the "different invariants per path" hazard, not just the path duplication.
+
+- `Session context loading > Full-briefing context with API call` — `CronusL-1141/AI-company` — current description mentions API call. Sharpening: add the "real-time git fetch with timeout inside startup" sub-pattern where the SessionStart briefing also performs a git-fetch update check (24-hour cooldown) inside the startup timeout budget. With spotty connectivity or VPN this can chew up the budget. The current description focuses on the API call; the additional update-check side channel is a separate failure mode worth naming.
+
+- `Tag and release lifecycle > Tag-on-main with manual GitHub Release` — `CodeAlive-AI/codealive-skills` — current description focuses on the manual `gh release create` step. Sharpening: add the consequence — when the manual step falls behind, you get tag-release count drift (10 tags, 7 Releases, missing v2.0.2 number) where pinning by tag works but pinning by Release does not. The drift outcome is a recurring symptom of the manual mechanism worth naming alongside the mechanism itself.
+
+## Proposed new roles
+
+> Format: `<new-role>` — what role this is, why it doesn't fit any existing role, supporting samples
+
+(none from this bin — every fact found a home under an existing role with at most a path-level refinement)
+
+## Proposed bucket splits
+
+> Format: `<role> > <existing-path>` — why it should split, into what, supporting samples
+
+(none from this bin)
+
+## Structural concerns
+
+> Anything that's hard to fit cleanly under any role/path; questions for the reconciler
+
+- **Per-sample identification metadata (URL, stars, last commit, default branch, license, sample origin)** — same concern as bin1. Per the operating instructions I moved entity-identifying content into a one-line preamble after the level-1 heading. Star count, last-commit date, default branch (e.g. `master` vs `main`), license and SPDX status all fold awkwardly into a one-line preamble. CronusL's `master`-not-`main` default branch is genuinely informative for the *Tag and release lifecycle* role (the sample exhibits "Tag-on-main, single branch" but the branch is named `master` — and that branch-name choice itself is data). I currently wrote this in the preamble; the data point is at risk of being lost to chain-key queries since it's not under any role/path. Defer to reconciler — could be an observation under `Author identity and provenance` or its own per-sample-metadata convention.
+
+- **`category + keywords` (no tags) on FORGE.** Closest existing path is `Keywords-only on plugin.json` — but that path's description explicitly says "No `category` or `tags` on the marketplace surface." FORGE has `category: "productivity"` on `plugin.json`. I picked `Keywords-only` and noted the category in the body, but this is a real path-level mismatch. Proposed in the new-paths section above.
+
+- **CodeAlive's tag-release count drift (10 tags, 7 Releases).** I placed under `Tag-on-main with manual GitHub Release` (the underlying mechanism) but the *count drift* is its own observable. Proposed as a new path above; alternatively a description sharpening would also work.
+
+- **CronusL's three Python install scripts each carrying *different* change-detection invariants.** The existing `Coexisting redundant install paths` covers the duplication but not the per-path-invariant divergence. Surfaced as a description sharpening above.
+
+- **CronusL's git-fetch-during-SessionStart inside startup timeout budget.** This is `Full-briefing context with API call` plus an opportunistic git update check. The two are bundled into one hook (`session_bootstrap.py`) but they're conceptually distinct. I placed under `Full-briefing context with API call` and noted the update check in the body. Could also be a sub-case of `Self-update advisory channel` under *Live monitoring* but that path is about update notifications, not opportunistic-fetch-with-timeout-budget.
+
+- **"Marketplace.json env-field workaround" — terminology question for reconciler.** CronusL's `auto_install.py` writes `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` to `~/.claude/settings.json` because plugin `settings.json`'s env field is silently ignored. I placed under `Settings.json env-field workaround` (which is in the *User configuration and authentication* role) — but the workaround is about plugin-component-registration ergonomics, not user config per se. Defer to reconciler — could be cross-listed or moved.
+
+- **CronusL's "Restart-required-for-MCP first-run" lives in *Novel and cross-cutting concerns***. I left it there since it sits at the intersection of *Install trigger and lifecycle* and *Session context loading* — `auto_install.py` writes the restart-required message via `additionalContext`. I covered the `additionalContext` aspect under `Conditional additionalContext for setup nudge` and the install-ordering aspect under `pip install against sys.executable (no venv isolation)`. The novel-axis framing names the *pattern* as a coherent design choice. Defer to reconciler whether to keep duplicated coverage or pick one home.

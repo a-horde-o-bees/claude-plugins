@@ -1,532 +1,235 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/SankaiAI/ats-optimized-resume-agent-skill`. Single-skill plugin that transforms a master resume and job description into a tailored, ATS-optimized Word document via a Python renderer using `python-docx` and `lxml`. Default branch `main`; MIT license; 65 stars; last commit 2026-04-11. Sample origin: bin-wrapper.
 
-### URL
+## Marketplace manifest layout
 
-https://github.com/SankaiAI/ats-optimized-resume-agent-skill
+### Self-referential single-plugin marketplace at repo root
 
-### Stars
+Single `.claude-plugin/marketplace.json` co-located with `.claude-plugin/plugin.json` at repo root, advertising one plugin entry whose `source` is `"./"`. Marketplace name `resume-skill-marketplace`; plugin name `resume-skill` — no reserved-name collision. The marketplace exists only to publish this one plugin. `metadata.{description, version}` wrapper carries `description: "Community marketplace for the resume-skill Claude Code plugin"` and `version: "0.1.0"`. `metadata.pluginRoot` absent. `$schema` absent on marketplace.json.
 
-65 (observed via `gh api` at research time)
+### Redundant metadata sub-object on plugin entries
 
-### Last commit date
+The marketplace entry duplicates the plugin's `description` field (identical string repeated in `plugin.json`); the two are hand-kept in sync without automation.
 
-2026-04-11 (`153209b Update skill instruction.`); repo `updated_at` 2026-04-19
+## Plugin source binding
 
-### Default branch
+### Relative source pointing to repo root (`./`)
 
-`main`
+`"source": "./"` on the marketplace entry; plugin root and repo root coincide. With `strict` field absent, implicit `strict: true` applies — the plugin manifest at `.claude-plugin/plugin.json` carries the registration burden.
 
-### License
+### `source: github` with explicit coords or `ref` pinning
 
-MIT (SPDX `MIT`, present as `LICENSE` at root)
+The marketplace entry also records `{"source":"github","repo":"SankaiAI/ats-optimized-resume-agent-skill","ref":"main"}`. `ref: "main"` pins to a moving branch — every install resolves to whatever tip-of-main is at install time; users have no way to hold a release.
 
-### Sample origin
+### `strict` field default
 
-bin-wrapper
+`strict` field absent on the marketplace entry — implicit `strict: true`. The marketplace entry has no `skills` override; skills location is declared in `plugin.json` only as `"skills": "./skills/"`.
 
-### One-line purpose
+## Per-plugin discoverability metadata
 
-"Transforms a master resume and job description into a tailored, ATS-optimized Word document (.docx) with human-sounding bullets and deterministic table-based layout." (from `plugin.json` / marketplace entry — the repo's own tagline is more marketing-y; the manifest version is used here since it matches purpose-statement discipline.)
+### Marketplace-entry facets plus duplicated keywords on plugin.json
 
-## 1. Marketplace discoverability
+Marketplace entry sets `category: "productivity"` plus `keywords: ["resume","docx","ats","job-search","career"]` (no `tags`). `plugin.json` independently carries the identical `keywords` list — two locations for the same intent with no automation reconciling them.
 
-### Manifest layout
+### `$schema` absence on per-plugin manifests
 
-single `.claude-plugin/marketplace.json` at repo root (one plugin entry)
+`$schema` absent from `plugin.json`.
 
-### Marketplace-level metadata
+## Version coordination
 
-`metadata.{description, version}` wrapper — `description: "Community marketplace for the resume-skill Claude Code plugin"`, `version: "0.1.0"`. No `metadata.pluginRoot`.
+### Multi-site sprawl (5+ locations)
 
-### `metadata.pluginRoot`
+Three separate `version: "0.1.0"` strings exist in the repo: marketplace-level `metadata.version`, marketplace plugin-entry `version`, and `plugin.json.version`. All hand-maintained, no enforcement. The version has remained at `0.1.0` from first commit (2026-04-08) through latest (2026-04-11); any future bump must be coordinated across all three files.
 
-absent
+## Channel distribution
 
-### Per-plugin discoverability
+### Single channel — tag-on-main with git-ref pinning
 
-`category: "productivity"` + `keywords: ["resume","docx","ats","job-search","career"]`. No `tags` field. (Single-plugin marketplace — uniform by construction.)
+`ref: "main"` is the only distribution channel. No tags, no release branches. `gh api .../tags` returns empty.
 
-### `$schema`
+## Tag and release lifecycle
 
-absent
+### No tags at all
 
-### Reserved-name collision
+`gh api .../tags` returns empty; `gh api .../releases` returns count=0. The repo has no tags and has cut no releases since first commit. Default branch is `main`. No release branches exist — only `main`.
 
-no — plugin name `resume-skill`, marketplace name `resume-skill-marketplace`
+## Plugin-component registration
 
-### Pitfalls observed
+### Explicit path string for one component
 
-`owner.email` in `marketplace.json` is literally `"your-email@example.com"` — placeholder was never filled in before publish. Plugin-level `description` on the marketplace entry duplicates the identical string in `plugin.json`; both are kept in sync manually (see §2 drift risk).
+`plugin.json` carries `"skills": "./skills/"` as the only component field. This is a non-default value — default discovery would look for `skills/` implicitly anyway, so the explicit `./skills/` is redundant but valid. No `commands`, `agents`, `hooks`, `.mcp.json`, `.lsp.json`, `monitors`, or `output-styles` fields.
 
-## 2. Plugin source binding
+## Component composition
 
-### Source format(s) observed
+### Skills (universal)
 
-`github` — `{"source":"github","repo":"SankaiAI/ats-optimized-resume-agent-skill","ref":"main"}`
+`skills/build-tailored-resume/SKILL.md` plus a duplicate root `SKILL.md`. Both files report 17916 bytes with identical opening frontmatter — content duplicated across two paths. The root copy is consumed by `install.sh`/`install.ps1` for non-plugin install methods; the `skills/` copy serves the plugin install path. Each edit must land in both locations or the two drift.
 
-### `strict` field
+### bin
 
-default (absent) — implicit `strict: true`. Since the plugin manifest lives under `.claude-plugin/plugin.json` at the repo root pointed at by the `github` source, strict discovery works without overrides.
+Two files — `bin/resume-skill` (POSIX bash, 1055 bytes) and `bin/resume-skill.cmd` (Windows batch, 408 bytes). No agents, commands, hooks, or MCP server.
 
-### `skills` override on marketplace entry
+## Skill authoring conventions
 
-absent. Skills location is declared in `plugin.json` only (`"skills": "./skills/"`).
+### Standard frontmatter
 
-### Version authority
+`SKILL.md` frontmatter carries `name`, `description`, plus the skill body driving the build-tailored-resume workflow.
 
-both — `plugin.json.version = "0.1.0"` and marketplace-entry `version = "0.1.0"` must be hand-kept in sync (drift risk). Marketplace-level `metadata.version` is also `0.1.0`, triply redundant.
+## Server runtime (MCP)
 
-### Pitfalls observed
+### No bin entry / direct invocation
 
-three separate `version: "0.1.0"` strings (marketplace metadata, plugin entry, plugin.json) with no single source. `ref: "main"` pins the source to a moving branch, so anyone who installs is always on tip-of-main — no way for the user to hold a release.
+Plugin does not ship an MCP server. All execution flows through the bin wrapper which `exec`s the Python CLI under `renderer/src/cli.py`.
 
-## 3. Channel distribution
+## Bin entry mechanism
 
-### Channel mechanism
+### Bash + `.cmd` pair for cross-platform
 
-no split — `ref: "main"` is the only channel; users cannot pin to a release because no tags or release branches exist.
+`bin/resume-skill` (POSIX bash, `#!/usr/bin/env bash`) and `bin/resume-skill.cmd` (Windows batch, no shebang) form a cross-platform pair. The bash wrapper resolves the plugin root via `"${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"`. The `.cmd` counterpart resolves via `IF "%PLUGIN_ROOT%"=="" SET PLUGIN_ROOT=%~dp0..`. The `.cmd` mirrors the bash wrapper's check-and-install logic — `python -c "import docx" 2>nul || pip install ...`, `%PYTHONPATH%` setup, `%*` argument passthrough. PowerShell `.ps1` exists separately as a one-shot installer (`install.ps1`) but is not used as a runtime shim. The `.cmd` cannot replicate `set -e`; a failing pip install in the `.cmd` path is silently ignored, and the subsequent `python cli.py` then fails with a less-useful ImportError.
 
-### Channel-pinning artifacts
+### First-run pip-install in bin wrapper
 
-absent
+The POSIX wrapper probes `python -c "import docx"`; on ImportError it runs `pip install python-docx lxml --quiet` against whatever `python`/`pip` resolve in PATH, then sets `PYTHONPATH="$PLUGIN_ROOT/renderer"` pointing at `src/` and `exec`s `python renderer/src/cli.py`. No venv, no version pin, no lockfile, no sha/md5. Re-runs are idempotent-by-retry because the `import docx` probe short-circuits subsequent invocations. The wrapper hard-codes `python` (not `python3`) and `pip` (not `pip3`), which fails on Linux distros where only `python3` exists. There is no `command -v python` precheck and no "python not found" guidance.
 
-### Pitfalls observed
+## Plugin-runtime root resolution
 
-no `@ref` pin story documented; users get whatever main has.
+### Two-tier env-var-first fallback
 
-## 4. Version control and release cadence
+Both bin wrappers prefer `${CLAUDE_PLUGIN_ROOT}` when set and fall back to a script-relative computation. The bash form uses `"${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"`; the `.cmd` form uses `IF "%PLUGIN_ROOT%"=="" SET PLUGIN_ROOT=%~dp0..`. The fallback makes both wrappers runnable from a bare clone outside the plugin harness.
 
-### Default branch name
+## Dependency installation
 
-`main`
+### `pip install` against `sys.executable` (no venv isolation)
 
-### Tag placement
+Renderer dependencies (`python-docx>=1.1.0`, `lxml>=5.0.0`) are installed via ad-hoc `pip install` into whatever Python environment the user's `pip` points at — system Python, conda env, pyenv shim, etc. No `${CLAUDE_PLUGIN_DATA}` venv, no `${CLAUDE_PLUGIN_ROOT}`-scoped venv. `install.sh`/`install.ps1` runs `pip install "$SCRIPT_DIR/renderer" --quiet`; the `bin/resume-skill` wrapper performs the same check-and-install on every CLI invocation.
 
-none — `gh api .../tags` returns empty
+### Coexisting redundant install paths
 
-### Release branching
+Two parallel install paths exist: (a) `install.sh`/`install.ps1` does a proper `pip install renderer/` and creates a `resume-skill` console script per `pyproject.toml`'s `project.scripts`; (b) `bin/resume-skill` shims directly to the source tree via `PYTHONPATH="$PLUGIN_ROOT/renderer"` pointing at `src/`, bypassing the installed console script. The two paths can disagree.
 
-none — only `main` branch exists
+### Manual venv with documented commands
 
-### Pre-release suffixes
+Renderer dependencies declared twice — `renderer/requirements.txt` (`python-docx>=1.1.0`, `lxml>=5.0.0`) and `renderer/pyproject.toml` `[project.dependencies]` listing the same two. `pyproject.toml` is authoritative (consumed by `pip install renderer/`); `requirements.txt` is duplicative. `pyproject.toml` declares `requires-python = ">=3.10"` as the only Python version constraint.
 
-none observed
+## Install change detection
 
-### Dev-counter scheme
+### Existence-only check
 
-absent — version is hand-edited `0.1.0` across three files
+Change detection is a single Python import probe — `python -c "import docx"`. Success short-circuits install; failure triggers `pip install`. No version compare, no lockfile, no sha/md5.
 
-### Pre-commit version bump
+## Install trigger and lifecycle
 
-no — no git hooks committed
+### Lazy bootstrap on first hook (no SessionStart)
 
-### Pitfalls observed
+There is no `hooks.json`, no SessionStart, no UserPromptSubmit. The bin wrapper itself triggers dep install lazily on every CLI invocation — first-run installs deps, subsequent runs short-circuit on the import probe.
 
-no release discipline at all. `gh api .../releases` returns `count=0`. The plugin has been at `0.1.0` since first commit (2026-04-08) through latest (2026-04-11). Any future bump has to be coordinated across three files.
+## Install failure posture
 
-## 5. Plugin-component registration
+### Set -e bash with stderr exit-1
 
-### Reference style in plugin.json
+The bash wrapper uses `set -e` — any non-zero exit halts the script. `pip install --quiet` suppresses stderr only on success; on failure pip's stderr is user-visible and the script exits non-zero. The Windows `.cmd` has no equivalent of `set -e`; a failed `pip install` is silently ignored.
 
-explicit string path for skills (`"skills": "./skills/"`), no other component fields. This is a non-default value — default discovery would look for `skills/` implicitly anyway, so the explicit `./skills/` is redundant (but valid).
+## User configuration and authentication
 
-### Components observed
+### No userConfig, env-var only
 
-skills=yes, commands=no, agents=no, hooks=no, `.mcp.json`=no, `.lsp.json`=no, monitors=no, bin=yes (`bin/resume-skill`, `bin/resume-skill.cmd`), output-styles=no
+`userConfig` not declared. Skill takes all inputs via conversational flow or file paths passed to the CLI; no env vars consumed. No OS credential store, no API keys, no auth surface.
 
-### Agent frontmatter fields used
+## Session context loading
 
-not applicable (no agents)
+### No session-context loading
 
-### Agent tools syntax
+No hooks of any kind. The plugin loads context via SKILL.md frontmatter description matching only.
 
-not applicable
+## Tool-use enforcement
 
-### Pitfalls observed
+### Skill-description prose as enforcement surrogate
 
-`skills/build-tailored-resume/SKILL.md` and root `SKILL.md` have **identical content** (both 17916 bytes, identical opening frontmatter). The root `SKILL.md` is the canonical file copied by `install.sh`/`install.ps1` for non-plugin installs (Methods 1-3). The `skills/` copy is what the plugin path (Method 4) uses. Two maintenance locations for the same text — classic Single-Source-of-Truth violation. Any edit has to land twice or they drift.
+No PreToolUse, PostToolUse, PermissionRequest, or PermissionDenied hooks. The plugin uses skill-level workflow enforcement — gates inside SKILL.md — instead of runtime hooks.
 
-## 6. Dependency installation
+## Live monitoring
 
-### Applicable
+### `monitors.json` absent
 
-yes — renders DOCX with `python-docx` and `lxml`
+No `monitors.json` and no monitoring surface.
 
-### Dep manifest format
+## Plugin-to-plugin coordination
 
-both — `renderer/requirements.txt` (`python-docx>=1.1.0`, `lxml>=5.0.0`) and `renderer/pyproject.toml` (PEP 621 `[project.dependencies]` listing the same two). `pyproject.toml` is authoritative (it's what `pip install renderer/` consumes); `requirements.txt` is duplicative.
+### `dependencies` field absent
 
-### Install location
+No `dependencies` field on `plugin.json`. Single-plugin marketplace, no inter-plugin coordination.
 
-ad-hoc `pip install` into whatever python environment the user's `pip` points at. No `${CLAUDE_PLUGIN_DATA}`, no `${CLAUDE_PLUGIN_ROOT}`-scoped venv. Installer script runs `pip install "$SCRIPT_DIR/renderer" --quiet` directly.
+## Testing
 
-### Install script location
+### pytest with sys.path manipulation
 
-two parallel entry points:
-  - `install.sh` / `install.ps1` at repo root — for non-plugin install methods (runs `pip install renderer/`, copies SKILL.md)
-  - `bin/resume-skill` / `bin/resume-skill.cmd` — runtime wrappers that check-and-install on every invocation
+Tests live at `renderer/tests/` (`test_rendering.py`, 9337 bytes; `test_validation.py`, 4437 bytes), importing pytest directly. Tests manipulate `sys.path` via `sys.path.insert(0, str(ROOT))` to locate `src/`, since the package layout uses `src/` mapped to `resume_skill` via `[tool.setuptools.package-dir]`. No `pytest.ini`, no `[tool.pytest.ini_options]` in `renderer/pyproject.toml`. `pyproject.toml` carries no `[project.optional-dependencies]` for dev/test — pytest is expected to be installed separately by whoever runs the tests. The test docstring instructs `cd resume_skill && python -m pytest tests/ -v` but the directory on disk is `renderer/`, not `resume_skill/` (the package name vs source directory drift); the correct invocation is `cd renderer && python -m pytest tests/ -v`.
 
-### Change detection
+## CI workflow shape
 
-none — `bin/resume-skill` uses `python -c "import docx"` as an existence probe. If import succeeds, skip install; if it fails, `pip install python-docx lxml --quiet`. No version pin checked, no lockfile, no sha/md5.
+### No CI
 
-### Retry-next-session invariant
+`.github/` directory does not exist (`gh api .../contents/.github` returns 404). No workflows, no triggers, no matrix. The pyproject/requirements drift, the stale test-docstring path, and the duplicated-SKILL.md inconsistency are caught only by manual review.
 
-not applicable (no per-session hook; the `import docx || pip install` runs on every CLI invocation, so it's idempotent-by-retry but not hook-driven)
+## Marketplace validation
 
-### Failure signaling
+### No validation
 
-`set -e` in bash wrapper — any non-zero exit halts. `pip install --quiet` drops stderr only on success; on failure pip stderr is user-visible. No JSON output, no `systemMessage`. Windows `.cmd` has no error handling equivalent — `|| pip install` chains run unconditionally on a failed probe but a failing `pip install` is silently ignored since there's no subsequent check.
+No validation tooling. The `owner.email: "your-email@example.com"` placeholder in `marketplace.json` was never replaced before publish — any schema-level validator would have caught it.
 
-### Runtime variant
+## Release automation
 
-Python pip (not uv, no venv)
+### No release automation / manual
 
-### Alternative approaches
+No `release.yml` or equivalent. `gh api .../releases` count=0. The plugin has never cut a release; users cannot install a stable ref.
 
-N/A — does not use PEP 723, pointer-file, `uvx`, or `npx`
+## Documentation surface
 
-### Version-mismatch handling
+### Marketing-grade README (40+ KB)
 
-none — no Python version pinning beyond `requires-python = ">=3.10"` in pyproject.toml
+Repo-root `README.md` is 40958 bytes — bilingual (English + Chinese with anchor-linked language sections), Table of Contents, five install methods, update/uninstall instructions, and a leading "⚡ For AI Coding Agents — Read This First" block containing literal clone+install commands segmented by OS (Mac/Linux, Windows) × scope (user, project) × agent (Claude Code, OpenClaw). Designed so an agent WebFetching the README at install time gets an unambiguous recipe at the top.
 
-### Pitfalls observed
+### Bilingual content
 
-`bin/resume-skill` hard-codes `python` (not `python3`) which fails on many Linux distros where only `python3` exists. The install-on-first-run pattern pollutes whatever environment the user's `python`/`pip` resolve to — a system python, a conda env, a pyenv shim — with no isolation. The CLI wrapper runs `cli.py` via `PYTHONPATH="$PLUGIN_ROOT/renderer"` pointing at `src/`, bypassing the installed `resume-skill` console-script entry point that `pyproject.toml` declares. So there are **two independent install paths**: (a) `install.sh` does a proper `pip install renderer/` and creates the `resume-skill` console script; (b) `bin/resume-skill` shims to the source tree directly, ignoring that installed console script. The two paths can disagree.
+README is explicitly bilingual (English `[English](#english)` + Chinese `| [中文](#chinese)`).
 
-## 7. Bin-wrapped CLI distribution
+### Agent-targeted install preamble in README
 
-### Applicable
+README opens with a blockquote-rendered "⚡ For AI Coding Agents — Read This First" block carrying pre-written shell commands per OS × scope × agent (Mac/Linux, Windows; user, project; Claude Code, OpenClaw). The same install intent is encoded twice — once for agents at the top, once for humans further down in the "Method 0/1/2/3/4" sections.
 
-yes — the primary observation this sample was selected for
+## License declaration
 
-### `bin/` files
+### LICENSE file present + SPDX in manifests (single source agreement)
 
-  - `bin/resume-skill` (1055 bytes) — POSIX bash wrapper; probes `import docx`, pip-installs on miss, sets `PYTHONPATH`, execs `python renderer/src/cli.py`
-  - `bin/resume-skill.cmd` (408 bytes) — Windows CMD wrapper; same logic, `%CLAUDE_PLUGIN_ROOT%` resolution, `%~dp0..` fallback, `%PYTHONPATH%`, `%*` passthrough
+MIT license. SPDX identifier `MIT` appears in manifests; `LICENSE` file present at repo root.
 
-### Shebang convention
+## Community health files
 
-`#!/usr/bin/env bash` on the POSIX file; `.cmd` has no shebang (Windows batch)
+### Bare minimum (LICENSE only)
 
-### Runtime resolution
+`PRIVACY.md` (1530 bytes) is present alongside `LICENSE`. No `SECURITY.md`, `CONTRIBUTING.md`, or `CODE_OF_CONDUCT.md`. No badges or status indicators in README.
 
-`${CLAUDE_PLUGIN_ROOT}` with script-relative fallback — bash uses `"${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"`; cmd uses `IF "%PLUGIN_ROOT%"=="" SET PLUGIN_ROOT=%~dp0..`
+## Cross-platform discipline
 
-### Venv handling (Python)
+### POSIX-only with no Windows story
 
-pip-install at first run (no venv — system/active-env `python` is used directly, deps installed globally into that environment)
+The bash wrapper hard-codes `python` and `pip` (not `python3`/`pip3`), fragile on Linux distros without a `python` shim. No `command -v python` precheck. The Windows `.cmd` companion exists but cannot replicate `set -euo pipefail` discipline; `|| pip install` after `python -c "import docx" 2>nul` only runs on nonzero exit of the probe — a distro where the probe fails for reasons other than missing `docx` (e.g., python not on PATH) triggers a spurious install attempt with no further error handling.
 
-### Platform support
+## Novel and cross-cutting concerns
 
-bash + `.cmd` pair (no `.ps1` wrapper for runtime; `.ps1` exists only for the one-shot `install.ps1`, not as a runtime shim)
+- **Coexisting redundant install paths.** The plugin install path (`bin/resume-skill` → `PYTHONPATH=renderer/src/`) and the standalone install path (`install.sh` → `pip install renderer/` → console script) reach the same source via different mechanics and can disagree.
+- **First-run pip-install pattern without venv or change detection.** `bin/resume-skill` probes `python -c "import docx"` and pip-installs into whatever `python`/`pip` resolve to in PATH on miss. No venv, no pinning, no change detection beyond import existence — the minimum-viable Python-dep-install pattern.
+- **Three-way version sync with no enforcement.** `marketplace.json` carries `metadata.version`, `plugins[0].version`, and `plugin.json.version` — all three hand-maintained with no schema validation, CI check, or single-source designation.
+- **Bash + `.cmd` pair (no `.ps1` runtime shim).** Windows runtime support is via `bin/resume-skill.cmd` (cmd.exe batch); `install.ps1` exists separately for the one-shot install flow but is not used as a runtime shim.
+- **Agent-targeted install preamble in README.** A blockquote-rendered "⚡ For AI Coding Agents — Read This First" section at the top of the README carries pre-written install commands segmented by OS × scope × agent.
 
-### Permissions
+## Cross-role tools
 
-cannot verify octal directly via the GitHub API contents endpoint, but the `#!/usr/bin/env bash` shebang and the README/architecture expectation (`chmod +x install.sh` is prescribed; `bin/resume-skill` is intended to be invoked by PATH resolution) imply 100755. Observed-as-inferred from the shebang and the documented "Claude Code adds bin\ to PATH automatically" comment, not verified against the blob mode byte.
+### Python (stdlib + pip + uv)
 
-### SessionStart relationship
+System Python with `python` and `pip` (not `python3`/`pip3`) from PATH. No uv, no uvx. `pyproject.toml` declares `requires-python = ">=3.10"`.
 
-static — there is no hooks.json, no `SessionStart`, no `UserPromptSubmit`. The bin wrapper itself is what triggers dep install, lazily, on CLI invocation.
+### `${CLAUDE_PLUGIN_ROOT}` env var
 
-### Pitfalls observed
-
-the POSIX wrapper uses `python` not `python3`, and `pip` not `pip3` — fragile on Linux distros without a `python` shim. The Windows `.cmd` equivalent is likewise shell-dependent: `|| pip install` after `python -c "import docx" 2>nul` only runs on nonzero exit of the probe, so a distro where the probe errors for some reason other than missing docx (e.g., python not on PATH) would trigger a spurious install attempt. No PATH sanity check, no `command -v python`, no "python not found" guidance. The `.cmd` counterpart to `set -e` does not exist; a failed pip install is invisible and the subsequent `python cli.py` then also fails with a less-useful ImportError.
-
-## 8. User configuration
-
-### `userConfig` present
-
-no
-
-### Field count
-
-none
-
-### `sensitive: true` usage
-
-not applicable
-
-### Schema richness
-
-not applicable
-
-### Reference in config substitution
-
-not applicable
-
-### Pitfalls observed
-
-none — skill takes all inputs via conversational flow or file paths passed to the CLI
-
-## 9. Tool-use enforcement
-
-### PreToolUse hooks
-
-none — no hooks.json, no `.claude-plugin/hooks/`
-
-### PostToolUse hooks
-
-none
-
-### PermissionRequest/PermissionDenied hooks
-
-absent
-
-### Output convention
-
-not applicable
-
-### Failure posture
-
-not applicable
-
-### Top-level try/catch wrapping
-
-not applicable
-
-### Pitfalls observed
-
-none — plugin uses skill-level workflow enforcement (the gates in SKILL.md) instead of runtime hooks
-
-## 10. Session context loading
-
-### SessionStart used for context
-
-no — no hooks of any kind
-
-### UserPromptSubmit for context
-
-no
-
-### `hookSpecificOutput.additionalContext` observed
-
-not applicable
-
-### SessionStart matcher
-
-not applicable
-
-### Pitfalls observed
-
-none — single-skill plugin loads context via SKILL.md frontmatter description matching only
-
-## 11. Live monitoring and notifications
-
-### `monitors.json` present
-
-no
-
-### Monitor count + purposes
-
-none
-
-### `when` values used
-
-not applicable
-
-### Version-floor declaration
-
-not applicable
-
-### Pitfalls observed
-
-none
-
-## 12. Plugin-to-plugin dependencies
-
-### `dependencies` field present
-
-no
-
-### Entries
-
-none
-
-### `{plugin-name}--v{version}` tag format observed
-
-not applicable (single-plugin marketplace, no tags at all)
-
-### Pitfalls observed
-
-none
-
-## 13. Testing and CI
-
-### Test framework
-
-pytest — `renderer/tests/test_rendering.py` (9337 bytes), `renderer/tests/test_validation.py` (4437 bytes); imports `pytest` directly
-
-### Tests location
-
-inside the renderer subdirectory — `renderer/tests/` (not at repo root; not per-plugin in a `tests/plugins/<name>/` layout since the plugin has only this one internal library)
-
-### Pytest config location
-
-none — no `pytest.ini`, no `[tool.pytest.ini_options]` in `renderer/pyproject.toml`. Tests manipulate `sys.path` manually (`sys.path.insert(0, str(ROOT))`) to locate `src/` since package layout uses `src/` mapped to `resume_skill` via `[tool.setuptools.package-dir]`.
-
-### Python dep manifest for tests
-
-pyproject.toml (no `[project.optional-dependencies]` for dev/test — pytest is expected to be installed separately by whoever runs the tests)
-
-### CI present
-
-no — `.github/` directory does not exist (`gh api .../contents/.github` returns 404)
-
-### CI file(s)
-
-none
-
-### CI triggers
-
-not applicable
-
-### CI does
-
-not applicable
-
-### Matrix
-
-not applicable
-
-### Action pinning
-
-not applicable
-
-### Caching
-
-not applicable
-
-### Test runner invocation
-
-test file docstring says `cd resume_skill && python -m pytest tests/ -v` — but the directory is actually `renderer/`, not `resume_skill/`, so the doc itself is stale (the `resume_skill` name refers to the installed package, not the source directory). Correct invocation: `cd renderer && python -m pytest tests/ -v`.
-
-### Pitfalls observed
-
-no CI means the pyproject.toml / requirements.txt drift, the stale test-docstring path, and the two-SKILL.md-copies inconsistency are never caught automatically. Tests manipulate `sys.path` instead of relying on an installed package, so they run against source even if an older version is pip-installed — hides install-path bugs.
-
-## 14. Release automation
-
-### `release.yml` (or equivalent) present
-
-no
-
-### Release trigger
-
-not applicable
-
-### Automation shape
-
-not applicable — no releases have ever been cut (`gh api .../releases` count=0)
-
-### Tag-sanity gates
-
-not applicable
-
-### Release creation mechanism
-
-not applicable
-
-### Draft releases
-
-not applicable
-
-### CHANGELOG parsing
-
-not applicable — no `CHANGELOG.md`
-
-### Pitfalls observed
-
-no release process means version-drift is the only version story; users cannot install a stable ref.
-
-## 15. Marketplace validation
-
-### Validation workflow present
-
-no
-
-### Validator
-
-not applicable — no validation tooling
-
-### Trigger
-
-not applicable
-
-### Frontmatter validation
-
-not applicable
-
-### Hooks.json validation
-
-not applicable (no hooks.json to validate)
-
-### Pitfalls observed
-
-the `owner.email: "your-email@example.com"` placeholder in `marketplace.json` would have been caught by any schema-level validator. It was not.
-
-## 16. Documentation
-
-### `README.md` at repo root
-
-present — 40958 bytes, bilingual (English + Chinese), with Table of Contents, five install methods, update/uninstall, dual AI-agent-targeted install-prompt section ("For AI Coding Agents — Read This First") containing literal clone+install commands for Claude Code, Cursor, Windsurf, OpenClaw
-
-### `README.md` per plugin
-
-absent — single-plugin repo; the root README is the plugin README
-
-### `CHANGELOG.md`
-
-absent
-
-### `architecture.md`
-
-absent
-
-### `CLAUDE.md`
-
-absent
-
-### Community health files
-
-`PRIVACY.md` present (1530 bytes). No `SECURITY.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`.
-
-### LICENSE
-
-present (MIT)
-
-### Badges / status indicators
-
-absent
-
-### Pitfalls observed
-
-README opens with a prompt-injection-style "⚡ For AI Coding Agents — Read This First" block containing pre-written install commands — a deliberate pattern targeting agent-assisted installs, not a pitfall per se, but worth flagging as a design choice (see §17). `architecture.md`/`CLAUDE.md` absence is consistent with the project being a single-skill plugin where `SKILL.md` + `README.md` carry the load.
-
-## 17. Novel axes
-
-- **Agent-targeted install preamble in README.** The README begins with a blockquote-rendered "⚡ For AI Coding Agents — Read This First" section containing literal shell commands to clone+install, segmented by OS (Mac/Linux, Windows) × scope (user, project) × agent (Claude Code, OpenClaw). The intent is that when a user asks their coding agent to install this plugin, the agent WebFetches the README and gets an unambiguous install recipe at the very top. This is a distinct consumer surface from the human-facing "Method 0/1/2/3/4" sections further down — the same install intent encoded twice, once for agents, once for humans.
-
-- **Dual install paths via independent mechanisms.** The repo supports (a) marketplace install via `.claude-plugin/marketplace.json` + `plugin.json` + `bin/` wrappers, and (b) direct install via `install.sh` / `install.ps1` + `pip install renderer/` + copying root `SKILL.md` into the user's skills dir. The two paths use different install mechanics (plugin bin-wrapper pip-install-on-first-run vs. standalone pip-install) and different source-tree consumption (PYTHONPATH-pointed-at-`src/` vs. proper installed console-script). A single-source-of-truth violation — the plugin mechanism does not share the standalone-install mechanism.
-
-- **First-run pip-install pattern without venv or change detection.** The `bin/resume-skill` wrapper probes `python -c "import docx"` and, on ImportError, runs `pip install python-docx lxml --quiet` against whatever `python`/`pip` are in PATH. No venv, no pinning, no change detection beyond existence. Contrast with patterns seen elsewhere in research sample (uv venv under `${CLAUDE_PLUGIN_DATA}`, PEP 723 inline metadata with `uv run --script`, `requirements.txt` sha tracking). This is the minimum-viable Python-dep-install pattern and makes dependency isolation the user's problem.
-
-- **Bash + `.cmd` pair (no `.ps1` runtime shim).** Windows support for the runtime CLI is via `bin/resume-skill.cmd` (cmd.exe batch), not PowerShell. This is a specific cross-platform-CLI pattern worth calling out — the convention is "POSIX bash + Windows .cmd" rather than "POSIX bash + PowerShell .ps1". A single `install.ps1` exists separately for the one-shot install flow, but the runtime wrapper is `.cmd`.
-
-- **Three-way version sync with no enforcement.** `marketplace.json` has `metadata.version`, `plugins[0].version`, AND the pointed-to `plugin.json.version` — all three hand-maintained. No schema validation, no CI check, no single-source marking which is authoritative.
-
-- **Triple bilingual content.** README is explicitly bilingual (English + Chinese, `[English](#english) | [中文](#chinese)`). Uncommon in Claude Code plugin READMEs — worth noting as community-reach signal.
-
-## 18. Gaps
-
-- **Blob file mode (octal permissions).** The GitHub API `contents` endpoint I used does not expose the git blob mode byte for `bin/resume-skill` and `install.sh`. Answer inferred from shebang presence and README prescription (`chmod +x install.sh`). Definitive answer would require `git ls-tree HEAD bin/` on a local clone or the `git/trees` API tree-entry `mode` field. Tree API does include `mode` but I did not request it specifically; acknowledging as a verification gap.
-
-- **Whether `skills/build-tailored-resume/SKILL.md` is a git-native symlink or a content duplicate.** Both files are reported as 17916 bytes and I read the frontmatter of both and observed identical opening content. The tree listing reported both as `blob` type, not `120000` symlink mode — but again, mode not inspected. If the two are genuinely a content copy, every future SKILL.md edit has to land twice. If one is a symlink, only one is authoritative. A `git cat-file -p` against the tree entry would resolve this; within the WebFetch/gh-api budget I could not confirm.
-
-- **Whether the `bin/` directory is actually added to PATH by Claude Code at install time as the bash wrapper's comment claims.** The `resume-skill` comment says "Claude Code automatically adds the plugin's bin/ directory to the Bash tool's PATH when the plugin is installed." This is a claim about Claude Code runtime behavior, not about the repo itself. Verification would require the Claude Code `docs-plugins-reference.md` (present in `research/claude-marketplace/context-resources/`) — I did not cross-reference during this pass. The claim matches the surfaced "bin directory on PATH" pattern from the plugin reference docs, but I did not re-verify against the current doc version.
-
-- **Actual pip-install behavior across Python environments.** The `bin/resume-skill` wrapper's `|| pip install` is behavior-tested only by whatever test suite the author ran locally; with no CI and no integration tests covering the install flow, any claim about "does this actually work on Python 3.10 / 3.11 / 3.12 / on macOS / on Windows / on WSL / under conda" is untestable from the repo alone. I documented the code; I cannot attest to runtime correctness.
-
-- **Whether the placeholder email (`your-email@example.com`) causes any marketplace-installer warning.** Claude Code's `/plugin install` flow may or may not surface this as a validation warning. Unable to confirm without running the install.
+Both bin wrappers consult `${CLAUDE_PLUGIN_ROOT}` first and fall back to a script-relative computation; the env var is the primary plugin-root resolution mechanism.

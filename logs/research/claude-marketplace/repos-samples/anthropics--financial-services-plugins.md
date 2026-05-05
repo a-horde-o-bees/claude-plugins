@@ -1,551 +1,197 @@
 # Sample
 
-## Identification
+Mirrors of `https://github.com/anthropics/financial-services-plugins`. Marketplace of Claude for Financial Services plugins (investment banking, equity research, private equity, wealth management, plus an Office-add-in admin setup plugin) built primarily for Claude Cowork, also compatible with Claude Code. 7,700 stars; default branch `main`; last commit 2026-04-17 (`356f09fe feat(manifest): add inference_headers config key (#68)`); 8 plugins (5 Anthropic-built core/function, 2 partner-built, 1 Office add-in admin tool).
 
-### URL
+## Marketplace manifest layout
 
-https://github.com/anthropics/financial-services-plugins
+### Multi-plugin owned-aggregator marketplace
 
-### Stars
+Single `.claude-plugin/marketplace.json` at repo root (2,025 bytes). Top-level shape is `{ name, owner: {name}, plugins: [...] }` — no `metadata` wrapper, no top-level `description`, no `version`. 8 plugins: 5 Anthropic-authored at repo root, 2 partner-built under `./partner-built/`, 1 Office add-in admin tool at `./claude-in-office`. No `$schema` field declared.
 
-7700
+### Top-level `metadata` wrapper variants
 
-### Last commit date
+Flat top-level fields only — `name`, `owner: {name}`, `plugins: [...]`. No `metadata` wrapper, no top-level `description`, no `version`. `metadata.pluginRoot` absent.
 
-2026-04-17 (`356f09fe feat(manifest): add inference_headers config key (#68)`)
+## Plugin source binding
 
-### Default branch
+### Relative source pointing to subdirectory
 
-main
+Every entry uses `"source": "./<dir>"` — five at repo root (`./financial-analysis`, `./investment-banking`, `./equity-research`, `./private-equity`, `./wealth-management`), two under `./partner-built/` (`./partner-built/lseg`, `./partner-built/spglobal`), one at `./claude-in-office`. Plugin-name/dir mismatch on the S&P Global entry: marketplace key `sp-global`, source directory `./partner-built/spglobal` (no hyphen), and `plugin.json` `name: "sp-global"`.
 
-### License
+### `strict` field default
 
-Apache-2.0
+Default (implicit true) — no `strict` key on any entry.
 
-### Sample origin
+### Vendored-partner subtree
 
-primary (Anthropic-owned marketplace; 8 plugins — 5 Anthropic-built core/function, 2 partner-built, 1 Office add-in admin tool)
+Two plugin entries under `./partner-built/<partner>/` whose code is authored by external partners but lives inside the host repo's tree, with the partner's own LICENSE and author attribution. `sp-global` advertises its own `repository: https://github.com/kensho-technologies/spglobal-agent-skills`, suggesting the tree here is a vendored copy. No manifest-level marker distinguishes first-party from third-party — the convention is purely filesystem-path-based. Sync mechanism (manual pull vs scripted) is not visible from the repo content alone (no `git submodule`, no subtree hints in README).
 
-### One-line purpose
+## Per-plugin discoverability metadata
 
-Marketplace of Claude for Financial Services plugins (investment banking, equity research, private equity, wealth management, plus an Office-add-in admin setup plugin) built primarily for Claude Cowork, also compatible with Claude Code.
+### No discoverability fields on marketplace entry
 
-## 1. Marketplace discoverability
+Marketplace entries carry only `{name, source, description}`. No `category`, `tags`, or `keywords` at the marketplace-entry level. The `$schema` reference is also absent.
 
-### Manifest layout
+### Keywords-only on plugin.json
 
-single `.claude-plugin/marketplace.json` at repo root (2,025 bytes)
+`sp-global` declares `keywords` inside its own `plugin.json`; no other plugin does. The keywords surface only via the plugin manifest, not the marketplace entry — category-based browser filters cannot surface the plugin.
 
-### Marketplace-level metadata
+## Version coordination
 
-none — top-level shape is `{ name, owner: {name}, plugins: [...] }`. No `metadata` wrapper, no top-level `description`, no `version`.
+### Single source of truth (`plugin.json` only)
 
-### `metadata.pluginRoot`
+Each plugin carries its own `version`; marketplace entries carry no version. Observed: `financial-analysis` 0.1.0, `investment-banking` 0.2.0, `equity-research` 0.1.0, `private-equity` 0.1.0, `wealth-management` 0.1.0, `lseg` 1.0.0, `sp-global` 1.0.0, `claude-in-office` 0.1.0.
 
-absent
+### No plugin-level version
 
-### Per-plugin discoverability
+`version` fields are effectively cosmetic — nothing verifies bump-on-change, nothing tags, nothing releases. Plugins ship without release discipline; a breaking change could land at `0.1.0` HEAD without any version bump. `investment-banking` is at 0.2.0 while peers sit at 0.1.0; the single bump reason is not recoverable without a git-log dive on `investment-banking/.claude-plugin/plugin.json` (no CHANGELOG, no release notes, no tags).
 
-none — entries carry only `{name, source, description}`. No `category`, `tags`, or `keywords` at the marketplace-entry level. (One partner plugin, `sp-global`, declares `keywords` inside its own `plugin.json`; no other plugin does.)
+## Channel distribution
 
-### `$schema`
+### No pinning surface
 
-absent
+No tags, no release branches, no marketplace channel. README install snippets use bare `plugin@financial-services-plugins`, no ref. Any consumer implicitly tracks `main` HEAD — `claude plugin install financial-analysis@financial-services-plugins` resolves against current main.
 
-### Reserved-name collision
+## Tag and release lifecycle
 
-no (plugin names are descriptive: `financial-analysis`, `investment-banking`, `equity-research`, `private-equity`, `wealth-management`, `lseg`, `sp-global`, `claude-in-office`)
+### No tags at all
 
-### Pitfalls observed
+`git/tags` returns 0 entries. No release branching — branch list shows `main` plus feature branches with `author/topic` convention (`manar/inference-headers`, `aperlov/azure-foundry-manifest-keys`, `cxl/remove-yfinance`). No pre-release suffixes, no dev-counter scheme. Recent 5 commits on main never bump `version` fields. Branch list also shows auto-generated branches like `claude/fix-script-integrity-wwwVc` and `claude/slack-update-readme-plugin-submission-jvRwz`-style, suggesting an external bot/agent operates on the repo but runs outside its own `.github/workflows`.
 
-Marketplace manifest description and plugin `plugin.json` description drift — e.g. marketplace entry for `investment-banking` reads "client and market insights, deck creation, financial analysis, and transaction management" while its `plugin.json` reads "client and market insights, deck creation, financial analysis, and transaction management" (match), but the core `financial-analysis` marketplace entry and its `plugin.json` both say "Core financial modeling and analysis tools: DCF, comps, LBO, 3-statement models, competitive analysis, and deck QC" (match). Still, because the field is duplicated across two files with no automation gluing them, drift is latent. No `category`/`tags` means nothing drives faceted discovery — the README is the discovery surface.
+## Plugin-component registration
 
-## 2. Plugin source binding
+### Default convention discovery
 
-### Source format(s) observed
+Every Anthropic-built `plugin.json` has only `{name, version, description, author}`. Component wiring relies on the default-discovery conventions for `commands/`, `skills/<name>/SKILL.md`, `hooks/hooks.json`, and `.mcp.json`.
 
-`relative` only — every entry uses `"source": "./<dir>"` (five at repo root, two under `./partner-built/`, one at `./claude-in-office`).
+### Inline `mcpServers` definition in `plugin.json`
 
-### `strict` field
+`sp-global` adds `mcpServers` inline (an object with a single `spglobal` HTTP server) despite also having `.mcp.json` at its plugin root — redundant declarations, two sources of truth.
 
-default (implicit true) — no `strict` key on any entry.
+### Empty hooks scaffolding
 
-### `skills` override on marketplace entry
+Five Anthropic-built plugins ship `hooks/hooks.json` files with empty content (`{}` or `[]`) — register zero hooks. Scaffolding present, behavior absent. Partner and `claude-in-office` plugins have no `hooks/` dir at all. Either remnants of a template, forward-compat stubs, or scaffolding for user customization; nothing in README or CLAUDE.md explains their presence.
 
-absent
+## Component composition
 
-### Version authority
+### Skills (universal)
 
-`plugin.json` only — each plugin carries its own `version`; marketplace entries carry no version. (Observed versions: `financial-analysis` 0.1.0, `investment-banking` 0.2.0, `equity-research` 0.1.0, `private-equity` 0.1.0, `wealth-management` 0.1.0, `lseg` 1.0.0, `sp-global` 1.0.0, `claude-in-office` 0.1.0.)
+Every plugin except `claude-in-office` ships skills.
 
-### Pitfalls observed
+### Commands
 
-plugin-name/dir mismatch for the S&P Global entry — marketplace key `sp-global`, source directory `./partner-built/spglobal` (no hyphen), and `plugin.json` `name: "sp-global"`. Functionally fine (marketplace `name` is authoritative for install), but the directory layout doesn't mirror the plugin name.
+Every plugin ships commands.
 
-## 3. Channel distribution
+### MCP servers
 
-### Channel mechanism
+`financial-analysis/.mcp.json` declares 11 servers; `partner-built/lseg/.mcp.json` declares 1; `partner-built/spglobal/.mcp.json` declares 1. `investment-banking/.mcp.json` is an empty `{"mcpServers": {}}`. All 11 connectors in `financial-analysis/.mcp.json` are remote HTTP MCP servers hosted by data providers — no local MCP server processes, no stdio MCP, no bundled runtime.
 
-no split — users pin via `@ref` on install (install snippets in README use bare `plugin@financial-services-plugins`, no ref).
+### Composition shapes
 
-### Channel-pinning artifacts
+Five Anthropic-built plugins follow a "Skills + commands + empty hooks scaffolding" composition. `financial-analysis` adds an MCP-only payload (11 HTTP MCP servers in `.mcp.json`). `claude-in-office` is the outlier — Skills + commands plus user-side admin tooling (`scripts/build-manifest.mjs`, `examples/python-bootstrap/` FastAPI reference server) outside the plugin component surface.
 
-absent — no stable/latest duplicate marketplaces, no release branches, no tags.
+## Server runtime (MCP)
 
-### Pitfalls observed
+### Remote HTTP MCP
 
-no pinning surface means any consumer implicitly tracks `main` HEAD — `claude plugin install financial-analysis@financial-services-plugins` resolves against current main. Anthropic-owned primary sample ships with the most permissive possible distribution posture.
+All 11 connectors in `financial-analysis/.mcp.json` are remote HTTP MCP servers hosted by data providers. No local MCP server processes, no stdio MCP, no bundled runtime. The "dependency" is the provider's SaaS uptime and the user's subscription. `partner-built/lseg` and `partner-built/spglobal` similarly use remote HTTP endpoints.
 
-## 4. Version control and release cadence
+## Bin entry mechanism
 
-### Default branch name
+### No bin entry / direct invocation
 
-main
+No `bin/` directory in any plugin. The closest analog is `claude-in-office/scripts/build-manifest.mjs`, invoked from command markdown via `node scripts/build-manifest.mjs ...`, not registered as a plugin bin entry. The script lives alongside commands but outside the plugin bin surface.
 
-### Tag placement
+## Dependency installation
 
-none (`git/tags` returns 0 entries)
+### No managed install — pure shell/markdown
 
-### Release branching
+The five Anthropic-built core/function plugins and the two partner plugins ship pure markdown + JSON + HTTP MCP URLs, no runtime deps. `claude-in-office` is partially applicable: it ships a Node `scripts/build-manifest.mjs` (plain `import` from `node:fs`, no `package.json`) and a Python FastAPI reference server under `examples/python-bootstrap/` with its own `requirements.txt`. The setup command (`commands/setup.md`) checks `node --version` and asks the user to install Node via their package manager before the command shells out to `node`/`npx`. The Python example is a reference server the admin runs out-of-band on their own infra, not installed into `${CLAUDE_PLUGIN_DATA}` or `${CLAUDE_PLUGIN_ROOT}`. The bundled `build-manifest.mjs` uses `console.warn`/`console.error` + non-zero `process.exit(1)` for bad input and missing URL slots.
 
-none (branch list shows `main` plus feature branches with `author/topic` convention: `manar/inference-headers`, `aperlov/azure-foundry-manifest-keys`, `cxl/remove-yfinance`, etc.)
+## User configuration and authentication
 
-### Pre-release suffixes
+### Gitignored `.local.md` convention
 
-none observed
+`investment-banking/.claude/investment-banking.local.md.example` ships a YAML-body markdown template the user copies to `.local.md` (gitignored per the plugin's `.gitignore`) to encode coverage/sector/deal preferences. Skills read this file at runtime via prose instructions, not a harness substitution mechanism. No `userConfig`, no `${user_config.KEY}` substitution, no harness involvement.
 
-### Dev-counter scheme
+### External schema in admin-run script
 
-absent — plugin versions bump manually (e.g., `investment-banking` at 0.2.0 while peers sit at 0.1.0; partner plugins at 1.0.0).
+`claude-in-office/scripts/build-manifest.mjs` hand-rolls a `KEYS` object with regex patterns, hints, and a `secret` flag for Vertex/Bedrock/gateway config — a parallel, hand-rolled config-surface system that does what `userConfig` exists for, but lives outside the plugin metadata layer. `gateway_token: { secret: true }` flags secrets and emits a warning when those are used in the manifest (which is org-wide), steering the admin toward per-user extension attrs instead. Plugin metadata layer is bypassed entirely; the plugin ships tooling for the admin to generate downstream configs rather than being configured itself.
 
-### Pre-commit version bump
+## Tool-use enforcement
 
-no — no hooks infra, no automation; commits don't touch version (recent 5 commits on main never bump `version` fields).
+### No enforcement (observational only)
 
-### Pitfalls observed
+Every `hooks.json` that exists is empty (`{}` or `[]`). No PreToolUse, PostToolUse, PermissionRequest, or PermissionDenied hooks across any plugin. All five Anthropic-built plugins ship a `hooks/hooks.json` file but register zero hooks — the scaffolding is present, the behavior is absent.
 
-plugins ship without a release discipline. `version` fields are effectively cosmetic — nothing verifies bump-on-change, nothing tags, nothing releases. Consumers have no semver signal; a breaking change could land at `0.1.0` HEAD without any version bump.
+## Session context loading
 
-## 5. Plugin-component registration
+### No session-context loading
 
-### Reference style in plugin.json
+No SessionStart hook, no UserPromptSubmit hook for context. No `hookSpecificOutput.additionalContext` observed. Plugins rely entirely on skills' frontmatter `description` matching to surface domain knowledge when relevant.
 
-default discovery — every Anthropic-built `plugin.json` has only `{name, version, description, author}`. `sp-global` adds `mcpServers` inline (an object with a single `spglobal` HTTP server) despite also having `.mcp.json` at its plugin root — redundant declarations.
+### File-backed context written at SessionStart
 
-### Components observed
+`claude-in-office/commands/setup.md` instructs the agent to read `~/Desktop/claude-in-office-setup.md` first and append a `## Run — <timestamp>` section on each invocation, making setup fully resumable across sessions. Resumption state lives in a user-visible plain markdown file the human can inspect and share. (Note: not technically a SessionStart hook — the file-backed context pattern is invoked by the user running the setup command.)
 
-    - skills — yes (every plugin except `claude-in-office`)
-    - commands — yes (every plugin)
-    - agents — no (no `agents/` dir in any plugin)
-    - hooks — structurally yes for five Anthropic plugins (`hooks/hooks.json` exists) but semantically no — every `hooks.json` is empty (`{}` or `[]`). Partner and claude-in-office plugins have no `hooks/` dir.
-    - .mcp.json — yes for `financial-analysis` (11 servers), `partner-built/lseg` (1), `partner-built/spglobal` (1); `investment-banking/.mcp.json` is an empty `{"mcpServers": {}}`; others have none.
-    - .lsp.json — no
-    - monitors — no
-    - bin — no (closest analog: `claude-in-office/scripts/build-manifest.mjs`, invoked from command markdown rather than surfaced as a plugin component)
-    - output-styles — no
+## Live monitoring
 
-### Agent frontmatter fields used
+### `monitors.json` absent
 
-not applicable (no agents present)
+No `monitors.json` in any plugin.
 
-### Agent tools syntax
+## Plugin-to-plugin coordination
 
-not applicable
+### Implicit prose-only dependency
 
-### Pitfalls observed
+No `plugin.json` declares a `dependencies` field. README states "Start with **financial analysis** — the core plugin that provides shared modeling tools and all MCP data connectors" but enforces this only as prose, not as a manifest dependency. `investment-banking` etc. have an empty `.mcp.json` and skills that assume `financial-analysis`'s MCP servers are loaded, but nothing in the metadata expresses that. If a user installs `investment-banking` without `financial-analysis`, the skills will still load but reference MCP tools that aren't configured.
 
-empty `hooks/hooks.json` files on five plugins are dead scaffolding — they exist but declare no hooks. Either remnants of a template, forward-compat stubs, or scaffolding for user customization; nothing in README or CLAUDE.md explains their presence. `sp-global` duplicates MCP server config in both `.claude-plugin/plugin.json` (inline `mcpServers`) and `.mcp.json` — two sources of truth.
+## Testing
 
-## 6. Dependency installation
+### No tests
 
-### Applicable
+No `tests/` directory anywhere, no pytest config, no jest/vitest config.
 
-no for the Anthropic-built five core/function plugins and the two partner plugins — pure markdown + JSON + HTTP MCP URLs, no runtime deps. Partially applicable for `claude-in-office`: it ships a Node `scripts/build-manifest.mjs` (plain `import` from `node:fs`, no package manifest) and a Python FastAPI reference server under `examples/python-bootstrap/` with its own `requirements.txt`.
+## CI workflow shape
 
-### Dep manifest format
+### No CI
 
-`requirements.txt` (only in `claude-in-office/examples/python-bootstrap/`); the `.mjs` script has no `package.json`.
+`.github/` directory does not exist at repo root (GitHub API returns 404 for `/contents/.github`). Zero CI surface on a 7.7k-star Anthropic-owned public marketplace. No manifest validation, no schema check, no command-markdown frontmatter lint. All quality control appears to be review-time on PRs.
 
-### Install location
+## Marketplace validation
 
-not applicable at plugin level — the Python example is a reference server the admin runs out-of-band on their own infra, not installed into `${CLAUDE_PLUGIN_DATA}` or `${CLAUDE_PLUGIN_ROOT}`.
+### No validation
 
-### Install script location
+No CI, no `validate.yml`, no pre-commit hook, no `claude plugin validate` invocation. Nothing prevents malformed JSON from landing on main; the only guardrail is manual PR review.
 
-inline in `commands/setup.md` — the setup command checks `node --version` and asks the user to install Node via their package manager before the command shells out to `node`/`npx`.
+## Release automation
 
-### Change detection
+### No release automation / manual
 
-none — no hook, no cache, no SessionStart dep-install machinery.
+No `release.yml`, no tags, no CHANGELOG.md, no GitHub releases. Confirms the "tip-of-main install" posture — Cowork pulls live; there is no released artifact.
 
-### Retry-next-session invariant
+## Documentation surface
 
-not applicable
+### Comprehensive single README + ad-hoc CLAUDE.md
 
-### Failure signaling
+Repo-root `README.md` is ~10.7 KB — thorough marketplace overview, install snippets, plugin matrix, MCP provider table, "Making Them Yours" customization section, "Contributing" subsection. Repo-root `CLAUDE.md` is sparse (~1.5 KB) — generic "repo structure + plugin layout + development workflow" scaffolding referencing `mcp/` and `mcp-categories.json` paths that don't actually exist in the current tree (stale template). No per-plugin `CLAUDE.md`. No `CHANGELOG.md`, no `architecture.md` at root.
 
-the bundled `build-manifest.mjs` uses `console.warn`/`console.error` + non-zero `process.exit(1)` for bad input and missing URL slots; not an install-time signal.
+### Stale `CLAUDE.md`
 
-### Runtime variant
+Repo-root `CLAUDE.md` references a `mcp/` directory and an `mcp-categories.json` file that don't exist in the current tree, and documents a template scaffolding layout that no plugin follows (the actual pattern is `.mcp.json` at plugin root, no `mcp/` directory, no `mcp-categories.json`). Running off this CLAUDE.md would mislead.
 
-mixed and user-side only — Node for the manifest generator (user installs), Python for the bootstrap reference server (user installs).
+### Per-plugin README mixed coverage
 
-### Alternative approaches
+Per-plugin READMEs uneven: `investment-banking/README.md`, `claude-in-office/README.md`, `partner-built/lseg/README.md`, `partner-built/spglobal/README.md` present; `financial-analysis`, `equity-research`, `private-equity`, `wealth-management` have no per-plugin README — four of eight plugins ship one, half don't.
 
-`npx` invocation from command markdown is the closest pattern — no PEP 723, no pointer files, no uvx, no venv.
+## License declaration
 
-### Version-mismatch handling
+### Single repo-level license
 
-none
+`LICENSE` (Apache-2.0) at repo root, ~11.4 KB. `partner-built/spglobal/LICENSE` also present (Apache-2.0 declared explicitly in its plugin.json); `financial-analysis/skills/skill-creator/LICENSE.txt` also present.
 
-### Pitfalls observed
+## Community health files
 
-`claude-in-office` places genuine dependency-bearing code outside the plugin component surface — `scripts/` and `examples/` are user-facing admin tooling, not plugin components. The setup command asks the admin to run `node`/`npx` on their own box. This sidesteps the whole plugin-dep-install story but also means there's no automation path when Node is missing — failure is surfaced as "stop here" in the command prose.
+### Bare minimum (LICENSE only)
 
-## 7. Bin-wrapped CLI distribution
-
-### Applicable
-
-no — no `bin/` directory in any plugin.
-
-### `bin/` files
-
-none. (`claude-in-office/scripts/build-manifest.mjs` is the only dedicated script, invoked from command markdown via `node scripts/build-manifest.mjs ...`, not registered as a plugin bin.)
-
-### Shebang convention
-
-not applicable
-
-### Runtime resolution
-
-not applicable
-
-### Venv handling (Python)
-
-not applicable
-
-### Platform support
-
-not applicable
-
-### Permissions
-
-not applicable
-
-### SessionStart relationship
-
-not applicable
-
-### Pitfalls observed
-
-repo demonstrates a pattern where scripts the user runs (like `build-manifest.mjs`) live alongside commands but outside the plugin bin surface. If the Claude Code bin mechanism existed in its current shape, this script would be a candidate — instead it's shell-invoked from command prose.
-
-## 8. User configuration
-
-### `userConfig` present
-
-no — no plugin.json declares `userConfig`.
-
-### Field count
-
-none
-
-### `sensitive: true` usage
-
-not applicable
-
-### Schema richness
-
-not applicable
-
-### Reference in config substitution
-
-not applicable — instead, `investment-banking` ships `.claude/investment-banking.local.md.example`, a plaintext YAML template the user copies to `.claude/investment-banking.local.md` (gitignored) to encode coverage/sector/deal preferences. This is a convention-only user-config channel: the file is read by skills at runtime rather than resolved by a harness substitution mechanism.
-
-### Pitfalls observed
-
-`claude-in-office/scripts/build-manifest.mjs` has its own per-key schema (`KEYS` object with regex patterns, hints, and a `secret` flag) for Vertex/Bedrock/gateway config — a parallel, hand-rolled config-surface system that does exactly what `userConfig` exists for, but lives outside the plugin metadata layer. Notably, it *does* flag secrets (`gateway_token: { secret: true }`) and emits a warning when those are used in the manifest (which is org-wide), steering the admin toward per-user extension attrs instead. This is a mature "don't-put-secrets-here" posture implemented outside the manifest format.
-
-## 9. Tool-use enforcement
-
-### PreToolUse hooks
-
-none (every `hooks.json` that exists is empty)
-
-### PostToolUse hooks
-
-none
-
-### PermissionRequest/PermissionDenied hooks
-
-absent
-
-### Output convention
-
-not applicable
-
-### Failure posture
-
-not applicable
-
-### Top-level try/catch wrapping
-
-not applicable
-
-### Pitfalls observed
-
-all five Anthropic-built plugins ship a `hooks/hooks.json` file but register zero hooks. The scaffolding is present, the behavior is absent — pure boilerplate.
-
-## 10. Session context loading
-
-### SessionStart used for context
-
-no
-
-### UserPromptSubmit for context
-
-no
-
-### `hookSpecificOutput.additionalContext` observed
-
-no
-
-### SessionStart matcher
-
-not applicable
-
-### Pitfalls observed
-
-no session-context loading at all. Plugins rely entirely on skills' frontmatter `description` matching to surface domain knowledge when relevant — the classic Cowork pattern (no always-on injection).
-
-## 11. Live monitoring and notifications
-
-### `monitors.json` present
-
-no
-
-### Monitor count + purposes
-
-none
-
-### `when` values used
-
-not applicable
-
-### Version-floor declaration
-
-not applicable
-
-### Pitfalls observed
-
-none (monitors simply not used)
-
-## 12. Plugin-to-plugin dependencies
-
-### `dependencies` field present
-
-no — no `plugin.json` declares a `dependencies` field. The README states "Start with **financial analysis** — the core plugin that provides shared modeling tools and all MCP data connectors" but enforces this only as prose, not as a manifest dependency. `investment-banking` etc. have an empty `.mcp.json` and skills that assume `financial-analysis`'s MCP servers are loaded, but nothing in the metadata expresses that.
-
-### Entries
-
-none
-
-### `{plugin-name}--v{version}` tag format observed
-
-not applicable (no tags at all)
-
-### Pitfalls observed
-
-implicit dependency on `financial-analysis`: the core plugin owns all 11 MCP connectors, and function-specific plugins reference them in skill prose without declaring the dependency. If a user installs `investment-banking` without `financial-analysis`, the skills will still load but reference MCP tools that aren't configured. The dependency is documented in README ("install first") but not enforced by metadata.
-
-## 13. Testing and CI
-
-### Test framework
-
-none — no `tests/` directory anywhere, no pytest config, no jest/vitest config.
-
-### Tests location
-
-not applicable
-
-### Pytest config location
-
-not applicable
-
-### Python dep manifest for tests
-
-not applicable
-
-### CI present
-
-no — `.github/` directory does not exist at repo root (GitHub API returns 404 for `/contents/.github`).
-
-### CI file(s)
-
-none
-
-### CI triggers
-
-not applicable
-
-### CI does
-
-not applicable
-
-### Matrix
-
-not applicable
-
-### Action pinning
-
-not applicable
-
-### Caching
-
-not applicable
-
-### Test runner invocation
-
-not applicable
-
-### Pitfalls observed
-
-zero CI surface on an Anthropic-owned, 7.7k-star, public marketplace. No manifest validation, no schema check, no command-markdown frontmatter lint. All quality control appears to be review-time on PRs. Branch list shows auto-generated branches like `claude/fix-script-integrity-wwwVc` — suggests some sort of external bot/agent-driven workflow operates on the repo but runs outside its own `.github/workflows`.
-
-## 14. Release automation
-
-### `release.yml` (or equivalent) present
-
-no
-
-### Release trigger
-
-not applicable
-
-### Automation shape
-
-not applicable — no releases, no tags, no CHANGELOG.
-
-### Tag-sanity gates
-
-not applicable
-
-### Release creation mechanism
-
-not applicable
-
-### Draft releases
-
-not applicable
-
-### CHANGELOG parsing
-
-not applicable
-
-### Pitfalls observed
-
-confirms the "tip-of-main install" posture — Cowork pulls live; there is no released artifact.
-
-## 15. Marketplace validation
-
-### Validation workflow present
-
-no
-
-### Validator
-
-not applicable
-
-### Trigger
-
-not applicable
-
-### Frontmatter validation
-
-not applicable
-
-### Hooks.json validation
-
-not applicable
-
-### Pitfalls observed
-
-given the manual-version-bump / no-CI posture, nothing prevents malformed JSON from landing on main. The only guardrail is manual PR review.
-
-## 16. Documentation
-
-### `README.md` at repo root
-
-present (~10.7 KB — thorough marketplace overview, install snippets, plugin matrix, MCP provider table, "Making Them Yours" customization section, "Contributing" subsection)
-
-### `README.md` per plugin
-
-mixed — `investment-banking/README.md`, `claude-in-office/README.md`, `partner-built/lseg/README.md`, `partner-built/spglobal/README.md` present; `financial-analysis`, `equity-research`, `private-equity`, `wealth-management` have no per-plugin README.
-
-### `CHANGELOG.md`
-
-absent
-
-### `architecture.md`
-
-absent
-
-### `CLAUDE.md`
-
-at repo root — but content is sparse (~1.5 KB, generic "repo structure + plugin layout + development workflow" scaffolding; references `mcp/` and `mcp-categories.json` paths that don't actually exist in the current tree — stale template). No per-plugin CLAUDE.md.
-
-### Community health files
-
-none (no SECURITY.md, no CONTRIBUTING.md, no CODE_OF_CONDUCT.md at repo root). README has a "Contributing" subsection with three-item fork-and-PR guidance.
-
-### LICENSE
-
-present (Apache-2.0 at repo root, ~11.4 KB); `partner-built/spglobal/LICENSE` also present (Apache-2.0 declared explicitly in its plugin.json); `financial-analysis/skills/skill-creator/LICENSE.txt` also present.
-
-### Badges / status indicators
-
-absent (no CI badge because no CI; no release badge because no releases).
-
-### Pitfalls observed
-
-root CLAUDE.md is stale — references `mcp/` and `mcp-categories.json` that don't exist, and documents a template scaffolding layout that no plugin follows (the actual pattern is `.mcp.json` at plugin root, no `mcp/` directory, no `mcp-categories.json`). Running off this CLAUDE.md would mislead. Per-plugin docs are inconsistent — four of eight plugins have a README; half don't.
-
-## 17. Novel axes
-
-- **Plaintext user-config via gitignored `.local.md` convention** — `investment-banking/.claude/investment-banking.local.md.example` ships a YAML-body markdown template the user copies to `.local.md` (gitignored per the plugin's `.gitignore`) to encode coverage, sectors, deal size, active mandates. Skills read this file at runtime. This is user configuration implemented entirely as file convention + skill prose — no `userConfig`, no `${user_config.KEY}` substitution, no harness involvement. Candidate axis: "file-convention user config" as an alternative pattern to manifest-declared `userConfig`.
-
-- **Partner-built namespace carving** — the marketplace mixes first-party (Anthropic-authored) and third-party (partner-authored) plugins using a `./partner-built/<partner>/` directory convention. No manifest-level marker distinguishes them; the convention is purely filesystem-path-based. `sp-global` advertises its own `repository: https://github.com/kensho-technologies/spglobal-agent-skills`, suggesting the tree here is a vendored copy. Candidate axis: "in-repo partner-built vendoring" as a provenance pattern for aggregator marketplaces.
-
-- **External HTTPS MCP as the dependency surface** — all 11 connectors in `financial-analysis/.mcp.json` are remote HTTP MCP servers hosted by data providers. No local MCP server processes, no stdio MCP, no bundled runtime. This sidesteps the entire local-install story (purpose 6) — the "dependency" is the provider's SaaS uptime and the user's subscription. Candidate axis: "HTTP-MCP-only" plugins as a distinct distribution class.
-
-- **Config-surface in user-side script rather than manifest** — `claude-in-office/scripts/build-manifest.mjs` hand-rolls a `KEYS` schema (regex patterns, hints, `secret: true` flags, required-companion-field validation) for Vertex/Bedrock/gateway customization. It implements `sensitive`-equivalent behavior ("this key goes in every user's manifest; warn if it's per-user sensitive") that the manifest-layer `userConfig` also offers. Candidate axis: "external config schema in admin-run script" — deliberate inversion where the plugin ships tooling for the admin to generate downstream configs rather than being configured itself.
-
-- **Setup-log resumability via Desktop markdown** — `claude-in-office/commands/setup.md` instructs the agent to read `~/Desktop/claude-in-office-setup.md` first and append a `## Run — <timestamp>` section on each invocation, making setup fully resumable across sessions. Contrast with SessionStart-based context-loading (which this repo never uses): resumption state lives in a user-visible file the human can inspect and share. Candidate axis: "user-visible markdown as workflow state".
-
-- **Empty-scaffold hooks** — five plugins carry a `hooks/hooks.json` with empty content (`{}` or `[]`). Either template residue or a placeholder telegraphing "this is where hooks would go if you added them". Candidate axis: "template-scaffolded but unused component directories" as either an anti-pattern (dead files) or a deliberate extension-point convention.
-
-## 18. Gaps
-
-### CLAUDE.md staleness root cause
-
-root `CLAUDE.md` describes a `mcp/` + `mcp-categories.json` structure that's absent from the tree. Could not determine whether this is (a) a generic template copied from an older repo and never updated, (b) deliberate future-state, or (c) reference to a prior refactor. Commit history on `CLAUDE.md` would resolve.
-
-### Why `investment-banking` is at 0.2.0 while peers sit at 0.1.0
-
-no CHANGELOG, no release notes, no tags — the single bump reason isn't recoverable without a git-log dive on `investment-banking/.claude-plugin/plugin.json`.
-
-### External bot branches
-
-branch list contains `claude/fix-script-integrity-wwwVc` and `claude/slack-update-readme-plugin-submission-jvRwz` style branches; the PR-creating agent runs outside the repo (no workflow file sources it here). Which agent/bot creates these, whether they have a schedule, and whether any of them perform validation isn't visible from repo contents.
-
-### Partner-built vendoring sync mechanism
-
-`sp-global/plugin.json` lists `repository: github.com/kensho-technologies/spglobal-agent-skills` — whether the vendored copy under `./partner-built/spglobal/` is manually pulled or scripted isn't visible in this repo. No `git submodule`, no subtree hints in README.
-
-### Why `hooks.json` files are empty
-
-no documentation explains their presence; could be scaffolding from a template, forward-compat, or residual. Would need to correlate plugin creation commits against the "template" state to tell.
-
-### Cowork-vs-Code runtime behavior differences
-
-README frames this as "Built for Claude Cowork, also compatible with Claude Code." The reference patterns observed (no hooks, no SessionStart, no `userConfig`, no release pipeline, tip-of-main install) are more aligned with Cowork's managed-install model than with Claude Code's local-plugin lifecycle. Whether the Cowork harness imposes different constraints (e.g., no hooks support, no binary distribution) would contextualize every "absent" finding above — resolves only with Cowork's plugin-runtime docs.
+`LICENSE` at repo root. No `SECURITY.md`, no `CONTRIBUTING.md`, no `CODE_OF_CONDUCT.md`. README has a "Contributing" subsection with three-item fork-and-PR guidance.
