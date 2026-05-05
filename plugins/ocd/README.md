@@ -107,13 +107,16 @@ Slash commands under `/ocd:` — descriptions source from each skill's SKILL.md 
 
 | Skill | Purpose |
 |-------|---------|
-| `/ocd:check` | Run universal discipline checks (dormancy today) against plugin systems |
-| `/ocd:git` | Record topic-grouped commits and push a branch to origin |
-| `/ocd:log` | Capture or manage project log entries — decisions, friction, problems, ideas |
+| `/ocd:check` | Run universal discipline checks (dormancy, markdown, python) against plugin systems or project files |
+| `/ocd:git` | Manage local git history — commit topic-grouped changes, push a branch, watch GitHub Actions, and bundle the full commit-push-CI cycle as a checkpoint |
+| `/ocd:log` | Capture or manage project log entries — decisions, friction, problems, ideas, patterns, research |
+| `/ocd:needs-map` | Walk components through the unmet-concern audit — identify failure modes, wire addressing edges, prune components with no specific unmet sub-need |
 | `/ocd:pdf` | Export markdown files to PDF using WeasyPrint |
 | `/ocd:refactor` | Execute mass source transformations through a scan → plan → apply → verify → test workflow |
+| `/ocd:retrospective` | Wrap a session by surfacing open threads, then walk patterns, friction, ideas, decisions, refinements, and user-memory candidates worth persisting |
 | `/ocd:sandbox` | Work on an isolated sandbox — durable feature boxes plus ephemeral validation sandboxes |
 | `/ocd:setup` | Manage ocd plugin infrastructure — enable/disable systems, report state, guided setup |
+| `/ocd:transcripts` | Query Claude Code session transcripts — projects, sessions, exchanges, with time accounting, persistent per-exchange purposes, and skill-orchestrated reports |
 
 ### MCP Servers
 
@@ -122,6 +125,7 @@ Agent-facing tools exposed over the Model Context Protocol. Registered in `.mcp.
 | Server | Tools | Purpose |
 |--------|-------|---------|
 | `navigator` | `paths_*`, `skills_*`, `references_*`, `scope_*` | Project structure index, reference mapping, governance matching, scope analysis |
+| `transcripts` | `projects_list`, `sessions_query`, `exchanges_query`, `purposes_set/clear`, `settings_get/set`, `schema_describe`, `sql_query` | Claude Code session transcripts — structured query, time accounting, persistent per-exchange purposes |
 
 ## Libraries
 

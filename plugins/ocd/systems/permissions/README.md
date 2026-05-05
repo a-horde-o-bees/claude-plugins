@@ -19,4 +19,4 @@ ocd-run setup permissions analyze              # cross-scope health check
 ocd-run setup permissions clean --scope <x>    # remove recommendations redundant with other scope
 ```
 
-`install` requires an explicit scope choice — the `/ocd:setup guided` skill drives the interactive flow that picks scope, deploys, and offers cross-scope cleanup.
+`deploy` requires an explicit scope choice — the `/ocd:setup guided` skill drives the interactive flow that picks scope, deploys, and offers cross-scope cleanup.
