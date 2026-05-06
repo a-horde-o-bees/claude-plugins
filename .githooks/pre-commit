@@ -12,7 +12,6 @@
 #   systems/setup/__main__.py              — CLI entry point (to systems/setup/)
 #   systems/setup/_metadata.py             — plugin metadata discovery (to systems/setup/)
 #   systems/setup/_deployment.py           — template deployment primitives (to systems/setup/)
-#   systems/setup/_enabled.py              — per-system opt-in state (to systems/setup/)
 #   systems/setup/_formatting.py           — output formatting (to systems/setup/)
 #   systems/setup/_system_discovery.py     — system and skill discovery (to systems/setup/)
 #   systems/setup/_orchestration.py        — install/enable/disable orchestration (to systems/setup/)
@@ -73,7 +72,6 @@ SHARED_FILES=(
     "plugins/ocd/systems/setup/__main__.py:systems/setup"
     "plugins/ocd/systems/setup/_metadata.py:systems/setup"
     "plugins/ocd/systems/setup/_deployment.py:systems/setup"
-    "plugins/ocd/systems/setup/_enabled.py:systems/setup"
     "plugins/ocd/systems/setup/_formatting.py:systems/setup"
     "plugins/ocd/systems/setup/_system_discovery.py:systems/setup"
     "plugins/ocd/systems/setup/_orchestration.py:systems/setup"

@@ -13,7 +13,6 @@ This package itself is also propagated to every plugin via pre-commit
 hook — plugins share the same install/init/status surface.
 """
 
-from ._enabled import effective_enabled, read_enabled, write_enabled  # noqa: F401
 from ._metadata import *  # noqa: F403
 from ._deployment import *  # noqa: F403
 from ._formatting import *  # noqa: F403
