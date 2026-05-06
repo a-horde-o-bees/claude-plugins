@@ -1,6 +1,6 @@
-"""Integration tests for the governance CLI verb dispatch.
+"""Integration tests for the conventions CLI verb dispatch.
 
-Exercises `ocd-run governance list|for` argparse + output shape through
+Exercises `ocd-run conventions list|for` argparse + output shape through
 the real bin wrapper. The underlying facade (governance_list,
 governance_match) is covered by test_governance.py and
 test_frontmatter.py; this suite locks the user-facing CLI surface.
@@ -12,7 +12,7 @@ from pathlib import Path
 
 def _run(ocd_run: Path, *args: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
-        [str(ocd_run), "governance", *args],
+        [str(ocd_run), "conventions", *args],
         capture_output=True, text=True,
     )
 

@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 
-from systems.governance import governance_match
+from systems.conventions import governance_match
 
 
 def _write_gov_file(path: Path, includes, excludes=None):

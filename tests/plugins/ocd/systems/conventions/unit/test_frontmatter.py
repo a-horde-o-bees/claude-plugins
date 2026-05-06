@@ -1,11 +1,11 @@
-"""Unit tests for governance._frontmatter.
+"""Unit tests for conventions._frontmatter.
 
 Covers pattern normalization (string vs JSON list), frontmatter
 extraction from markdown files, and block-style vs flow-style YAML
 parsing of the `includes`/`excludes` fields.
 """
 
-from systems.governance._frontmatter import (
+from systems.conventions._frontmatter import (
     normalize_patterns,
     parse_governance,
     read_frontmatter,

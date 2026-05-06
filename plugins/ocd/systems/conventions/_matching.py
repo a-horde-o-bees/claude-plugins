@@ -1,14 +1,13 @@
-"""Governance operations.
+"""Convention matching and listing.
 
-Governance matching and listing. Reads rules and conventions directly
-from disk — no database, no caching. Convention files in
-.claude/conventions/ carry frontmatter with include/exclude patterns;
-rule files in .claude/rules/ are always-on context with no pattern
-matching.
+Reads rules and conventions directly from disk — no database, no
+caching. Convention files in .claude/conventions/ carry frontmatter
+with include/exclude patterns; rule files in .claude/rules/ are
+always-on context with no pattern matching.
 
 All functions resolve project directory internally via the environment
 helpers. All functions return structured data (dicts/lists). Formatting
-for CLI display belongs in cli.py.
+for CLI display belongs in __main__.py.
 """
 
 from __future__ import annotations

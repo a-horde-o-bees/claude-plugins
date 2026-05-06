@@ -96,4 +96,4 @@ SQLite database is opened in WAL mode with a 5-second busy timeout. Multiple age
 
 - **Navigator MCP server** (`plugins/ocd/systems/navigator/server.py`) — thin FastMCP adapter. Every tool delegates to a facade function, serializes the result, and returns.
 - **`/ocd:navigator` skill** — drives description writing for undescribed and stale entries, using `paths_undescribed` and `paths_upsert` via the MCP server.
-- **Convention gate hook** — the related `systems/governance` library reads from disk directly, not through navigator. Navigator's `scope_analyze` calls `governance_match` to attach governance data to scanned files.
+- **Convention gate hook** — the related `systems/conventions` library reads from disk directly, not through navigator. Navigator's `scope_analyze` calls `governance_match` to attach governance data to scanned files.

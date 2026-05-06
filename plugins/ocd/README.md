@@ -130,7 +130,7 @@ Python packages consumed as imports. Each has its own README and architecture.
 
 | Library | Package | Purpose |
 |---------|---------|---------|
-| `governance` | [`systems/governance/`](systems/governance/) | Convention and rule governance: match files to applicable entries, list entries, compute dependency ordering. Disk-only. |
+| `conventions` | [`systems/conventions/`](systems/conventions/) | Conventions backbone: deploy convention templates AND match files to applicable conventions via frontmatter `includes`/`excludes`. Disk-only matching, no caching. |
 | `navigator` | [`systems/navigator/`](systems/navigator/) | Project structure index backed by SQLite: path indexing, filesystem scan, descriptions, reference mapping, skill resolution. |
 
 ## License

@@ -21,8 +21,8 @@ from ._skills import *  # noqa: F401,F403
 from ._init import ready, ensure_ready, init, reset, status  # noqa: F401
 
 # Cross-package: scope_analyze composites governance matching into its result,
-# so the facade imports governance_match from the governance library.
-from systems.governance import governance_match
+# so the facade imports governance_match from the conventions library.
+from systems.conventions import governance_match
 
 
 def _ensure_scanned(db_path: str) -> None:

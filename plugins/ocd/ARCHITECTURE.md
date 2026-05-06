@@ -56,11 +56,11 @@ Deny rules take precedence over allow rules. File paths resolve against allowed 
 
 ### PreToolUse: Convention Gate
 
-`hooks/convention_gate.py` — intercepts Read, Edit, and Write tool calls. Calls `governance_match` from `systems/governance/` with the target file path and injects matched convention paths into `additionalContext`. Read invocations receive conventions as informational context; Edit and Write invocations receive a directive to conform and refactor immediately if non-conformant.
+`hooks/convention_gate.py` — intercepts Read, Edit, and Write tool calls. Calls `governance_match` from `systems/conventions/` with the target file path and injects matched convention paths into `additionalContext`. Read invocations receive conventions as informational context; Edit and Write invocations receive a directive to conform and refactor immediately if non-conformant.
 
 ## Governance
 
-Rules and conventions share a governance infrastructure implemented in `systems/governance/`. The library reads directly from disk on every call — no database, no caching. It scans `.claude/rules/` and `.claude/conventions/` directories, parses YAML frontmatter, and performs in-memory pattern matching.
+Rules and conventions share matching infrastructure implemented in `systems/conventions/`. The library reads directly from disk on every call — no database, no caching. It scans `.claude/rules/` and `.claude/conventions/` directories, parses YAML frontmatter, and performs in-memory pattern matching.
 
 **`governance_match`** takes file paths and returns applicable conventions. Rules are excluded by default (already in agent context); `include_rules=True` adds them for evaluation workflows.
 
@@ -118,15 +118,14 @@ Python packages consumed as imports. Each is a subsystem under `systems/`; subst
 | Library | Package | Purpose | Docs |
 |---------|---------|---------|------|
 | `rules` | `systems/rules/` | Rules subsystem — deploys markdown rule templates to `.claude/rules/<plugin>/` as always-on agent context. | [README](systems/rules/README.md) |
-| `conventions` | `systems/conventions/` | Conventions subsystem — deploys convention templates to `.claude/conventions/<plugin>/` for file-governance via `includes`/`excludes` frontmatter. | [README](systems/conventions/README.md) |
+| `conventions` | `systems/conventions/` | Conventions subsystem — deploys convention templates to `.claude/conventions/<plugin>/` AND matches files to applicable conventions via `includes`/`excludes` frontmatter. Reads directly from disk on every match call — no database, no caching. | [README](systems/conventions/README.md) · [ARCHITECTURE.md](systems/conventions/ARCHITECTURE.md) |
 | `logs` | `systems/log/` | Logs subsystem — deploys per-type templates to the shared `logs/<type>/` pool at project root (unnamespaced; contributes to project-level log types). | [README](systems/log/README.md) |
 | `permissions` | `systems/permissions/` | Permissions subsystem — reports auto-approve coverage; CLI verbs (`status`, `deploy`, `analyze`, `clean`) manage recommended patterns across project and user scopes. See Permissions Subsystem section below. | — |
-| `governance` | `systems/governance/` | Convention and rule governance library: match files to applicable governance entries, list entries by kind, and compute the dependency-ordered level grouping. Reads directly from disk on every call — no database, no caching. | [README](systems/governance/README.md) · [ARCHITECTURE.md](systems/governance/ARCHITECTURE.md) |
 | `navigator` | `systems/navigator/` | Project structure index backed by SQLite. Maintains a queryable directory of project files and directories with human-written descriptions agents use to decide whether to open a file. | [README](systems/navigator/README.md) · [ARCHITECTURE.md](systems/navigator/ARCHITECTURE.md) |
 | `transcripts` | `systems/transcripts/` | Claude Code session transcript index backed by SQLite. Ingests JSONL transcripts from `~/.claude/projects/`, partitions per-exchange time into user/agent/idle, holds persistent per-exchange purpose annotations, and serves both a CLI and an MCP server from the same library. | [README](systems/transcripts/README.md) · [ARCHITECTURE.md](systems/transcripts/ARCHITECTURE.md) |
 | `needs_map` | `systems/needs_map/` | Component-needs audit model backed by SQLite. Captures components, hierarchical needs, dependency edges, and addressing edges with rationales; enforces wiring rules so every addressing edge lands where the unmet test fires meaningfully. | [README](systems/needs_map/README.md) · [ARCHITECTURE.md](systems/needs_map/ARCHITECTURE.md) |
 
-Consumers within this plugin: the `convention_gate` hook imports `systems.governance`; the navigator MCP server imports `systems.navigator`; plugin orchestration (`run_init` / `run_status`) discovers and calls every `systems/*/_init.py` uniformly for per-subsystem deployment and reporting.
+Consumers within this plugin: the `convention_gate` hook imports `systems.conventions`; the navigator MCP server imports `systems.navigator`; plugin orchestration (`run_init` / `run_status`) discovers systems via `systems/*/setup/__init__.py` and dispatches to their per-system setup handlers.
 
 ## Always-On Primitives
 
@@ -179,7 +178,7 @@ ocd-run hooks.convention_gate        # Hook invocation
 ocd-run setup <verb>                 # Setup — init | status | enable | disable | guided
 ocd-run navigator <verb>             # Navigator CLI — scan | describe | list | search | set | resolve-skill | init
 ocd-run check <dimension>            # Discipline checks — dormancy | markdown | python
-ocd-run governance <verb>            # Governance queries — match | list | order
+ocd-run conventions <verb>           # Convention queries — for | list
 ocd-run refactor <tool>              # Mass transformation primitives (rename-symbol)
 ocd-run sandbox <verb>               # Sandbox substrate primitives (worktree-add, cleanup, ...)
 ocd-run transcripts <verb>           # Transcripts CLI — projects | sessions | exchanges | purposes-set | purposes-clear | settings | reset (report is skill-only)

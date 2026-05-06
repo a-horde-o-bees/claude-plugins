@@ -1,4 +1,4 @@
-"""Unit tests for governance operations in systems.governance._governance.
+"""Unit tests for convention matching in systems.conventions._matching.
 
 Covers entry listing and pattern-based file-to-convention matching
 including exclude filters and list-pattern variants. Frontmatter parsing
@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from systems.governance import (
+from systems.conventions import (
     governance_list,
     governance_match,
 )

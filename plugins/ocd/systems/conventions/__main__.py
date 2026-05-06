@@ -1,4 +1,4 @@
-"""Governance CLI.
+"""Conventions CLI.
 
 Presentation layer — argument parsing and dispatch wrappers only.
 Business logic lives in __init__.py facade. Functions read directly
@@ -45,9 +45,9 @@ def _dispatch_for(args: argparse.Namespace) -> None:
 def build_parser() -> argparse.ArgumentParser:
     """Build argument parser for the governance CLI."""
     parser = argparse.ArgumentParser(
-        prog="governance",
+        prog="conventions",
         description=(
-            "Governance operations — matching rules and conventions from\n"
+            "Convention operations — matching rules and conventions from\n"
             "frontmatter. Reads directly from disk.\n"
             "\n"
             "Commands:\n"
@@ -55,8 +55,8 @@ def build_parser() -> argparse.ArgumentParser:
             "  for     — find conventions that govern given files\n"
             "\n"
             "Typical usage:\n"
-            "  governance list                     # browse registered entries\n"
-            "  governance for src/app.py           # check what governs a file"
+            "  conventions list                     # browse registered entries\n"
+            "  conventions for src/app.py           # check what governs a file"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
