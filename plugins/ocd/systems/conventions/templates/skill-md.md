@@ -110,23 +110,21 @@ skill-name/
 ├── SKILL.md               # Main instructions (required)
 ├── __init__.py            # Facade — public interface (optional, for skills with code)
 ├── __main__.py            # CLI entry point (optional, for skills with code)
-├── _component-name.md     # Extracted component (optional)
-├── references/            # Detailed reference docs (optional)
+├── workflows/             # Procedure files (see workflows-md.md)
+├── components/            # Reference content (see components-md.md)
 └── tests/                 # Test suites (optional)
 ```
 
-## Components
+A skill follows the same `workflows/` + `components/` split as any other system per `system-structure.md`. Sub-flows go in `workflows/<topic>.md`; reference content goes in `components/<topic>.md`. Skills with substantial structure may also carry `plans/` and `TASKS.md`.
 
-Component files (see Process Flow Notation) live alongside SKILL.md. Typical contents: extracted sub-flows, agent workflows, evaluation criteria, reference material.
+## Sub-flow Extraction
 
-### When to extract
-
-Extract a sub-flow into a component file when either holds:
+Extract a sub-flow into a `workflows/<topic>.md` file when either holds:
 
 - The sub-flow is dispatched via `Spawn:` to an isolated agent — the agent reads only its own instructions, keeping the caller's context clean
 - The sub-flow is optional — conditional on arguments or runtime state, not traversed by every invocation — so the caller avoids loading instructions that won't execute on the paths that skip it
 
-Mandatory sub-flows that run on every invocation stay inline regardless of size. If the caller always reads them anyway, extraction saves no context.
+Mandatory sub-flows that run on every invocation stay inline regardless of size. If the caller always reads them anyway, extraction saves no context. See `system-structure.md` for the full extraction criteria.
 
 ## Delegation
 

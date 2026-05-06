@@ -72,7 +72,7 @@ Plugin-wide rule templates in `systems/rules/templates/` deploy to `.claude/rule
 |------|-------|
 | `design-principles.md` | Foundational principles governing all artifacts and agent behavior |
 | `workflow.md` | Working directory, agents, testing — execution discipline for working in this project |
-| `system-docs.md` | README and ARCHITECTURE.md requirements per system, including the Subsystem Doc Consolidation rule and purpose-statement propagation |
+| `system-structure.md` | System layout — three-doc model, operational subdirectories (workflows/, components/, plans/), TASKS.md, CLAUDE.md as navigation hub, extraction criteria, subsystem doc consolidation, purpose-statement propagation |
 | `process-flow-notation.md` | Structured programming notation for skill workflows |
 | `markdown.md` | Base content standards for markdown files |
 
@@ -82,7 +82,7 @@ Rules use the template-deployed model: sources are authoritative; deployed copie
 
 ## Skills
 
-Skill packages live under `systems/` (declared via `plugin.json`'s `skills` field). Each contains at minimum a `SKILL.md` describing the workflow. Some include extracted component files (`_*.md`) for subflows that only run on optional execution paths. Per the Subsystem Doc Consolidation rule in `system-docs.md`, skills' operational reference IS `SKILL.md` — no separate README or architecture is required; purpose statements below are propagated from each skill's frontmatter `description` field.
+Skill packages live under `systems/` (declared via `plugin.json`'s `skills` field). Each contains at minimum a `SKILL.md` describing the workflow. Some include extracted component files (`_*.md`) for subflows that only run on optional execution paths. Per the Subsystem Doc Consolidation rule in `system-structure.md`, skills' operational reference IS `SKILL.md` — no separate README or architecture is required; purpose statements below are propagated from each skill's frontmatter `description` field.
 
 **Skills:**
 

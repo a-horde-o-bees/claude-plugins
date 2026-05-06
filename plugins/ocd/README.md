@@ -47,7 +47,7 @@ Always-on agent behavior guidance deployed to `.claude/rules/ocd/` via `/ocd:set
 |------|---------|
 | `design-principles.md` | Foundational principles governing all artifacts and agent behavior |
 | `workflow.md` | Execution discipline: working directory, agents, testing |
-| `system-docs.md` | README and ARCHITECTURE.md requirements per system |
+| `system-structure.md` | System layout — three-doc model, operational subdirectories (workflows/, components/, plans/), TASKS.md, CLAUDE.md as navigation hub |
 | `process-flow-notation.md` | Structured programming notation for agent workflows |
 | `markdown.md` | Base content standards for markdown files |
 
