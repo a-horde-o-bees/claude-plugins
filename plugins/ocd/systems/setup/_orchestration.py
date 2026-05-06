@@ -1,37 +1,36 @@
-"""Install and list orchestration.
+"""Setup orchestration — meta verbs and system-level dispatch helpers.
 
-Top-level run_init and run_status entry points that discover every
-systems/ entry and dispatch uniformly to each subsystem's setup
-package. Systems without a `setup/` folder are invisible — only
-migrated systems participate in orchestration.
+Top-level entry points for the new setup CLI surface:
 
-Enable/disable orchestration respects the per-project opt-in config
-(`.claude/<plugin>/enabled-systems.json`). `run_init` installs only
-enabled systems at project scope and uninstalls disabled ones.
-`run_enable` and `run_disable` mutate the config and reconcile disk
-state.
+- run_purposes() — lettered list of every migrated system with its
+  purpose statement (one-liner). Drives the discovery experience; the
+  user picks which system to explore.
+- run_statuses() — aggregated status across every migrated system. Calls
+  each system's status() with no scope to report state at every scope
+  the system supports.
+- run_system_usage(system_name) — renders one system's usage by reading
+  the first paragraph of each setup/*.md component file plus the system's
+  purpose() function.
+
+Per-system verb invocation (install/uninstall/status) is dispatched by
+the CLI directly to the named system's setup module, not orchestrated
+here. Each system's setup/__init__.py owns its own install/uninstall/
+status logic.
 """
 
+from __future__ import annotations
+
 import importlib
+from pathlib import Path
 
-from ._enabled import effective_enabled, read_enabled, write_enabled
-from ._system_discovery import _discover_systems, _discover_workflow_skills
-from tools.environment import get_claude_home, get_git_root_for, get_plugin_root, get_project_dir
-from ._formatting import format_bare_skill, format_section
-from ._metadata import find_marketplace_source, format_header, get_installed_version, get_plugin_name
-
-
-_META_SKILLS = {"setup"}
+from tools.environment import get_git_root_for, get_plugin_root, get_project_dir
+from ._formatting import format_section
+from ._metadata import get_plugin_name
+from ._system_discovery import _discover_systems
 
 
 def _require_git_project_dir() -> None:
-    """Refuse deploy verbs unless the project directory is inside a git repo.
-
-    Setup writes files into the project tree; without version control
-    those writes have no record and no rollback. The block is
-    intentional — `git init` is a deliberate one-line action that
-    establishes the tracking the deploy then relies on.
-    """
+    """Refuse deploy verbs unless the project directory is inside a git repo."""
     project_dir = get_project_dir()
     try:
         get_git_root_for(project_dir)
@@ -42,201 +41,95 @@ def _require_git_project_dir() -> None:
         ) from exc
 
 
-def run_init(
-    force: bool = False,
-    system: str | None = None,
-    all_systems: bool = False,
-    selected: list[str] | None = None,
-) -> None:
-    """Install: init enabled systems and prune disabled ones.
-
-    system: narrow scope to one subsystem for this run. Does not mutate
-    the enabled-systems config — use it for targeted re-init.
-
-    all_systems: enable every discovered system and persist.
-
-    selected: enable exactly this list (validated against discovery) and
-    persist. Mutually exclusive with all_systems.
-
-    No flags: use the existing enabled-systems config. If no config
-    exists yet (first install), default to enabling every discovered
-    system so the plugin works out of the box.
-
-    force: passed through to each subsystem's init().
-    """
-    _require_git_project_dir()
+def run_purposes() -> None:
+    """Print a lettered list of every migrated system with its purpose statement."""
     plugin_root = get_plugin_root()
     plugin_name = get_plugin_name(plugin_root)
-
-    available = _discover_systems(plugin_root)
-    if system is not None and system not in available:
-        print(f"Unknown system: {system}")
-        print(f"Available: {', '.join(available)}" if available else "No systems discovered.")
-        return
-
-    narrow_run = system is not None
-
-    if narrow_run:
-        target_systems = [system]
-        disabled = []
-    else:
-        if all_systems:
-            target_systems = list(available)
-            write_enabled(plugin_root, target_systems)
-        elif selected is not None:
-            unknown = [s for s in selected if s not in available]
-            if unknown:
-                print(f"Unknown system(s): {', '.join(unknown)}")
-                print(f"Available: {', '.join(available)}")
-                return
-            target_systems = sorted(set(selected))
-            write_enabled(plugin_root, target_systems)
-        else:
-            target_systems = effective_enabled(plugin_root, available)
-            if read_enabled(plugin_root) is None:
-                write_enabled(plugin_root, target_systems)
-        disabled = [s for s in available if s not in target_systems]
-
-    print(f"{plugin_name} install" + (f" --system {system}" if narrow_run else ""))
-    print()
-
-    rules_changed = False
-
-    for system_name in target_systems:
-        mod = importlib.import_module(f"systems.{system_name}.setup")
-        result = mod.install(scope="project", force=force)
-        for line in format_section(system_name.capitalize(), result["files"], result.get("extra")):
-            print(line)
-        print()
-
-        if system_name == "rules":
-            rules_changed = any(f["before"] != f["after"] for f in result["files"])
-
-    for system_name in disabled:
-        mod = importlib.import_module(f"systems.{system_name}.setup")
-        result = mod.uninstall(scope="project")
-        for line in format_section(
-            f"{system_name.capitalize()} (disabled)", result["files"], result.get("extra"),
-        ):
-            print(line)
-        print()
-
-    if not narrow_run:
-        skills = _discover_workflow_skills(plugin_root)
-        shown = [s for s in skills if s not in _META_SKILLS]
-        if shown:
-            print("Skills")
-            for skill_name in shown:
-                print(f"  {format_bare_skill(plugin_name, skill_name)}")
-            print()
-
-    if rules_changed:
-        print("Done. Restart Claude session to load new rules.")
-    else:
-        print("Done.")
-
-
-def run_enable(system: str) -> None:
-    """Add system to the enabled list and init it in-place."""
-    _require_git_project_dir()
-    plugin_root = get_plugin_root()
-    available = _discover_systems(plugin_root)
-    if system not in available:
-        print(f"Unknown system: {system}")
-        print(f"Available: {', '.join(available)}")
-        return
-
-    enabled = effective_enabled(plugin_root, available)
-    if system in enabled:
-        print(f"{system} is already enabled")
-        return
-
-    enabled.append(system)
-    write_enabled(plugin_root, enabled)
-
-    mod = importlib.import_module(f"systems.{system}.setup")
-    result = mod.install(scope="project", force=False)
-    for line in format_section(system.capitalize(), result["files"], result.get("extra")):
-        print(line)
-    print()
-
-    if system == "rules" and any(f["before"] != f["after"] for f in result["files"]):
-        print(f"{system} enabled. Restart Claude session to load new rules.")
-    else:
-        print(f"{system} enabled.")
-
-
-def run_disable(system: str) -> None:
-    """Remove system from enabled list and clean its deployed artifacts."""
-    _require_git_project_dir()
-    plugin_root = get_plugin_root()
-    available = _discover_systems(plugin_root)
-    if system not in available:
-        print(f"Unknown system: {system}")
-        print(f"Available: {', '.join(available)}")
-        return
-
-    enabled = effective_enabled(plugin_root, available)
-    if system not in enabled:
-        print(f"{system} is already disabled")
-        return
-
-    enabled.remove(system)
-    write_enabled(plugin_root, enabled)
-
-    mod = importlib.import_module(f"systems.{system}.setup")
-    result = mod.uninstall(scope="project")
-    for line in format_section(
-        f"{system.capitalize()} (disabled)", result["files"], result.get("extra"),
-    ):
-        print(line)
-    print()
-    print(f"{system} disabled.")
-
-
-def run_status(system: str | None = None) -> None:
-    """List: discover and report state for every subsystem.
-
-    system: when provided, scopes output to one subsystem. Unknown names
-    print an error listing available systems.
-    """
-    plugin_root = get_plugin_root()
-    claude_home = get_claude_home()
-    plugin_name = get_plugin_name(plugin_root)
-
     systems = _discover_systems(plugin_root)
-    if system is not None and system not in systems:
-        print(f"Unknown system: {system}")
-        print(f"Available: {', '.join(systems)}" if systems else "No systems discovered.")
+    if not systems:
+        print(f"No migrated systems in {plugin_name}.")
         return
 
-    # Header (plugin-wide; skipped when scoped to a single subsystem)
-    if system is None:
-        installed_version = get_installed_version(plugin_root)
-        source_version, marketplace_name = find_marketplace_source(
-            plugin_name, plugin_root, claude_home,
-        )
-        print(format_header(plugin_name, installed_version, source_version, marketplace_name))
-        print()
+    print(f"{plugin_name} systems:")
+    print()
+    for idx, system_name in enumerate(systems):
+        letter = chr(ord("A") + idx)
+        try:
+            mod = importlib.import_module(f"systems.{system_name}.setup")
+            purpose = mod.purpose() if hasattr(mod, "purpose") else "(no purpose declared)"
+        except Exception as exc:  # noqa: BLE001
+            purpose = f"(error loading: {exc})"
+        print(f"  {letter}. {system_name} — {purpose}")
+    print()
+    print("Pick a system: `ocd-run setup <system>` for that system's usage.")
 
-    target_systems = [system] if system is not None else systems
-    enabled = set(effective_enabled(plugin_root, systems))
 
-    for system_name in target_systems:
-        mod = importlib.import_module(f"systems.{system_name}.setup")
-        result = mod.status(scope="project")
-        opt_in = "enabled" if system_name in enabled else "disabled"
-        heading = f"{system_name.capitalize()} [{opt_in}]"
-        for line in format_section(heading, result["files"], result.get("extra")):
+def run_statuses() -> None:
+    """Print aggregated status across every migrated system."""
+    plugin_root = get_plugin_root()
+    plugin_name = get_plugin_name(plugin_root)
+    systems = _discover_systems(plugin_root)
+    if not systems:
+        print(f"No migrated systems in {plugin_name}.")
+        return
+
+    print(f"{plugin_name} statuses")
+    print()
+    for system_name in systems:
+        try:
+            mod = importlib.import_module(f"systems.{system_name}.setup")
+            result = mod.status() if hasattr(mod, "status") else {"files": [], "extra": []}
+        except Exception as exc:  # noqa: BLE001
+            result = {"files": [], "extra": [{"label": "error", "value": str(exc)}]}
+
+        for line in format_section(system_name.capitalize(), result.get("files", []), result.get("extra")):
             print(line)
         print()
 
-    # Workflow skills (only when not scoped)
-    if system is None:
-        skills = _discover_workflow_skills(plugin_root)
-        shown = [s for s in skills if s not in _META_SKILLS]
-        if shown:
-            print("Skills")
-            for skill_name in shown:
-                print(f"  {format_bare_skill(plugin_name, skill_name)}")
-            print()
+
+def run_system_usage(system_name: str) -> None:
+    """Render one migrated system's usage from its setup/*.md component files."""
+    plugin_root = get_plugin_root()
+    setup_dir = plugin_root / "systems" / system_name / "setup"
+
+    try:
+        mod = importlib.import_module(f"systems.{system_name}.setup")
+        purpose = mod.purpose() if hasattr(mod, "purpose") else None
+    except Exception as exc:  # noqa: BLE001
+        print(f"error loading {system_name}: {exc}")
+        return
+
+    print(f"{system_name}")
+    if purpose:
+        print()
+        print(f"  {purpose}")
+    print()
+    print("Verbs:")
+    for verb_md in sorted(setup_dir.glob("*.md")):
+        verb = verb_md.stem
+        first_paragraph = _first_paragraph(verb_md)
+        print(f"  {verb} — {first_paragraph}")
+    print()
+    print(f"Run a verb: `ocd-run setup {system_name} <verb> [args]`")
+
+
+def _first_paragraph(md_path: Path) -> str:
+    """Read the first non-heading, non-empty paragraph from a markdown file."""
+    text = md_path.read_text()
+    paragraphs: list[str] = []
+    current: list[str] = []
+    for line in text.splitlines():
+        if not line.strip():
+            if current:
+                paragraphs.append(" ".join(current))
+                current = []
+            continue
+        if line.startswith("#"):
+            if current:
+                paragraphs.append(" ".join(current))
+                current = []
+            continue
+        current.append(line.strip())
+    if current:
+        paragraphs.append(" ".join(current))
+    return paragraphs[0] if paragraphs else "(no description)"

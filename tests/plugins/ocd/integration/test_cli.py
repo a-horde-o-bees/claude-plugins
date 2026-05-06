@@ -49,11 +49,11 @@ class TestModulePromotion:
     """
 
     def test_bare_name_promoted_to_systems(self) -> None:
-        """`ocd-run setup status` resolves to `systems.setup`."""
-        result = _run("setup", "status")
+        """`ocd-run setup` resolves to `systems.setup` (bare-name promotion)."""
+        result = _run("setup")
         assert result.returncode == 0, result.stderr
-        # Output shape: plugin header + per-system sections + skills list
-        assert "ocd" in result.stdout.lower()
+        # Output shape: setup usage banner with the plugin's migrated systems
+        assert "setup" in result.stdout.lower()
 
     def test_unknown_bare_name_fails(self) -> None:
         """Bare name with no matching systems.<X> module fails — run.py falls
@@ -93,10 +93,11 @@ class TestSubsystemDispatch:
         assert isinstance(payload["siblings"], list)
         assert isinstance(payload["worktrees"], list)
 
-    def test_setup_status_scopes_to_system(self) -> None:
-        """`ocd-run setup status --system <name>` narrows the report to one
-        subsystem. Exercises argparse flag marshaling through the bash layer.
+    def test_setup_system_status_dispatches(self) -> None:
+        """`ocd-run setup <system> status` dispatches to that system's setup
+        module and reports its state. Exercises positional dispatch through
+        the bash layer.
         """
-        result = _run("setup", "status", "--system", "rules")
+        result = _run("setup", "rules", "status")
         assert result.returncode == 0, result.stderr
-        assert "Rules" in result.stdout
+        assert "Rules" in result.stdout or "rules" in result.stdout.lower()

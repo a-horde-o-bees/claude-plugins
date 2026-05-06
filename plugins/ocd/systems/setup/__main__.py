@@ -1,135 +1,170 @@
-"""Plugin CLI.
+"""Setup CLI — meta verbs and per-system dispatch.
 
-Agent-facing entry point for init, status, and permissions operations.
-Business logic lives in __init__.py.
+Dispatch shape:
+
+    ocd-run setup                      → usage (this skill's verbs + system list)
+    ocd-run setup purposes             → lettered system list with purpose statements
+    ocd-run setup statuses             → aggregated status across migrated systems
+    ocd-run setup permissions <verb>   → permissions subcommands (status/deploy/analyze/clean)
+    ocd-run setup <system>             → that system's usage
+    ocd-run setup <system> <verb> ...  → that system's verb handler
+
+Meta-verb match takes priority. If the first positional is not a meta
+verb or 'permissions', it is treated as a system name and dispatched to
+that system's setup module. Unknown systems error with the full list.
 """
+
+from __future__ import annotations
 
 import argparse
 import importlib
+import sys
 
-from . import run_enable, run_disable, run_init, run_status
+from tools.environment import get_plugin_root
+from . import (
+    run_purposes,
+    run_statuses,
+    run_system_usage,
+)
+from ._orchestration import _require_git_project_dir
+from ._system_discovery import _discover_systems
+
+
+META_VERBS = ("purposes", "statuses")
+
+
+def _format_section(heading: str, result: dict) -> None:
+    from ._formatting import format_section
+    for line in format_section(heading, result.get("files", []), result.get("extra")):
+        print(line)
+
+
+def _dispatch_system_verb(system_name: str, verb: str, rest: list[str]) -> None:
+    """Dispatch a verb to the named system's setup module."""
+    mod = importlib.import_module(f"systems.{system_name}.setup")
+
+    if verb == "status":
+        parser = argparse.ArgumentParser(prog=f"setup {system_name} status")
+        parser.add_argument("--scope", choices=["user", "project"], default=None)
+        args = parser.parse_args(rest)
+        result = mod.status(scope=args.scope)
+        _format_section(f"{system_name.capitalize()} status", result)
+        return
+
+    if verb == "install":
+        parser = argparse.ArgumentParser(prog=f"setup {system_name} install")
+        parser.add_argument("target", nargs="?", default=None)
+        parser.add_argument("--scope", required=True, choices=["user", "project"])
+        parser.add_argument("--force", action="store_true")
+        args = parser.parse_args(rest)
+        if args.scope == "project":
+            _require_git_project_dir()
+        result = mod.install(scope=args.scope, target=args.target, force=args.force)
+        _format_section(f"{system_name.capitalize()} install", result)
+        return
+
+    if verb == "uninstall":
+        parser = argparse.ArgumentParser(prog=f"setup {system_name} uninstall")
+        parser.add_argument("target", nargs="?", default=None)
+        parser.add_argument("--scope", required=True, choices=["user", "project"])
+        args = parser.parse_args(rest)
+        if args.scope == "project":
+            _require_git_project_dir()
+        result = mod.uninstall(scope=args.scope, target=args.target)
+        _format_section(f"{system_name.capitalize()} uninstall", result)
+        return
+
+    print(f"Unknown verb '{verb}' for system '{system_name}'", file=sys.stderr)
+    print("Available verbs: install, uninstall, status", file=sys.stderr)
+    sys.exit(1)
+
+
+def _dispatch_permissions(rest: list[str]) -> None:
+    parser = argparse.ArgumentParser(prog="setup permissions")
+    sub = parser.add_subparsers(dest="perm_command", required=True)
+
+    sub.add_parser("status", help="Both scopes' permission state")
+
+    deploy = sub.add_parser("deploy", help="Deploy recommended patterns to one scope")
+    deploy.add_argument("--scope", required=True, choices=["user", "project"])
+
+    sub.add_parser("analyze", help="Cross-scope health analysis")
+
+    clean = sub.add_parser("clean", help="Remove recommendations redundant with the other scope")
+    clean.add_argument("--scope", required=True, choices=["user", "project"])
+
+    args = parser.parse_args(rest)
+
+    perm = importlib.import_module("systems.permissions")
+    if args.perm_command == "status":
+        perm.run_permissions_status()
+    elif args.perm_command == "deploy":
+        perm.run_permissions_deploy(scope=args.scope)
+    elif args.perm_command == "analyze":
+        perm.run_permissions_analyze()
+    elif args.perm_command == "clean":
+        perm.run_permissions_clean(scope=args.scope)
+
+
+def _print_skill_usage() -> None:
+    plugin_root = get_plugin_root()
+    systems = _discover_systems(plugin_root)
+    print("setup — manage plugin infrastructure")
+    print()
+    print("Meta verbs:")
+    print("  purposes      — lettered list of systems with purpose statements")
+    print("  statuses      — aggregated status across systems")
+    print("  permissions   — auto-approve permission patterns (status/deploy/analyze/clean)")
+    print()
+    print("Per-system:")
+    print("  <system>            — that system's usage and available verbs")
+    print("  <system> <verb> ... — install / uninstall / status with --scope")
+    print()
+    if systems:
+        print(f"Migrated systems: {', '.join(systems)}")
+    else:
+        print("No migrated systems yet.")
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        prog="plugin",
-        description="Plugin infrastructure: init, status, and permissions operations.",
-    )
-    commands = parser.add_subparsers(dest="command", required=True)
+    args = sys.argv[1:]
+    if not args:
+        _print_skill_usage()
+        return
 
-    init_p = commands.add_parser(
-        "init",
-        help="Deploy enabled subsystems; mutate the enabled list with --all or --systems",
-    )
-    init_p.add_argument(
-        "--force", action="store_true",
-        help="Overwrite existing state with plugin defaults; destructive",
-    )
-    init_p.add_argument(
-        "--system", default=None,
-        help="Scope init to one subsystem; does not mutate the enabled list",
-    )
-    init_p.add_argument(
-        "--all", action="store_true", dest="all_systems",
-        help="Enable every discovered system and persist the selection",
-    )
-    init_p.add_argument(
-        "--systems", default=None,
-        help="Comma-separated list of systems to enable; persists the selection",
-    )
+    first = args[0]
+    rest = args[1:]
 
-    enable_p = commands.add_parser(
-        "enable",
-        help="Add one system to the enabled list and init it",
-    )
-    enable_p.add_argument("system", help="System name (e.g. rules, navigator)")
+    if first in META_VERBS:
+        if first == "purposes":
+            run_purposes()
+        elif first == "statuses":
+            run_statuses()
+        return
 
-    disable_p = commands.add_parser(
-        "disable",
-        help="Remove one system from the enabled list and clean its deployed artifacts",
-    )
-    disable_p.add_argument("system", help="System name (e.g. rules, navigator)")
+    if first == "permissions":
+        _dispatch_permissions(rest)
+        return
 
-    status_p = commands.add_parser(
-        "status",
-        help="Report plugin version, opt-in state, and state of every subsystem",
-    )
-    status_p.add_argument(
-        "--system", default=None,
-        help="Scope status to one subsystem (rules, conventions, navigator, ...)",
-    )
+    plugin_root = get_plugin_root()
+    available = _discover_systems(plugin_root)
+    if first not in available:
+        print(f"Unknown verb or system: {first}", file=sys.stderr)
+        print(f"Meta verbs: {', '.join(META_VERBS)}, permissions", file=sys.stderr)
+        if available:
+            print(f"Migrated systems: {', '.join(available)}", file=sys.stderr)
+        else:
+            print("No migrated systems yet.", file=sys.stderr)
+        sys.exit(1)
 
-    perm_p = commands.add_parser(
-        "permissions",
-        help="Manage recommended auto-approve permission patterns",
-    )
-    perm_commands = perm_p.add_subparsers(dest="perm_command", required=True)
+    system_name = first
+    if not rest:
+        run_system_usage(system_name)
+        return
 
-    perm_commands.add_parser(
-        "status",
-        help="Structured report of both scopes' permission state",
-    )
-
-    deploy_perm_p = perm_commands.add_parser(
-        "deploy",
-        help="Deploy recommended patterns to one scope",
-    )
-    deploy_perm_p.add_argument(
-        "--scope", required=True, choices=["user", "project"],
-        help="Target scope for deployment",
-    )
-
-    perm_commands.add_parser(
-        "analyze",
-        help="Cross-scope health analysis",
-    )
-
-    clean_p = perm_commands.add_parser(
-        "clean",
-        help="Remove recommended patterns redundant with the other scope",
-    )
-    clean_p.add_argument(
-        "--scope", required=True, choices=["user", "project"],
-        help="Scope to clean",
-    )
-
-    args = parser.parse_args()
-
-    if args.command == "init":
-        if args.all_systems and args.systems is not None:
-            parser.error("--all and --systems are mutually exclusive")
-        if args.system is not None and (args.all_systems or args.systems is not None):
-            parser.error("--system cannot combine with --all or --systems")
-        selected = (
-            [name.strip() for name in args.systems.split(",") if name.strip()]
-            if args.systems is not None
-            else None
-        )
-        run_init(
-            force=args.force,
-            system=args.system,
-            all_systems=args.all_systems,
-            selected=selected,
-        )
-    elif args.command == "enable":
-        run_enable(args.system)
-    elif args.command == "disable":
-        run_disable(args.system)
-    elif args.command == "status":
-        run_status(system=args.system)
-    elif args.command == "permissions":
-        # Runtime import — permissions lives in systems/, discovered via
-        # sys.path established by run.py. importlib keeps this consistent with
-        # how orchestration dispatches to systems/<subsystem>/_init.py.
-        perm = importlib.import_module("systems.permissions")
-        if args.perm_command == "status":
-            perm.run_permissions_status()
-        elif args.perm_command == "deploy":
-            perm.run_permissions_deploy(scope=args.scope)
-        elif args.perm_command == "analyze":
-            perm.run_permissions_analyze()
-        elif args.perm_command == "clean":
-            perm.run_permissions_clean(scope=args.scope)
+    verb = rest[0]
+    verb_args = rest[1:]
+    _dispatch_system_verb(system_name, verb, verb_args)
 
 
 if __name__ == "__main__":

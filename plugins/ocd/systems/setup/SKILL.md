@@ -1,107 +1,62 @@
 ---
 name: setup
-description: Manage ocd plugin infrastructure — pick which systems deploy, enable or disable individual systems, report current state, or walk through guided setup.
-argument-hint: "<status | init [--all | --systems <csv> | --force] | enable <system> | disable <system> | guided>"
+description: Manage ocd plugin infrastructure — discover systems, inspect their status, and run install/uninstall verbs at user or project scope.
+argument-hint: "[purposes | statuses | <system> [<verb> [args]]]"
 allowed-tools:
   - AskUserQuestion
   - Bash(ocd-run:*)
+  - Bash(plugins/ocd/bin/ocd-run:*)
+  - Read
 ---
 
 # /setup
 
-Manage ocd plugin infrastructure. Every deployable system (rules, conventions, log, navigator, permissions, refactor) is opt-in — the user chooses which ones belong in their project. The enabled selection persists in `.claude/ocd/enabled-systems.json` so subsequent inits and checkpoints honor the choice without re-prompting.
+Single entry point for plugin infrastructure. Setup itself is informational; per-system verbs (install, uninstall, status) are dispatched to each system's `setup/` handlers.
 
-## Rules
+## Process Model
 
-- Systems not in the enabled list are not deployed and their artifacts are cleaned on `disable`
-- Permissions deploy to exactly one scope — deploying to both is not an option
-- Non-recommended patterns (user's custom additions) are never modified by deploy or clean
-- User scope cleanup warns about cross-project impact before proceeding
-- Clean only removes patterns that exist in both the template and the other scope
+- **Meta verbs** — `purposes` (lettered list of systems), `statuses` (aggregated state), `permissions` (auto-approve patterns) report across the plugin.
+- **System fallthrough** — any other first argument is treated as a system name. Unknown systems error with the available list.
+- **Per-system verb** — `<system> <verb>` dispatches to that system's `setup/<verb>.md` workflow. Install and uninstall require `--scope user` or `--scope project`.
+
+Systems are invisible to setup until they have a `setup/__init__.py` exposing the per-system shape — see `plugins/ocd/systems/conventions/templates/plugin-system.md`.
 
 ## Workflow
 
-1. If not $ARGUMENTS: Exit to user: skill description and argument-hint
-2. {verb} = first token of $ARGUMENTS
-3. {verb-arg} = remainder of $ARGUMENTS after {verb}
+1. If not $ARGUMENTS: bash: `ocd-run setup` — surfaces meta verbs and migrated systems
+2. {first} = first token of $ARGUMENTS
+3. {rest} = remainder of $ARGUMENTS after {first}
 
-> Verb dispatch — status reports, init deploys/cherry-picks, enable/disable toggle one system, guided walks through interactively.
+> Meta-verb match — purposes / statuses / permissions are handled by the CLI directly; no markdown component to load. Surface the CLI output verbatim.
 
-4. If {verb} is `status`: Call: Status
-5. Else if {verb} is `init`: Call: Init
-6. Else if {verb} is `enable`: Call: Enable
-7. Else if {verb} is `disable`: Call: Disable
-8. Else if {verb} is `guided`: Call: Guided
-9. Else: Exit to user: unrecognized verb {verb} — expected status, init, enable, disable, or guided
+4. If {first} is `purposes`: bash: `ocd-run setup purposes`; present output; Return to caller
+5. If {first} is `statuses`: bash: `ocd-run setup statuses`; present output; Return to caller
+6. If {first} is `permissions`: bash: `ocd-run setup permissions {rest}`; present output; Return to caller
 
-## Status
+> System fallthrough — load the system's verb component when a verb is named, otherwise show usage.
 
-> Report current infrastructure state — which systems are enabled, deployment status per system, plugin version. Changes nothing.
+7. {system} = {first}
+8. {verb} = first token of {rest}; null if {rest} is empty
+9. {verb-args} = remainder of {rest} after {verb}
 
-1. bash: `ocd-run setup status`
-2. Present output to user — no summarization or reformatting
-3. Return to caller
+10. If not {verb}: bash: `ocd-run setup {system}`; present output; Return to caller
+
+> Verb dispatch — install and uninstall use the system's interactive markdown workflow; status runs read-only via the CLI directly.
+
+11. If {verb} is `status`:
+    1. bash: `ocd-run setup {system} status {verb-args}`
+    2. Present output
+    3. Return to caller
+12. If {verb} is `install`:
+    1. Read: `${CLAUDE_PLUGIN_ROOT}/systems/{system}/setup/install.md`
+    2. Follow that workflow with {verb-args} as its arguments
+    3. Return to caller
+13. If {verb} is `uninstall`:
+    1. Read: `${CLAUDE_PLUGIN_ROOT}/systems/{system}/setup/uninstall.md`
+    2. Follow that workflow with {verb-args} as its arguments
+    3. Return to caller
+14. Else: Exit to user: unknown verb `{verb}` for system `{system}` — expected install, uninstall, or status
 
 ### Report
 
-- Plugin version
-- Per-system opt-in state (`[enabled]` / `[disabled]`) and deployment status
-- Skills list
-
-## Init
-
-> Deploy enabled systems. First-time runs with no flags default to enabling every system so the plugin works out of the box. Subsequent runs honor the persisted selection unless `--all` or `--systems` is passed to change it.
-
-1. If --all: bash: `ocd-run setup init --all [--force if --force]`
-2. Else if --systems: bash: `ocd-run setup init --systems {systems} [--force if --force]`
-3. Else if --system: bash: `ocd-run setup init --system {system} [--force if --force]`
-4. Else: bash: `ocd-run setup init [--force if --force]`
-5. Present init output to user
-6. Return to caller
-
-### Flag semantics
-
-- `--all` — enable every discovered system, persist the selection
-- `--systems <csv>` — enable exactly this comma-separated list, persist the selection
-- `--system <name>` — narrow one run to a single system; does not persist anything
-- `--force` — overwrite divergent files with plugin defaults
-- No flags — use the existing persisted selection; on first install default to everything
-
-## Enable
-
-> Add one system to the enabled list and init it in place.
-
-1. If no {verb-arg}: Exit to user: enable requires a system name
-2. bash: `ocd-run setup enable {verb-arg}`
-3. Present output to user
-4. Return to caller
-
-## Disable
-
-> Remove one system from the enabled list and clean its deployed artifacts.
-
-1. If no {verb-arg}: Exit to user: disable requires a system name
-2. bash: `ocd-run setup disable {verb-arg}`
-3. Present output to user
-4. Return to caller
-
-## Guided
-
-> Interactive walkthrough — show current state, let user cherry-pick systems, confirm, deploy. Offers permissions setup as an optional final step.
-
-1. bash: `ocd-run setup status`
-2. Present current state to user — explain opt-in, deployment status, and what init will do
-3. AskUserQuestion — which systems to enable, options combine individual systems plus `All` and `Keep current selection`
-4. If `Keep current selection`: {selection} = persisted enabled list; proceed with no config change
-5. Else if `All`: {selection} = every available system
-6. Else: {selection} = the chosen subset
-7. If any currently-deployed files would be removed by narrowing the selection: present the list and confirm with user
-8. If --force and any files show `divergent`: explain that force mode will overwrite divergent files with plugin defaults
-9. Ask user to confirm — AskUserQuestion with options: `["Proceed", "Cancel"]`
-10. If cancel: Exit to user: setup cancelled
-11. If `All` or `Keep current selection` was chosen:
-    1. bash: `ocd-run setup init --all [--force if --force]`
-12. Else: bash: `ocd-run setup init --systems {selection-csv} [--force if --force]`
-13. Ask user about permissions — AskUserQuestion with options: `["Configure permissions", "Skip"]`
-14. If configure: Call: `_permissions-setup.md`
-15. Return to caller
+Each delegated path returns its own report; surface the called CLI's or the called workflow's output verbatim.
