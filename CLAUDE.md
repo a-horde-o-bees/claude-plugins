@@ -1,83 +1,57 @@
-# Project Instructions
+# claude-plugins
 
-Operational procedures for agents working in the claude-plugins marketplace repository. Read the sibling `ARCHITECTURE.md` before acting.
+Project-level navigation hub for the claude-plugins marketplace repository. Read the sibling `ARCHITECTURE.md` before acting on internals.
 
-## Development Workflow
+## Universal triggers
 
-When user asks to "checkpoint" progress: skill: `/checkpoint`
+When the user says **"checkpoint"**: skill: `/checkpoint`.
 
-## Audit Skill Invocation
+When implementing plugin infrastructure (hooks, MCP servers, dependency management, environment variables), the official Claude Code plugin docs are the primary source: <https://code.claude.com/docs/en/plugins-reference>
 
-Before invoking `/audit-*`, check whether `/checkpoint` is needed so the skill reads current content. These skills read deployed governance files (`.claude/rules/`, `.claude/conventions/`) and cached plugin files (target skill's SKILL.md and components). If template edits have not synced to deployed copies, if the target skill has uncommitted changes, or if the plugin cache is out of date relative to recent work, prompt the user to confirm running `/checkpoint` before proceeding. Uncommitted unrelated work is fine — only changes that affect what the skill reads matter.
+## components/
 
-## Skill Testing Modes
+Reference content. Look up the topic; apply its guidance.
 
-Two ways to exercise a skill during development:
+- `audit-skill-invocation.md` — pre-flight check before invoking `/audit-*` skills (run `/checkpoint` first when content has shifted)
+- `skill-testing-modes.md` — real invocation vs ad-hoc Task agent for skill development
+- `plugin-bin-invocation.md` — bare-name (`ocd-run`) vs full-path (`plugins/ocd/bin/ocd-run`) and when to use each
+- `versioning.md` — `x.y.z` semver, pre-commit auto-bump, release cuts via `/ocd:git release`, patch releases
+- `template-edit-paths.md` — where rule/convention/log templates live; never edit deployed copies under `.claude/`
+- `python-dependencies.md` — adding a package to a plugin's `pyproject.toml` and the `SessionStart` reinstall
+- `external-tool-dependencies.md` — runtime check pattern for npm globals / system packages skills depend on
+- `testing.md` — `bin/project-run tests` flag surface and layout
+- `project-tooling.md` — `bin/project-run` commands and `tools/` layout
+- `architectural-boundaries.md` — what the plugin layer can control vs what's harness-determined
 
-- **Real invocation** — run via slash command (e.g., `/ocd:status`). Goes through the plugin cache. Claude Code loads everything under `plugins/<plugin>/` at session start — `SKILL.md` and every supporting file (component blocks, prompt fragments, anything in the skill directory). Edits are invisible to real invocations until `/checkpoint` refreshes the cache. Use for end-to-end orchestration verification.
-- **Ad-hoc** — spawn a general-purpose agent via the Task tool with an explicit prompt that tells it to Read the skill's files by absolute path. Bypasses the cache — the agent reads from disk, so the latest edits propagate immediately. Use for iterating on component-file content (criteria, prompt fragments, shared instruction blocks) without the `/checkpoint` cycle between edits.
+## workflows/
 
-Ad-hoc validates instruction content; real invocation validates orchestration. Before closing out skill work, verify via real invocation after a `/checkpoint`.
+Top-down procedures. (Currently empty at project root — operational procedures live in skills under each plugin.)
 
-## Plugin Bin Invocation
+## plans/
 
-Each plugin ships a `plugins/<plugin>/bin/<plugin>-run` entry point (`ocd-run`, future `blueprint-run`, …). During development two invocation forms coexist in the permission allowlist; pick the one matching what you need to verify.
+Active and upcoming workstreams.
 
-- **Bare name** — `ocd-run <verb>`. Resolves via `$PATH` to the installed plugin cache (`~/.claude/plugins/cache/<author>/<plugin>/<version>/bin/`). This is whatever was synced at the last `/checkpoint`; edits in the working tree are invisible until the cache refreshes. Allow-listed in user settings (`Bash(<plugin>-run:*)`) because it's stable across sessions and projects.
-- **Full path** — `plugins/<plugin>/bin/<plugin>-run <verb>`. Invokes the in-tree copy directly — no cache, edits take effect immediately. Allow-listed in this project's `.claude/settings.json` (`Bash(plugins/<plugin>/bin/<plugin>-run:*)`) because ad-hoc verification of plugin code in this repo must run against the working tree, not the last cached version.
+- `system-migrations.md` — overarching plan for migrating each ocd system to the system-structure layout
+- `conditional-memory.md` — investigate per-rule trigger-conditioned auto-load to reduce always-on token floor
+- `pfn-sweep.md` — convert prose procedural sections to Process Flow Notation
+- `subflow-extraction.md` — extract conditional sub-flows into separate workflow/component files
+- `init-project-skill.md` — bootstrap tool that creates the canonical project structure in fresh Python projects
 
-Default to the full-path form when validating changes you haven't checkpointed yet. Use the bare form when you specifically want to exercise what downstream users have installed.
+## Other top-level docs
 
-## Versioning
+- `TASKS.md` — persistent task tracker; pointer-only, links to plans
+- `ARCHITECTURE.md` — project-level architecture
+- `README.md` — user/contributor-facing overview
+- `MARKETPLACE-STANDARDS.md` — marketplace conventions
+- `CHANGELOG.md` — release history
 
-`x.y.z` semver in each plugin's `.claude-plugin/plugin.json`. Tags live on main; no release branches.
+## Cold-pickup reading order
 
-**Pre-commit hook auto-bumps `z`** on every commit that stages changes to the plugin tree other than `plugin.json` itself (see `.githooks/pre-commit`). This keeps Claude Code's reload detection firing as dev-channel users track main. Commits that stage only `plugin.json` (and `CHANGELOG.md`) skip the auto-bump — that's the escape hatch release cuts use.
+When starting from a cleared context:
 
-**Release cut:** `/ocd:git release <version>`. The skill reads project methodology from `.claude/ocd/git/release.md` (bootstraps if absent), synthesizes a CHANGELOG entry from commit history since the last tag, presents the draft + proposed bump for review, then on approval writes CHANGELOG, bumps the manifest, commits, tags annotated, and pushes main + tag. `.github/workflows/release.yml` fires on tag push to verify tag-commit version alignment, run tests, and create the GitHub release.
-
-**Patch release:** tag a specific main commit as `v<current-version>`. No plugin.json edit required — the auto-bump already assigns each commit a unique patch-level version. The tag is the "deliberate release" signal; the commit's z value is just its place in the dev sequence.
-
-**Pre-first-release:** `plugin.json` stays at `0.0.z` until the first `v0.1.0` release is cut. After that, the release series tracks whatever `y` is at the most recent tag; z auto-increments between tags.
-
-## Plugin Reference
-
-When implementing plugin infrastructure (hooks, MCP servers, dependency management, environment variables), check the official Claude Code plugin docs first: https://code.claude.com/docs/en/plugins-reference
-
-This is the primary source for patterns, supported fields, and examples. Fetch the page and review relevant sections before designing new plugin features.
-
-## Editing Rules, Conventions, and Patterns
-
-Edit templates under each owning system's directory — rules in `plugins/ocd/systems/<system>/rules/` for system-scoped rules or `plugins/ocd/systems/rules/templates/` for project-wide rules; conventions in `plugins/ocd/systems/conventions/templates/`; log-type templates in `plugins/ocd/systems/log/templates/<type>/` (covers patterns, research, decision, friction, idea, problem). Never edit deployed copies in `.claude/` or deployed log templates under `logs/<type>/_template.md` — a guard hook blocks those writes. Per-system setup handlers manage deploys via `/ocd:setup`.
-
-## Adding Python Dependencies
-
-Add the package to the target plugin's `pyproject.toml` under `[project.dependencies]`. The plugin's SessionStart hook detects the change on next session start (via `diff -q` against the cached copy) and reinstalls into the plugin's isolated venv automatically.
-
-Prerequisite: `uv` must be installed on the user's system.
-
-## System and Global Tool Dependencies
-
-Tools installed globally on the user's system (npm globals, system packages, standalone binaries) cannot be auto-installed by plugins — they require user action. Skills that depend on these tools check availability at runtime in their Route and provide corrective install guidance:
-
-```
-1. Verify tool available — bash: `command -v <tool>`
-    1. If not found: Exit to user — `<tool>` is required; install with `<install command>`
-```
-
-Use `SessionStart` hooks for Python packages (isolated in plugin venv). Use runtime checks in skills for everything else.
-
-## Testing
-
-- All tests: `bin/project-run tests`. Scope flags: `--plugin <name>` for a single plugin's suite, `--project` for project-level tests only. Unknown flags forward verbatim to pytest, e.g. `bin/project-run tests --plugin ocd --run-agent -v` (a leading `--` separator is also accepted).
-- Tests at a clean ref in a detached worktree: `bin/project-run sandbox-tests --ref <ref>`. Worktree is always removed before return.
-- Project tests in `tests/`, per-plugin tests isolated by `pythonpath`.
-- Plugin configs: `tests/plugins/<plugin>/pyproject.toml` under `[tool.pytest.ini_options]`; project config: root `pyproject.toml`.
-
-## Project-level tooling
-
-Project-level operations (test orchestration, one-time project setup) live under `tools/` and `bin/project-run` at project root — not inside any plugin. Anything tied to this repo's development infrastructure belongs here so it doesn't ship to downstream consumers of the plugins.
-
-- `bin/project-run setup` — configure local git hookspath (run once per checkout).
-- `bin/project-run tests [--plugin <name> | --project]` — run suites in the current tree.
-- `bin/project-run sandbox-tests [--ref <ref>]` — run suites in a detached worktree at a given ref.
+1. `README.md` — what this project is
+2. `ARCHITECTURE.md` — how the pieces fit together
+3. `CLAUDE.md` (this file) — navigation index
+4. `TASKS.md` — current work surface
+5. The relevant `plans/<workstream>.md` for the active task
+6. Targeted `components/<topic>.md` lookups as procedures need them
