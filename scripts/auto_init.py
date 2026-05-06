@@ -1,5 +1,10 @@
 """Auto-init orchestrator — rectify deployed state to current templates.
 
+Paused — by default this script prints a notice and exits 0 without
+rectifying anything, while the new opt-in install machinery (per-system,
+per-scope) is settled. Pass `--rectify` to run the full rectification
+explicitly.
+
 Scans every plugin under plugins/, runs each system's init(force=True)
 to bring deployed state into alignment with current templates, and
 prunes orphans in template categories whose source systems have been
@@ -13,8 +18,6 @@ expected; data preservation across forced rebuilds is the system's
 responsibility (timestamped backups beside the live DB on schema
 divergence). Auto-init no longer maintains a project-level pre-sync
 backup-and-restore mechanism.
-
-Called by /checkpoint after push. Exits 0 on success.
 """
 
 import importlib
@@ -43,6 +46,14 @@ TEMPLATE_CATEGORIES = ("rules", "conventions", "patterns")
 
 
 def main() -> int:
+    if "--rectify" not in sys.argv[1:]:
+        print(
+            "auto-init paused — per-system install handlers will own rectification "
+            "once the new opt-in setup machinery lands. Pass `--rectify` to run "
+            "the full rectification explicitly.",
+            file=sys.stderr,
+        )
+        return 0
     claimed = _run_all_plugin_inits()
     _prune_orphans(claimed)
     backups = _collect_db_backups()
