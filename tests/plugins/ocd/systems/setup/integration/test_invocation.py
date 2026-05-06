@@ -225,16 +225,22 @@ class TestOptInInit:
 class TestOptInEnableDisable:
     """enable/disable verbs toggle a single system and reconcile disk state."""
 
-    def test_disable_removes_deployed_tree(self, git_project_dir: Path) -> None:
+    def test_disable_removes_rules_templates(self, git_project_dir: Path) -> None:
         run("setup", "init", "--all", env={"CLAUDE_PROJECT_DIR": str(git_project_dir)})
-        assert (git_project_dir / ".claude" / "rules" / "ocd").is_dir()
+        rules_dir = git_project_dir / ".claude" / "rules" / "ocd"
+        assert (rules_dir / "honesty.md").is_file()
+        assert (rules_dir / "systems" / "navigator.md").is_file()
 
         result = run(
             "setup", "disable", "rules",
             env={"CLAUDE_PROJECT_DIR": str(git_project_dir)},
         )
         assert result.returncode == 0, result.stderr
-        assert not (git_project_dir / ".claude" / "rules" / "ocd").is_dir()
+        # Foundational rules templates owned by the rules system are removed.
+        assert not (rules_dir / "honesty.md").exists()
+        # System-owned rules (deployed by their owning systems) remain — disable
+        # rules only touches the rules system's own templates.
+        assert (rules_dir / "systems" / "navigator.md").is_file()
 
         import json
         enabled = json.loads(

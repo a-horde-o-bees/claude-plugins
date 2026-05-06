@@ -1,94 +1,29 @@
-"""Rules subsystem.
+"""Legacy init facade for the rules subsystem.
 
-Deploy rule markdown files from systems/rules/templates/ into
-.claude/rules/{plugin}/ per-plugin subfolder. Rules are always-on
-agent context loaded by Claude Code at session start.
+Delegates to systems/rules/setup/__init__.py — the new per-system setup
+shape (install/uninstall/status with scope). This file is a transitional
+shim so existing setup orchestration (run_init, run_status, etc.) keeps
+working while other systems migrate. Removed in a single cleanup commit
+once every system has its own setup/ folder and the setup CLI dispatch
+has switched over.
 
 Interface contract: init() and status() return
 {"files": [...], "extra": [...]}.
 """
 
-from pathlib import Path
-
-from systems import setup
-from tools import environment
-
-
-CATEGORY = "rules"
-
-
-def _plugin_name() -> str:
-    return setup.get_plugin_name(environment.get_plugin_root())
-
-
-def _templates_dir() -> Path:
-    return environment.get_plugin_root() / "systems" / CATEGORY / "templates"
-
-
-def _target_dir() -> Path:
-    return environment.get_project_dir() / ".claude" / CATEGORY / _plugin_name()
-
-
-def _deployed_rel() -> str:
-    return f".claude/{CATEGORY}/{_plugin_name()}"
+from .setup import install, uninstall, status as _scoped_status
 
 
 def init(force: bool = False) -> dict:
-    """Deploy rule templates."""
-    results = setup.deploy_files(
-        src_dir=_templates_dir(),
-        dst_dir=_target_dir(),
-        pattern="*.md",
-        force=force,
-    )
-    rel = _deployed_rel()
-    files = [{"path": f"{rel}/{r.pop('name')}", **r} for r in results]
-    return {"files": files, "extra": []}
+    """Legacy init — installs all rule templates at project scope."""
+    return install(scope="project", target=None, force=force)
 
 
 def status() -> dict:
-    """Report rule deployment state."""
-    src_dir = _templates_dir()
-    if not src_dir.is_dir():
-        return {"files": [], "extra": []}
-
-    rel = _deployed_rel()
-    target = _target_dir()
-    files = []
-    for src in sorted(src_dir.glob("*.md")):
-        if not src.is_file():
-            continue
-        dst = target / src.name
-        state = setup.compare_deployed(src, dst)
-        files.append({
-            "path": f"{rel}/{src.name}",
-            "before": state,
-            "after": state,
-        })
-    return {"files": files, "extra": []}
+    """Legacy status — reports project-scope deployment state."""
+    return _scoped_status(scope="project")
 
 
 def clean() -> dict:
-    """Remove deployed rule files. Inverse of init()."""
-    target = _target_dir()
-    rel = _deployed_rel()
-    files: list[dict] = []
-    if not target.is_dir():
-        return {"files": files, "extra": []}
-
-    for md in sorted(target.rglob("*.md")):
-        files.append({
-            "path": f"{rel}/{md.relative_to(target)}",
-            "before": "current",
-            "after": "absent",
-        })
-        md.unlink()
-
-    # Remove empty directories left behind, deepest first
-    for path in sorted(target.rglob("*"), reverse=True):
-        if path.is_dir() and not any(path.iterdir()):
-            path.rmdir()
-    if target.is_dir() and not any(target.iterdir()):
-        target.rmdir()
-
-    return {"files": files, "extra": []}
+    """Legacy clean — uninstalls all rule files from project scope."""
+    return uninstall(scope="project", target=None)
