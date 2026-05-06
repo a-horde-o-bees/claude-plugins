@@ -101,6 +101,24 @@ Anywhere a workflow is described as prose ("first do X, then Y, then if Z, do W.
 
 When a workflow component runs a sub-flow only on certain paths (specific verb, runtime condition, optional argument), inlining the sub-flow forces every invocation to load it. Extracting to a component file (`_subflow.md`) and invoking via `Spawn: Call:` (isolated agent context) or `Call:` (caller's context, on-demand) means callers that don't traverse the path never read the content. Same on-demand discipline the memory-rules investigation is targeting, applied at workflow-component granularity. Sweep candidates: long `_*.md` files with conditional branches that pull in optional-path content; SKILL.md files where the dispatcher already loads the whole verb table even though only one verb fires per invocation (current pattern uses `Call:` correctly for this — but worth confirming no skill carries inline branches that should be extracted).
 
+### Scope-per-system tool installation
+
+`/ocd:setup init` currently deploys all enabled systems to project-local `.claude/<plugin>/...`. Some systems' data is inherently global (transcripts indexes user-global `~/.claude/projects/`), making per-project init wasted work — and hitting "dormant" status in any project that hasn't been init'd, even when the underlying data is available everywhere.
+
+The natural axis is per-system scope rather than per-project all-or-nothing:
+
+- **Inherently user-scoped** (data is global): transcripts. Should default to user-scope install; remove the dormant-when-not-init'd gate from non-init'd projects
+- **Inherently project-scoped** (data is project-relative): navigator (indexes project files), needs-map (evaluates project components), logs (project notes)
+- **Either** (content travels well across projects): rules, conventions, permissions. Default to user-scope, project-scope override when set
+
+Investigation paths:
+
+1. **Audit current systems against this axis** — confirm the categorization, identify any borderline cases
+2. **Move transcripts to user-scope by default** — install at `~/.claude/ocd/transcripts/transcripts.db`; remove the per-project init gate from skill dormancy. Concrete friction surface: a `/ocd:transcripts projects` invocation from a project that hasn't been init'd returns "dormant" even though the data is global to the user
+3. **Add scope flag to setup init** — `/ocd:setup init --scope <user|project>` for the "either" systems
+
+Same load-only-when-relevant axis, applied to system installation rather than content loading.
+
 ## Constraints to remember during investigation
 
 - Memory rules exist for a reason: they're agent-facing discipline that fires reliably across sessions. Wholesale "load less" can quietly turn into "discipline drifts." Reduction must preserve the trigger-strength of the guidance.
