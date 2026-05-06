@@ -18,16 +18,20 @@ Each step lands as a prompt the user issues in a fresh restarted session.
 
 1. `/ocd:setup` — usage banner shows meta verbs (`purposes`, `statuses`, `permissions`) and `rules` in the migrated-systems list
 2. `/ocd:setup purposes` — lettered list with `A. rules — <purpose statement>`; no other systems shown (un-migrated systems invisible)
-3. `/ocd:setup rules` — system usage prints purpose, lists `status`, `install`, `uninstall` verbs with first-paragraph descriptions
-4. `/ocd:setup rules install honesty --scope project` — file lands at `<project>/.claude/rules/ocd/honesty.md`; output shows `absent → current`
-5. `/ocd:setup rules install honesty --scope user` — file lands at `~/.claude/rules/ocd/honesty.md`; output shows `absent → current`
-6. `/ocd:setup rules uninstall honesty --scope user` — file removed from `~/.claude/rules/ocd/`; output shows `current → absent`
-7. `/ocd:setup rules status` — report shows `honesty.md` as `current` at project scope, `absent` at user scope
+3. `/ocd:setup rules` — system usage prints purpose, lists `status`, `list`, `install`, `uninstall` verbs with descriptions
+4. `/ocd:setup rules list` — catalog of available rule templates with one-paragraph purpose per row, sorted by name
+5. `/ocd:setup rules install honesty --scope project` — file lands at `<project>/.claude/rules/ocd/honesty.md`
+6. `/ocd:setup rules install honesty borrow-before-build --scope user` — both files land at `~/.claude/rules/ocd/`; output shows two `absent → current` rows
+7. `/ocd:setup rules uninstall honesty --scope user` — only honesty removed; borrow-before-build still at user scope
+8. `/ocd:setup rules status` — report distinguishes deployed state per scope per rule
 
 Additional spot checks:
 
-- `/ocd:setup rules install --all --scope project` — all 28+ rule templates deploy
-- `/ocd:setup rules install bogus_rule --scope project` — error output names the rule as unknown and lists available
+- `/ocd:setup rules install --all --scope project` — every rule template deploys
+- `/ocd:setup rules uninstall --all --scope user` — every deployed rule removed from user scope; directory cleaned up
+- `/ocd:setup rules install bogus_rule --scope project` — error: `unknown rule(s): bogus_rule — available: ...`
+- `/ocd:setup rules install honesty bogus_rule --scope project` — error names the unknown one; nothing deployed
+- `/ocd:setup rules install --scope project` (no targets, no --all) — error: specify targets or --all
 - `/ocd:setup rules install honesty` (missing `--scope`) — error: `--scope` required
 
 ## Decisions

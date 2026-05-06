@@ -41,21 +41,25 @@ Systems are invisible to setup until their package `__init__.py` exposes the fou
 
 10. If not {verb}: bash: `ocd-run setup {system}`; present output; Return to caller
 
-> Verb dispatch — install and uninstall use the system's interactive markdown workflow; status runs read-only via the CLI directly.
+> Verb dispatch — install and uninstall use the system's interactive markdown workflow; status and list run read-only via the CLI directly.
 
 11. If {verb} is `status`:
     1. bash: `ocd-run setup {system} status {verb-args}`
     2. Present output
     3. Return to caller
-12. If {verb} is `install`:
+12. If {verb} is `list`:
+    1. bash: `ocd-run setup {system} list {verb-args}`
+    2. Present output
+    3. Return to caller
+13. If {verb} is `install`:
     1. Read: `${CLAUDE_PLUGIN_ROOT}/systems/{system}/workflows/install.md`
     2. Follow that workflow with {verb-args} as its arguments
     3. Return to caller
-13. If {verb} is `uninstall`:
+14. If {verb} is `uninstall`:
     1. Read: `${CLAUDE_PLUGIN_ROOT}/systems/{system}/workflows/uninstall.md`
     2. Follow that workflow with {verb-args} as its arguments
     3. Return to caller
-14. Else: Exit to user: unknown verb `{verb}` for system `{system}` — expected install, uninstall, or status
+15. Else: Exit to user: unknown verb `{verb}` for system `{system}` — expected install, uninstall, status, or list
 
 ### Report
 

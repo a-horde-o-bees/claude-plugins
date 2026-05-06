@@ -39,6 +39,11 @@ def _format_section(heading: str, result: dict) -> None:
         print(line)
 
 
+def _format_catalog(heading: str, items: list[dict]) -> list[str]:
+    from ._formatting import format_catalog
+    return format_catalog(heading, items)
+
+
 def _dispatch_system_verb(system_name: str, verb: str, rest: list[str]) -> None:
     """Dispatch a verb to the named system's setup module."""
     mod = importlib.import_module(f"systems.{system_name}")
@@ -51,31 +56,54 @@ def _dispatch_system_verb(system_name: str, verb: str, rest: list[str]) -> None:
         _format_section(f"{system_name.capitalize()} status", result)
         return
 
+    if verb == "list":
+        parser = argparse.ArgumentParser(prog=f"setup {system_name} list")
+        parser.parse_args(rest)
+        if not hasattr(mod, "list_items"):
+            print(f"System '{system_name}' does not expose a catalog.", file=sys.stderr)
+            sys.exit(1)
+        result = mod.list_items()
+        for line in _format_catalog(f"{system_name.capitalize()} catalog", result.get("items", [])):
+            print(line)
+        return
+
     if verb == "install":
         parser = argparse.ArgumentParser(prog=f"setup {system_name} install")
-        parser.add_argument("target", nargs="?", default=None)
+        parser.add_argument("targets", nargs="*", default=[])
         parser.add_argument("--scope", required=True, choices=["user", "project"])
+        parser.add_argument("--all", action="store_true", dest="all_targets")
         parser.add_argument("--force", action="store_true")
         args = parser.parse_args(rest)
+        if not args.targets and not args.all_targets:
+            print(f"setup {system_name} install: specify one or more targets, or --all", file=sys.stderr)
+            print(f"Run `ocd-run setup {system_name} list` to see available targets.", file=sys.stderr)
+            sys.exit(1)
         if args.scope == "project":
             _require_git_project_dir()
-        result = mod.install(scope=args.scope, target=args.target, force=args.force)
+        targets = None if args.all_targets else args.targets
+        result = mod.install(scope=args.scope, targets=targets, force=args.force)
         _format_section(f"{system_name.capitalize()} install", result)
         return
 
     if verb == "uninstall":
         parser = argparse.ArgumentParser(prog=f"setup {system_name} uninstall")
-        parser.add_argument("target", nargs="?", default=None)
+        parser.add_argument("targets", nargs="*", default=[])
         parser.add_argument("--scope", required=True, choices=["user", "project"])
+        parser.add_argument("--all", action="store_true", dest="all_targets")
         args = parser.parse_args(rest)
+        if not args.targets and not args.all_targets:
+            print(f"setup {system_name} uninstall: specify one or more targets, or --all", file=sys.stderr)
+            print(f"Run `ocd-run setup {system_name} status` to see deployed targets.", file=sys.stderr)
+            sys.exit(1)
         if args.scope == "project":
             _require_git_project_dir()
-        result = mod.uninstall(scope=args.scope, target=args.target)
+        targets = None if args.all_targets else args.targets
+        result = mod.uninstall(scope=args.scope, targets=targets)
         _format_section(f"{system_name.capitalize()} uninstall", result)
         return
 
     print(f"Unknown verb '{verb}' for system '{system_name}'", file=sys.stderr)
-    print("Available verbs: install, uninstall, status", file=sys.stderr)
+    print("Available verbs: list, install, uninstall, status", file=sys.stderr)
     sys.exit(1)
 
 

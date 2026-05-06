@@ -106,6 +106,8 @@ def run_system_usage(system_name: str) -> None:
     print()
     print("Verbs:")
     print("  status — read-only state report (no workflow file; CLI-direct)")
+    if hasattr(mod, "list_items"):
+        print("  list — catalog of available items with purposes (no workflow file; CLI-direct)")
     if workflows_dir.is_dir():
         for verb_md in sorted(workflows_dir.glob("*.md")):
             verb = verb_md.stem

@@ -36,6 +36,23 @@ def format_section(header: str, items: list[dict], extra: list[dict] | None = No
     return lines
 
 
+def format_catalog(header: str, items: list[dict]) -> list[str]:
+    """Render a catalog of available items with name + purpose.
+
+    Items are dicts with {name, purpose}. Emits the header, then a column-
+    aligned list of name → purpose. Used by `setup <system> list` to show
+    a system's available templates so the user can pick which to install.
+    """
+    rows = [(item["name"], item.get("purpose", "")) for item in items]
+    lines = [header]
+    if not rows:
+        lines.append("  (no items)")
+        return lines
+    for row in format_columns(rows):
+        lines.append(f"  {row}")
+    return lines
+
+
 def format_bare_skill(plugin_name: str, skill_name: str) -> str:
     """Render a skill header in qualified `/plugin:skill` form.
 

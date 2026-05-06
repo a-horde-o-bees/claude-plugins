@@ -57,12 +57,58 @@ def _available_rules() -> list[str]:
     return sorted(p.stem for p in src_dir.glob("*.md") if p.is_file())
 
 
+def _purpose_of(rule_path: Path) -> str:
+    """Read the first non-heading paragraph from a rule template file.
+
+    Skips YAML frontmatter (between `---` fences) and markdown headings,
+    returning the first prose paragraph that follows the title.
+    """
+    text = rule_path.read_text()
+    lines = text.splitlines()
+    i = 0
+    if lines and lines[0].strip() == "---":
+        i = 1
+        while i < len(lines) and lines[i].strip() != "---":
+            i += 1
+        i += 1  # past closing fence
+    current: list[str] = []
+    while i < len(lines):
+        line = lines[i]
+        i += 1
+        if not line.strip():
+            if current:
+                return " ".join(current)
+            continue
+        if line.startswith("#"):
+            continue
+        current.append(line.strip())
+    return " ".join(current) if current else "(no description)"
+
+
 def purpose() -> str:
     """One-line purpose statement for setup-level discovery."""
     return (
         "Always-on agent guidance — install rule files at user or project "
         "scope so they auto-load into every session."
     )
+
+
+def list_items() -> dict:
+    """List available rule templates with first-paragraph purposes.
+
+    Returns {items: [{name, purpose}, ...], extra: []}. The catalog drives
+    the discovery surface so an agent or user can pick rules to install
+    by name without reading every template file.
+    """
+    src_dir = _templates_dir()
+    items: list[dict] = []
+    if not src_dir.is_dir():
+        return {"items": items, "extra": []}
+    for src in sorted(src_dir.glob("*.md")):
+        if not src.is_file():
+            continue
+        items.append({"name": src.stem, "purpose": _purpose_of(src)})
+    return {"items": items, "extra": []}
 
 
 def status(scope: str | None = None) -> dict:
@@ -101,12 +147,12 @@ def status(scope: str | None = None) -> dict:
     return {"files": files, "extra": []}
 
 
-def install(scope: str, target: str | None = None, force: bool = False) -> dict:
+def install(scope: str, targets: list[str] | None = None, force: bool = False) -> dict:
     """Deploy one or more rule templates to the chosen scope.
 
-    target='all' or None deploys every template; otherwise target is a
-    rule basename (with or without .md extension) and only that one
-    deploys. force=True overwrites divergent deployed copies.
+    targets=None deploys every template; otherwise each entry is a rule
+    basename (with or without .md extension) and only those deploy.
+    force=True overwrites divergent deployed copies.
     """
     if scope not in SUPPORTED_SCOPES:
         return {
@@ -121,36 +167,46 @@ def install(scope: str, target: str | None = None, force: bool = False) -> dict:
     dst_dir = _target_dir(scope)
     rel = _deployed_rel(scope)
 
-    if target in (None, "all"):
-        pattern = "*.md"
+    if targets is None:
+        names = [f"{stem}.md" for stem in _available_rules()]
     else:
-        name = target if target.endswith(".md") else f"{target}.md"
-        if not (src_dir / name).is_file():
+        names = []
+        unknown: list[str] = []
+        for t in targets:
+            name = t if t.endswith(".md") else f"{t}.md"
+            if (src_dir / name).is_file():
+                names.append(name)
+            else:
+                unknown.append(t)
+        if unknown:
             available = ", ".join(_available_rules())
             return {
                 "files": [],
                 "extra": [{
                     "label": "error",
-                    "value": f"unknown rule: {target} — available: {available}",
+                    "value": f"unknown rule(s): {', '.join(unknown)} — available: {available}",
                 }],
             }
-        pattern = name
 
-    results = setup.deploy_files(
-        src_dir=src_dir,
-        dst_dir=dst_dir,
-        pattern=pattern,
-        force=force,
-    )
-    files = [{"path": f"{rel}/{r.pop('name')}", **r} for r in results]
+    files: list[dict] = []
+    for name in names:
+        results = setup.deploy_files(
+            src_dir=src_dir,
+            dst_dir=dst_dir,
+            pattern=name,
+            force=force,
+        )
+        for r in results:
+            files.append({"path": f"{rel}/{r.pop('name')}", **r})
+
     return {"files": files, "extra": []}
 
 
-def uninstall(scope: str, target: str | None = None) -> dict:
+def uninstall(scope: str, targets: list[str] | None = None) -> dict:
     """Remove one or more deployed rule files from the chosen scope.
 
-    target='all' or None removes every deployed template; otherwise
-    target is a rule basename and only that one is removed.
+    targets=None removes every deployed template; otherwise each entry is
+    a rule basename and only those are removed.
     """
     if scope not in SUPPORTED_SCOPES:
         return {
@@ -167,12 +223,15 @@ def uninstall(scope: str, target: str | None = None) -> dict:
     if not dst_dir.is_dir():
         return {"files": files, "extra": []}
 
-    if target in (None, "all"):
+    if targets is None:
         deployed = sorted(dst_dir.glob("*.md"))
     else:
-        name = target if target.endswith(".md") else f"{target}.md"
-        candidate = dst_dir / name
-        deployed = [candidate] if candidate.is_file() else []
+        deployed = []
+        for t in targets:
+            name = t if t.endswith(".md") else f"{t}.md"
+            candidate = dst_dir / name
+            if candidate.is_file():
+                deployed.append(candidate)
 
     for md in deployed:
         files.append({
@@ -182,7 +241,7 @@ def uninstall(scope: str, target: str | None = None) -> dict:
         })
         md.unlink()
 
-    if not any(dst_dir.iterdir()):
+    if dst_dir.exists() and not any(dst_dir.iterdir()):
         dst_dir.rmdir()
 
     return {"files": files, "extra": []}
