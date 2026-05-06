@@ -136,14 +136,14 @@ Entry points take only their own domain-specific arguments. Project and plugin p
 
 **Force semantics.**
 
-`init(force=True)` is the canonical "rectify to current state" operation, invoked by `scripts/auto_init.py` on every checkpoint so the project always reflects the latest plugin code. Force is destructive **only where state has actually drifted** — it does not blindly wipe-and-rebuild healthy infrastructure. The contract:
+`init(force=True)` is the canonical "rectify to current state" operation, invoked by per-system setup handlers when force-rectifying drift. Force is destructive **only where state has actually drifted** — it does not blindly wipe-and-rebuild healthy infrastructure. The contract:
 
 1. **Inventory** — read-only comparison between live state and current templates. DB-backed systems compose `tools.db.rectify`, which structurally compares the live DB schema against what the system's schema-builder produces. File-deploying systems compose `setup.deploy_files`, which hash-compares each template against its deployed copy.
 2. **No-op short-circuit** — if every artifact is current, emit `current → current` for each and return without I/O.
 3. **File rectification** — orphans removed, drifted files overwritten from template, transitions reported. DB untouched.
 4. **Schema rectification** — only when DB is `divergent` or `absent`. On divergent: live DB copied to a timestamped backup beside it (`<name>.db.backup-<ISO>`), wiped, rebuilt; emit `divergent → reinstalled` plus a backup-path entry.
 
-Each rectification step reports its own transitions. The orchestrator (`scripts/auto_init.py`) aggregates them and surfaces backup paths for the user to fold or remove after the run.
+Each rectification step reports its own transitions and surfaces any backup paths for the user to fold or remove after the run.
 
 `force=False` creates absent infrastructure and refuses divergent schema with an `InitError` — the user-direct path for "ensure exists without authorizing destruction."
 

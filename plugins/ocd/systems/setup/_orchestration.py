@@ -1,15 +1,15 @@
 """Install and list orchestration.
 
 Top-level run_init and run_status entry points that discover every
-systems/ entry and dispatch uniformly to each subsystem's _init.py.
-Content domains (rules, conventions, log) and operational systems
-(navigator, permissions) follow the same contract.
+systems/ entry and dispatch uniformly to each subsystem's setup
+package. Systems without a `setup/` folder are invisible — only
+migrated systems participate in orchestration.
 
 Enable/disable orchestration respects the per-project opt-in config
-(`.claude/<plugin>/enabled-systems.json`). `run_init` deploys only
-enabled systems and prunes deployed artifacts for disabled systems
-via each system's optional `clean()` contract. `run_enable` and
-`run_disable` mutate the config and reconcile disk state.
+(`.claude/<plugin>/enabled-systems.json`). `run_init` installs only
+enabled systems at project scope and uninstalls disabled ones.
+`run_enable` and `run_disable` mutate the config and reconcile disk
+state.
 """
 
 import importlib
@@ -103,8 +103,8 @@ def run_init(
     rules_changed = False
 
     for system_name in target_systems:
-        mod = importlib.import_module(f"systems.{system_name}._init")
-        result = mod.init(force=force)
+        mod = importlib.import_module(f"systems.{system_name}.setup")
+        result = mod.install(scope="project", force=force)
         for line in format_section(system_name.capitalize(), result["files"], result.get("extra")):
             print(line)
         print()
@@ -113,10 +113,8 @@ def run_init(
             rules_changed = any(f["before"] != f["after"] for f in result["files"])
 
     for system_name in disabled:
-        mod = importlib.import_module(f"systems.{system_name}._init")
-        if not hasattr(mod, "clean"):
-            continue
-        result = mod.clean()
+        mod = importlib.import_module(f"systems.{system_name}.setup")
+        result = mod.uninstall(scope="project")
         for line in format_section(
             f"{system_name.capitalize()} (disabled)", result["files"], result.get("extra"),
         ):
@@ -156,8 +154,8 @@ def run_enable(system: str) -> None:
     enabled.append(system)
     write_enabled(plugin_root, enabled)
 
-    mod = importlib.import_module(f"systems.{system}._init")
-    result = mod.init(force=False)
+    mod = importlib.import_module(f"systems.{system}.setup")
+    result = mod.install(scope="project", force=False)
     for line in format_section(system.capitalize(), result["files"], result.get("extra")):
         print(line)
     print()
@@ -186,21 +184,14 @@ def run_disable(system: str) -> None:
     enabled.remove(system)
     write_enabled(plugin_root, enabled)
 
-    mod = importlib.import_module(f"systems.{system}._init")
-    if hasattr(mod, "clean"):
-        result = mod.clean()
-        for line in format_section(
-            f"{system.capitalize()} (disabled)", result["files"], result.get("extra"),
-        ):
-            print(line)
-        print()
-        print(f"{system} disabled.")
-    else:
-        print()
-        print(
-            f"{system} removed from enabled list. No clean() contract — "
-            f"deployed artifacts (if any) were not removed automatically.",
-        )
+    mod = importlib.import_module(f"systems.{system}.setup")
+    result = mod.uninstall(scope="project")
+    for line in format_section(
+        f"{system.capitalize()} (disabled)", result["files"], result.get("extra"),
+    ):
+        print(line)
+    print()
+    print(f"{system} disabled.")
 
 
 def run_status(system: str | None = None) -> None:
@@ -232,8 +223,8 @@ def run_status(system: str | None = None) -> None:
     enabled = set(effective_enabled(plugin_root, systems))
 
     for system_name in target_systems:
-        mod = importlib.import_module(f"systems.{system_name}._init")
-        result = mod.status()
+        mod = importlib.import_module(f"systems.{system_name}.setup")
+        result = mod.status(scope="project")
         opt_in = "enabled" if system_name in enabled else "disabled"
         heading = f"{system_name.capitalize()} [{opt_in}]"
         for line in format_section(heading, result["files"], result.get("extra")):

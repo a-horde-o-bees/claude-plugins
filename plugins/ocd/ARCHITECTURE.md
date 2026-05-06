@@ -78,7 +78,7 @@ Plugin-wide rule templates in `systems/rules/templates/` deploy to `.claude/rule
 
 System-owned rules live alongside the system that prescribes them — `systems/<name>/rules/` — and deploy flat under `.claude/rules/ocd/systems/<name>.md` via the system's own init per System Dormancy (see marketplace-level `ARCHITECTURE.md`). Today navigator owns `navigator.md` (navigator usage guidance), log owns `log.md` (log type selection and routing), and refactor owns `refactor.md` (when to reach for `/ocd:refactor` over manual sed or Edit). The `systems/` subdir inside `.claude/rules/ocd/` namespaces system-scoped rules away from project-wide foundational rules, so filenames can match system names without colliding.
 
-Rules use the template-deployed model: sources are authoritative; deployed copies in `.claude/rules/ocd/` are derived artifacts tracked in git so the rectified state travels with the repo. A guard hook blocks direct edits to deployed copies so changes only flow template → deployed. `/checkpoint` runs `scripts/auto_init.py` (the auto-init orchestrator) to rectify deployed state against current templates.
+Rules use the template-deployed model: sources are authoritative; deployed copies in `.claude/rules/ocd/` are derived artifacts tracked in git so the rectified state travels with the repo. A guard hook blocks direct edits to deployed copies so changes only flow template → deployed. Per-system setup handlers manage deployment via `/ocd:setup`.
 
 ## Skills
 

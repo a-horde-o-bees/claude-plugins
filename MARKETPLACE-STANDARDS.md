@@ -99,7 +99,7 @@ Graduated from the former `claude-marketplace--diff.md` alignment audit once ali
 
 ## Project-level tooling layout
 
-**Standard.** Project-level operations tied to this repository's development infrastructure live at project root under `tools/` (specifically `tools/testing/` for test discovery, runner, venv resolution, and detached-worktree wrapping; `tools/setup/` for git hookspath configuration). Exposed through `bin/project-run` — a bash entry point that resolves the project venv and dispatches to `tools/` modules. `scripts/` at project root holds release helpers (`scripts/release.sh`, `scripts/auto_init.py`, `scripts/validate-manifests.py`).
+**Standard.** Project-level operations tied to this repository's development infrastructure live at project root under `tools/` (specifically `tools/testing/` for test discovery, runner, venv resolution, and detached-worktree wrapping; `tools/setup/` for git hookspath configuration). Exposed through `bin/project-run` — a bash entry point that resolves the project venv and dispatches to `tools/` modules. `scripts/` at project root holds release helpers (`scripts/release.sh`, `scripts/validate-manifests.py`).
 
 **Why.** 0/54 sampled repos package project-level orchestration inside a plugin — placing dev infrastructure inside `plugins/` is a layering inversion that leaks dev state into end-user plugin caches. `bin/project-run` mirrors the ergonomic property of plugin-scoped bins (on PATH, callable by short name) at project scope.
 

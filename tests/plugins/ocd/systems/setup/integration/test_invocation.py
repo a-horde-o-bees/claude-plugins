@@ -1,9 +1,9 @@
 """Integration tests for setup CLI invocation through run.py.
 
-Verifies setup's user-facing CLI — init, status, permissions
+Verifies setup's user-facing CLI — basic invocation, permissions
 subcommands, and the MCP server launch path — invokes cleanly through
 the full import chain: run.py → systems/setup/__main__.py →
-systems/setup/__init__.py → importlib.import_module(systems.X._init).
+systems/setup/__init__.py → importlib.import_module(systems.X.setup).
 
 Hook invocations live under tests/plugins/ocd/hooks/<hook>/test_invocation.py
 (per-hook home); skill --help coverage was removed as argparse
@@ -139,46 +139,26 @@ class TestServerInvocation:
         assert result.returncode == 0, result.stderr
 
 
-class TestOptInInit:
-    """Opt-in surface on `setup init` — --all, --systems, first-time
-    default, and mutual-exclusivity validation."""
+class TestOptInRulesOnly:
+    """Setup orchestration verbs operate on migrated systems only.
 
-    def _config(self, project_dir: Path) -> Path:
-        return project_dir / ".claude" / "ocd" / "enabled-systems.json"
+    Rules is currently the sole migrated system; other systems are
+    invisible until they migrate to the setup/ shape. These tests verify
+    init/enable/disable/status work end-to-end against the only system
+    that participates.
+    """
 
-    def test_first_init_enables_all_and_writes_config(self, git_project_dir: Path) -> None:
+    def test_init_deploys_rules(self, git_project_dir: Path) -> None:
         result = run("setup", "init", env={"CLAUDE_PROJECT_DIR": str(git_project_dir)})
         assert result.returncode == 0, result.stderr
-        config = self._config(git_project_dir)
+        assert (git_project_dir / ".claude" / "rules" / "ocd" / "honesty.md").is_file()
+
+    def test_init_writes_enabled_config(self, git_project_dir: Path) -> None:
+        run("setup", "init", env={"CLAUDE_PROJECT_DIR": str(git_project_dir)})
+        config = git_project_dir / ".claude" / "ocd" / "enabled-systems.json"
         assert config.is_file()
         import json
-        data = json.loads(config.read_text())
-        assert "rules" in data["enabled"]
-        assert "conventions" in data["enabled"]
-
-    def test_init_all_enables_every_system(self, git_project_dir: Path) -> None:
-        result = run(
-            "setup", "init", "--all",
-            env={"CLAUDE_PROJECT_DIR": str(git_project_dir)},
-        )
-        assert result.returncode == 0, result.stderr
-        import json
-        enabled = json.loads(self._config(git_project_dir).read_text())["enabled"]
-        assert set(enabled) >= {"rules", "conventions", "log", "navigator"}
-
-    def test_init_systems_limits_to_list(self, git_project_dir: Path) -> None:
-        result = run(
-            "setup", "init", "--systems", "rules,conventions",
-            env={"CLAUDE_PROJECT_DIR": str(git_project_dir)},
-        )
-        assert result.returncode == 0, result.stderr
-        import json
-        enabled = json.loads(self._config(git_project_dir).read_text())["enabled"]
-        assert sorted(enabled) == ["conventions", "rules"]
-        # Only enabled systems' deploys exist
-        assert (git_project_dir / ".claude" / "rules" / "ocd").is_dir()
-        assert (git_project_dir / ".claude" / "conventions" / "ocd").is_dir()
-        assert not (git_project_dir / "logs" / "decision").is_dir()
+        assert "rules" in json.loads(config.read_text())["enabled"]
 
     def test_init_systems_rejects_unknown(self, git_project_dir: Path) -> None:
         result = run(
@@ -196,71 +176,23 @@ class TestOptInInit:
         assert result.returncode != 0
         assert "mutually exclusive" in result.stderr
 
-    def test_subsequent_init_respects_persisted_selection(self, git_project_dir: Path) -> None:
-        """First init with --systems; second init without flags deploys
-        only what was persisted, not everything."""
-        run(
-            "setup", "init", "--systems", "rules",
-            env={"CLAUDE_PROJECT_DIR": str(git_project_dir)},
-        )
-        result = run("setup", "init", env={"CLAUDE_PROJECT_DIR": str(git_project_dir)})
-        assert result.returncode == 0, result.stderr
-        assert (git_project_dir / ".claude" / "rules" / "ocd").is_dir()
-        assert not (git_project_dir / ".claude" / "conventions" / "ocd").is_dir()
-
-    def test_disabled_tree_pruned_when_selection_shrinks(self, git_project_dir: Path) -> None:
-        """Init with --all, then init with --systems limited — the
-        removed systems' deploy trees are cleaned up."""
-        run("setup", "init", "--all", env={"CLAUDE_PROJECT_DIR": str(git_project_dir)})
-        assert (git_project_dir / ".claude" / "conventions" / "ocd").is_dir()
-
-        result = run(
-            "setup", "init", "--systems", "rules",
-            env={"CLAUDE_PROJECT_DIR": str(git_project_dir)},
-        )
-        assert result.returncode == 0, result.stderr
-        assert not (git_project_dir / ".claude" / "conventions" / "ocd").is_dir()
-
-
-class TestOptInEnableDisable:
-    """enable/disable verbs toggle a single system and reconcile disk state."""
-
     def test_disable_removes_rules_templates(self, git_project_dir: Path) -> None:
-        run("setup", "init", "--all", env={"CLAUDE_PROJECT_DIR": str(git_project_dir)})
+        run("setup", "init", env={"CLAUDE_PROJECT_DIR": str(git_project_dir)})
         rules_dir = git_project_dir / ".claude" / "rules" / "ocd"
         assert (rules_dir / "honesty.md").is_file()
-        assert (rules_dir / "systems" / "navigator.md").is_file()
 
         result = run(
             "setup", "disable", "rules",
             env={"CLAUDE_PROJECT_DIR": str(git_project_dir)},
         )
         assert result.returncode == 0, result.stderr
-        # Foundational rules templates owned by the rules system are removed.
         assert not (rules_dir / "honesty.md").exists()
-        # System-owned rules (deployed by their owning systems) remain — disable
-        # rules only touches the rules system's own templates.
-        assert (rules_dir / "systems" / "navigator.md").is_file()
 
         import json
         enabled = json.loads(
             (git_project_dir / ".claude" / "ocd" / "enabled-systems.json").read_text(),
         )["enabled"]
         assert "rules" not in enabled
-
-    def test_enable_restores_deployed_tree(self, git_project_dir: Path) -> None:
-        run(
-            "setup", "init", "--systems", "conventions",
-            env={"CLAUDE_PROJECT_DIR": str(git_project_dir)},
-        )
-        assert not (git_project_dir / ".claude" / "rules" / "ocd").is_dir()
-
-        result = run(
-            "setup", "enable", "rules",
-            env={"CLAUDE_PROJECT_DIR": str(git_project_dir)},
-        )
-        assert result.returncode == 0, result.stderr
-        assert (git_project_dir / ".claude" / "rules" / "ocd").is_dir()
 
     def test_enable_unknown_system(self, git_project_dir: Path) -> None:
         result = run(
@@ -270,28 +202,8 @@ class TestOptInEnableDisable:
         assert result.returncode == 0
         assert "Unknown system" in result.stdout
 
-    def test_disable_already_disabled_is_noop(self, git_project_dir: Path) -> None:
-        run(
-            "setup", "init", "--systems", "conventions",
-            env={"CLAUDE_PROJECT_DIR": str(git_project_dir)},
-        )
-        result = run(
-            "setup", "disable", "rules",
-            env={"CLAUDE_PROJECT_DIR": str(git_project_dir)},
-        )
-        assert result.returncode == 0, result.stderr
-        assert "already disabled" in result.stdout
-
-
-class TestOptInStatus:
-    """Status reflects opt-in state per system."""
-
-    def test_status_marks_enabled_systems(self, git_project_dir: Path) -> None:
-        run(
-            "setup", "init", "--systems", "rules",
-            env={"CLAUDE_PROJECT_DIR": str(git_project_dir)},
-        )
+    def test_status_marks_rules_enabled(self, git_project_dir: Path) -> None:
+        run("setup", "init", env={"CLAUDE_PROJECT_DIR": str(git_project_dir)})
         result = run("setup", "status", env={"CLAUDE_PROJECT_DIR": str(git_project_dir)})
         assert result.returncode == 0, result.stderr
         assert "Rules [enabled]" in result.stdout
-        assert "[disabled]" in result.stdout

@@ -5,9 +5,6 @@
 # 1. Bump versions: increments z in plugin.json for each plugin with staged changes.
 # 2. Propagate shared files: copies ocd plugin framework to all non-ocd plugins.
 #
-# Template → deployed sync runs out-of-band in /checkpoint (auto-init script),
-# not here — commits can batch without paying the force-init cost each time.
-#
 # Propagated files:
 #   tools/environment.py                   — path resolution (canonical at project root, copied to <plugin>/tools/)
 #   tools/errors.py                        — shared exception types  (canonical at project root, copied to <plugin>/tools/)
@@ -19,9 +16,7 @@
 #   systems/setup/_formatting.py           — output formatting (to systems/setup/)
 #   systems/setup/_system_discovery.py     — system and skill discovery (to systems/setup/)
 #   systems/setup/_orchestration.py        — install/enable/disable orchestration (to systems/setup/)
-#   systems/rules/_init.py                 — rules subsystem (to systems/rules/)
 #   systems/conventions/_init.py           — conventions subsystem (to systems/conventions/)
-#   systems/patterns/_init.py              — patterns subsystem (to systems/patterns/)
 #   systems/log/_init.py                   — log subsystem (to systems/log/)
 #   systems/permissions/__init__.py        — permissions facade (to systems/permissions/)
 #   systems/permissions/_init.py           — permissions subsystem (to systems/permissions/)
@@ -82,7 +77,6 @@ SHARED_FILES=(
     "plugins/ocd/systems/setup/_formatting.py:systems/setup"
     "plugins/ocd/systems/setup/_system_discovery.py:systems/setup"
     "plugins/ocd/systems/setup/_orchestration.py:systems/setup"
-    "plugins/ocd/systems/rules/_init.py:systems/rules"
     "plugins/ocd/systems/conventions/_init.py:systems/conventions"
     "plugins/ocd/systems/log/_init.py:systems/log"
     "plugins/ocd/systems/permissions/__init__.py:systems/permissions"

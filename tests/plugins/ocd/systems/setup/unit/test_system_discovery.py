@@ -1,15 +1,21 @@
 """Unit tests for setup._system_discovery.
 
 Covers the deterministic scan behavior of _discover_systems (scans
-`systems/*/` for `_init.py`) and _discover_workflow_skills (scans
-`systems/*/` for `SKILL.md`). Both functions must return sorted
-lists, skip directories that lack the sentinel file, and handle
-missing parent directories gracefully.
+`systems/*/setup/__init__.py`) and _discover_workflow_skills (scans
+`systems/*/SKILL.md`). Both functions must return sorted lists, skip
+directories that lack the sentinel file, and handle missing parent
+directories gracefully.
 """
 
 from pathlib import Path
 
 from systems.setup._system_discovery import _discover_systems, _discover_workflow_skills
+
+
+def _make_setup_pkg(systems_dir: Path, name: str) -> None:
+    pkg = systems_dir / name / "setup"
+    pkg.mkdir(parents=True)
+    (pkg / "__init__.py").write_text("")
 
 
 class TestDiscoverSystems:
@@ -20,41 +26,38 @@ class TestDiscoverSystems:
         (tmp_path / "systems").mkdir()
         assert _discover_systems(tmp_path) == []
 
-    def test_discovers_subsystems_with_init_py(self, tmp_path: Path) -> None:
+    def test_discovers_subsystems_with_setup_pkg(self, tmp_path: Path) -> None:
         systems = tmp_path / "systems"
-        (systems / "navigator").mkdir(parents=True)
-        (systems / "navigator" / "_init.py").write_text("")
-        (systems / "governance").mkdir()
-        (systems / "governance" / "_init.py").write_text("")
+        _make_setup_pkg(systems, "navigator")
+        _make_setup_pkg(systems, "governance")
 
         result = _discover_systems(tmp_path)
 
         assert set(result) == {"navigator", "governance"}
 
-    def test_ignores_subsystems_without_init_py(self, tmp_path: Path) -> None:
+    def test_ignores_subsystems_without_setup_pkg(self, tmp_path: Path) -> None:
         systems = tmp_path / "systems"
-        (systems / "with_init").mkdir(parents=True)
-        (systems / "with_init" / "_init.py").write_text("")
-        (systems / "without_init").mkdir()
+        _make_setup_pkg(systems, "with_setup")
+        (systems / "without_setup").mkdir()
 
         result = _discover_systems(tmp_path)
 
-        assert result == ["with_init"]
+        assert result == ["with_setup"]
 
     def test_returns_sorted_names(self, tmp_path: Path) -> None:
         systems = tmp_path / "systems"
         for name in ["zulu", "alpha", "mike"]:
-            (systems / name).mkdir(parents=True)
-            (systems / name / "_init.py").write_text("")
+            _make_setup_pkg(systems, name)
 
         result = _discover_systems(tmp_path)
 
         assert result == ["alpha", "mike", "zulu"]
 
-    def test_ignores_files_that_are_not_packages(self, tmp_path: Path) -> None:
+    def test_ignores_loose_setup_pkg_at_systems_root(self, tmp_path: Path) -> None:
         systems = tmp_path / "systems"
-        systems.mkdir()
-        (systems / "loose_init.py").write_text("")
+        # A bare `systems/setup/__init__.py` is the orchestrator package, not a system.
+        (systems / "setup").mkdir(parents=True)
+        (systems / "setup" / "__init__.py").write_text("")
 
         result = _discover_systems(tmp_path)
 

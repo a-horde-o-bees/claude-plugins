@@ -17,8 +17,6 @@ Bundle the development checkpoint cycle for the current branch — commit, push,
 
 The generic commit + push + CI steps are delegated to `/ocd:git` verbs (`commit`, `push`, `ci`). Project-specific layers — marketplace refresh, plugin update, restart recommendation — sit on top of those calls. Other projects can use `/ocd:git checkpoint` directly when they don't need these layers.
 
-> Auto-init is paused — `scripts/auto_init.py` no longer runs as part of /checkpoint while the new opt-in install machinery (per-system, per-scope) is settled. After the new model lands, rectification will move into the system-level install handlers and this skill may regain (or retire) an auto-init step depending on what's needed.
-
 ## Workflow
 
 1. {branch} = bash: `git branch --show-current`

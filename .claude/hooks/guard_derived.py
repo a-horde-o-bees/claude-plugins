@@ -1,8 +1,8 @@
 """Block direct edits to deployed and propagated files.
 
 Two categories of derived files should not be edited directly:
-1. Deployed rules, conventions, and log templates — rectified from
-   plugin templates at /checkpoint via the auto-init script
+1. Deployed rules, conventions, and log templates — managed by each
+   system's setup handler
 2. Propagated files — copied from canonical sources to other plugins
    by the pre-commit hook
 
@@ -14,8 +14,8 @@ Edit canonical sources instead:
 - Setup package (propagated to non-ocd plugins): plugins/ocd/systems/setup/
 - Always-on primitives (propagated to every plugin's tools/): tools/ at project root
 
-Deployed copies land on disk through the owning system's init() during
-/checkpoint's auto-init step — not at commit time.
+Deployed copies land on disk through the owning system's setup install,
+not at commit time.
 """
 
 import json

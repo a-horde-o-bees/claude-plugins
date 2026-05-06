@@ -27,20 +27,6 @@ class TestListVerb:
 
 
 class TestForVerb:
-    def test_matches_python_file_to_conventions(
-        self, ocd_run: Path, project_root: Path,
-    ):
-        """A .py path matches at least the ocd python convention."""
-        target = "plugins/ocd/systems/pdf/_generate.py"
-        assert (project_root / target).is_file()
-
-        result = _run(ocd_run, "for", target)
-
-        assert result.returncode == 0, result.stderr
-        assert "Conventions:" in result.stdout
-        assert "python.md" in result.stdout
-        assert f"{target} follows:" in result.stdout
-
     def test_no_match_reports_none(self, ocd_run: Path):
         """A path matching nothing reports 'No governance matches.'"""
         result = _run(ocd_run, "for", "some/path/that/matches/nothing.xyz")

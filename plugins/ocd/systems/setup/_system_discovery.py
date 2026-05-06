@@ -1,29 +1,29 @@
 """System and skill discovery.
 
-Discovers systems with init infrastructure and workflow skills (slash
+Discovers systems with setup infrastructure and workflow skills (slash
 commands) within a plugin directory tree. All systems live under
-systems/; a subsystem may own state (has _init.py), expose a workflow
-(has SKILL.md), or both.
+systems/; a subsystem may own state (has setup/__init__.py), expose a
+workflow (has SKILL.md), or both.
 """
 
 from pathlib import Path
 
 
 def _discover_systems(plugin_root: Path) -> list[str]:
-    """Discover systems with init infrastructure.
+    """Discover systems with setup infrastructure.
 
-    Returns sorted list of subsystem names whose package contains an
-    _init.py module (conforming to the Init/Status Contract). These
-    systems own state — database files, deployed conventions,
-    configuration — and their init routines bootstrap or refresh it.
+    Returns sorted list of subsystem names whose package contains a
+    `setup/__init__.py` exposing the per-system setup surface (purpose,
+    status, install, uninstall). Systems without setup/ are invisible
+    to the setup orchestrator until they migrate.
     """
     subsystems_dir = plugin_root / "systems"
     if not subsystems_dir.is_dir():
         return []
 
     return sorted(
-        init_path.parent.name
-        for init_path in subsystems_dir.glob("*/_init.py")
+        setup_init.parent.parent.name
+        for setup_init in subsystems_dir.glob("*/setup/__init__.py")
     )
 
 

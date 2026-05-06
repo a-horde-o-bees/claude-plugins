@@ -97,6 +97,6 @@ class TestSubsystemDispatch:
         """`ocd-run setup status --system <name>` narrows the report to one
         subsystem. Exercises argparse flag marshaling through the bash layer.
         """
-        result = _run("setup", "status", "--system", "conventions")
+        result = _run("setup", "status", "--system", "rules")
         assert result.returncode == 0, result.stderr
-        assert "Conventions" in result.stdout
+        assert "Rules" in result.stdout

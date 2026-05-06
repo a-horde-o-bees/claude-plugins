@@ -75,13 +75,12 @@ Each plugin's `systems/framework/` package is identical — a generic framework 
 
 ### Template-Deployed Model
 
-Templates live per-system in plugin source — project-wide rules in `plugins/<plugin>/systems/rules/templates/`, system-scoped rules in `plugins/<plugin>/systems/<system>/rules/`, conventions in `plugins/<plugin>/systems/conventions/templates/`, log templates in `plugins/<plugin>/systems/log/templates/<type>/`. Templates are the authoritative source. Deployed copies in `.claude/rules/` and `.claude/conventions/` are derived artifacts; they are tracked in git so the rectified state travels with the repo and every consumer (CI, fresh checkouts, new sessions) sees the same corpus. Log-type templates deploy alongside user log entries at project-root `logs/<type>/` — logs are project notes the agent curates, not Claude Code infrastructure, so they live outside the `.claude/` tree entirely. Each system's `_init.py` deploys its own templates; a guard hook blocks direct edits to deployed copies so changes only flow template → deployed. `scripts/auto_init.py` (the auto-init orchestrator) rectifies the full deployed tree at `/checkpoint` — force-runs every system's `init()`, prunes orphans in template-managed categories, backs up existing `.claude/**/*.db` files to `.claude/pre-sync/` and reconciles them against post-init schemas (match → restore data; mismatch → surface a migration flag), then runs `navigator scan` for every plugin that ships one. Governance metadata (`includes`, `excludes`) lives in each file's YAML frontmatter; the governance library reconciles rules and conventions against disk state on every query, so entries stay current without an explicit registration step.
+Templates live per-system in plugin source — project-wide rules in `plugins/<plugin>/systems/rules/templates/`, system-scoped rules in `plugins/<plugin>/systems/<system>/rules/`, conventions in `plugins/<plugin>/systems/conventions/templates/`, log templates in `plugins/<plugin>/systems/log/templates/<type>/`. Templates are the authoritative source. Deployed copies in `.claude/rules/` and `.claude/conventions/` are derived artifacts; they are tracked in git so the rectified state travels with the repo and every consumer (CI, fresh checkouts, new sessions) sees the same corpus. Log-type templates deploy alongside user log entries at project-root `logs/<type>/` — logs are project notes the agent curates, not Claude Code infrastructure, so they live outside the `.claude/` tree entirely. Each system's setup handler deploys its own templates; a guard hook blocks direct edits to deployed copies so changes only flow template → deployed. Governance metadata (`includes`, `excludes`) lives in each file's YAML frontmatter; the governance library reconciles rules and conventions against disk state on every query, so entries stay current without an explicit registration step.
 
 ### Development Scripts
 
 | Script | Purpose |
 |--------|---------|
-| `scripts/auto_init.py` | Auto-init orchestrator — rectifies deployed state against current templates, called by `/checkpoint` |
 | `scripts/validate-manifests.py` | Validate marketplace + plugin manifests; invoked by CI |
 
 Release cuts are driven by `/ocd:git release <version>` — see CLAUDE.md for the operational flow and `plugins/ocd/systems/git/_release.md` for the workflow definition.
@@ -109,8 +108,8 @@ claude-plugins/
 ├── .claude-plugin/
 │   └── marketplace.json         — marketplace manifest registering plugins
 ├── .claude/
-│   ├── rules/                   — deployed rule files (tracked; rectified by scripts/auto_init.py)
-│   ├── conventions/             — deployed convention files (tracked; rectified by scripts/auto_init.py)
+│   ├── rules/                   — deployed rule files (tracked; managed per-system via /ocd:setup)
+│   ├── conventions/             — deployed convention files (tracked; managed per-system via /ocd:setup)
 │   ├── skills/                  — project-local dev skills (checkpoint)
 │   ├── hooks/                   — project-level pre-commit guards
 │   ├── ocd/                     — ocd plugin project data (navigator db, needs-map db, enabled-systems.json)
@@ -120,7 +119,7 @@ claude-plugins/
 ├── tools/                       — project-level development tooling (testing orchestration, setup)
 ├── plugins/
 │   └── ocd/                     — ocd plugin (own system, see plugins/ocd/ARCHITECTURE.md)
-├── scripts/                     — shared development scripts (auto_init, manifest validator)
+├── scripts/                     — shared development scripts (manifest validator)
 ├── tests/                       — project-level integration tests (dev-only)
 ├── logs/                        — project log entries (decisions, friction, problems, ideas)
 └── research/                    — external research notes (dev-only)
