@@ -74,8 +74,10 @@ def deployed_tree(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[P
 class TestProjectWideRules:
     """Foundational rules deploy flat under .claude/rules/<plugin>/."""
 
-    def test_design_principles_deployed_flat(self, deployed_tree: Path) -> None:
-        assert (deployed_tree / ".claude/rules/ocd/design-principles.md").is_file()
+    def test_principle_files_deployed_flat(self, deployed_tree: Path) -> None:
+        assert (deployed_tree / ".claude/rules/ocd/honesty.md").is_file()
+        assert (deployed_tree / ".claude/rules/ocd/purpose-statement.md").is_file()
+        assert (deployed_tree / ".claude/rules/ocd/single-source-of-truth.md").is_file()
 
     def test_markdown_deployed_flat(self, deployed_tree: Path) -> None:
         assert (deployed_tree / ".claude/rules/ocd/markdown.md").is_file()
