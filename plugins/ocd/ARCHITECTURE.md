@@ -117,14 +117,14 @@ Agent-facing tools exposed over the Model Context Protocol. The plugin registers
 
 ## Libraries
 
-Python packages consumed as imports. Each is a subsystem under `systems/`; substantial ones document their architecture separately, while thin subsystems consolidate their purpose into a README. This section is the plugin-level overview.
+Python packages consumed as imports. Each is a subsystem under `systems/`; substantial ones document their architecture in their own `ARCHITECTURE.md`, while thin subsystems are described in this document under their own dedicated section (see Setup Package, Permissions Subsystem). This section is the plugin-level overview.
 
 | Library | Package | Purpose | Docs |
 |---------|---------|---------|------|
 | `rules` | `systems/rules/` | Rules subsystem — deploys markdown rule templates to `.claude/rules/<plugin>/` as always-on agent context. | [README](systems/rules/README.md) |
 | `conventions` | `systems/conventions/` | Conventions subsystem — deploys convention templates to `.claude/conventions/<plugin>/` for file-governance via `governed_by` frontmatter. | [README](systems/conventions/README.md) |
 | `logs` | `systems/log/` | Logs subsystem — deploys per-type templates to the shared `logs/<type>/` pool at project root (unnamespaced; contributes to project-level log types). | [README](systems/log/README.md) |
-| `permissions` | `systems/permissions/` | Permissions subsystem — reports auto-approve coverage; specialized CLI ops (`status`, `install`, `analyze`, `clean`) manage recommended patterns across project and user scopes. | [README](systems/permissions/README.md) |
+| `permissions` | `systems/permissions/` | Permissions subsystem — reports auto-approve coverage; CLI verbs (`status`, `deploy`, `analyze`, `clean`) manage recommended patterns across project and user scopes. See Permissions Subsystem section below. | — |
 | `governance` | `systems/governance/` | Convention and rule governance library: match files to applicable governance entries, list entries by kind, and compute the dependency-ordered level grouping. Reads directly from disk on every call — no database, no caching. | [README](systems/governance/README.md) · [ARCHITECTURE.md](systems/governance/ARCHITECTURE.md) |
 | `navigator` | `systems/navigator/` | Project structure index backed by SQLite. Maintains a queryable directory of project files and directories with human-written descriptions agents use to decide whether to open a file. | [README](systems/navigator/README.md) · [ARCHITECTURE.md](systems/navigator/ARCHITECTURE.md) |
 | `transcripts` | `systems/transcripts/` | Claude Code session transcript index backed by SQLite. Ingests JSONL transcripts from `~/.claude/projects/`, partitions per-exchange time into user/agent/idle, holds persistent per-exchange purpose annotations, and serves both a CLI and an MCP server from the same library. | [README](systems/transcripts/README.md) · [ARCHITECTURE.md](systems/transcripts/ARCHITECTURE.md) |
@@ -153,6 +153,25 @@ Consumers within this plugin: the `convention_gate` hook imports `systems.govern
 | `_formatting.py` | Output column alignment and section rendering |
 | `_system_discovery.py` | System and workflow skill discovery |
 | `_orchestration.py` | `run_init`, `run_status`, `run_enable`, `run_disable` entry points — discover every enabled subsystem and dispatch uniformly |
+
+## Permissions Subsystem
+
+`systems/permissions/` — auto-approve pattern management across Claude Code's project and user scopes. Reports coverage against plugin-recommended patterns, deploys recommended patterns at a user-selected scope, analyzes cross-scope health, and cleans redundant entries. Invoked via `ocd-run setup permissions <verb>`; the `/ocd:setup guided` skill drives the interactive flow that picks scope, deploys, and offers cross-scope cleanup.
+
+| Module | Responsibility |
+|--------|---------------|
+| `settings.json` | Recommended permission patterns grouped by category — the catalog the operator deploys from |
+| `_operations.py` | `run_permissions_status`, `run_permissions_deploy`, `run_permissions_analyze`, `run_permissions_clean` plus helpers |
+| `_init.py` | Subsystem `init()`/`status()` per the Init/Status Contract |
+
+CLI surface:
+
+| Verb | Effect |
+|------|--------|
+| `status` | Report both scopes' permission state against recommended patterns |
+| `deploy --scope <project\|user>` | Deploy recommended patterns to the chosen scope (explicit scope choice required) |
+| `analyze` | Cross-scope health check — surface gaps, drift, redundancy |
+| `clean --scope <project\|user>` | Remove recommendations from one scope that the other already covers |
 
 ## Entry Points
 
