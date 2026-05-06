@@ -31,6 +31,7 @@ Top-down procedures. (Currently empty at project root — operational procedures
 
 Active and upcoming workstreams.
 
+- `rules-migration-validation.md` — exercise the new `/ocd:setup` dispatch against rules at both scopes; blocks the broader migration sequence until green
 - `system-migrations.md` — overarching plan for migrating each ocd system to the system-structure layout
 - `conditional-memory.md` — investigate per-rule trigger-conditioned auto-load to reduce always-on token floor
 - `pfn-sweep.md` — convert prose procedural sections to Process Flow Notation

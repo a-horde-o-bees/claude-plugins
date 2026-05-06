@@ -6,11 +6,11 @@ Project-scoped scan-once view. Per-sandbox `SANDBOX-TASKS.md` files (seeded by `
 
 ## In progress
 
-- (None at this checkpoint)
+- **Rules migration validation** — [plan](plans/rules-migration-validation.md). Exercise the new `/ocd:setup` dispatch against the cached plugin install at user and project scope. Blocks `system-migrations.md` until green.
 
 ## Pending
 
-- **System migrations to system-structure** — [plan](plans/system-migrations.md). Migrate each ocd system to the layout pioneered by the rules system. Sequenced smallest-first.
+- **System migrations to system-structure** — [plan](plans/system-migrations.md). Migrate each ocd system to the layout pioneered by the rules system. Sequenced smallest-first. Blocked on rules-migration-validation.
 - **`ocd:init-python-project` skill** — [plan](plans/init-project-skill.md). Scaffold fresh Python projects with this repo's canonical patterns. Foundation landed in centralize-tools (PR #1); the skill itself is the next branch.
 
 ## Upcoming
