@@ -83,3 +83,22 @@ The markdown workflow is the consumer-facing layer; the Python facade is the det
 ## Hidden Until Migrated
 
 Systems without a `setup/` folder are invisible to the setup skill — they do not appear in `purposes` or `statuses` output, and `/ocd:setup <name>` errors with "unknown system". This keeps the setup surface conformant: every system listed has the expected handler shape, and incremental migration leaves un-migrated systems silent rather than half-supported.
+
+## Operational CLI Gating
+
+When a system has its own operational CLI separate from the setup surface (e.g., `ocd-run navigator scan`, `ocd-run transcripts query`), that CLI gates on install state. Each operational entry point calls the system's own `status()` early and refuses to run if the system is not installed at any scope:
+
+```python
+def main() -> None:
+    from .setup import status as _setup_status
+    state = _setup_status()
+    if not any(f["before"] == "current" for f in state.get("files", [])):
+        print(
+            "<system> is not installed. Run `/ocd:setup <system> install --scope <user|project>` first.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    ...
+```
+
+The gate prevents agents from invoking operational commands on a system the user has not opted in to, matching the broader hide-until-installed principle. The setup CLI itself is always available — it is the bootstrap path for every system.
