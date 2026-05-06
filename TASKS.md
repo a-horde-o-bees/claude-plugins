@@ -15,6 +15,7 @@ Project-scoped scan-once view. Per-sandbox `SANDBOX-TASKS.md` files (seeded by `
 
 ## Upcoming
 
+- **Components relocation** — [plan](plans/components-relocation.md). Move workflow-scoped components into the workflows that need them; re-type cross-cutters (rule + ARCHITECTURE.md). Empty out `components/`, drop the enumeration from project-root CLAUDE.md.
 - **Conditional memory loading** — [plan](plans/conditional-memory.md). Per-rule trigger-conditioned auto-load to reduce always-on token floor. Needs Anthropic-side coordination.
 - **Prose → PFN sweep** — [plan](plans/pfn-sweep.md). Convert prose procedures to Process Flow Notation across the project.
 - **Sub-flow extraction sweep** — [plan](plans/subflow-extraction.md). Extract conditional sub-flows into separate workflow/component files.

@@ -38,9 +38,9 @@ Additional spot checks:
 
 ## Open questions
 
-- The setup skill SKILL.md uses `Read:` to load the system's `workflows/<verb>.md` and follow it inline. Verify this works through the cached plugin install — the path is `${CLAUDE_PLUGIN_ROOT}/systems/{system}/workflows/{verb}.md` and depends on `CLAUDE_PLUGIN_ROOT` being set in the skill execution context
-- The interactive workflows in `workflows/install.md` and `workflows/uninstall.md` use `AskUserQuestion`. Verify scope-prompt and lettered target selection render correctly when the skill executor runs through the markdown
-- The rules system's `__init__.py` is at the package root (not under `setup/`). Verify `importlib.import_module("systems.rules")` resolves the facade functions correctly through the cached install — the discovery scan in setup's `__main__.py` reads the file content for the four required function names
+- ~~The setup skill SKILL.md uses `Read:` to load the system's `workflows/<verb>.md` and follow it inline. Verify this works through the cached plugin install — the path is `${CLAUDE_PLUGIN_ROOT}/systems/{system}/workflows/{verb}.md` and depends on `CLAUDE_PLUGIN_ROOT` being set in the skill execution context~~ — resolved by precedent. `needs_map/SKILL.md`, `navigator/SKILL.md`, `pdf/SKILL.md`, and `git/_release_bootstrap.md` all use the same `Read: ${CLAUDE_PLUGIN_ROOT}/...` pattern; agent expands it at execution time.
+- The interactive workflows in `workflows/install.md` and `workflows/uninstall.md` rely on the agent picking `AskUserQuestion` when the workflow says "ask the user". `AskUserQuestion` is in setup's SKILL.md `allowed-tools` so it's available; whether the agent uses it correctly for scope-prompt and lettered target selection is agent-behavior-dependent and best surfaced by running the validation steps.
+- ~~The rules system's `__init__.py` is at the package root (not under `setup/`). Verify `importlib.import_module("systems.rules")` resolves the facade functions correctly through the cached install — the discovery scan in setup's `__main__.py` reads the file content for the four required function names~~ — resolved. `_system_discovery.py` globs `*/__init__.py` and text-matches the four required function names; rules `__init__.py` defines all four at top level.
 
 ## Status
 
