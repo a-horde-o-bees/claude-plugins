@@ -1,10 +1,10 @@
 """Unit tests for setup._system_discovery.
 
 Covers the deterministic scan behavior of _discover_systems (scans
-`systems/*/setup/__init__.py`) and _discover_workflow_skills (scans
-`systems/*/SKILL.md`). Both functions must return sorted lists, skip
-directories that lack the sentinel file, and handle missing parent
-directories gracefully.
+`systems/*/__init__.py` for the per-system facade contract) and
+_discover_workflow_skills (scans `systems/*/SKILL.md`). Both functions
+must return sorted lists, skip directories that lack the sentinel
+file, and handle missing parent directories gracefully.
 """
 
 from pathlib import Path
@@ -12,10 +12,19 @@ from pathlib import Path
 from systems.setup._system_discovery import _discover_systems, _discover_workflow_skills
 
 
-def _make_setup_pkg(systems_dir: Path, name: str) -> None:
-    pkg = systems_dir / name / "setup"
+_FACADE_STUB = (
+    "def purpose(): pass\n"
+    "def status(scope=None): pass\n"
+    "def install(scope, target=None, force=False): pass\n"
+    "def uninstall(scope, target=None): pass\n"
+)
+
+
+def _make_system(systems_dir: Path, name: str, with_facade: bool = True) -> None:
+    pkg = systems_dir / name
     pkg.mkdir(parents=True)
-    (pkg / "__init__.py").write_text("")
+    if with_facade:
+        (pkg / "__init__.py").write_text(_FACADE_STUB)
 
 
 class TestDiscoverSystems:
@@ -26,42 +35,55 @@ class TestDiscoverSystems:
         (tmp_path / "systems").mkdir()
         assert _discover_systems(tmp_path) == []
 
-    def test_discovers_subsystems_with_setup_pkg(self, tmp_path: Path) -> None:
+    def test_discovers_subsystems_with_facade(self, tmp_path: Path) -> None:
         systems = tmp_path / "systems"
-        _make_setup_pkg(systems, "navigator")
-        _make_setup_pkg(systems, "governance")
+        _make_system(systems, "navigator")
+        _make_system(systems, "governance")
 
         result = _discover_systems(tmp_path)
 
         assert set(result) == {"navigator", "governance"}
 
-    def test_ignores_subsystems_without_setup_pkg(self, tmp_path: Path) -> None:
+    def test_ignores_subsystems_without_facade(self, tmp_path: Path) -> None:
         systems = tmp_path / "systems"
-        _make_setup_pkg(systems, "with_setup")
-        (systems / "without_setup").mkdir()
+        _make_system(systems, "with_facade")
+        # Package present but no __init__.py — not migrated.
+        (systems / "without_facade").mkdir()
 
         result = _discover_systems(tmp_path)
 
-        assert result == ["with_setup"]
+        assert result == ["with_facade"]
+
+    def test_ignores_subsystems_with_partial_facade(self, tmp_path: Path) -> None:
+        systems = tmp_path / "systems"
+        _make_system(systems, "complete")
+        partial = systems / "partial"
+        partial.mkdir(parents=True)
+        # Only one of the four required functions — not enough.
+        (partial / "__init__.py").write_text("def purpose(): pass\n")
+
+        result = _discover_systems(tmp_path)
+
+        assert result == ["complete"]
 
     def test_returns_sorted_names(self, tmp_path: Path) -> None:
         systems = tmp_path / "systems"
         for name in ["zulu", "alpha", "mike"]:
-            _make_setup_pkg(systems, name)
+            _make_system(systems, name)
 
         result = _discover_systems(tmp_path)
 
         assert result == ["alpha", "mike", "zulu"]
 
-    def test_ignores_loose_setup_pkg_at_systems_root(self, tmp_path: Path) -> None:
+    def test_ignores_setup_orchestrator_system(self, tmp_path: Path) -> None:
+        # `systems/setup/__init__.py` is the orchestrator, not a managed system.
         systems = tmp_path / "systems"
-        # A bare `systems/setup/__init__.py` is the orchestrator package, not a system.
-        (systems / "setup").mkdir(parents=True)
-        (systems / "setup" / "__init__.py").write_text("")
+        _make_system(systems, "setup")
+        _make_system(systems, "rules")
 
         result = _discover_systems(tmp_path)
 
-        assert result == []
+        assert result == ["rules"]
 
 
 class TestDiscoverWorkflowSkills:

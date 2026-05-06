@@ -1,11 +1,12 @@
-"""Unit tests for systems.rules.setup.
+"""Unit tests for the rules system's setup facade.
 
-Covers the new per-system setup shape: purpose, status across user and
-project scopes, install with target/scope handling, uninstall behavior,
-and unsupported-scope error reporting.
+Covers the per-system setup shape (purpose, status, install,
+uninstall) exposed at `systems.rules.__init__` per the plugin-system
+convention. Validates per-scope deploy paths, target handling, and
+unsupported-scope error reporting.
 """
 
-from systems.rules import setup as rules_setup
+import systems.rules as rules_setup
 
 
 class TestPurpose:

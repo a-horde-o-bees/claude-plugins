@@ -11,15 +11,15 @@ allowed-tools:
 
 # /setup
 
-Single entry point for plugin infrastructure. Setup itself is informational; per-system verbs (install, uninstall, status) are dispatched to each system's `setup/` handlers.
+Single entry point for plugin infrastructure. Setup itself is informational; per-system verbs (install, uninstall, status) are dispatched to each system's `__init__.py` facade and `workflows/` markdown.
 
 ## Process Model
 
 - **Meta verbs** — `purposes` (lettered list of systems), `statuses` (aggregated state), `permissions` (auto-approve patterns) report across the plugin.
 - **System fallthrough** — any other first argument is treated as a system name. Unknown systems error with the available list.
-- **Per-system verb** — `<system> <verb>` dispatches to that system's `setup/<verb>.md` workflow. Install and uninstall require `--scope user` or `--scope project`.
+- **Per-system verb** — `<system> <verb>` dispatches to that system's `workflows/<verb>.md` file. Install and uninstall require `--scope user` or `--scope project`.
 
-Systems are invisible to setup until they have a `setup/__init__.py` exposing the per-system shape — see `plugins/ocd/systems/conventions/templates/plugin-system.md`.
+Systems are invisible to setup until their package `__init__.py` exposes the four facade functions (`purpose`, `status`, `install`, `uninstall`) per `plugins/ocd/systems/conventions/templates/plugin-system.md`.
 
 ## Workflow
 
@@ -48,11 +48,11 @@ Systems are invisible to setup until they have a `setup/__init__.py` exposing th
     2. Present output
     3. Return to caller
 12. If {verb} is `install`:
-    1. Read: `${CLAUDE_PLUGIN_ROOT}/systems/{system}/setup/install.md`
+    1. Read: `${CLAUDE_PLUGIN_ROOT}/systems/{system}/workflows/install.md`
     2. Follow that workflow with {verb-args} as its arguments
     3. Return to caller
 13. If {verb} is `uninstall`:
-    1. Read: `${CLAUDE_PLUGIN_ROOT}/systems/{system}/setup/uninstall.md`
+    1. Read: `${CLAUDE_PLUGIN_ROOT}/systems/{system}/workflows/uninstall.md`
     2. Follow that workflow with {verb-args} as its arguments
     3. Return to caller
 14. Else: Exit to user: unknown verb `{verb}` for system `{system}` — expected install, uninstall, or status

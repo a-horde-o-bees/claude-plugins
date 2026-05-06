@@ -55,7 +55,7 @@ def run_purposes() -> None:
     for idx, system_name in enumerate(systems):
         letter = chr(ord("A") + idx)
         try:
-            mod = importlib.import_module(f"systems.{system_name}.setup")
+            mod = importlib.import_module(f"systems.{system_name}")
             purpose = mod.purpose() if hasattr(mod, "purpose") else "(no purpose declared)"
         except Exception as exc:  # noqa: BLE001
             purpose = f"(error loading: {exc})"
@@ -77,7 +77,7 @@ def run_statuses() -> None:
     print()
     for system_name in systems:
         try:
-            mod = importlib.import_module(f"systems.{system_name}.setup")
+            mod = importlib.import_module(f"systems.{system_name}")
             result = mod.status() if hasattr(mod, "status") else {"files": [], "extra": []}
         except Exception as exc:  # noqa: BLE001
             result = {"files": [], "extra": [{"label": "error", "value": str(exc)}]}
@@ -88,12 +88,12 @@ def run_statuses() -> None:
 
 
 def run_system_usage(system_name: str) -> None:
-    """Render one migrated system's usage from its setup/*.md component files."""
+    """Render one migrated system's usage from its workflows/*.md files."""
     plugin_root = get_plugin_root()
-    setup_dir = plugin_root / "systems" / system_name / "setup"
+    workflows_dir = plugin_root / "systems" / system_name / "workflows"
 
     try:
-        mod = importlib.import_module(f"systems.{system_name}.setup")
+        mod = importlib.import_module(f"systems.{system_name}")
         purpose = mod.purpose() if hasattr(mod, "purpose") else None
     except Exception as exc:  # noqa: BLE001
         print(f"error loading {system_name}: {exc}")
@@ -105,10 +105,12 @@ def run_system_usage(system_name: str) -> None:
         print(f"  {purpose}")
     print()
     print("Verbs:")
-    for verb_md in sorted(setup_dir.glob("*.md")):
-        verb = verb_md.stem
-        first_paragraph = _first_paragraph(verb_md)
-        print(f"  {verb} — {first_paragraph}")
+    print("  status — read-only state report (no workflow file; CLI-direct)")
+    if workflows_dir.is_dir():
+        for verb_md in sorted(workflows_dir.glob("*.md")):
+            verb = verb_md.stem
+            first_paragraph = _first_paragraph(verb_md)
+            print(f"  {verb} — {first_paragraph}")
     print()
     print(f"Run a verb: `ocd-run setup {system_name} <verb> [args]`")
 

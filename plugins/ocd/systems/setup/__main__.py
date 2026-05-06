@@ -41,7 +41,7 @@ def _format_section(heading: str, result: dict) -> None:
 
 def _dispatch_system_verb(system_name: str, verb: str, rest: list[str]) -> None:
     """Dispatch a verb to the named system's setup module."""
-    mod = importlib.import_module(f"systems.{system_name}.setup")
+    mod = importlib.import_module(f"systems.{system_name}")
 
     if verb == "status":
         parser = argparse.ArgumentParser(prog=f"setup {system_name} status")
