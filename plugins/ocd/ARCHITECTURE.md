@@ -64,10 +64,6 @@ Rules and conventions share a governance infrastructure implemented in `systems/
 
 **`governance_match`** takes file paths and returns applicable conventions. Rules are excluded by default (already in agent context); `include_rules=True` adds them for evaluation workflows.
 
-**`governance_order`** computes level-grouped dependency ordering from `governed_by` frontmatter using Tarjan's SCC algorithm. Produces foundation-first levels for evaluation traversal. Detects dangling references and cycles.
-
-**`governed_by`** frontmatter declares which governance entries a file builds on. Consumed at evaluation time by skills that walk the dependency chain — not consumed by runtime convention loading.
-
 ## Rules
 
 Plugin-wide rule templates in `systems/rules/templates/` deploy to `.claude/rules/ocd/` via `/ocd:setup init`. Users own the deployed copies — they can inspect, edit, or delete them.
@@ -122,7 +118,7 @@ Python packages consumed as imports. Each is a subsystem under `systems/`; subst
 | Library | Package | Purpose | Docs |
 |---------|---------|---------|------|
 | `rules` | `systems/rules/` | Rules subsystem — deploys markdown rule templates to `.claude/rules/<plugin>/` as always-on agent context. | [README](systems/rules/README.md) |
-| `conventions` | `systems/conventions/` | Conventions subsystem — deploys convention templates to `.claude/conventions/<plugin>/` for file-governance via `governed_by` frontmatter. | [README](systems/conventions/README.md) |
+| `conventions` | `systems/conventions/` | Conventions subsystem — deploys convention templates to `.claude/conventions/<plugin>/` for file-governance via `includes`/`excludes` frontmatter. | [README](systems/conventions/README.md) |
 | `logs` | `systems/log/` | Logs subsystem — deploys per-type templates to the shared `logs/<type>/` pool at project root (unnamespaced; contributes to project-level log types). | [README](systems/log/README.md) |
 | `permissions` | `systems/permissions/` | Permissions subsystem — reports auto-approve coverage; CLI verbs (`status`, `deploy`, `analyze`, `clean`) manage recommended patterns across project and user scopes. See Permissions Subsystem section below. | — |
 | `governance` | `systems/governance/` | Convention and rule governance library: match files to applicable governance entries, list entries by kind, and compute the dependency-ordered level grouping. Reads directly from disk on every call — no database, no caching. | [README](systems/governance/README.md) · [ARCHITECTURE.md](systems/governance/ARCHITECTURE.md) |

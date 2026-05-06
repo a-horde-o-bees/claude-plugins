@@ -17,7 +17,7 @@ import pytest
 from systems.governance import governance_match
 
 
-def _write_gov_file(path: Path, includes, excludes=None, governed_by=None):
+def _write_gov_file(path: Path, includes, excludes=None):
     """Create a governance file with frontmatter."""
     path.parent.mkdir(parents=True, exist_ok=True)
     if isinstance(includes, list):
@@ -32,10 +32,6 @@ def _write_gov_file(path: Path, includes, excludes=None, governed_by=None):
                 lines.append(f'  - "{exc}"')
         else:
             lines.append(f'excludes: "{excludes}"')
-    if governed_by:
-        lines.append("governed_by:")
-        for dep in governed_by:
-            lines.append(f"  - {dep}")
     lines += ["---", "", "# Convention content", ""]
     path.write_text("\n".join(lines))
 
@@ -61,22 +57,12 @@ def gov_env(tmp_path, monkeypatch):
     )
 
     # Conventions
-    _write_gov_file(
-        tmp_path / ".claude/conventions/ocd/python.md", "*.py",
-        governed_by=[".claude/rules/design-principles.md"],
-    )
+    _write_gov_file(tmp_path / ".claude/conventions/ocd/python.md", "*.py")
     _write_gov_file(
         tmp_path / ".claude/conventions/ocd/mcp-server.md", "systems/*/server.py",
-        governed_by=[".claude/rules/design-principles.md", ".claude/conventions/ocd/python.md"],
     )
-    _write_gov_file(
-        tmp_path / ".claude/conventions/ocd/skill-md.md", "SKILL.md",
-        governed_by=[".claude/rules/design-principles.md"],
-    )
-    _write_gov_file(
-        tmp_path / ".claude/conventions/ocd/markdown.md", "*.md",
-        governed_by=[".claude/rules/design-principles.md"],
-    )
+    _write_gov_file(tmp_path / ".claude/conventions/ocd/skill-md.md", "SKILL.md")
+    _write_gov_file(tmp_path / ".claude/conventions/ocd/markdown.md", "*.md")
 
 
 class TestSingleFileBaseline:

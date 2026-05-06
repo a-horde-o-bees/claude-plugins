@@ -1,10 +1,3 @@
----
-governed_by:
-  - .claude/conventions/ocd/audit-skill-md.md
-  - .claude/rules/ocd/markdown.md
-  - .claude/rules/ocd/design-principles.md
----
-
 # Audit Triage Criteria
 
 Classification standard for audit skills. The skill executor classifies reported findings against this file before deciding what to auto-apply versus what to surface to the user. Audit agents never read this file — separation is enforced by file compartmentalization; this file is referenced only in the skill executor's workflow, not in agent component files.

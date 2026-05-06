@@ -2,14 +2,10 @@
 
 from __future__ import annotations
 
-import tempfile
 from pathlib import Path
-
-import pytest
 
 from systems.navigator._references import (
     _parse_skill_refs,
-    _parse_governance_refs,
     _classify_and_parse,
     references_map,
 )
@@ -144,47 +140,6 @@ class TestParseSkillRefs:
 
 
 # =========================================================================
-# Governance parser
-# =========================================================================
-
-
-class TestParseGovernanceRefs:
-    def test_extracts_governed_by(self, tmp_path: Path) -> None:
-        """Governance governed_by: field is returned as references."""
-        gov_file = tmp_path / "rule.md"
-        gov_file.write_text(
-            "---\n"
-            "includes: \"*.md\"\n"
-            "governed_by:\n"
-            "  - .claude/rules/design.md\n"
-            "  - .claude/conventions/ocd/markdown.md\n"
-            "---\n\n"
-            "# Rule\n"
-        )
-        refs = _parse_governance_refs(str(gov_file))
-        assert refs == [".claude/rules/design.md", ".claude/conventions/ocd/markdown.md"]
-
-    def test_no_governed_by(self, tmp_path: Path) -> None:
-        """Governance without governed_by returns empty list."""
-        gov_file = tmp_path / "rule.md"
-        gov_file.write_text(
-            "---\n"
-            "includes: \"*\"\n"
-            "---\n\n"
-            "# Rule\n"
-        )
-        refs = _parse_governance_refs(str(gov_file))
-        assert refs == []
-
-    def test_no_frontmatter(self, tmp_path: Path) -> None:
-        """Non-governance file returns empty list."""
-        md_file = tmp_path / "plain.md"
-        md_file.write_text("# Just markdown\n")
-        refs = _parse_governance_refs(str(md_file))
-        assert refs == []
-
-
-# =========================================================================
 # Classifier
 # =========================================================================
 
@@ -209,22 +164,6 @@ class TestClassifyAndParse:
         )
         refs = _classify_and_parse(str(skill_md))
         assert len(refs) == 1
-
-    def test_governance_dispatches(self, tmp_path: Path) -> None:
-        """Files in .claude/rules/ dispatch to governance parser."""
-        rules_dir = tmp_path / ".claude" / "rules"
-        rules_dir.mkdir(parents=True)
-        rule = rules_dir / "test-rule.md"
-        rule.write_text(
-            "---\n"
-            "includes: \"*\"\n"
-            "governed_by:\n"
-            "  - .claude/rules/parent.md\n"
-            "---\n\n"
-            "# Rule\n"
-        )
-        refs = _classify_and_parse(str(rule))
-        assert refs == [".claude/rules/parent.md"]
 
     def test_unknown_file_type(self, tmp_path: Path) -> None:
         """Unrecognized file types return no references."""

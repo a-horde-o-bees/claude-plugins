@@ -62,14 +62,11 @@ Each convention has YAML frontmatter declaring which files it applies to:
 ```yaml
 ---
 includes: "*.py"
-governed_by:
-  - .claude/conventions/ocd/python.md
 ---
 ```
 
 - **`includes`** — file patterns this convention applies to
 - **`excludes`** — (optional) patterns to exclude from matching
-- **`governed_by`** — (optional) governance entries this convention builds on, defining evaluation ordering
 
 Rules govern agent behavior (always loaded, universal). Conventions govern file content (loaded on demand, pattern-matched). Both share the same frontmatter format and governance infrastructure.
 

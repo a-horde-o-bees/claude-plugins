@@ -1,16 +1,15 @@
 # Governance Library Architecture
 
-Match files to applicable conventions, list governance entries, and compute the dependency-ordered level grouping. This document covers the library's internals.
+Match files to applicable conventions and list governance entries. This document covers the library's internals.
 
 ## Purpose
 
-Consumers need answers to three questions:
+Consumers need answers to two questions:
 
 1. Which conventions apply to this file?
 2. What rules and conventions exist, and what do their frontmatter declarations say?
-3. In what order should governance be evaluated when one entry governs another?
 
-Answer (1) is the PreToolUse convention_gate's entire job. Answer (2) supports CLI listing and health checks. Answer (3) supports audit-style walks through the governance chain.
+Answer (1) is the PreToolUse convention_gate's entire job. Answer (2) supports CLI listing and health checks.
 
 All answers read directly from disk on every call. No database, no caching, no registration step. Governance files are the source of truth; their frontmatter and filesystem presence fully describe the state.
 
@@ -34,15 +33,15 @@ Facade (above)
 
 | Module | Responsibility |
 |--------|---------------|
-| `__init__.py` | Facade and core operations — public interface plus file-to-convention matching, entry listing, dependency-level grouping |
+| `__init__.py` | Facade — public interface re-exports from internal modules |
+| `_governance.py` | Core operations — file-to-convention matching, entry listing |
 | `_frontmatter.py` | Purpose-built YAML frontmatter parser for the governance field set (no PyYAML dependency) |
 | `__main__.py` | CLI — argument parsing and dispatch wrappers around the facade |
 
 ## Public Interface
 
 - **`governance_match(paths)`** — returns a mapping of each input path to the list of convention files whose `includes` pattern matches it, excluding any whose `excludes` pattern also matches. Rules are excluded from match results by default (already in agent context). `include_rules=True` adds them for evaluation walks.
-- **`list_rules()`** / **`list_conventions()`** — enumerate governance entries with their parsed frontmatter (`includes`, `excludes`, `governed_by`).
-- **`governance_order()`** — computes the level-grouped topological order of all governance entries based on `governed_by` declarations. Uses Tarjan's SCC algorithm, which detects cycles; dangling references (entries pointing at non-existent governors) are reported separately.
+- **`governance_list()`** — enumerates governance entries (rules and conventions) with their parsed frontmatter (`includes`, `excludes`).
 
 ## Frontmatter Schema
 
@@ -52,12 +51,10 @@ Each governance file opens with YAML frontmatter:
 ---
 includes: "pattern" | ["pattern", ...]
 excludes: "pattern" | ["pattern", ...]     # optional
-governed_by:                                 # optional
-  - .claude/rules/ocd/design-principles.md
 ---
 ```
 
-`includes` and `excludes` are glob patterns matched against file paths relative to the project root. `governed_by` names governance entries this one builds on, defining evaluation ordering for audit workflows (not runtime matching).
+`includes` and `excludes` are glob patterns matched against file paths relative to the project root.
 
 ## Design Decisions
 
@@ -69,4 +66,4 @@ governed_by:                                 # optional
 
 - **convention_gate hook** calls `governance_match` on every Read/Edit/Write tool call; output paths join `additionalContext` for the invoking tool.
 - **Navigator's `scope_analyze`** calls `governance_match` for each scanned file and attaches the match list to its scope entry.
-- **Governance CLI** exposes `match`, `list`, and `order` subcommands for operational queries.
+- **Governance CLI** exposes `for` and `list` subcommands for operational queries.

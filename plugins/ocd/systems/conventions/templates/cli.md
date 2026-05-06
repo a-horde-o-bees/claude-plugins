@@ -1,8 +1,5 @@
 ---
 includes: "**/systems/*/__main__.py"
-governed_by:
-  - .claude/rules/ocd/design-principles.md
-  - .claude/conventions/ocd/python.md
 ---
 
 # CLI Conventions

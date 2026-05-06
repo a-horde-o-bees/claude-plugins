@@ -1,7 +1,5 @@
 ---
 includes: "*.md"
-governed_by:
-  - .claude/rules/ocd/design-principles.md
 ---
 
 # Markdown

@@ -1,8 +1,5 @@
 ---
 includes: "**/systems/*/server.py"
-governed_by:
-  - .claude/rules/ocd/design-principles.md
-  - .claude/conventions/ocd/python.md
 ---
 
 # MCP Server Conventions
@@ -45,7 +42,7 @@ Multiple write verbs per concept are normal — different mutation semantics des
 
 When a concept's domain requires operations that don't reduce to query/upsert/set/update/clear/remove, use descriptive names that convey the operation's purpose. The `object_action` naming convention still applies — the operation name replaces a standard verb.
 
-Examples: `paths_undescribed` (deepest dir with undescribed children), `references_map` (build reference DAG from input paths), `scope_analyze` (composite of references + sizes + governance), `governance_order` (topological sort), `schema_describe` (live schema introspection). These are domain operations encoding business logic that doesn't fit standard CRUD.
+Examples: `paths_undescribed` (deepest dir with undescribed children), `references_map` (build reference DAG from input paths), `scope_analyze` (composite of references + sizes + governance), `schema_describe` (live schema introspection). These are domain operations encoding business logic that doesn't fit standard CRUD.
 
 A server may mix standard verbs with domain-specific operations. Standard verbs handle the individual-record lifecycle; domain operations handle composites and cross-cutting queries.
 

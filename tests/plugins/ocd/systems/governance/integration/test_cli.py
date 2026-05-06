@@ -1,12 +1,11 @@
 """Integration tests for the governance CLI verb dispatch.
 
-Exercises `ocd-run governance list|for|order` argparse + output shape
-through the real bin wrapper. The underlying facade (governance_list,
-governance_match, governance_order) is covered by test_governance.py
-and test_frontmatter.py; this suite locks the user-facing CLI surface.
+Exercises `ocd-run governance list|for` argparse + output shape through
+the real bin wrapper. The underlying facade (governance_list,
+governance_match) is covered by test_governance.py and
+test_frontmatter.py; this suite locks the user-facing CLI surface.
 """
 
-import json
 import subprocess
 from pathlib import Path
 
@@ -60,19 +59,6 @@ class TestForVerb:
         """nargs='+' rejects zero files."""
         result = _run(ocd_run, "for")
         assert result.returncode != 0
-
-
-class TestOrderVerb:
-    def test_emits_levels(self, ocd_run: Path):
-        result = _run(ocd_run, "order")
-        assert result.returncode == 0, result.stderr
-        assert "Level 0:" in result.stdout
-
-    def test_json_output_parses(self, ocd_run: Path):
-        result = _run(ocd_run, "order", "--json")
-        assert result.returncode == 0, result.stderr
-        payload = json.loads(result.stdout)
-        assert set(payload.keys()) == {"levels", "dangling"}
 
 
 class TestDispatchBoundary:

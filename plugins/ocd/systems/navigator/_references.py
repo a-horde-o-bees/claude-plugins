@@ -6,7 +6,6 @@ references recursively, deduplicating and detecting cycles.
 
 Parsers:
   - SKILL.md: backtick-wrapped relative paths in workflow steps
-  - Governance (.claude/rules/, .claude/conventions/): depends: frontmatter
   - Component _*.md: leaf nodes (no outward references)
 """
 
@@ -17,8 +16,6 @@ from collections import deque
 from pathlib import Path
 
 from tools import environment
-
-from systems.governance import parse_governance
 
 
 # --- Parsers ---
@@ -85,18 +82,6 @@ def _parse_skill_refs(file_path: str) -> list[str]:
     return refs
 
 
-def _parse_governance_refs(file_path: str) -> list[str]:
-    """Extract governed_by: references from governance frontmatter.
-
-    Returns project-relative paths from the governed_by field. These are
-    already project-relative in the frontmatter.
-    """
-    parsed = parse_governance(Path(file_path))
-    if parsed is None:
-        return []
-    return parsed.get("governed_by", [])
-
-
 def _classify_and_parse(file_path: str) -> list[str]:
     """Dispatch to the appropriate parser based on file type.
 
@@ -111,10 +96,6 @@ def _classify_and_parse(file_path: str) -> list[str]:
     # SKILL.md files
     if p.name == "SKILL.md":
         return _parse_skill_refs(file_path)
-
-    # Governance files (rules and conventions)
-    if ".claude/rules/" in file_path or ".claude/conventions/" in file_path:
-        return _parse_governance_refs(file_path)
 
     return []
 

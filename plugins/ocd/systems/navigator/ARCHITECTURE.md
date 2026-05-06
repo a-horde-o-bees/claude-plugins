@@ -37,7 +37,7 @@ Facade (above)
 | `__main__.py` | CLI entry point (scan, describe, list, search, set, remove, resolve-skill, list-skills, get-undescribed, init) |
 | `_db.py` | Schema, migrations, connection factory, seed-rule loading from `navigator_seed.csv` |
 | `_scanner.py` | Filesystem walking with rule-based pruning, git-hash change detection, stale-cascade to parent directories |
-| `_references.py` | File reference mapping — builds a dependency DAG from parseable file references (SKILL.md component calls, governance `governed_by`, etc.) |
+| `_references.py` | File reference mapping — builds a dependency DAG from parseable file references (SKILL.md component calls, etc.) |
 | `_skills.py` | Resolves skill names to SKILL.md paths across discovery locations. Accepts bare, slash-prefixed, plugin-qualified, or fully-qualified forms |
 | `_init.py` | Initialize database and report status; called by plugin orchestration during `/ocd:setup init` and `/ocd:setup status` |
 

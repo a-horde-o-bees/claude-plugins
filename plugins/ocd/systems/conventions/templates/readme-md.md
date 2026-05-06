@@ -1,9 +1,5 @@
 ---
 includes: "README.md"
-governed_by:
-  - .claude/rules/ocd/design-principles.md
-  - .claude/rules/ocd/system-docs.md
-  - .claude/rules/ocd/markdown.md
 ---
 
 # README.md Conventions

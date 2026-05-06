@@ -69,7 +69,6 @@ Work that improves the machinery agents operate through.
 
 Work that shapes how rules, conventions, and cross-plugin interactions evolve.
 
-- **Locked-down status hard to track across governance chain** — each rule/convention/skill has a "locked-down" state (systematically walked against governors and verified coherent); today that status is scattered. Needs a tracking mechanism. [idea log](logs/idea/Locked-down%20status%20hard%20to%20track%20across%20governance%20chain.md)
 - **PFN recursion awareness on Spawn and Call** — current PFN doesn't make recursion semantics explicit. [idea log](logs/idea/PFN%20recursion%20awareness%20on%20Spawn%20and%20Call.md)
 - **PFN self-description audit** — verify PFN prescribes chains of events unambiguously (e.g. prior issues with `isolation: "worktree"` and `When:` constructs that relied on runtime resolution). [idea log](logs/idea/PFN%20self-description%20audit.md)
 - **Purpose-first framing for pattern research** — methodology discipline for authoring pattern docs: purpose-organized from the start rather than feature-organized and refactored later. [idea log](logs/idea/Purpose-first%20framing%20for%20pattern%20research.md)

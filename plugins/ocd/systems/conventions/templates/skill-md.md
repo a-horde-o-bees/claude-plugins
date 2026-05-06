@@ -1,9 +1,5 @@
 ---
 includes: "SKILL.md"
-governed_by:
-  - .claude/rules/ocd/design-principles.md
-  - .claude/rules/ocd/process-flow-notation.md
-  - .claude/rules/ocd/markdown.md
 ---
 
 # SKILL.md Conventions

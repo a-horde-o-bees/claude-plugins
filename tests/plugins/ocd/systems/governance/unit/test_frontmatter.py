@@ -75,8 +75,6 @@ class TestBlockStylePattern:
             '  - "test_*.*"\n'
             '  - "*_test.*"\n'
             '  - "conftest.*"\n'
-            "governed_by:\n"
-            "  - .claude/rules/design.md\n"
             "---\n\n"
             "# Testing\n"
         )
@@ -84,7 +82,6 @@ class TestBlockStylePattern:
         assert result is not None
         patterns = normalize_patterns(result["includes"])
         assert patterns == ["test_*.*", "*_test.*", "conftest.*"]
-        assert result["governed_by"] == [".claude/rules/design.md"]
 
     def test_flow_style_includes(self, tmp_path):
         """Flow-style YAML list for includes works."""

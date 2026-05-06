@@ -1,6 +1,6 @@
 # governance
 
-Convention and rule governance library: match files to applicable governance entries, list entries by kind, and compute the dependency-ordered level grouping. Reads directly from disk on every call — no database, no caching.
+Convention and rule governance library: match files to applicable governance entries and list entries by kind. Reads directly from disk on every call — no database, no caching.
 
 ## Setup
 
@@ -20,8 +20,7 @@ No installation step beyond `/ocd:setup init` in the consuming project.
 import systems.governance
 
 matches = systems.governance.governance_match(["plugins/ocd/skills/status/SKILL.md"])
-rules = systems.governance.list_rules()
-order = systems.governance.governance_order()
+entries = systems.governance.governance_list()
 ```
 
 Functions return structured data (dicts, lists). Formatting for display is the caller's responsibility.
@@ -29,16 +28,15 @@ Functions return structured data (dicts, lists). Formatting for display is the c
 ### As a CLI
 
 ```
-ocd-run governance match <path> [<path> ...]
-ocd-run governance list [--kind rules|conventions]
-ocd-run governance order [--json]
+ocd-run governance for <path> [<path> ...]
+ocd-run governance list
 ```
 
-`match` returns applicable conventions for the given paths. `list` enumerates rules and/or conventions with their include/exclude/governed_by fields. `order` computes dependency-level grouping from `governed_by` declarations using Tarjan's SCC algorithm.
+`for` returns applicable conventions for the given paths. `list` enumerates rules and conventions with their include/exclude fields.
 
 ## Dependencies
 
-Standard-library only — no PyYAML or other third-party packages. Governance frontmatter is parsed by a purpose-built mini-parser that reads the specific structure used by rules and conventions (`includes:`, `excludes:`, `governed_by:`).
+Standard-library only — no PyYAML or other third-party packages. Governance frontmatter is parsed by a purpose-built mini-parser that reads the specific structure used by rules and conventions (`includes:`, `excludes:`).
 
 ## License
 
