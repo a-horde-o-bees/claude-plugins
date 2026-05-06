@@ -1,10 +1,14 @@
 ---
-includes: "*"
+includes:
+  - "**/CLAUDE.md"
+  - "**/SKILL.md"
+  - "**/ARCHITECTURE.md"
+  - "**/README.md"
 ---
 
 # System Structure
 
-Documentation and folder structure for systems. Inherits the three-document model (`CLAUDE.md`, `README.md`, `ARCHITECTURE.md`) and adds subdirectories for procedural and reference content, plus forward-looking plans and persistent task tracking. Applied at every system boundary where content has grown past what a single doc can hold cleanly.
+Universal documentation and folder layout for any system. Establishes the three-document model and operational subdirectories that apply at every system boundary. Project-root extensions (workstream tracking, log curation, project-only entry-point files) live in the `project-structure` convention.
 
 ## System boundaries
 
@@ -35,28 +39,6 @@ Each file inside opens with an L1 heading and purpose statement (per markdown co
 
 The split exists because the access patterns differ: a procedure is consumed top-to-bottom, in order; reference content is queried for a specific fact and applied. Mixing them in one file forces every consumer to scan past content they don't need.
 
-## Forward-looking work tracking
-
-When a system has substantial in-flight or planned work:
-
-- `plans/` — strategy docs for active or upcoming workstreams. Each file describes goal, output, sequence of work, locked decisions, and open questions for one workstream. Persists across sessions; rewritten as the workstream evolves.
-- `TASKS.md` — persistent task tracker at the system root. Each entry links to a `plans/` file when context is non-trivial, or to a decision document when the task is awaiting input. Sections by status: in-progress, pending, upcoming, done.
-
-`TASKS.md` is distinct from session-scoped tracking (e.g. TaskCreate). Those manage the current session's checklist; `TASKS.md` persists across sessions and survives context clears.
-
-## CLAUDE.md as navigation hub
-
-`CLAUDE.md` is loaded by every agent on every spawn; its consumer profile is universal. Content there is paid by every consumer regardless of task, so only content every consumer needs — orientation, pointers, project-wide rules — belongs there. Topic-specific content has narrower consumers and lives where those consumers will reach for it.
-
-Once `workflows/`, `components/`, or `plans/` exist, `CLAUDE.md` collapses to an index — purpose statements, one line each, pointing at where detail lives. The index follows a fixed structure:
-
-1. L1 heading and purpose statement
-2. `workflows/` — list with one-line purpose per file
-3. `components/` — list with one-line purpose per file
-4. `plans/` — list with one-line purpose per file (when any exist)
-5. Other top-level docs — `TASKS.md`, decision records, semantic specs, etc.
-6. Cold-pickup reading order — the sequence an agent should follow when starting from a cleared context
-
 ## Extraction criteria
 
 Extraction is driven by consumer fit, not document size. Move content into a separate file when:
@@ -78,32 +60,29 @@ Each document serves one consumer perspective and one content type. When an oper
 | Architectural reasoning | `ARCHITECTURE.md` |
 | Operational procedures | `workflows/<topic>.md` (or inline in `CLAUDE.md` for small systems) |
 | Operational reference | `components/<topic>.md` (or inline in `CLAUDE.md` for small systems) |
-| Forward-looking strategy | `plans/<workstream>.md` |
-| Active work tracking | `TASKS.md` |
-| Decisions, friction, ideas, problems, patterns, research | `logs/<type>/` per the `log.md` rule |
 
 - `README.md` excludes technical internals — those belong in `ARCHITECTURE.md`
 - `ARCHITECTURE.md` excludes user-facing content — that belongs in `README.md`
 - `CLAUDE.md` / `SKILL.md` excludes architectural descriptions — references `ARCHITECTURE.md` and contains either navigation (when subdirs exist) or operational content (for small systems)
 - When a procedure requires architectural context to be actionable, the operational document directs the reader to `ARCHITECTURE.md` rather than embedding the context inline
 
+Project-root content extensions (forward-looking strategy, active work tracking, logs) live in the `project-structure` convention.
+
 ## Filename case
 
 All-caps filenames signal entry points at a system boundary — docs a reader should find without knowing the system's internals. Lowercase filenames signal content within a structure — navigable only once you're inside the system.
 
-**All-caps — entry points:**
+**All-caps — entry points at every system boundary:**
 
-- Three-document-model docs at every system boundary: `README.md`, `ARCHITECTURE.md`, `CLAUDE.md`, `SKILL.md`
-- Persistent task tracker: `TASKS.md`
-- Project-root community-health and planning conventions: `LICENSE`, `CHANGELOG.md`, `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, `ROADMAP.md`, `MARKETPLACE-STANDARDS.md`
+- Three-document-model docs: `README.md`, `ARCHITECTURE.md`, `CLAUDE.md`, `SKILL.md`
+
+Project-root-only entry points (`TASKS.md`, `LICENSE`, `CHANGELOG.md`, etc.) are listed in the `project-structure` convention.
 
 **Lowercase — content within a structure:**
 
 - Workflow procedures (`workflows/<topic>.md`)
 - Component references (`components/<topic>.md`)
-- Plan documents (`plans/<workstream>.md`)
 - Convention, rule, and pattern templates (`design-principles.md`, `architecture-md.md`, `claude-marketplace.md`) — content *of* the governance system
-- Log entries under `logs/<type>/` — content *of* the logs system
 - Component files extracted from a skill's workflow (`_pack.md`, `_open.md`)
 - Working state files (`state.md`) and audit artifacts that aren't entry points
 - Python files (`.py`) and other code — standard language conventions apply
