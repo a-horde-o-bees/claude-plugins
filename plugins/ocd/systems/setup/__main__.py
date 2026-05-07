@@ -38,9 +38,13 @@ META_VERBS = ("list", "status")
 
 
 def _format_section(heading: str, result: dict) -> None:
-    from ._formatting import format_section
-    for line in format_section(heading, result.get("files", []), result.get("extra")):
-        print(line)
+    from ._formatting import format_section, format_status
+    if "rows" in result and "columns" in result:
+        for line in format_status(heading, result["rows"], result["columns"], result.get("extra")):
+            print(line)
+    else:
+        for line in format_section(heading, result.get("files", []), result.get("extra")):
+            print(line)
 
 
 def _format_catalog(heading: str, items: list[dict]) -> list[str]:

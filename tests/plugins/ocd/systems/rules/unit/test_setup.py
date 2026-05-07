@@ -43,19 +43,25 @@ class TestListItems:
 class TestStatus:
     def test_default_reports_both_scopes(self, scopes):
         result = rules_setup.status()
-        paths = [f["path"] for f in result["files"]]
-        assert any(p.startswith("~/.claude/rules/ocd/") for p in paths)
-        assert any(p.startswith(".claude/rules/ocd/") and not p.startswith("~/") for p in paths)
+        assert result["columns"] == ["user", "project"]
+        assert result["rows"]
+        for row in result["rows"]:
+            assert "user" in row
+            assert "project" in row
 
     def test_scope_filter_user(self, scopes):
         result = rules_setup.status(scope="user")
-        paths = [f["path"] for f in result["files"]]
-        assert all(p.startswith("~/.claude/rules/ocd/") for p in paths)
+        assert result["columns"] == ["user"]
+        for row in result["rows"]:
+            assert "user" in row
+            assert "project" not in row
 
     def test_scope_filter_project(self, scopes):
         result = rules_setup.status(scope="project")
-        paths = [f["path"] for f in result["files"]]
-        assert all(p.startswith(".claude/rules/ocd/") for p in paths)
+        assert result["columns"] == ["project"]
+        for row in result["rows"]:
+            assert "project" in row
+            assert "user" not in row
 
     def test_unsupported_scope_returns_error(self, scopes):
         result = rules_setup.status(scope="planet")
@@ -63,7 +69,13 @@ class TestStatus:
 
     def test_reports_absent_before_install(self, scopes):
         result = rules_setup.status(scope="project")
-        assert all(f["before"] == "absent" for f in result["files"])
+        assert all(row["project"] == "absent" for row in result["rows"])
+
+    def test_one_row_per_rule_template(self, scopes):
+        """Wide format: each rule template appears once, regardless of scope count."""
+        result = rules_setup.status()
+        names = [row["name"] for row in result["rows"]]
+        assert len(names) == len(set(names)), "duplicate rule names in rows"
 
 
 class TestInstall:
@@ -178,8 +190,8 @@ class TestScopeIsolation:
     def test_install_at_one_scope_does_not_affect_other(self, scopes):
         rules_setup.install(scope="user", targets=["honesty"])
         project_status = rules_setup.status(scope="project")
-        honesty_at_project = next(
-            f for f in project_status["files"]
-            if f["path"].endswith("honesty.md")
+        honesty_row = next(
+            row for row in project_status["rows"]
+            if row["name"] == "honesty"
         )
-        assert honesty_at_project["before"] == "absent"
+        assert honesty_row["project"] == "absent"

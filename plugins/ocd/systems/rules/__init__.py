@@ -115,36 +115,34 @@ def status(scope: str | None = None) -> dict:
     """Report install state per template across requested scopes.
 
     scope=None reports both user and project scopes; scope='user' or
-    'project' narrows to one. Each rule template appears as a file
-    entry per scope it was queried against.
+    'project' narrows to one. Returns a per-rule table with one column
+    per requested scope so a reader sees each rule's state across
+    scopes on a single row.
     """
-    scopes = (scope,) if scope else SUPPORTED_SCOPES
     if scope and scope not in SUPPORTED_SCOPES:
         return {
-            "files": [],
+            "rows": [],
+            "columns": [],
             "extra": [{"label": "error", "value": f"unsupported scope: {scope}"}],
         }
 
+    scopes = (scope,) if scope else SUPPORTED_SCOPES
+
     src_dir = _templates_dir()
-    files: list[dict] = []
     if not src_dir.is_dir():
-        return {"files": files, "extra": []}
+        return {"rows": [], "columns": list(scopes), "extra": []}
 
-    for s in scopes:
-        rel = _deployed_rel(s)
-        target = _target_dir(s)
-        for src in sorted(src_dir.glob("*.md")):
-            if not src.is_file():
-                continue
-            dst = target / src.name
-            state = setup.compare_deployed(src, dst)
-            files.append({
-                "path": f"{rel}/{src.name}",
-                "before": state,
-                "after": state,
-            })
+    rows: list[dict] = []
+    for src in sorted(src_dir.glob("*.md")):
+        if not src.is_file():
+            continue
+        row: dict = {"name": src.stem}
+        for s in scopes:
+            dst = _target_dir(s) / src.name
+            row[s] = setup.compare_deployed(src, dst)
+        rows.append(row)
 
-    return {"files": files, "extra": []}
+    return {"rows": rows, "columns": list(scopes), "extra": []}
 
 
 def install(scope: str, targets: list[str] | None = None, force: bool = False) -> dict:

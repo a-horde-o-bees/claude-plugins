@@ -34,7 +34,9 @@ def install(scope: str, targets: list[str] | None = None, force: bool = False) -
 def uninstall(scope: str, targets: list[str] | None = None) -> dict: ...
 ```
 
-- **`status(scope=None)`** — reports state per artifact at the requested scope. `None` reports across every supported scope. Returns `{"files": [...], "extra": [...]}`.
+- **`status(scope=None)`** — reports state per artifact at the requested scope. `None` reports across every supported scope. Returns either of two shapes:
+    - **Wide table** — `{"rows": [{"name", **{column: state}}, ...], "columns": [scope, ...], "extra": [...]}`. One row per artifact with one column per scope queried; the setup CLI renders a per-scope table. Use this when the same artifact has independent state per scope (e.g., rule templates deployable at user OR project independently).
+    - **Flat list** — `{"files": [{"path", "before", "after"}, ...], "extra": [...]}`. One row per file; the setup CLI renders a path → state list. Use this for systems whose artifacts are inherently single-scope or whose summary belongs entirely in `extra`.
 - **`list_items()`** — catalog of available items with one-paragraph purpose per item. Returns `{"items": [{"name", "purpose"}, ...], "extra": [...]}`.
 - **`install(scope, targets, force)`** — deploys at the chosen scope. `targets=None` deploys all; otherwise each entry is a target name. `force=True` overwrites divergent deployed copies.
 - **`uninstall(scope, targets)`** — removes deployed artifacts. `targets=None` removes all; otherwise each entry is a target name.

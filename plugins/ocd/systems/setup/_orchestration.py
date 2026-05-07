@@ -24,7 +24,7 @@ import importlib
 from pathlib import Path
 
 from tools.environment import get_git_root_for, get_plugin_root, get_project_dir
-from ._formatting import format_columns, format_section
+from ._formatting import format_columns, format_section, format_status
 from ._metadata import get_plugin_name
 from ._system_discovery import _discover_systems
 
@@ -88,8 +88,17 @@ def run_statuses() -> None:
         except Exception as exc:  # noqa: BLE001
             result = {"files": [], "extra": [{"label": "error", "value": str(exc)}]}
 
-        for line in format_section(system_name.capitalize(), result.get("files", []), result.get("extra")):
-            print(line)
+        if "rows" in result and "columns" in result:
+            for line in format_status(
+                system_name.capitalize(),
+                result["rows"],
+                result["columns"],
+                result.get("extra"),
+            ):
+                print(line)
+        else:
+            for line in format_section(system_name.capitalize(), result.get("files", []), result.get("extra")):
+                print(line)
         print()
 
 
