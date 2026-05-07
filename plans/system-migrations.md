@@ -4,24 +4,24 @@ Migrate each ocd plugin system to the system-structure layout established by the
 
 ## Goal
 
-Every system in `plugins/ocd/systems/` conforms to `plugin-system.md` (top-level `__init__.py` with the four facade functions, `workflows/install.md`, `workflows/uninstall.md`) and `system-structure.md` (three-doc set when substantive, navigation-hub `CLAUDE.md`/`SKILL.md` when subdirs exist). Setup orchestration discovers every system uniformly; un-migrated systems remain invisible until they migrate.
+Every system in `plugins/ocd/systems/` conforms to `plugin-system.md` (top-level `__init__.py` with at minimum `purpose()`, plus either standard verbs (`status` / `list_items` / `install` / `uninstall`) or a `dispatch(verb, args)` entry point for systems with their own verb shape) and `system-structure.md` (three-doc set when substantive, navigation-hub `CLAUDE.md`/`SKILL.md` when subdirs exist). Setup orchestration discovers every system uniformly; un-migrated systems remain invisible until they migrate.
 
 ## Output
 
 Each system migration lands as a commit containing:
 
-- `<system>/__init__.py` exposing `purpose`, `status`, `install`, `uninstall` (or `SKILL.md` for skill-only systems that don't appear in `/ocd:setup`)
-- `<system>/workflows/install.md` and `<system>/workflows/uninstall.md` for setup-managed systems
+- `<system>/__init__.py` exposing at minimum `purpose()`, plus the verb shape that fits the system — standard handlers, custom `dispatch()`, or both. (Skill-only systems that don't appear in `/ocd:setup` use `SKILL.md` instead of the facade.)
+- `<system>/workflows/install.md` and `<system>/workflows/uninstall.md` for setup-managed systems with the standard install/uninstall verbs
 - `<system>/README.md`, `<system>/ARCHITECTURE.md`, `<system>/CLAUDE.md` (or `SKILL.md`) when substantive
-- Tests for the new facade and per-scope install paths
+- Tests for the facade functions and per-scope install paths
 - Updated doc references in plugin-level `ARCHITECTURE.md`, `README.md`
 
 ## Sequence
 
 Order by independence and risk. Smallest/cleanest first to firm the template; larger systems last.
 
-1. ~~rules — exemplar~~ (done in prior commit)
-2. permissions — small migration; already partly scope-aware via `--scope` flag
+1. ~~rules — exemplar~~ (done)
+2. ~~permissions — promoted to regular system with custom `dispatch()` for status / deploy / analyze / clean verbs~~ (done as part of setup CLI hardening; first system to exercise the dispatch model)
 3. refactor — small; ships one rule template, no DB
 4. log — moderate; deploys log-type templates to project root `logs/`, project-only scope
 5. conventions — moderate; merged-from-governance system; ships templates + matching CLI; both scopes

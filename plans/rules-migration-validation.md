@@ -48,4 +48,8 @@ Additional spot checks:
 
 ## Status
 
-Pending — runs immediately after the next `/checkpoint` lands the project-root reorganization on main.
+Done — validated against cached plugin install (most recent: 0.2.22) across multiple checkpoint+restart cycles. Every step in the sequence and every spot check passed. Both standard-shape system (rules) and custom-verb system (permissions) dispatch cleanly through the setup CLI; wide-table status displays per-scope state without row doubling; permissions confirmed visible as a regular migrated system after the promotion.
+
+The setup CLI surface evolved during validation as gaps surfaced: `list` verb added (per-rule purpose discovery), multi-target install/uninstall, meta verbs renamed for uniformity (`purposes` → `list`, `statuses` → `status`), generic verb dispatch via `dispatch(verb, args)` so systems can declare their own verb shape, permissions promoted from special-case to a regular system. None of those were premised in the original validation plan — the plan caught them by exercising the surface end-to-end.
+
+Follow-up — the AskUserQuestion check (open question 2 above) was not exercised by the CLI sweep; it only fires when the agent invokes `/ocd:setup rules install` with no args via the slash command and follows `workflows/install.md`'s "ask the user" steps. Captured as a small follow-up; does not block `system-migrations.md` from proceeding.
