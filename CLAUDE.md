@@ -34,6 +34,7 @@ Filesystem layout — every path at the root that an agent might need to read or
 | `components/testing.md` | `bin/project-run tests` flag surface and layout |
 | `components/project-tooling.md` | `bin/project-run` commands and `tools/` layout |
 | `components/architectural-boundaries.md` | What the plugin layer can control vs what's harness-determined |
+| `components/hook-registered-files.md` | Plugin-dev concern — order of edits when renaming a file registered as a hook command |
 | `workflows/` | Top-down procedures (currently empty at project root — operational procedures live in skills under each plugin) |
 | `plans/` | Active and upcoming workstreams; access via `TASKS.md` links |
 | `plugins/` | Plugin systems; each subdirectory carries its own `CLAUDE.md` |

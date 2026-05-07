@@ -1,5 +1,4 @@
 ---
-includes: "*"
 tagline: Test discipline — authoring, driving changes through tests, maintenance, when to test
 ---
 

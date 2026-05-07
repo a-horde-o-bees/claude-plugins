@@ -1,5 +1,4 @@
 ---
-includes: "*"
 tagline: Enforce correctness through structure, not documentation
 ---
 

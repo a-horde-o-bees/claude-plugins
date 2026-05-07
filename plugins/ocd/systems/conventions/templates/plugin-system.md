@@ -1,8 +1,5 @@
 ---
-includes:
-  - "**/systems/*/__init__.py"
-  - "**/systems/*/workflows/install.md"
-  - "**/systems/*/workflows/uninstall.md"
+tagline: Plugin-system facade and verb-dispatch convention for ocd setup-managed systems
 ---
 
 # Plugin System Setup Conventions

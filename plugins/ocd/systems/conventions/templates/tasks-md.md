@@ -1,5 +1,5 @@
 ---
-includes: "**/TASKS.md"
+tagline: Content standards for TASKS.md — persistent task tracker at a system's root
 ---
 
 # TASKS.md Conventions

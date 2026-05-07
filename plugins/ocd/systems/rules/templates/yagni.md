@@ -1,5 +1,4 @@
 ---
-includes: "*"
 tagline: Solve the problem in front of you, not hypothetical future requirements
 ---
 

@@ -1,8 +1,5 @@
 ---
-includes:
-  - "TASKS.md"
-  - "plans/*.md"
-  - "logs/**/*.md"
+tagline: Project-root layout extensions — workstreams, logs, entry points
 ---
 
 # Project Root Structure

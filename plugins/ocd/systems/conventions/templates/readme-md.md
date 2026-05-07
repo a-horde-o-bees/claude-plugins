@@ -1,5 +1,5 @@
 ---
-includes: "README.md"
+tagline: Content standards for README.md — user-facing install/use documentation
 ---
 
 # README.md Conventions

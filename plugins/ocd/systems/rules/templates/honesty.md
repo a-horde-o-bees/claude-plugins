@@ -1,5 +1,4 @@
 ---
-includes: "*"
 tagline: Tether action and output to verified evidence; bound claims to the sample examined
 ---
 

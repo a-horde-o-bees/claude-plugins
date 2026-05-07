@@ -1,5 +1,5 @@
 ---
-includes: "**/plans/*.md"
+tagline: Content standards for plans/ — strategy docs for active or upcoming workstreams
 ---
 
 # plans/ Conventions

@@ -1,5 +1,5 @@
 ---
-includes: "CLAUDE.md"
+tagline: Content standards for CLAUDE.md — agent-facing operational reference
 ---
 
 # CLAUDE.md Conventions

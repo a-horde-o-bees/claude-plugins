@@ -1,5 +1,4 @@
 ---
-includes: "*"
 tagline: Structure communicates intent — names and patterns encode meaning without docs
 ---
 

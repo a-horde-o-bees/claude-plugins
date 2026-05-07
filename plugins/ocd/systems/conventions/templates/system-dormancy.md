@@ -1,10 +1,5 @@
 ---
-includes:
-  - "**/systems/*/__init__.py"
-  - "**/systems/*/server.py"
-  - "**/systems/*/SKILL.md"
-  - "**/hooks/**/*.py"
-  - "**/hooks/**/*.sh"
+tagline: Dormancy contract — systems are invisible and silent until installed
 ---
 
 # System Dormancy

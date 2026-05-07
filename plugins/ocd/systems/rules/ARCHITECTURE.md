@@ -6,7 +6,7 @@ Always-on agent guidance — rule templates that auto-load into every Claude Cod
 
 Rules answer one question: what guidance should every agent see in every session?
 
-Each rule template is a self-contained markdown file with `includes: "*"` frontmatter. Claude Code auto-loads any markdown file under `.claude/rules/` (and `~/.claude/rules/`) at session start, so deploying a template at a scope is the entire installation mechanism.
+Each rule template is a self-contained markdown file with a `tagline:` frontmatter line for catalog display. Claude Code auto-loads any markdown file under `.claude/rules/` (and `~/.claude/rules/`) at session start, so deploying a template at a scope is the entire installation mechanism.
 
 ## Layers
 

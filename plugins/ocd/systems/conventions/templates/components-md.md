@@ -1,5 +1,5 @@
 ---
-includes: "**/components/*.md"
+tagline: Content standards for components/ — reference blocks, one per topic
 ---
 
 # components/ Conventions

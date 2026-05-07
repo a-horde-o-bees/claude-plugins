@@ -1,5 +1,5 @@
 ---
-includes: "**/systems/*/__main__.py"
+tagline: Argparse subparser structure and naming for system __main__.py CLIs
 ---
 
 # CLI Conventions

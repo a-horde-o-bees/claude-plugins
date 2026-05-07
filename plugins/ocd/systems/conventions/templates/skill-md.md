@@ -1,5 +1,5 @@
 ---
-includes: "SKILL.md"
+tagline: Content standards for SKILL.md — slash-command frontmatter and body
 ---
 
 # SKILL.md Conventions

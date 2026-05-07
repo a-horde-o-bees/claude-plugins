@@ -1,5 +1,5 @@
 ---
-includes: "**/workflows/*.md"
+tagline: Content standards for workflows/ — multi-step procedures consumed top-to-bottom
 ---
 
 # workflows/ Conventions

@@ -1,10 +1,5 @@
 ---
-includes:
-  - ".claude/rules/*.md"
-  - ".claude/conventions/*.md"
-excludes:
-  - "ARCHITECTURE.md"
-  - "README.md"
+tagline: Frontmatter, body, and structure standards for rules and conventions
 ---
 
 # Governance File Conventions

@@ -1,5 +1,4 @@
 ---
-includes: "*.md"
 tagline: Base content standards for markdown — heading, blank lines, paragraph wrapping
 ---
 

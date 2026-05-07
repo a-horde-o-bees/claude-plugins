@@ -1,5 +1,4 @@
 ---
-includes: "*"
 tagline: Continue with reduced state when dependencies are absent; report what's missing
 ---
 

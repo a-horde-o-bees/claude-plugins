@@ -1,5 +1,4 @@
 ---
-includes: "*"
 tagline: Push back when user directives conflict with design principles
 ---
 

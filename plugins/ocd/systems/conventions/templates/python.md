@@ -1,5 +1,5 @@
 ---
-includes: "*.py"
+tagline: Python code style, module structure, import patterns for project Python files
 ---
 
 # Python Conventions

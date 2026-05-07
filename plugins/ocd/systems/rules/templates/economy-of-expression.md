@@ -1,5 +1,4 @@
 ---
-includes: "*"
 tagline: Completeness without verbosity — every word must earn its place
 ---
 

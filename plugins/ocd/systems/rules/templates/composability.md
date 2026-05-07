@@ -1,5 +1,4 @@
 ---
-includes: "*"
 tagline: Build small pieces that combine; avoid monolithic components that block change
 ---
 

@@ -1,5 +1,5 @@
 ---
-includes: "**/systems/*/server.py"
+tagline: Tool design, server architecture, and data conventions for FastMCP servers
 ---
 
 # MCP Server Conventions

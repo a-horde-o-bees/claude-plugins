@@ -1,5 +1,4 @@
 ---
-includes: "*"
 tagline: Design tools and output for agent consumption — context inline, errors corrective
 ---
 

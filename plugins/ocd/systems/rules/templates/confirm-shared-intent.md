@@ -1,5 +1,4 @@
 ---
-includes: "*"
 tagline: Align with the user on intent and approach before committing to action
 ---
 

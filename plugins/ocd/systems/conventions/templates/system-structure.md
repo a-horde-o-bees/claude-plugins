@@ -1,9 +1,5 @@
 ---
-includes:
-  - "**/CLAUDE.md"
-  - "**/SKILL.md"
-  - "**/ARCHITECTURE.md"
-  - "**/README.md"
+tagline: Universal three-document model and folder layout for any system boundary
 ---
 
 # System Structure

@@ -1,5 +1,5 @@
 ---
-includes: "*/audit-*/SKILL.md"
+tagline: SKILL.md conventions specific to audit-* skills
 ---
 
 # Audit Skill Conventions

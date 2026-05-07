@@ -1,5 +1,5 @@
 ---
-includes: "ARCHITECTURE.md"
+tagline: Content standards for ARCHITECTURE.md — system internals reference
 ---
 
 # ARCHITECTURE.md Conventions

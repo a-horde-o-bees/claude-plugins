@@ -1,5 +1,4 @@
 ---
-includes: "*"
 tagline: Surface tools where the agent reaches for them, not where they have to hunt
 ---
 
