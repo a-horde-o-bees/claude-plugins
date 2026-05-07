@@ -16,8 +16,8 @@ The rules system, on the new layout (`__init__.py` facade + `workflows/install.m
 
 Each step lands as a prompt the user issues in a fresh restarted session.
 
-1. `/ocd:setup` — usage banner shows meta verbs (`purposes`, `statuses`, `permissions`) and `rules` in the migrated-systems list
-2. `/ocd:setup purposes` — lettered list with `A. rules — <purpose statement>`; no other systems shown (un-migrated systems invisible)
+1. `/ocd:setup` — usage banner shows meta verbs (`list`, `status`) and the migrated systems list including `rules` and `permissions`
+2. `/ocd:setup list` — lettered list with `A. permissions — ...`, `B. rules — ...`; only migrated systems shown
 3. `/ocd:setup rules` — system usage prints purpose, lists `status`, `list`, `install`, `uninstall` verbs with descriptions
 4. `/ocd:setup rules list` — catalog of available rule templates with one-paragraph purpose per row, sorted by name
 5. `/ocd:setup rules install honesty --scope project` — file lands at `<project>/.claude/rules/ocd/honesty.md`

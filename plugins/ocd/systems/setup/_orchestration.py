@@ -24,7 +24,7 @@ import importlib
 from pathlib import Path
 
 from tools.environment import get_git_root_for, get_plugin_root, get_project_dir
-from ._formatting import format_section
+from ._formatting import format_columns, format_section
 from ._metadata import get_plugin_name
 from ._system_discovery import _discover_systems
 
@@ -52,6 +52,7 @@ def run_purposes() -> None:
 
     print(f"{plugin_name} systems:")
     print()
+    rows: list[tuple[str, ...]] = []
     for idx, system_name in enumerate(systems):
         letter = chr(ord("A") + idx)
         try:
@@ -59,7 +60,9 @@ def run_purposes() -> None:
             purpose = mod.purpose() if hasattr(mod, "purpose") else "(no purpose declared)"
         except Exception as exc:  # noqa: BLE001
             purpose = f"(error loading: {exc})"
-        print(f"  {letter}. {system_name} — {purpose}")
+        rows.append((f"{letter}. {system_name}", purpose))
+    for line in format_columns(rows):
+        print(f"  {line}")
     print()
     print("Pick a system: `ocd-run setup <system>` for that system's usage.")
 
@@ -73,12 +76,15 @@ def run_statuses() -> None:
         print(f"No migrated systems in {plugin_name}.")
         return
 
-    print(f"{plugin_name} statuses")
+    print(f"{plugin_name} status")
     print()
     for system_name in systems:
         try:
             mod = importlib.import_module(f"systems.{system_name}")
-            result = mod.status() if hasattr(mod, "status") else {"files": [], "extra": []}
+            if hasattr(mod, "status"):
+                result = mod.status()
+            else:
+                result = {"files": [], "extra": [{"label": "(no status)", "value": "system does not expose status"}]}
         except Exception as exc:  # noqa: BLE001
             result = {"files": [], "extra": [{"label": "error", "value": str(exc)}]}
 
@@ -88,7 +94,12 @@ def run_statuses() -> None:
 
 
 def run_system_usage(system_name: str) -> None:
-    """Render one migrated system's usage from its workflows/*.md files."""
+    """Render one migrated system's usage.
+
+    A system that exposes `verbs() -> list[dict]` controls its own verb
+    listing. Otherwise, the listing is computed from standard handlers
+    (`status`, `list_items`) plus any `workflows/<verb>.md` files.
+    """
     plugin_root = get_plugin_root()
     workflows_dir = plugin_root / "systems" / system_name / "workflows"
 
@@ -105,14 +116,21 @@ def run_system_usage(system_name: str) -> None:
         print(f"  {purpose}")
     print()
     print("Verbs:")
-    print("  status — read-only state report (no workflow file; CLI-direct)")
-    if hasattr(mod, "list_items"):
-        print("  list — catalog of available items with purposes (no workflow file; CLI-direct)")
-    if workflows_dir.is_dir():
-        for verb_md in sorted(workflows_dir.glob("*.md")):
-            verb = verb_md.stem
-            first_paragraph = _first_paragraph(verb_md)
-            print(f"  {verb} — {first_paragraph}")
+
+    if hasattr(mod, "verbs"):
+        verb_rows = [(v["name"], v.get("description", "")) for v in mod.verbs()]
+    else:
+        verb_rows = []
+        if hasattr(mod, "status"):
+            verb_rows.append(("status", "read-only state report (CLI-direct)"))
+        if hasattr(mod, "list_items"):
+            verb_rows.append(("list", "catalog of available items with purposes (CLI-direct)"))
+        if workflows_dir.is_dir():
+            for verb_md in sorted(workflows_dir.glob("*.md")):
+                verb_rows.append((verb_md.stem, _first_paragraph(verb_md)))
+
+    for line in format_columns(verb_rows):
+        print(f"  {line}")
     print()
     print(f"Run a verb: `ocd-run setup {system_name} <verb> [args]`")
 

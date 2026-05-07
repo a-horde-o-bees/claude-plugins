@@ -7,36 +7,71 @@ includes:
 
 # Plugin System Setup Conventions
 
-Plugin-specific addendum to `system-structure.md`. Every system in an ocd-style plugin participates in the setup surface — install, uninstall, status, purpose — through a fixed Python facade and a pair of workflow files. This convention documents what's required beyond the general system layout.
+Plugin-specific addendum to `system-structure.md`. Every migrated system in an ocd-style plugin participates in the setup surface (`/ocd:setup <system>`) through a Python facade. The facade declares minimum identity (`purpose()`) plus whatever verbs the system needs — either the standard set (status, list, install, uninstall) or its own verb shape via `dispatch()`. This convention documents the contract, the verb dispatch model, and the workflow files that pair with the standard CRUD verbs.
 
-## Python Facade
+## Required identity
 
-The system's package `__init__.py` exposes four functions with these exact signatures:
+The system's package `__init__.py` must expose `purpose()`:
 
 ```python
 def purpose() -> str: ...
-def status(scope: str | None = None) -> dict: ...
-def install(scope: str, target: str | None = None, force: bool = False) -> dict: ...
-def uninstall(scope: str, target: str | None = None) -> dict: ...
 ```
 
-- **`purpose()`** — one-line purpose statement; called by the setup `purposes` aggregator to assemble the lettered system list.
-- **`status(scope=None)`** — reports install state per artifact at the requested scope. `None` reports across every supported scope.
-- **`install(scope, target, force)`** — deploys at the chosen scope. `target='all'` or `None` installs every artifact this system owns; a specific target name installs one. `force=True` overwrites divergent deployed copies.
-- **`uninstall(scope, target)`** — removes one or all deployed artifacts at the chosen scope.
+Returns a one-line purpose statement consumed by the setup `list` aggregator to assemble the lettered system list. A system that does not export `purpose()` is invisible to setup discovery — it does not appear in `setup list` / `setup status` output, and `/ocd:setup <name>` errors with "unknown system."
 
-Return shape from install/uninstall/status is `{"files": [...], "extra": [...]}` per the Init/Status Contract in `python.md`.
+## Verb shape — two models
 
-## Setup Workflows
+Beyond `purpose()`, a system declares its verbs in one of two ways:
 
-Two markdown files under the system's `workflows/` directory:
+### Standard handlers
+
+For systems that fit the install / uninstall / status / list shape, expose the matching functions. The setup CLI handles argparse and output formatting:
+
+```python
+def status(scope: str | None = None) -> dict: ...
+def list_items() -> dict: ...
+def install(scope: str, targets: list[str] | None = None, force: bool = False) -> dict: ...
+def uninstall(scope: str, targets: list[str] | None = None) -> dict: ...
+```
+
+- **`status(scope=None)`** — reports state per artifact at the requested scope. `None` reports across every supported scope. Returns `{"files": [...], "extra": [...]}`.
+- **`list_items()`** — catalog of available items with one-paragraph purpose per item. Returns `{"items": [{"name", "purpose"}, ...], "extra": [...]}`.
+- **`install(scope, targets, force)`** — deploys at the chosen scope. `targets=None` deploys all; otherwise each entry is a target name. `force=True` overwrites divergent deployed copies.
+- **`uninstall(scope, targets)`** — removes deployed artifacts. `targets=None` removes all; otherwise each entry is a target name.
+
+Each function is independently optional: a read-only system might expose only `status` and `list_items`; an atomic system might expose `install`/`uninstall` without `list_items`.
+
+### Custom dispatch
+
+For systems whose verbs do not fit the standard shape (e.g., permissions has `deploy` / `clean` / `analyze`), expose `dispatch()` instead:
+
+```python
+def dispatch(verb: str, args: list[str]) -> None: ...
+```
+
+The setup CLI routes every verb to `dispatch()` when present — standard handlers are bypassed. `dispatch()` parses its own argparse per verb and either prints output directly or returns. Systems that need it typically also expose `verbs()` so the usage display knows what verbs exist:
+
+```python
+def verbs() -> list[dict]:
+    return [
+        {"name": "deploy", "description": "..."},
+        {"name": "analyze", "description": "..."},
+        ...
+    ]
+```
+
+A system declares EITHER standard handlers OR dispatch — not both. Dispatch always wins when present, so mixing the two would leave standard handler functions unreachable.
+
+## Setup workflows
+
+Standard `install` and `uninstall` verbs use markdown workflows under `workflows/`:
 
 - `workflows/install.md` — interactive install workflow loaded by `/ocd:setup <system> install`
 - `workflows/uninstall.md` — interactive uninstall workflow loaded by `/ocd:setup <system> uninstall`
 
 Both follow `workflows-md.md`. The install flow prompts for scope, presents available targets (lettered selection for multi-pick or `all`), confirms with the user, and dispatches to the system's CLI. The uninstall flow mirrors that shape for removal.
 
-The `status` verb is read-only; the setup CLI calls `status(scope=...)` directly without a markdown workflow. No `workflows/status.md` is required.
+The `status` and `list` verbs are read-only; the setup CLI calls them directly without a markdown workflow. Dispatch-based verbs are CLI-direct unless the system chooses to add its own workflow files.
 
 ## Scope
 
@@ -59,19 +94,22 @@ Scope semantics:
 - `user` — deploys under `~/.claude/<category>/<plugin>/...` (auto-loaded across every project)
 - `project` — deploys under `<project>/.claude/<category>/<plugin>/...` (scoped to the active project)
 
-Scope is required for install and uninstall — deny-by-default. `status` accepts `scope=None` to report across every supported scope.
+Scope is required for install and uninstall — deny-by-default. `status` accepts `scope=None` to report across every supported scope. Custom verbs declare scope requirements per verb in their dispatch.
 
 ## Targets
 
-Some systems own multiple artifacts and accept a target name to operate on one (e.g., the rules system accepts a per-template name). Others are atomic — install/uninstall takes only scope, no meaningful target. Systems with sub-targets reject unknown names with an error entry; atomic systems ignore the target argument.
+Standard `install`/`uninstall` accept multiple positional targets or `--all`:
 
-When `target` is `None` or `'all'`, install/uninstall operates on every artifact the system owns.
+```
+ocd-run setup <system> install <target1> <target2> ... --scope <user|project>
+ocd-run setup <system> install --all --scope <user|project>
+```
 
-## Hidden Until Migrated
+`targets=None` (passed when `--all` is set) operates on every artifact. `targets=[<name>, ...]` operates on the named ones. Unknown target names produce an error entry; the system rejects the whole batch rather than partially deploying.
 
-Systems without a top-level `__init__.py` exposing the four facade functions are invisible to the setup skill — they do not appear in `purposes` or `statuses` output, and `/ocd:setup <name>` errors with "unknown system". This keeps the setup surface conformant: every system listed has the expected handler shape, and incremental migration leaves un-migrated systems silent rather than half-supported.
+Atomic systems with no meaningful targets accept `targets=None` and ignore non-empty lists.
 
-## Operational CLI Gating
+## Operational CLI gating
 
 When a system has its own operational CLI separate from the setup surface (e.g., `ocd-run navigator scan`, `ocd-run transcripts query`), that CLI gates on install state. Each operational entry point calls the system's own `status()` early and refuses to run if the system is not installed at any scope:
 
@@ -88,4 +126,4 @@ def main() -> None:
     ...
 ```
 
-The gate prevents agents from invoking operational commands on a system the user has not opted in to, matching the broader hide-until-installed principle. The setup CLI itself is always available — it is the bootstrap path for every system.
+The gate prevents agents from invoking operational commands on a system the user has not opted in to, matching the broader hide-until-installed principle codified in `system-dormancy.md`. The setup CLI itself is always available — it is the bootstrap path for every system.

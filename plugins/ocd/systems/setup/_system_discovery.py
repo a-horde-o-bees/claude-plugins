@@ -14,17 +14,21 @@ from pathlib import Path
 # discrete setup-managed system.
 _INFRASTRUCTURE_SYSTEMS = frozenset({"setup"})
 
-# Sentinel functions every migrated system's __init__.py must export.
-_REQUIRED_FACADE_FUNCTIONS = ("purpose", "status", "install", "uninstall")
+# Sentinel function every migrated system's __init__.py must export.
+# Beyond purpose, systems may expose any combination of standard verbs
+# (status, list_items, install, uninstall) or their own dispatch(verb,
+# args) for system-specific verbs — see plugin-system.md.
+_REQUIRED_FACADE_FUNCTIONS = ("purpose",)
 
 
 def _discover_systems(plugin_root: Path) -> list[str]:
-    """Discover systems with the per-system setup facade.
+    """Discover systems migrated to the setup surface.
 
     Returns sorted list of subsystem names whose package's `__init__.py`
-    exposes the facade contract — `purpose`, `status`, `install`,
-    `uninstall` — per the plugin-system convention. Systems without the
-    facade are invisible to the setup orchestrator until they migrate.
+    exposes `purpose()` per the plugin-system convention. Beyond purpose,
+    systems declare their own verb shape — standard handlers, custom
+    dispatch, or both. Systems without `purpose()` are invisible to the
+    setup orchestrator until they migrate.
     """
     subsystems_dir = plugin_root / "systems"
     if not subsystems_dir.is_dir():

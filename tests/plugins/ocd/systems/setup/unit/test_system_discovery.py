@@ -12,12 +12,7 @@ from pathlib import Path
 from systems.setup._system_discovery import _discover_systems, _discover_workflow_skills
 
 
-_FACADE_STUB = (
-    "def purpose(): pass\n"
-    "def status(scope=None): pass\n"
-    "def install(scope, target=None, force=False): pass\n"
-    "def uninstall(scope, target=None): pass\n"
-)
+_FACADE_STUB = "def purpose(): pass\n"
 
 
 def _make_system(systems_dir: Path, name: str, with_facade: bool = True) -> None:
@@ -54,13 +49,13 @@ class TestDiscoverSystems:
 
         assert result == ["with_facade"]
 
-    def test_ignores_subsystems_with_partial_facade(self, tmp_path: Path) -> None:
+    def test_ignores_subsystems_missing_purpose(self, tmp_path: Path) -> None:
         systems = tmp_path / "systems"
         _make_system(systems, "complete")
-        partial = systems / "partial"
-        partial.mkdir(parents=True)
-        # Only one of the four required functions — not enough.
-        (partial / "__init__.py").write_text("def purpose(): pass\n")
+        no_purpose = systems / "no_purpose"
+        no_purpose.mkdir(parents=True)
+        # Has __init__.py but no purpose() — not migrated.
+        (no_purpose / "__init__.py").write_text("def status(): pass\n")
 
         result = _discover_systems(tmp_path)
 

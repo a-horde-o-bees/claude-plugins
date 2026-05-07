@@ -2,16 +2,19 @@
 
 Dispatch shape:
 
-    ocd-run setup                      → usage (this skill's verbs + system list)
-    ocd-run setup purposes             → lettered system list with purpose statements
-    ocd-run setup statuses             → aggregated status across migrated systems
-    ocd-run setup permissions <verb>   → permissions subcommands (status/deploy/analyze/clean)
+    ocd-run setup                      → usage (meta verbs + migrated systems)
+    ocd-run setup list                 → lettered system list with purposes
+    ocd-run setup status               → aggregated status across migrated systems
     ocd-run setup <system>             → that system's usage
     ocd-run setup <system> <verb> ...  → that system's verb handler
 
 Meta-verb match takes priority. If the first positional is not a meta
-verb or 'permissions', it is treated as a system name and dispatched to
-that system's setup module. Unknown systems error with the full list.
+verb, it is treated as a system name and dispatched to that system's
+setup module. Per-system verbs route through the system's standard
+handlers (status, list_items, install, uninstall) when those functions
+exist; systems with their own verb set expose `dispatch(verb, args)`
+which receives every verb directly. Unknown systems error with the full
+list.
 """
 
 from __future__ import annotations
@@ -26,11 +29,12 @@ from . import (
     run_statuses,
     run_system_usage,
 )
+from ._formatting import format_columns
 from ._orchestration import _require_git_project_dir
 from ._system_discovery import _discover_systems
 
 
-META_VERBS = ("purposes", "statuses")
+META_VERBS = ("list", "status")
 
 
 def _format_section(heading: str, result: dict) -> None:
@@ -45,10 +49,23 @@ def _format_catalog(heading: str, items: list[dict]) -> list[str]:
 
 
 def _dispatch_system_verb(system_name: str, verb: str, rest: list[str]) -> None:
-    """Dispatch a verb to the named system's setup module."""
+    """Dispatch a verb to the named system's setup module.
+
+    A system that exposes `dispatch(verb, args)` owns its full verb
+    surface — every verb routes through it. Systems without dispatch fall
+    through to the standard handlers (status, list, install, uninstall),
+    which call the matching function on the module.
+    """
     mod = importlib.import_module(f"systems.{system_name}")
 
+    if hasattr(mod, "dispatch"):
+        mod.dispatch(verb, rest)
+        return
+
     if verb == "status":
+        if not hasattr(mod, "status"):
+            print(f"System '{system_name}' does not support status.", file=sys.stderr)
+            sys.exit(1)
         parser = argparse.ArgumentParser(prog=f"setup {system_name} status")
         parser.add_argument("--scope", choices=["user", "project"], default=None)
         args = parser.parse_args(rest)
@@ -57,17 +74,20 @@ def _dispatch_system_verb(system_name: str, verb: str, rest: list[str]) -> None:
         return
 
     if verb == "list":
-        parser = argparse.ArgumentParser(prog=f"setup {system_name} list")
-        parser.parse_args(rest)
         if not hasattr(mod, "list_items"):
             print(f"System '{system_name}' does not expose a catalog.", file=sys.stderr)
             sys.exit(1)
+        parser = argparse.ArgumentParser(prog=f"setup {system_name} list")
+        parser.parse_args(rest)
         result = mod.list_items()
         for line in _format_catalog(f"{system_name.capitalize()} catalog", result.get("items", [])):
             print(line)
         return
 
     if verb == "install":
+        if not hasattr(mod, "install"):
+            print(f"System '{system_name}' does not support install.", file=sys.stderr)
+            sys.exit(1)
         parser = argparse.ArgumentParser(prog=f"setup {system_name} install")
         parser.add_argument("targets", nargs="*", default=[])
         parser.add_argument("--scope", required=True, choices=["user", "project"])
@@ -86,6 +106,9 @@ def _dispatch_system_verb(system_name: str, verb: str, rest: list[str]) -> None:
         return
 
     if verb == "uninstall":
+        if not hasattr(mod, "uninstall"):
+            print(f"System '{system_name}' does not support uninstall.", file=sys.stderr)
+            sys.exit(1)
         parser = argparse.ArgumentParser(prog=f"setup {system_name} uninstall")
         parser.add_argument("targets", nargs="*", default=[])
         parser.add_argument("--scope", required=True, choices=["user", "project"])
@@ -103,35 +126,8 @@ def _dispatch_system_verb(system_name: str, verb: str, rest: list[str]) -> None:
         return
 
     print(f"Unknown verb '{verb}' for system '{system_name}'", file=sys.stderr)
-    print("Available verbs: list, install, uninstall, status", file=sys.stderr)
+    print(f"Run `ocd-run setup {system_name}` to see this system's verbs.", file=sys.stderr)
     sys.exit(1)
-
-
-def _dispatch_permissions(rest: list[str]) -> None:
-    parser = argparse.ArgumentParser(prog="setup permissions")
-    sub = parser.add_subparsers(dest="perm_command", required=True)
-
-    sub.add_parser("status", help="Both scopes' permission state")
-
-    deploy = sub.add_parser("deploy", help="Deploy recommended patterns to one scope")
-    deploy.add_argument("--scope", required=True, choices=["user", "project"])
-
-    sub.add_parser("analyze", help="Cross-scope health analysis")
-
-    clean = sub.add_parser("clean", help="Remove recommendations redundant with the other scope")
-    clean.add_argument("--scope", required=True, choices=["user", "project"])
-
-    args = parser.parse_args(rest)
-
-    perm = importlib.import_module("systems.permissions")
-    if args.perm_command == "status":
-        perm.run_permissions_status()
-    elif args.perm_command == "deploy":
-        perm.run_permissions_deploy(scope=args.scope)
-    elif args.perm_command == "analyze":
-        perm.run_permissions_analyze()
-    elif args.perm_command == "clean":
-        perm.run_permissions_clean(scope=args.scope)
 
 
 def _print_skill_usage() -> None:
@@ -140,13 +136,15 @@ def _print_skill_usage() -> None:
     print("setup — manage plugin infrastructure")
     print()
     print("Meta verbs:")
-    print("  purposes      — lettered list of systems with purpose statements")
-    print("  statuses      — aggregated status across systems")
-    print("  permissions   — auto-approve permission patterns (status/deploy/analyze/clean)")
+    rows = [
+        ("list", "lettered list of systems with purpose statements"),
+        ("status", "aggregated status across systems"),
+    ]
+    for line in format_columns(rows):
+        print(f"  {line}")
     print()
     print("Per-system:")
-    print("  <system>            — that system's usage and available verbs")
-    print("  <system> <verb> ... — install / uninstall / status with --scope")
+    print("  <system>  see its purpose and verbs")
     print()
     if systems:
         print(f"Migrated systems: {', '.join(systems)}")
@@ -164,21 +162,17 @@ def main() -> None:
     rest = args[1:]
 
     if first in META_VERBS:
-        if first == "purposes":
+        if first == "list":
             run_purposes()
-        elif first == "statuses":
+        elif first == "status":
             run_statuses()
-        return
-
-    if first == "permissions":
-        _dispatch_permissions(rest)
         return
 
     plugin_root = get_plugin_root()
     available = _discover_systems(plugin_root)
     if first not in available:
         print(f"Unknown verb or system: {first}", file=sys.stderr)
-        print(f"Meta verbs: {', '.join(META_VERBS)}, permissions", file=sys.stderr)
+        print(f"Meta verbs: {', '.join(META_VERBS)}", file=sys.stderr)
         if available:
             print(f"Migrated systems: {', '.join(available)}", file=sys.stderr)
         else:

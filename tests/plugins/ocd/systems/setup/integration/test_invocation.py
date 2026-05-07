@@ -44,8 +44,9 @@ class TestSetupSkillUsage:
 
     def test_no_args_lists_meta_verbs(self) -> None:
         result = run("setup")
-        assert "purposes" in result.stdout
-        assert "statuses" in result.stdout
+        assert "list" in result.stdout
+        assert "status" in result.stdout
+        # permissions is a regular migrated system, not a meta verb
         assert "permissions" in result.stdout
 
     def test_no_args_lists_migrated_systems(self) -> None:
@@ -60,16 +61,16 @@ class TestSetupSkillUsage:
 
 
 class TestSetupMetaVerbs:
-    """Meta verbs purposes and statuses aggregate across migrated systems."""
+    """Meta verbs list and status aggregate across migrated systems."""
 
-    def test_purposes_lists_systems(self) -> None:
-        result = run("setup", "purposes")
+    def test_list_lists_systems(self) -> None:
+        result = run("setup", "list")
         assert result.returncode == 0, result.stderr
-        # Lettered list — first migrated system rules appears as 'A.'
         assert "rules" in result.stdout
+        assert "permissions" in result.stdout
 
-    def test_statuses_reports_each_system(self) -> None:
-        result = run("setup", "statuses")
+    def test_status_reports_each_system(self) -> None:
+        result = run("setup", "status")
         assert result.returncode == 0, result.stderr
         assert "Rules" in result.stdout or "rules" in result.stdout.lower()
 
