@@ -57,32 +57,36 @@ def _available_rules() -> list[str]:
     return sorted(p.stem for p in src_dir.glob("*.md") if p.is_file())
 
 
-def _purpose_of(rule_path: Path) -> str:
-    """Read the first non-heading paragraph from a rule template file.
+def _tagline_of(rule_path: Path) -> str:
+    """Read the `tagline:` field from a rule template's YAML frontmatter.
 
-    Skips YAML frontmatter (between `---` fences) and markdown headings,
-    returning the first prose paragraph that follows the title.
+    The tagline is the brief one-liner shown in `setup rules list` so the
+    catalog stays scannable. Templates without a tagline fall back to a
+    placeholder so the missing field surfaces during review.
     """
     text = rule_path.read_text()
     lines = text.splitlines()
-    i = 0
-    if lines and lines[0].strip() == "---":
-        i = 1
-        while i < len(lines) and lines[i].strip() != "---":
-            i += 1
-        i += 1  # past closing fence
-    current: list[str] = []
-    while i < len(lines):
-        line = lines[i]
-        i += 1
-        if not line.strip():
-            if current:
-                return " ".join(current)
-            continue
-        if line.startswith("#"):
-            continue
-        current.append(line.strip())
-    return " ".join(current) if current else "(no description)"
+    if not lines or lines[0].strip() != "---":
+        return "(no tagline)"
+    for line in lines[1:]:
+        if line.strip() == "---":
+            break
+        if line.startswith("tagline:"):
+            return line.split(":", 1)[1].strip().strip('"').strip("'")
+    return "(no tagline)"
+
+
+def _body_of(rule_path: Path) -> str:
+    """Return the rule template body with YAML frontmatter stripped."""
+    text = rule_path.read_text()
+    lines = text.splitlines(keepends=True)
+    if not lines or lines[0].strip() != "---":
+        return text
+    for i in range(1, len(lines)):
+        if lines[i].strip() == "---":
+            body = "".join(lines[i + 1:])
+            return body.lstrip("\n")
+    return text
 
 
 def purpose() -> str:
@@ -94,11 +98,11 @@ def purpose() -> str:
 
 
 def list_items() -> dict:
-    """List available rule templates with first-paragraph purposes.
+    """List available rule templates with one-line taglines.
 
-    Returns {items: [{name, purpose}, ...], extra: []}. The catalog drives
-    the discovery surface so an agent or user can pick rules to install
-    by name without reading every template file.
+    Returns {items: [{name, tagline}, ...], extra: []}. The catalog drives
+    the discovery surface so an agent or user can scan rules at a glance
+    and reach for `show <name>` to read a full template.
     """
     src_dir = _templates_dir()
     items: list[dict] = []
@@ -107,8 +111,30 @@ def list_items() -> dict:
     for src in sorted(src_dir.glob("*.md")):
         if not src.is_file():
             continue
-        items.append({"name": src.stem, "purpose": _purpose_of(src)})
+        items.append({"name": src.stem, "tagline": _tagline_of(src)})
     return {"items": items, "extra": []}
+
+
+def show(name: str) -> dict:
+    """Return the full body of a named rule template.
+
+    name accepts either bare basename or `<name>.md`. Returns
+    {content: str, extra: []} with frontmatter stripped on success, or
+    {content: "", extra: [{"label": "error", ...}]} when the name does
+    not match any template.
+    """
+    target = name if name.endswith(".md") else f"{name}.md"
+    src = _templates_dir() / target
+    if not src.is_file():
+        available = ", ".join(_available_rules())
+        return {
+            "content": "",
+            "extra": [{
+                "label": "error",
+                "value": f"unknown rule: {name} — available: {available}",
+            }],
+        }
+    return {"content": _body_of(src), "extra": []}
 
 
 def status(scope: str | None = None) -> dict:

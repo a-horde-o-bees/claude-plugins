@@ -1,5 +1,6 @@
 ---
 includes: "*"
+tagline: Each component does one thing; boundaries are functional, not arbitrary
 ---
 
 # Separation of Concerns

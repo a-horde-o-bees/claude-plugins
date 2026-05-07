@@ -1,5 +1,6 @@
 ---
 includes: "*"
+tagline: Reveal information in layers — overview first, details on demand
 ---
 
 # Progressive Disclosure

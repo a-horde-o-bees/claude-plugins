@@ -1,5 +1,6 @@
 ---
 includes: "*.md"
+tagline: Structured programming notation for agent workflows — steps, scoping, calls
 ---
 
 # Process Flow Notation

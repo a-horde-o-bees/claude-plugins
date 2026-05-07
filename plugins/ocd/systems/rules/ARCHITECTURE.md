@@ -14,7 +14,7 @@ Each rule template is a self-contained markdown file with `includes: "*"` frontm
 Setup CLI (ocd-run setup rules <verb>)
     ↓ dispatches to
 Rules facade (__init__.py)
-    ↓ purpose / status / install / uninstall
+    ↓ purpose / status / list_items / show / install / uninstall
 Setup library helpers (deploy_files, compare_deployed)
     ↓ filesystem reads/writes
 Deployed copies (~/.claude/rules/ocd/  OR  <project>/.claude/rules/ocd/)
@@ -24,10 +24,10 @@ Deployed copies (~/.claude/rules/ocd/  OR  <project>/.claude/rules/ocd/)
 
 | Module | Responsibility |
 |--------|---------------|
-| `__init__.py` | Facade — purpose, status, install, uninstall. Resolves scope to deploy path; delegates file ops to `setup.deploy_files` / `compare_deployed`. |
-| `workflows/install.md` | Interactive install workflow — prompts for scope, presents lettered template selection, dispatches to CLI |
+| `__init__.py` | Facade — purpose, status, list_items, show, install, uninstall. Resolves scope to deploy path; delegates file ops to `setup.deploy_files` / `compare_deployed`. |
+| `workflows/install.md` | Interactive install workflow — asks scope, presents lettered template selection per `confirm-shared-intent`, dispatches to CLI |
 | `workflows/uninstall.md` | Interactive uninstall workflow — mirror of install |
-| `templates/` | Source-of-truth rule templates. Each file is a deployable rule. |
+| `templates/` | Source-of-truth rule templates. Each file is a deployable rule with `tagline:` frontmatter for catalog display. |
 
 ## Scope Resolution
 

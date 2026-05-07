@@ -1,5 +1,6 @@
 ---
 includes: "*"
+tagline: Concepts trigger reliably only when they name a single mechanism — split otherwise
 ---
 
 # Trigger Specificity

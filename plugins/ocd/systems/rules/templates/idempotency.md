@@ -1,5 +1,6 @@
 ---
 includes: "*"
+tagline: Operations are safely re-runnable — converge to the same state on retry
 ---
 
 # Idempotency

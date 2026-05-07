@@ -1,5 +1,6 @@
 ---
 includes: "*"
+tagline: Adopt existing tools and patterns before writing new code or abstractions
 ---
 
 # Borrow Before Build

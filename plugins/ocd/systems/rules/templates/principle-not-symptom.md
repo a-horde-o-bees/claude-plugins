@@ -1,5 +1,6 @@
 ---
 includes: "*"
+tagline: Trigger rules on the underlying principle, not a numeric or downstream symptom
 ---
 
 # Principle, Not Symptom

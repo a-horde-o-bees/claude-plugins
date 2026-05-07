@@ -1,5 +1,6 @@
 ---
 includes: "*"
+tagline: Design systems that can be interrupted and resumed from explicit, persistent state
 ---
 
 # Resumability

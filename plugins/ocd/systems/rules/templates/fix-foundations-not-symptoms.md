@@ -1,5 +1,6 @@
 ---
 includes: "*"
+tagline: Trace problems to root cause and rebuild the foundation, not workarounds
 ---
 
 # Fix Foundations, Not Symptoms

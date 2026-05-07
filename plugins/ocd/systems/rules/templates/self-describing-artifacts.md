@@ -1,5 +1,6 @@
 ---
 includes: "*"
+tagline: Every artifact carries its own purpose, structure, and guard rails inline
 ---
 
 # Self-Describing Artifacts

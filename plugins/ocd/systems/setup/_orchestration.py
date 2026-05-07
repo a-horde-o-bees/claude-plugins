@@ -133,7 +133,9 @@ def run_system_usage(system_name: str) -> None:
         if hasattr(mod, "status"):
             verb_rows.append(("status", "read-only state report (CLI-direct)"))
         if hasattr(mod, "list_items"):
-            verb_rows.append(("list", "catalog of available items with purposes (CLI-direct)"))
+            verb_rows.append(("list", "catalog of available items with taglines (CLI-direct)"))
+        if hasattr(mod, "show"):
+            verb_rows.append(("show <name>", "full template body for one item (CLI-direct)"))
         if workflows_dir.is_dir():
             for verb_md in sorted(workflows_dir.glob("*.md")):
                 verb_rows.append((verb_md.stem, _first_paragraph(verb_md)))

@@ -18,26 +18,53 @@ class TestPurpose:
 
 
 class TestListItems:
-    def test_returns_items_with_name_and_purpose(self, scopes):
+    def test_returns_items_with_name_and_tagline(self, scopes):
         result = rules_setup.list_items()
         assert "items" in result
         assert len(result["items"]) >= 24
         for item in result["items"]:
             assert "name" in item
-            assert "purpose" in item
-            assert item["purpose"]
-            assert not item["purpose"].startswith("includes:")
-            assert not item["purpose"].startswith("---")
+            assert "tagline" in item
+            assert item["tagline"]
+            assert not item["tagline"].startswith("includes:")
+            assert not item["tagline"].startswith("---")
 
     def test_items_sorted_by_name(self, scopes):
         result = rules_setup.list_items()
         names = [item["name"] for item in result["items"]]
         assert names == sorted(names)
 
-    def test_purpose_skips_yaml_frontmatter(self, scopes):
+    def test_tagline_is_single_line(self, scopes):
+        result = rules_setup.list_items()
+        for item in result["items"]:
+            assert "\n" not in item["tagline"]
+
+    def test_tagline_reads_frontmatter_field(self, scopes):
         result = rules_setup.list_items()
         honesty = next(item for item in result["items"] if item["name"] == "honesty")
-        assert "Action and output" in honesty["purpose"] or "verify" in honesty["purpose"].lower()
+        assert "verified evidence" in honesty["tagline"]
+
+
+class TestShow:
+    def test_returns_content_for_named_rule(self, scopes):
+        result = rules_setup.show("honesty")
+        assert "content" in result
+        assert "# Honesty" in result["content"]
+
+    def test_content_omits_frontmatter(self, scopes):
+        result = rules_setup.show("honesty")
+        assert not result["content"].startswith("---")
+        assert "tagline:" not in result["content"]
+        assert "includes:" not in result["content"]
+
+    def test_accepts_md_extension(self, scopes):
+        result = rules_setup.show("honesty.md")
+        assert "# Honesty" in result["content"]
+
+    def test_unknown_rule_returns_error(self, scopes):
+        result = rules_setup.show("not-a-rule")
+        assert any("unknown rule" in e["value"] for e in result["extra"])
+        assert result.get("content", "") == ""
 
 
 class TestStatus:

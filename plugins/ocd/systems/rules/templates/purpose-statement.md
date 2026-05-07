@@ -1,5 +1,6 @@
 ---
 includes: "*"
+tagline: How to write descriptions for artifacts at any scale — scope and role, no internals
 ---
 
 # Purpose Statement

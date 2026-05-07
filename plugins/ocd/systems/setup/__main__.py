@@ -88,6 +88,24 @@ def _dispatch_system_verb(system_name: str, verb: str, rest: list[str]) -> None:
             print(line)
         return
 
+    if verb == "show":
+        if not hasattr(mod, "show"):
+            print(f"System '{system_name}' does not expose show.", file=sys.stderr)
+            sys.exit(1)
+        parser = argparse.ArgumentParser(prog=f"setup {system_name} show")
+        parser.add_argument("name")
+        args = parser.parse_args(rest)
+        result = mod.show(args.name)
+        extra = result.get("extra") or []
+        if extra:
+            for e in extra:
+                print(f"{e['label']}: {e['value']}", file=sys.stderr)
+            sys.exit(1)
+        content = result.get("content", "")
+        if content:
+            print(content, end="" if content.endswith("\n") else "\n")
+        return
+
     if verb == "install":
         if not hasattr(mod, "install"):
             print(f"System '{system_name}' does not support install.", file=sys.stderr)

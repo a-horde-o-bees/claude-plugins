@@ -120,6 +120,27 @@ class TestSetupSystemDispatch:
         result = run("setup", "rules", "status")
         assert result.returncode == 0, result.stderr
 
+    def test_list_dispatches_to_system(self) -> None:
+        result = run("setup", "rules", "list")
+        assert result.returncode == 0, result.stderr
+        assert "honesty" in result.stdout
+        assert "verified evidence" in result.stdout
+
+    def test_show_dispatches_to_system(self) -> None:
+        result = run("setup", "rules", "show", "honesty")
+        assert result.returncode == 0, result.stderr
+        assert "# Honesty" in result.stdout
+        assert "tagline:" not in result.stdout
+
+    def test_show_requires_target(self) -> None:
+        result = run("setup", "rules", "show")
+        assert result.returncode != 0
+
+    def test_show_unknown_target_exits_nonzero(self) -> None:
+        result = run("setup", "rules", "show", "not-a-rule")
+        assert result.returncode != 0
+        assert "unknown" in (result.stdout + result.stderr).lower()
+
     def test_unknown_verb_exits_nonzero(self) -> None:
         result = run("setup", "rules", "bogus")
         assert result.returncode != 0

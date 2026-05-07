@@ -1,5 +1,6 @@
 ---
 includes: "*"
+tagline: Record reasoning behind significant choices alongside the choice
 ---
 
 # Capture Rationale

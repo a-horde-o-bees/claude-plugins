@@ -18,13 +18,16 @@ Each rule is an independent template that auto-loads into every Claude Code sess
 
 ## Workflow
 
-1. If no arguments: present usage and run `ocd-run setup rules list` to surface the catalog with purposes
-2. If --scope missing: ask the user which scope; offer user, project
-3. If neither --all nor any {target} given: run `ocd-run setup rules list`, present the catalog, ask the user which to install — accept multiple via lettered selection or `all`. Translate the user's choice into either a list of named targets or `--all`.
-4. Confirm with the user — show {targets} (or `--all`), {scope}, and what's about to deploy
-5. bash: `ocd-run setup rules install {targets} --scope {scope} [--force]` (or `--all` in place of {targets})
-6. Surface the CLI output to the user — per-file `absent → current` / `current → current` / `divergent → current` transitions
-7. If any file remained `divergent` (no --force): tell the user to re-run with `--force` to overwrite
+1. If --scope missing: AskUserQuestion — `user` vs `project` (2 options fits the tool cleanly)
+2. If neither --all nor any {target} given:
+    1. bash: `ocd-run setup rules list` — surfaces the catalog with one-line taglines
+    2. Render the catalog in the assistant response as a lettered list per `confirm-shared-intent`: `Q1 Which rules to install?` with `A) <name> — <tagline>`, `B) <name> — <tagline>`, etc., plus a final `all` option
+    3. Accept the user's reply as letters (e.g. `A, F, Q`), bare rule names, or `all`. For full-purpose detail on any item, point at `ocd-run setup rules show <name>`.
+    4. {targets} = list of resolved rule names from the user's choice; or `--all` if the user picks `all`
+3. Confirm with the user — show {targets} (or `--all`), {scope}, and what's about to deploy
+4. bash: `ocd-run setup rules install {targets} --scope {scope} [--force]` (or `--all` in place of {targets})
+5. Surface the CLI output to the user — per-file `absent → current` / `current → current` / `divergent → current` transitions
+6. If any file remained `divergent` (no --force): tell the user to re-run with `--force` to overwrite
 
 ### Report
 

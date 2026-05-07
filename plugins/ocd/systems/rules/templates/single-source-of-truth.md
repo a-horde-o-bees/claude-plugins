@@ -1,5 +1,6 @@
 ---
 includes: "*"
+tagline: One authoritative source per concept; derivatives validate against it
 ---
 
 # Single Source of Truth

@@ -72,13 +72,14 @@ def format_status(
 
 
 def format_catalog(header: str, items: list[dict]) -> list[str]:
-    """Render a catalog of available items with name + purpose.
+    """Render a catalog of available items with name + tagline.
 
-    Items are dicts with {name, purpose}. Emits the header, then a column-
-    aligned list of name → purpose. Used by `setup <system> list` to show
-    a system's available templates so the user can pick which to install.
+    Items are dicts with {name, tagline}. Emits the header, then a column-
+    aligned list of name → tagline. Used by `setup <system> list` to show
+    a system's available templates so the user can scan at a glance and
+    reach for `setup <system> show <name>` for full details.
     """
-    rows = [(item["name"], item.get("purpose", "")) for item in items]
+    rows = [(item["name"], item.get("tagline", "")) for item in items]
     lines = [header]
     if not rows:
         lines.append("  (no items)")

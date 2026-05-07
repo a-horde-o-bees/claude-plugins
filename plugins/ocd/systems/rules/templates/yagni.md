@@ -1,5 +1,6 @@
 ---
 includes: "*"
+tagline: Solve the problem in front of you, not hypothetical future requirements
 ---
 
 # You Aren't Gonna Need It (YAGNI)

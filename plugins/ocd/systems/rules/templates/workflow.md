@@ -1,5 +1,6 @@
 ---
 includes: "*"
+tagline: Project operational patterns — working dir, agents, push blocking, hook renames
 ---
 
 # Workflow

@@ -1,5 +1,6 @@
 ---
 includes: "*"
+tagline: Refactors propagate fully — no compatibility shims or legacy aliases
 ---
 
 # Clean Break

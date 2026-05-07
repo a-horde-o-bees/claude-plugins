@@ -1,5 +1,6 @@
 ---
 includes: "*"
+tagline: Enforce correctness through structure, not documentation
 ---
 
 # Make Invalid States Unrepresentable

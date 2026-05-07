@@ -25,11 +25,12 @@ Beyond `purpose()`, a system declares its verbs in one of two ways:
 
 ### Standard handlers
 
-For systems that fit the install / uninstall / status / list shape, expose the matching functions. The setup CLI handles argparse and output formatting:
+For systems that fit the install / uninstall / status / list / show shape, expose the matching functions. The setup CLI handles argparse and output formatting:
 
 ```python
 def status(scope: str | None = None) -> dict: ...
 def list_items() -> dict: ...
+def show(name: str) -> dict: ...
 def install(scope: str, targets: list[str] | None = None, force: bool = False) -> dict: ...
 def uninstall(scope: str, targets: list[str] | None = None) -> dict: ...
 ```
@@ -37,11 +38,12 @@ def uninstall(scope: str, targets: list[str] | None = None) -> dict: ...
 - **`status(scope=None)`** — reports state per artifact at the requested scope. `None` reports across every supported scope. Returns either of two shapes:
     - **Wide table** (preferred for per-scope state) — `{"rows": [{"name", **{column: state}}, ...], "columns": [scope, ...], "extra": [...]}`. One row per artifact with one column per scope queried; the setup CLI renders a per-scope table. Use `setup.status_table(items, columns, state_for, extra=...)` to construct this — the helper does the per-(item, column) iteration so each system declares only its items, scopes, and the (item, scope) → state resolver.
     - **Flat list** — `{"files": [{"path", "before", "after"}, ...], "extra": [...]}`. One row per file; the setup CLI renders a path → state list. Use this only when artifacts are inherently single-scope or the summary belongs entirely in `extra`.
-- **`list_items()`** — catalog of available items with one-paragraph purpose per item. Returns `{"items": [{"name", "purpose"}, ...], "extra": [...]}`.
+- **`list_items()`** — catalog of available items with one-line tagline per item. Returns `{"items": [{"name", "tagline"}, ...], "extra": [...]}`. The tagline is the brief at-a-glance summary surfaced by `setup <system> list`; full content is fetched via `show`.
+- **`show(name)`** — full content for one named item. Returns `{"content": str, "extra": [...]}` on success or `{"content": "", "extra": [{"label": "error", "value": "unknown ..."}]}` when the name is not recognized. Templates that supply taglines via frontmatter (e.g., rule templates) should keep the tagline source-of-truth in the template file itself, parsed by the system's facade.
 - **`install(scope, targets, force)`** — deploys at the chosen scope. `targets=None` deploys all; otherwise each entry is a target name. `force=True` overwrites divergent deployed copies.
 - **`uninstall(scope, targets)`** — removes deployed artifacts. `targets=None` removes all; otherwise each entry is a target name.
 
-Each function is independently optional: a read-only system might expose only `status` and `list_items`; an atomic system might expose `install`/`uninstall` without `list_items`.
+Each function is independently optional: a read-only system might expose only `status` and `list_items`; an atomic system might expose `install`/`uninstall` without `list_items`. `show` is paired with `list_items` — when a system exposes `list_items` and items have full bodies worth surfacing on demand, it should also expose `show`.
 
 ### Custom dispatch
 
@@ -71,9 +73,9 @@ Standard `install` and `uninstall` verbs use markdown workflows under `workflows
 - `workflows/install.md` — interactive install workflow loaded by `/ocd:setup <system> install`
 - `workflows/uninstall.md` — interactive uninstall workflow loaded by `/ocd:setup <system> uninstall`
 
-Both follow `workflows-md.md`. The install flow prompts for scope, presents available targets (lettered selection for multi-pick or `all`), confirms with the user, and dispatches to the system's CLI. The uninstall flow mirrors that shape for removal.
+Both follow `workflows-md.md`. The install flow asks scope via `AskUserQuestion`, fetches the catalog with `setup <system> list`, presents items as a lettered list per `confirm-shared-intent` (or `AskUserQuestion` when ≤4 items), accepts letters / names / `all`, confirms, then dispatches to the CLI. The uninstall flow mirrors that shape for removal.
 
-The `status` and `list` verbs are read-only; the setup CLI calls them directly without a markdown workflow. Dispatch-based verbs are CLI-direct unless the system chooses to add its own workflow files.
+The `status`, `list`, and `show` verbs are read-only; the setup CLI calls them directly without a markdown workflow. Dispatch-based verbs are CLI-direct unless the system chooses to add its own workflow files.
 
 ## Scope
 

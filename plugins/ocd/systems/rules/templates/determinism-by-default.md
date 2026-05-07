@@ -1,5 +1,6 @@
 ---
 includes: "*"
+tagline: Encode deterministic operations in tools, not in agent instructions
 ---
 
 # Determinism by Default

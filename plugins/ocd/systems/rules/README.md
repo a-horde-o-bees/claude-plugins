@@ -17,6 +17,8 @@ Through the setup skill:
 
 ```
 /ocd:setup rules                                    # rules' usage
+/ocd:setup rules list                               # catalog with one-line taglines
+/ocd:setup rules show <rule>                        # full body of one rule
 /ocd:setup rules install <rule> --scope project     # install one rule at project
 /ocd:setup rules install --all --scope user         # install every rule at user
 /ocd:setup rules uninstall <rule> --scope project   # remove one
@@ -27,7 +29,7 @@ Through the setup skill:
 
 ## Available rules
 
-Run `/ocd:setup rules` to see the catalog. Highlights include `design-principles` (split into 24 individual principle files), `purpose-statement`, `process-flow-notation`, `markdown`, `system-structure`, `testing`, `workflow`.
+Run `/ocd:setup rules list` to scan the catalog and `/ocd:setup rules show <name>` for any rule's full body.
 
 ## License
 
