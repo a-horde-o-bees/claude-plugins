@@ -24,7 +24,7 @@ Order by independence and risk. Smallest/cleanest first to firm the template; la
 2. ~~permissions — promoted to regular system with custom `dispatch()` for status / deploy / analyze / clean verbs~~ (done as part of setup CLI hardening; first system to exercise the dispatch model)
 3. refactor — small; ships one rule template, no DB
 4. log — moderate; deploys log-type templates to project root `logs/`, project-only scope
-5. conventions — moderate; merged-from-governance system; ships templates + matching CLI; both scopes
+5. conventions — moderate; merged-from-governance system; ships templates + matching CLI; both scopes. **Coordinated with `discovery-model` workstream** — the conventions migration now carries the discovery-model substrate (`<scope>/discovery/`, `<scope>/dependencies/`, `<scope>/rules/discovery-triggers.md`) instead of `includes`/`excludes` matching. See `plans/discovery-model.md` for the substrate's design.
 6. needs_map — DB-backed; project-only scope
 7. navigator — DB-backed; project-only scope; operational CLI + MCP server (introduces operational gating)
 8. transcripts — DB-backed; **scope migration to user** (see plans/scope-per-system-install.md if extracted)
@@ -40,5 +40,5 @@ Order by independence and risk. Smallest/cleanest first to firm the template; la
 ## Open questions
 
 - transcripts user-scope DB location: `~/.claude/ocd/transcripts/transcripts.db` or under `get_plugin_data_dir()`? Resolve when transcripts migrates.
-- Do conventions deploy templates (the on-demand convention files agents see) and matching infrastructure (the Python/CLI for `governance_match`/`governance_list`) need to install as one unit, or can the user pick which? Resolve when conventions migrates.
 - Operational CLI gating: should `status()` count `divergent` files as installed for gate purposes? Probably yes — they're deployed, just need refresh. Confirm during navigator migration.
+- Conventions install footprint under the discovery model — how to surface the substrate (router rule deploys to user `rules/`; manifest + stubs to user/project `discovery/`; dependencies to user/project `dependencies/`) cleanly through the existing setup CLI shape. Resolve when conventions migrates per the discovery-model plan.

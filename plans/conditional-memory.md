@@ -33,4 +33,4 @@ None locked yet — this is design space.
 
 ## Status
 
-Not started. Independent of the system-structure migration; can land any time.
+Likely subsumed by the `discovery-model` workstream — see `plans/discovery-model.md` and `logs/decision/discovery-model.md`. The discovery model achieves the same outcome (per-rule trigger-conditioned loading) without requiring Anthropic-side coordination; it does so by moving artifact-triggered guidance off the always-on memory floor entirely and routing on-demand via a small always-on trigger router. Re-evaluate this plan after the discovery substrate lands; close if redundant.
