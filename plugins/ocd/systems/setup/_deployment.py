@@ -3,12 +3,45 @@
 Core operations for deploying template files to project directories:
 comparison, batch file deployment with force/orphan control, and
 systems' paths.csv declaration deployment with placeholder substitution.
+
+Also exposes `status_table`, the shared helper systems use to build the
+wide-table status return shape (per-item rows × per-scope columns).
 """
 
 import shutil
 from pathlib import Path
+from typing import Callable
 
 from ._metadata import get_plugin_name
+
+
+def status_table(
+    items: list[str],
+    columns: list[str],
+    state_for: Callable[[str, str], str],
+    extra: list[dict] | None = None,
+) -> dict:
+    """Build a wide-table status return shape from items + state resolver.
+
+    Encapsulates the per-item × per-scope iteration so each migrated
+    system declares only what it knows: its item names, the scopes it
+    queries, and how to resolve a single (item, scope) pair to a state
+    string. The shared shape lets the setup CLI render a consistent
+    per-scope table across systems.
+
+    items: row names (one row per item).
+    columns: column names (typically scope names like "user", "project").
+    state_for: callable invoked once per (item, column) pair returning
+        the cell value as a string.
+    extra: optional list of {"label", "value"} entries appended after
+        the table — for cross-cutting summary lines that don't fit the
+        per-item × per-scope grid (e.g., redundancy counts).
+    """
+    rows = [
+        {"name": name, **{col: state_for(name, col) for col in columns}}
+        for name in items
+    ]
+    return {"rows": rows, "columns": list(columns), "extra": extra or []}
 
 
 def compare_deployed(src: Path, dst: Path) -> str:
