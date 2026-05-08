@@ -99,9 +99,10 @@
       ]
     },
     "ocd": {
-      "description": "OCD plugin CLI runner",
+      "description": "OCD plugin CLI runner and path resolver",
       "patterns": [
-        "Bash(ocd-run:*)"
+        "Bash(ocd-run:*)",
+        "Bash(ocd-path:*)"
       ]
     },
     "project": {
