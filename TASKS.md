@@ -6,7 +6,7 @@ Project-scoped scan-once view. Per-sandbox `SANDBOX-TASKS.md` files (seeded by `
 
 ## In progress
 
-- **Discovery model** — [plan](plans/discovery-model.md). Trigger-routed context-loading substrate replacing the broken `includes`/`excludes` mechanism. Reduces always-on rule cost by ~93%. Plan + decision log captured; implementation steps next. Subsumes the conventions migration in `system-migrations`.
+- **Plugin context architecture refactor** — [plan](plans/discovery-model.md). Two-mechanism architecture: discovery substrate (rules/conventions/dependencies content) + shim model (systems with code via `Call: !`<plugin>-path <system>``). Adds `ocd-run` self-update on plugin upgrade and a state-location convention (bin-mediated DBs to plugin data dir). Phases A–H; rules and transcripts are the test surfaces. Decisions captured across four logs (`discovery-model`, `shim-model`, `ocd-run-self-update`, `state-location`); user committed to revisiting them post-refactor. Subsumes the conventions migration in `system-migrations`.
 
 ## Pending
 
