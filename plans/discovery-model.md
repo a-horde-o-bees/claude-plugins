@@ -149,7 +149,13 @@ For each: substrate-deploy any rules/conventions the system contributes; shim-de
 
 ## State
 
-Phase A in flight as of this commit. Decisions captured across four logs; plan revised to reflect expanded scope. Test surfaces selected: rules (substrate) and transcripts (shim model).
+Phases A and B complete.
+
+- **Phase A** (decisions + plan) — landed in commit `42516eb`. Four decision logs capture the architecture: `discovery-model.md`, `shim-model.md`, `ocd-run-self-update.md`, `state-location.md`.
+- **Phase B** (bin layer):
+    - `plugins/ocd/bin/ocd-path` added — returns absolute path to a system's CLAUDE.md in current cache. Used by deployed shim SKILL.md bodies via `Call: !`ocd-path <system>``.
+    - `plugins/ocd/bin/ocd-run` extended with self-update — manifest-diff before exec, `flock`-serialized `install_deps.sh` invocation when drifted. Eliminates session-restart-required UX after plugin upgrades.
+    - Tests cover both bins under `tests/plugins/ocd/bin/`. All 863 plugin + 67 project tests pass.
 
 PFN already moved (`plugins/ocd/dependencies/process-flow-notation.md`) in earlier work — that change predates the shim model decision but doesn't conflict; PFN is a dependency, not a system.
 
@@ -157,4 +163,4 @@ Transition risk: the deployed `.claude/rules/ocd/process-flow-notation.md` survi
 
 Doc rot scope: `plugins/ocd/README.md` and `plugins/ocd/ARCHITECTURE.md` still describe the old convention-gate hook and `includes`/`excludes` mechanism. Those docs get rewritten holistically when Phase E or F lands, not chip-by-chip.
 
-Next pickup: Phase B (bin layer — `ocd-path` and `ocd-run` self-update).
+Next pickup: Phase C (substrate mechanics — per-system handler protocol + dependency layer + convention content deployment).

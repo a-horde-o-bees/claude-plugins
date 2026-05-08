@@ -1,0 +1,50 @@
+#!/bin/bash
+# ocd-path — return the absolute path to a system's CLAUDE.md in current cache.
+#
+# Used by deployed shim SKILL.md files at <scope>/.claude/skills/<plugin>-<system>/SKILL.md
+# whose body is `Call: !`ocd-path <system>``. Claude Code's preprocessing
+# substitutes the resolved path into the skill body before the agent sees
+# it. The agent then Reads the cached CLAUDE.md; relative paths inside that
+# CLAUDE.md resolve against the cache, so plugin upgrades flow through
+# automatically — the next invocation re-runs ocd-path and gets the new
+# version's path.
+#
+# Self-locates the plugin root via the dirname-of-dirname-of-readlink-f
+# pattern (mirrors ocd-run), then validates the .claude-plugin/plugin.json
+# marker exists. No env vars required — CLAUDE_PLUGIN_ROOT is not set in
+# user-skill !`...` preprocessing (verified empirically; see
+# logs/decision/shim-model.md).
+#
+# Usage:
+#     ocd-path <system>
+#
+# Stdout: absolute path to systems/<system>/CLAUDE.md
+# Stderr (on error): clear corrective guidance per graceful-degradation rule
+
+set -euo pipefail
+
+if [[ $# -lt 1 ]]; then
+    echo "ocd-path: missing system argument" >&2
+    echo "Usage: ocd-path <system>" >&2
+    exit 1
+fi
+
+system="$1"
+
+script_real="$(readlink -f "$0")"
+plugin_root="$(dirname "$(dirname "$script_real")")"
+
+if [[ ! -f "$plugin_root/.claude-plugin/plugin.json" ]]; then
+    echo "ocd-path: not in plugin tree (no .claude-plugin/plugin.json marker at $plugin_root)" >&2
+    echo "ocd-path expects to live at <plugin_root>/bin/ocd-path; verify install layout." >&2
+    exit 1
+fi
+
+target="$plugin_root/systems/$system/CLAUDE.md"
+
+if [[ ! -f "$target" ]]; then
+    echo "ocd-path: CLAUDE.md not found for system '$system' at $target" >&2
+    exit 1
+fi
+
+echo "$target"

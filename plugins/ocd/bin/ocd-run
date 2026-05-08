@@ -32,6 +32,52 @@ set -euo pipefail
 script_real="$(readlink -f "$0")"
 plugin_root="$(dirname "$(dirname "$script_real")")"
 
+# === Self-update on plugin upgrade ===
+# When the plugin's source pyproject.toml differs from the cached manifest in
+# the data dir, run install_deps.sh synchronously so the venv reflects the
+# current source. flock serializes concurrent invocations; the lock-protected
+# block re-checks drift to avoid double-install when another process was
+# already past the diff but mid-install. Skipped silently when the plugin
+# doesn't ship install_deps.sh.
+#
+# MCP servers spawn from .mcp.json directly (not through ocd-run), so they
+# pick up venv changes only on session restart. Mid-session MCP refresh
+# remains a known limitation per logs/decision/ocd-run-self-update.md.
+
+if [[ -x "$plugin_root/hooks/install_deps.sh" ]]; then
+    if [[ -n "${CLAUDE_PLUGIN_DATA:-}" ]]; then
+        _data_dir="$CLAUDE_PLUGIN_DATA"
+    elif [[ "$plugin_root" == */plugins/cache/*/* ]]; then
+        _version_dir="$plugin_root"
+        _plugin_dir="$(dirname "$_version_dir")"
+        _author_dir="$(dirname "$_plugin_dir")"
+        _cache_dir="$(dirname "$_author_dir")"
+        _plugins_dir="$(dirname "$_cache_dir")"
+        _plugin_name="$(basename "$_plugin_dir")"
+        _author_name="$(basename "$_author_dir")"
+        _data_dir="$_plugins_dir/data/${_plugin_name}-${_author_name}"
+    else
+        _plugin_basename="$(basename "$plugin_root")"
+        _data_dir="$HOME/.claude/plugins/data/${_plugin_basename}-inline"
+    fi
+
+    _source_manifest="$plugin_root/pyproject.toml"
+    _cached_manifest="$_data_dir/pyproject.toml"
+
+    if [[ -f "$_source_manifest" ]]; then
+        if [[ ! -f "$_cached_manifest" ]] || ! diff -q "$_source_manifest" "$_cached_manifest" >/dev/null 2>&1; then
+            mkdir -p "$_data_dir"
+            (
+                flock 9
+                if [[ ! -f "$_cached_manifest" ]] || ! diff -q "$_source_manifest" "$_cached_manifest" >/dev/null 2>&1; then
+                    CLAUDE_PLUGIN_ROOT="$plugin_root" CLAUDE_PLUGIN_DATA="$_data_dir" "$plugin_root/hooks/install_deps.sh"
+                fi
+            ) 9>"$_data_dir/.install-lock"
+        fi
+    fi
+fi
+# === End self-update ===
+
 _venv_python=""
 
 # 1. Env var set by Claude Code during hook/MCP invocation
