@@ -73,7 +73,6 @@ Plugin-wide rule templates in `systems/rules/templates/` deploy to `.claude/rule
 | `design-principles.md` | Foundational principles governing all artifacts and agent behavior |
 | `workflow.md` | Working directory, agents, testing — execution discipline for working in this project |
 | `system-structure.md` | System layout — three-doc model, operational subdirectories (workflows/, components/, plans/), TASKS.md, CLAUDE.md as navigation hub, extraction criteria, subsystem doc consolidation, purpose-statement propagation |
-| `process-flow-notation.md` | Structured programming notation for skill workflows |
 | `markdown.md` | Base content standards for markdown files |
 
 System-owned rules live alongside the system that prescribes them — `systems/<name>/rules/` — and deploy flat under `.claude/rules/ocd/systems/<name>.md` via the system's own init per System Dormancy (see marketplace-level `ARCHITECTURE.md`). Today navigator owns `navigator.md` (navigator usage guidance), log owns `log.md` (log type selection and routing), and refactor owns `refactor.md` (when to reach for `/ocd:refactor` over manual sed or Edit). The `systems/` subdir inside `.claude/rules/ocd/` namespaces system-scoped rules away from project-wide foundational rules, so filenames can match system names without colliding.
