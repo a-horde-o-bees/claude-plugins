@@ -6,21 +6,19 @@ Project-scoped scan-once view. Per-sandbox `SANDBOX-TASKS.md` files (seeded by `
 
 ## In progress
 
-- **Plugin context architecture refactor** — [plan](plans/discovery-model.md). Two-mechanism architecture: discovery substrate (rules/conventions/dependencies content) + shim model (systems with code via `Call: !`<plugin>-path <system>``). Adds `ocd-run` self-update on plugin upgrade and a state-location convention (bin-mediated DBs to plugin data dir). Phases A–H; rules and transcripts are the test surfaces. Decisions captured across four logs (`discovery-model`, `shim-model`, `ocd-run-self-update`, `state-location`); user committed to revisiting them post-refactor. Subsumes the conventions migration in `system-migrations`.
+- **Architecture refactor** — [plan](plans/architecture-refactor.md). Skills as the atomic unit of distribution; plugins as packaging conveniences for marketplace surface; new `progressive-composer` plugin fills the individual-skill-management gap; rules-system retains the always-on discipline library; conventions become categorical opt-in skills; MCP servers benched until context-cost case justifies reactivation; permissions becomes a Pattern B installer skill. Decisions captured across seven logs (`skill-architecture`, `skill-authoring`, `progressive-composer`, `plugin-compartmentalization`, `hook-scoping`, `mcp-benching`, `yagni-revocation`); two prior decisions survive (`state-location`, `ocd-run-self-update`). Phases A–I.
+    - Phase A (decisions + plan) — done, this commit
+    - Phase B (build progressive-composer plugin) — next pickup
+    - Phases C–I — per plan; system migrations, MCP unwiring, permissions Pattern B, plugin compartmentalization, conventions migration, decision-log review
 
 ## Pending
 
-- **System migrations to system-structure** — [plan](plans/system-migrations.md). Migrate each ocd system to the layout pioneered by the rules system. Sequenced smallest-first. Note: the `conventions` migration step now coordinates with the discovery-model workstream — conventions move under the discovery substrate.
-- **`ocd:init-python-project` skill** — [plan](plans/init-project-skill.md). Scaffold fresh Python projects with this repo's canonical patterns. Foundation landed in centralize-tools (PR #1); the skill itself is the next branch.
+- **`ocd:init-python-project` skill** — [plan](plans/init-project-skill.md). Scaffold fresh Python projects with this repo's canonical patterns. Foundation landed in centralize-tools (PR #1); the skill itself is the next branch. When implemented, follows the new skill-folder format per the architecture refactor (lands under Phase E or as parallel work).
 
 ## Upcoming
 
-- **Components relocation** — [plan](plans/components-relocation.md). Move workflow-scoped components into the workflows that need them; re-type cross-cutters (rule + ARCHITECTURE.md). Empty out `components/`, drop the enumeration from project-root CLAUDE.md.
-- **AskUserQuestion interactive workflow check** — small follow-up from `rules-migration-validation`. Invoke `/ocd:setup rules install` (no args) via slash command and verify the agent picks `AskUserQuestion` for scope + lettered target selection per `workflows/install.md`. Standalone check; no plan needed.
-- **Conditional memory loading** — [plan](plans/conditional-memory.md). Per-rule trigger-conditioned auto-load to reduce always-on token floor. Likely subsumed by the discovery-model workstream once it lands; may close.
-- **Prose → PFN sweep** — [plan](plans/pfn-sweep.md). Convert prose procedures to Process Flow Notation across the project.
-- **Sub-flow extraction sweep** — [plan](plans/subflow-extraction.md). Extract conditional sub-flows into separate workflow/component files.
-- **Working-directory limitation revocation** — small refactor: revoke the working-directory rule (currently the only content of `working-directory.md`) once `bin/` executables are callable from any directory and permission auto-approvals are adjusted accordingly. Resolves a long-standing friction without a full plan; standalone task.
+- **AskUserQuestion interactive workflow check** — small follow-up from prior rules-migration validation. Premise depends on whether setup-style interactive workflows survive the architecture refactor. Re-evaluate when Phase F (permissions to Pattern B) lands and we know what's left of the setup system.
+- **Working-directory limitation revocation** — small refactor: revoke the working-directory rule (currently the only content of `working-directory.md`) once `bin/` executables are callable from any directory and permission auto-approvals are adjusted accordingly. Standalone task; resolvable independent of the architecture refactor.
 
 ## Active sandbox branches
 
@@ -49,7 +47,7 @@ This session's commits:
 - **Conventions — system-dormancy contract** — codifies the dormancy contract (invisible until installed, zero tokens, zero side effects, hook bail-out pattern); fires on hook files, MCP servers, system `__init__.py`, `SKILL.md`
 - **System structure split** — `system-structure` (universal: 3-doc model + workflows/components) and `project-structure` (project-root: TASKS.md + plans/ + logs/ + project-only entry points) as separate conventions; both moved to `conventions/templates/`
 - **CLAUDE.md format — Paths section default** — every CLAUDE.md follows the Required Sections framework (heading + purpose, optional inline, Paths table per enumeration rule, one-line cold-pickup); `claude-md.md` and `system-structure.md` codify the format
-- **Rules migration validation — done** — see [plan](plans/rules-migration-validation.md). Validated rules + permissions through cached install; AskUserQuestion check carried over to Upcoming
+- **Rules migration validation — done** — Validated rules + permissions through cached install; AskUserQuestion check carried over to Upcoming
 
 Earlier:
 
