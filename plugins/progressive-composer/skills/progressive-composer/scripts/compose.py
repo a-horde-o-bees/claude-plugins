@@ -1,0 +1,654 @@
+"""Compose verb — workflow-driven, self-contained skill folders.
+
+    uv run -m scripts.compose new --scope <user|project>
+    uv run -m scripts.compose refine <name> --scope <user|project>
+    uv run -m scripts.compose build <name> --scope <user|project> [--force]
+    uv run -m scripts.compose list [--scope <both|user|project>] [--drift]
+
+Agent-internal sub-ops (called during compose workflows; not user-facing):
+
+    uv run -m scripts.compose add-source <name> <url>:<skill>[@<ref>] --scope <user|project>
+    uv run -m scripts.compose remove-source <name> <source-slug> --scope <user|project>
+    uv run -m scripts.compose update-sources <name> [--source <slug>] --scope <user|project>
+    uv run -m scripts.compose purge-sources <name> --scope <user|project>
+
+Stdlib-only — no PEP 723 deps, runs uniformly under module-mode `uv run`.
+"""
+
+import argparse
+import shutil
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+from scripts._clone import (
+    ls_remote_head,
+    now_iso,
+    sparse_checkout_skill,
+)
+from scripts._paths import (
+    composition_path,
+    compositions_in_scope,
+    derive_source_slug,
+    scope_skills_dir,
+    skill_folder,
+    skill_md_path,
+    source_embed_path,
+    sources_subdir,
+)
+from scripts._spec import (
+    BUILD_STATUS_BUILT,
+    Source,
+    add_source_to_spec,
+    read as read_spec,
+    remove_source_from_spec,
+    write as write_spec,
+)
+
+
+SKILL_LAYOUTS = ("skills/{skill}", "{skill}")
+
+
+def parse_source_arg(value: str) -> tuple[str, str, str | None]:
+    """Parse `<url>:<skill>` or `<url>:<skill>@<ref>` into (url, skill, ref)."""
+    ref: str | None = None
+    if "@" in value:
+        url_skill_part, _, candidate_ref = value.rpartition("@")
+        if "/" not in candidate_ref or candidate_ref.startswith("refs/"):
+            value = url_skill_part
+            ref = candidate_ref
+    if "://" in value:
+        scheme, rest = value.split("://", 1)
+        if ":" not in rest:
+            raise argparse.ArgumentTypeError(
+                f"expected `<url>:<skill>` form, got {value!r}"
+            )
+        path_part, _, skill = rest.rpartition(":")
+        url = f"{scheme}://{path_part}"
+    else:
+        if value.count(":") < 1:
+            raise argparse.ArgumentTypeError(
+                f"expected `<url>:<skill>` form, got {value!r}"
+            )
+        url, _, skill = value.rpartition(":")
+    if not url or not skill:
+        raise argparse.ArgumentTypeError(
+            f"expected `<url>:<skill>` form, got {value!r}"
+        )
+    return url, skill, ref
+
+
+def find_skill_path_in_repo(url: str, ref: str | None, skill: str) -> str:
+    """Probe upstream layout: `skills/<skill>` first, then `<skill>` at root.
+
+    Performs a tiny clone into a temp dir to ls-tree and find where the
+    requested skill folder lives. Returns the path relative to repo root.
+    """
+    with tempfile.TemporaryDirectory(prefix="probe-") as tmp:
+        clone_dir = Path(tmp) / "probe"
+        clone_args = [
+            "git",
+            "clone",
+            "--filter=blob:none",
+            "--no-checkout",
+            "--depth",
+            "1",
+        ]
+        if ref:
+            clone_args.extend(["--branch", ref])
+        clone_args.extend([url, str(clone_dir)])
+        subprocess.run(clone_args, check=True, capture_output=True, text=True)
+
+        result = subprocess.run(
+            ["git", "-C", str(clone_dir), "ls-tree", "-r", "--name-only", "HEAD"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        files = set(result.stdout.strip().splitlines())
+        for layout in SKILL_LAYOUTS:
+            candidate = layout.format(skill=skill)
+            skill_md = f"{candidate}/SKILL.md"
+            if skill_md in files:
+                return candidate
+        raise FileNotFoundError(
+            f"skill {skill!r} not found at any known layout in {url}@{ref or 'default'}"
+        )
+
+
+COMPOSED_SKILL_TEMPLATE = """\
+---
+name: {name}
+description: {description}
+---
+
+# {name}
+
+{goal_summary}
+
+<!--
+This skill was scaffolded by `compose build`. The goal articulation
+above came from the composition spec at:
+{spec_path}
+
+Refine this SKILL.md via dialogue with the user — flesh out triggers,
+verb topography, and procedural workflows drawing on the embedded
+sources at {sources_path}/<source-slug>/. Run
+`compose refine {name} --scope {scope}` periodically to detect upstream
+drift and incorporate updates.
+-->
+
+## Triggers
+
+<!-- agent fills in based on the goal articulated in composition.md -->
+
+## Verbs
+
+<!-- agent fills in based on the per-source mappings in composition.md -->
+"""
+
+
+# -----------------------------------------------------------------------------
+# compose new — workflow entry (no disk ops)
+# -----------------------------------------------------------------------------
+
+
+def cmd_new(args: argparse.Namespace) -> int:
+    print(f"compose new started — scope: {args.scope}")
+    print()
+    print("This is a workflow entry point. The script prints orchestration;")
+    print("the agent drives the dialogue. The user has not yet chosen a skill")
+    print("name — collect it through dialogue.")
+    print()
+    print("Next steps for the agent:")
+    print("  1. Ask the user:")
+    print("       - What should this skill enable Claude to do?")
+    print("       - When should this skill fire? (user phrases / contexts)")
+    print("       - What's the expected output format?")
+    print("       - What name should the skill have? (lowercase, hyphenated)")
+    print("  2. Once a name and high-level goal are chosen, use the Write")
+    print("     tool to create the composition.md scaffold at:")
+    print(f"       {scope_skills_dir(args.scope)}/<chosen-name>/composition.md")
+    print("  3. Ask the user about exemplar sources. For each one, invoke:")
+    print("       uv run -m scripts.compose add-source <chosen-name>")
+    print(f"         <url>:<skill>[@<ref>] --scope {args.scope}")
+    print("  4. Read each embedded source's SKILL.md from")
+    print("       <chosen-name>/sources/<source-slug>/SKILL.md")
+    print("     to drive dialogue.")
+    print("  5. Walk the user through goal articulation and per-source")
+    print("     mapping; edit the composition.md body via Edit tool.")
+    print("  6. When ready to materialize, invoke:")
+    print(f"       uv run -m scripts.compose build <chosen-name> --scope {args.scope}")
+    print()
+    print("composition.md scaffold (use Write tool to create):")
+    print()
+    print("---")
+    print("spec_version: 1")
+    print("name: <chosen-name>")
+    print("type: composed")
+    print("description: <one-line, populated from goal articulation>")
+    print(f"scope: {args.scope}")
+    print("sources: []")
+    print("goal_summary: <one-line summary the deployed SKILL.md body opens with>")
+    print("last_build: null")
+    print("build_status: draft")
+    print("---")
+    print()
+    print("# Goal")
+    print()
+    print("<articulated through dialogue — what does this skill enable, when does it fire, expected output>")
+    print()
+    print("## Source mapping")
+    print()
+    print("<one ### subsection per source after compose add-source invocations;")
+    print("per-source: which aspects to keep verbatim, adapt, reject>")
+    print()
+    print("## Design refinements")
+    print()
+    print("<dated entries appended on subsequent compose refine sessions>")
+    return 0
+
+
+# -----------------------------------------------------------------------------
+# compose refine — workflow re-entry (read spec, drift check, orchestrate)
+# -----------------------------------------------------------------------------
+
+
+def cmd_refine(args: argparse.Namespace) -> int:
+    spec_path = composition_path(args.name, args.scope)
+    if not spec_path.exists():
+        print(
+            f"no composition at {spec_path} — run `compose new --scope {args.scope}` to start a new one",
+            file=sys.stderr,
+        )
+        return 2
+
+    spec = read_spec(spec_path)
+
+    print(f"spec: {spec_path}")
+    print(f"status: {spec.build_status}")
+    if spec.last_build:
+        print(f"last_build: {spec.last_build}")
+
+    drifted, in_sync, issues = _check_drift(spec)
+
+    if drifted:
+        print()
+        print("drift detected:")
+        for src, current_sha in drifted:
+            print(f"  - {src.url}:{src.skill}@{src.ref} {src.commit[:8]} → {current_sha[:8]}")
+
+    if in_sync:
+        print()
+        print("in sync:")
+        for src in in_sync:
+            print(f"  - {src.url}:{src.skill}@{src.ref} @ {src.commit[:8]}")
+
+    if issues:
+        print()
+        print("issues:")
+        for src, reason in issues:
+            print(f"  - {src.url}:{src.skill}@{src.ref} — {reason}")
+
+    print()
+    print("Next steps for the agent:")
+    if drifted:
+        print("  1. Surface drift to the user — name each drifted source and the SHA shift.")
+        print("  2. For each drifted source the user wants to update, invoke:")
+        print(f"       uv run -m scripts.compose update-sources {args.name} --source <slug> --scope {args.scope}")
+    else:
+        print("  1. All sources are in sync; no updates required from upstream.")
+    print("  2. Re-read sources from the embedded `sources/<slug>/` paths to spot")
+    print("     content changes worth incorporating into the goal or per-source mapping.")
+    print("  3. Drive refinement dialogue with the user; edit composition.md body via Edit tool.")
+    print("  4. Append a dated entry to `## Design refinements` summarizing this session.")
+    return 0
+
+
+def _check_drift(spec) -> tuple[list, list, list]:
+    drifted = []
+    in_sync = []
+    issues = []
+    for src in spec.sources:
+        try:
+            current_sha = ls_remote_head(src.url, src.ref)
+        except Exception as exc:
+            issues.append((src, f"ls-remote failed: {exc}"))
+            continue
+        if current_sha == src.commit:
+            in_sync.append(src)
+        else:
+            drifted.append((src, current_sha))
+    return drifted, in_sync, issues
+
+
+# -----------------------------------------------------------------------------
+# compose build — terminal materialize
+# -----------------------------------------------------------------------------
+
+
+def cmd_build(args: argparse.Namespace) -> int:
+    spec_path = composition_path(args.name, args.scope)
+    if not spec_path.exists():
+        print(
+            f"no composition at {spec_path} — run `compose new --scope {args.scope}` first",
+            file=sys.stderr,
+        )
+        return 2
+
+    spec = read_spec(spec_path)
+    if not spec.description:
+        print(
+            "spec description is empty — set `description` in composition.md frontmatter "
+            "before building (the deployed SKILL.md needs a discoverable description)",
+            file=sys.stderr,
+        )
+        return 2
+    if not spec.goal_summary:
+        print(
+            "spec goal_summary is empty — set `goal_summary` in composition.md frontmatter "
+            "before building (the deployed SKILL.md body opens with this)",
+            file=sys.stderr,
+        )
+        return 2
+    if not spec.sources:
+        print(
+            "spec has no sources — add at least one via `compose add-source` before building",
+            file=sys.stderr,
+        )
+        return 2
+
+    skill_md = skill_md_path(args.name, args.scope)
+    if skill_md.exists() and not args.force:
+        print(
+            f"deployed SKILL.md already exists at {skill_md} — pass --force to "
+            "regenerate (this overwrites agent refinements)",
+            file=sys.stderr,
+        )
+        return 2
+
+    folder = skill_folder(args.name, args.scope)
+    folder.mkdir(parents=True, exist_ok=True)
+    (folder / "scripts").mkdir(exist_ok=True)
+    init_py = folder / "scripts" / "__init__.py"
+    if not init_py.exists():
+        init_py.write_text("")
+
+    skill_md.write_text(
+        COMPOSED_SKILL_TEMPLATE.format(
+            name=spec.name,
+            description=spec.description,
+            goal_summary=spec.goal_summary,
+            spec_path=spec_path,
+            sources_path=sources_subdir(args.name, args.scope),
+            scope=args.scope,
+        )
+    )
+
+    spec.last_build = now_iso()
+    spec.build_status = BUILD_STATUS_BUILT
+    write_spec(spec_path, spec)
+
+    print(f"built {spec.name} at {folder}")
+    print("sources used:")
+    for src in spec.sources:
+        print(f"  - {src.url}:{src.skill}@{src.ref} @ {src.commit[:8]}")
+    print(f"status: {spec.build_status}")
+    print()
+    print("Next steps for the agent:")
+    print(f"  1. Open {skill_md} and refine via dialogue with the user")
+    print("  2. Add `_<verb>.md` workflow files for each procedure the spec describes")
+    print("  3. Implement scripts in `scripts/` drawing on `sources/<source-slug>/` exemplars")
+    print(f"  4. Run `compose refine {spec.name} --scope {args.scope}` to detect upstream drift")
+    return 0
+
+
+# -----------------------------------------------------------------------------
+# compose list — overview
+# -----------------------------------------------------------------------------
+
+
+def cmd_list(args: argparse.Namespace) -> int:
+    scopes = ("user", "project") if args.scope == "both" else (args.scope,)
+    found_any = False
+
+    for scope in scopes:
+        try:
+            entries = compositions_in_scope(scope)
+        except RuntimeError:
+            continue
+        if not entries:
+            continue
+
+        print(f"{scope}-scope:")
+        for spec_path in entries:
+            try:
+                spec = read_spec(spec_path)
+            except Exception as exc:
+                print(f"  - {spec_path.parent.name} (parse error: {exc})")
+                found_any = True
+                continue
+
+            tail = ""
+            if spec.last_build:
+                tail = f", last build {spec.last_build}"
+            line = (
+                f"  - {spec.name} ({len(spec.sources)} "
+                f"source{'s' if len(spec.sources) != 1 else ''}, "
+                f"{spec.build_status}{tail})"
+            )
+            print(line)
+
+            if args.drift and spec.sources:
+                drifted, _, issues = _check_drift(spec)
+                for src, current_sha in drifted:
+                    print(
+                        f"      drift: {src.url}:{src.skill}@{src.ref} "
+                        f"{src.commit[:8]} → {current_sha[:8]}"
+                    )
+                for src, reason in issues:
+                    print(
+                        f"      issue: {src.url}:{src.skill}@{src.ref} — {reason}"
+                    )
+            found_any = True
+
+    if not found_any:
+        print("no skills deployed by progressive-composer at the requested scope(s)")
+    return 0
+
+
+# -----------------------------------------------------------------------------
+# compose add-source — agent sub-op
+# -----------------------------------------------------------------------------
+
+
+def cmd_add_source(args: argparse.Namespace) -> int:
+    spec_path = composition_path(args.name, args.scope)
+    if not spec_path.exists():
+        print(
+            f"no composition at {spec_path} — run `compose new --scope {args.scope}` first",
+            file=sys.stderr,
+        )
+        return 2
+
+    spec = read_spec(spec_path)
+
+    url, skill, ref_from_arg = args.source
+    ref = ref_from_arg or "main"
+    source_slug = derive_source_slug(url)
+
+    try:
+        skill_path = find_skill_path_in_repo(url, ref, skill)
+    except FileNotFoundError as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
+
+    embed_path = source_embed_path(args.name, source_slug, args.scope)
+    embed_path.parent.mkdir(parents=True, exist_ok=True)
+    commit = sparse_checkout_skill(url, skill_path, ref, embed_path)
+
+    source = Source(url=url, skill=skill, ref=ref, commit=commit)
+    add_source_to_spec(spec, source)
+    write_spec(spec_path, spec)
+
+    print(f"added source {url}:{skill}@{ref}")
+    print(f"  embedded at: {embed_path}")
+    print(f"  pinned commit: {commit[:8]}")
+    return 0
+
+
+# -----------------------------------------------------------------------------
+# compose remove-source — agent sub-op
+# -----------------------------------------------------------------------------
+
+
+def cmd_remove_source(args: argparse.Namespace) -> int:
+    spec_path = composition_path(args.name, args.scope)
+    if not spec_path.exists():
+        print(
+            f"no composition at {spec_path}", file=sys.stderr,
+        )
+        return 2
+
+    spec = read_spec(spec_path)
+    # Match by source-slug (since slug is what the user remembers from the embed dir)
+    matches = [s for s in spec.sources if derive_source_slug(s.url) == args.source_slug]
+    if not matches:
+        print(
+            f"no source with slug {args.source_slug!r} in composition {args.name}",
+            file=sys.stderr,
+        )
+        return 2
+
+    for src in matches:
+        remove_source_from_spec(spec, src.url, src.skill)
+
+    embed_path = source_embed_path(args.name, args.source_slug, args.scope)
+    if embed_path.exists():
+        shutil.rmtree(embed_path)
+
+    write_spec(spec_path, spec)
+
+    print(f"removed source {args.source_slug} from {args.name}")
+    return 0
+
+
+# -----------------------------------------------------------------------------
+# compose update-sources — agent sub-op
+# -----------------------------------------------------------------------------
+
+
+def cmd_update_sources(args: argparse.Namespace) -> int:
+    spec_path = composition_path(args.name, args.scope)
+    if not spec_path.exists():
+        print(
+            f"no composition at {spec_path}", file=sys.stderr,
+        )
+        return 2
+
+    spec = read_spec(spec_path)
+    targets = spec.sources
+    if args.source:
+        targets = [s for s in spec.sources if derive_source_slug(s.url) == args.source]
+        if not targets:
+            print(
+                f"no source with slug {args.source!r} in composition {args.name}",
+                file=sys.stderr,
+            )
+            return 2
+
+    for src in targets:
+        try:
+            skill_path = find_skill_path_in_repo(src.url, src.ref, src.skill)
+        except FileNotFoundError as exc:
+            print(f"skip {src.url}:{src.skill}@{src.ref} — {exc}", file=sys.stderr)
+            continue
+
+        slug = derive_source_slug(src.url)
+        embed_path = source_embed_path(args.name, slug, args.scope)
+        embed_path.parent.mkdir(parents=True, exist_ok=True)
+        old_commit = src.commit
+        new_commit = sparse_checkout_skill(src.url, skill_path, src.ref, embed_path)
+        src.commit = new_commit
+        print(
+            f"updated {src.url}:{src.skill}@{src.ref} "
+            f"{old_commit[:8] if old_commit else 'unset'} → {new_commit[:8]}"
+        )
+
+    write_spec(spec_path, spec)
+    return 0
+
+
+# -----------------------------------------------------------------------------
+# compose purge-sources — agent sub-op
+# -----------------------------------------------------------------------------
+
+
+def cmd_purge_sources(args: argparse.Namespace) -> int:
+    spec_path = composition_path(args.name, args.scope)
+    if not spec_path.exists():
+        print(f"no composition at {spec_path}", file=sys.stderr)
+        return 2
+
+    sources_dir = sources_subdir(args.name, args.scope)
+    if not sources_dir.exists():
+        print(f"no sources/ subfolder at {sources_dir}; nothing to purge")
+        return 0
+
+    shutil.rmtree(sources_dir)
+    print(f"purged {sources_dir}")
+    print("composition.md commits remain pinned; future `compose refine` auto-rehydrates")
+    return 0
+
+
+# -----------------------------------------------------------------------------
+# argparse wiring
+# -----------------------------------------------------------------------------
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(
+        prog="compose",
+        description="Workflow-driven, self-contained skill composition.",
+    )
+    sub = parser.add_subparsers(dest="verb", required=True)
+
+    # User-facing
+    new = sub.add_parser("new", help="open a new-composition workflow")
+    new.add_argument(
+        "--scope",
+        required=True,
+        choices=("user", "project"),
+        help="scope where the composition will live",
+    )
+
+    refine = sub.add_parser("refine", help="re-enter an existing composition with drift check")
+    refine.add_argument("name", help="composition skill name")
+    refine.add_argument("--scope", required=True, choices=("user", "project"))
+
+    build = sub.add_parser("build", help="materialize composition.md into a deployed skill")
+    build.add_argument("name", help="composition skill name")
+    build.add_argument("--scope", required=True, choices=("user", "project"))
+    build.add_argument(
+        "--force",
+        action="store_true",
+        help="overwrite an existing deployed SKILL.md",
+    )
+
+    list_cmd = sub.add_parser("list", help="show all deployed skills and their status")
+    list_cmd.add_argument(
+        "--scope",
+        choices=("user", "project", "both"),
+        default="both",
+    )
+    list_cmd.add_argument(
+        "--drift",
+        action="store_true",
+        help="run git ls-remote per source to detect upstream drift",
+    )
+
+    # Agent sub-ops
+    add_src = sub.add_parser("add-source", help="(agent sub-op) add a source to a composition")
+    add_src.add_argument("name", help="composition skill name")
+    add_src.add_argument(
+        "source",
+        type=parse_source_arg,
+        metavar="URL:SKILL[@REF]",
+    )
+    add_src.add_argument("--scope", required=True, choices=("user", "project"))
+
+    rm_src = sub.add_parser("remove-source", help="(agent sub-op) remove a source from a composition")
+    rm_src.add_argument("name", help="composition skill name")
+    rm_src.add_argument("source_slug", help="source slug (derived from URL)")
+    rm_src.add_argument("--scope", required=True, choices=("user", "project"))
+
+    upd_src = sub.add_parser("update-sources", help="(agent sub-op) re-fetch source(s) at upstream HEAD")
+    upd_src.add_argument("name", help="composition skill name")
+    upd_src.add_argument(
+        "--source",
+        help="source slug to update (default: all sources)",
+    )
+    upd_src.add_argument("--scope", required=True, choices=("user", "project"))
+
+    pg_src = sub.add_parser("purge-sources", help="(agent sub-op) delete the sources/ subfolder")
+    pg_src.add_argument("name", help="composition skill name")
+    pg_src.add_argument("--scope", required=True, choices=("user", "project"))
+
+    args = parser.parse_args()
+
+    dispatch = {
+        "new": cmd_new,
+        "refine": cmd_refine,
+        "build": cmd_build,
+        "list": cmd_list,
+        "add-source": cmd_add_source,
+        "remove-source": cmd_remove_source,
+        "update-sources": cmd_update_sources,
+        "purge-sources": cmd_purge_sources,
+    }
+    return dispatch[args.verb](args)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

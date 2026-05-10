@@ -225,3 +225,109 @@ For cross-system or cross-plugin requirements, `requires:` lists the canonical n
 - **Enables:** declarative deps for install machinery; clear runtime failure mode when deps missing; cross-skill prerequisites without coupling skills tightly
 - **Constrains:** authoring discipline must keep `requires:` and the body-top assertion in sync; the assertion is agent-readable text, not a deterministic check (agent-faithful execution required); future tightening could move assertion to a deterministic check via bin tool if needed
 
+## Hyphenated folder names per agentskills.io spec
+
+### Context
+
+The [agentskills.io specification](https://agentskills.io/specification) and the [Claude Code skills doc](https://code.claude.com/docs/en/skills) require skill names to match `[a-z0-9-]+` — lowercase alphanumerics and hyphens only. The `name` field must match the parent directory name.
+
+The current `plugins/ocd/systems/` tree uses underscored folder names for multi-word systems (`needs_map`, `progressive_composer`), driven by a self-imposed constraint: the folders are imported as Python packages by `bin/ocd-run` via `runpy.run_module("systems.<name>")`, and Python identifiers cannot contain hyphens.
+
+Corpus research surveyed `anthropics/skills` (17 skills) and four community repos (~330+ skills total). Every skill folder is hyphenated. None violate the spec rule. The Python-import constraint is universally resolved by *not importing the skill folder*: Python lives in a child directory (`scripts/`, `core/`, `lib/`) which carries its own underscore-friendly name, while the parent stays hyphenated and is only ever a filesystem location.
+
+### Options Considered
+
+**Keep underscored folders, prioritize Python-import ergonomics.** Rejected: violates the agentskills.io spec; diverges from every surveyed skill in the wild; would fail the official `skills-ref validate` tool; readers familiar with skills don't recognize the shape.
+
+**Hyphenate folders, decouple Python package from folder name (`needs-map/lib/needs_map/`).** Rejected: spec-compliant but retains the bespoke wrapper-dispatcher layer that has no community precedent; readers still encounter an unfamiliar shape.
+
+**Hyphenate folders, move Python into `scripts/` per community pattern.** Adopted.
+
+### Decision
+
+Every skill folder is hyphenated. Multi-word skills follow the community pattern: `slack-formatting/`, `progressive-composer/`, `needs-map/`. The folder name matches the SKILL.md frontmatter `name` field (the spec mandates this).
+
+Python implementation moves into a child directory (`scripts/` is the dominant convention in `anthropics/skills`; `core/` and `lib/` appear in some community repos). The child directory uses an underscore-friendly name and is the importable Python package. The skill folder itself is never imported — it is only ever a filesystem path.
+
+### Consequences
+
+- **Enables:** spec compliance; mainstream-conformant folder names; recognition by `skills-ref validate`; alignment with every surveyed skill
+- **Constrains:** any tooling that walks `plugins/<plugin>/skills/` must accept hyphens in folder names; existing ocd `systems/<sys>/` underscored folders need migration during Phase E of the architecture refactor
+
+## Python lives in `scripts/`, invoked relative to skill root
+
+### Context
+
+With folders hyphenated, the question becomes how the Python implementation is laid out and invoked. Corpus research found a uniform community pattern across `anthropics/skills` and surveyed third-party repos.
+
+### Decision
+
+Python implementation lives at `<skill>/scripts/` as a Python package (with `__init__.py` when intra-script imports are needed) or as flat scripts (when each script stands alone). SKILL.md invokes scripts with relative paths, with cwd at the skill root:
+
+```
+python scripts/<verb>.py <args>
+python -m scripts.<module> <args>          # when scripts/ is a package
+uv run scripts/<verb>.py <args>            # when deps are needed (PEP 723)
+```
+
+Companion subdirectories follow the same naming flexibility — `core/`, `lib/`, `helpers/` — chosen by the skill author when `scripts/` doesn't fit. The constraint is consistent: the Python package lives one level below the skill folder, never IS the skill folder.
+
+The `_<verb>.md` workflow files (per *Flat layout*) sit alongside `scripts/` and SKILL.md at the skill root, not inside `scripts/`. Markdown workflows and Python implementation are sibling concerns — neither nests the other.
+
+### Consequences
+
+- **Enables:** Python imports work from inside the skill via `from scripts.foo import bar`; mainstream pattern recognized by every reader familiar with skills; trivial to invoke (`cd <skill> && python scripts/...`)
+- **Constrains:** SKILL.md procedures must establish cwd at the skill root before invoking scripts; tools that resolve paths from outside the skill folder (e.g., from a project root) need to anchor on the skill folder explicitly
+
+## Dependencies via `uv run`, no plugin-level venv dispatcher
+
+### Context
+
+The current `bin/<plugin>-run` dispatcher resolves a plugin venv (per `logs/decision/ocd-run-self-update.md`) and execs into `runpy.run_module`. It supports manifest-diff self-update, multi-mode venv discovery (Claude Code cache, --plugin-dir, dev checkout), and PATH-accessible bare-name invocation.
+
+Corpus research found zero community skills using a wrapper-dispatcher layer. The dominant pattern for skills with deps is PEP 723 inline-script declarations consumed by `uv run`:
+
+```python
+# /// script
+# dependencies = ["openpyxl>=3.1"]
+# ///
+
+import openpyxl
+...
+```
+
+`uv run` resolves and caches dependencies per-invocation transparently. No plugin-managed venv. No discovery layer. No self-update on manifest drift — `uv` handles that internally. The same `uv run` invocation works for stdlib-only scripts (no deps to resolve, just runs Python).
+
+### Options Considered
+
+**Retain `<plugin>-run` for venv self-update; coexist with community pattern.** Rejected: the dispatcher is the foundation our existing pattern is built on; keeping it for some skills and not others creates two parallel mechanisms. Mainstream conformance means the wrapper layer goes for new skills.
+
+**Adopt `uv run` uniformly; deprecate `<plugin>-run` for new skills.** Adopted.
+
+**Branch invocation by dep state — `python3` for stdlib, `uv run` only when deps declared.** Rejected. Two invocation forms across one skill family creates surface area for drift: SKILL.md examples, agent-side recall, and tests all encode the form. A script that starts stdlib-only and later adds a single dep would force every consumer to update their invocation. Uniform `uv run` removes the branching entirely; the cost — `uv` as a prerequisite even for stdlib-only scripts — is the same `uv` that the community ecosystem already standardizes on.
+
+### Decision
+
+All scripts invoke via `uv run`, regardless of dep state:
+
+```
+uv run -m scripts.<verb> <args>
+```
+
+Cwd is the skill folder. Module-mode (`-m`) suits skills with multiple verbs sharing helpers via package imports (`from scripts._paths import ...`). Single-script skills with no inter-script imports may use `uv run scripts/<verb>.py <args>` instead — both forms are mainstream-conformant; module-mode is the default for our authoring.
+
+`uv` is a soft prerequisite for every skill we ship. Skills declare this in their `## Requirements` section (per *Dependencies declared via `requires:` with body-top assertion*) so the bail-out message points users at the `uv` install instructions when missing.
+
+When a script adds a third-party dependency, the author adds a PEP 723 directive at the top of that script. The invocation form does not change. Existing consumers' workflows do not change.
+
+The existing `bin/ocd-run` and `bin/ocd-path` survive only as long as the ocd plugin's underscored `systems/<sys>/` folders survive. Phase E of the architecture refactor migrates ocd to the community pattern; at the end of that phase, `bin/<plugin>-run` deletes from the ocd plugin entirely.
+
+`progressive-composer` ships under the new pattern from day one — no `bin/`, no `run.py`, no vendored `tools/` package. It pilots the community shape that ocd will eventually match.
+
+### Consequences
+
+- **Enables:** mainstream-conformant invocation; per-invocation dep resolution via `uv` (more robust than manifest-diff self-update because `uv` handles version drift, lockfiles, and isolation natively); no plugin-level venv to manage; skills are independently portable to any of the four locations Claude Code loads from without dispatcher infrastructure; uniform invocation across all scripts means SKILL.md examples and tests don't fork by dep state
+- **Constrains:** users without `uv` installed cannot run any of our skills until they install it (acceptable — `uv` is the ecosystem's standard tool for Python dep management and ships as a small static binary); stdlib-only scripts pay a small `uv` startup cost per invocation (~tens of ms) compared to bare `python3`, which is acceptable in exchange for uniform invocation; the `<plugin>-run` self-update mechanism (`logs/decision/ocd-run-self-update.md`) becomes legacy infrastructure scoped to ocd's pre-migration state; `tools/environment.py` propagation across plugins (per `.githooks/pre-commit`) is no longer needed once skills carry their own minimal env-resolution helpers in `scripts/`
+- **Supersedes:** the `## Self-described location scoped to wrap mode` decision above — without a wrapper dispatcher, there is no "wrap mode" that progressive-composer applies. Path resolution stays mainstream: cwd at skill root, relative paths from there
+- **Migration:** `logs/decision/ocd-run-self-update.md` should carry a supersession note pointing here; ocd's `bin/ocd-run`, `bin/ocd-path`, `run.py`, `tools/environment.py`, `tools/errors.py`, and the `.githooks/pre-commit` propagation rules retire when Phase E completes
+

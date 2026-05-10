@@ -1,0 +1,14 @@
+{
+  "name": "progressive-composer",
+  "version": "0.0.2",
+  "description": "Track external skill repos, install individual skills selectively, and refactor third-party skills into the progressive-disclosure shape \u2014 the meta-tool layer the marketplace doesn't provide",
+  "author": {
+    "name": "a-horde-o-bees"
+  },
+  "homepage": "https://github.com/a-horde-o-bees/claude-plugins",
+  "repository": "https://github.com/a-horde-o-bees/claude-plugins",
+  "license": "MIT",
+  "skills": [
+    "./skills/"
+  ]
+}

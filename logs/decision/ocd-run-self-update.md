@@ -6,6 +6,8 @@ log-role: reference
 
 Decision making `ocd-run` self-trigger `install_deps.sh` when it detects a manifest drift between the cached plugin source and the installed venv. Eliminates session-restart-required UX after plugin upgrades.
 
+> **Superseded for new skills.** The `bin/<plugin>-run` dispatcher pattern is being retired in favor of the community standard — direct `python3 scripts/<verb>.py` invocation with PEP 723 + `uv run` for dependencies. See `logs/decision/skill-authoring.md` § *Dependencies via PEP 723 + `uv run`, no plugin-level venv dispatcher*. This file remains the canonical record of the self-update mechanism that ships with the ocd plugin's pre-migration `bin/ocd-run` and `bin/ocd-path` binaries; both retire when Phase E of `plans/architecture-refactor.md` completes the ocd migration to the community shape.
+
 ## Context
 
 Today's flow on plugin upgrade:

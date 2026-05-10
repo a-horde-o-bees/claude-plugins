@@ -14,7 +14,7 @@ Reduce always-on context cost while making our skills mainstream-discoverable on
 
 **Rules system — always-on discipline library.** Curated behavioral disciplines that fire on every utterance (honesty, principle-not-symptom, fix-foundations-not-symptoms, etc.). Deployed to `<scope>/.claude/rules/<plugin>/<system>/`. Project opts into specific rules at install. New behavioral content defaults to skills, not rules — rules are the always-on layer for disciplines that genuinely cannot be reach-for. See `logs/decision/skill-architecture.md` for the categorization tests.
 
-**Skills — reach-for capabilities.** Procedural workflows, tool bridges, behavioral guides, conventions. Standard mainstream `<skill-name>/SKILL.md` folder format. Frontmatter `description` does double-duty: discoverable on marketplaces AND cognitive-trigger-precise. Body shape: triggers + command topography; deeper procedural content reached via `Call: _<component>.md` or bash `Call: !` `<plugin>-run <verb>` ``. Flat layout — `_<verb>.md` and `_<component>.md` siblings of SKILL.md; underscore prefix signals "called only, never opened directly." See `logs/decision/skill-authoring.md`.
+**Skills — reach-for capabilities.** Procedural workflows, tool bridges, behavioral guides, conventions. Standard mainstream `<skill-name>/SKILL.md` folder format — folder names hyphenated per agentskills.io spec. Frontmatter `description` does double-duty: discoverable on marketplaces AND cognitive-trigger-precise. Body shape: triggers + command topography; deeper procedural content reached via `Call: _<component>.md` or uniform `uv run -m scripts.<verb> <args>` invocation (PEP 723 inline-script directives carry any third-party deps). Flat layout — `_<verb>.md` and `_<component>.md` siblings of SKILL.md; underscore prefix signals "called only, never opened directly." Python implementation lives in `<skill>/scripts/` (or `core/`, `lib/` per author choice), never in the skill folder itself. See `logs/decision/skill-authoring.md`.
 
 **Dependencies — shared content.** Single canonical copy at `<scope>/.claude/dependencies/<name>.md`. Sources declare `requires: [<name>, ...]` in frontmatter. Skill body asserts dependency presence at top; bails with corrective message if missing. Lifecycle: install on first need, leave-on-uninstall (no refcount machinery; user-decided artifacts).
 
@@ -32,11 +32,14 @@ Both paths materialize from the same source repo. Plugin manifests bundle subset
 <repo-root>/
 ├── .claude-plugin/
 │   └── marketplace.json          # defines N thematic plugin bundles
-├── skills/                        # all skills as folders (one per skill)
-│   ├── <skill-name-1>/
+├── skills/                        # all skills as folders (one per skill, hyphenated)
+│   ├── <skill-name-1>/            # e.g. progressive-composer, slack-formatting
 │   │   ├── SKILL.md
 │   │   ├── _<verb>.md             # internal verb workflows (called only)
 │   │   ├── _<component>.md        # internal reusable sub-procedures
+│   │   ├── scripts/               # python implementation (importable package)
+│   │   │   ├── __init__.py
+│   │   │   └── <verb>.py
 │   │   ├── README.md              # optional, when substantial
 │   │   └── ARCHITECTURE.md        # optional, when substantial
 │   ├── <skill-name-2>/
@@ -44,6 +47,8 @@ Both paths materialize from the same source repo. Plugin manifests bundle subset
 ├── dependencies/                  # cross-skill shared content (PFN, etc.)
 └── README.md
 ```
+
+All skills invoke uniformly via `uv run -m scripts.<verb> <args>` regardless of dep state. Stdlib-only skills run unchanged; skills with third-party deps add PEP 723 inline-script directives at the top of the relevant `scripts/*.py` files and `uv run` resolves them transparently. No plugin-level `bin/<plugin>-run` dispatcher, no plugin-level venv — `uv` is a soft prerequisite for every skill we ship. See `logs/decision/skill-authoring.md` § *Dependencies via `uv run`*.
 
 ### Plugin compartmentalization
 
@@ -90,13 +95,15 @@ The yagni rule is removed (template + deployed copy). YAGNI conflicts with the u
 - includes/excludes path-glob mechanism — already gone; replaced by frontmatter-description triggering
 - Conventions deployment directory — conventions become categorical skills (opt-in, project-shape-changing)
 - YAGNI rule — removed
-- Self-described location discipline — scoped to wrap/shim mode in progressive-composer only; not a general improvement
+- Self-described location discipline — supplanted by mainstream invocation; no wrap-mode dispatcher, so no preamble required (see `logs/decision/skill-authoring.md` § *Dependencies via `uv run`*)
+- `bin/<plugin>-run` dispatcher pattern (`bin/ocd-run`, `bin/ocd-path`) — community pattern is direct `uv run -m scripts.<verb>` invocation; the dispatcher layer retires when ocd's underscored `systems/<sys>/` migrate during Phase E
+- `plugins/<plugin>/run.py` module loader — same fate; module loading was a function of the dispatcher, gone with it
+- Underscored skill folder names (`needs_map`, etc.) — agentskills.io spec mandates `[a-z0-9-]+`; every folder hyphenates during Phase E
+- Vendored `tools/environment.py` and `tools/errors.py` propagation across plugins (`.githooks/pre-commit`) — once the dispatcher and `runpy.run_module` chain is gone, env/error helpers either inline into the few scripts that need them or stay scoped to one plugin without cross-plugin propagation
 
 ### What survives
 
-- `bin/ocd-path` — useful when progressive-composer wraps third-party skills with a shim that resolves cache paths
-- `bin/ocd-run` self-update — manifest-diff before exec; transparent plugin upgrades
-- State location convention — bin-mediated state to plugin data dir; user-edited artifacts in project tree
+- State location convention — plugin data dir for cache and per-project state keyed on path-hash; the location story is unchanged, only the dispatcher that mediates writes goes away. progressive-composer's scripts write directly to data dir without a wrapper layer
 - Dependencies layer — simplified (leave-on-uninstall, no refcount; `<scope>/.claude/dependencies/` location since they're Claude Code framework infrastructure)
 - Rules system — always-on discipline library
 - MCP servers themselves (benched, not deleted) — reactivate when justified
@@ -123,15 +130,42 @@ Surviving from prior architectural work (no changes):
 
 ### Phase B — Build progressive-composer plugin
 
-> Foundational meta-plugin. Built before migrating any of our content because it's the install path we'll use on ourselves.
+> Foundational meta-plugin. Built before migrating any of our content because it's the install path we'll use on ourselves. Pilots the community-pattern shape that ocd will eventually match — hyphenated folder, `scripts/` Python package, no dispatcher.
 
-1. Scaffold `progressive-composer/` source tree following the anthropic-style repo layout
-2. Implement repo/marketplace tracking — config file storing tracked sources, last-sync timestamps, sync mode per skill (synced vs reimplemented)
-3. Implement clone-unmodified pipeline — `git clone` to managed cache; preserve LICENSE and metadata
-4. Implement individual skill install — copy `<source>/skills/<skill>/` to `<scope>/.claude/skills/<skill>/`
-5. Implement session-start sync for source-tracking skills — diff cache against source, refresh on drift
-6. Implement intelligent recheck for reimplemented skills — diff cache against last-known-source, surface to user
-7. Implement refactor command — operates on a skill folder, produces a progressive-disclosure-shaped variant
+**History.** Phase B went through three design iterations during implementation:
+
+1. **Initial subsets 1–4** built around a separate sources registry (`sources.json`), shared cache directory, and a working-area-vs-deployed-skill split. Implementation surfaced workflow-shape problems and over-distributed storage.
+2. **First redesign** collapsed subsets 1–4 into a single all-in-one model: self-contained skill folders, sparse-checkout per skill, composition.md inline. Included install/uninstall verbs as part of the plugin's surface.
+3. **Final redesign** (this is the locked design) drops install/uninstall after research showed Vercel's `npx skills` covers that surface; bakes PFN + progressive-disclosure authoring discipline into compose build's output as the differentiating value-add. See `logs/decision/progressive-composer.md` § *Compose verb — workflow-driven, self-contained skill folders* for full rationale.
+
+**Locked Phase B scope — compose-only meta-plugin:**
+
+1. Scaffold `plugins/progressive-composer/` with `.claude-plugin/plugin.json`, README, ARCHITECTURE, LICENSE, `skills/progressive-composer/` (hyphenated). No `bin/`, no `run.py`, no vendored `tools/` package. One skill matching plugin name (Anthropic 1:1 convention)
+2. Sparse-checkout primitive — `git clone --filter=blob:none --sparse <url> <dest>` + `git sparse-checkout set <skill-path>` to fetch one skill folder from upstream without cloning the whole repo
+3. `compose new --scope <user|project>` — workflow entry; script outputs orchestration; agent collects skill name and goal via dialogue, writes initial composition.md via Write tool, invokes `compose add-source` for each chosen exemplar, drives goal-articulation dialogue, eventually invokes `compose build`
+4. `compose refine <name> --scope <user|project>` — workflow re-entry; script reads composition.md, runs `git ls-remote` per source for drift detection, prints status report; agent surfaces drift, asks user about updating drifted sources via `compose update-sources`, drives refinement dialogue
+5. `compose build <name> --scope <user|project> [--force]` — generate SKILL.md from composition.md drawing on embedded `sources/<source-slug>/` content. Output follows progressive-disclosure shape (frontmatter + body triggers + verb topography pointing at `_<verb>.md` files); workflow files use PFN notation. Generates `scripts/__init__.py` package skeleton. Refuses to overwrite without `--force`
+6. `compose list [--scope <both|user|project>] [--drift]` — walk `<scope>/.claude/skills/*/composition.md`; without `--drift` reports last-known status; with `--drift` runs `git ls-remote` per source per composition for live drift report
+7. Agent-internal sub-ops (called during compose workflows; not user-facing): `compose add-source`, `compose remove-source`, `compose update-sources`, `compose purge-sources`
+
+**What the locked redesign eliminates from in-flight code:**
+
+- `sources.json` registry — each skill's composition.md is its own provenance record
+- Shared `cache/<source>/` directory — per-skill sparse-checkouts under `<skill>/sources/<source-slug>/`
+- `track`/`untrack`/`sync` verbs — sparse-checkout fetches when needed; ls-remote for drift
+- Separate `compositions/<name>.md` working area — inline at `<scope>/.claude/skills/<name>/composition.md`
+- `installed.json` registries — walking `<scope>/.claude/skills/*/composition.md` enumerates everything we deployed
+- `compose recheck` as a separate verb — folded into `compose list --drift` and `compose refine` entry
+- `<scope>/.claude/progressive-composer-a-horde-o-bees/` plugin-namespaced user-edited directory — compositions live in their skill folders
+- `install` / `uninstall` verbs and `type: install|composed` discriminator — Vercel's `npx skills` covers the install case; we focus on composition. composition.md schema simplifies to one shape (always a composition)
+
+**Out of scope (covered elsewhere in the ecosystem):**
+
+- Direct install of unmodified upstream skills — Vercel's `npx skills add <repo> --skill <name>` handles this. README points users at it explicitly.
+- Symlink-based auto-fresh upstream tracking — `npx skills` symlinks; updates flow automatically. progressive-composer's drift tracking is for compositions where pinning is the point.
+- Personal-track via branch (originally subset 5) — obsoleted by self-contained skill folders. User git-tracks `<scope>/.claude/skills/<name>/` directly.
+
+SKILL.md invokes scripts uniformly as `uv run -m scripts.<verb> <args>` regardless of dep state. Cwd is the skill folder before script invocation. composition.md lives at `<scope>/.claude/skills/<name>/composition.md` — frontmatter for drift-detection metadata + provenance, body for design intent. The skill folder is the unit of everything — recipe, exemplars, output.
 
 ### Phase C — Convert one ocd system to validate the format
 
@@ -155,18 +189,26 @@ Surviving from prior architectural work (no changes):
 
 ### Phase E — Convert remaining ocd systems to skill format
 
-> Each system migrates as its own focused commit. Order: skill-only systems first (smaller surface), code-bearing systems after.
+> Each system migrates as its own focused commit. Order: skill-only systems first (smaller surface), code-bearing systems after. Migration also hyphenates folder names per the community pattern adopted in `logs/decision/skill-authoring.md`.
 
-Pending migrations: refactor, conventions, log (if not pilot), needs_map, sandbox, retrospective, git, check, pdf. Plus convert `init-project-skill` plan into actual skill (`plans/init-project-skill.md` carries scope).
+Pending migrations: refactor, conventions, log (if not pilot), needs-map, sandbox, retrospective, git, check, pdf. Plus convert `init-project-skill` plan into actual skill (`plans/init-project-skill.md` carries scope).
 
 For each:
 
-- Move from `plugins/ocd/systems/<sys>/` to `plugins/<plugin>/skills/<sys>/` (or new plugin if compartmentalization splits this skill out)
+- Move from `plugins/ocd/systems/<sys>/` to `plugins/<plugin>/skills/<skill-name>/` (hyphenated; e.g. `needs_map` → `needs-map`); new plugin if compartmentalization splits this skill out
 - Author SKILL.md per format conventions
 - Extract verbs and components to `_<name>.md` siblings
+- Move Python implementation from the old `systems/<sys>/` package layout into `skills/<skill-name>/scripts/`. Replace `ocd-run <sys> <verb>` invocations in markdown with `uv run -m scripts.<verb>` (PEP 723 inline-script directives carry deps where present)
 - Update marketplace.json plugin manifests to include the migrated skill in the appropriate bundle
 - Remove dead artifacts (CLAUDE.md operational ref, workflows/, components/ folder structure)
 - PFN sweep on the migrated skill's procedural content (`plans/pfn-sweep.md` lands per-system, not as a separate pass)
+
+When the last system migrates out of `plugins/ocd/systems/`, the dispatcher infrastructure retires:
+
+- Delete `plugins/ocd/bin/ocd-run`, `plugins/ocd/bin/ocd-path`, `plugins/ocd/run.py`
+- Delete `plugins/ocd/tools/environment.py` and `plugins/ocd/tools/errors.py` (or inline what scripts still need)
+- Strip the propagation rules from `.githooks/pre-commit` for the now-deleted shared files
+- Revoke any `ocd-run` and `ocd-path` allowlist entries in `.claude/settings.json`
 
 ### Phase F — Permissions to Pattern B
 
@@ -214,12 +256,10 @@ For each:
 
 ## State
 
-Phase A in progress (this commit). Phase B is next pickup.
+Phase A landed in commit `da37142`. Phase B is in progress on main — progressive-composer scaffold under the community pattern (hyphenated folder, `scripts/` Python, no dispatcher).
 
-What's already committed from prior architectural work that survives:
+The decision to drop `bin/<plugin>-run` and adopt the community pattern arrived during Phase B kickoff after corpus research surveyed `anthropics/skills` and ~330 community skills. Captured in `logs/decision/skill-authoring.md` § *Hyphenated folder names per agentskills.io spec*, *Python lives in `scripts/`*, and *Dependencies via `uv run`*. The earlier `ocd-run-self-update.md` decision is superseded for new skills (kept as the canonical record of what the legacy ocd dispatcher does until Phase E retires it).
 
-- `plugins/ocd/bin/ocd-path` (`c16433f`) — useful for progressive-composer's refactor mode if it produces wrapping shims for third-party skills
-- `plugins/ocd/bin/ocd-run` self-update (`c16433f`) — transparent plugin upgrades; preserved
-- Permissions allowlist for `ocd-path` (`9fb1b5e`, unpushed) — clean checkpoint cycle should push it before Phase B begins
+Pre-refactor artifacts surviving as legacy infrastructure scoped to ocd's pre-migration state: `plugins/ocd/bin/ocd-run`, `plugins/ocd/bin/ocd-path`, `plugins/ocd/run.py`, `plugins/ocd/tools/environment.py`, the permissions allowlist for `ocd-path` and `ocd-run`. All retire when Phase E completes the ocd migration.
 
 Doc rot scope: `plugins/ocd/README.md` and `plugins/ocd/ARCHITECTURE.md` describe pre-refactor mechanisms (convention-gate hook, includes/excludes). Holistic rewrite when Phase E or G completes — not chip-by-chip during the migration. Same for project-root `ARCHITECTURE.md` if it references defunct mechanisms.

@@ -1,9 +1,18 @@
 """Per-suite venv resolution.
 
 The project venv at `<project>/.venv/bin/python3` backs project-level
-tests. Each plugin's tests run under that plugin's own venv at
+tests. Plugins with their own dependency manifest (`install_deps.sh` +
+`pyproject.toml`) run their tests under the plugin venv at
 `~/.claude/plugins/data/<plugin>-<namespace>/venv/bin/python3`, where
 install_deps.sh installs the plugin's requirements on SessionStart.
+
+Stdlib-only plugins authored under the community-skill pattern (no
+`install_deps.sh`, no plugin-level pyproject.toml — e.g.
+progressive-composer) have no plugin venv at all; their tests fall
+back to the project venv. The fallback is structurally gated: only
+plugins whose source tree lacks `hooks/install_deps.sh` qualify, so
+plugins that DO declare their own deps still surface loudly when their
+venv is missing rather than silently masking dependency drift.
 
 When both marketplace and inline dev venvs exist for the same plugin,
 marketplace wins — tests should exercise the version users have
@@ -34,12 +43,21 @@ def resolve_project_venv() -> Path:
 def resolve_plugin_venv(plugin_name: str) -> Path:
     """Return path to the named plugin's venv python3.
 
-    Searches `~/.claude/plugins/data/` for matching plugin data directories.
-    Prefers marketplace install (`<plugin>-<namespace>`) over inline dev
-    (`<plugin>-inline`). Raises RuntimeError when no matching venv is
-    found — plugins with missing venvs should surface loudly rather than
-    fall back to the project venv, which silently masks dependency drift.
+    For plugins that ship `hooks/install_deps.sh` (the dependency-manifest
+    pattern), searches `~/.claude/plugins/data/` for matching plugin
+    data directories. Prefers marketplace install (`<plugin>-<namespace>`)
+    over inline dev (`<plugin>-inline`). Raises RuntimeError when no
+    matching venv is found — these plugins should surface loudly rather
+    than fall back to the project venv, which would silently mask
+    dependency drift.
+
+    For stdlib-only plugins (no `install_deps.sh`), returns the project
+    venv directly — they have no third-party deps so the project venv's
+    pytest is sufficient to exercise their tests.
     """
+    if not _plugin_declares_own_venv(plugin_name):
+        return resolve_project_venv()
+
     data_dir = environment.get_claude_home() / "plugins" / "data"
     if not data_dir.is_dir():
         raise RuntimeError(
@@ -65,3 +83,10 @@ def resolve_plugin_venv(plugin_name: str) -> Path:
         f"no venv found for plugin `{plugin_name}` under {data_dir} — "
         "ensure the plugin is installed and its SessionStart hook has run",
     )
+
+
+def _plugin_declares_own_venv(plugin_name: str) -> bool:
+    """A plugin owns a venv when its source tree ships `hooks/install_deps.sh`."""
+    project_root = environment.get_project_dir()
+    install_script = project_root / "plugins" / plugin_name / "hooks" / "install_deps.sh"
+    return install_script.is_file()

@@ -11,6 +11,12 @@
       "source": "./plugins/ocd",
       "description": "Deterministic enforcement of permissions, rules, and structural conventions with agent-facing project navigation",
       "category": "development"
+    },
+    {
+      "name": "progressive-composer",
+      "source": "./plugins/progressive-composer",
+      "description": "Track external skill repos, install individual skills selectively, and refactor third-party skills into the progressive-disclosure shape",
+      "category": "development"
     }
   ]
 }

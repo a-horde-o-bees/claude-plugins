@@ -6,10 +6,23 @@ Project-scoped scan-once view. Per-sandbox `SANDBOX-TASKS.md` files (seeded by `
 
 ## In progress
 
-- **Architecture refactor** — [plan](plans/architecture-refactor.md). Skills as the atomic unit of distribution; plugins as packaging conveniences for marketplace surface; new `progressive-composer` plugin fills the individual-skill-management gap; rules-system retains the always-on discipline library; conventions become categorical opt-in skills; MCP servers benched until context-cost case justifies reactivation; permissions becomes a Pattern B installer skill. Decisions captured across seven logs (`skill-architecture`, `skill-authoring`, `progressive-composer`, `plugin-compartmentalization`, `hook-scoping`, `mcp-benching`, `yagni-revocation`); two prior decisions survive (`state-location`, `ocd-run-self-update`). Phases A–I.
-    - Phase A (decisions + plan) — done, this commit
-    - Phase B (build progressive-composer plugin) — next pickup
-    - Phases C–I — per plan; system migrations, MCP unwiring, permissions Pattern B, plugin compartmentalization, conventions migration, decision-log review
+- **Architecture refactor** — [plan](plans/architecture-refactor.md). Skills as the atomic unit of distribution; plugins as packaging conveniences for marketplace surface; new `progressive-composer` plugin fills the individual-skill-management gap; rules-system retains the always-on discipline library; conventions become categorical opt-in skills; MCP servers benched until context-cost case justifies reactivation; permissions becomes a Pattern B installer skill. Phases A–I.
+
+    **Pivot 1 (community-pattern conformance)** — corpus research (~330 skills surveyed) showed our `bin/<plugin>-run` dispatcher and underscored skill folders violate the agentskills.io spec and have zero community precedent. Adopted community pattern: hyphenated folders, `scripts/` Python package, uniform `uv run -m scripts.<verb>` invocation. Captured in `logs/decision/skill-authoring.md` (three new sections); `ocd-run-self-update` flagged superseded for new skills.
+
+    **Pivot 2 (compose vision)** — `refactor` (1:1) reframed into `compose` (many-to-one with persistent design intent) — agent-driven dialogue, drift detection via source snapshots.
+
+    **Pivot 3 (workflow-driven, self-contained skill folders)** — collapsed subsets 1–4's separate sources registry / shared cache / working-area design into a single self-contained skill folder model. Each deployed skill at `<scope>/.claude/skills/<name>/` carries its own composition.md (recipe + provenance), embedded sources at `sources/<source-slug>/` (sparse-checked at pinned commits), and SKILL.md (the dish).
+
+    **Pivot 4 (compose-only, drop install)** — research surfaced that Vercel's `npx skills` covers the install surface (npm-distributed, polished, Vercel-backed). Competing on installation duplicates Vercel; our unique value is composition + drift tracking. Dropped install/uninstall verbs and `type: install|composed` discriminator from composition.md. Bundled PFN + progressive-disclosure authoring discipline into compose build's output as the differentiating value-add. Captured across `logs/decision/progressive-composer.md` § *Meta-plugin scope and rationale* (rewritten) and § *Compose verb — workflow-driven, self-contained skill folders* (updated to reflect compose-only scope).
+
+    - Phase A (decisions + plan) — done, commit `da37142`
+    - Phase B locked design — compose-only meta-plugin. 46 plugin tests passing, 976 across all suites. User-facing verbs: `compose new`, `compose refine`, `compose build`, `compose list [--drift]`. Agent-internal sub-ops: `compose add-source`, `compose remove-source`, `compose update-sources`, `compose purge-sources`. Sparse-checkout per-skill via `git clone --filter=blob:none --sparse`; non-mutating drift via `git ls-remote`; stdlib-only YAML subset for composition.md (no `type` field — every spec is a composition); cwd-at-skill-folder + `uv run -m scripts.<verb>` invocation; PFN + progressive-disclosure baked into `compose build` output
+    - Phase B subset 5 (personal-track via branch) — obsoleted by self-contained skill folder architecture. Cross-machine portability: `git init` on `<scope>/.claude/skills/<name>/` directly
+    - Phases C–I — per plan; system migrations (Phase E now also hyphenates ocd's underscored folders and retires `bin/ocd-run`), MCP unwiring, permissions Pattern B, plugin compartmentalization, conventions migration, decision-log review
+    - Phase B subset 4 (`compose build`, `compose recheck`, `compose list` — materialize, drift-detect, list) — per plan
+    - Phase B subset 5 (personal-track via branch) — per plan
+    - Phases C–I — per plan; system migrations (Phase E now also hyphenates ocd's underscored folders and retires `bin/ocd-run`), MCP unwiring, permissions Pattern B, plugin compartmentalization, conventions migration, decision-log review
 
 ## Pending
 
