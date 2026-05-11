@@ -1,0 +1,14 @@
+{
+  "name": "composed-skills",
+  "version": "0.0.2",
+  "description": "Curated bundle of skills composed via progressive-skill-composer. Each skill carries its own composition.md (design intent + pinned source provenance) and supporting workflow files. Install the bundle via /plugin install or pick individual skills via Vercel's npx skills.",
+  "author": {
+    "name": "a-horde-o-bees"
+  },
+  "homepage": "https://github.com/a-horde-o-bees/claude-plugins",
+  "repository": "https://github.com/a-horde-o-bees/claude-plugins",
+  "license": "MIT",
+  "skills": [
+    "./skills/"
+  ]
+}

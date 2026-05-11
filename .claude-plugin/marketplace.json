@@ -15,7 +15,13 @@
     {
       "name": "progressive-skill-composer",
       "source": "./plugins/progressive-skill-composer",
-      "description": "Track external skill repos, install individual skills selectively, and refactor third-party skills into the progressive-disclosure shape",
+      "description": "Compose new skills from one or more exemplar sources via goal-driven dialogue, with PFN + progressive-disclosure authoring discipline applied automatically. Drift tracking against pinned upstream commits via non-mutating git ls-remote. Complements Vercel's npx skills (which covers individual-skill install).",
+      "category": "development"
+    },
+    {
+      "name": "composed-skills",
+      "source": "./plugins/composed-skills",
+      "description": "Curated bundle of skills composed via progressive-skill-composer. Each skill carries its own composition.md (design intent + pinned source provenance). Install the bundle via /plugin install, or pick individual skills via Vercel's npx skills.",
       "category": "development"
     }
   ]
