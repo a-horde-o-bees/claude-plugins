@@ -1,10 +1,10 @@
 ---
-tagline: Content standards for TASKS.md — persistent task tracker at a system's root
+tagline: Content standards for TASKS.md — living log of active and upcoming work at a system's root
 ---
 
 # TASKS.md Conventions
 
-Content standards for `TASKS.md` — the persistent task tracker at a system's root. Each entry tracks one piece of work; sections group entries by status. Distinct from session-scoped tracking (TaskCreate manages the current session's checklist; `TASKS.md` survives session clears).
+Content standards for `TASKS.md` — a **living log** at a system's root that tracks what is *active* and *coming*. Distinct from session-scoped tracking (TaskCreate manages the current session's checklist; `TASKS.md` survives session clears). Distinct from a historical record (git log + decision logs carry completed work and rationale).
 
 ## Purpose Statement
 
@@ -19,7 +19,8 @@ Sections organize entries by status, in the order a reader scans:
 | `## In progress` | Tasks currently being worked. Should be 1–3 entries; more signals fragmented attention. |
 | `## Pending` | Tasks ready to start when capacity opens — preconditions met, scope clear. |
 | `## Upcoming` | Tasks that will be ready soon — preconditions not yet met, or scope still being clarified. |
-| `## Done` | Recently completed tasks. Migrate older entries to commit history or decision logs. |
+
+No `## Done` section. Completed work is in `git log` (and, when rationale matters, `logs/decision/`); duplicating it here would conflict with the `single-source-of-truth` rule and create a parallel history that drifts. Other status-adjacent sections (e.g., `## Active sandbox branches`, `## Backlog`) are allowed when they track something concretely *current* — sandbox branches not yet merged, ideas indexed but not yet promoted to In progress.
 
 Empty sections may be omitted; a section with no entries adds noise without information.
 
@@ -44,10 +45,10 @@ Entries longer than two lines indicate the task carries enough context to warran
 
 When a task closes:
 
-- Migrate the entry from `## In progress` or `## Pending` to `## Done`
+- Remove the entry from `## In progress` or `## Pending`
 - The plan moves per the `plans-md.md` lifecycle (archive, decision log, or delete)
-- Older `## Done` entries periodically migrate to `logs/decision/` or get pruned — `TASKS.md` reflects recent completions, not full history
+- The completion record lives in the commit message and, when load-bearing, a decision log entry — not in TASKS.md
 
 ## Lifecycle
 
-`TASKS.md` is a mutable working document. It updates freely as work progresses. The persistent value is in the *current* state of work, not its history; commit history captures the journey.
+`TASKS.md` is a mutable working document. It updates freely as work progresses. The persistent value is in the *current* state of work; commit history and decision logs carry the journey and the rationale.
