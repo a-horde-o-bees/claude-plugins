@@ -45,9 +45,6 @@ from scripts._spec import (
 )
 
 
-SKILL_LAYOUTS = ("skills/{skill}", "{skill}")
-
-
 def parse_source_arg(value: str) -> tuple[str, str, str | None]:
     """Parse `<url>:<skill>` or `<url>:<skill>@<ref>` into (url, skill, ref)."""
     ref: str | None = None
@@ -78,10 +75,18 @@ def parse_source_arg(value: str) -> tuple[str, str, str | None]:
 
 
 def find_skill_path_in_repo(url: str, ref: str | None, skill: str) -> str:
-    """Probe upstream layout: `skills/<skill>` first, then `<skill>` at root.
+    """Locate a skill folder at any depth in the upstream repo.
 
-    Performs a tiny clone into a temp dir to ls-tree and find where the
-    requested skill folder lives. Returns the path relative to repo root.
+    Scans the full ls-tree for any path matching `<...>/<skill>/SKILL.md`
+    (including root-level `<skill>/SKILL.md`). Returns the path relative
+    to repo root, sans trailing `/SKILL.md`.
+
+    When multiple paths match, picks the shallowest (fewest path
+    separators) — this handles the common case of a curated repo with
+    a single top-level skills directory plus deeper nested cases like
+    `<plugin>/skills/<skill>/` and `plugins/<plugin>/skills/<skill>/`.
+    If multiple paths tie at the shallowest depth, raises with a
+    disambiguation message.
     """
     with tempfile.TemporaryDirectory(prefix="probe-") as tmp:
         clone_dir = Path(tmp) / "probe"
@@ -104,15 +109,34 @@ def find_skill_path_in_repo(url: str, ref: str | None, skill: str) -> str:
             capture_output=True,
             text=True,
         )
-        files = set(result.stdout.strip().splitlines())
-        for layout in SKILL_LAYOUTS:
-            candidate = layout.format(skill=skill)
-            skill_md = f"{candidate}/SKILL.md"
-            if skill_md in files:
-                return candidate
+        files = result.stdout.strip().splitlines()
+
+    matches: list[str] = []
+    root_skill_md = f"{skill}/SKILL.md"
+    nested_suffix = f"/{skill}/SKILL.md"
+    for path in files:
+        if path == root_skill_md:
+            matches.append(skill)
+        elif path.endswith(nested_suffix):
+            matches.append(path[: -len("/SKILL.md")])
+
+    if not matches:
         raise FileNotFoundError(
-            f"skill {skill!r} not found at any known layout in {url}@{ref or 'default'}"
+            f"skill {skill!r} not found at any depth in {url}@{ref or 'default'}"
         )
+
+    matches.sort(key=lambda p: (p.count("/"), p))
+    shallowest_depth = matches[0].count("/")
+    shallowest = [m for m in matches if m.count("/") == shallowest_depth]
+
+    if len(shallowest) > 1:
+        raise FileNotFoundError(
+            f"skill {skill!r} matches multiple paths at the same depth in "
+            f"{url}@{ref or 'default'}: {', '.join(shallowest)}. "
+            "Rename one upstream or specify the desired path explicitly."
+        )
+
+    return shallowest[0]
 
 
 COMPOSED_SKILL_TEMPLATE = """\

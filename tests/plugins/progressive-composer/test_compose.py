@@ -134,6 +134,93 @@ def test_compose_new_omits_type_field_from_scaffold(composer_run, isolated_env):
     assert "type:" not in result.stdout
 
 
+def test_compose_add_source_finds_skill_at_nested_depth(
+    composer_run, fixture_repo, isolated_env
+):
+    """Probe locates a skill folder at arbitrary depth — not just `skills/<skill>/`.
+
+    Community repos use varied layouts (`<plugin>/skills/<skill>/`,
+    `plugins/<plugin>/skills/<skill>/`, etc.). The probe scans the full
+    ls-tree for any `<...>/<skill>/SKILL.md` match.
+    """
+    import subprocess
+    from scripts._paths import derive_source_slug
+
+    # Place a skill at a deeply nested path in the fixture repo.
+    nested_dir = fixture_repo / "plugins" / "some-plugin" / "skills" / "deep-skill"
+    nested_dir.mkdir(parents=True)
+    (nested_dir / "SKILL.md").write_text(
+        "---\nname: deep-skill\ndescription: nested fixture\n---\n# deep\n"
+    )
+    subprocess.run(["git", "add", "."], cwd=fixture_repo, check=True)
+    subprocess.run(
+        [
+            "git", "-c", "user.email=test@test", "-c", "user.name=test",
+            "commit", "-qm", "add deeply-nested skill",
+        ],
+        cwd=fixture_repo,
+        check=True,
+    )
+
+    _seed_composition(composer_run, fixture_repo, isolated_env)
+    composer_run(
+        "compose",
+        "add-source",
+        "my-skill",
+        f"{_file_url(fixture_repo)}:deep-skill",
+        "--scope",
+        "user",
+    )
+
+    slug = derive_source_slug(_file_url(fixture_repo), "deep-skill")
+    embed = (
+        isolated_env["claude_home"]
+        / "skills"
+        / "my-skill"
+        / "sources"
+        / slug
+        / "SKILL.md"
+    )
+    assert embed.exists()
+
+
+def test_compose_add_source_rejects_ambiguous_same_depth_matches(
+    composer_run, fixture_repo, isolated_env
+):
+    """Two `<x>/<skill>/SKILL.md` paths at the same depth — probe refuses."""
+    import subprocess
+
+    # Two skills with the same name at the same nesting depth.
+    for parent in ("a", "b"):
+        d = fixture_repo / parent / "ambiguous-skill"
+        d.mkdir(parents=True)
+        (d / "SKILL.md").write_text(
+            f"---\nname: ambiguous-skill\ndescription: under {parent}\n---\n# {parent}\n"
+        )
+    subprocess.run(["git", "add", "."], cwd=fixture_repo, check=True)
+    subprocess.run(
+        [
+            "git", "-c", "user.email=test@test", "-c", "user.name=test",
+            "commit", "-qm", "add ambiguous skill",
+        ],
+        cwd=fixture_repo,
+        check=True,
+    )
+
+    _seed_composition(composer_run, fixture_repo, isolated_env)
+    result = composer_run(
+        "compose",
+        "add-source",
+        "my-skill",
+        f"{_file_url(fixture_repo)}:ambiguous-skill",
+        "--scope",
+        "user",
+        check=False,
+    )
+    assert result.returncode != 0
+    assert "multiple paths" in result.stderr
+
+
 def test_compose_remove_source_deletes_embed_and_frontmatter(
     composer_run, fixture_repo, isolated_env
 ):
