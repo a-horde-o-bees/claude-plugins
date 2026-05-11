@@ -10,7 +10,6 @@ which is non-mutating — no local clone state is touched.
 import shutil
 import subprocess
 import tempfile
-from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -122,7 +121,3 @@ def ls_remote_head(url: str, ref: str) -> str:
                 return qualified_lines[0].split("\t")[0]
         raise RuntimeError(f"ref {ref!r} not found at {url}")
     return line[0].split("\t")[0]
-
-
-def now_iso() -> str:
-    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")

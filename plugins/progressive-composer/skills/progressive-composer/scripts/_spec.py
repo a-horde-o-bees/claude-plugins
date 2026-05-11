@@ -2,22 +2,26 @@
 
 Each composed skill carries a composition.md sibling at
 `<scope>/.claude/skills/<name>/composition.md` recording the recipe
-(sources, pinned commits, goal articulation) and provenance.
+(sources, pinned commits) and design intent (goal, surface, sources
+rationale).
 
-Python reads frontmatter for build / refine / drift logic. Both Python
-and the agent (via Edit tool) write the file — the agent's edits
-target the body; Python's edits target frontmatter fields like
-last_build and build_status, plus the sources list (via add-source /
-remove-source / update-sources sub-ops).
+composition.md is the *alignment doc* between exemplar sources and the
+live skill — not a complete blueprint. The skill files (SKILL.md,
+_<verb>.md, scripts/) are the authoritative implementation; composition.md
+captures why the skill exists, what cognitive surface it carries, and
+what each source contributes. After initial materialization, the agent
+edits SKILL.md/scripts directly; composition.md stays aligned with the
+current design intent.
+
+Frontmatter is intentionally minimal — only fields that carry over to
+SKILL.md frontmatter (name, description), machine-managed provenance
+(sources), and a schema version for migration affordance. Build state
+is derived from filesystem (SKILL.md present? skill is operational);
+no `last_build` or `build_status` fields.
 
 Stdlib-only YAML subset (rolled inline) — keeps the script runnable
 under uniform `uv run -m scripts.<verb>` module-mode invocation without
 `--with pyyaml` ceremony.
-
-There is no `type` discriminator. Every composition.md describes a
-composition. For users wanting to install an unmodified upstream skill,
-Vercel's `npx skills add <repo> --skill <name>` is the recommended
-path; this plugin focuses on composition.
 """
 
 from __future__ import annotations
@@ -29,12 +33,6 @@ from typing import Any
 
 
 CURRENT_SPEC_VERSION = 1
-
-BUILD_STATUS_DRAFT = "draft"
-BUILD_STATUS_BUILT = "built"
-VALID_BUILD_STATUSES = (BUILD_STATUS_DRAFT, BUILD_STATUS_BUILT)
-
-VALID_SCOPES = ("user", "project")
 
 
 @dataclass
@@ -65,12 +63,8 @@ class Source:
 @dataclass
 class Spec:
     name: str
-    scope: str
     sources: list[Source] = field(default_factory=list)
     description: str = ""
-    goal_summary: str = ""
-    last_build: str | None = None
-    build_status: str = BUILD_STATUS_DRAFT
     spec_version: int = CURRENT_SPEC_VERSION
     body: str = ""
 
@@ -79,11 +73,7 @@ class Spec:
             "spec_version": self.spec_version,
             "name": self.name,
             "description": self.description,
-            "scope": self.scope,
             "sources": [s.to_dict() for s in self.sources],
-            "goal_summary": self.goal_summary,
-            "last_build": self.last_build,
-            "build_status": self.build_status,
         }
 
     @classmethod
@@ -91,12 +81,8 @@ class Spec:
         return cls(
             spec_version=frontmatter.get("spec_version", CURRENT_SPEC_VERSION),
             name=frontmatter["name"],
-            scope=frontmatter["scope"],
             description=frontmatter.get("description", ""),
             sources=[Source.from_dict(s) for s in frontmatter.get("sources", [])],
-            goal_summary=frontmatter.get("goal_summary", ""),
-            last_build=frontmatter.get("last_build"),
-            build_status=frontmatter.get("build_status", BUILD_STATUS_DRAFT),
             body=body,
         )
 
@@ -105,33 +91,36 @@ COMPOSED_SCAFFOLD_BODY = """\
 
 # Goal
 
-<articulate what this composed skill enables Claude to do, when it should fire, and what the expected output format is — refined through `compose new` and subsequent `compose refine` dialogue>
+<why this skill exists; what value it provides; current intent. Edited in place as the design evolves — no historical journal; describe the destination, not the path.>
 
-## Source mapping
+## Surface
 
-<one subsection per `compose add-source` invocation; agent fills as sources are added>
+<the cognitive moments this skill carries and where each routes — the progressive-disclosure shape SKILL.md will materialize. One subsection per moment.>
 
-## Design refinements
+### <cognitive moment>
 
-<accumulated decisions from `compose refine` sessions — appended over time, previous entries preserved unless explicitly superseded>
+Routes to: `_<verb>.md` (or inline)
+
+<what fires this; what content loads when it does>
+
+## Sources
+
+<per-source rationale, aligned with the Surface above. One subsection per `compose add-source` invocation; remove when a source no longer informs the skill.>
+
+### <source-slug>:<skill>
+
+Informs: <which Surface entries>. <Keep verbatim / adapt / reject — current rationale.>
 """
 
 
-def make_composed_scaffold(
-    name: str,
-    scope: str,
-    description: str = "",
-) -> Spec:
-    """Build a draft composed-skill spec with empty sources list and stub body.
+def make_composed_scaffold(name: str, description: str = "") -> Spec:
+    """Build a draft composed-skill spec with empty sources and stub body.
 
     Sources are added incrementally via `compose add-source` after this
     initial scaffold is written.
     """
-    if scope not in VALID_SCOPES:
-        raise ValueError(f"unknown scope: {scope!r} — expected one of {VALID_SCOPES}")
     return Spec(
         name=name,
-        scope=scope,
         description=description,
         body=COMPOSED_SCAFFOLD_BODY,
     )
@@ -289,9 +278,9 @@ def parse(text: str) -> Spec:
     body = text[end + 5 :]
     frontmatter = _parse_frontmatter(frontmatter_text)
 
-    if "name" not in frontmatter or "scope" not in frontmatter:
+    if "name" not in frontmatter:
         raise ValueError(
-            "composition.md frontmatter must include 'name' and 'scope' fields"
+            "composition.md frontmatter must include 'name' field"
         )
 
     return Spec.from_dict(frontmatter, body)

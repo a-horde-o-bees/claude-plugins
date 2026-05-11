@@ -28,10 +28,10 @@ uv run -m scripts.compose <subverb> [args]
 
 | Verb | Workflow file | Subverb | Purpose |
 |---|---|---|---|
-| `compose new` | `_compose_new.md` | `scripts.compose new` | Open new-composition workflow; agent collects name + sources + goal via dialogue |
-| `compose refine` | `_compose_refine.md` | `scripts.compose refine` | Re-enter an existing composition; auto drift check; agent drives refinement dialogue |
-| `compose build` | `_compose_build.md` | `scripts.compose build` | Materialize composition.md into a deployable SKILL.md drawing on embedded sources, structured per PFN + progressive disclosure |
-| `compose list` | `_compose_list.md` | `scripts.compose list` | Walk deployed compositions; report status (with `--drift` for network drift check) |
+| `compose new` | `_compose_new.md` | `scripts.compose new` | Open new-composition workflow; agent collects name, intent, Surface, and sources via dialogue |
+| `compose refine` | `_compose_refine.md` | `scripts.compose refine` | Re-enter an existing composition; auto drift check; agent drives refinement of design intent |
+| `compose build` | `_compose_build.md` | `scripts.compose build` | Initial materialization of SKILL.md + `scripts/` package skeleton from composition.md. Once SKILL.md exists, the agent refines it directly — composition.md tracks intent, not the live code |
+| `compose list` | `_compose_list.md` | `scripts.compose list` | Walk deployed compositions; report deployed/draft state per composition (with `--drift` for network drift check) |
 
 For each verb's procedure, `Call:` the corresponding `_<verb>.md` workflow file. `uv` is a soft prerequisite — install via [astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/) when missing. All scripts are stdlib-only.
 

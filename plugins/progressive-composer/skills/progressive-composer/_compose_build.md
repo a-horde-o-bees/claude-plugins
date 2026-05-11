@@ -1,6 +1,6 @@
 # Compose build
 
-Materialize a finalized composition into a deployable skill folder. Script generates SKILL.md from composition.md drawing on the embedded `sources/<source-slug>/` content; advances pinned commits to current sources/ HEAD; sets `build_status: built`. Agent then refines the deployed SKILL.md via dialogue.
+Scaffold a deployable skill folder from composition.md. Script generates the initial SKILL.md frontmatter (from composition.md's `name` + `description`) and a `scripts/` package skeleton. Build is the **initial materialization** — once SKILL.md exists, the agent refines it directly; composition.md tracks intent, not the live code.
 
 ## Arguments
 
@@ -16,29 +16,29 @@ Materialize a finalized composition into a deployable skill folder. Script gener
 
 2. The script validates:
     - composition.md exists at the resolved path
-    - `type` is `composed` (installs don't go through build — they materialize at install time)
-    - `description` and `goal_summary` are non-empty (required for the deployed SKILL.md frontmatter and body opener)
+    - `description` is non-empty (required for the deployed SKILL.md frontmatter)
     - `sources` list is non-empty (a composition with no exemplars isn't a composition)
+    - SKILL.md does not already exist at the deploy path — unless `--force` is set
 
 3. The script writes:
-    - `<scope>/.claude/skills/<name>/SKILL.md` — frontmatter from spec (name, description), body opens with `goal_summary` plus an HTML comment pointing at composition.md and TODO sections for triggers and verbs
+    - `<scope>/.claude/skills/<name>/SKILL.md` — frontmatter from spec (name, description), body scaffolds a `## Triggers` section the agent fleshes out from composition.md's `## Surface`
     - `<scope>/.claude/skills/<name>/scripts/__init__.py` — empty package marker (created if absent)
 
-4. The script updates composition.md frontmatter: `last_build` (now), `build_status: built`. Pinned source commits are NOT advanced by build itself — they were last set by `compose new`'s `add-source` invocations or by `compose refine`'s `update-sources` calls. Build trusts whatever's pinned.
+4. The script emits state only: skill folder path, SKILL.md path, sources materialized. No procedural guidance.
 
 5. Agent opens the deployed SKILL.md and refines it via dialogue:
-    - Reads composition.md to recall the goal articulation and per-source mappings
-    - Reads each `sources/<source-slug>/SKILL.md` to draw on the exemplars
-    - Authors triggers, verb topography, and procedural workflows that synthesize the design intent
-    - Implements scripts in `scripts/` using the embedded sources as references
+    - Reads composition.md to recall the Goal + Surface + per-source rationale
+    - Reads each `sources/<source-slug>/SKILL.md` to draw on exemplars
+    - Translates each `## Surface > ### <cognitive moment>` from composition.md into a `## Triggers` entry in the deployed SKILL.md
+    - For each `Routes to: _<verb>.md` line in Surface, creates the corresponding `_<verb>.md` workflow file under PFN authoring discipline
+    - Implements `scripts/` as needed using the embedded sources as references
 
 ## Validation gates
 
 Build refuses to proceed when:
 
 - composition.md doesn't exist
-- type is `install` (installs don't need build)
-- `description` or `goal_summary` is empty in composition.md frontmatter (run `compose refine` to fill them)
+- `description` is empty in composition.md frontmatter (set it before building; the SKILL.md frontmatter needs a discoverable description)
 - The sources list is empty
 - A deployed SKILL.md already exists and `--force` is not set
 
@@ -51,11 +51,15 @@ built <name> at <scope>/.claude/skills/<name>
 sources used:
   - <url>:<skill>@<ref> @ <commit-short>
   - <url>:<skill>@<ref> @ <commit-short>
-status: built
-
-Next steps for the agent:
-  1. Open <path>/SKILL.md and refine via dialogue with the user
-  2. Add `_<verb>.md` workflow files for each procedure the spec describes
-  3. Implement scripts in `scripts/` drawing on `sources/<source-slug>/` exemplars
-  4. Run `compose refine <name> --scope <scope>` to detect upstream drift
 ```
+
+Nothing else. Procedure for what to do after build lives in this file's *Process* section, not in script output.
+
+## After build: composition.md vs SKILL.md
+
+After the initial materialization, the two files have distinct roles:
+
+- **composition.md** — design intent + source provenance. Edited in place during refinement. Not regenerable from SKILL.md.
+- **SKILL.md (+ `_<verb>.md` + `scripts/`)** — the live skill implementation. Refined directly by the agent. Not regenerable from composition.md alone.
+
+`compose build --force` re-scaffolds SKILL.md from composition.md's name + description, **clobbering prior agent refinements**. Use `--force` deliberately — typically only when a major redesign means the prior SKILL.md no longer fits and the agent will refine fresh.

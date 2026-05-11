@@ -3,7 +3,6 @@
 import re
 
 from scripts._spec import (
-    BUILD_STATUS_BUILT,
     parse,
 )
 
@@ -23,8 +22,7 @@ def _seed_composition(composer_run, fixture_repo, isolated_env, name="my-skill",
     from scripts._spec import make_composed_scaffold, write as write_spec
 
     spec_path = composition_path(name, scope)
-    spec = make_composed_scaffold(name=name, scope=scope, description="test composition")
-    spec.goal_summary = "demonstrate end-to-end compose flow"
+    spec = make_composed_scaffold(name=name, description="test composition")
     spec_path.parent.mkdir(parents=True, exist_ok=True)
     write_spec(spec_path, spec)
 
@@ -39,14 +37,17 @@ def _seed_composition(composer_run, fixture_repo, isolated_env, name="my-skill",
     return spec_path
 
 
-def test_compose_new_prints_orchestration(composer_run, isolated_env):
-    """compose new is workflow entry — outputs orchestration, no disk ops."""
+def test_compose_new_emits_state_only(composer_run, isolated_env):
+    """compose new emits resolved state (scope + target path) — no procedure."""
     result = composer_run("compose", "new", "--scope", "user")
     assert result.returncode == 0
-    assert "compose new started" in result.stdout
-    assert "Next steps for the agent" in result.stdout
-    assert "spec_version: 1" in result.stdout
-    # No skill folder created
+    assert "scope: user" in result.stdout
+    assert "target:" in result.stdout
+    assert str(isolated_env["claude_home"] / "skills") in result.stdout
+    # No procedure / scaffold prints — those live in _compose_new.md
+    assert "Next steps for the agent" not in result.stdout
+    assert "spec_version:" not in result.stdout
+    # No disk ops
     assert not (isolated_env["claude_home"] / "skills").exists() or not list(
         (isolated_env["claude_home"] / "skills").iterdir()
     )
@@ -191,16 +192,15 @@ def test_compose_purge_sources_deletes_subfolder(
 
 
 def test_compose_build_writes_skill_md(composer_run, fixture_repo, isolated_env):
-    spec_path = _seed_composition(composer_run, fixture_repo, isolated_env)
+    _seed_composition(composer_run, fixture_repo, isolated_env)
     composer_run("compose", "build", "my-skill", "--scope", "user")
     skill_md = isolated_env["claude_home"] / "skills" / "my-skill" / "SKILL.md"
     assert skill_md.exists()
-    assert "my-skill" in skill_md.read_text()
-    assert "demonstrate end-to-end compose flow" in skill_md.read_text()
-
-    spec = parse(spec_path.read_text())
-    assert spec.build_status == BUILD_STATUS_BUILT
-    assert spec.last_build is not None
+    text = skill_md.read_text()
+    assert "name: my-skill" in text
+    assert "test composition" in text  # description carries from composition.md
+    # scripts/__init__.py is the empty package marker
+    assert (isolated_env["claude_home"] / "skills" / "my-skill" / "scripts" / "__init__.py").exists()
 
 
 def test_compose_build_refuses_overwrite_without_force(
@@ -234,8 +234,7 @@ def test_compose_build_rejects_empty_description(composer_run, fixture_repo, iso
     from scripts._spec import make_composed_scaffold, write as write_spec
 
     spec_path = composition_path("my-skill", "user")
-    spec = make_composed_scaffold(name="my-skill", scope="user", description="")
-    spec.goal_summary = "summary"
+    spec = make_composed_scaffold(name="my-skill", description="")
     spec_path.parent.mkdir(parents=True, exist_ok=True)
     write_spec(spec_path, spec)
 
@@ -261,8 +260,20 @@ def test_compose_refine_reads_spec_and_reports_in_sync(
     _seed_composition(composer_run, fixture_repo, isolated_env)
     result = composer_run("compose", "refine", "my-skill", "--scope", "user")
     assert "spec:" in result.stdout
+    assert "deployed: no" in result.stdout
     assert "in sync:" in result.stdout
     assert "fixture-skill" in result.stdout
+    # Procedural "Next steps" content lives in _compose_refine.md, not in script output
+    assert "Next steps for the agent" not in result.stdout
+
+
+def test_compose_refine_reports_deployed_after_build(
+    composer_run, fixture_repo, isolated_env
+):
+    _seed_composition(composer_run, fixture_repo, isolated_env)
+    composer_run("compose", "build", "my-skill", "--scope", "user")
+    result = composer_run("compose", "refine", "my-skill", "--scope", "user")
+    assert "deployed: yes" in result.stdout
 
 
 def test_compose_refine_detects_drift(

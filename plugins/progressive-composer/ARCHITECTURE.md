@@ -74,24 +74,22 @@ Returns the captured commit SHA. The destination receives just the skill folder'
 ---
 spec_version: 1
 name: <skill-name>
-description: <one-line>
-scope: user                 # OR project
+description: <one-line cognitive trigger; carries to the built SKILL.md frontmatter>
 sources:
   - url: https://github.com/anthropics/skills.git
     skill: slack-formatting
     ref: main               # branch / tag / refs/heads/<x>
-    commit: abc123def...    # pinned at build time
-goal_summary: <one-line>
-last_build: 2026-05-10T14:00:00Z
-build_status: built         # draft | built
+    commit: abc123def...    # pinned at add-source / update-sources time
 ---
 
 # Goal
-# Source mapping
-# Design refinements
+# Surface
+# Sources
 ```
 
-Stdlib-only YAML subset implemented in `_spec.py` (no pyyaml dep). Schema is bounded — top-level scalars, one list of dicts (`sources`). No `type` discriminator; every composition.md describes a composition.
+Stdlib-only YAML subset implemented in `_spec.py` (no pyyaml dep). Schema is intentionally minimal — only fields that carry over to SKILL.md frontmatter (`name`, `description`), machine-managed provenance (`sources`), and a schema version for migration affordance. Build state is derived from filesystem (SKILL.md present in the skill folder ⇒ deployed); no `last_build` or `build_status` fields. No `scope` field — folder position encodes it. No `type` discriminator; every composition.md describes a composition.
+
+composition.md is an **alignment doc** between exemplar sources and the live skill — not a complete blueprint. The skill files (SKILL.md, `_<verb>.md`, `scripts/`) are the authoritative implementation; composition.md captures why the skill exists, what cognitive surface it carries, and what each source contributes. After initial materialization, the agent edits SKILL.md/scripts directly; composition.md stays aligned with the current design intent.
 
 ## Verb dispatch
 

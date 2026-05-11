@@ -24,7 +24,6 @@ from pathlib import Path
 
 from scripts._clone import (
     ls_remote_head,
-    now_iso,
     sparse_checkout_skill,
 )
 from scripts._paths import (
@@ -38,7 +37,6 @@ from scripts._paths import (
     sources_subdir,
 )
 from scripts._spec import (
-    BUILD_STATUS_BUILT,
     Source,
     add_source_to_spec,
     read as read_spec,
@@ -125,27 +123,28 @@ description: {description}
 
 # {name}
 
-{goal_summary}
-
 <!--
-This skill was scaffolded by `compose build`. The goal articulation
-above came from the composition spec at:
+Scaffolded by `compose build` from composition.md at:
 {spec_path}
 
-Refine this SKILL.md via dialogue with the user — flesh out triggers,
-verb topography, and procedural workflows drawing on the embedded
-sources at {sources_path}/<source-slug>/. Run
-`compose refine {name} --scope {scope}` periodically to detect upstream
-drift and incorporate updates.
+This is the initial materialization — `composition.md` captures design
+intent and source provenance; this SKILL.md is the live implementation.
+After scaffolding, refine here via dialogue with the user, flesh out
+each Triggers entry, and create the `_<verb>.md` workflow files the
+Triggers below reference. Embedded sources are at
+{sources_path}/<source-slug>/.
+
+Run `compose refine {name} --scope {scope}` periodically to detect
+upstream drift in sources.
 -->
 
 ## Triggers
 
-<!-- agent fills in based on the goal articulated in composition.md -->
-
-## Verbs
-
-<!-- agent fills in based on the per-source mappings in composition.md -->
+<!--
+Scaffolded from composition.md's `## Surface` section. Each cognitive
+moment in Surface becomes a Triggers entry; each `Routes to: _<verb>.md`
+line implies a `_<verb>.md` workflow file the agent will create.
+-->
 """
 
 
@@ -155,57 +154,9 @@ drift and incorporate updates.
 
 
 def cmd_new(args: argparse.Namespace) -> int:
-    print(f"compose new started — scope: {args.scope}")
-    print()
-    print("This is a workflow entry point. The script prints orchestration;")
-    print("the agent drives the dialogue. The user has not yet chosen a skill")
-    print("name — collect it through dialogue.")
-    print()
-    print("Next steps for the agent:")
-    print("  1. Ask the user:")
-    print("       - What should this skill enable Claude to do?")
-    print("       - When should this skill fire? (user phrases / contexts)")
-    print("       - What's the expected output format?")
-    print("       - What name should the skill have? (lowercase, hyphenated)")
-    print("  2. Once a name and high-level goal are chosen, use the Write")
-    print("     tool to create the composition.md scaffold at:")
-    print(f"       {scope_skills_dir(args.scope)}/<chosen-name>/composition.md")
-    print("  3. Ask the user about exemplar sources. For each one, invoke:")
-    print("       uv run -m scripts.compose add-source <chosen-name>")
-    print(f"         <url>:<skill>[@<ref>] --scope {args.scope}")
-    print("  4. Read each embedded source's SKILL.md from")
-    print("       <chosen-name>/sources/<source-slug>/SKILL.md")
-    print("     to drive dialogue.")
-    print("  5. Walk the user through goal articulation and per-source")
-    print("     mapping; edit the composition.md body via Edit tool.")
-    print("  6. When ready to materialize, invoke:")
-    print(f"       uv run -m scripts.compose build <chosen-name> --scope {args.scope}")
-    print()
-    print("composition.md scaffold (use Write tool to create):")
-    print()
-    print("---")
-    print("spec_version: 1")
-    print("name: <chosen-name>")
-    print("description: <one-line, populated from goal articulation>")
+    target_dir = scope_skills_dir(args.scope)
     print(f"scope: {args.scope}")
-    print("sources: []")
-    print("goal_summary: <one-line summary the deployed SKILL.md body opens with>")
-    print("last_build: null")
-    print("build_status: draft")
-    print("---")
-    print()
-    print("# Goal")
-    print()
-    print("<articulated through dialogue — what does this skill enable, when does it fire, expected output>")
-    print()
-    print("## Source mapping")
-    print()
-    print("<one ### subsection per source after compose add-source invocations;")
-    print("per-source: which aspects to keep verbatim, adapt, reject>")
-    print()
-    print("## Design refinements")
-    print()
-    print("<dated entries appended on subsequent compose refine sessions>")
+    print(f"target: {target_dir}/<chosen-name>/composition.md")
     return 0
 
 
@@ -224,11 +175,11 @@ def cmd_refine(args: argparse.Namespace) -> int:
         return 2
 
     spec = read_spec(spec_path)
+    skill_md = skill_md_path(args.name, args.scope)
+    deployed = "yes" if skill_md.exists() else "no"
 
     print(f"spec: {spec_path}")
-    print(f"status: {spec.build_status}")
-    if spec.last_build:
-        print(f"last_build: {spec.last_build}")
+    print(f"deployed: {deployed}")
 
     drifted, in_sync, issues = _check_drift(spec)
 
@@ -249,19 +200,6 @@ def cmd_refine(args: argparse.Namespace) -> int:
         print("issues:")
         for src, reason in issues:
             print(f"  - {src.url}:{src.skill}@{src.ref} — {reason}")
-
-    print()
-    print("Next steps for the agent:")
-    if drifted:
-        print("  1. Surface drift to the user — name each drifted source and the SHA shift.")
-        print("  2. For each drifted source the user wants to update, invoke:")
-        print(f"       uv run -m scripts.compose update-sources {args.name} --source <slug> --scope {args.scope}")
-    else:
-        print("  1. All sources are in sync; no updates required from upstream.")
-    print("  2. Re-read sources from the embedded `sources/<slug>/` paths to spot")
-    print("     content changes worth incorporating into the goal or per-source mapping.")
-    print("  3. Drive refinement dialogue with the user; edit composition.md body via Edit tool.")
-    print("  4. Append a dated entry to `## Design refinements` summarizing this session.")
     return 0
 
 
@@ -304,13 +242,6 @@ def cmd_build(args: argparse.Namespace) -> int:
             file=sys.stderr,
         )
         return 2
-    if not spec.goal_summary:
-        print(
-            "spec goal_summary is empty — set `goal_summary` in composition.md frontmatter "
-            "before building (the deployed SKILL.md body opens with this)",
-            file=sys.stderr,
-        )
-        return 2
     if not spec.sources:
         print(
             "spec has no sources — add at least one via `compose add-source` before building",
@@ -338,28 +269,17 @@ def cmd_build(args: argparse.Namespace) -> int:
         COMPOSED_SKILL_TEMPLATE.format(
             name=spec.name,
             description=spec.description,
-            goal_summary=spec.goal_summary,
             spec_path=spec_path,
             sources_path=sources_subdir(args.name, args.scope),
             scope=args.scope,
         )
     )
 
-    spec.last_build = now_iso()
-    spec.build_status = BUILD_STATUS_BUILT
-    write_spec(spec_path, spec)
-
     print(f"built {spec.name} at {folder}")
+    print(f"skill_md: {skill_md}")
     print("sources used:")
     for src in spec.sources:
         print(f"  - {src.url}:{src.skill}@{src.ref} @ {src.commit[:8]}")
-    print(f"status: {spec.build_status}")
-    print()
-    print("Next steps for the agent:")
-    print(f"  1. Open {skill_md} and refine via dialogue with the user")
-    print("  2. Add `_<verb>.md` workflow files for each procedure the spec describes")
-    print("  3. Implement scripts in `scripts/` drawing on `sources/<source-slug>/` exemplars")
-    print(f"  4. Run `compose refine {spec.name} --scope {args.scope}` to detect upstream drift")
     return 0
 
 
@@ -389,13 +309,10 @@ def cmd_list(args: argparse.Namespace) -> int:
                 found_any = True
                 continue
 
-            tail = ""
-            if spec.last_build:
-                tail = f", last build {spec.last_build}"
+            deployed = "deployed" if (spec_path.parent / "SKILL.md").exists() else "draft"
+            source_word = "source" if len(spec.sources) == 1 else "sources"
             line = (
-                f"  - {spec.name} ({len(spec.sources)} "
-                f"source{'s' if len(spec.sources) != 1 else ''}, "
-                f"{spec.build_status}{tail})"
+                f"  - {spec.name} ({len(spec.sources)} {source_word}, {deployed})"
             )
             print(line)
 
