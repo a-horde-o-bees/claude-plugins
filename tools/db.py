@@ -20,7 +20,14 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable
 
-from tools.errors import InitError
+
+class InitError(RuntimeError):
+    """Raised when rectify() refuses a destructive action without explicit force.
+
+    Producer-owned: db.py is the sole module that raises this, so it lives
+    here rather than in a separate errors module — splitting would force
+    consumers to import from two places without saving context.
+    """
 
 
 # Schema builder: callable that creates/upgrades a DB at the given path.

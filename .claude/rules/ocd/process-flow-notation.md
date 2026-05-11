@@ -113,6 +113,24 @@ All delegations follow the same shape — mechanism followed by what that mechan
 
 Invocation prefix is optional when the mechanism is unambiguous from context; required when a workflow mixes mechanisms. The prefix may appear after an em-dash: `1. Action — skill: /<plugin>:<skill-name>`.
 
+### Workflow vs Script
+
+PFN is the bridge between agent-facing instruction and mechanical code. Each authoring decision: does this step belong in workflow markdown or in a script the workflow invokes?
+
+Always encode in workflow:
+
+- Reasoning, judgment, contextual decision-making, sequencing the agent must steer.
+- Orchestrating disparate systems (e.g. skill calls, tool invocations, agent spawns) whose composition depends on intermediate results.
+- User-facing surface — review gates, clarifying questions, error-recovery dialogues.
+
+Always delegate to a script:
+
+- Mechanically resolvable operations (e.g. lookups, mutations, generation, transformations).
+
+Antipatterns:
+
+- Scripts are invoked as encapsulated operations with deterministic outcomes and should never dictate agent actions nor require agent intervention.
+
 ## Arguments
 
 PFN content declares arguments in CLI-style format and references them in workflow steps using `--flag` (presence) and `{flag}` (value). Consumer conventions that embed PFN workflows declare their argument surface in this form.

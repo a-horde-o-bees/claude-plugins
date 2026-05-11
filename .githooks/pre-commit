@@ -1,26 +1,18 @@
 #!/usr/bin/env bash
 #
-# Pre-commit: bump plugin versions, propagate shared files.
+# Pre-commit: bump plugin versions, propagate canonical shared files into skills.
 #
 # 1. Bump versions: increments z in plugin.json for each plugin with staged changes.
-# 2. Propagate shared files: copies ocd plugin framework to all non-ocd plugins.
+# 2. Propagate canonicals: for each project-root `shared/<subfolder>/<file>`
+#    that's staged, copy it into every `<plugin>/skills/<name>/<subfolder>/<file>`
+#    that already exists. File-existence opt-in — a skill only receives
+#    propagation once its maintainer has placed an initial copy.
 #
-# Propagated files:
-#   tools/environment.py                   — path resolution (canonical at project root, copied to <plugin>/tools/)
-#   tools/errors.py                        — shared exception types  (canonical at project root, copied to <plugin>/tools/)
-#   systems/setup/__init__.py              — facade with star imports (to systems/setup/)
-#   systems/setup/__main__.py              — CLI entry point (to systems/setup/)
-#   systems/setup/_metadata.py             — plugin metadata discovery (to systems/setup/)
-#   systems/setup/_deployment.py           — template deployment primitives (to systems/setup/)
-#   systems/setup/_formatting.py           — output formatting (to systems/setup/)
-#   systems/setup/_system_discovery.py     — system and skill discovery (to systems/setup/)
-#   systems/setup/_orchestration.py        — install/enable/disable orchestration (to systems/setup/)
-#   systems/conventions/_init.py           — conventions subsystem (to systems/conventions/)
-#   systems/log/_init.py                   — log subsystem (to systems/log/)
-#   systems/permissions/__init__.py        — permissions facade (to systems/permissions/)
-#   systems/permissions/_init.py           — permissions subsystem (to systems/permissions/)
-#   systems/permissions/_operations.py     — permissions operations (to systems/permissions/)
-#   hooks/install_deps.sh                  — SessionStart venv install (to hooks/)
+# Architectural model: project-root `shared/` is canonical storage only, never
+# imported from at runtime in distributed code. `shared/scripts/` and
+# `shared/dependencies/` mirror the skill-internal layout. Each skill bundles
+# its own copies (so it runs independently of any project import path) and
+# this hook keeps those bundled copies byte-equal to canonical.
 
 set -euo pipefail
 
@@ -60,63 +52,42 @@ p.write_text(json.dumps(d, indent=2) + '\n')
     done
 fi
 
-# --- Propagate shared plugin files ---
+# --- Propagate canonical shared files into skills ---
+#
+# CANONICALS holds project-root `shared/<subfolder>/<file>` paths whose
+# content propagates into every `<plugin>/skills/<name>/<subfolder>/<file>`
+# that already exists. The subfolder under `shared/` mirrors the same
+# subfolder under each skill — `shared/scripts/X.py` lands in
+# `<skill>/scripts/X.py`, `shared/dependencies/X.md` lands in
+# `<skill>/dependencies/X.md`. File-existence opt-in: a skill only
+# receives propagation once its maintainer has placed an initial copy.
+#
+# `__init__.py` is excluded — skills' subfolders have their own package
+# markers for their own modules; the canonical __init__.py belongs only
+# to the canonical package.
 
-# Map of canonical paths to target subdirectories within each plugin.
-# Canonical sources for always-on primitives live at project-root tools/;
-# setup package and per-subsystem _init.py files live under plugins/ocd/.
-SHARED_FILES=(
-    "tools/environment.py:tools"
-    "tools/errors.py:tools"
-    "plugins/ocd/systems/setup/__init__.py:systems/setup"
-    "plugins/ocd/systems/setup/__main__.py:systems/setup"
-    "plugins/ocd/systems/setup/_metadata.py:systems/setup"
-    "plugins/ocd/systems/setup/_deployment.py:systems/setup"
-    "plugins/ocd/systems/setup/_formatting.py:systems/setup"
-    "plugins/ocd/systems/setup/_system_discovery.py:systems/setup"
-    "plugins/ocd/systems/setup/_orchestration.py:systems/setup"
-    "plugins/ocd/systems/conventions/_init.py:systems/conventions"
-    "plugins/ocd/systems/log/_init.py:systems/log"
-    "plugins/ocd/systems/permissions/__init__.py:systems/permissions"
-    "plugins/ocd/systems/permissions/_init.py:systems/permissions"
-    "plugins/ocd/systems/permissions/_operations.py:systems/permissions"
-    "plugins/ocd/hooks/install_deps.sh:hooks"
+CANONICALS=(
+    "shared/scripts/_environment.py"
+    "shared/scripts/_deps.py"
+    "shared/dependencies/process-flow-notation.md"
+    "shared/dependencies/file-decomposition.md"
+    "shared/dependencies/dependency-resolution.md"
 )
 
-staged=$(git diff --cached --name-only)
-
-for entry in "${SHARED_FILES[@]}"; do
-    canonical="${entry%%:*}"
-    target_subdir="${entry##*:}"
-
-    # Only act if the canonical file is staged
+for canonical in "${CANONICALS[@]}"; do
+    # Only act if the canonical was staged
     if ! echo "$staged" | grep -qx "$canonical"; then
         continue
     fi
 
-    filename="$(basename "$canonical")"
+    # Strip the `shared/` umbrella to get the relative path that mirrors
+    # into each skill's own folder.
+    relpath="${canonical#shared/}"
 
-    # Derive the plugin that owns the canonical source, if any. Canonical
-    # sources at project root (no plugins/ prefix) are owned by none — every
-    # plugin receives a vendored copy. Canonical sources under plugins/<name>/
-    # skip <name> so the source is never copied over itself.
-    source_plugin=""
-    if [[ "$canonical" == plugins/* ]]; then
-        source_plugin="${canonical#plugins/}"
-        source_plugin="${source_plugin%%/*}"
-    fi
-
-    # Copy to every eligible plugin that already has the target
-    # subdirectory. Opt-in model: a plugin only receives a propagated file
-    # once its maintainer has created the subsystem directory that holds it.
-    for plugin_dir in plugins/*/; do
-        plugin_name="$(basename "$plugin_dir")"
-        [ -n "$source_plugin" ] && [ "$plugin_name" = "$source_plugin" ] && continue
-
-        dest_dir="${plugin_dir}${target_subdir}"
-        [ -d "$dest_dir" ] || continue
-
-        git show ":${canonical}" > "${dest_dir}/${filename}"
-        git add "${dest_dir}/${filename}"
+    for skill_dir in plugins/*/skills/*/; do
+        target_file="${skill_dir}${relpath}"
+        [ -f "$target_file" ] || continue
+        git show ":${canonical}" > "$target_file"
+        git add "$target_file"
     done
 done

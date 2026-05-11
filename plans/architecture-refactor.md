@@ -99,7 +99,7 @@ The yagni rule is removed (template + deployed copy). YAGNI conflicts with the u
 - `bin/<plugin>-run` dispatcher pattern (`bin/ocd-run`, `bin/ocd-path`) — community pattern is direct `uv run -m scripts.<verb>` invocation; the dispatcher layer retires when ocd's underscored `systems/<sys>/` migrate during Phase E
 - `plugins/<plugin>/run.py` module loader — same fate; module loading was a function of the dispatcher, gone with it
 - Underscored skill folder names (`needs_map`, etc.) — agentskills.io spec mandates `[a-z0-9-]+`; every folder hyphenates during Phase E
-- Vendored `tools/environment.py` and `tools/errors.py` propagation across plugins (`.githooks/pre-commit`) — once the dispatcher and `runpy.run_module` chain is gone, env/error helpers either inline into the few scripts that need them or stay scoped to one plugin without cross-plugin propagation
+- Vendored `dependencies/environment.py` and `dependencies/errors.py` propagation across plugins (`.githooks/pre-commit`) — once the dispatcher and `runpy.run_module` chain is gone, env/error helpers either inline into the few scripts that need them or stay scoped to one plugin without cross-plugin propagation
 
 ### What survives
 
@@ -203,8 +203,8 @@ For each:
 
 When the last system migrates out of `plugins/ocd/systems/`, the dispatcher infrastructure retires:
 
-- Delete `plugins/ocd/bin/ocd-run`, `plugins/ocd/bin/ocd-path`, `plugins/ocd/run.py`
-- Delete `plugins/ocd/tools/environment.py` and `plugins/ocd/tools/errors.py` (or inline what scripts still need)
+- Delete `plugins/ocd-old/bin/ocd-run`, `plugins/ocd-old/bin/ocd-path`, `plugins/ocd-old/run.py`
+- Delete `plugins/ocd-old/dependencies/environment.py` and `plugins/ocd-old/dependencies/errors.py` (or inline what scripts still need)
 - Strip the propagation rules from `.githooks/pre-commit` for the now-deleted shared files
 - Revoke any `ocd-run` and `ocd-path` allowlist entries in `.claude/settings.json`
 
@@ -268,6 +268,6 @@ Pivot decisions captured in `logs/decision/progressive-skill-composer.md`:
 
 The decision to drop `bin/<plugin>-run` and adopt the community pattern arrived during Phase B kickoff after corpus research surveyed `anthropics/skills` and ~330 community skills. Captured in `logs/decision/skill-authoring.md` § *Hyphenated folder names per agentskills.io spec*, *Python lives in `scripts/`*, and *Dependencies via `uv run`*. The earlier `ocd-run-self-update.md` decision is superseded for new skills (kept as the canonical record of what the legacy ocd dispatcher does until Phase E retires it).
 
-Pre-refactor artifacts surviving as legacy infrastructure scoped to ocd's pre-migration state: `plugins/ocd/bin/ocd-run`, `plugins/ocd/bin/ocd-path`, `plugins/ocd/run.py`, `plugins/ocd/tools/environment.py`, the permissions allowlist for `ocd-path` and `ocd-run`. All retire when Phase E completes the ocd migration.
+Pre-refactor artifacts surviving as legacy infrastructure scoped to ocd's pre-migration state: `plugins/ocd-old/bin/ocd-run`, `plugins/ocd-old/bin/ocd-path`, `plugins/ocd-old/run.py`, `plugins/ocd-old/dependencies/environment.py`, the permissions allowlist for `ocd-path` and `ocd-run`. All retire when Phase E completes the ocd migration.
 
 Doc rot scope: `plugins/ocd/README.md` and `plugins/ocd/ARCHITECTURE.md` describe pre-refactor mechanisms (convention-gate hook, includes/excludes). Holistic rewrite when Phase E or G completes — not chip-by-chip during the migration. Same for project-root `ARCHITECTURE.md` if it references defunct mechanisms.

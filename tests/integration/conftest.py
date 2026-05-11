@@ -30,11 +30,12 @@ def _git_root() -> Path:
 def _install_project_root_on_syspath() -> None:
     """Make project-root `tools/` importable for integration tests.
 
-    `tools/` is the canonical home for vendored always-on primitives
-    (`tools.environment`, `tools.errors`, `tools.db`). Tests that
-    exercise these helpers without going through a plugin's venv need
-    project root on sys.path; otherwise `from tools import db` fails
-    at collection time.
+    `tools/` is the canonical home for project-internal helpers
+    (`tools.db`, `tools.PROJECT_ROOT`, etc.). Tests that exercise it
+    without going through a plugin's venv need project root on
+    sys.path; otherwise `from tools import db` fails at collection
+    time. `shared/` is canonical storage for skill propagation and is
+    not imported as a runtime module by anything in this repo.
     """
     root = _git_root()
     if str(root) not in sys.path:

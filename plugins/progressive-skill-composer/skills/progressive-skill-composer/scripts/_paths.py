@@ -9,36 +9,28 @@ No shared cache directory. No separate compositions/ working area. No
 sources.json or install registry — each skill's composition.md is its
 own provenance record; walking `<scope>/.claude/skills/*/composition.md`
 enumerates every deployed skill the plugin owns.
+
+Cross-cutting primitives (`get_project_dir`, `get_plugin_root`,
+`get_claude_home`) come from this skill's own vendored copy of
+`environment.py` — the canonical lives at project-root `dependencies/`
+and propagates here via `.githooks/pre-commit`. Each skill bundles its
+own copy so it runs independently of any plugin or project import path.
 """
 
 import hashlib
 import os
 import re
-import subprocess
 from pathlib import Path
 from urllib.parse import urlparse
 
+from scripts._environment import (
+    get_claude_home,
+    get_plugin_root,
+    get_project_dir,
+)
+
 
 CLAUDE_PLUGIN_DATA_ENV = "CLAUDE_PLUGIN_DATA"
-CLAUDE_PLUGIN_ROOT_ENV = "CLAUDE_PLUGIN_ROOT"
-CLAUDE_PROJECT_DIR_ENV = "CLAUDE_PROJECT_DIR"
-CLAUDE_HOME_ENV = "CLAUDE_HOME"
-
-
-def get_plugin_root() -> Path:
-    """Walk up from this file until `.claude-plugin/plugin.json` is found."""
-    env = os.environ.get(CLAUDE_PLUGIN_ROOT_ENV)
-    if env:
-        return Path(env).resolve()
-    here = Path(__file__).resolve()
-    for ancestor in here.parents:
-        if (ancestor / ".claude-plugin" / "plugin.json").exists():
-            return ancestor
-    raise RuntimeError(
-        f"plugin root not found walking up from {here} — no ancestor "
-        f"contains .claude-plugin/plugin.json. Set {CLAUDE_PLUGIN_ROOT_ENV} "
-        "explicitly when running outside a plugin tree."
-    )
 
 
 def get_data_dir() -> Path:
@@ -77,59 +69,6 @@ def get_data_dir() -> Path:
     )
     path.mkdir(parents=True, exist_ok=True)
     return path
-
-
-def get_claude_home() -> Path:
-    env = os.environ.get(CLAUDE_HOME_ENV)
-    if env:
-        return Path(env).resolve()
-    return (Path.home() / ".claude").resolve()
-
-
-def get_project_dir() -> Path:
-    """Resolve the active project directory: env var, then git root.
-
-    Defensive guard — refuses any resolution that lands inside Claude
-    home. Caches at `~/.claude/plugins/.../skills/<name>/` are themselves
-    git checkouts; without the guard, `git rev-parse --show-toplevel`
-    fired from a cache subdirectory returns `~/.claude` and the script
-    then writes to `~/.claude/.claude/skills/`. The corrective error
-    names the env var the caller should set.
-    """
-    claude_home = get_claude_home()
-
-    def _reject_if_inside_home(path: Path) -> None:
-        try:
-            path.relative_to(claude_home)
-        except ValueError:
-            return
-        raise RuntimeError(
-            f"resolved project directory {path} is inside Claude home "
-            f"({claude_home}) — set {CLAUDE_PROJECT_DIR_ENV} to your "
-            "project root explicitly. Common cause: invoking from a "
-            "plugin cache subdirectory."
-        )
-
-    env = os.environ.get(CLAUDE_PROJECT_DIR_ENV)
-    if env:
-        path = Path(env).resolve()
-        if path.is_dir():
-            _reject_if_inside_home(path)
-            return path
-    result = subprocess.run(
-        ["git", "rev-parse", "--show-toplevel"],
-        capture_output=True,
-        text=True,
-    )
-    if result.returncode == 0:
-        path = Path(result.stdout.strip()).resolve()
-        if path.is_dir():
-            _reject_if_inside_home(path)
-            return path
-    raise RuntimeError(
-        f"project directory not discoverable — set {CLAUDE_PROJECT_DIR_ENV} "
-        "or invoke from within a git checkout"
-    )
 
 
 def destination_dir(destination: str, project_dir: Path | None = None) -> Path:

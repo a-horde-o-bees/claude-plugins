@@ -78,6 +78,10 @@ No shared cache directory; no central registry. Each composition.md IS the per-s
 
 The agent fleshes out the scaffolded structure via Edit tool after build; the layered shape is the foundation.
 
+### Workflow vs script — what goes where
+
+Apply the PFN rule's *Workflow vs Script* section when fleshing out a composition. The decision happens twice: during `compose refine` (verb topography — which verbs are workflows vs which are scripts the workflows invoke) and during `compose build` (scaffolding the `_<verb>.md` files and `scripts/` skeleton). If a draft step is mechanically resolvable from inputs, pull it into a script.
+
 ## Compositions of compositions
 
 Composing a new skill that uses one of your previously-composed skills as a source is not recommended — provenance entanglement makes the recipe history hard to follow. Use upstream sources directly instead. Not enforced by the script; surfaced here for awareness.

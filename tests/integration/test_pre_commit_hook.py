@@ -26,15 +26,13 @@ MAIN_TREE_HOOK = Path(__file__).resolve().parents[2] / ".githooks" / "pre-commit
 
 
 class TestPreCommitPropagation:
-    """Test .githooks/pre-commit propagates shared files to non-ocd plugins."""
+    """Test .githooks/pre-commit propagates canonical dependencies into skill scripts/."""
 
     @pytest.fixture(autouse=True)
     def setup_plugin(self, worktree):
         self.root = worktree
         self.plugin_dir = worktree / "plugins" / "test-hook-plugin"
         self.plugin_dir.mkdir(parents=True, exist_ok=True)
-        (self.plugin_dir / "systems" / "setup").mkdir(parents=True, exist_ok=True)
-        (self.plugin_dir / "tools").mkdir(parents=True, exist_ok=True)
         subprocess.run(
             ["git", "add", str(self.plugin_dir)],
             cwd=self.root, capture_output=True,
@@ -81,80 +79,73 @@ class TestPreCommitPropagation:
         )
 
     def test_no_action_when_canonical_not_staged(self):
-        target = self.plugin_dir / "systems" / "setup" / "__init__.py"
+        skill_scripts = self.plugin_dir / "skills" / "test-skill" / "scripts"
+        skill_scripts.mkdir(parents=True, exist_ok=True)
+        target = skill_scripts / "_environment.py"
+        target.write_text("placeholder\n")
+        subprocess.run(["git", "add", str(target)], cwd=self.root, capture_output=True)
+        original = target.read_bytes()
+
         result = self._run_hook()
         assert result.returncode == 0
-        assert not target.exists(), "Should not propagate when nothing staged"
+        assert target.read_bytes() == original, \
+            "Skill copy should not change when canonical is not staged"
 
-    def test_propagates_setup_init(self):
-        canonical = self.root / "plugins" / "ocd" / "systems" / "setup" / "__init__.py"
-        target = self.plugin_dir / "systems" / "setup" / "__init__.py"
+    def test_propagates_environment_to_skill_scripts(self):
+        """Canonical dependencies/environment.py propagates into each skill's
+        scripts/ folder that already has a copy — file-existence opt-in."""
+        canonical = self.root / "shared" / "scripts" / "_environment.py"
+        skill_scripts = self.plugin_dir / "skills" / "test-skill" / "scripts"
+        skill_scripts.mkdir(parents=True, exist_ok=True)
+        target = skill_scripts / "_environment.py"
+        # Seed initial copy so the file-existence opt-in fires.
+        target.write_text("placeholder\n")
+        subprocess.run(["git", "add", str(target)], cwd=self.root, capture_output=True)
 
         self._touch_and_stage(canonical)
         try:
             result = self._run_hook()
             assert result.returncode == 0, result.stderr
-            assert target.exists(), "__init__.py was not propagated"
             assert canonical.read_bytes() == target.read_bytes(), \
-                "Propagated __init__.py content does not match canonical"
+                "Skill-level environment.py did not sync to canonical content"
         finally:
             self._unstage_file(canonical)
 
-    def test_propagates_setup_main(self):
-        canonical = self.root / "plugins" / "ocd" / "systems" / "setup" / "__main__.py"
-        target = self.plugin_dir / "systems" / "setup" / "__main__.py"
+    def test_propagates_pfn_to_skill_dependencies(self):
+        """Canonical shared/dependencies/process-flow-notation.md propagates
+        into each skill's dependencies/ folder that already has a copy
+        (the subfolder under shared/ mirrors the subfolder under each skill)."""
+        canonical = self.root / "shared" / "dependencies" / "process-flow-notation.md"
+        skill_deps = self.plugin_dir / "skills" / "test-skill" / "dependencies"
+        skill_deps.mkdir(parents=True, exist_ok=True)
+        target = skill_deps / "process-flow-notation.md"
+        target.write_text("placeholder\n")
+        subprocess.run(["git", "add", str(target)], cwd=self.root, capture_output=True)
 
         self._touch_and_stage(canonical)
         try:
             result = self._run_hook()
             assert result.returncode == 0, result.stderr
-            assert target.exists(), "__main__.py was not propagated"
             assert canonical.read_bytes() == target.read_bytes(), \
-                "Propagated __main__.py content does not match canonical"
+                "Skill-level PFN did not sync to canonical content"
         finally:
             self._unstage_file(canonical)
 
-    def test_propagates_tools_environment(self):
-        """Canonical source at project-root tools/ propagates into every
-        plugin's tools/ subdir — the always-on primitives vendored per plugin.
-        """
-        canonical = self.root / "tools" / "environment.py"
-        target = self.plugin_dir / "tools" / "environment.py"
+    def test_skill_scripts_without_existing_copy_not_seeded(self):
+        """Skill-level opt-in: a skill scripts/ folder without an existing
+        copy is left alone (no automatic seeding)."""
+        canonical = self.root / "shared" / "scripts" / "_environment.py"
+        skill_scripts = self.plugin_dir / "skills" / "test-skill-no-copy" / "scripts"
+        skill_scripts.mkdir(parents=True, exist_ok=True)
+        target = skill_scripts / "_environment.py"
+        assert not target.exists()
 
         self._touch_and_stage(canonical)
         try:
             result = self._run_hook()
             assert result.returncode == 0, result.stderr
-            assert target.exists(), "environment.py was not propagated"
-            assert canonical.read_bytes() == target.read_bytes(), \
-                "Propagated environment.py content does not match canonical"
-        finally:
-            self._unstage_file(canonical)
-
-    def test_skips_ocd_plugin(self):
-        """Ocd is the source of setup/; project-root tools/ is canonical for
-        env/errors. Hook must not copy to either source location."""
-        canonical = self.root / "plugins" / "ocd" / "systems" / "setup" / "__init__.py"
-        original = canonical.read_bytes()
-
-        self._touch_and_stage(canonical)
-        try:
-            self._run_hook()
-            assert canonical.read_bytes() == original + b"\n"
-        finally:
-            self._unstage_file(canonical)
-
-    def test_skips_plugin_without_target_dir(self):
-        """If a plugin lacks the target subdirectory, skip it."""
-        shutil.rmtree(self.plugin_dir / "systems" / "setup")
-        canonical = self.root / "plugins" / "ocd" / "systems" / "setup" / "__init__.py"
-
-        self._touch_and_stage(canonical)
-        try:
-            result = self._run_hook()
-            assert result.returncode == 0, result.stderr
-            assert not (self.plugin_dir / "systems" / "setup" / "__init__.py").exists(), \
-                "Should not create systems/setup/ directory"
+            assert not target.exists(), \
+                "Hook should not seed environment.py into a skill that hasn't opted in"
         finally:
             self._unstage_file(canonical)
 

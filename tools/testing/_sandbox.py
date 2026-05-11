@@ -16,7 +16,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from tools import environment
+from tools import get_project_dir
 
 
 TEST_NAME_PREFIX = "tmp-test-"
@@ -34,7 +34,7 @@ def sandbox_tests_run(
     is always removed before return. `pytest_args` is forwarded verbatim
     to the inner runner.
     """
-    project_root = environment.get_project_dir()
+    project_root = get_project_dir()
     ref_sha = _resolve_ref(project_root, ref)
     short_sha = ref_sha[:7]
     worktree = _sibling_path(project_root, f"{TEST_NAME_PREFIX}{short_sha}")

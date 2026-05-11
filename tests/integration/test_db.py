@@ -14,7 +14,7 @@ from pathlib import Path
 import pytest
 
 from tools import db
-from tools.errors import InitError
+from tools.db import InitError
 
 
 def _make_db(path: Path, schema: str) -> None:

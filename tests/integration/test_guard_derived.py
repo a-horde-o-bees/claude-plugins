@@ -51,53 +51,55 @@ class TestDeployedFilesBlocked:
         assert decision["permissionDecision"] == "deny"
 
 
-class TestPropagatedSetupBlocked:
+class TestPropagatedSkillScriptsBlocked:
     @pytest.mark.parametrize("path", [
-        "plugins/some-other-plugin/systems/setup/__init__.py",
-        "plugins/some-other-plugin/systems/setup/__main__.py",
-        "plugins/some-other-plugin/systems/setup/_orchestration.py",
+        "plugins/progressive-skill-composer/skills/progressive-skill-composer/scripts/_environment.py",
+        "plugins/progressive-skill-composer/skills/progressive-skill-composer/scripts/_deps.py",
+        "plugins/some-plugin/skills/some-skill/scripts/_environment.py",
+        "plugins/some-plugin/skills/some-skill/scripts/_deps.py",
+        "plugins/some-plugin/skills/some-skill/dependencies/process-flow-notation.md",
+        "plugins/some-plugin/skills/some-skill/dependencies/file-decomposition.md",
+        "plugins/some-plugin/skills/some-skill/dependencies/dependency-resolution.md",
     ])
-    def test_non_ocd_setup_denied(self, path: str):
+    def test_skill_scripts_denied(self, path: str):
+        """Each skill's scripts/_environment.py, scripts/_deps.py, and
+        dependencies/*.md propagated rule canonicals are copies of the
+        project-root canonical — block direct edits so changes route
+        through the canonical."""
         result = _run_hook(path)
         assert result.returncode == 2
         decision = json.loads(result.stdout)["hookSpecificOutput"]
         assert decision["permissionDecision"] == "deny"
 
-    def test_ocd_setup_allowed(self):
-        """Canonical source in ocd/systems/setup/ is editable — regex excludes ocd/."""
-        result = _run_hook("plugins/ocd/systems/setup/__init__.py")
+    def test_skill_scripts_other_files_allowed(self):
+        """Only the specific propagated filenames are blocked;
+        other skill scripts are skill-owned and editable."""
+        result = _run_hook(
+            "plugins/progressive-skill-composer/skills/progressive-skill-composer/scripts/compose.py"
+        )
         assert result.returncode == 0
         assert result.stdout == ""
 
-
-class TestPropagatedToolsBlocked:
-    @pytest.mark.parametrize("path", [
-        "plugins/ocd/tools/environment.py",
-        "plugins/ocd/tools/errors.py",
-        "plugins/some-other-plugin/tools/environment.py",
-        "plugins/some-other-plugin/tools/errors.py",
-    ])
-    def test_plugin_tools_denied(self, path: str):
-        """Every plugin's tools/environment.py and tools/errors.py are
-        propagated copies — canonical lives at project-root tools/."""
-        result = _run_hook(path)
-        assert result.returncode == 2
-        decision = json.loads(result.stdout)["hookSpecificOutput"]
-        assert decision["permissionDecision"] == "deny"
-
-    def test_project_root_tools_allowed(self):
-        """Canonical source at project root is editable."""
-        result = _run_hook("tools/environment.py")
-        assert result.returncode == 0
-        assert result.stdout == ""
+    def test_project_root_shared_allowed(self):
+        """Canonical sources at project root are editable."""
+        for path in (
+            "shared/scripts/_environment.py",
+            "shared/scripts/_deps.py",
+            "shared/dependencies/process-flow-notation.md",
+            "shared/dependencies/file-decomposition.md",
+            "shared/dependencies/dependency-resolution.md",
+        ):
+            result = _run_hook(path)
+            assert result.returncode == 0, f"{path} should be editable"
+            assert result.stdout == "", f"{path} should be editable"
 
 
 class TestUnguardedPathsAllowed:
     @pytest.mark.parametrize("path", [
         "README.md",
-        "plugins/ocd/systems/pdf/_generate.py",
         "logs/decision/some-entry.md",  # real log entries, not templates
         ".claude/hooks/guard_derived.py",
+        "plugins/ocd-old/systems/pdf/_generate.py",  # legacy code editable
     ])
     def test_path_allowed(self, path: str):
         result = _run_hook(path)

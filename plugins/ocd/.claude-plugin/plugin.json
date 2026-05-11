@@ -1,14 +1,8 @@
 {
   "name": "ocd",
-  "version": "0.2.29",
-  "description": "Deterministic enforcement of permissions, rules, and structural conventions with agent-facing project navigation",
+  "description": "Skill-based discipline plugin \u2014 each system from the legacy monolithic ocd plugin is being migrated into a self-contained skill that bundles its own dependencies. Currently empty; skills land here as migration proceeds.",
+  "version": "0.3.1",
   "author": {
     "name": "a-horde-o-bees"
-  },
-  "homepage": "https://github.com/a-horde-o-bees/claude-plugins",
-  "repository": "https://github.com/a-horde-o-bees/claude-plugins",
-  "license": "MIT",
-  "skills": [
-    "./systems/"
-  ]
+  }
 }
