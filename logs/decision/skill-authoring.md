@@ -225,7 +225,7 @@ Corpus research surveyed `anthropics/skills` (17 skills) and four community repo
 
 ### Decision
 
-Every skill folder is hyphenated. Multi-word skills follow the community pattern: `slack-formatting/`, `progressive-composer/`, `needs-map/`. The folder name matches the SKILL.md frontmatter `name` field (the spec mandates this).
+Every skill folder is hyphenated. Multi-word skills follow the community pattern: `slack-formatting/`, `progressive-skill-composer/`, `needs-map/`. The folder name matches the SKILL.md frontmatter `name` field (the spec mandates this).
 
 Python implementation moves into a child directory (`scripts/` is the dominant convention in `anthropics/skills`; `core/` and `lib/` appear in some community repos). The child directory uses an underscore-friendly name and is the importable Python package. The skill folder itself is never imported — it is only ever a filesystem path.
 
@@ -302,7 +302,7 @@ When a script adds a third-party dependency, the author adds a PEP 723 directive
 
 The existing `bin/ocd-run` and `bin/ocd-path` survive only as long as the ocd plugin's underscored `systems/<sys>/` folders survive. Phase E of the architecture refactor migrates ocd to the community pattern; at the end of that phase, `bin/<plugin>-run` deletes from the ocd plugin entirely.
 
-`progressive-composer` ships under the new pattern from day one — no `bin/`, no `run.py`, no vendored `tools/` package. It pilots the community shape that ocd will eventually match.
+`progressive-skill-composer` ships under the new pattern from day one — no `bin/`, no `run.py`, no vendored `tools/` package. It pilots the community shape that ocd will eventually match.
 
 ### Consequences
 

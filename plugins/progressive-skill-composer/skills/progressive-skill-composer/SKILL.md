@@ -1,9 +1,9 @@
 ---
-name: progressive-composer
+name: progressive-skill-composer
 description: Use this skill when the user wants to design a new skill from one or more exemplar source skills, iterate on an in-progress composition, materialize a finalized composition into a deployable skill, or list deployed compositions with optional upstream-drift detection. Provides the meta-tool layer for goal-driven skill composition with our authoring discipline (PFN notation + progressive disclosure) baked into the output. Each composed skill is self-contained — composition.md (the recipe), embedded source skills (the ingredients), and SKILL.md (the dish) live together in one folder. For installing an unmodified upstream skill kept as-is, use Vercel's `npx skills` instead — this skill focuses on composition, not installation.
 ---
 
-# progressive-composer
+# progressive-skill-composer
 
 Compose new skills from one or more exemplar sources, with PFN + progressive-disclosure authoring discipline applied automatically. Drift detection against pinned upstream commits via non-mutating `git ls-remote`. Each deployed composition is a self-contained folder: SKILL.md (what Claude Code loads), composition.md (recipe + provenance), embedded `sources/<source-slug>/` exemplars, and `scripts/` for the composition's own implementation.
 
@@ -86,4 +86,4 @@ Composing a new skill that uses one of your previously-composed skills as a sour
 
 - **Vercel's `npx skills`** ([skills.sh](https://skills.sh)) — for installing unmodified upstream skills. Symlinks into `~/.claude/skills/`; auto-fresh via upstream.
 - **`/plugin install`** — for atomic plugin bundles. Bundle-grained, not skill-grained.
-- **progressive-composer (this plugin)** — for designing new skills from exemplars with authoring discipline applied. Drift tracking against pinned snapshots.
+- **progressive-skill-composer (this plugin)** — for designing new skills from exemplars with authoring discipline applied. Drift tracking against pinned snapshots.

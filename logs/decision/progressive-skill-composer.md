@@ -27,7 +27,7 @@ Two niches remain genuinely unoccupied:
 
 ### Decision
 
-`progressive-composer` is a compose-only meta-plugin. Scope:
+`progressive-skill-composer` is a compose-only meta-plugin. Scope:
 
 | Capability | Behavior |
 |---|---|
@@ -36,23 +36,23 @@ Two niches remain genuinely unoccupied:
 | Drift tracking against pinned upstream | composition.md frontmatter pins each source's `(url, ref, commit)`. `compose list --drift` and `compose refine`'s entry use `git ls-remote <url> <ref>` (non-mutating) to compare upstream HEAD to pinned commit. User decides whether to update via `compose update-sources`. |
 | Cross-machine portability | Self-contained skill folders. `git init` `<scope>/.claude/skills/<name>/` and push to whatever remote you want; clone elsewhere to bring the composition (recipe + embedded sources + output) along. No plugin-level sync verbs. |
 
-What progressive-composer does NOT do (covered by Vercel's `npx skills`):
+What progressive-skill-composer does NOT do (covered by Vercel's `npx skills`):
 
 - Direct install of upstream skills kept as-is — use `npx skills add <repo> --skill <name>`
-- Symlink-based auto-fresh upstream tracking — `npx skills` symlinks; updates flow through automatically. progressive-composer's drift tracking is for compositions where pinning is the point.
+- Symlink-based auto-fresh upstream tracking — `npx skills` symlinks; updates flow through automatically. progressive-skill-composer's drift tracking is for compositions where pinning is the point.
 
 ### Consequences
 
 - **Enables:** unique value in the ecosystem (composition + drift tracking are unoccupied territory); sharper plugin pitch; complementary to Vercel rather than competing; output skills automatically conform to PFN + progressive-disclosure discipline (a value-add over generic compose tools)
 - **Constrains:** users wanting straight install reach for `npx skills`, not us — README must point at it explicitly to avoid confusion; we can't claim "manage all your skills" since Vercel covers half that surface. We can claim "design new skills from exemplars with discipline."
-- **Discovery surface:** `/plugin install progressive-composer` for users wanting the compose toolchain; the plugin's own SKILL.md frontmatter description leads with composition value (NOT installation, which is Vercel's space)
+- **Discovery surface:** `/plugin install progressive-skill-composer` for users wanting the compose toolchain; the plugin's own SKILL.md frontmatter description leads with composition value (NOT installation, which is Vercel's space)
 - **Migration:** the prior in-flight install/uninstall verbs and `type: install|composed` discriminator are dropped; composition.md schema simplifies (no type field; all entries are compositions)
 
 ## Distribution model — both paths from one source
 
 ### Context
 
-With progressive-composer providing individual-skill install, the question is whether we keep plugin packaging at all, or go standalone-only.
+With progressive-skill-composer providing individual-skill install, the question is whether we keep plugin packaging at all, or go standalone-only.
 
 ### Options Considered
 
@@ -67,12 +67,12 @@ With progressive-composer providing individual-skill install, the question is wh
 The source repo ships:
 
 - `.claude-plugin/marketplace.json` defining N thematic plugin bundles (marketplace surface for `/plugin install` users)
-- `skills/<skill>/` folders that are independently portable (standalone surface for progressive-composer / direct `~/.claude/skills/` clone)
+- `skills/<skill>/` folders that are independently portable (standalone surface for progressive-skill-composer / direct `~/.claude/skills/` clone)
 
 Users pick their preferred consumption path:
 
 - `/plugin install <bundle>@<marketplace>` for atomic bundle install
-- progressive-composer for individual-skill control with refactoring and source tracking
+- progressive-skill-composer for individual-skill control with refactoring and source tracking
 - Manual `git clone + cp` for users who want neither
 
 ### Consequences
@@ -84,7 +84,7 @@ Users pick their preferred consumption path:
 
 ### Context
 
-Earlier framings treated compose as a sequence of single-shot CLI operations (`compose new`, `compose refine`, `compose build`, `compose recheck`) each producing or consuming a separate working spec at `<scope>/.claude/progressive-composer-a-horde-o-bees/compositions/<output>.md`. Implementation surfaced two problems with that model:
+Earlier framings treated compose as a sequence of single-shot CLI operations (`compose new`, `compose refine`, `compose build`, `compose recheck`) each producing or consuming a separate working spec at `<scope>/.claude/progressive-skill-composer-a-horde-o-bees/compositions/<output>.md`. Implementation surfaced two problems with that model:
 
 - **Workflow shape was wrong.** Compose isn't a pipeline of discrete steps; it's a building dialogue. The user might add a source, discuss it, refine the goal, change their mind on a source, build, then return weeks later to incorporate upstream changes. Forcing each cognitive moment into its own CLI verb fragmented the experience and made the agent's role (driving dialogue) compete with the script's role (recording state).
 - **Storage was over-distributed.** A composition's recipe (working spec), exemplar sources (cache directory), and deployed output (skill folder) lived in three different filesystem locations. Cross-machine portability required syncing all three; sharing a composed skill required bundling them. The composition wasn't a self-contained artifact.
@@ -148,7 +148,7 @@ Each composed skill folder is self-contained:
 
 `sources/` is present during active development with sparse-checkouts of each exemplar. composition.md body articulates Goal, Source mapping, and accumulated Design refinements. After build, `sources/` may be optionally purged via `compose purge-sources` (commits remain pinned in composition.md; refine auto-rehydrates by re-running `compose add-source` against pinned commits).
 
-Cache directory and source registry are gone — no `~/.claude/plugins/data/progressive-composer-a-horde-o-bees/cache/` or `sources.json`. The plugin data dir holds nothing user-facing; transient state is per-skill and self-contained.
+Cache directory and source registry are gone — no `~/.claude/plugins/data/progressive-skill-composer-a-horde-o-bees/cache/` or `sources.json`. The plugin data dir holds nothing user-facing; transient state is per-skill and self-contained.
 
 ### composition.md schema
 
@@ -183,7 +183,7 @@ build_status: built                                 # draft | built
 <dated entries appended during compose refine sessions; previous entries preserved unless superseded>
 ```
 
-No `type` discriminator — every composition.md describes a composition. For users wanting direct install of an unmodified upstream skill, Vercel's `npx skills add <repo> --skill <name>` is the recommended path; progressive-composer doesn't bundle that capability.
+No `type` discriminator — every composition.md describes a composition. For users wanting direct install of an unmodified upstream skill, Vercel's `npx skills add <repo> --skill <name>` is the recommended path; progressive-skill-composer doesn't bundle that capability.
 
 ### Workflow shape — agent-driven dialogue
 

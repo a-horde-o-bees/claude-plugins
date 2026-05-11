@@ -1,4 +1,4 @@
-# progressive-composer
+# progressive-skill-composer
 
 Compose new skills from one or more exemplar sources via goal-driven dialogue, with PFN + progressive-disclosure authoring discipline baked into the output. Fills the unoccupied niche between `/plugin install` (bundle-atomic) and direct standalone install (`npx skills`): nothing in the ecosystem composes new skills from exemplars against a user-articulated goal.
 
@@ -7,7 +7,7 @@ Each composed skill is **self-contained**: `composition.md` (the recipe + proven
 ## Setup
 
 ```
-/plugin install progressive-composer
+/plugin install progressive-skill-composer
 ```
 
 Restart the session after install so the skill is discoverable. `uv` is a soft prerequisite — install via [astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/) when missing. All scripts are stdlib-only otherwise.
@@ -38,9 +38,9 @@ Restart the session after install so the skill is discoverable. `uv` is a soft p
 
 ## What this plugin doesn't do
 
-For installing unmodified upstream skills, use **Vercel's `npx skills`** ([skills.sh](https://skills.sh)) — symlinks into `~/.claude/skills/`, auto-fresh via upstream. progressive-composer focuses specifically on **goal-driven composition** with **drift tracking against pinned snapshots**; install is a different problem with mature tooling.
+For installing unmodified upstream skills, use **Vercel's `npx skills`** ([skills.sh](https://skills.sh)) — symlinks into `~/.claude/skills/`, auto-fresh via upstream. progressive-skill-composer focuses specifically on **goal-driven composition** with **drift tracking against pinned snapshots**; install is a different problem with mature tooling.
 
-For atomic plugin-bundle install, `/plugin install <bundle>@<marketplace>` is the official Claude Code path. progressive-composer isn't an alternative there either.
+For atomic plugin-bundle install, `/plugin install <bundle>@<marketplace>` is the official Claude Code path. progressive-skill-composer isn't an alternative there either.
 
 The differentiation:
 
@@ -48,7 +48,7 @@ The differentiation:
 |---|---|
 | Install one upstream skill, kept as-is | Vercel's `npx skills` |
 | Install a plugin bundle | `/plugin install` |
-| **Design a new skill from exemplars with authoring discipline applied + drift tracking** | **progressive-composer** |
+| **Design a new skill from exemplars with authoring discipline applied + drift tracking** | **progressive-skill-composer** |
 
 ## Cross-machine portability
 

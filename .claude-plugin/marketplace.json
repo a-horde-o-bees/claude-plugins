@@ -13,8 +13,8 @@
       "category": "development"
     },
     {
-      "name": "progressive-composer",
-      "source": "./plugins/progressive-composer",
+      "name": "progressive-skill-composer",
+      "source": "./plugins/progressive-skill-composer",
       "description": "Track external skill repos, install individual skills selectively, and refactor third-party skills into the progressive-disclosure shape",
       "category": "development"
     }

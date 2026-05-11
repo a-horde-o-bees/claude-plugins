@@ -1,12 +1,12 @@
 # Architecture refactor
 
-Pivot to a skills-as-atomic-unit architecture. Plugins become packaging conveniences for marketplace surface; the actual content is skills in a standard mainstream folder format. A new meta-plugin (`progressive-composer`) provides the missing ergonomic layer for individual skill management — track repos, install selectively, refactor third-party skills into our progressive-disclosure shape. Rules-system retains the always-on discipline library; conventions migrate to opt-in categorical skills; MCP servers benched until a context-cost case justifies their reactivation.
+Pivot to a skills-as-atomic-unit architecture. Plugins become packaging conveniences for marketplace surface; the actual content is skills in a standard mainstream folder format. A new meta-plugin (`progressive-skill-composer`) provides the missing ergonomic layer for individual skill management — track repos, install selectively, refactor third-party skills into our progressive-disclosure shape. Rules-system retains the always-on discipline library; conventions migrate to opt-in categorical skills; MCP servers benched until a context-cost case justifies their reactivation.
 
 What survives from prior architectural work: the `bin/ocd-path` and `bin/ocd-run` self-update layer (committed as `c16433f`), the state-location convention (`logs/decision/state-location.md`), and the manifest-diff self-update mechanism (`logs/decision/ocd-run-self-update.md`).
 
 ## Goal
 
-Reduce always-on context cost while making our skills mainstream-discoverable on aggregators (skillsmp.com, anthropic-style marketplaces, etc.) and individually installable for users who want only specific capabilities. Every skill is a folder following the universal `<skill-name>/SKILL.md` format. Plugin packaging is one of two parallel distribution paths: marketplace-surface (`/plugin install`) and individual-skill-surface (progressive-composer + direct `~/.claude/skills/` clone).
+Reduce always-on context cost while making our skills mainstream-discoverable on aggregators (skillsmp.com, anthropic-style marketplaces, etc.) and individually installable for users who want only specific capabilities. Every skill is a folder following the universal `<skill-name>/SKILL.md` format. Plugin packaging is one of two parallel distribution paths: marketplace-surface (`/plugin install`) and individual-skill-surface (progressive-skill-composer + direct `~/.claude/skills/` clone).
 
 ## Architecture
 
@@ -22,7 +22,7 @@ Reduce always-on context cost while making our skills mainstream-discoverable on
 
 **Plugin packaging (marketplace surface).** N thematic plugins from one source repo, each bundling a curated set of skills. Users installing via `/plugin install <bundle>@<marketplace>` get the bundle atomically. Mirrors anthropics/skills (17 skills across 3 plugins). This is the discovery path most Claude Code users will reach for.
 
-**Standalone skill installation (individual surface).** Skills work at runtime when copied directly to `~/.claude/skills/<skill>/SKILL.md` or `<scope>/.claude/skills/<skill>/SKILL.md` per the documented `Where skills live` table. progressive-composer is the ergonomic layer for this path: track repos/marketplaces, clone unmodified, install selectively, refactor on demand. See `logs/decision/progressive-composer.md`.
+**Standalone skill installation (individual surface).** Skills work at runtime when copied directly to `~/.claude/skills/<skill>/SKILL.md` or `<scope>/.claude/skills/<skill>/SKILL.md` per the documented `Where skills live` table. progressive-skill-composer is the ergonomic layer for this path: track repos/marketplaces, clone unmodified, install selectively, refactor on demand. See `logs/decision/progressive-skill-composer.md`.
 
 Both paths materialize from the same source repo. Plugin manifests bundle subsets; skill folders are independently portable.
 
@@ -33,7 +33,7 @@ Both paths materialize from the same source repo. Plugin manifests bundle subset
 ├── .claude-plugin/
 │   └── marketplace.json          # defines N thematic plugin bundles
 ├── skills/                        # all skills as folders (one per skill, hyphenated)
-│   ├── <skill-name-1>/            # e.g. progressive-composer, slack-formatting
+│   ├── <skill-name-1>/            # e.g. progressive-skill-composer, slack-formatting
 │   │   ├── SKILL.md
 │   │   ├── _<verb>.md             # internal verb workflows (called only)
 │   │   ├── _<component>.md        # internal reusable sub-procedures
@@ -54,7 +54,7 @@ All skills invoke uniformly via `uv run -m scripts.<verb> <args>` regardless of 
 
 Thematic plugin buckets — multiple plugins from this single source repo, organized by domain. Migrate skills out of `ocd` plugin one at a time as each refactor completes. New plugins fork off naturally as content shape locks. The source repo stays one unit; plugin manifests carve it as packaging convenience. See `logs/decision/plugin-compartmentalization.md`.
 
-### progressive-composer plugin
+### progressive-skill-composer plugin
 
 New meta-plugin. Scope:
 
@@ -65,7 +65,7 @@ New meta-plugin. Scope:
 - Refactor third-party skills into progressive-disclosure shape on demand
 - Personal-track via branch — user can maintain own customizations as a branch of the core plugin, usable across machines
 
-Fills the ergonomic gap the official Claude Code distribution doesn't provide: anthropic's marketplace surface is plugin-grained only; individual skill install is a manual `git clone + cp` operation today. See `logs/decision/progressive-composer.md`.
+Fills the ergonomic gap the official Claude Code distribution doesn't provide: anthropic's marketplace surface is plugin-grained only; individual skill install is a manual `git clone + cp` operation today. See `logs/decision/progressive-skill-composer.md`.
 
 ### Hook scoping — Pattern B for installer skills
 
@@ -91,7 +91,7 @@ The yagni rule is removed (template + deployed copy). YAGNI conflicts with the u
 - Workflows/components folder distinction — flatten to `_<verb>.md` + `_<component>.md` siblings of SKILL.md
 - install.md/uninstall.md handlers — plugin install IS the install for non-installer skills; Pattern B for installers
 - Tagline frontmatter — description does both general-purpose discovery and cognitive-trigger work
-- Setup system — mostly dissolves; permissions becomes its own Pattern B skill; remaining setup verbs absorbed into progressive-composer or removed
+- Setup system — mostly dissolves; permissions becomes its own Pattern B skill; remaining setup verbs absorbed into progressive-skill-composer or removed
 - includes/excludes path-glob mechanism — already gone; replaced by frontmatter-description triggering
 - Conventions deployment directory — conventions become categorical skills (opt-in, project-shape-changing)
 - YAGNI rule — removed
@@ -103,7 +103,7 @@ The yagni rule is removed (template + deployed copy). YAGNI conflicts with the u
 
 ### What survives
 
-- State location convention — plugin data dir for cache and per-project state keyed on path-hash; the location story is unchanged, only the dispatcher that mediates writes goes away. progressive-composer's scripts write directly to data dir without a wrapper layer
+- State location convention — plugin data dir for cache and per-project state keyed on path-hash; the location story is unchanged, only the dispatcher that mediates writes goes away. progressive-skill-composer's scripts write directly to data dir without a wrapper layer
 - Dependencies layer — simplified (leave-on-uninstall, no refcount; `<scope>/.claude/dependencies/` location since they're Claude Code framework infrastructure)
 - Rules system — always-on discipline library
 - MCP servers themselves (benched, not deleted) — reactivate when justified
@@ -117,7 +117,7 @@ Captured in:
 - `plans/architecture-refactor.md` (this file)
 - `logs/decision/skill-architecture.md` — distribution model, atomic skills, rules-retains, conventions-as-skills
 - `logs/decision/skill-authoring.md` — folder format, body shape, flat layout, frontmatter discipline (extends prior decision log)
-- `logs/decision/progressive-composer.md` — meta-plugin scope
+- `logs/decision/progressive-skill-composer.md` — meta-plugin scope
 - `logs/decision/plugin-compartmentalization.md` — thematic split, plugins as packaging
 - `logs/decision/hook-scoping.md` — Pattern A vs B
 - `logs/decision/mcp-benching.md` — context cost
@@ -128,7 +128,7 @@ Surviving from prior architectural work (no changes):
 - `logs/decision/state-location.md`
 - `logs/decision/ocd-run-self-update.md`
 
-### Phase B — Build progressive-composer plugin
+### Phase B — Build progressive-skill-composer plugin
 
 > Foundational meta-plugin. Built before migrating any of our content because it's the install path we'll use on ourselves. Pilots the community-pattern shape that ocd will eventually match — hyphenated folder, `scripts/` Python package, no dispatcher.
 
@@ -136,11 +136,11 @@ Surviving from prior architectural work (no changes):
 
 1. **Initial subsets 1–4** built around a separate sources registry (`sources.json`), shared cache directory, and a working-area-vs-deployed-skill split. Implementation surfaced workflow-shape problems and over-distributed storage.
 2. **First redesign** collapsed subsets 1–4 into a single all-in-one model: self-contained skill folders, sparse-checkout per skill, composition.md inline. Included install/uninstall verbs as part of the plugin's surface.
-3. **Final redesign** (this is the locked design) drops install/uninstall after research showed Vercel's `npx skills` covers that surface; bakes PFN + progressive-disclosure authoring discipline into compose build's output as the differentiating value-add. See `logs/decision/progressive-composer.md` § *Compose verb — workflow-driven, self-contained skill folders* for full rationale.
+3. **Final redesign** (this is the locked design) drops install/uninstall after research showed Vercel's `npx skills` covers that surface; bakes PFN + progressive-disclosure authoring discipline into compose build's output as the differentiating value-add. See `logs/decision/progressive-skill-composer.md` § *Compose verb — workflow-driven, self-contained skill folders* for full rationale.
 
 **Locked Phase B scope — compose-only meta-plugin:**
 
-1. Scaffold `plugins/progressive-composer/` with `.claude-plugin/plugin.json`, README, ARCHITECTURE, LICENSE, `skills/progressive-composer/` (hyphenated). No `bin/`, no `run.py`, no vendored `tools/` package. One skill matching plugin name (Anthropic 1:1 convention)
+1. Scaffold `plugins/progressive-skill-composer/` with `.claude-plugin/plugin.json`, README, ARCHITECTURE, LICENSE, `skills/progressive-skill-composer/` (hyphenated). No `bin/`, no `run.py`, no vendored `tools/` package. One skill matching plugin name (Anthropic 1:1 convention)
 2. Sparse-checkout primitive — `git clone --filter=blob:none --sparse <url> <dest>` + `git sparse-checkout set <skill-path>` to fetch one skill folder from upstream without cloning the whole repo
 3. `compose new --scope <user|project>` — workflow entry; script outputs orchestration; agent collects skill name and goal via dialogue, writes initial composition.md via Write tool, invokes `compose add-source` for each chosen exemplar, drives goal-articulation dialogue, eventually invokes `compose build`
 4. `compose refine <name> --scope <user|project>` — workflow re-entry; script reads composition.md, runs `git ls-remote` per source for drift detection, prints status report; agent surfaces drift, asks user about updating drifted sources via `compose update-sources`, drives refinement dialogue
@@ -156,13 +156,13 @@ Surviving from prior architectural work (no changes):
 - Separate `compositions/<name>.md` working area — inline at `<scope>/.claude/skills/<name>/composition.md`
 - `installed.json` registries — walking `<scope>/.claude/skills/*/composition.md` enumerates everything we deployed
 - `compose recheck` as a separate verb — folded into `compose list --drift` and `compose refine` entry
-- `<scope>/.claude/progressive-composer-a-horde-o-bees/` plugin-namespaced user-edited directory — compositions live in their skill folders
+- `<scope>/.claude/progressive-skill-composer-a-horde-o-bees/` plugin-namespaced user-edited directory — compositions live in their skill folders
 - `install` / `uninstall` verbs and `type: install|composed` discriminator — Vercel's `npx skills` covers the install case; we focus on composition. composition.md schema simplifies to one shape (always a composition)
 
 **Out of scope (covered elsewhere in the ecosystem):**
 
 - Direct install of unmodified upstream skills — Vercel's `npx skills add <repo> --skill <name>` handles this. README points users at it explicitly.
-- Symlink-based auto-fresh upstream tracking — `npx skills` symlinks; updates flow automatically. progressive-composer's drift tracking is for compositions where pinning is the point.
+- Symlink-based auto-fresh upstream tracking — `npx skills` symlinks; updates flow automatically. progressive-skill-composer's drift tracking is for compositions where pinning is the point.
 - Personal-track via branch (originally subset 5) — obsoleted by self-contained skill folders. User git-tracks `<scope>/.claude/skills/<name>/` directly.
 
 SKILL.md invokes scripts uniformly as `uv run -m scripts.<verb> <args>` regardless of dep state. Cwd is the skill folder before script invocation. composition.md lives at `<scope>/.claude/skills/<name>/composition.md` — frontmatter for drift-detection metadata + provenance, body for design intent. The skill folder is the unit of everything — recipe, exemplars, output.
@@ -233,7 +233,7 @@ When the last system migrates out of `plugins/ocd/systems/`, the dispatcher infr
 1. Cluster current conventions (system-structure, claude-md, plans-md, tasks-md, plugin-system, etc.) into thematic skill groupings
 2. Author one skill per cluster; body indexes the conventions in that cluster, reaches them via `_<convention>.md` files or inline
 3. Remove the deployed `<scope>/.claude/conventions/` directory; convention bodies move into skill bodies
-4. Update install flow (now via progressive-composer) to surface conventions-skills as opt-in additions
+4. Update install flow (now via progressive-skill-composer) to surface conventions-skills as opt-in additions
 
 ### Phase I — Decision log review
 
@@ -255,7 +255,7 @@ When the last system migrates out of `plugins/ocd/systems/`, the dispatcher infr
 
 ## State
 
-Phase A landed in commit `da37142`. Phase B is in progress on main — progressive-composer scaffold under the community pattern (hyphenated folder, `scripts/` Python, no dispatcher).
+Phase A landed in commit `da37142`. Phase B is in progress on main — progressive-skill-composer scaffold under the community pattern (hyphenated folder, `scripts/` Python, no dispatcher).
 
 The decision to drop `bin/<plugin>-run` and adopt the community pattern arrived during Phase B kickoff after corpus research surveyed `anthropics/skills` and ~330 community skills. Captured in `logs/decision/skill-authoring.md` § *Hyphenated folder names per agentskills.io spec*, *Python lives in `scripts/`*, and *Dependencies via `uv run`*. The earlier `ocd-run-self-update.md` decision is superseded for new skills (kept as the canonical record of what the legacy ocd dispatcher does until Phase E retires it).
 

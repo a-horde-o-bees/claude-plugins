@@ -59,10 +59,10 @@ This isolates per-project state from cross-project state without polluting any p
 
 The original three categories (bin-mediated, user-edited, scope-required) were drafted assuming user-edited content is *project content* — logs, plans, sandbox tasks. The "outside `.claude/`" rule for user-edited targets that case: project content belongs at the project tree's top level, not buried in a config directory.
 
-Plugin-managed user-edited content is a different case the original framing did not cover. progressive-composer's compose flow needs a per-composition spec file the user reads and edits between sessions to articulate design intent. This file is:
+Plugin-managed user-edited content is a different case the original framing did not cover. progressive-skill-composer's compose flow needs a per-composition spec file the user reads and edits between sessions to articulate design intent. This file is:
 
 - **User-edited** (read/edit by both user and agent during dialogue refinement)
-- **Plugin-owned** (created by progressive-composer; format is its contract)
+- **Plugin-owned** (created by progressive-skill-composer; format is its contract)
 - **Cross-project for user-scope, project-bound for project-scope** (compositions can be either)
 
 Putting plugin-owned user-edited content in the project root tree (per the original user-edited rule) would mix it with project-not-plugin artifacts and create naming collisions when multiple plugins want similar content kinds. Putting it in plugin data dir (per the bin-mediated rule) puts the agent through Read/Write hops via subprocess scripts every time the user wants to refine the spec, which defeats the dialogue UX.
@@ -85,6 +85,6 @@ This category sits under `.claude/` rather than at the project tree's top level 
 - **Constrains:** the agent's Read/Edit/Write tools hit the standard `.claude/` permission gate — first-touch per session prompts; subsequent edits typically pre-approved. Heavy-dialogue artifacts can allowlist their specific path (`<scope>/.claude/<plugin>-<author>/<concern>/**`) when friction surfaces. The original user-edited rule's "outside `.claude/`" guidance still applies to project-not-plugin content (logs, plans) — those don't move
 - **Naming discipline:** the plugin-name + author segment matches the plugin's `name` and `author.name` fields in `plugin.json` (same convention Claude Code uses for `~/.claude/plugins/data/<plugin>-<author>/`); the concern segment uses a noun describing the content kind; content files at the leaf use the artifact's natural name. Avoid generic names like `data/` or `state/` — a future reader should infer the content kind from the directory name without reading inside
 
-### Note on progressive-composer
+### Note on progressive-skill-composer
 
-progressive-composer initially exemplified this pattern (composition specs at `<scope>/.claude/progressive-composer-a-horde-o-bees/compositions/<output>.md`) but moved away from it during Phase B redesign. Its compositions are now embedded inside the per-skill folder at `<scope>/.claude/skills/<name>/composition.md` because the recipe naturally travels with the skill. The plugin-namespaced extension remains valid for plugins that need plugin-managed user-edited content not tied to any specific skill.
+progressive-skill-composer initially exemplified this pattern (composition specs at `<scope>/.claude/progressive-skill-composer-a-horde-o-bees/compositions/<output>.md`) but moved away from it during Phase B redesign. Its compositions are now embedded inside the per-skill folder at `<scope>/.claude/skills/<name>/composition.md` because the recipe naturally travels with the skill. The plugin-namespaced extension remains valid for plugins that need plugin-managed user-edited content not tied to any specific skill.

@@ -363,7 +363,7 @@ def cmd_list(args: argparse.Namespace) -> int:
             found_any = True
 
     if not found_any:
-        print("no skills deployed by progressive-composer at the requested destination(s)")
+        print("no skills deployed by progressive-skill-composer at the requested destination(s)")
     return 0
 
 

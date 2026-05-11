@@ -1,6 +1,6 @@
 {
-  "name": "progressive-composer",
-  "version": "0.0.6",
+  "name": "progressive-skill-composer",
+  "version": "0.0.7",
   "description": "Compose new skills from exemplar sources with PFN + progressive-disclosure authoring discipline applied automatically, plus drift tracking against pinned upstream commits. Complements Vercel's npx skills (which covers individual-skill install).",
   "author": {
     "name": "a-horde-o-bees"

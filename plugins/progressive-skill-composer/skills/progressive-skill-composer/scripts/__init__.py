@@ -1,4 +1,4 @@
-"""progressive-composer Python implementation.
+"""progressive-skill-composer Python implementation.
 
 Each verb lives in its own module (`track.py`, `install.py`, ...). Shared
 helpers carry an underscore prefix (`_paths.py`, `_config.py`,
