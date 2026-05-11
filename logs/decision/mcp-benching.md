@@ -27,7 +27,7 @@ Both systems already expose bash CLIs via `ocd-run <system> <verb>`. The MCP lay
 
 ## Decision
 
-MCP server registrations are removed from `plugin.json` for transcripts and navigator. Skills authored for both systems bridge to the existing bash CLIs via `Call: !` `ocd-run <system> <verb>` `` patterns in their bodies.
+MCP server registrations are removed from `plugin.json` for transcripts and navigator. Skills authored for both systems invoke functionality via `uv run -m scripts.<verb>` per the skill-authoring decision; the migrated Python lives under each skill's `scripts/` package.
 
 The MCP server *code* stays in the source tree (benched, not deleted). Reactivation is a `plugin.json` edit away if a future context-cost case justifies it. The criteria for reactivation:
 

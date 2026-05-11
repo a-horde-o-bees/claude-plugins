@@ -20,13 +20,6 @@ Project-scoped scan-once view. Per-sandbox `SANDBOX-TASKS.md` files (seeded by `
     - Phase B locked design — compose-only meta-plugin. 46 plugin tests passing, 976 across all suites. User-facing verbs: `compose new`, `compose refine`, `compose build`, `compose list [--drift]`. Agent-internal sub-ops: `compose add-source`, `compose remove-source`, `compose update-sources`, `compose purge-sources`. Sparse-checkout per-skill via `git clone --filter=blob:none --sparse`; non-mutating drift via `git ls-remote`; stdlib-only YAML subset for composition.md (no `type` field — every spec is a composition); cwd-at-skill-folder + `uv run -m scripts.<verb>` invocation; PFN + progressive-disclosure baked into `compose build` output
     - Phase B subset 5 (personal-track via branch) — obsoleted by self-contained skill folder architecture. Cross-machine portability: `git init` on `<scope>/.claude/skills/<name>/` directly
     - Phases C–I — per plan; system migrations (Phase E now also hyphenates ocd's underscored folders and retires `bin/ocd-run`), MCP unwiring, permissions Pattern B, plugin compartmentalization, conventions migration, decision-log review
-    - Phase B subset 4 (`compose build`, `compose recheck`, `compose list` — materialize, drift-detect, list) — per plan
-    - Phase B subset 5 (personal-track via branch) — per plan
-    - Phases C–I — per plan; system migrations (Phase E now also hyphenates ocd's underscored folders and retires `bin/ocd-run`), MCP unwiring, permissions Pattern B, plugin compartmentalization, conventions migration, decision-log review
-
-## Pending
-
-- **`ocd:init-python-project` skill** — [plan](plans/init-project-skill.md). Scaffold fresh Python projects with this repo's canonical patterns. Foundation landed in centralize-tools (PR #1); the skill itself is the next branch. When implemented, follows the new skill-folder format per the architecture refactor (lands under Phase E or as parallel work).
 
 ## Upcoming
 

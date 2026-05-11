@@ -191,7 +191,7 @@ SKILL.md invokes scripts uniformly as `uv run -m scripts.<verb> <args>` regardle
 
 > Each system migrates as its own focused commit. Order: skill-only systems first (smaller surface), code-bearing systems after. Migration also hyphenates folder names per the community pattern adopted in `logs/decision/skill-authoring.md`.
 
-Pending migrations: refactor, conventions, log (if not pilot), needs-map, sandbox, retrospective, git, check, pdf. Plus convert `init-project-skill` plan into actual skill (`plans/init-project-skill.md` carries scope).
+Pending migrations: refactor, conventions, log (if not pilot), needs-map, sandbox, retrospective, git, check, pdf.
 
 For each:
 
@@ -250,7 +250,6 @@ When the last system migrates out of `plugins/ocd/systems/`, the dispatcher infr
 - **Dev-mode trigger-recording** — instrumentation hook that records skill-trigger evaluations to a log for usage analysis. Mechanism (hook? settings flag?) deferred.
 - **Spawn agents without rules** — research item. Selective rule exclusion for subagent contexts. Future task.
 - **In-the-wild comparison** — compare each ocd skill (post-refactor) to existing equivalents on aggregators; improve or retire candidates per the user's "use what's already there" disposition.
-- **progressive-composer refactor mode** — when it produces a refactored variant of a third-party skill, how is that tracked relative to source? Branch-based? Separate repo? Resolve during Phase B implementation.
 - **Permissions Pattern B against subagent contexts** — does the deployed settings.json hook fire in spawned subagent contexts the same way it fires in the main agent? Verify before relying on it.
 - **Corpus research prompt** — drafted earlier; on hold per user direction until new corpus questions surface.
 

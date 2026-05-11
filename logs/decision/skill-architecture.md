@@ -37,8 +37,8 @@ Three-mechanism content delivery:
 
 ### Consequences
 
-- **Enables:** mainstream discoverability via standard format; selective install per skill via progressive-composer; per-skill upgrades; ecosystem alignment; same source content materializes to both distribution paths
-- **Constrains:** plugin packaging is no longer the only mechanism — install machinery now spans plugin marketplace AND individual skill install paths; the new meta-plugin (progressive-composer) is required to make individual skill install ergonomic
+- **Enables:** mainstream discoverability via standard format; selective install per skill through ecosystem tooling (e.g., Vercel's `npx skills`) that indexes any standard `<skill>/SKILL.md` folder; per-skill upgrades; ecosystem alignment; same source content materializes to both distribution paths
+- **Constrains:** plugin packaging is no longer the only mechanism — install machinery now spans plugin marketplace AND individual skill install paths; individual-install ergonomics come from external tooling rather than our own meta-plugin
 - **Migration:** every ocd system reframes as a skill folder; current system structure (workflows/, components/, code) reorganizes around the skill format
 
 ## Rules-system retains the always-on discipline library

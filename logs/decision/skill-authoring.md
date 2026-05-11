@@ -103,11 +103,6 @@ The prior architecture had a system-level `CLAUDE.md` operational reference reac
 
 The system-level `CLAUDE.md` operational reference dies. The deployed `SKILL.md` body carries triggers + command topography directly. Verb workflows reached via `_<verb>.md` siblings; sub-procedures via `_<component>.md` siblings.
 
-Effect on the bin layer:
-
-- `ocd-run` self-update: still relevant (manifest diff, transparent plugin upgrades)
-- `ocd-path`: role narrows. No longer used by every shim to resolve cache CLAUDE.md. Still useful when progressive-composer wraps third-party skills with a path-resolving shim — keeps the bin available for that mode
-
 ### Consequences
 
 - **Enables:** tighter progressive disclosure (frontmatter description → body → reached files, no middle layer); fewer files per system; SKILL.md body is the meaningful content rather than a redirect
@@ -175,21 +170,6 @@ The body should answer: "Should the agent go deeper, and if so, where?" Not: "Ho
 - **Enables:** progressive disclosure layered into the skill itself — frontmatter (always-on) → body (on invocation) → verb workflows (on Call:); body is the navigation surface, not the implementation
 - **Constrains:** body length must stay tight — long bodies defeat the lazy-load benefit of `_<verb>.md` extraction; behavioral skills with no procedures need to consciously decide what their body holds (discipline statement, examples, principles?)
 - **Open:** corpus research on mainstream skill body conventions can refine these specifics — what section headers are common, what length norms are typical, when do bodies inline content vs reach via Call:
-
-## Self-described location scoped to wrap mode
-
-### Context
-
-During the design conversation, the question came up of whether SKILL.md should self-describe its location at the top so Call: refs know they're relative. The user concluded this is only necessary when the skill is invoked non-normally (e.g., wrapped by another skill that's the actual entry point). For native skill invocations, the agent already has the path context.
-
-### Decision
-
-Self-described location is not a general SKILL.md authoring requirement. It's scoped to progressive-composer's wrap-mode — when progressive-composer creates a shim that points at a different skill, the shim states the wrapped skill's location so Call: refs in the wrapped content resolve correctly. Native skill authoring uses relative paths from the file currently being read; the agent's path context handles the rest.
-
-### Consequences
-
-- **Enables:** simpler authoring discipline for native skills — no required preamble; Call: paths just work relative to the current file
-- **Constrains:** progressive-composer's wrap-mode needs to handle path resolution correctly when it inserts a shim layer between caller and wrapped content; designed-in during Phase B implementation
 
 ## Dependencies declared via `requires:` with body-top assertion
 
@@ -328,6 +308,5 @@ The existing `bin/ocd-run` and `bin/ocd-path` survive only as long as the ocd pl
 
 - **Enables:** mainstream-conformant invocation; per-invocation dep resolution via `uv` (more robust than manifest-diff self-update because `uv` handles version drift, lockfiles, and isolation natively); no plugin-level venv to manage; skills are independently portable to any of the four locations Claude Code loads from without dispatcher infrastructure; uniform invocation across all scripts means SKILL.md examples and tests don't fork by dep state
 - **Constrains:** users without `uv` installed cannot run any of our skills until they install it (acceptable — `uv` is the ecosystem's standard tool for Python dep management and ships as a small static binary); stdlib-only scripts pay a small `uv` startup cost per invocation (~tens of ms) compared to bare `python3`, which is acceptable in exchange for uniform invocation; the `<plugin>-run` self-update mechanism (`logs/decision/ocd-run-self-update.md`) becomes legacy infrastructure scoped to ocd's pre-migration state; `tools/environment.py` propagation across plugins (per `.githooks/pre-commit`) is no longer needed once skills carry their own minimal env-resolution helpers in `scripts/`
-- **Supersedes:** the `## Self-described location scoped to wrap mode` decision above — without a wrapper dispatcher, there is no "wrap mode" that progressive-composer applies. Path resolution stays mainstream: cwd at skill root, relative paths from there
 - **Migration:** `logs/decision/ocd-run-self-update.md` should carry a supersession note pointing here; ocd's `bin/ocd-run`, `bin/ocd-path`, `run.py`, `tools/environment.py`, `tools/errors.py`, and the `.githooks/pre-commit` propagation rules retire when Phase E completes
 
