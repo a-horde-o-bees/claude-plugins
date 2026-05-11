@@ -31,10 +31,10 @@ No `bin/<plugin>-run` dispatcher, no plugin-level `run.py`, no vendored `tools/`
 
 ## Storage discipline
 
-Each composed skill is self-contained at `<scope>/.claude/skills/<name>/`:
+Each composed skill is self-contained at `<destination-parent>/<name>/`:
 
 ```
-<scope>/.claude/skills/<name>/
+<destination-parent>/<name>/
 ├── SKILL.md                          # Claude Code's entry point (PFN-structured body)
 ├── composition.md                    # recipe + provenance (always present for our deploys)
 ├── sources/                          # embedded exemplars during active development
@@ -45,11 +45,11 @@ Each composed skill is self-contained at `<scope>/.claude/skills/<name>/`:
 
 **No shared cache directory.** Each composition embeds the exact upstream skill folders it depends on, sparse-checked at pinned commits. Multi-version is the default — two compositions needing different refs of the same upstream repo each get their own pinned snapshot.
 
-**No central registry.** Each composition.md IS the per-skill provenance record. Walking `<scope>/.claude/skills/*/composition.md` enumerates every composition the plugin owns.
+**No central registry.** Each composition.md IS the per-skill provenance record. Walking `<destination-parent>/*/composition.md` enumerates every composition the plugin owns.
 
 **Plugin data dir is reserved but unused.** No transient state currently goes through `~/.claude/plugins/data/progressive-composer-a-horde-o-bees/`. Reserved per Claude Code convention for future verbs that might need disk space.
 
-State location follows project-root `logs/decision/state-location.md`. The plugin-namespaced extension (`<scope>/.claude/<plugin>-<author>/<concern>/`) remains a valid pattern for plugins that need plugin-managed user-edited content separate from any specific skill; progressive-composer doesn't currently use it.
+State location follows project-root `logs/decision/state-location.md`. The plugin-namespaced extension (`<destination>/.claude/<plugin>-<author>/<concern>/`) remains a valid pattern for plugins that need plugin-managed user-edited content separate from any specific skill; progressive-composer doesn't currently use it.
 
 ## Sparse-checkout primitive
 
@@ -97,7 +97,7 @@ composition.md is an **alignment doc** between exemplar sources and the live ski
 
 ## Workflow shape — compose
 
-`compose new --scope` and `compose refine <name> --scope` are **orchestration entry points**: the script prints state + guidance; the agent reads the orchestration and drives dialogue. The workflow files (`_compose_new.md`, `_compose_refine.md`) document what the agent does at each step. Sub-ops (`add-source`, `update-sources`, etc.) are deterministic operations the agent invokes during the workflow.
+`compose new --destination` and `compose refine <name> --destination` are **orchestration entry points**: the script prints state + guidance; the agent reads the orchestration and drives dialogue. The workflow files (`_compose_new.md`, `_compose_refine.md`) document what the agent does at each step. Sub-ops (`add-source`, `update-sources`, etc.) are deterministic operations the agent invokes during the workflow.
 
 `compose build` is the **terminal materialize step**. The output skill scaffold conforms to PFN + progressive-disclosure discipline automatically — SKILL.md body shape, `_<verb>.md` workflow files using PFN notation, `scripts/` Python package skeleton. The agent fleshes out details via Edit tool after build.
 

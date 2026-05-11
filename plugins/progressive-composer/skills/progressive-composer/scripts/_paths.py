@@ -132,73 +132,93 @@ def get_project_dir() -> Path:
     )
 
 
-def scope_skills_dir(scope: str, project_dir: Path | None = None) -> Path:
-    """Where deployed skills (composed or installed) live for a scope."""
-    if scope == "user":
+def destination_dir(destination: str, project_dir: Path | None = None) -> Path:
+    """Resolve a destination string to the parent directory for composed skills.
+
+    A composed skill is portable — `--destination` describes where the
+    skill folder is stood up. Three forms:
+
+    - `user` — the user-scope Claude Code skills location (`~/.claude/skills/`)
+    - `project` — the project-scope Claude Code skills location
+      (`<project-root>/.claude/skills/`)
+    - any other value — treated as a path. Absolute paths used as-is;
+      relative paths resolve against the project directory. This is how
+      composed skills get placed adjacent to a plugin shell in a monorepo
+      (e.g., `plugins/composed-skills/skills/`).
+    """
+    if destination == "user":
         return get_claude_home() / "skills"
-    if scope == "project":
+    if destination == "project":
         if project_dir is None:
             project_dir = get_project_dir()
         return project_dir / ".claude" / "skills"
-    raise ValueError(f"unknown scope: {scope!r} — expected 'user' or 'project'")
+    path = Path(destination)
+    if not path.is_absolute():
+        if project_dir is None:
+            project_dir = get_project_dir()
+        path = project_dir / path
+    return path.resolve()
 
 
-def skill_folder(name: str, scope: str, project_dir: Path | None = None) -> Path:
-    """Resolve a deployed skill's folder."""
-    return scope_skills_dir(scope, project_dir) / name
+def skill_folder(name: str, destination: str, project_dir: Path | None = None) -> Path:
+    """Resolve a composed skill's folder."""
+    return destination_dir(destination, project_dir) / name
 
 
 def composition_path(
     name: str,
-    scope: str,
+    destination: str,
     project_dir: Path | None = None,
 ) -> Path:
-    """Resolve a deployed skill's composition.md."""
-    return skill_folder(name, scope, project_dir) / "composition.md"
+    """Resolve a composed skill's composition.md."""
+    return skill_folder(name, destination, project_dir) / "composition.md"
 
 
 def skill_md_path(
     name: str,
-    scope: str,
+    destination: str,
     project_dir: Path | None = None,
 ) -> Path:
-    """Resolve a deployed skill's SKILL.md."""
-    return skill_folder(name, scope, project_dir) / "SKILL.md"
+    """Resolve a composed skill's SKILL.md."""
+    return skill_folder(name, destination, project_dir) / "SKILL.md"
 
 
 def sources_subdir(
     name: str,
-    scope: str,
+    destination: str,
     project_dir: Path | None = None,
 ) -> Path:
     """The `sources/` subfolder where embedded exemplar skills live."""
-    return skill_folder(name, scope, project_dir) / "sources"
+    return skill_folder(name, destination, project_dir) / "sources"
 
 
 def source_embed_path(
     skill_name: str,
     source_slug: str,
-    scope: str,
+    destination: str,
     project_dir: Path | None = None,
 ) -> Path:
     """Where one embedded exemplar source is sparse-checked into."""
-    return sources_subdir(skill_name, scope, project_dir) / source_slug
+    return sources_subdir(skill_name, destination, project_dir) / source_slug
 
 
 _SLUG_PATTERN = re.compile(r"[^a-z0-9]+")
 
 
-def compositions_in_scope(scope: str, project_dir: Path | None = None) -> list[Path]:
-    """Return spec paths for every deployed skill at the given scope.
+def compositions_in_destination(
+    destination: str,
+    project_dir: Path | None = None,
+) -> list[Path]:
+    """Return composition.md paths for every composed skill at the destination.
 
-    Walks `<scope>/.claude/skills/*/composition.md`. Returns absolute
-    paths sorted by skill folder name.
+    Walks `<destination-dir>/*/composition.md`. Returns absolute paths
+    sorted by skill folder name.
     """
-    skills_dir = scope_skills_dir(scope, project_dir)
-    if not skills_dir.is_dir():
+    parent = destination_dir(destination, project_dir)
+    if not parent.is_dir():
         return []
     results: list[Path] = []
-    for entry in sorted(skills_dir.iterdir()):
+    for entry in sorted(parent.iterdir()):
         if not entry.is_dir():
             continue
         spec = entry / "composition.md"

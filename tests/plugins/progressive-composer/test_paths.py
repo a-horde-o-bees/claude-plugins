@@ -4,9 +4,9 @@ import pytest
 
 from scripts._paths import (
     composition_path,
-    compositions_in_scope,
+    compositions_in_destination,
     derive_source_slug,
-    scope_skills_dir,
+    destination_dir,
     skill_folder,
     skill_md_path,
     source_embed_path,
@@ -14,17 +14,27 @@ from scripts._paths import (
 )
 
 
-def test_scope_skills_dir_user(isolated_env):
-    assert scope_skills_dir("user") == isolated_env["claude_home"] / "skills"
+def test_destination_dir_user(isolated_env):
+    assert destination_dir("user") == isolated_env["claude_home"] / "skills"
 
 
-def test_scope_skills_dir_project(isolated_env):
-    assert scope_skills_dir("project") == isolated_env["project_dir"] / ".claude" / "skills"
+def test_destination_dir_project(isolated_env):
+    assert destination_dir("project") == isolated_env["project_dir"] / ".claude" / "skills"
 
 
-def test_scope_skills_dir_rejects_unknown(isolated_env):
-    with pytest.raises(ValueError, match="unknown scope"):
-        scope_skills_dir("global")
+def test_destination_dir_relative_path_resolves_under_project(isolated_env):
+    """Path form: relative path joins to project root."""
+    result = destination_dir("plugins/composed-skills/skills")
+    assert result == (
+        isolated_env["project_dir"] / "plugins" / "composed-skills" / "skills"
+    ).resolve()
+
+
+def test_destination_dir_absolute_path_used_as_is(isolated_env, tmp_path):
+    """Path form: absolute path used directly."""
+    custom = tmp_path / "custom-skills"
+    custom.mkdir()
+    assert destination_dir(str(custom)) == custom.resolve()
 
 
 def test_skill_folder_user(isolated_env):
@@ -66,26 +76,26 @@ def test_source_embed_path_user(isolated_env):
     )
 
 
-def test_compositions_in_scope_empty(isolated_env):
-    assert compositions_in_scope("user") == []
+def test_compositions_in_destination_empty(isolated_env):
+    assert compositions_in_destination("user") == []
 
 
-def test_compositions_in_scope_skips_folders_without_composition(isolated_env):
+def test_compositions_in_destination_skips_folders_without_composition(isolated_env):
     skills_dir = isolated_env["claude_home"] / "skills"
     skills_dir.mkdir(parents=True)
     (skills_dir / "naked-skill").mkdir()
     (skills_dir / "naked-skill" / "SKILL.md").write_text("# without composition\n")
-    assert compositions_in_scope("user") == []
+    assert compositions_in_destination("user") == []
 
 
-def test_compositions_in_scope_returns_skills_with_composition(isolated_env):
+def test_compositions_in_destination_returns_skills_with_composition(isolated_env):
     skills_dir = isolated_env["claude_home"] / "skills"
     skills_dir.mkdir(parents=True)
     for name in ("a-skill", "b-skill"):
         folder = skills_dir / name
         folder.mkdir()
         (folder / "composition.md").write_text("---\nname: x\nscope: user\n---\n")
-    paths = compositions_in_scope("user")
+    paths = compositions_in_destination("user")
     assert len(paths) == 2
     assert paths[0].parent.name == "a-skill"
     assert paths[1].parent.name == "b-skill"

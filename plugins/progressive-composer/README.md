@@ -16,15 +16,15 @@ Restart the session after install so the skill is discoverable. `uv` is a soft p
 
 | Verb | Purpose |
 |---|---|
-| `compose new --scope <user\|project>` | Open new-composition workflow. Agent collects name + sources + goal via dialogue, writes composition.md scaffold via Write tool, embeds sources via `compose add-source`. |
-| `compose refine <name> --scope <user\|project>` | Re-enter an existing composition. Script auto-runs `git ls-remote` per source for drift detection; agent surfaces drift and drives refinement dialogue. |
-| `compose build <name> --scope <user\|project> [--force]` | Materialize composition.md into a deployable SKILL.md (PFN + progressive-disclosure structured) plus `_<verb>.md` workflow scaffolds and `scripts/` package skeleton. |
-| `compose list [--scope <both\|user\|project>] [--drift]` | Walk deployed compositions. With `--drift`, runs `git ls-remote` per source to report upstream drift. |
+| `compose new --destination <user\|project\|path>` | Open new-composition workflow. Agent collects name + sources + goal via dialogue, writes composition.md scaffold via Write tool, embeds sources via `compose add-source`. |
+| `compose refine <name> --destination <user\|project\|path>` | Re-enter an existing composition. Script auto-runs `git ls-remote` per source for drift detection; agent surfaces drift and drives refinement dialogue. |
+| `compose build <name> --destination <user\|project\|path> [--force]` | Materialize composition.md into a deployable SKILL.md (PFN + progressive-disclosure structured) plus `_<verb>.md` workflow scaffolds and `scripts/` package skeleton. |
+| `compose list [--destination <user\|project\|path>] [--drift]` | Walk deployed compositions. With `--drift`, runs `git ls-remote` per source to report upstream drift. |
 
 ## Storage layout
 
 ```
-<scope>/.claude/skills/<name>/        # composed skills
+<destination-parent>/<name>/        # composed skills
 ├── SKILL.md                          # what Claude Code loads (PFN-structured body)
 ├── composition.md                    # recipe + provenance + pinned commits
 ├── sources/                          # embedded exemplars during active development
@@ -52,7 +52,7 @@ The differentiation:
 
 ## Cross-machine portability
 
-Composed skill folders are self-contained — `git init` any subdirectory of `<scope>/.claude/skills/` and push to your remote of choice. New machine: clone, the deployed compositions work immediately. No plugin-level sync verbs needed.
+Composed skill folders are self-contained — `git init` any subdirectory of `<destination-parent>/` and push to your remote of choice. New machine: clone, the deployed compositions work immediately. No plugin-level sync verbs needed.
 
 For project-scope compositions, `<project>/.claude/skills/<name>/` rides along with the project's git history naturally.
 

@@ -41,10 +41,10 @@ The compose workflow uses sub-ops the agent invokes during dialogue (not user-fa
 
 | Sub-op | Purpose |
 |---|---|
-| `compose add-source <name> <url>:<skill>[@<ref>] --scope` | Sparse-checkout source skill into `<skill>/sources/<source-slug>/`; append to composition.md frontmatter |
-| `compose remove-source <name> <source-slug> --scope` | Delete from sources/, remove from composition.md frontmatter |
-| `compose update-sources <name> [--source <slug>] --scope` | Re-sparse-checkout source(s) at current upstream HEAD; advance pinned commit |
-| `compose purge-sources <name> --scope` | Delete sources/ subfolder when finalized; pinned commits remain in composition.md |
+| `compose add-source <name> <url>:<skill>[@<ref>] --destination` | Sparse-checkout source skill into `<skill>/sources/<source-slug>/`; append to composition.md frontmatter |
+| `compose remove-source <name> <source-slug> --destination` | Delete from sources/, remove from composition.md frontmatter |
+| `compose update-sources <name> [--source <slug>] --destination` | Re-sparse-checkout source(s) at current upstream HEAD; advance pinned commit |
+| `compose purge-sources <name> --destination` | Delete sources/ subfolder when finalized; pinned commits remain in composition.md |
 
 These are documented inside `_compose_new.md` and `_compose_refine.md` workflow files as steps the agent follows; users do not invoke them directly.
 
@@ -53,7 +53,7 @@ These are documented inside `_compose_new.md` and `_compose_refine.md` workflow 
 Each composed skill is self-contained:
 
 ```
-<scope>/.claude/skills/<name>/
+<destination-parent>/<name>/
 ├── SKILL.md                      # what Claude Code loads (PFN-structured body)
 ├── composition.md                # frontmatter (sources + pins) + body (goal + recipe)
 ├── sources/                      # embedded exemplars during active development
@@ -66,7 +66,7 @@ Each composed skill is self-contained:
 
 `sources/` is present during active development; `compose purge-sources` reclaims disk after finalization (pinned commits in composition.md persist; `compose refine` auto-rehydrates by re-fetching at pinned commits).
 
-No shared cache directory; no central registry. Each composition.md IS the per-skill provenance record. Walking `<scope>/.claude/skills/*/composition.md` enumerates every composition the plugin owns.
+No shared cache directory; no central registry. Each composition.md IS the per-skill provenance record. Walking `<destination-parent>/*/composition.md` enumerates every composition the plugin owns.
 
 ## Authoring discipline baked in
 

@@ -31,7 +31,7 @@ def _seed_composition(composer_run, fixture_repo, isolated_env, name="my-skill",
         "add-source",
         name,
         f"{_file_url(fixture_repo)}:fixture-skill",
-        "--scope",
+        "--destination",
         scope,
     )
     return spec_path
@@ -39,9 +39,9 @@ def _seed_composition(composer_run, fixture_repo, isolated_env, name="my-skill",
 
 def test_compose_new_emits_state_only(composer_run, isolated_env):
     """compose new emits resolved state (scope + target path) — no procedure."""
-    result = composer_run("compose", "new", "--scope", "user")
+    result = composer_run("compose", "new", "--destination", "user")
     assert result.returncode == 0
-    assert "scope: user" in result.stdout
+    assert "destination: user" in result.stdout
     assert "target:" in result.stdout
     assert str(isolated_env["claude_home"] / "skills") in result.stdout
     # No procedure / scaffold prints — those live in _compose_new.md
@@ -115,7 +115,7 @@ def test_compose_add_source_two_skills_same_repo_no_collision(
         "add-source",
         "my-skill",
         f"{_file_url(fixture_repo)}:second-skill",
-        "--scope",
+        "--destination",
         "user",
     )
 
@@ -130,7 +130,7 @@ def test_compose_add_source_two_skills_same_repo_no_collision(
 
 def test_compose_new_omits_type_field_from_scaffold(composer_run, isolated_env):
     """Scaffold output must not emit `type:` — discriminator was dropped in pivot-4."""
-    result = composer_run("compose", "new", "--scope", "user")
+    result = composer_run("compose", "new", "--destination", "user")
     assert "type:" not in result.stdout
 
 
@@ -168,7 +168,7 @@ def test_compose_add_source_finds_skill_at_nested_depth(
         "add-source",
         "my-skill",
         f"{_file_url(fixture_repo)}:deep-skill",
-        "--scope",
+        "--destination",
         "user",
     )
 
@@ -213,7 +213,7 @@ def test_compose_add_source_rejects_ambiguous_same_depth_matches(
         "add-source",
         "my-skill",
         f"{_file_url(fixture_repo)}:ambiguous-skill",
-        "--scope",
+        "--destination",
         "user",
         check=False,
     )
@@ -236,7 +236,7 @@ def test_compose_remove_source_deletes_embed_and_frontmatter(
         "remove-source",
         "my-skill",
         slug,
-        "--scope",
+        "--destination",
         "user",
     )
     assert not embed.exists()
@@ -260,7 +260,7 @@ def test_compose_update_sources_rerolls_commit(
         "compose",
         "update-sources",
         "my-skill",
-        "--scope",
+        "--destination",
         "user",
     )
     after = parse(spec_path.read_text())
@@ -274,13 +274,13 @@ def test_compose_purge_sources_deletes_subfolder(
     sources_dir = isolated_env["claude_home"] / "skills" / "my-skill" / "sources"
     assert sources_dir.exists()
 
-    composer_run("compose", "purge-sources", "my-skill", "--scope", "user")
+    composer_run("compose", "purge-sources", "my-skill", "--destination", "user")
     assert not sources_dir.exists()
 
 
 def test_compose_build_writes_skill_md(composer_run, fixture_repo, isolated_env):
     _seed_composition(composer_run, fixture_repo, isolated_env)
-    composer_run("compose", "build", "my-skill", "--scope", "user")
+    composer_run("compose", "build", "my-skill", "--destination", "user")
     skill_md = isolated_env["claude_home"] / "skills" / "my-skill" / "SKILL.md"
     assert skill_md.exists()
     text = skill_md.read_text()
@@ -294,9 +294,9 @@ def test_compose_build_refuses_overwrite_without_force(
     composer_run, fixture_repo, isolated_env
 ):
     _seed_composition(composer_run, fixture_repo, isolated_env)
-    composer_run("compose", "build", "my-skill", "--scope", "user")
+    composer_run("compose", "build", "my-skill", "--destination", "user")
     result = composer_run(
-        "compose", "build", "my-skill", "--scope", "user", check=False
+        "compose", "build", "my-skill", "--destination", "user", check=False
     )
     assert result.returncode != 0
     assert "already exists" in result.stderr
@@ -304,12 +304,12 @@ def test_compose_build_refuses_overwrite_without_force(
 
 def test_compose_build_force_overwrites(composer_run, fixture_repo, isolated_env):
     _seed_composition(composer_run, fixture_repo, isolated_env)
-    composer_run("compose", "build", "my-skill", "--scope", "user")
+    composer_run("compose", "build", "my-skill", "--destination", "user")
     skill_md = isolated_env["claude_home"] / "skills" / "my-skill" / "SKILL.md"
     skill_md.write_text("# user refinements\n")
 
     composer_run(
-        "compose", "build", "my-skill", "--scope", "user", "--force"
+        "compose", "build", "my-skill", "--destination", "user", "--force"
     )
     assert "user refinements" not in skill_md.read_text()
 
@@ -330,12 +330,12 @@ def test_compose_build_rejects_empty_description(composer_run, fixture_repo, iso
         "add-source",
         "my-skill",
         f"{_file_url(fixture_repo)}:fixture-skill",
-        "--scope",
+        "--destination",
         "user",
     )
 
     result = composer_run(
-        "compose", "build", "my-skill", "--scope", "user", check=False
+        "compose", "build", "my-skill", "--destination", "user", check=False
     )
     assert result.returncode != 0
     assert "description" in result.stderr
@@ -345,7 +345,7 @@ def test_compose_refine_reads_spec_and_reports_in_sync(
     composer_run, fixture_repo, isolated_env
 ):
     _seed_composition(composer_run, fixture_repo, isolated_env)
-    result = composer_run("compose", "refine", "my-skill", "--scope", "user")
+    result = composer_run("compose", "refine", "my-skill", "--destination", "user")
     assert "spec:" in result.stdout
     assert "deployed: no" in result.stdout
     assert "in sync:" in result.stdout
@@ -358,8 +358,8 @@ def test_compose_refine_reports_deployed_after_build(
     composer_run, fixture_repo, isolated_env
 ):
     _seed_composition(composer_run, fixture_repo, isolated_env)
-    composer_run("compose", "build", "my-skill", "--scope", "user")
-    result = composer_run("compose", "refine", "my-skill", "--scope", "user")
+    composer_run("compose", "build", "my-skill", "--destination", "user")
+    result = composer_run("compose", "refine", "my-skill", "--destination", "user")
     assert "deployed: yes" in result.stdout
 
 
@@ -372,14 +372,14 @@ def test_compose_refine_detects_drift(
         "new content\n",
         message="upstream changed",
     )
-    result = composer_run("compose", "refine", "my-skill", "--scope", "user")
+    result = composer_run("compose", "refine", "my-skill", "--destination", "user")
     assert "drift detected" in result.stdout
     assert "fixture-skill" in result.stdout
 
 
 def test_compose_refine_missing_spec_exits_nonzero(composer_run, isolated_env):
     result = composer_run(
-        "compose", "refine", "absent", "--scope", "user", check=False
+        "compose", "refine", "absent", "--destination", "user", check=False
     )
     assert result.returncode != 0
     assert "no composition" in result.stderr
@@ -394,7 +394,7 @@ def test_compose_list_shows_composition(
     composer_run, fixture_repo, isolated_env
 ):
     _seed_composition(composer_run, fixture_repo, isolated_env)
-    result = composer_run("compose", "list", "--scope", "user")
+    result = composer_run("compose", "list", "--destination", "user")
     assert "my-skill" in result.stdout
     assert "draft" in result.stdout
 
@@ -403,12 +403,12 @@ def test_compose_list_drift_runs_ls_remote(
     composer_run, fixture_repo, commit_to_fixture, isolated_env
 ):
     _seed_composition(composer_run, fixture_repo, isolated_env)
-    composer_run("compose", "build", "my-skill", "--scope", "user")
+    composer_run("compose", "build", "my-skill", "--destination", "user")
     commit_to_fixture(
         "skills/fixture-skill/extra.md",
         "drift\n",
         message="drift",
     )
-    result = composer_run("compose", "list", "--scope", "user", "--drift")
+    result = composer_run("compose", "list", "--destination", "user", "--drift")
     assert "drift:" in result.stdout
     assert "fixture-skill" in result.stdout

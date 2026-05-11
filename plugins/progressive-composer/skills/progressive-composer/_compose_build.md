@@ -4,15 +4,15 @@ Scaffold a deployable skill folder from composition.md. Script generates the ini
 
 ## Arguments
 
-`<name> --scope <user|project> [--force]`
+`<name> --destination <user|project|path> [--force]`
 
 - `<name>` — composition skill name.
-- `--scope` — scope where the composition lives.
+- `--destination` — where the composition lives. `user`, `project`, or a path (absolute or relative to the project root).
 - `--force` — overwrite an existing deployed SKILL.md (clobbers prior agent refinements).
 
 ## Process
 
-1. Invoke — bash: `uv run -m scripts.compose build <name> --scope <user|project>`
+1. Invoke — bash: `uv run -m scripts.compose build <name> --destination <user|project|path>`
 
 2. The script validates:
     - composition.md exists at the resolved path
@@ -21,8 +21,8 @@ Scaffold a deployable skill folder from composition.md. Script generates the ini
     - SKILL.md does not already exist at the deploy path — unless `--force` is set
 
 3. The script writes:
-    - `<scope>/.claude/skills/<name>/SKILL.md` — frontmatter from spec (name, description), body scaffolds a `## Triggers` section the agent fleshes out from composition.md's `## Surface`
-    - `<scope>/.claude/skills/<name>/scripts/__init__.py` — empty package marker (created if absent)
+    - `<destination-parent>/<name>/SKILL.md` — frontmatter from spec (name, description), body scaffolds a `## Triggers` section the agent fleshes out from composition.md's `## Surface`
+    - `<destination-parent>/<name>/scripts/__init__.py` — empty package marker (created if absent)
 
 4. The script emits state only: skill folder path, SKILL.md path, sources materialized. No procedural guidance.
 
@@ -47,7 +47,7 @@ Each gate prints a corrective message and exits non-zero.
 ## Output
 
 ```
-built <name> at <scope>/.claude/skills/<name>
+built <name> at <destination-parent>/<name>
 sources used:
   - <url>:<skill>@<ref> @ <commit-short>
   - <url>:<skill>@<ref> @ <commit-short>

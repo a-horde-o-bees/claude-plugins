@@ -4,14 +4,14 @@ Re-enter an existing composition. Script reads composition.md, runs `git ls-remo
 
 ## Arguments
 
-`<name> --scope <user|project>`
+`<name> --destination <user|project|path>`
 
 - `<name>` — composition skill name.
-- `--scope` — scope where the composition lives.
+- `--destination` — scope where the composition lives.
 
 ## Process
 
-1. Invoke — bash: `uv run -m scripts.compose refine <name> --scope <user|project>`
+1. Invoke — bash: `uv run -m scripts.compose refine <name> --destination <user|project|path>`
 
 2. The script emits state only:
     - Spec path
@@ -26,12 +26,12 @@ Re-enter an existing composition. Script reads composition.md, runs `git ls-remo
 4. For each drifted source the user wants to update, agent invokes:
 
     ```
-    uv run -m scripts.compose update-sources <name> --source <source-slug> --scope <scope>
+    uv run -m scripts.compose update-sources <name> --source <source-slug> --destination <destination>
     ```
 
    This re-sparse-checks the source at current upstream HEAD and advances the pinned `commit` in composition.md. To update all drifted sources at once, omit `--source`.
 
-5. Agent re-reads any updated `<scope>/.claude/skills/<name>/sources/<source-slug>/` to spot content changes worth reflecting in the Goal, Surface, or Sources sections.
+5. Agent re-reads any updated `<destination-parent>/<name>/sources/<source-slug>/` to spot content changes worth reflecting in the Goal, Surface, or Sources sections.
 
 6. Agent drives refinement dialogue with the user. Composition.md edits happen **in place** — the file describes current ideal state, not a journal. Targeted prompts:
     - "Now that `<source>` has updated, does its Sources subsection still hold?"
@@ -43,12 +43,12 @@ Re-enter an existing composition. Script reads composition.md, runs `git ls-remo
 
 ## Sources missing from cache
 
-If a source's embedded `sources/<slug>/` was purged via `compose purge-sources`, the agent rehydrates by invoking `compose update-sources <name> --source <slug> --scope <scope>` before re-reading the source content. The pinned commit in composition.md ensures rehydration restores the same content the previous session was based on.
+If a source's embedded `sources/<slug>/` was purged via `compose purge-sources`, the agent rehydrates by invoking `compose update-sources <name> --source <slug> --destination <destination>` before re-reading the source content. The pinned commit in composition.md ensures rehydration restores the same content the previous session was based on.
 
 ## Issues surfaced by the script
 
 The script reports issues for sources where `git ls-remote` failed (network error, repo gone, ref deleted). The agent surfaces these to the user and discusses whether to:
 
-- Replace the source via `compose remove-source <name> <slug> --scope` and `compose add-source <name> <new-url>:<skill>[@<ref>] --scope`
+- Replace the source via `compose remove-source <name> <slug> --destination` and `compose add-source <name> <new-url>:<skill>[@<ref>] --destination`
 - Drop the source (also call `compose remove-source`) if no replacement exists and the source no longer informs the skill
 - Wait and try again later if the failure is transient

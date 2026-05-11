@@ -1,16 +1,22 @@
 """Compose verb — workflow-driven, self-contained skill folders.
 
-    uv run -m scripts.compose new --scope <user|project>
-    uv run -m scripts.compose refine <name> --scope <user|project>
-    uv run -m scripts.compose build <name> --scope <user|project> [--force]
-    uv run -m scripts.compose list [--scope <both|user|project>] [--drift]
+    uv run -m scripts.compose new --destination <user|project|path>
+    uv run -m scripts.compose refine <name> --destination <user|project|path>
+    uv run -m scripts.compose build <name> --destination <user|project|path> [--force]
+    uv run -m scripts.compose list [--destination <user|project|path>] [--drift]
+
+`--destination` accepts three forms:
+
+- `user` — `~/.claude/skills/`
+- `project` — `<project-root>/.claude/skills/`
+- any other value — treated as a path (absolute, or relative to project root)
 
 Agent-internal sub-ops (called during compose workflows; not user-facing):
 
-    uv run -m scripts.compose add-source <name> <url>:<skill>[@<ref>] --scope <user|project>
-    uv run -m scripts.compose remove-source <name> <source-slug> --scope <user|project>
-    uv run -m scripts.compose update-sources <name> [--source <slug>] --scope <user|project>
-    uv run -m scripts.compose purge-sources <name> --scope <user|project>
+    uv run -m scripts.compose add-source <name> <url>:<skill>[@<ref>] --destination <user|project|path>
+    uv run -m scripts.compose remove-source <name> <source-slug> --destination <user|project|path>
+    uv run -m scripts.compose update-sources <name> [--source <slug>] --destination <user|project|path>
+    uv run -m scripts.compose purge-sources <name> --destination <user|project|path>
 
 Stdlib-only — no PEP 723 deps, runs uniformly under module-mode `uv run`.
 """
@@ -28,9 +34,9 @@ from scripts._clone import (
 )
 from scripts._paths import (
     composition_path,
-    compositions_in_scope,
+    compositions_in_destination,
     derive_source_slug,
-    scope_skills_dir,
+    destination_dir,
     skill_folder,
     skill_md_path,
     source_embed_path,
@@ -158,8 +164,8 @@ each Triggers entry, and create the `_<verb>.md` workflow files the
 Triggers below reference. Embedded sources are at
 {sources_path}/<source-slug>/.
 
-Run `compose refine {name} --scope {scope}` periodically to detect
-upstream drift in sources.
+Run `compose refine {name} --destination {destination}` periodically to
+detect upstream drift in sources.
 -->
 
 ## Triggers
@@ -178,8 +184,8 @@ line implies a `_<verb>.md` workflow file the agent will create.
 
 
 def cmd_new(args: argparse.Namespace) -> int:
-    target_dir = scope_skills_dir(args.scope)
-    print(f"scope: {args.scope}")
+    target_dir = destination_dir(args.destination)
+    print(f"destination: {args.destination}")
     print(f"target: {target_dir}/<chosen-name>/composition.md")
     return 0
 
@@ -190,16 +196,16 @@ def cmd_new(args: argparse.Namespace) -> int:
 
 
 def cmd_refine(args: argparse.Namespace) -> int:
-    spec_path = composition_path(args.name, args.scope)
+    spec_path = composition_path(args.name, args.destination)
     if not spec_path.exists():
         print(
-            f"no composition at {spec_path} — run `compose new --scope {args.scope}` to start a new one",
+            f"no composition at {spec_path} — run `compose new --destination {args.destination}` to start a new one",
             file=sys.stderr,
         )
         return 2
 
     spec = read_spec(spec_path)
-    skill_md = skill_md_path(args.name, args.scope)
+    skill_md = skill_md_path(args.name, args.destination)
     deployed = "yes" if skill_md.exists() else "no"
 
     print(f"spec: {spec_path}")
@@ -250,10 +256,10 @@ def _check_drift(spec) -> tuple[list, list, list]:
 
 
 def cmd_build(args: argparse.Namespace) -> int:
-    spec_path = composition_path(args.name, args.scope)
+    spec_path = composition_path(args.name, args.destination)
     if not spec_path.exists():
         print(
-            f"no composition at {spec_path} — run `compose new --scope {args.scope}` first",
+            f"no composition at {spec_path} — run `compose new --destination {args.destination}` first",
             file=sys.stderr,
         )
         return 2
@@ -273,7 +279,7 @@ def cmd_build(args: argparse.Namespace) -> int:
         )
         return 2
 
-    skill_md = skill_md_path(args.name, args.scope)
+    skill_md = skill_md_path(args.name, args.destination)
     if skill_md.exists() and not args.force:
         print(
             f"deployed SKILL.md already exists at {skill_md} — pass --force to "
@@ -282,7 +288,7 @@ def cmd_build(args: argparse.Namespace) -> int:
         )
         return 2
 
-    folder = skill_folder(args.name, args.scope)
+    folder = skill_folder(args.name, args.destination)
     folder.mkdir(parents=True, exist_ok=True)
     (folder / "scripts").mkdir(exist_ok=True)
     init_py = folder / "scripts" / "__init__.py"
@@ -294,8 +300,8 @@ def cmd_build(args: argparse.Namespace) -> int:
             name=spec.name,
             description=spec.description,
             spec_path=spec_path,
-            sources_path=sources_subdir(args.name, args.scope),
-            scope=args.scope,
+            sources_path=sources_subdir(args.name, args.destination),
+            destination=args.destination,
         )
     )
 
@@ -313,18 +319,21 @@ def cmd_build(args: argparse.Namespace) -> int:
 
 
 def cmd_list(args: argparse.Namespace) -> int:
-    scopes = ("user", "project") if args.scope == "both" else (args.scope,)
+    if args.destination is None:
+        destinations = ("user", "project")
+    else:
+        destinations = (args.destination,)
     found_any = False
 
-    for scope in scopes:
+    for destination in destinations:
         try:
-            entries = compositions_in_scope(scope)
+            entries = compositions_in_destination(destination)
         except RuntimeError:
             continue
         if not entries:
             continue
 
-        print(f"{scope}-scope:")
+        print(f"{destination}:")
         for spec_path in entries:
             try:
                 spec = read_spec(spec_path)
@@ -354,7 +363,7 @@ def cmd_list(args: argparse.Namespace) -> int:
             found_any = True
 
     if not found_any:
-        print("no skills deployed by progressive-composer at the requested scope(s)")
+        print("no skills deployed by progressive-composer at the requested destination(s)")
     return 0
 
 
@@ -364,10 +373,10 @@ def cmd_list(args: argparse.Namespace) -> int:
 
 
 def cmd_add_source(args: argparse.Namespace) -> int:
-    spec_path = composition_path(args.name, args.scope)
+    spec_path = composition_path(args.name, args.destination)
     if not spec_path.exists():
         print(
-            f"no composition at {spec_path} — run `compose new --scope {args.scope}` first",
+            f"no composition at {spec_path} — run `compose new --destination {args.destination}` first",
             file=sys.stderr,
         )
         return 2
@@ -384,7 +393,7 @@ def cmd_add_source(args: argparse.Namespace) -> int:
         print(str(exc), file=sys.stderr)
         return 2
 
-    embed_path = source_embed_path(args.name, source_slug, args.scope)
+    embed_path = source_embed_path(args.name, source_slug, args.destination)
     embed_path.parent.mkdir(parents=True, exist_ok=True)
     commit = sparse_checkout_skill(url, skill_path, ref, embed_path)
 
@@ -404,7 +413,7 @@ def cmd_add_source(args: argparse.Namespace) -> int:
 
 
 def cmd_remove_source(args: argparse.Namespace) -> int:
-    spec_path = composition_path(args.name, args.scope)
+    spec_path = composition_path(args.name, args.destination)
     if not spec_path.exists():
         print(
             f"no composition at {spec_path}", file=sys.stderr,
@@ -424,7 +433,7 @@ def cmd_remove_source(args: argparse.Namespace) -> int:
     for src in matches:
         remove_source_from_spec(spec, src.url, src.skill)
 
-    embed_path = source_embed_path(args.name, args.source_slug, args.scope)
+    embed_path = source_embed_path(args.name, args.source_slug, args.destination)
     if embed_path.exists():
         shutil.rmtree(embed_path)
 
@@ -440,7 +449,7 @@ def cmd_remove_source(args: argparse.Namespace) -> int:
 
 
 def cmd_update_sources(args: argparse.Namespace) -> int:
-    spec_path = composition_path(args.name, args.scope)
+    spec_path = composition_path(args.name, args.destination)
     if not spec_path.exists():
         print(
             f"no composition at {spec_path}", file=sys.stderr,
@@ -466,7 +475,7 @@ def cmd_update_sources(args: argparse.Namespace) -> int:
             continue
 
         slug = derive_source_slug(src.url, src.skill)
-        embed_path = source_embed_path(args.name, slug, args.scope)
+        embed_path = source_embed_path(args.name, slug, args.destination)
         embed_path.parent.mkdir(parents=True, exist_ok=True)
         old_commit = src.commit
         new_commit = sparse_checkout_skill(src.url, skill_path, src.ref, embed_path)
@@ -486,12 +495,12 @@ def cmd_update_sources(args: argparse.Namespace) -> int:
 
 
 def cmd_purge_sources(args: argparse.Namespace) -> int:
-    spec_path = composition_path(args.name, args.scope)
+    spec_path = composition_path(args.name, args.destination)
     if not spec_path.exists():
         print(f"no composition at {spec_path}", file=sys.stderr)
         return 2
 
-    sources_dir = sources_subdir(args.name, args.scope)
+    sources_dir = sources_subdir(args.name, args.destination)
     if not sources_dir.exists():
         print(f"no sources/ subfolder at {sources_dir}; nothing to purge")
         return 0
@@ -514,22 +523,23 @@ def main() -> int:
     )
     sub = parser.add_subparsers(dest="verb", required=True)
 
+    destination_help = (
+        "where the composition lives: `user` (~/.claude/skills/), "
+        "`project` (<project-root>/.claude/skills/), or a path "
+        "(absolute or relative to the project root)"
+    )
+
     # User-facing
     new = sub.add_parser("new", help="open a new-composition workflow")
-    new.add_argument(
-        "--scope",
-        required=True,
-        choices=("user", "project"),
-        help="scope where the composition will live",
-    )
+    new.add_argument("--destination", required=True, help=destination_help)
 
     refine = sub.add_parser("refine", help="re-enter an existing composition with drift check")
     refine.add_argument("name", help="composition skill name")
-    refine.add_argument("--scope", required=True, choices=("user", "project"))
+    refine.add_argument("--destination", required=True, help=destination_help)
 
     build = sub.add_parser("build", help="materialize composition.md into a deployed skill")
     build.add_argument("name", help="composition skill name")
-    build.add_argument("--scope", required=True, choices=("user", "project"))
+    build.add_argument("--destination", required=True, help=destination_help)
     build.add_argument(
         "--force",
         action="store_true",
@@ -538,9 +548,12 @@ def main() -> int:
 
     list_cmd = sub.add_parser("list", help="show all deployed skills and their status")
     list_cmd.add_argument(
-        "--scope",
-        choices=("user", "project", "both"),
-        default="both",
+        "--destination",
+        default=None,
+        help=(
+            "destination to enumerate (default: both `user` and `project`). "
+            "Pass an explicit path to list custom-destination compositions."
+        ),
     )
     list_cmd.add_argument(
         "--drift",
@@ -556,12 +569,12 @@ def main() -> int:
         type=parse_source_arg,
         metavar="URL:SKILL[@REF]",
     )
-    add_src.add_argument("--scope", required=True, choices=("user", "project"))
+    add_src.add_argument("--destination", required=True, help=destination_help)
 
     rm_src = sub.add_parser("remove-source", help="(agent sub-op) remove a source from a composition")
     rm_src.add_argument("name", help="composition skill name")
     rm_src.add_argument("source_slug", help="source slug (derived from URL)")
-    rm_src.add_argument("--scope", required=True, choices=("user", "project"))
+    rm_src.add_argument("--destination", required=True, help=destination_help)
 
     upd_src = sub.add_parser("update-sources", help="(agent sub-op) re-fetch source(s) at upstream HEAD")
     upd_src.add_argument("name", help="composition skill name")
@@ -569,11 +582,11 @@ def main() -> int:
         "--source",
         help="source slug to update (default: all sources)",
     )
-    upd_src.add_argument("--scope", required=True, choices=("user", "project"))
+    upd_src.add_argument("--destination", required=True, help=destination_help)
 
     pg_src = sub.add_parser("purge-sources", help="(agent sub-op) delete the sources/ subfolder")
     pg_src.add_argument("name", help="composition skill name")
-    pg_src.add_argument("--scope", required=True, choices=("user", "project"))
+    pg_src.add_argument("--destination", required=True, help=destination_help)
 
     args = parser.parse_args()
 

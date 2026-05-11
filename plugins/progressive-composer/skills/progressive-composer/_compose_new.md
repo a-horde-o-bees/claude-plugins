@@ -4,13 +4,13 @@ Open a new-composition workflow. The script emits resolved state only (target pa
 
 ## Arguments
 
-`--scope <user|project>`
+`--destination <user|project|path>`
 
-- `--scope` — scope where the composition will live (`<scope>/.claude/skills/<name>/`).
+- `--destination` — where the composition will live. `user`, `project`, or a path (absolute or relative to the project root). The skill folder is created at `<destination-parent>/<name>/`.
 
 ## Process
 
-1. Invoke — bash: `uv run -m scripts.compose new --scope <user|project>`
+1. Invoke — bash: `uv run -m scripts.compose new --destination <user|project|path>`
 
 2. The script emits resolved state — scope and the target composition.md path (with `<chosen-name>` as placeholder). No disk writes; no procedural guidance.
 
@@ -25,17 +25,17 @@ Open a new-composition workflow. The script emits resolved state only (target pa
     - "For each moment, does deeper content load on demand (`_<verb>.md`) or is it terse enough to inline in SKILL.md's body?"
     - The Surface is the progressive-disclosure shape SKILL.md will materialize; capture it now even at a rough level.
 
-5. Once name + description are chosen, agent uses the Write tool to create `<scope>/.claude/skills/<chosen-name>/composition.md` using the scaffold template (see *composition.md scaffold template* below). Substitute placeholders with values collected in steps 3–4.
+5. Once name + description are chosen, agent uses the Write tool to create `<destination-parent>/<chosen-name>/composition.md` using the scaffold template (see *composition.md scaffold template* below). Substitute placeholders with values collected in steps 3–4.
 
 6. Agent asks about exemplar sources. For each chosen source, agent invokes the sub-op:
 
     ```
-    uv run -m scripts.compose add-source <chosen-name> <url>:<skill>[@<ref>] --scope <scope>
+    uv run -m scripts.compose add-source <chosen-name> <url>:<skill>[@<ref>] --destination <destination>
     ```
 
-   The sub-op sparse-checks the source skill into `<scope>/.claude/skills/<chosen-name>/sources/<source-slug>/` and appends the source to composition.md frontmatter with a pinned commit.
+   The sub-op sparse-checks the source skill into `<destination-parent>/<chosen-name>/sources/<source-slug>/` and appends the source to composition.md frontmatter with a pinned commit.
 
-7. Agent reads each embedded source's SKILL.md (and supporting files) at `<scope>/.claude/skills/<chosen-name>/sources/<source-slug>/SKILL.md` to understand what each exemplar offers.
+7. Agent reads each embedded source's SKILL.md (and supporting files) at `<destination-parent>/<chosen-name>/sources/<source-slug>/SKILL.md` to understand what each exemplar offers.
 
 8. Agent fills in the **Sources** body section with per-source rationale. For each source, prompts include:
     - "Looking at `<slug>:<skill>`, what's worth keeping verbatim?"
@@ -48,7 +48,7 @@ Open a new-composition workflow. The script emits resolved state only (target pa
 9. When the user is satisfied with the design, agent invokes the build verb:
 
     ```
-    uv run -m scripts.compose build <chosen-name> --scope <scope>
+    uv run -m scripts.compose build <chosen-name> --destination <destination>
     ```
 
    This scaffolds the live skill (SKILL.md + scripts/) from the composition. Build is the **initial materialization**, not a regenerator — once SKILL.md exists, the agent refines it directly; composition.md tracks intent only.
