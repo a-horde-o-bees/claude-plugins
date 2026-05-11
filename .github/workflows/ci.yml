@@ -28,13 +28,8 @@ jobs:
       - name: Sync project venv
         run: uv sync --group dev
 
-      - name: Bootstrap ocd plugin venv
-        env:
-          CLAUDE_PLUGIN_ROOT: ${{ github.workspace }}/plugins/ocd
-          CLAUDE_PLUGIN_DATA: ${{ github.workspace }}/.ci-claude-home/plugins/data/ocd-ci
-        run: |
-          mkdir -p "$CLAUDE_PLUGIN_DATA"
-          bash plugins/ocd/hooks/install_deps.sh
+      - name: Run project tests
+        run: bin/project-run tests --project
 
-      - name: Run tests
-        run: bin/project-run tests
+      - name: Run progressive-skill-composer tests
+        run: bin/project-run tests --plugin progressive-skill-composer
