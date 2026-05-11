@@ -2,9 +2,9 @@
 log-role: reference
 ---
 
-# Progressive Composer
+# Progressive Skill Composer
 
-Decisions governing the meta-plugin that composes new skills from one or more exemplar sources, with our authoring discipline (PFN + progressive disclosure) baked into the output. Drift tracking against pinned upstream commits. Self-contained skill folders for cross-machine portability.
+Decisions governing the meta-plugin that composes new skills from one or more exemplar sources, with our authoring discipline (PFN + progressive disclosure) baked into the output. Drift tracking against pinned upstream commits. Self-contained skill folders deployed to a user-specified destination (user-scope, project-scope, or any path — including the `composed-skills` bundle for shareable compositions).
 
 ## Meta-plugin scope and rationale
 
@@ -236,3 +236,138 @@ A user could in principle add a previously-composed skill as a source for a new 
 - **Open:** sparse-checkout fallback strategy if upstream removes the named skill folder (currently raises; user gets corrective error); whether `compose purge-sources` should be tied to a `compose finalize` lifecycle marker; spec format versioning for future schema evolution; whether build should generate `_<verb>.md` stubs from a verbs frontmatter field or only from agent-driven Source mapping content
 
 See `plans/architecture-refactor.md` Phase B for the implementation order.
+
+## composition.md as alignment doc, not blueprint
+
+### Context
+
+Earlier framings of composition.md treated it as a near-complete spec — fields like `goal_summary`, `last_build`, `build_status`, and a richly-structured body with append-only `## Design refinements` made it look like a regenerator: wipe the skill, rerun build, get the same SKILL.md back. Implementation experience surfaced two problems with that framing:
+
+- Real composed skills get refined past what composition.md can describe. The SKILL.md, `_<verb>.md` workflow files, and `scripts/` accumulate detail that composition.md doesn't track. Build can't actually regenerate the live skill from composition.md once the agent has refined it.
+- The `## Design refinements` append-only log accumulated historical journal entries that conflicted with the project's `single-source-of-truth` rule ("describe current reality only; do not reference previous states"). Git history + session transcripts already carry the journey; duplicating it in composition.md added maintenance burden without unique value.
+
+### Options Considered
+
+**Keep composition.md as a complete blueprint.** Rejected: the skill quickly outgrows what the spec can encode, leaving build's `--force` regeneration as a destructive operation that clobbers refinement.
+
+**composition.md as design intent + source provenance only — the live skill is the implementation.** Adopted.
+
+### Decision
+
+composition.md is an **alignment doc** between exemplar sources and the live skill, not a complete blueprint. The skill files (SKILL.md, `_<verb>.md`, `scripts/`) are the authoritative implementation; composition.md captures *why* the skill exists, *what* cognitive surface it carries, and *what each source contributes*. After initial materialization, the agent edits SKILL.md/scripts directly; composition.md stays aligned with current design intent.
+
+**Frontmatter minimized** to fields that earn their keep:
+
+| Field | Purpose |
+|---|---|
+| `spec_version` | Schema migration affordance |
+| `name` | Carries to the built SKILL.md frontmatter |
+| `description` | Carries to the built SKILL.md frontmatter (cognitive trigger) |
+| `sources` | Machine-managed provenance (url, skill, ref, commit) |
+
+**Dropped fields** (and why):
+
+- `scope` — folder position encodes it; redundant
+- `goal_summary` — redundant with the body's `# Goal`; description carries discovery copy
+- `last_build` — filesystem (SKILL.md presence) is the build-state truth
+- `build_status` — same; build's overwrite gate uses SKILL.md presence directly
+- `type` — pivot 4 dropped the `composed | installed` discriminator
+
+**Body restructured** for the new role:
+
+- `# Goal` — why the skill exists; edited in place; no historical journal
+- `## Surface` — the cognitive moments the skill carries and where each routes (the progressive-disclosure shape SKILL.md will materialize). Bridges composition intent to concrete trigger/verb topology.
+- `## Sources` — per-source rationale tied to Surface entries (keep verbatim / adapt / reject); when a source stops earning its keep, remove the subsection AND call `compose remove-source`
+
+The `## Design refinements` append-only log is dropped entirely. Refinement happens in place; git diff + session transcripts carry the journey.
+
+### Consequences
+
+- **Enables:** composition.md scales with complex skills without bloating (no journal accumulation); single source of truth for design intent; the live skill is unambiguously the implementation; refinement decisions edit composition.md sections in place
+- **Constrains:** users wanting to recreate a refined skill from scratch can't — they'd need to re-refine on top of the build scaffold. This is the right tradeoff; refinement is craft, not regeneration
+- **Build behavior change:** overwrite gate switched from `build_status == "built"` to filesystem `SKILL.md` presence; build's output template body holds just a `## Triggers` scaffold (no goal_summary opener) that the agent fills from composition.md's `## Surface`
+
+## Destination forms — user, project, or any path
+
+### Context
+
+The original `--scope <user|project>` argument bound composition output to Claude Code's two standard discovery locations. That was the right default for consumers (drop the composition into the right place to be picked up by their session) but the wrong default for maintainers of this repo, who want to make composed skills shareable. A shareable composition needs to live adjacent to the `progressive-skill-composer` tool in a monorepo so standard install tooling (`npx skills`, `/plugin install`) can publish it downstream.
+
+### Options Considered
+
+**Fork the plugin into a separate "shareable composer" variant.** Rejected: duplicates the entire codebase for a destination concern.
+
+**Add a `--shareable` flag that targets `plugins/composed-skills/skills/`.** Rejected: assumes monorepo structure; doesn't generalize. A user might want to compose into any custom path.
+
+**Generalize `--scope` to `--destination` with three forms — user, project, or any path.** Adopted.
+
+### Decision
+
+`--scope` renamed to `--destination` across every compose verb and sub-op. Accepts:
+
+| Form | Resolves to |
+|---|---|
+| `user` | `~/.claude/skills/` (Claude Code's user-scope location) |
+| `project` | `<project-root>/.claude/skills/` (Claude Code's project-scope location) |
+| any other value | treated as a path — absolute used as-is, relative resolves against the project root |
+
+The keyword forms remain the easy default for consumers; the path form unlocks shareable compositions inside a monorepo (e.g., `--destination plugins/composed-skills/skills`).
+
+composition.md records nothing about destination — folder position encodes it. The composed skill is portable; the maintainer chooses where to stand it up.
+
+`compose list` defaults to enumerating both `user` and `project` (the two canonical Claude Code locations). For custom destinations, the user passes `--destination <path>` explicitly. No auto-discovery of arbitrary paths.
+
+### Consequences
+
+- **Enables:** shareable compositions (compose into a monorepo plugin shell, distribute via `npx skills` or `/plugin install`); generalizes cleanly to non-monorepo custom destinations; keeps default UX for consumers unchanged in behavior (just renamed flag)
+- **Constrains:** clean break — `--scope` no longer accepted; consumers who had scripts using the old flag must update; this is explicit per the project's clean-break stance
+- **Schema impact:** composition.md no longer has a `scope` frontmatter field (was already dropped in the alignment-doc redesign)
+
+## composed-skills bundle as the third destination
+
+### Context
+
+With `--destination <path>` available, the question becomes how the maintainer of this repo should structure shareable compositions. Options ranged from a flat `composed-skills/` directory at project root to a fully-fledged plugin with its own marketplace entry.
+
+### Options Considered
+
+**Flat `composed-skills/` at project root.** Rejected: skills are discoverable at `~/.claude/skills/*/SKILL.md` and `<project>/.claude/skills/*/SKILL.md` by default; a project-root `composed-skills/` directory doesn't participate in either discovery path. To make compositions installable downstream, they need a published location.
+
+**Drop one skill at a time into existing plugins (ocd, etc.).** Rejected: pollutes thematic boundaries; the `ocd` plugin is for OCD-specific discipline, not for arbitrary composed skills.
+
+**Dedicated `composed-skills` plugin shell.** Adopted.
+
+### Decision
+
+`plugins/composed-skills/` is a pure-packaging plugin: `plugin.json`, `README.md`, `ARCHITECTURE.md`, `LICENSE`, and `skills/` (initially with `.gitkeep`). No Python, no bin, no MCP. Its `plugin.json` declares `"skills": ["./skills/"]` so new compositions become discoverable automatically — no per-skill manifest edit needed.
+
+The maintainer invokes:
+
+```
+uv run -m scripts.compose new --destination plugins/composed-skills/skills
+```
+
+from progressive-skill-composer's cache directory (passing `CLAUDE_PROJECT_DIR` to anchor the relative path). The composition lands at `plugins/composed-skills/skills/<name>/`, becomes part of the next commit + marketplace tag, and propagates downstream via the standard install/update mechanics.
+
+### Consequences
+
+- **Enables:** consumers install the entire composed-skills bundle via `/plugin install composed-skills@a-horde-o-bees` OR pick individual skills via `npx skills add a-horde-o-bees/claude-plugins --skill <name>`; the bundle's auto-discovery of `./skills/` means adding a new composition is purely a filesystem operation
+- **Constrains:** the bundle's `plugin.json` versioning advances on any change under `skills/<name>/` (pre-commit auto-bump); maintainers cutting a release stamp the entire bundle at once
+- **Open thread:** how `/checkpoint` should integrate the composed-skills bundle version bump — current auto-bump fires per-commit; whether the bundle wants its own release cadence vs riding the marketplace's is unresolved. Captured in `plans/composed-skills-workflow.md` under "Open: checkpoint integration"
+
+## Skill name — progressive-skill-composer
+
+### Context
+
+The original plugin name was `progressive-composer`. Mid-iteration, the user noted that many ecosystem skills are named `skill-composer` (or variants); positioning ours alongside those named tools — same problem space, distinguished by our discipline prefix — would help cognitive matching for users browsing aggregators.
+
+### Decision
+
+Renamed to `progressive-skill-composer`. The `progressive` prefix names our value-add (PFN + progressive-disclosure discipline baked into output); the `skill-composer` suffix matches ecosystem nomenclature.
+
+The rename is a clean break — no compatibility alias. Existing installations of `progressive-composer@a-horde-o-bees` must be uninstalled and reinstalled under the new name.
+
+### Consequences
+
+- **Enables:** ecosystem-coherent naming; users finding `skill-composer` variants on aggregators recognize ours as a peer
+- **Constrains:** any external references to `progressive-composer` need updating; the rename touched 18 source files plus 3 directory renames

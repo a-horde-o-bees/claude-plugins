@@ -1,6 +1,6 @@
 # Marketplace Architecture
 
-Claude Code plugin marketplace packaging one released plugin with shared development infrastructure. Each plugin is an independent system with its own architecture; this document covers how they are packaged, developed, and delivered.
+Claude Code plugin marketplace packaging three plugins (ocd, progressive-skill-composer, composed-skills) with shared development infrastructure. Each plugin is an independent system with its own architecture; this document covers how they are packaged, developed, and delivered.
 
 ## Layers
 
@@ -9,7 +9,7 @@ Claude Code plugin runtime
     ↓ marketplace resolution
 Marketplace manifest (.claude-plugin/marketplace.json)
     ↓ plugin source paths
-Plugins (plugins/ocd/)
+Plugins (plugins/<name>/)
     ↓ own entry points, hooks, skills
 Plugin internals (see per-plugin ARCHITECTURE.md)
 ```
@@ -18,7 +18,9 @@ Plugin internals (see per-plugin ARCHITECTURE.md)
 
 | Plugin | Status | Purpose | Architecture |
 |--------|--------|---------|-------------|
-| [ocd](plugins/ocd/) | Released (latest stable: `v0.1.0`; dev channel tracks main) | Deterministic enforcement of permissions, rules, and structural conventions with agent-facing project navigation | [ARCHITECTURE.md](plugins/ocd/ARCHITECTURE.md) |
+| [ocd](plugins/ocd/) | Released (latest stable: `v0.2.0`; dev channel tracks main) | Deterministic enforcement of permissions, rules, and structural conventions with agent-facing project navigation | [ARCHITECTURE.md](plugins/ocd/ARCHITECTURE.md) |
+| [progressive-skill-composer](plugins/progressive-skill-composer/) | Shipping (cached at v0.0.7+; auto-bumps per commit) | Compose new skills from one or more exemplar sources with PFN + progressive-disclosure authoring discipline baked into output; non-mutating drift tracking against pinned commits | [ARCHITECTURE.md](plugins/progressive-skill-composer/ARCHITECTURE.md) |
+| [composed-skills](plugins/composed-skills/) | Scaffold (no compositions landed yet) | Pure-packaging bundle for skills authored via progressive-skill-composer; consumers install via `/plugin install` or `npx skills` | [ARCHITECTURE.md](plugins/composed-skills/ARCHITECTURE.md) |
 
 Plugins are independent systems — each has its own manifest, hooks, skills, rules, and tests. Tagged releases live on `main`; no release branches.
 

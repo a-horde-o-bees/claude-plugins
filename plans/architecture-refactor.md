@@ -132,40 +132,38 @@ Surviving from prior architectural work (no changes):
 
 > Foundational meta-plugin. Built before migrating any of our content because it's the install path we'll use on ourselves. Pilots the community-pattern shape that ocd will eventually match — hyphenated folder, `scripts/` Python package, no dispatcher.
 
-**History.** Phase B went through three design iterations during implementation:
+**Status.** Shipping. Plugin landed as `progressive-skill-composer@a-horde-o-bees` (was originally `progressive-composer`; renamed for ecosystem-coherent naming alongside other `skill-composer` variants). Test suite: 55 plugin tests, 985 project-wide. Cached version advances per commit via pre-commit auto-bump.
 
-1. **Initial subsets 1–4** built around a separate sources registry (`sources.json`), shared cache directory, and a working-area-vs-deployed-skill split. Implementation surfaced workflow-shape problems and over-distributed storage.
-2. **First redesign** collapsed subsets 1–4 into a single all-in-one model: self-contained skill folders, sparse-checkout per skill, composition.md inline. Included install/uninstall verbs as part of the plugin's surface.
-3. **Final redesign** (this is the locked design) drops install/uninstall after research showed Vercel's `npx skills` covers that surface; bakes PFN + progressive-disclosure authoring discipline into compose build's output as the differentiating value-add. See `logs/decision/progressive-skill-composer.md` § *Compose verb — workflow-driven, self-contained skill folders* for full rationale.
+**Design pivots after Phase A.** The locked design went through several iterations during implementation; each is captured in detail in `logs/decision/progressive-skill-composer.md`:
 
-**Locked Phase B scope — compose-only meta-plugin:**
+1. **Pivot 1 — community-pattern conformance.** Corpus research (~330 skills) showed `bin/<plugin>-run` dispatchers + underscored folders violate the agentskills.io spec. Adopted hyphenated folders, `scripts/` package, uniform `uv run -m scripts.<verb>` invocation.
+2. **Pivot 2 — compose vision.** Reframed `refactor` (1:1) into `compose` (many-to-one with persistent design intent).
+3. **Pivot 3 — workflow-driven, self-contained skill folders.** Collapsed the separate sources registry / shared cache / working-area design into a single self-contained skill folder model.
+4. **Pivot 4 — compose-only, drop install.** Vercel's `npx skills` covers individual install; we don't compete. Composition + drift tracking is our unique value.
+5. **Pivot 5 — composition.md as alignment doc.** Dropped `scope`, `goal_summary`, `last_build`, `build_status` fields; restructured body to `# Goal` / `## Surface` / `## Sources` with no historical journal. The skill files are the implementation; composition.md tracks design intent only.
+6. **Pivot 6 — `--destination` rename + path form.** `--scope` accepted only `user|project`; renamed to `--destination` accepting any path. Unlocks compositions at custom locations (especially `plugins/composed-skills/skills/` for shareable bundles in this monorepo).
+7. **Plugin rename — progressive-composer → progressive-skill-composer.** Positions the plugin alongside ecosystem `skill-composer` variants while the `progressive` prefix names our authoring discipline (PFN + progressive disclosure).
 
-1. Scaffold `plugins/progressive-skill-composer/` with `.claude-plugin/plugin.json`, README, ARCHITECTURE, LICENSE, `skills/progressive-skill-composer/` (hyphenated). No `bin/`, no `run.py`, no vendored `tools/` package. One skill matching plugin name (Anthropic 1:1 convention)
-2. Sparse-checkout primitive — `git clone --filter=blob:none --sparse <url> <dest>` + `git sparse-checkout set <skill-path>` to fetch one skill folder from upstream without cloning the whole repo
-3. `compose new --scope <user|project>` — workflow entry; script outputs orchestration; agent collects skill name and goal via dialogue, writes initial composition.md via Write tool, invokes `compose add-source` for each chosen exemplar, drives goal-articulation dialogue, eventually invokes `compose build`
-4. `compose refine <name> --scope <user|project>` — workflow re-entry; script reads composition.md, runs `git ls-remote` per source for drift detection, prints status report; agent surfaces drift, asks user about updating drifted sources via `compose update-sources`, drives refinement dialogue
-5. `compose build <name> --scope <user|project> [--force]` — generate SKILL.md from composition.md drawing on embedded `sources/<source-slug>/` content. Output follows progressive-disclosure shape (frontmatter + body triggers + verb topography pointing at `_<verb>.md` files); workflow files use PFN notation. Generates `scripts/__init__.py` package skeleton. Refuses to overwrite without `--force`
-6. `compose list [--scope <both|user|project>] [--drift]` — walk `<scope>/.claude/skills/*/composition.md`; without `--drift` reports last-known status; with `--drift` runs `git ls-remote` per source per composition for live drift report
-7. Agent-internal sub-ops (called during compose workflows; not user-facing): `compose add-source`, `compose remove-source`, `compose update-sources`, `compose purge-sources`
+**Current verb surface:**
 
-**What the locked redesign eliminates from in-flight code:**
+| Verb | Behavior |
+|---|---|
+| `compose new --destination <user\|project\|path>` | Script emits resolved state (scope + target path); agent reads `_compose_new.md` and drives dialogue to collect name, intent, Surface, sources |
+| `compose refine <name> --destination <user\|project\|path>` | Script emits drift report; agent reads `_compose_refine.md` and drives refinement of design intent |
+| `compose build <name> --destination <user\|project\|path> [--force]` | Initial materialization of SKILL.md + `scripts/__init__.py`. Overwrite gate uses filesystem (SKILL.md presence), not a frontmatter flag. Build is one-shot scaffolding, not regeneration; refinement happens directly on SKILL.md afterward |
+| `compose list [--destination <user\|project\|path>] [--drift]` | Walks composition.md files at the requested destination(s); reports `deployed` (SKILL.md present) or `draft` per composition |
 
-- `sources.json` registry — each skill's composition.md is its own provenance record
-- Shared `cache/<source>/` directory — per-skill sparse-checkouts under `<skill>/sources/<source-slug>/`
-- `track`/`untrack`/`sync` verbs — sparse-checkout fetches when needed; ls-remote for drift
-- Separate `compositions/<name>.md` working area — inline at `<scope>/.claude/skills/<name>/composition.md`
-- `installed.json` registries — walking `<scope>/.claude/skills/*/composition.md` enumerates everything we deployed
-- `compose recheck` as a separate verb — folded into `compose list --drift` and `compose refine` entry
-- `<scope>/.claude/progressive-skill-composer-a-horde-o-bees/` plugin-namespaced user-edited directory — compositions live in their skill folders
-- `install` / `uninstall` verbs and `type: install|composed` discriminator — Vercel's `npx skills` covers the install case; we focus on composition. composition.md schema simplifies to one shape (always a composition)
+Agent-internal sub-ops: `compose add-source`, `compose remove-source`, `compose update-sources`, `compose purge-sources`.
+
+**Adjacent infrastructure.**
+
+- `composed-skills` plugin shell (`plugins/composed-skills/`) — pure-packaging bundle where shareable compositions land. Plugin manifest declares `"skills": ["./skills/"]` for auto-discovery. Marketplace entry installable today as `composed-skills@a-horde-o-bees`.
+- `plans/composed-skills-workflow.md` — documents the maintainer flow of composing into the bundle, downstream install via `npx skills` or `/plugin install`, and open threads (e.g., `/checkpoint` integration).
 
 **Out of scope (covered elsewhere in the ecosystem):**
 
 - Direct install of unmodified upstream skills — Vercel's `npx skills add <repo> --skill <name>` handles this. README points users at it explicitly.
 - Symlink-based auto-fresh upstream tracking — `npx skills` symlinks; updates flow automatically. progressive-skill-composer's drift tracking is for compositions where pinning is the point.
-- Personal-track via branch (originally subset 5) — obsoleted by self-contained skill folders. User git-tracks `<scope>/.claude/skills/<name>/` directly.
-
-SKILL.md invokes scripts uniformly as `uv run -m scripts.<verb> <args>` regardless of dep state. Cwd is the skill folder before script invocation. composition.md lives at `<scope>/.claude/skills/<name>/composition.md` — frontmatter for drift-detection metadata + provenance, body for design intent. The skill folder is the unit of everything — recipe, exemplars, output.
 
 ### Phase C — Convert one ocd system to validate the format
 
@@ -255,7 +253,18 @@ When the last system migrates out of `plugins/ocd/systems/`, the dispatcher infr
 
 ## State
 
-Phase A landed in commit `da37142`. Phase B is in progress on main — progressive-skill-composer scaffold under the community pattern (hyphenated folder, `scripts/` Python, no dispatcher).
+Phase A landed in commit `da37142`. Phase B is shipping — `progressive-skill-composer@a-horde-o-bees` is on the marketplace (cached at v0.0.7+, advancing per commit via auto-bump); `composed-skills@a-horde-o-bees` scaffold landed in commit `5180fd7` as the third-destination bridge for shareable compositions. 985 tests pass project-wide; 55 of them on progressive-skill-composer.
+
+Next concrete step: compose `claude-python` into `plugins/composed-skills/skills/` as the first end-to-end exercise of the new workflow. Five exemplar sources identified (`affaan-m/everything-claude-code:python-patterns` + `python-testing`, `laurigates/claude-plugins:uv-run`, `sickn33/antigravity-awesome-skills:python-packaging` + `python-pro`).
+
+Pivot decisions captured in `logs/decision/progressive-skill-composer.md`:
+
+- *Compose verb — workflow-driven, self-contained skill folders* (pivot 3)
+- *Meta-plugin scope and rationale* (pivot 4 — compose-only)
+- *composition.md as alignment doc, not blueprint* (pivot 5)
+- *Destination forms — user, project, or any path* (pivot 6)
+- *composed-skills bundle as the third destination* (the bundle)
+- *Skill name — progressive-skill-composer* (rename)
 
 The decision to drop `bin/<plugin>-run` and adopt the community pattern arrived during Phase B kickoff after corpus research surveyed `anthropics/skills` and ~330 community skills. Captured in `logs/decision/skill-authoring.md` § *Hyphenated folder names per agentskills.io spec*, *Python lives in `scripts/`*, and *Dependencies via `uv run`*. The earlier `ocd-run-self-update.md` decision is superseded for new skills (kept as the canonical record of what the legacy ocd dispatcher does until Phase E retires it).
 

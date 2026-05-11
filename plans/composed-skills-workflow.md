@@ -96,13 +96,8 @@ After cutting a tagged release of the marketplace, downstream consumers running 
 
 These tie into the broader release-flow design and the existing `components/versioning.md`. Defer until the workflow has a few real compositions through it.
 
-## Open: composed-skills plugin shell
+## Plugin shell status
 
-The `plugins/composed-skills/` plugin shell doesn't exist yet. Creating it is a separate step before the first composition lands there. The standard plugin scaffold:
+`plugins/composed-skills/` scaffold landed in commit `5180fd7` — pure-packaging shell with `plugin.json`, README, ARCHITECTURE, LICENSE, and empty `skills/` (placeholder `.gitkeep`). Marketplace entry added in the same commit. `composed-skills@a-horde-o-bees` is installable today.
 
-- `.claude-plugin/plugin.json` — name `composed-skills`, version `0.0.1`, description
-- `README.md` — user-facing overview (what this bundle contains, install paths)
-- `ARCHITECTURE.md` — explains "this is a bundle of composed skills; each skill is its own design"
-- entry in `.claude-plugin/marketplace.json` so the bundle is installable via `/plugin install`
-
-Once that lands, `compose new --destination plugins/composed-skills/skills` becomes the working flow for shareable compositions.
+First composition target: `claude-python` (five exemplar sources: affaan-m's python-patterns and python-testing, laurigates' uv-run, sickn33's python-packaging and python-pro).

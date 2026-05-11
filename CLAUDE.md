@@ -37,7 +37,11 @@ Filesystem layout — every path at the root that an agent might need to read or
 | `components/hook-registered-files.md` | Plugin-dev concern — order of edits when renaming a file registered as a hook command |
 | `workflows/` | Top-down procedures (currently empty at project root — operational procedures live in skills under each plugin) |
 | `plans/` | Active and upcoming workstreams; access via `TASKS.md` links |
-| `plugins/` | Plugin systems; each subdirectory carries its own `CLAUDE.md` |
+| `plans/architecture-refactor.md` | Active umbrella plan — skills-as-atomic-unit architecture; Phase B shipping (progressive-skill-composer + composed-skills) |
+| `plans/composed-skills-workflow.md` | Maintainer workflow for composing shareable skills into `plugins/composed-skills/skills/` and publishing via standard install tooling |
+| `plugins/` | Plugin systems; each subdirectory carries its own `CLAUDE.md` or `README.md` |
+| `plugins/progressive-skill-composer/` | The compose toolchain — `compose new`/`refine`/`build`/`list` with `--destination <user\|project\|path>` |
+| `plugins/composed-skills/` | Pure-packaging bundle for compositions authored via progressive-skill-composer; consumers install via `/plugin install` or `npx skills` |
 | `logs/` | Project log entries by type (decision, pattern, research, friction, idea, problem); routing per `log.md` rule |
 | `tests/` | Project-level test suites; runtime per `components/testing.md` |
 | `tools/` | Project-tooling scripts invoked via `bin/project-run` |
