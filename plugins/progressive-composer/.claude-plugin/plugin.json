@@ -1,7 +1,7 @@
 {
   "name": "progressive-composer",
-  "version": "0.0.2",
-  "description": "Track external skill repos, install individual skills selectively, and refactor third-party skills into the progressive-disclosure shape \u2014 the meta-tool layer the marketplace doesn't provide",
+  "version": "0.0.3",
+  "description": "Compose new skills from exemplar sources with PFN + progressive-disclosure authoring discipline applied automatically, plus drift tracking against pinned upstream commits. Complements Vercel's npx skills (which covers individual-skill install).",
   "author": {
     "name": "a-horde-o-bees"
   },

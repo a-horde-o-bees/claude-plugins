@@ -87,11 +87,34 @@ def get_claude_home() -> Path:
 
 
 def get_project_dir() -> Path:
-    """Resolve the active project directory: env var, then git root."""
+    """Resolve the active project directory: env var, then git root.
+
+    Defensive guard — refuses any resolution that lands inside Claude
+    home. Caches at `~/.claude/plugins/.../skills/<name>/` are themselves
+    git checkouts; without the guard, `git rev-parse --show-toplevel`
+    fired from a cache subdirectory returns `~/.claude` and the script
+    then writes to `~/.claude/.claude/skills/`. The corrective error
+    names the env var the caller should set.
+    """
+    claude_home = get_claude_home()
+
+    def _reject_if_inside_home(path: Path) -> None:
+        try:
+            path.relative_to(claude_home)
+        except ValueError:
+            return
+        raise RuntimeError(
+            f"resolved project directory {path} is inside Claude home "
+            f"({claude_home}) — set {CLAUDE_PROJECT_DIR_ENV} to your "
+            "project root explicitly. Common cause: invoking from a "
+            "plugin cache subdirectory."
+        )
+
     env = os.environ.get(CLAUDE_PROJECT_DIR_ENV)
     if env:
         path = Path(env).resolve()
         if path.is_dir():
+            _reject_if_inside_home(path)
             return path
     result = subprocess.run(
         ["git", "rev-parse", "--show-toplevel"],
@@ -101,6 +124,7 @@ def get_project_dir() -> Path:
     if result.returncode == 0:
         path = Path(result.stdout.strip()).resolve()
         if path.is_dir():
+            _reject_if_inside_home(path)
             return path
     raise RuntimeError(
         f"project directory not discoverable — set {CLAUDE_PROJECT_DIR_ENV} "
@@ -183,16 +207,24 @@ def compositions_in_scope(scope: str, project_dir: Path | None = None) -> list[P
     return results
 
 
-def derive_source_slug(url: str) -> str:
-    """Stable slug derived from a repo URL — used for embed folder names.
+def derive_source_slug(url: str, skill: str) -> str:
+    """Stable slug derived from a repo URL plus skill name.
 
-    Uses the last two path segments to stay readable across URL shapes:
-        https://github.com/anthropics/skills.git → anthropics-skills
-        git@github.com:foo/bar.git → foo-bar
-        file:///tmp/.../fixture-source → <parent>-fixture-source
+    Used for embed folder names — `sources/<slug>/SKILL.md`. Includes
+    the skill segment so multiple skills from the same repo don't
+    collide on the filesystem. Shape: `<repo-segments>--<skill>` with
+    double-dash separator.
 
-    Single-segment paths produce just that segment. Empty or unusable
-    paths fall back to a SHA-1 prefix of the URL for collision safety.
+    Examples:
+        https://github.com/anthropics/skills.git + pdf
+            → anthropics-skills--pdf
+        git@github.com:foo/bar.git + my-skill
+            → foo-bar--my-skill
+        file:///tmp/.../fixture-source + fixture-skill
+            → <parent>-fixture-source--fixture-skill
+
+    Empty or unusable URL paths fall back to a SHA-1 prefix of the URL
+    for collision safety; the skill suffix is appended either way.
     """
     parsed = urlparse(url) if "://" in url else None
     if parsed and parsed.path:
@@ -214,7 +246,9 @@ def derive_source_slug(url: str) -> str:
     else:
         slug_source = path
 
-    slug = _SLUG_PATTERN.sub("-", slug_source.lower()).strip("-")
-    if not slug:
-        slug = hashlib.sha1(url.encode("utf-8")).hexdigest()[:12]
-    return slug
+    repo_slug = _SLUG_PATTERN.sub("-", slug_source.lower()).strip("-")
+    if not repo_slug:
+        repo_slug = hashlib.sha1(url.encode("utf-8")).hexdigest()[:12]
+
+    skill_slug = _SLUG_PATTERN.sub("-", skill.lower()).strip("-")
+    return f"{repo_slug}--{skill_slug}"

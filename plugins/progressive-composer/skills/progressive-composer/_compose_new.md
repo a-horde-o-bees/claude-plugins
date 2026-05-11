@@ -55,7 +55,6 @@ The agent writes this exact shape via Write tool after collecting name + goal in
 ---
 spec_version: 1
 name: <chosen-name>
-type: composed
 description: <one-line description for SKILL.md frontmatter>
 scope: <user|project>
 sources: []

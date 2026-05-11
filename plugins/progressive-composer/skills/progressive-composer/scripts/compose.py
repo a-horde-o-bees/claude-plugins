@@ -186,7 +186,6 @@ def cmd_new(args: argparse.Namespace) -> int:
     print("---")
     print("spec_version: 1")
     print("name: <chosen-name>")
-    print("type: composed")
     print("description: <one-line, populated from goal articulation>")
     print(f"scope: {args.scope}")
     print("sources: []")
@@ -436,7 +435,7 @@ def cmd_add_source(args: argparse.Namespace) -> int:
 
     url, skill, ref_from_arg = args.source
     ref = ref_from_arg or "main"
-    source_slug = derive_source_slug(url)
+    source_slug = derive_source_slug(url, skill)
 
     try:
         skill_path = find_skill_path_in_repo(url, ref, skill)
@@ -473,7 +472,7 @@ def cmd_remove_source(args: argparse.Namespace) -> int:
 
     spec = read_spec(spec_path)
     # Match by source-slug (since slug is what the user remembers from the embed dir)
-    matches = [s for s in spec.sources if derive_source_slug(s.url) == args.source_slug]
+    matches = [s for s in spec.sources if derive_source_slug(s.url, s.skill) == args.source_slug]
     if not matches:
         print(
             f"no source with slug {args.source_slug!r} in composition {args.name}",
@@ -510,7 +509,7 @@ def cmd_update_sources(args: argparse.Namespace) -> int:
     spec = read_spec(spec_path)
     targets = spec.sources
     if args.source:
-        targets = [s for s in spec.sources if derive_source_slug(s.url) == args.source]
+        targets = [s for s in spec.sources if derive_source_slug(s.url, s.skill) == args.source]
         if not targets:
             print(
                 f"no source with slug {args.source!r} in composition {args.name}",
@@ -525,7 +524,7 @@ def cmd_update_sources(args: argparse.Namespace) -> int:
             print(f"skip {src.url}:{src.skill}@{src.ref} — {exc}", file=sys.stderr)
             continue
 
-        slug = derive_source_slug(src.url)
+        slug = derive_source_slug(src.url, src.skill)
         embed_path = source_embed_path(args.name, slug, args.scope)
         embed_path.parent.mkdir(parents=True, exist_ok=True)
         old_commit = src.commit

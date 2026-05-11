@@ -57,7 +57,7 @@ def test_compose_add_source_sparse_checks_into_sources_subdir(
 ):
     spec_path = _seed_composition(composer_run, fixture_repo, isolated_env)
     from scripts._paths import derive_source_slug
-    slug = derive_source_slug(_file_url(fixture_repo))
+    slug = derive_source_slug(_file_url(fixture_repo), "fixture-skill")
     embed = (
         isolated_env["claude_home"]
         / "skills"
@@ -74,13 +74,72 @@ def test_compose_add_source_sparse_checks_into_sources_subdir(
     assert re.fullmatch(r"[0-9a-f]{40}", spec.sources[0].commit)
 
 
+def test_compose_add_source_two_skills_same_repo_no_collision(
+    composer_run, fixture_repo, isolated_env
+):
+    """Two skills from the same repo embed into distinct sources/ subdirs.
+
+    Regression guard for the slug-collision bug — prior to including the
+    skill name in derive_source_slug, the second add-source clobbered
+    the first's SKILL.md because both resolved to the same embed dir.
+    """
+    import subprocess
+    from scripts._paths import derive_source_slug
+
+    # Add a second skill to the fixture repo, on the same branch.
+    second_skill_dir = fixture_repo / "skills" / "second-skill"
+    second_skill_dir.mkdir(parents=True)
+    (second_skill_dir / "SKILL.md").write_text(
+        "---\nname: second-skill\ndescription: another fixture\n---\n# second\n"
+    )
+    subprocess.run(["git", "add", "."], cwd=fixture_repo, check=True)
+    subprocess.run(
+        [
+            "git",
+            "-c",
+            "user.email=test@test",
+            "-c",
+            "user.name=test",
+            "commit",
+            "-qm",
+            "add second skill",
+        ],
+        cwd=fixture_repo,
+        check=True,
+    )
+
+    _seed_composition(composer_run, fixture_repo, isolated_env)
+    composer_run(
+        "compose",
+        "add-source",
+        "my-skill",
+        f"{_file_url(fixture_repo)}:second-skill",
+        "--scope",
+        "user",
+    )
+
+    slug_first = derive_source_slug(_file_url(fixture_repo), "fixture-skill")
+    slug_second = derive_source_slug(_file_url(fixture_repo), "second-skill")
+    assert slug_first != slug_second
+
+    sources_dir = isolated_env["claude_home"] / "skills" / "my-skill" / "sources"
+    assert (sources_dir / slug_first / "SKILL.md").exists()
+    assert (sources_dir / slug_second / "SKILL.md").exists()
+
+
+def test_compose_new_omits_type_field_from_scaffold(composer_run, isolated_env):
+    """Scaffold output must not emit `type:` — discriminator was dropped in pivot-4."""
+    result = composer_run("compose", "new", "--scope", "user")
+    assert "type:" not in result.stdout
+
+
 def test_compose_remove_source_deletes_embed_and_frontmatter(
     composer_run, fixture_repo, isolated_env
 ):
     from scripts._paths import derive_source_slug
 
     spec_path = _seed_composition(composer_run, fixture_repo, isolated_env)
-    slug = derive_source_slug(_file_url(fixture_repo))
+    slug = derive_source_slug(_file_url(fixture_repo), "fixture-skill")
     embed = isolated_env["claude_home"] / "skills" / "my-skill" / "sources" / slug
     assert embed.exists()
 

@@ -92,20 +92,66 @@ def test_compositions_in_scope_returns_skills_with_composition(isolated_env):
 
 
 @pytest.mark.parametrize(
-    "url,expected",
+    "url,skill,expected",
     [
-        ("https://github.com/anthropics/skills.git", "anthropics-skills"),
-        ("https://github.com/anthropics/skills", "anthropics-skills"),
-        ("git@github.com:foo/bar.git", "foo-bar"),
-        # last 2 path segments — keeps slugs short across deep paths
-        ("https://example.com/path/with/slashes/repo.git", "slashes-repo"),
+        (
+            "https://github.com/anthropics/skills.git",
+            "pdf",
+            "anthropics-skills--pdf",
+        ),
+        (
+            "https://github.com/anthropics/skills",
+            "pdf",
+            "anthropics-skills--pdf",
+        ),
+        (
+            "git@github.com:foo/bar.git",
+            "my-skill",
+            "foo-bar--my-skill",
+        ),
+        # last 2 path segments of repo — keeps slugs short across deep paths
+        (
+            "https://example.com/path/with/slashes/repo.git",
+            "thing",
+            "slashes-repo--thing",
+        ),
     ],
 )
-def test_derive_source_slug(url, expected):
-    assert derive_source_slug(url) == expected
+def test_derive_source_slug(url, skill, expected):
+    assert derive_source_slug(url, skill) == expected
+
+
+def test_derive_source_slug_includes_skill_to_avoid_collision():
+    """Two skills from the same repo must produce distinct slugs."""
+    url = "https://github.com/affaan-m/everything-claude-code.git"
+    patterns_slug = derive_source_slug(url, "python-patterns")
+    testing_slug = derive_source_slug(url, "python-testing")
+    assert patterns_slug != testing_slug
 
 
 def test_derive_source_slug_falls_back_for_pathless_url():
-    slug = derive_source_slug("https://example.com")
+    slug = derive_source_slug("https://example.com", "thing")
     assert slug  # non-empty
     assert all(c.isalnum() or c == "-" for c in slug)
+    assert slug.endswith("--thing")
+
+
+def test_get_project_dir_rejects_path_inside_claude_home(
+    tmp_path, monkeypatch
+):
+    """Refuse a project_dir resolution that lands inside CLAUDE_HOME.
+
+    Caches and home-dir git checkouts can shadow real projects when the
+    script falls back to `git rev-parse --show-toplevel`. Detect that
+    case and tell the caller to set CLAUDE_PROJECT_DIR explicitly.
+    """
+    from scripts._paths import get_project_dir
+
+    claude_home = tmp_path / "claude_home"
+    bad_project = claude_home / "plugins" / "cache" / "x" / "y" / "z"
+    bad_project.mkdir(parents=True)
+    monkeypatch.setenv("CLAUDE_HOME", str(claude_home))
+    monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(bad_project))
+
+    with pytest.raises(RuntimeError, match="CLAUDE_PROJECT_DIR"):
+        get_project_dir()
