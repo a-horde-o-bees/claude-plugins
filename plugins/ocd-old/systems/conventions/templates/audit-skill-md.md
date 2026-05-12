@@ -1,7 +1,3 @@
----
-tagline: SKILL.md conventions specific to audit-* skills
----
-
 # Audit Skill Conventions
 
 Specialized SKILL.md conventions for audit skills — skills that examine artifacts against governance, best practices, and prior art and surface findings for triage. Applies to skills with the `audit-` directory prefix. Supplements the general skill-md convention — audit skills follow both.

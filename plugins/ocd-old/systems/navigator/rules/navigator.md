@@ -1,7 +1,3 @@
----
-includes: "*"
----
-
 # Navigator Usage
 
 When to reach for the navigator MCP server for project-structure queries versus Grep or Glob.

@@ -1,7 +1,3 @@
----
-tagline: Content standards for TASKS.md — living log of active and upcoming work at a system's root
----
-
 # TASKS.md Conventions
 
 Content standards for `TASKS.md` — a **living log** at a system's root that tracks what is *active* and *coming*. Distinct from session-scoped tracking (TaskCreate manages the current session's checklist; `TASKS.md` survives session clears). Distinct from a historical record (git log + decision logs carry completed work and rationale).

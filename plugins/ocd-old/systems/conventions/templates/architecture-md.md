@@ -1,7 +1,3 @@
----
-tagline: Content standards for ARCHITECTURE.md — system internals reference
----
-
 # ARCHITECTURE.md Conventions
 
 Content standards for `ARCHITECTURE.md` files. System-facing technical reference documenting layers, components, relationships, design patterns, and key implementation details.

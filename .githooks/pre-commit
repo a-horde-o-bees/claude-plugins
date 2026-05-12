@@ -72,6 +72,7 @@ CANONICALS=(
     "shared/dependencies/process-flow-notation.md"
     "shared/dependencies/file-decomposition.md"
     "shared/dependencies/dependency-resolution.md"
+    "shared/dependencies/trigger-specificity.md"
 )
 
 for canonical in "${CANONICALS[@]}"; do

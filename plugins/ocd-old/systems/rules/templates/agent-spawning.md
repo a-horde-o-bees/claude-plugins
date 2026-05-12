@@ -1,7 +1,3 @@
----
-tagline: Minimize agent count for ad-hoc work; follow skill-prescribed counts as-is
----
-
 # Agent Spawning
 
 Each spawned subagent independently loads context and rediscovers the project, multiplying token cost. Default to a single agent processing tasks sequentially within one context. Skill-prescribed agent spawning has already weighed the cost at design time — follow the prescription without second-guessing the count.

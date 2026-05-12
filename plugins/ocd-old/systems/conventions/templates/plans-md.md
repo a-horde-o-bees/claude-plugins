@@ -1,7 +1,3 @@
----
-tagline: Content standards for plans/ — strategy docs for active or upcoming workstreams
----
-
 # plans/ Conventions
 
 Content standards for files under a system's `plans/` subdirectory. A plan is a strategy doc for one active or upcoming workstream — goal, output, sequence of work, locked decisions, open questions. Persists across sessions; rewritten as the workstream evolves.

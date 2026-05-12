@@ -1,10 +1,6 @@
----
-includes: "*.md"
----
-
 # Process Flow Notation
 
-Structured programming for agent workflows. Required in always-on context — agents must parse and follow this notation during execution, not only when authoring.
+Structured programming for agent workflows. Loaded by sources that declare `requires: process-flow-notation` in their frontmatter — agents read this once when any dependent fires, then parse and follow the notation in those sources.
 
 ## Steps
 

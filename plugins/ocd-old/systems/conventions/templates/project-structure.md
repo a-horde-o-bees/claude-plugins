@@ -1,7 +1,3 @@
----
-tagline: Project-root layout extensions — workstreams, logs, entry points
----
-
 # Project Root Structure
 
 Layout extensions specific to project root. Inherits the universal `system-structure` convention; adds workstream tracking, log curation, and project-only entry-point files. Subsystems do not adopt these — they belong only at the repository root.

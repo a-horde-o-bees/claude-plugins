@@ -1,7 +1,3 @@
----
-tagline: Plugin-system facade and verb-dispatch convention for ocd setup-managed systems
----
-
 # Plugin System Setup Conventions
 
 Plugin-specific addendum to `system-structure.md`. Every migrated system in an ocd-style plugin participates in the setup surface (`/ocd:setup <system>`) through a Python facade. The facade declares minimum identity (`purpose()`) plus whatever verbs the system needs — either the standard set (status, list, install, uninstall) or its own verb shape via `dispatch()`. This convention documents the contract, the verb dispatch model, and the workflow files that pair with the standard CRUD verbs.

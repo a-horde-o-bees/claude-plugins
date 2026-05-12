@@ -1,7 +1,3 @@
----
-tagline: Content standards for components/ — reference blocks, one per topic
----
-
 # components/ Conventions
 
 Content standards for files under a system's `components/` subdirectory. A component is a reference block: a layout, a rule, a schema, a tool surface — content the agent looks up to apply, not a procedure executed top-to-bottom. One file per topic.

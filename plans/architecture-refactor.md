@@ -228,10 +228,11 @@ When the last system migrates out of `plugins/ocd/systems/`, the dispatcher infr
 
 > Conventions become categorical skills — opt-in, project-shape-changing. The user understands installing them accepts shape influence; rules are too strong for this content class.
 
+Pre-work already done: `convention_gate` hook removed; `.claude/conventions/` directory wiped from this project (canonicals remain at `plugins/ocd-old/systems/conventions/templates/` as source-of-truth). See "Stopgap: manual rules deployment" above.
+
 1. Cluster current conventions (system-structure, claude-md, plans-md, tasks-md, plugin-system, etc.) into thematic skill groupings
 2. Author one skill per cluster; body indexes the conventions in that cluster, reaches them via `_<convention>.md` files or inline
-3. Remove the deployed `<scope>/.claude/conventions/` directory; convention bodies move into skill bodies
-4. Update install flow (now via progressive-skill-composer) to surface conventions-skills as opt-in additions
+3. Update install flow (now via progressive-skill-composer) to surface conventions-skills as opt-in additions
 
 ### Phase I — Decision log review
 
@@ -240,6 +241,36 @@ When the last system migrates out of `plugins/ocd/systems/`, the dispatcher infr
 1. Review each `logs/decision/*.md` against final implementation
 2. Slim decision logs that were comprehensive scaffolding to essential rationale + final shape
 3. Remove options-considered branches that are no longer relevant
+
+## Stopgap: manual rules deployment
+
+Until the rules-skill rebuild ships and proper agent-instruction-authoring (AIA) skill bundles its dependencies, this project deploys a minimized always-on rules set manually into `.claude/rules/ocd/`.
+
+**Deployment criterion (current set: 18 files):**
+
+- Substantively revised via concise-output (V8) convergence in this refactor: agent-first-interfaces, borrow-before-build, clean-break, composability, confirm-shared-intent, fix-foundations-not-symptoms, graceful-degradation, honesty, markdown, principled-pushback, purpose-statement, testing, file-decomposition
+- Newly authored: concise-output, structure-as-documentation, trigger-specificity (merged from `principle-not-symptom` + the prior `trigger-specificity` — see "AIA cluster" below)
+- Foundational shared deps as always-on stopgap: process-flow-notation, dependency-resolution (file-decomposition and trigger-specificity also count, listed above)
+
+Frontmatter-strip-only canonicals (body untouched, e.g., capture-rationale, idempotency, separation-of-concerns) live source-only in `plugins/ocd-old/systems/rules/templates/`. They re-deploy when bundled into the appropriate skill.
+
+**Wiped from deployment in this stopgap:**
+
+- `.claude/rules/ocd/systems/` (log, navigator, refactor system rules) — not actively leveraged during the refactor
+- `.claude/conventions/` (full directory) — convention_gate hook was defunct and is removed from `plugins/ocd-old/hooks/hooks.json`; the script `plugins/ocd-old/hooks/convention_gate.py` is deleted
+- `.claude/rules/ocd/workflow.md` — split per commit `815ebae` into `working-directory.md` (canonical) + `agent-spawning.md` (canonical) + `components/hook-registered-files.md`; "Push Blocking" dropped as defunct
+- `.claude/rules/ocd/system-docs.md` — subsumed by `system-structure.md` convention per commit `40cc819`
+
+## AIA cluster — agent-instruction-authoring
+
+The shared dependencies governing how agent-facing instructions are authored cluster under the working name `agent-instruction-authoring`. Members so far:
+
+- `shared/dependencies/process-flow-notation.md` — the workflow notation spec
+- `shared/dependencies/trigger-specificity.md` — single-mechanism + right-level (principle, not symptom) — merged from former `principle-not-symptom.md` and `trigger-specificity.md` rules; convergence ran 3 iterations of concise-output
+
+The eventual AIA-cluster skills (rules, progressive-skill-composer, etc.) will declare these as deps via SKILL.md frontmatter and `_deps.py` will resolve them at invocation time. Until those skills exist, the deps deploy as always-on rules in this project for working continuity.
+
+Open question: does `shared/dependencies/purpose-statement.md` join the cluster? Defer until first AIA skill is built.
 
 ## Open questions
 
@@ -271,3 +302,5 @@ The decision to drop `bin/<plugin>-run` and adopt the community pattern arrived 
 Pre-refactor artifacts surviving as legacy infrastructure scoped to ocd's pre-migration state: `plugins/ocd-old/bin/ocd-run`, `plugins/ocd-old/bin/ocd-path`, `plugins/ocd-old/run.py`, `plugins/ocd-old/dependencies/environment.py`, the permissions allowlist for `ocd-path` and `ocd-run`. All retire when Phase E completes the ocd migration.
 
 Doc rot scope: `plugins/ocd/README.md` and `plugins/ocd/ARCHITECTURE.md` describe pre-refactor mechanisms (convention-gate hook, includes/excludes). Holistic rewrite when Phase E or G completes — not chip-by-chip during the migration. Same for project-root `ARCHITECTURE.md` if it references defunct mechanisms.
+
+Mid-refactor turn state (uncommitted at time of writing): the rules slimming campaign processed most rule canonicals via concise-output (V8) convergence; `principle-not-symptom.md` merged into `trigger-specificity.md` and the merged form moved to `shared/dependencies/`; `economy-of-expression.md` renamed to `concise-output.md`; `convention-as-documentation.md` renamed/restructured to `structure-as-documentation.md`; orphan deployed-only `workflow.md` and `system-docs.md` wiped (intent confirmed in commits `815ebae`, `40cc819`); `.claude/rules/ocd/` reduced to 18 always-on files; `.claude/rules/ocd/systems/` and `.claude/conventions/` wiped; `convention_gate` hook removed. See "Stopgap: manual rules deployment" and "AIA cluster" sections above for criterion and member list.

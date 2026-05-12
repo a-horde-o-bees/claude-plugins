@@ -1,7 +1,3 @@
----
-tagline: Universal three-document model and folder layout for any system boundary
----
-
 # System Structure
 
 Universal documentation and folder layout for any system. Establishes the three-document model and operational subdirectories that apply at every system boundary. Project-root extensions (workstream tracking, log curation, project-only entry-point files) live in the `project-structure` convention.

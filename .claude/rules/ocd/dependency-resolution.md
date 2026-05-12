@@ -1,7 +1,3 @@
----
-includes: "*.md"
----
-
 # Dependency Resolution
 
 Skills declare shared rule/reference files (e.g., PFN, file-decomposition) in SKILL.md frontmatter. Every invocation runs the bundled resolver script, which checks each dependency's deployed location, deploys the skill's bundled fallback if nothing is found, and emits a path list for the agent to load.

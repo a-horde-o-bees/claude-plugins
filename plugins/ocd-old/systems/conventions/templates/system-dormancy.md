@@ -1,7 +1,3 @@
----
-tagline: Dormancy contract — systems are invisible and silent until installed
----
-
 # System Dormancy
 
 Every plugin system stays invisible and silent until the user installs it. An uninstalled system costs no tokens, fires no hooks, registers no tools, and contributes no rules — its presence in the plugin source has zero observable impact on a session that has not opted in. Dormancy is the contract every system author must satisfy at every surface the system exposes.

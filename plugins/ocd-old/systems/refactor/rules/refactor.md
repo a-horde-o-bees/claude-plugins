@@ -1,7 +1,3 @@
----
-includes: "*"
----
-
 # Refactor Usage
 
 When to reach for the `/ocd:refactor` skill versus manual `sed`, `Edit`, or regex sweeps for source transformations.

@@ -12,10 +12,13 @@ Project-scoped scan-once view. Per-sandbox `SANDBOX-TASKS.md` files (seeded by `
 
     Pending phases: Phase C (pilot ocd system conversion), Phase D (MCP unwiring), Phase E (remaining ocd system migrations + retire `bin/ocd-run`), Phase F (permissions to Pattern B), Phase G (plugin compartmentalization), Phase H (conventions migration), Phase I (decision log review).
 
+    **Recent state changes (uncommitted at landing of next checkpoint):** Rules slimming via concise-output (V8) convergence; `principle-not-symptom` merged into `trigger-specificity`; `trigger-specificity` relocated to `shared/dependencies/`; always-on `.claude/rules/ocd/` minimized to 18 files (substantively-revised + new + foundational shared deps); `.claude/conventions/` and `.claude/rules/ocd/systems/` wiped; `convention_gate` hook removed from `plugins/ocd-old/hooks/`. See *Stopgap: manual rules deployment* and *AIA cluster* sections in the architecture-refactor plan.
+
 ## Upcoming
 
+- **Git skill migration (HIGH PRIORITY)** — `/ocd:git` (commit, push, ci, checkpoint, release verbs) is currently unloadable in this environment; the manual checkpoint exercise on 2026-05-12 surfaced the gap. Migrate ahead of other Phase E systems so the checkpoint loop is restored. Source at `plugins/ocd-old/systems/git/`; migration target follows the skill-as-atomic-unit shape (hyphenated folder, `scripts/` package, `_<verb>.md` flat layout, AIA cluster deps where applicable).
 - **AskUserQuestion interactive workflow check** — small follow-up from prior rules-migration validation. Premise depends on whether setup-style interactive workflows survive the architecture refactor. Re-evaluate when Phase F (permissions to Pattern B) lands and we know what's left of the setup system.
-- **Working-directory limitation revocation** — small refactor: revoke the working-directory rule (currently the only content of `working-directory.md`) once `bin/` executables are callable from any directory and permission auto-approvals are adjusted accordingly. Standalone task; resolvable independent of the architecture refactor.
+- **Working-directory limitation revocation** — small refactor: revoke the working-directory rule once `bin/` executables are callable from any directory and permission auto-approvals are adjusted accordingly. Standalone task; resolvable independent of the architecture refactor. Note: `working-directory.md` is no longer deployed as always-on (frontmatter-strip-only canonical), but the rule still applies via the `workflow.md` content embedded in current session context until next session start.
 
 ## Active sandbox branches
 

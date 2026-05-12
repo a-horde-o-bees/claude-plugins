@@ -1,8 +1,4 @@
----
-tagline: Structure communicates intent — names and patterns encode meaning without docs
----
-
-# Convention as Documentation
+# Structure as Documentation
 
 Structure communicates intent — organization itself conveys meaning, so readers can locate relevant content without needing explanatory documentation. Names, locations, patterns, and hierarchies encode meaning that should be readable without a guide.
 

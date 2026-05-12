@@ -1,7 +1,3 @@
----
-includes: "*"
----
-
 # Log Routing
 
 Captures information worth preserving for a future session. Log at the moment of encounter — context degrades when deferred.

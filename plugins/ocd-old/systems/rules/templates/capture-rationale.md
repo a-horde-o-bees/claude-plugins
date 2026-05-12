@@ -1,7 +1,3 @@
----
-tagline: Record reasoning behind significant choices alongside the choice
----
-
 # Capture Rationale
 
 The reasoning behind significant choices — where alternatives existed and one was selected — is preserved alongside the choice, not left to inspection, memory, or future re-derivation. Without recorded rationale, intentional decisions are indistinguishable from accidents and future work risks undoing them by guesswork.

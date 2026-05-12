@@ -1,7 +1,3 @@
----
-tagline: Argparse subparser structure and naming for system __main__.py CLIs
----
-
 # CLI Conventions
 
 Structural and naming conventions for argparse-based CLI dispatch in `__main__.py` modules. Each system's CLI is a thin wrapper that delegates to library functions. Verb structure mirrors the system's MCP tool surface so a reader who knows one knows the other.

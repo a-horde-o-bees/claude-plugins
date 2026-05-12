@@ -1,7 +1,3 @@
----
-tagline: Engineering around MCPs — keep the agent out of bulk loops, reuse existing servers
----
-
 # MCP Engineering
 
 MCP servers are JSON-RPC services — any process that speaks the protocol can call their tools. The agent is one consumer among many; bulk or mechanical work routed through an MCP server is paid in agent tokens proportional to data size when the agent is the caller, but a script speaking the same protocol pays nothing per record. This rule governs the disciplines that fire when designing, consuming, or automating MCPs — separate from server-authoring conventions in `mcp-server`, which apply only when editing server source.

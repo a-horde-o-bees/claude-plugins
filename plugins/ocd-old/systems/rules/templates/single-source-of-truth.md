@@ -1,7 +1,3 @@
----
-tagline: One authoritative source per concept; derivatives validate against it
----
-
 # Single Source of Truth
 
 One authoritative source for each concept. Derived artifacts validate against their source, not the reverse. When information appears in multiple places, one is the source and the others are projections — make the relationship explicit and the validation automatic.

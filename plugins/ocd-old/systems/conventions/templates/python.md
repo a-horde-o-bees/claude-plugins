@@ -1,7 +1,3 @@
----
-tagline: Python code style, module structure, import patterns for project Python files
----
-
 # Python Conventions
 
 Code style, module structure, and import patterns for Python files in this project.

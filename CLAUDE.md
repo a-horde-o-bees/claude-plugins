@@ -47,9 +47,12 @@ Filesystem layout — every path at the root that an agent might need to read or
 | `tools/` | Project-tooling scripts invoked via `bin/project-run` |
 | `scripts/` | Standalone Python scripts (e.g., manifest validation) |
 | `bin/` | Entry-point shims (e.g., `project-run`) |
-| `.claude/` | Project-deployed Claude Code settings, rules, conventions |
+| `shared/` | Canonical storage for cross-skill content; subdirectories mirror skill-internal layout (`shared/scripts/`, `shared/dependencies/`); pre-commit propagates copies into matching skill subfolders |
+| `shared/dependencies/` | Cross-skill rule canonicals — PFN, file-decomposition, dependency-resolution, trigger-specificity |
+| `shared/scripts/` | Cross-skill script canonicals — `_environment.py`, `_deps.py` |
+| `.claude/` | Project-deployed Claude Code settings + always-on rules (`rules/ocd/`, 18 files); conventions deployment dormant per architecture refactor |
 | `.claude-plugin/` | Marketplace manifest |
-| `.githooks/` | Git hooks (e.g., pre-commit version bump) |
+| `.githooks/` | Git hooks (e.g., pre-commit version bump, canonical propagation) |
 
 ## Cold-pickup
 

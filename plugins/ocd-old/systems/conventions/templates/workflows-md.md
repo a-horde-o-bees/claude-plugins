@@ -1,7 +1,3 @@
----
-tagline: Content standards for workflows/ — multi-step procedures consumed top-to-bottom
----
-
 # workflows/ Conventions
 
 Content standards for files under a system's `workflows/` subdirectory. A workflow is a multi-step procedure consumed top-to-bottom: the agent reads it once and executes each step in order. One file per procedure.

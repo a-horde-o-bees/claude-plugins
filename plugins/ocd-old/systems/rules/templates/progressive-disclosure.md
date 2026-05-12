@@ -1,7 +1,3 @@
----
-tagline: Reveal information in layers — overview first, details on demand
----
-
 # Progressive Disclosure
 
 Reveal information in layers — overview first, details on demand. Every level of a system is understandable without descending into the levels below it. A reader at any depth sees complete context for that depth and clear paths to go deeper when needed.

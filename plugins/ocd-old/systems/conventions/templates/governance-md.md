@@ -1,7 +1,3 @@
----
-tagline: Frontmatter, body, and structure standards for rules and conventions
----
-
 # Governance File Conventions
 
 Content and structure standards for rules and conventions — the files that govern agent behavior and file content.

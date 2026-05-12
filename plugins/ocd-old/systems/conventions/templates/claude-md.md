@@ -1,7 +1,3 @@
----
-tagline: Content standards for CLAUDE.md — agent-facing operational reference
----
-
 # CLAUDE.md Conventions
 
 Content standards for `CLAUDE.md` files. Agent-facing operational reference for systems whose operational content is not packaged as a slash skill (skills use `SKILL.md`). `CLAUDE.md` is loaded by every agent on every spawn; its content is paid by every consumer regardless of task.

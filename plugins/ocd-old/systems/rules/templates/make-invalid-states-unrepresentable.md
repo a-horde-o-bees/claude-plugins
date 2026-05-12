@@ -1,7 +1,3 @@
----
-tagline: Enforce correctness through structure, not documentation
----
-
 # Make Invalid States Unrepresentable
 
 Enforce correctness through structure, not documentation. When the system's structure prevents incorrect usage, documentation becomes confirmation rather than instruction. Prefer enforcement mechanisms over prose rules at every layer — data, schemas, tool interfaces, file organization.
