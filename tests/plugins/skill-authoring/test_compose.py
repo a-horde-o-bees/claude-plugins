@@ -1,4 +1,4 @@
-"""End-to-end tests for the compose workflow (new, refine, build, list, sub-ops)."""
+"""End-to-end tests for the compose workflow (new, refine, list, sub-ops)."""
 
 import re
 
@@ -278,69 +278,6 @@ def test_compose_purge_sources_deletes_subfolder(
     assert not sources_dir.exists()
 
 
-def test_compose_build_writes_skill_md(composer_run, fixture_repo, isolated_env):
-    _seed_composition(composer_run, fixture_repo, isolated_env)
-    composer_run("compose", "build", "my-skill", "--destination", "user")
-    skill_md = isolated_env["claude_home"] / "skills" / "my-skill" / "SKILL.md"
-    assert skill_md.exists()
-    text = skill_md.read_text()
-    assert "name: my-skill" in text
-    assert "test composition" in text  # description carries from composition.md
-    # scripts/__init__.py is the empty package marker
-    assert (isolated_env["claude_home"] / "skills" / "my-skill" / "scripts" / "__init__.py").exists()
-
-
-def test_compose_build_refuses_overwrite_without_force(
-    composer_run, fixture_repo, isolated_env
-):
-    _seed_composition(composer_run, fixture_repo, isolated_env)
-    composer_run("compose", "build", "my-skill", "--destination", "user")
-    result = composer_run(
-        "compose", "build", "my-skill", "--destination", "user", check=False
-    )
-    assert result.returncode != 0
-    assert "already exists" in result.stderr
-
-
-def test_compose_build_force_overwrites(composer_run, fixture_repo, isolated_env):
-    _seed_composition(composer_run, fixture_repo, isolated_env)
-    composer_run("compose", "build", "my-skill", "--destination", "user")
-    skill_md = isolated_env["claude_home"] / "skills" / "my-skill" / "SKILL.md"
-    skill_md.write_text("# user refinements\n")
-
-    composer_run(
-        "compose", "build", "my-skill", "--destination", "user", "--force"
-    )
-    assert "user refinements" not in skill_md.read_text()
-
-
-
-
-def test_compose_build_rejects_empty_description(composer_run, fixture_repo, isolated_env):
-    from scripts._paths import composition_path
-    from scripts._spec import make_composed_scaffold, write as write_spec
-
-    spec_path = composition_path("my-skill", "user")
-    spec = make_composed_scaffold(name="my-skill", description="")
-    spec_path.parent.mkdir(parents=True, exist_ok=True)
-    write_spec(spec_path, spec)
-
-    composer_run(
-        "compose",
-        "add-source",
-        "my-skill",
-        f"{_file_url(fixture_repo)}:fixture-skill",
-        "--destination",
-        "user",
-    )
-
-    result = composer_run(
-        "compose", "build", "my-skill", "--destination", "user", check=False
-    )
-    assert result.returncode != 0
-    assert "description" in result.stderr
-
-
 def test_compose_refine_reads_spec_and_reports_in_sync(
     composer_run, fixture_repo, isolated_env
 ):
@@ -354,11 +291,14 @@ def test_compose_refine_reads_spec_and_reports_in_sync(
     assert "Next steps for the agent" not in result.stdout
 
 
-def test_compose_refine_reports_deployed_after_build(
+def test_compose_refine_reports_deployed_when_skill_md_exists(
     composer_run, fixture_repo, isolated_env
 ):
     _seed_composition(composer_run, fixture_repo, isolated_env)
-    composer_run("compose", "build", "my-skill", "--destination", "user")
+    # Live-edit model: SKILL.md is written by the agent during compose new;
+    # mirror that here by placing the file directly.
+    skill_md = isolated_env["claude_home"] / "skills" / "my-skill" / "SKILL.md"
+    skill_md.write_text("---\nname: my-skill\ndescription: test\n---\n# my-skill\n")
     result = composer_run("compose", "refine", "my-skill", "--destination", "user")
     assert "deployed: yes" in result.stdout
 
@@ -403,7 +343,6 @@ def test_compose_list_drift_runs_ls_remote(
     composer_run, fixture_repo, commit_to_fixture, isolated_env
 ):
     _seed_composition(composer_run, fixture_repo, isolated_env)
-    composer_run("compose", "build", "my-skill", "--destination", "user")
     commit_to_fixture(
         "skills/fixture-skill/extra.md",
         "drift\n",
