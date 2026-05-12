@@ -1,23 +1,21 @@
-# Testing
+# Test Authoring
 
-Testing discipline across four phases: authoring, driving changes, maintaining the system, deciding when to test.
+Writing a new test — what to verify, technique selection by risk class, isolation, placement.
 
-## Test Authoring
-
-### What Qualifies
+## What Qualifies
 
 Deterministic operations (same input → same output) get traditional tests. Non-deterministic behavior (agent judgment, NL interpretation, workflow execution quality) gets evaluation protocols that accept variance.
 
-### Durability
+## Durability
 
 Verification of new code goes in the test structure — including smoke tests, round-trip checks, parse-and-render checks, any one-shot validation. Not ad-hoc bash, inline Python heredocs, or `python -c "..."` snippets.
 
 - Exploration and learning differ from verification; explore freely, but verifying new code requires a test
 - Test fixtures handle environment setup; ad-hoc commands need inline env vars requiring manual approval
 
-### Techniques by Risk Class
+## Techniques by Risk Class
 
-#### Strong-case techniques
+### Strong-case techniques
 
 > Always earn the investment.
 
@@ -74,7 +72,7 @@ Traditional unit tests — isolate each function, verify with explicit inputs an
 
 Explicit boundary enumeration plus property-based fuzzing.
 
-#### Situational techniques
+### Situational techniques
 
 > Earn the investment when the failure mode applies.
 
@@ -127,7 +125,7 @@ Don't verify — exact strings the agent produces (model variance is brittle; te
 
 Cost discipline — fail fast before the subprocess call (assert preconditions before spending tokens); keep tests narrow (one behavior, minimal prompt); share setup (session-scoped fixture beats per-test).
 
-### Isolation
+## Isolation
 
 Tests own their state. Never rely on ambient user settings, global environment, or developer's home directory.
 
@@ -137,7 +135,7 @@ Tests own their state. Never rely on ambient user settings, global environment, 
 
 A test passing locally but failing in CI with "JSONDecodeError: Expecting value" is almost always a fixture gap, not a flake.
 
-### Placement
+## Placement
 
 | What it tests | Home |
 |---|---|
@@ -148,87 +146,3 @@ A test passing locally but failing in CI with "JSONDecodeError: Expecting value"
 Feature tests move with the skill or system they belong to. Integration tests stay at plugin root because they outlive any single system. Conformance tests apply universally and run against synthetic fixtures, not real systems that drift.
 
 A behavior never lives in two homes. If a test fits feature or integration, it's a feature test. If a check fits integration or conformance, it's conformance only when it applies to every system uniformly.
-
-## Driving Changes Through Tests
-
-Locate or write the test first, confirm RED against current code, make the change, confirm GREEN. Applies when verification was going to happen anyway.
-
-- **Verification runs through an allowlisted path.** The test suite (`bin/project-run tests`, `pytest`, `ocd-run check`) matches existing permission patterns. Ad-hoc verification (`python -c "..."`, bash pipelines, `VAR=$(...)` chains) often halts for manual approval.
-- **The implementation can't ratify itself.** A test written after tends to assert what code does, not what spec demands — bugs get encoded as "correct."
-
-### When Driving Applies
-
-- Adding a new callable (function, method, CLI verb, MCP tool, hook handler)
-- Modifying behavior of an existing callable — return values, error paths, side effects
-- Fixing a bug where you'd want a regression guard
-- Changing a round-trip-able format — parse ↔ serialize, schema, protocol
-
-### Exemptions
-
-- **Verified existing coverage.** Articulate what the post-change test would assert, grep test files, confirm coverage exists with the same inputs and expectation. Active check, not "probably covered somewhere."
-- **Configuration restating.** The only possible test would echo data back. Don't write it.
-- **No verification intended.** Docs, comments, docstrings, log entries, ROADMAP edits, memory updates.
-- **Mechanical changes already covered.** Pure renames or format refactors where existing tests exercise the new shape.
-
-### Running the Test
-
-**Narrow batch.** Run only tests directly affected — the file or class owning the assertion. Broader scope is overhead during a red-green cycle.
-
-**RED first.** Run the narrow batch against current code before implementing. If it passes unchanged, stop:
-
-- The change is unnecessary (behavior is already correct)
-- The test doesn't discriminate the behavior (false-positive coverage)
-- Your model of current state is wrong
-
-**Implement the change.**
-
-**GREEN after.** Re-run the narrow batch. Confirm pass.
-
-**Full suite.** Run only when structural changes cascade (moves, renames, refactors) or at checkpoint boundaries.
-
-## Maintaining the Test System
-
-### Callable Surface Coverage
-
-Every callable a consumer invokes — CLI verb, subcommand, hook handler, skill entry point, MCP tool, script — has at least one test. Kind (unit, integration, end-to-end) depends on what it does.
-
-- Zero test references is a missing test, not a "simple enough" exemption
-- Untested callables rot — the next change breaks them silently
-- Required flags need at least one test path
-- Boolean flags that change behavior meaningfully (destructive `--force`, mode-switching) need their own path; ceremony flags (`--quiet`, `--no-color`) are covered transitively
-
-**Crawlable inventory.**
-
-1. List every callable — CLI verbs (argparse in `__main__.py`), hook handlers (`hooks.json`), skill slash commands (`SKILL.md`), MCP tools (registrations), project scripts (`bin/`, `scripts/`)
-2. Grep test files for invocations
-3. Callables with zero invocations are gaps
-
-`/ocd:check` runs this crawl as part of universal conformance.
-
-**Exempt.**
-
-- Private helpers (underscore-prefixed, no public dispatch path) — covered transitively
-- Deprecated callables — delete rather than test
-
-### Anti-patterns
-
-**Configuration restating.** If manifest says `pattern: "*.py"` and test asserts `pattern == "*.py"`, the test verifies parsing, not system behavior. Test that pattern matching behaves correctly (file X matches pattern Y).
-
-**Coverage metrics disconnected from risk.** 100% on a formatter has less value than 60% on permission enforcement with adversarial cases. Allocate effort proportional to failure impact.
-
-**Unit-testing non-deterministic behavior.** Agent judgment, NL interpretation, and workflow execution quality can't be caught by unit tests. Don't assert specific strings, tool-call sequences, or prompt interpretations. Test deterministic infrastructure; evaluate agent behavior through protocols.
-
-## Decision Framework
-
-For any callable or deterministic component:
-
-1. Does it have at least one test? If no, write one — untested callables are the first gap.
-2. If deterministic:
-    1. Contract agents depend on (output format, exit codes, help text): snapshot
-    2. Invariants exist: property test
-    3. Idempotent by design: test idempotency
-    4. Security boundary: exhaustive adversarial cases
-    5. Silent failure causes downstream malfunction: test regardless of simplicity
-    6. Integration test duplicates unit coverage with no new failure mode: skip
-    7. Test merely restates configuration: skip
-3. Else: evaluate through protocols, don't unit test

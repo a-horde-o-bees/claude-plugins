@@ -54,28 +54,30 @@ fi
 
 # --- Propagate canonical shared files into skills ---
 #
-# CANONICALS holds project-root `shared/<subfolder>/<file>` paths whose
-# content propagates into every `<plugin>/skills/<name>/<subfolder>/<file>`
-# that already exists. The subfolder under `shared/` mirrors the same
-# subfolder under each skill — `shared/scripts/X.py` lands in
-# `<skill>/scripts/X.py`, `shared/dependencies/X.md` lands in
-# `<skill>/dependencies/X.md`. File-existence opt-in: a skill only
-# receives propagation once its maintainer has placed an initial copy.
+# Every file under `shared/scripts/` (*.py) and `shared/dependencies/`
+# (*.md) is a canonical whose content propagates into every
+# `<plugin>/skills/<name>/<subfolder>/<file>` that already exists. The
+# subfolder under `shared/` mirrors the same subfolder under each skill —
+# `shared/scripts/X.py` lands in `<skill>/scripts/X.py`,
+# `shared/dependencies/X.md` lands in `<skill>/dependencies/X.md`.
+# File-existence opt-in: a skill only receives propagation once its
+# maintainer has placed an initial copy.
 #
-# `__init__.py` is excluded — skills' subfolders have their own package
-# markers for their own modules; the canonical __init__.py belongs only
-# to the canonical package.
+# Glob over the canonical directories — new canonicals (added via the
+# rules-skill or by promoting a project-level rule) propagate without
+# needing this hook to be edited. `__init__.py` and other non-canonical
+# package markers are skipped: skills' subfolders have their own package
+# markers for their own modules.
 
-CANONICALS=(
-    "shared/scripts/_environment.py"
-    "shared/scripts/_deps.py"
-    "shared/dependencies/process-flow-notation.md"
-    "shared/dependencies/file-decomposition.md"
-    "shared/dependencies/dependency-resolution.md"
-    "shared/dependencies/trigger-specificity.md"
-)
+shopt -s nullglob
+canonicals=( shared/scripts/*.py shared/dependencies/*.md shared/assets/*.md )
+shopt -u nullglob
 
-for canonical in "${CANONICALS[@]}"; do
+for canonical in "${canonicals[@]}"; do
+    case "$(basename "$canonical")" in
+        __init__.py) continue ;;
+    esac
+
     # Only act if the canonical was staged
     if ! echo "$staged" | grep -qx "$canonical"; then
         continue

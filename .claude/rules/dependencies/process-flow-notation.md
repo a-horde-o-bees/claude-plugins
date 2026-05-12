@@ -1,6 +1,12 @@
 # Process Flow Notation
 
-Structured programming for agent workflows. Loaded by sources that declare `requires: process-flow-notation` in their frontmatter — agents read this once when any dependent fires, then parse and follow the notation in those sources.
+Structured programming for agent workflows. Loaded by sources that list `[[process-flow-notation]]` in their `## Dependencies` section — agents read this once when any dependent fires, then parse and follow the notation in those sources.
+
+## Dependencies
+
+Read each if not already in context. Discover via `find ~/.claude <project>/.claude -path "*dependencies/<name>.md" -type f 2>/dev/null`. Selection: prefer user-scope; prefer `rules/dependencies/` over plain `dependencies/`; skill-bundled is last resort. User-scope skills skip project matches.
+
+- [[workflow-vs-script]]
 
 ## Steps
 
@@ -109,23 +115,7 @@ All delegations follow the same shape — mechanism followed by what that mechan
 
 Invocation prefix is optional when the mechanism is unambiguous from context; required when a workflow mixes mechanisms. The prefix may appear after an em-dash: `1. Action — skill: /<plugin>:<skill-name>`.
 
-### Workflow vs Script
-
-PFN is the bridge between agent-facing instruction and mechanical code. Each authoring decision: does this step belong in workflow markdown or in a script the workflow invokes?
-
-Always encode in workflow:
-
-- Reasoning, judgment, contextual decision-making, sequencing the agent must steer.
-- Orchestrating disparate systems (e.g. skill calls, tool invocations, agent spawns) whose composition depends on intermediate results.
-- User-facing surface — review gates, clarifying questions, error-recovery dialogues.
-
-Always delegate to a script:
-
-- Mechanically resolvable operations (e.g. lookups, mutations, generation, transformations).
-
-Antipatterns:
-
-- Scripts are invoked as encapsulated operations with deterministic outcomes and should never dictate agent actions nor require agent intervention.
+For each step's placement, see [[workflow-vs-script]].
 
 ## Arguments
 

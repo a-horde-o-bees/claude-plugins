@@ -2,9 +2,15 @@
 
 Content standards for markdown files.
 
-## Heading and Purpose Statement
+## Dependencies
 
-Every file opens with a level-1 heading (`#`) matching the file's name, followed by a purpose statement conveying scope and role — these two lines let a reader decide whether to read further.
+Read each if not already in context. Discover via `find ~/.claude <project>/.claude -path "*dependencies/<name>.md" -type f 2>/dev/null`. Selection: prefer user-scope; prefer `rules/dependencies/` over plain `dependencies/`; skill-bundled is last resort. User-scope skills skip project matches.
+
+- [[description-authoring]]
+
+## Heading and Description
+
+Every file opens with a level-1 heading (`#`) matching the file's name, immediately followed by a description following [[description-authoring]].
 
 ## Blank Line Separation
 
@@ -32,3 +38,4 @@ Lists keep one item per line. Code blocks preserve their internal formatting. Ta
 ## Special Characters
 
 Characters that markdown renderers may interpret — `{}`, `<>`, `*`, `_` — must appear within backtick-delimited inline code or fenced code blocks when used literally. Without protection, renderers strip `<>` as HTML tags, template engines consume `{}` as variables, and `*`/`_` trigger emphasis. Applies anywhere these characters appear outside code blocks — prose, table cells, list items.
+

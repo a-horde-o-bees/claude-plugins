@@ -10,13 +10,11 @@ Two categories of derived files should not be edited directly:
    `shared/dependencies/X.md` lands in `<skill>/dependencies/X.md`.
 
 Edit canonical sources instead:
-- Project-wide rules: plugins/ocd-old/systems/rules/templates/ (legacy)
-  and shared/dependencies/ (always-on shared deps: PFN, file-decomposition,
-  dependency-resolution, trigger-specificity)
+- Rule canonicals (all 18 always-on rules): shared/dependencies/<name>.md
+- Shared scripts (_environment.py, _deps.py): shared/scripts/<name>.py
 - Conventions: plugins/ocd-old/systems/conventions/templates/ (source-only;
   no current deployment target)
 - Log templates: plugins/ocd-old/systems/log/templates/<type>/
-- Shared canonicals (propagated to every skill's matching subfolder that has its own copy): shared/ at project root
 """
 
 import json
@@ -27,7 +25,7 @@ GUARDED_PATTERNS = [
     re.compile(r"^\.claude/(rules|conventions)/"),    # deployed from templates
     re.compile(r"^logs/[^/]+/_(?:template|samples-template)\.md$"),  # deployed log templates
     re.compile(r"^plugins/[^/]+/skills/[^/]+/scripts/(_environment|_deps)\.py$"),  # propagated python canonicals
-    re.compile(r"^plugins/[^/]+/skills/[^/]+/dependencies/(process-flow-notation|file-decomposition|dependency-resolution|trigger-specificity)\.md$"),  # propagated rule canonicals
+    re.compile(r"^plugins/[^/]+/skills/[^/]+/dependencies/[^/]+\.md$"),  # propagated rule canonicals
 ]
 
 

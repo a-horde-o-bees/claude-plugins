@@ -4,18 +4,16 @@ Where to edit when changing rules, conventions, log-type templates, or shared ca
 
 | Content | Edit path |
 |---------|-----------|
-| Project-wide rules (legacy templates) | `plugins/ocd-old/systems/rules/templates/<rule>.md` |
-| System-scoped rules (legacy) | `plugins/ocd-old/systems/<system>/rules/<rule>.md` |
-| Conventions (source-only; deployment dormant) | `plugins/ocd-old/systems/conventions/templates/<convention>.md` |
-| Log-type templates | `plugins/ocd-old/systems/log/templates/<type>/_template.md` |
-| Shared cross-skill rules (PFN, file-decomposition, dependency-resolution, trigger-specificity) | `shared/dependencies/<name>.md` |
+| All rule canonicals (18 files) | `shared/dependencies/<name>.md` |
 | Shared cross-skill scripts (`_environment.py`, `_deps.py`) | `shared/scripts/<name>.py` |
+| Log-type templates (legacy) | `plugins/ocd-old/systems/log/templates/<type>/_template.md` |
+| Conventions templates (source-only; deployment dormant) | `plugins/ocd-old/systems/conventions/templates/<convention>.md` |
 
 ## Deployment
 
-Currently manual — sync from canonicals into `.claude/rules/ocd/` when content changes substantively. The legacy per-system setup handler (`/ocd:setup <system> install`) is dormant during the architecture refactor; conventions and system rules are not deployed at all (see `plans/architecture-refactor.md` *Stopgap: manual rules deployment* section for the always-on set criterion).
+Currently manual — sync from canonicals into `.claude/rules/dependencies/` when content changes substantively. The legacy per-system setup handler (`/ocd:setup <system> install`) is dormant during the architecture refactor; conventions and system rules are not deployed at all (see `plans/architecture-refactor.md` *Stopgap: manual rules deployment* section for the always-on set criterion).
 
-Pre-commit propagates `shared/<dir>/<file>` copies into every `plugins/<x>/skills/<y>/<dir>/<file>` that already exists (file-existence opt-in). See `.githooks/pre-commit` `CANONICALS` array.
+Pre-commit globs `shared/scripts/*.py` and `shared/dependencies/*.md`, propagating each staged canonical into every `plugins/<x>/skills/<y>/<dir>/<file>` that already exists (file-existence opt-in). See `.githooks/pre-commit`.
 
 ## Never edit
 

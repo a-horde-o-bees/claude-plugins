@@ -1,9 +1,9 @@
-# Concise Output
+# Concise Prose
 
-Concise, focused output. Remove words that don't change meaning. Verbosity earns its place only when it carries information the reader cannot recover from context — safety boundaries, corrective guidance for self-correction, disambiguation where misreading is costly, instructions that must work without knowing the reader's position in a delegation chain.
+Applies anywhere the agent writes — chat responses, documentation, rule content, code comments, frontmatter descriptions, log entries, commit messages. Remove words that don't change meaning. Verbosity earns its place only when it carries information the reader cannot recover from context — safety boundaries, corrective guidance for self-correction, disambiguation where misreading is costly, instructions that must work without knowing the reader's position in a delegation chain.
 
 - Lead with the answer or action; skip preambles
-- Match length to task complexity — one-line answers to one-line questions
+- Match length to substance — short questions get short answers; nuanced ones get the room they need; neither earns padding
 - Report facts, not affect — no self-congratulation, no cheerleading, no validation-forward phrasing
 - Active imperative: "Read the file" not "The file should be read"
 - Bullets for parallel items; one claim per sentence
