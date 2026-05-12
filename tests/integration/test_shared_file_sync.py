@@ -1,13 +1,13 @@
 """Contract test: propagated copies stay byte-equal to their canonical source.
 
-`.githooks/pre-commit` copies each entry in its `CANONICALS` array — files
-at project-root `shared/<subfolder>/<file>` — into every
+`.githooks/pre-commit` propagates each file matching its `canonicals=(...)`
+glob array — files at project-root `shared/<subfolder>/<file>` — into every
 `<plugin>/skills/<name>/<subfolder>/<file>` that already exists
-(file-existence opt-in). This test parses the CANONICALS array, walk-scans
-the project tree for every skill-level vendored copy of each canonical,
-and hashes each copy against its canonical — so drift introduced by
-bypassed hooks, direct branch pushes, or a rebase that skips the hook
-surfaces here instead of at runtime.
+(file-existence opt-in). This test parses the canonicals globs, expands
+them against the filesystem, walk-scans every skill-level vendored copy
+of each canonical, and hashes each copy against its canonical — so drift
+introduced by bypassed hooks, direct branch pushes, or a rebase that
+skips the hook surfaces here instead of at runtime.
 
 The failure message names the drifting file and points at
 `.githooks/pre-commit` as the fix point.
@@ -22,7 +22,7 @@ from pathlib import Path
 
 
 HOOK_PATH = ".githooks/pre-commit"
-_ENTRY_RE = re.compile(r'^\s*"([^"]+)"\s*$')
+_ARRAY_RE = re.compile(r"^\s*canonicals=\(\s*(.+?)\s*\)\s*$")
 
 
 def _project_root() -> Path:
@@ -36,23 +36,20 @@ def _project_root() -> Path:
     return Path(result.stdout.strip()).resolve()
 
 
-def _parse_canonicals(hook_text: str) -> list[str]:
-    """Extract canonical paths from the CANONICALS array."""
-    entries: list[str] = []
-    in_array = False
+def _parse_canonicals(hook_text: str, root: Path) -> list[str]:
+    """Resolve the `canonicals=(...)` globs against the filesystem."""
+    patterns: list[str] = []
     for line in hook_text.splitlines():
-        stripped = line.strip()
-        if stripped.startswith("CANONICALS=("):
-            in_array = True
-            continue
-        if in_array and stripped == ")":
-            break
-        if not in_array:
-            continue
-        match = _ENTRY_RE.match(line)
+        match = _ARRAY_RE.match(line)
         if match:
-            entries.append(match.group(1))
-    return entries
+            patterns = match.group(1).split()
+            break
+    resolved: list[str] = []
+    for pattern in patterns:
+        for path in sorted(root.glob(pattern)):
+            if path.is_file() and path.name != "__init__.py":
+                resolved.append(str(path.relative_to(root)))
+    return resolved
 
 
 def _hash(path: Path) -> str:
@@ -85,9 +82,9 @@ class TestSharedFileSync:
     def test_every_canonical_matches_every_skill_copy(self) -> None:
         root = _project_root()
         hook_text = (root / HOOK_PATH).read_text()
-        canonicals = _parse_canonicals(hook_text)
+        canonicals = _parse_canonicals(hook_text, root)
         assert canonicals, (
-            f"no CANONICALS entries parsed from {HOOK_PATH} — "
+            f"no canonicals globs resolved from {HOOK_PATH} — "
             "parser or hook format regressed"
         )
 
