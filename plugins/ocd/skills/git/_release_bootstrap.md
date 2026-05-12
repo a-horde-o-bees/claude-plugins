@@ -4,6 +4,13 @@
 
 The output is a populated `.claude/ocd/git/release.md` that future invocations of `/ocd:git release` read directly — no repeat dialogue. The doc becomes the project's record of release methodology.
 
+### Dependencies
+
+Read each if not already in context. Discover via `find ~/.claude <project>/.claude -path "*dependencies/<name>.md" -type f 2>/dev/null`. Selection: prefer user-scope; prefer `rules/dependencies/` over plain `dependencies/`; skill-bundled is last resort. User-scope skills skip project matches.
+
+- [[confirm-shared-intent]]
+- [[markdown]]
+
 ### Variables
 
 - {release-md-path} — destination path for the populated methodology doc (typically `.claude/ocd/git/release.md`)
@@ -25,7 +32,7 @@ The output is a populated `.claude/ocd/git/release.md` that future invocations o
     5. {auto-bump-hook} = bash: `[ -f .githooks/pre-commit ] && grep -l -i "bump\|version" .githooks/pre-commit 2>/dev/null || echo none`
     6. {github-release-workflow} = bash: `[ -f .github/workflows/release.yml ] && echo yes || echo no`
 
-2. Read the starter template at `${CLAUDE_PLUGIN_ROOT}/systems/git/templates/release.md` to anchor the output structure
+2. Read the starter template at `${CLAUDE_PLUGIN_ROOT}/skills/git/assets/release.md` to anchor the output structure
 
 3. Compose the full draft `release.md` content using the template structure and detection-driven defaults for every section:
 

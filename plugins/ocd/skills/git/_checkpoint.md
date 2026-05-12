@@ -27,5 +27,5 @@ Branch defaults to current. CI runs by default; `--no-ci` skips it (useful when 
     - Branch
     - Commits made: count and messages (from Commit sub-flow)
     - Commits pushed: count (from Push sub-flow)
-    - CI status (from CI sub-flow): passed, failed, dispatched, or no-runs
+    - CI status (from CI sub-flow): passed, failed, dispatched, incomplete, or no-runs
     - If nothing was committed AND nothing was pushed: checkpoint complete, no CI check ran

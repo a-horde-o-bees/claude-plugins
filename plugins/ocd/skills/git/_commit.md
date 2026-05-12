@@ -4,6 +4,14 @@
 
 Fully automated — analyzes changes, groups by topic, drafts messages, executes commits. No user confirmation needed for grouping or messages. When grouping is ambiguous, keep changes together rather than splitting incorrectly.
 
+### Dependencies
+
+Read each if not already in context. Discover via `find ~/.claude <project>/.claude -path "*dependencies/<name>.md" -type f 2>/dev/null`. Selection: prefer user-scope; prefer `rules/dependencies/` over plain `dependencies/`; skill-bundled is last resort. User-scope skills skip project matches.
+
+- [[description-authoring]]
+- [[concise-prose]]
+- [[honesty]]
+
 ### Rules
 
 - Purpose of grouping is readable history — each commit should be a focused window into related changes so specific implementations are easy to find later

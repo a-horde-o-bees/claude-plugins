@@ -4,6 +4,14 @@
 
 The agent runs in isolated context with only the inputs it needs. Returns the recommended version, the bump-axis rationale, and a markdown section ready to insert into `CHANGELOG.md`.
 
+### Dependencies
+
+Read each if not already in context. Discover via `find ~/.claude <project>/.claude -path "*dependencies/<name>.md" -type f 2>/dev/null`. Selection: prefer user-scope; prefer `rules/dependencies/` over plain `dependencies/`; skill-bundled is last resort. User-scope skills skip project matches.
+
+- [[description-authoring]]
+- [[concise-prose]]
+- [[honesty]]
+
 ### Variables
 
 - {commit-range} — git log range to read (e.g., `v0.1.0..HEAD`, or `HEAD` for first release)

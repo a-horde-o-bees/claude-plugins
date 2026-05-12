@@ -2,7 +2,7 @@
 
 Project-specific methodology for cutting tagged releases. Read by `/ocd:git release` to validate inputs, locate manifest(s) to bump, format the CHANGELOG, and execute commit/tag/push correctly. Captured during the bootstrap dialogue and refined over time as the project's release practice evolves.
 
-This is the *local* version (under `.claude/ocd/git/release.md`) — fill in each section with this project's specifics. The plugin ships a starter template at `plugins/ocd/systems/git/templates/release.md`; the bootstrap dialogue uses it as scaffolding.
+This is the *local* version (under `.claude/ocd/git/release.md`) — fill in each section with this project's specifics. The plugin ships a starter template at `plugins/ocd/skills/git/assets/release.md`; the bootstrap dialogue uses it as scaffolding.
 
 ## Versioning scheme
 

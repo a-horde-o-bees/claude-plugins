@@ -4,6 +4,13 @@
 
 The synthesizer reads commits since the last tag and produces both the CHANGELOG draft and the recommended version. Review is mandatory — synthesis is non-deterministic and a tagged release is hard to amend, so the human gate stays in the loop. After approval everything else is automated.
 
+### Dependencies
+
+Read each if not already in context. Discover via `find ~/.claude <project>/.claude -path "*dependencies/<name>.md" -type f 2>/dev/null`. Selection: prefer user-scope; prefer `rules/dependencies/` over plain `dependencies/`; skill-bundled is last resort. User-scope skills skip project matches.
+
+- [[confirm-shared-intent]]
+- [[description-authoring]]
+
 ### Variables
 
 - {version} — optional positional override; when provided, replaces the synthesizer's recommendation. When absent, the recommendation drives.
