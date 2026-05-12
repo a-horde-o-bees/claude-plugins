@@ -2,8 +2,12 @@
 
     uv run -m scripts.compose new --destination <user|project|path>
     uv run -m scripts.compose refine <name> --destination <user|project|path>
-    uv run -m scripts.compose build <name> --destination <user|project|path> [--force]
     uv run -m scripts.compose list [--destination <user|project|path>] [--drift]
+
+The agent scaffolds and edits the live SKILL.md + `_<verb>.md` workflow
+files directly during `compose new` and `compose refine` — no separate
+build step. `composition.md` tracks intent; the skill files are the
+live implementation.
 
 `--destination` accepts three forms:
 
@@ -37,7 +41,6 @@ from scripts._paths import (
     compositions_in_destination,
     derive_source_slug,
     destination_dir,
-    skill_folder,
     skill_md_path,
     source_embed_path,
     sources_subdir,
@@ -145,39 +148,6 @@ def find_skill_path_in_repo(url: str, ref: str | None, skill: str) -> str:
     return shallowest[0]
 
 
-COMPOSED_SKILL_TEMPLATE = """\
----
-name: {name}
-description: {description}
----
-
-# {name}
-
-<!--
-Scaffolded by `compose build` from composition.md at:
-{spec_path}
-
-This is the initial materialization — `composition.md` captures design
-intent and source provenance; this SKILL.md is the live implementation.
-After scaffolding, refine here via dialogue with the user, flesh out
-each Triggers entry, and create the `_<verb>.md` workflow files the
-Triggers below reference. Embedded sources are at
-{sources_path}/<source-slug>/.
-
-Run `compose refine {name} --destination {destination}` periodically to
-detect upstream drift in sources.
--->
-
-## Triggers
-
-<!--
-Scaffolded from composition.md's `## Surface` section. Each cognitive
-moment in Surface becomes a Triggers entry; each `Routes to: _<verb>.md`
-line implies a `_<verb>.md` workflow file the agent will create.
--->
-"""
-
-
 # -----------------------------------------------------------------------------
 # compose new — workflow entry (no disk ops)
 # -----------------------------------------------------------------------------
@@ -251,69 +221,6 @@ def _check_drift(spec) -> tuple[list, list, list]:
 
 
 # -----------------------------------------------------------------------------
-# compose build — terminal materialize
-# -----------------------------------------------------------------------------
-
-
-def cmd_build(args: argparse.Namespace) -> int:
-    spec_path = composition_path(args.name, args.destination)
-    if not spec_path.exists():
-        print(
-            f"no composition at {spec_path} — run `compose new --destination {args.destination}` first",
-            file=sys.stderr,
-        )
-        return 2
-
-    spec = read_spec(spec_path)
-    if not spec.description:
-        print(
-            "spec description is empty — set `description` in composition.md frontmatter "
-            "before building (the deployed SKILL.md needs a discoverable description)",
-            file=sys.stderr,
-        )
-        return 2
-    if not spec.sources:
-        print(
-            "spec has no sources — add at least one via `compose add-source` before building",
-            file=sys.stderr,
-        )
-        return 2
-
-    skill_md = skill_md_path(args.name, args.destination)
-    if skill_md.exists() and not args.force:
-        print(
-            f"deployed SKILL.md already exists at {skill_md} — pass --force to "
-            "regenerate (this overwrites agent refinements)",
-            file=sys.stderr,
-        )
-        return 2
-
-    folder = skill_folder(args.name, args.destination)
-    folder.mkdir(parents=True, exist_ok=True)
-    (folder / "scripts").mkdir(exist_ok=True)
-    init_py = folder / "scripts" / "__init__.py"
-    if not init_py.exists():
-        init_py.write_text("")
-
-    skill_md.write_text(
-        COMPOSED_SKILL_TEMPLATE.format(
-            name=spec.name,
-            description=spec.description,
-            spec_path=spec_path,
-            sources_path=sources_subdir(args.name, args.destination),
-            destination=args.destination,
-        )
-    )
-
-    print(f"built {spec.name} at {folder}")
-    print(f"skill_md: {skill_md}")
-    print("sources used:")
-    for src in spec.sources:
-        print(f"  - {src.url}:{src.skill}@{src.ref} @ {src.commit[:8]}")
-    return 0
-
-
-# -----------------------------------------------------------------------------
 # compose list — overview
 # -----------------------------------------------------------------------------
 
@@ -363,7 +270,7 @@ def cmd_list(args: argparse.Namespace) -> int:
             found_any = True
 
     if not found_any:
-        print("no skills deployed by progressive-skill-composer at the requested destination(s)")
+        print("no skills deployed by skill-composer at the requested destination(s)")
     return 0
 
 
@@ -537,15 +444,6 @@ def main() -> int:
     refine.add_argument("name", help="composition skill name")
     refine.add_argument("--destination", required=True, help=destination_help)
 
-    build = sub.add_parser("build", help="materialize composition.md into a deployed skill")
-    build.add_argument("name", help="composition skill name")
-    build.add_argument("--destination", required=True, help=destination_help)
-    build.add_argument(
-        "--force",
-        action="store_true",
-        help="overwrite an existing deployed SKILL.md",
-    )
-
     list_cmd = sub.add_parser("list", help="show all deployed skills and their status")
     list_cmd.add_argument(
         "--destination",
@@ -593,7 +491,6 @@ def main() -> int:
     dispatch = {
         "new": cmd_new,
         "refine": cmd_refine,
-        "build": cmd_build,
         "list": cmd_list,
         "add-source": cmd_add_source,
         "remove-source": cmd_remove_source,

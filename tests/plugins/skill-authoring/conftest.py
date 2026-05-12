@@ -1,4 +1,4 @@
-"""Shared pytest fixtures for the progressive-skill-composer plugin test suite.
+"""Shared pytest fixtures for the skill-authoring plugin test suite.
 
 Tests run scripts in two modes:
 
@@ -26,9 +26,9 @@ PROJECT_ROOT = Path(__file__).resolve().parents[3]
 SKILL_DIR = (
     PROJECT_ROOT
     / "plugins"
-    / "progressive-skill-composer"
+    / "skill-authoring"
     / "skills"
-    / "progressive-skill-composer"
+    / "skill-composer"
 )
 
 

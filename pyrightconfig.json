@@ -1,6 +1,6 @@
 {
     "extraPaths": [
         "plugins/ocd",
-        "plugins/progressive-skill-composer/skills/progressive-skill-composer"
+        "plugins/skill-authoring/skills/skill-composer"
     ]
 }

@@ -1,11 +1,21 @@
 ---
-name: progressive-skill-composer
-description: Use this skill when the user wants to design a new skill from one or more exemplar source skills, iterate on an in-progress composition, materialize a finalized composition into a deployable skill, or list deployed compositions with optional upstream-drift detection. Provides the meta-tool layer for goal-driven skill composition with our authoring discipline (PFN notation + progressive disclosure) baked into the output. Each composed skill is self-contained — composition.md (the recipe), embedded source skills (the ingredients), and SKILL.md (the dish) live together in one folder. For installing an unmodified upstream skill kept as-is, use Vercel's `npx skills` instead — this skill focuses on composition, not installation.
+name: skill-composer
+description: Use this skill when the user wants to design a new skill from one or more exemplar source skills, iterate on an in-progress composition, or list deployed compositions with optional upstream-drift detection. Provides the meta-tool layer for goal-driven skill composition with our authoring discipline (PFN notation + progressive disclosure) baked into the output. Each composed skill is self-contained — composition.md (the recipe), embedded source skills (the ingredients), and SKILL.md (the dish) live together in one folder. For installing an unmodified upstream skill kept as-is, use Vercel's `npx skills` instead — this skill focuses on composition, not installation.
 ---
 
-# progressive-skill-composer
+# skill-composer
 
-Compose new skills from one or more exemplar sources, with PFN + progressive-disclosure authoring discipline applied automatically. Drift detection against pinned upstream commits via non-mutating `git ls-remote`. Each deployed composition is a self-contained folder: SKILL.md (what Claude Code loads), composition.md (recipe + provenance), embedded `sources/<source-slug>/` exemplars, and `scripts/` for the composition's own implementation.
+Compose new skills from one or more exemplar sources, with PFN + progressive-disclosure authoring discipline applied automatically. Drift detection against pinned upstream commits via non-mutating `git ls-remote`.
+
+## Dependencies
+
+Read each if not already in context. Discover via `find ~/.claude <project>/.claude -path "*dependencies/<name>.md" -type f 2>/dev/null`. Selection: prefer user-scope; prefer `rules/dependencies/` over plain `dependencies/`; skill-bundled is last resort. User-scope skills skip project matches.
+
+- [[progressive-disclosure]]
+- [[process-flow-notation]]
+- [[workflow-vs-script]]
+- [[description-authoring]]
+- [[markdown]]
 
 ## Triggers
 
@@ -13,7 +23,6 @@ Compose new skills from one or more exemplar sources, with PFN + progressive-dis
 |---|---|
 | User wants to design a new skill drawing on one or more exemplars | `compose new` |
 | User wants to iterate on an in-progress composition (drift check + refinement dialogue) | `compose refine` |
-| User wants to materialize a finalized composition into a deployable skill | `compose build` |
 | User asks what compositions exist and whether sources have drifted | `compose list` (with `--drift` for live network check) |
 
 For installing an unmodified upstream skill kept as-is, use Vercel's [`npx skills`](https://skills.sh) — this plugin doesn't bundle that capability.
@@ -28,9 +37,8 @@ uv run -m scripts.compose <subverb> [args]
 
 | Verb | Workflow file | Subverb | Purpose |
 |---|---|---|---|
-| `compose new` | `_compose_new.md` | `scripts.compose new` | Open new-composition workflow; agent collects name, intent, Surface, and sources via dialogue |
-| `compose refine` | `_compose_refine.md` | `scripts.compose refine` | Re-enter an existing composition; auto drift check; agent drives refinement of design intent |
-| `compose build` | `_compose_build.md` | `scripts.compose build` | Initial materialization of SKILL.md + `scripts/` package skeleton from composition.md. Once SKILL.md exists, the agent refines it directly — composition.md tracks intent, not the live code |
+| `compose new` | `_compose_new.md` | `scripts.compose new` | Open new-composition workflow; agent collects name, intent, Surface, and sources via dialogue, then scaffolds composition.md + live SKILL.md + `_<verb>.md` workflow files directly |
+| `compose refine` | `_compose_refine.md` | `scripts.compose refine` | Re-enter an existing composition; auto drift check; agent drives refinement of design intent and edits the live skill files in place |
 | `compose list` | `_compose_list.md` | `scripts.compose list` | Walk deployed compositions; report deployed/draft state per composition (with `--drift` for network drift check) |
 
 For each verb's procedure, `Call:` the corresponding `_<verb>.md` workflow file. `uv` is a soft prerequisite — install via [astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/) when missing. All scripts are stdlib-only.
@@ -70,17 +78,14 @@ No shared cache directory; no central registry. Each composition.md IS the per-s
 
 ## Authoring discipline baked in
 
-`compose build` produces output that conforms to our project's authoring conventions automatically:
+`compose new` and `compose refine` scaffold and edit live skill files directly from bundled templates at `assets/skill-template.md`, `assets/verb-workflow-template.md`, and `assets/composition-template.md`. The disciplines that shape the output:
 
-- **SKILL.md body shape** follows progressive-disclosure layering — frontmatter description as cognitive trigger, body holds Triggers + Verb topography pointing at `_<verb>.md` workflow files (not inline procedures)
-- **Workflow files** (`_<verb>.md`) authored with PFN notation — numbered steps, indentation-scoped blocks, `Call:` refs to components, `bash:` / `skill:` invocation prefixes
-- **Python implementation** lives in `scripts/` package skeleton
+- **SKILL.md body shape** — [[progressive-disclosure]]: frontmatter description as cognitive trigger, body holds Triggers + Verb topography pointing at `_<verb>.md` workflow files
+- **Workflow files** (`_<verb>.md`) — [[process-flow-notation]]: numbered steps, indentation-scoped blocks, `Call:` refs to components, `bash:` / `skill:` invocation prefixes
+- **Python implementation** — `scripts/` package skeleton; mechanically resolvable work goes there per [[workflow-vs-script]]
+- **Frontmatter descriptions** — [[description-authoring]]: scope + role, exclude internals / contents / history
 
-The agent fleshes out the scaffolded structure via Edit tool after build; the layered shape is the foundation.
-
-### Workflow vs script — what goes where
-
-Apply the PFN rule's *Workflow vs Script* section when fleshing out a composition. The decision happens twice: during `compose refine` (verb topography — which verbs are workflows vs which are scripts the workflows invoke) and during `compose build` (scaffolding the `_<verb>.md` files and `scripts/` skeleton). If a draft step is mechanically resolvable from inputs, pull it into a script.
+`composition.md` tracks intent and source provenance; `SKILL.md` + `_<verb>.md` are the live implementation. The agent edits both in place.
 
 ## Compositions of compositions
 
@@ -90,4 +95,5 @@ Composing a new skill that uses one of your previously-composed skills as a sour
 
 - **Vercel's `npx skills`** ([skills.sh](https://skills.sh)) — for installing unmodified upstream skills. Symlinks into `~/.claude/skills/`; auto-fresh via upstream.
 - **`/plugin install`** — for atomic plugin bundles. Bundle-grained, not skill-grained.
-- **progressive-skill-composer (this plugin)** — for designing new skills from exemplars with authoring discipline applied. Drift tracking against pinned snapshots.
+- **`/skill-authoring:skill-composer` (this skill)** — for designing new skills from exemplars with authoring discipline applied. Drift tracking against pinned snapshots.
+- **`/skill-authoring:skill-creator` (sibling skill)** — for designing new skills from scratch via interview-driven dialogue. Same authoring disciplines applied at every step.

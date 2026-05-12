@@ -46,4 +46,4 @@ project:
   - claude-python (5 sources, draft)
 ```
 
-When no compositions exist at any requested destination, prints `no skills deployed by progressive-skill-composer at the requested destination(s)`.
+When no compositions exist at any requested destination, prints `no skills deployed by skill-composer at the requested destination(s)`.

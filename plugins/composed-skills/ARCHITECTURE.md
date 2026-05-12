@@ -4,7 +4,7 @@ Internal design reference for maintainers. User-facing documentation lives in `R
 
 ## Purpose
 
-This bundle exists to make composed skills shareable and installable. `progressive-skill-composer`'s default `--destination` keywords (`user`, `project`) write a composition straight into a consumer's Claude Code skills directory — correct for personal use, wrong for sharing. This plugin shell is the third destination: `--destination plugins/composed-skills/skills` from the project root puts a composition into a path that the standard install tooling (`/plugin install`, `npx skills`) can publish to other machines and other users.
+This bundle exists to make composed skills shareable and installable. `skill-authoring:skill-composer`'s default `--destination` keywords (`user`, `project`) write a composition straight into a consumer's Claude Code skills directory — correct for personal use, wrong for sharing. This plugin shell is the third destination: `--destination plugins/composed-skills/skills` from the project root puts a composition into a path that the standard install tooling (`/plugin install`, `npx skills`) can publish to other machines and other users.
 
 ## Layers
 
@@ -16,7 +16,7 @@ plugins/composed-skills/
 ├── ARCHITECTURE.md                      # this file
 ├── LICENSE                              # MIT
 └── skills/                              # one subdirectory per composed skill
-    └── <name>/                          # composed via progressive-skill-composer
+    └── <name>/                          # composed via skill-authoring:skill-composer
         ├── SKILL.md
         ├── composition.md
         ├── sources/                     # optional; sparse-checked at pinned commits
@@ -28,7 +28,7 @@ The plugin shell carries no Python, no bin scripts, no MCP servers — it is pur
 
 ## How a composed skill enters this bundle
 
-1. Author invokes `progressive-skill-composer`'s `compose new --destination plugins/composed-skills/skills` from the project root
+1. Author invokes `skill-authoring:skill-composer`'s `compose new --destination plugins/composed-skills/skills` from the project root
 2. The agent collects name + intent + Surface + sources via dialogue, writes `composition.md`
 3. `compose add-source` sparse-checks each exemplar into `skills/<name>/sources/<slug>/` and pins commits
 4. The agent fills in the Goal, Surface, and Sources body sections
@@ -46,7 +46,7 @@ For consumers installing the bundle, `sources/` may or may not be present depend
 
 ## Bundle-level versioning
 
-`composed-skills` follows the same `x.y.z` semver convention as other plugins in this marketplace (per `components/versioning.md`). Pre-commit hook auto-bumps `z` on commits that touch `skills/<name>/` (the same rule that bumps `ocd` and `progressive-skill-composer`). Tagged releases bundle a snapshot of every skill at that point; downstream consumers on the stable channel pin to a tag and update deliberately.
+`composed-skills` follows the same `x.y.z` semver convention as other plugins in this marketplace (per `components/versioning.md`). Pre-commit hook auto-bumps `z` on commits that touch `skills/<name>/` (the same rule that bumps `ocd` and `skill-authoring:skill-composer`). Tagged releases bundle a snapshot of every skill at that point; downstream consumers on the stable channel pin to a tag and update deliberately.
 
 ## Drift between bundle releases and composition state
 

@@ -1,31 +1,36 @@
-# progressive-skill-composer architecture
+# skill-authoring architecture
 
-Internal design reference for developers maintaining the plugin. User-facing documentation lives in `README.md`; agent-facing operational procedures live in `skills/progressive-skill-composer/SKILL.md` and the `_<verb>.md` workflow files.
+Internal design reference for developers maintaining the plugin. User-facing documentation lives in `README.md`; agent-facing operational procedures live in `skills/skill-composer/SKILL.md`, `skills/skill-creator/SKILL.md`, and the `_<verb>.md` workflow files in each.
 
 ## Layers
 
 ```
-plugins/progressive-skill-composer/
+plugins/skill-authoring/
 ├── .claude-plugin/
 │   └── plugin.json
 ├── README.md
 ├── ARCHITECTURE.md
 ├── LICENSE
 ├── skills/
-│   └── progressive-skill-composer/        # entry point — Claude Code loads SKILL.md from here
-│       ├── SKILL.md                 # triggers + verb topography
-│       ├── _<verb>.md               # workflow files reachable via Call:
-│       └── scripts/                 # python implementation as importable package
-│           ├── __init__.py
-│           ├── _paths.py            # scope/folder/embed path helpers
-│           ├── _spec.py             # composition.md schema, parse, serialize
-│           ├── _clone.py            # sparse-checkout + ls-remote primitives
-│           ├── _config.py           # generic JSON helpers (currently unused)
-│           └── compose.py           # compose verb (new/refine/build/list + sub-ops)
+│   ├── skill-composer/              # entry point — Claude Code loads SKILL.md from here
+│   │   ├── SKILL.md                 # triggers + verb topography
+│   │   ├── _<verb>.md               # workflow files reachable via Call:
+│   │   └── scripts/                 # python implementation as importable package
+│   │       ├── __init__.py
+│   │       ├── _paths.py            # scope/folder/embed path helpers
+│   │       ├── _spec.py             # composition.md schema, parse, serialize
+│   │       ├── _clone.py            # sparse-checkout + ls-remote primitives
+│   │       ├── _config.py           # generic JSON helpers (currently unused)
+│   │       └── compose.py           # compose verb (new/refine/list + sub-ops)
+│   └── skill-creator/               # companion skill — from-scratch authoring composed on Anthropic's skill-creator
+│       ├── SKILL.md
+│       ├── composition.md           # recipe + provenance for this composition
+│       ├── _<verb>.md
+│       └── sources/                 # embedded community skill-creator at pinned commit
 └── tests/                           # pytest fixtures + verb tests
 ```
 
-The skill folder is hyphenated (`progressive-skill-composer/`) and matches the plugin name per Anthropic's 1:1 convention (cf. `frontend-design/skills/frontend-design`, `skill-creator/skills/skill-creator`). Python implementation lives in `scripts/` so the parent folder is never imported as a Python package. SKILL.md invokes scripts as `uv run -m scripts.compose <subverb>` with cwd at the skill folder.
+Skill folders are hyphenated (`skill-composer/`, `skill-creator/`) and intentionally self-describing so each works under standalone install via `npx skills` — the plugin prefix is bonus context, not the load-bearer. Python implementation lives in each skill's `scripts/` so the parent folder is never imported as a Python package. SKILL.md invokes scripts as `uv run -m scripts.compose <subverb>` with cwd at the skill folder.
 
 No `bin/<plugin>-run` dispatcher, no plugin-level `run.py`, no vendored `tools/` package. Path resolution and env access happen inline in `scripts/_paths.py`. See project-root `logs/decision/skill-authoring.md` § *Dependencies via `uv run`* for the rationale.
 
@@ -47,9 +52,9 @@ Each composed skill is self-contained at `<destination-parent>/<name>/`:
 
 **No central registry.** Each composition.md IS the per-skill provenance record. Walking `<destination-parent>/*/composition.md` enumerates every composition the plugin owns.
 
-**Plugin data dir is reserved but unused.** No transient state currently goes through `~/.claude/plugins/data/progressive-skill-composer-a-horde-o-bees/`. Reserved per Claude Code convention for future verbs that might need disk space.
+**Plugin data dir is reserved but unused.** No transient state currently goes through `~/.claude/plugins/data/skill-authoring-a-horde-o-bees/`. Reserved per Claude Code convention for future verbs that might need disk space.
 
-State location follows project-root `logs/decision/state-location.md`. The plugin-namespaced extension (`<destination>/.claude/<plugin>-<author>/<concern>/`) remains a valid pattern for plugins that need plugin-managed user-edited content separate from any specific skill; progressive-skill-composer doesn't currently use it.
+State location follows project-root `logs/decision/state-location.md`. The plugin-namespaced extension (`<destination>/.claude/<plugin>-<author>/<concern>/`) remains a valid pattern for plugins that need plugin-managed user-edited content separate from any specific skill; skill-authoring doesn't currently use it.
 
 ## Sparse-checkout primitive
 
@@ -105,8 +110,8 @@ composition.md is an **alignment doc** between exemplar sources and the live ski
 
 ## What this plugin doesn't do
 
-- **Install unmodified upstream skills** — Vercel's `npx skills` covers this surface; mature, npm-distributed, polished. progressive-skill-composer doesn't compete.
-- **Plugin-level operations** — `/plugin install` handles atomic plugin bundles; `ccpi` package-manager-style CLI handles plugin-level lifecycle. progressive-skill-composer is skill-grained, composition-focused.
+- **Install unmodified upstream skills** — Vercel's `npx skills` covers this surface; mature, npm-distributed, polished. skill-authoring doesn't compete.
+- **Plugin-level operations** — `/plugin install` handles atomic plugin bundles; `ccpi` package-manager-style CLI handles plugin-level lifecycle. skill-authoring is skill-grained, composition + creation focused.
 
 ## Compositions of compositions
 

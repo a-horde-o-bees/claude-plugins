@@ -32,8 +32,8 @@ def _run_hook(file_path: str, cwd: str = "") -> subprocess.CompletedProcess[str]
 
 class TestDeployedFilesBlocked:
     @pytest.mark.parametrize("path", [
-        ".claude/rules/ocd/design-principles.md",
-        ".claude/rules/ocd/testing.md",
+        ".claude/rules/dependencies/process-flow-notation.md",
+        ".claude/rules/dependencies/testing.md",
         ".claude/conventions/ocd/python.md",
         "logs/research/_samples-template.md",
     ])
@@ -53,8 +53,8 @@ class TestDeployedFilesBlocked:
 
 class TestPropagatedSkillScriptsBlocked:
     @pytest.mark.parametrize("path", [
-        "plugins/progressive-skill-composer/skills/progressive-skill-composer/scripts/_environment.py",
-        "plugins/progressive-skill-composer/skills/progressive-skill-composer/scripts/_deps.py",
+        "plugins/skill-authoring/skills/skill-composer/scripts/_environment.py",
+        "plugins/skill-authoring/skills/skill-composer/scripts/_deps.py",
         "plugins/some-plugin/skills/some-skill/scripts/_environment.py",
         "plugins/some-plugin/skills/some-skill/scripts/_deps.py",
         "plugins/some-plugin/skills/some-skill/dependencies/process-flow-notation.md",
@@ -75,7 +75,7 @@ class TestPropagatedSkillScriptsBlocked:
         """Only the specific propagated filenames are blocked;
         other skill scripts are skill-owned and editable."""
         result = _run_hook(
-            "plugins/progressive-skill-composer/skills/progressive-skill-composer/scripts/compose.py"
+            "plugins/skill-authoring/skills/skill-composer/scripts/compose.py"
         )
         assert result.returncode == 0
         assert result.stdout == ""

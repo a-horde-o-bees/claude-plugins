@@ -1,4 +1,0 @@
-[tool.pytest.ini_options]
-pythonpath = ["../../../plugins/progressive-skill-composer/skills/progressive-skill-composer"]
-addopts = "--import-mode=importlib"
-testpaths = ["."]

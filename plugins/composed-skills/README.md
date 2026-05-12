@@ -1,6 +1,6 @@
 # composed-skills
 
-A curated bundle of skills composed via [`progressive-skill-composer`](../progressive-skill-composer/README.md). Each skill in this bundle was designed from one or more exemplar source skills with PFN + progressive-disclosure authoring discipline applied automatically, and carries its own `composition.md` recording the design intent + pinned upstream source provenance for drift tracking.
+A curated bundle of skills composed via [`/skill-authoring:skill-composer`](../skill-authoring/README.md). Each skill in this bundle was designed from one or more exemplar source skills with PFN + progressive-disclosure authoring discipline applied automatically, and carries its own `composition.md` recording the design intent + pinned upstream source provenance for drift tracking.
 
 ## What this bundle contains
 
@@ -36,14 +36,14 @@ Restart the session after install so the new skills are discoverable. Most compo
 | Concern | Bundle |
 |---|---|
 | Project discipline (rules, conventions, permissions) | [`ocd`](../ocd/) |
-| Skill-composition tooling itself | [`progressive-skill-composer`](../progressive-skill-composer/) |
+| Skill-authoring tooling itself | [`skill-authoring`](../skill-authoring/) |
 | **The composed skills produced by that tooling** | **`composed-skills`** (this) |
 
-This bundle is the output side of the compose workflow. Composers (people who author new skills) reach for `progressive-skill-composer`. Consumers (people who use those skills downstream) reach for this bundle.
+This bundle is the output side of the compose workflow. Composers (people who author new skills) reach for `/skill-authoring:skill-composer`. Consumers (people who use those skills downstream) reach for this bundle.
 
 ## Authoring discipline
 
-Every skill in this bundle was composed under the discipline encoded in `progressive-skill-composer`:
+Every skill in this bundle was composed under the discipline encoded in `/skill-authoring:skill-composer`:
 
 - **PFN notation** in workflow files (`_<verb>.md`) — numbered steps, indentation-scoped blocks, explicit `Call:` / `bash:` / `skill:` invocation prefixes
 - **Progressive disclosure** in SKILL.md — frontmatter description as cognitive trigger; body holds Triggers + topography pointing at `_<verb>.md` workflow files (not inline procedures)

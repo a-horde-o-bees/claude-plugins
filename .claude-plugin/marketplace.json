@@ -13,15 +13,15 @@
       "category": "development"
     },
     {
-      "name": "progressive-skill-composer",
-      "source": "./plugins/progressive-skill-composer",
-      "description": "Compose new skills from one or more exemplar sources via goal-driven dialogue, with PFN + progressive-disclosure authoring discipline applied automatically. Drift tracking against pinned upstream commits via non-mutating git ls-remote. Complements Vercel's npx skills (which covers individual-skill install).",
+      "name": "skill-authoring",
+      "source": "./plugins/skill-authoring",
+      "description": "Two companion skills for authoring new skills: skill-composer composes from exemplar sources via goal-driven dialogue with drift tracking against pinned upstream commits; skill-creator creates from scratch via interview-driven dialogue layered on Anthropic's skill-creator. Both apply PFN, progressive-disclosure, description-authoring, and workflow-vs-script disciplines at every authoring moment.",
       "category": "development"
     },
     {
       "name": "composed-skills",
       "source": "./plugins/composed-skills",
-      "description": "Curated bundle of skills composed via progressive-skill-composer. Each skill carries its own composition.md (design intent + pinned source provenance). Install the bundle via /plugin install, or pick individual skills via Vercel's npx skills.",
+      "description": "Curated bundle of skills composed via skill-authoring:skill-composer. Each skill carries its own composition.md (design intent + pinned source provenance). Install the bundle via /plugin install, or pick individual skills via Vercel's npx skills.",
       "category": "development"
     }
   ]

@@ -1,7 +1,7 @@
 {
   "name": "composed-skills",
-  "version": "0.0.2",
-  "description": "Curated bundle of skills composed via progressive-skill-composer. Each skill carries its own composition.md (design intent + pinned source provenance) and supporting workflow files. Install the bundle via /plugin install or pick individual skills via Vercel's npx skills.",
+  "version": "0.0.3",
+  "description": "Curated bundle of skills composed via skill-authoring:skill-composer. Each skill carries its own composition.md (design intent + pinned source provenance) and supporting workflow files. Install the bundle via /plugin install or pick individual skills via Vercel's npx skills.",
   "author": {
     "name": "a-horde-o-bees"
   },
