@@ -41,7 +41,7 @@ Compartmentalization is reversible — moving a skill between plugin bundles is 
 ### Consequences
 
 - **Enables:** users install only the thematic plugin(s) matching their needs; new plugins fork off without disrupting existing structure; compartmentalization decisions can refine as content shape locks
-- **Constrains:** marketplace.json must stay accurate; every skill belongs to exactly one bundle (no cross-bundle ownership); per-bundle install ceremony multiplies with N (mitigated by progressive-skill-composer for individual-skill control)
+- **Constrains:** marketplace.json must stay accurate; every skill belongs to exactly one bundle (no cross-bundle ownership); per-bundle install ceremony multiplies with N (mitigated by skill-authoring for individual-skill control)
 - **Open:** the natural thematic clusters are not yet locked. Likely candidates emerge as Phase E (system migration) progresses; final shape settles before Phase G
 
 ## Source repo stays singular
@@ -52,7 +52,7 @@ Compartmentalization could in principle split the source repo into N separate re
 
 ### Options Considered
 
-**Multiple source repos, one per plugin.** Rejected: multiplies maintenance overhead; cross-plugin shared content (dependencies like PFN) becomes harder to keep canonical; users tracking via progressive-skill-composer track N repos instead of one.
+**Multiple source repos, one per plugin.** Rejected: multiplies maintenance overhead; cross-plugin shared content (dependencies like PFN) becomes harder to keep canonical; users tracking via skill-authoring track N repos instead of one.
 
 **Single source repo with multiple plugin manifests.** Adopted. Mirrors Anthropic's pattern; keeps shared content (dependencies/, READMEs, CONTRIBUTING) in one place.
 
@@ -62,5 +62,5 @@ Compartmentalization could in principle split the source repo into N separate re
 
 ### Consequences
 
-- **Enables:** single CI surface; shared dependencies stay canonical; one source for progressive-skill-composer to track for all our content; consistent authoring discipline applied across bundles
+- **Enables:** single CI surface; shared dependencies stay canonical; one source for skill-authoring to track for all our content; consistent authoring discipline applied across bundles
 - **Constrains:** repo-level concerns (CHANGELOG, LICENSE, governance) cover all bundles uniformly; users can't selectively clone "just one plugin's source" without filtering

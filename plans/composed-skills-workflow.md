@@ -1,10 +1,10 @@
 # Composed-skills workflow
 
-Workflow for maintaining shareable composed skills inside this monorepo using `progressive-skill-composer` + Vercel's `npx skills` (or `/plugin install`) as the install tooling.
+Workflow for maintaining shareable composed skills inside this monorepo using `/skill-authoring:skill-composer` + Vercel's `npx skills` (or `/plugin install`) as the install tooling.
 
 ## Why this workflow
 
-progressive-skill-composer's default destinations (`user`, `project`) are right for most users — drop the composition straight into the consumer's Claude Code skills directory. For composed skills the **maintainer** of this repo wants to **share with others**, that default is wrong: the skill is consumed by the maintainer's downstream sessions, not authored as a redistributable artifact.
+skill-composer's default destinations (`user`, `project`) are right for most users — drop the composition straight into the consumer's Claude Code skills directory. For composed skills the **maintainer** of this repo wants to **share with others**, that default is wrong: the skill is consumed by the maintainer's downstream sessions, not authored as a redistributable artifact.
 
 The composed-skills plugin shell is the bridge:
 
@@ -78,7 +78,7 @@ Once a composed skill is committed to main:
 
 ## Drift tracking continues to work
 
-Even though the composition is in a monorepo (not in `<scope>/.claude/skills/`), progressive-skill-composer's drift detection works the same way:
+Even though the composition is in a monorepo (not in `<scope>/.claude/skills/`), skill-composer's drift detection works the same way:
 
 ```
 uv run -m scripts.compose refine <name> --destination plugins/composed-skills/skills

@@ -4,6 +4,8 @@ log-role: reference
 
 # Progressive Skill Composer
 
+> **Plugin renamed to `skill-authoring` 2026-05-12** with internal split into `skill-composer` + `skill-creator` skills. This log preserves the original plugin name throughout for historical accuracy of the decisions made under that name. See `plans/architecture-refactor.md` § Phase B pivots 7+8 for the rename narrative.
+
 Decisions governing the meta-plugin that composes new skills from one or more exemplar sources, with our authoring discipline (PFN + progressive disclosure) baked into the output. Drift tracking against pinned upstream commits. Self-contained skill folders deployed to a user-specified destination (user-scope, project-scope, or any path — including the `composed-skills` bundle for shareable compositions).
 
 ## Meta-plugin scope and rationale
