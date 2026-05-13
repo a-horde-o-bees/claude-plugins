@@ -6,6 +6,8 @@ log-role: reference
 
 Where plugin-managed working files (DBs, indices, caches) live, keyed on whether the agent or Claude Code reads them directly versus only through bin tools.
 
+> **Status (2026-05-13)** — Four-category matrix (bin-mediated, user-edited, scope-required, plugin-namespaced user-edited) remains the framework. The `skill-authoring` plugin (formerly `progressive-skill-composer`) embeds `composition.md` inside each skill's folder rather than using plugin-namespaced storage — the recipe travels with the skill. The plugin-namespaced extension stays valid for plugins that need plugin-managed user-edited content not tied to any specific skill.
+
 ## Context
 
 Two recurring frictions surface when the agent operates on plugin-managed state:

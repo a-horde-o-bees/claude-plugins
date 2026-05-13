@@ -6,6 +6,8 @@ log-role: reference
 
 Decisions governing the sandbox system — worktree-based isolation for durable feature work and ephemeral testing.
 
+> **Status (2026-05-13)** — Skill currently lives at `plugins/ocd-old/systems/sandbox/` pending Phase E migration. The single-skill ownership of durable + ephemeral worktree lifecycle and the `<project>--<name>/` sibling-path substrate remain valid post-migration; only the invocation substrate evolves.
+
 ## Sandbox consolidates worktree lifecycle
 
 ### Context

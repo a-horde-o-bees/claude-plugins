@@ -4,7 +4,9 @@ log-role: reference
 
 # Check
 
-Decisions governing the `/ocd:check` skill and its discipline-check dimensions.
+Decisions governing the `check` skill and its discipline-check dimensions.
+
+> **Status (2026-05-13)** — Skill currently lives at `plugins/ocd-old/systems/check/` pending Phase E migration. The dimension rules (markdown, python, dormancy) and the allowlist CSV schema remain valid post-migration; only the invocation substrate evolves from `ocd-run check` to `uv run -m scripts.<verb>`.
 
 ## Markdown dimension: deterministic scanner, selective autofix
 

@@ -6,6 +6,8 @@ log-role: reference
 
 Decisions governing how hooks attach to skills — frontmatter declaration (lifecycle-scoped) versus body-deployed installer (persistent). Determines whether a skill needing continuous enforcement (like permissions) requires plugin packaging or can ship as a standalone skill.
 
+> **Status (2026-05-13)** — Pattern A vs Pattern B distinction remains valid under the skills-as-atomic architecture. Permissions-as-Pattern-B-skill is Phase F in `plans/architecture-refactor.md`. Empirical verification of Pattern A's "active" semantics is still deferred.
+
 ## Pattern A vs Pattern B
 
 ### Context

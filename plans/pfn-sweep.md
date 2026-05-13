@@ -29,8 +29,7 @@ Per-document edits across the surface:
 ## Open questions
 
 - Are there documents whose prose form is load-bearing (e.g., agent-facing reading orders that work better as narrative)? Identify during the audit pass
-- Should this sweep happen during each system migration (PFN-on-conversion) or as a separate pass after migrations? Per-system probably wins — content is fresh and the migrator already has the system loaded
 
 ## Status
 
-Not started. Lands naturally during system migrations; a focused sweep can fill any remaining prose-procedure gaps afterward.
+Per-system during Phase E migrations — resolved per `plans/architecture-refactor.md` § Phase E ("PFN sweep on the migrated skill's procedural content"). A focused cross-cutting pass after Phase E fills any remaining prose-procedure gaps in READMEs and ARCHITECTUREs.

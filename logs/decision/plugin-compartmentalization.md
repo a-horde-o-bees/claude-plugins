@@ -6,6 +6,8 @@ log-role: reference
 
 Decisions governing how the source repo is split into thematic plugin bundles and how skills migrate out of the monolithic ocd plugin into more focused buckets.
 
+> **Status (2026-05-13)** — Thematic-split-from-start decision holds. Active Phase G proposal: `git`, `discipline`, `skill-authoring` as domain plugins; `ocd` retires once its skills move; `composed-skills` bundle retires (the composition history travels via `composition.md` in each composed skill regardless of which domain plugin holds it). See `plans/architecture-refactor.md` § Phase G.
+
 ## Thematic split from start
 
 ### Context

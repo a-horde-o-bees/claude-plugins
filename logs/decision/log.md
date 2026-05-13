@@ -4,7 +4,9 @@ log-role: reference
 
 # Log
 
-Decisions governing the `/log` skill — capture verbs (`add`/`list`/`remove`), the `research` subcommand surface, and the supporting Python package layout under `plugins/ocd/systems/log/`.
+Decisions governing the `log` skill — capture verbs (`add`/`list`/`remove`), the `research` subcommand surface, and the supporting Python package layout.
+
+> **Status (2026-05-13)** — Skill currently lives at `plugins/ocd-old/systems/log/` pending Phase E migration. The `research` subcommand surface and `_sample_tools` primitives remain valid post-migration; package layout moves from `plugins/ocd/systems/log/` to the target domain plugin's `skills/log/scripts/`.
 
 ## Research analysis lives under `/log`, not a new top-level skill
 
@@ -84,30 +86,4 @@ Empty `__init__.py` placeholders live at every level of the test mirror: `tests/
 
 ## Sandbox scope excludes retrofit engine, work-queue tooling, and migration manifests
 
-### Context
-
-The same session that authored this sandbox also identified follow-on phases: a research-corpus retrofit (Phase A), a master template design pass (Phase B), and a generic retrofit engine (Phase C/D) that could replace `logs/research/mcp/scripts/_retrofit_samples_to_template.py` with corpus-agnostic infrastructure. The sandbox could have bundled some of that work — building the retrofit engine alongside `sample_tools` was particularly tempting because the same heading-tree primitives underpin both.
-
-### Options Considered
-
-**Bundle retrofit engine and sample_tools in one sandbox.** Ships infrastructure together. Rejected: retrofit engine requirements are unknown until Phase B produces a master template and migration manifest. Building it now means designing for hypothetical migrations that may not exist — directly violating YAGNI. If Phase B's manifest is empty (no structural transformations needed), the entire engine is dead code on first day.
-
-**Bundle work-queue/log CSV management.** A future capability for tracking research observations across iteration cycles. Rejected: the use case is speculative; no live workflow needs it yet, and the data shape will be shaped by Phase A's actual observations rather than design-time guesses.
-
-**Ship only the foundation: skill extension + analytical primitives.** Phase A retrofit consumes them as a library. Phase B sees the corpora through them. Phase C/D engine, if needed, builds on them. Accepted.
-
-### Decision
-
-This sandbox ships `sample_tools` (heading-tree parsing, duplicate detection, cross-sample coverage, per-section consolidation) and the `/log research` surface that exposes them. It explicitly excludes:
-
-- A generic retrofit engine — Phase C/D, contingent on Phase B producing a non-empty migration manifest
-- Work-queue or observation-log CSV management — a Phase A artifact whose schema is determined by what Phase A observes
-- Master template design — Phase B, which uses `count-sections` / `consolidate` outputs as inputs to human + analytical synthesis
-- Deletion of `logs/research/mcp/scripts/_retrofit_samples_to_template.py` — corpus-specific retrofit kept until the generic replacement actually exists
-
-### Consequences
-
-- **Enables:** unpacking this sandbox lands runnable, tested infrastructure with no half-built downstream
-- **Enables:** Phase A starts immediately on main with the primitives available
-- **Constrains:** post-unpack work needs a durable home (logs/idea, ROADMAP, or external tracker) since the originating session's task list does not survive unpack; this is captured in `SANDBOX-TASKS.md` under "Tracking handoff after unpack"
-- **Constrains:** if Phase A or Phase B reveal that retrofit-engine design needs primitives `sample_tools` does not provide, those land in a future sandbox rather than being retrofitted into this one
+The originating sandbox shipped only the foundation (`sample_tools` + `/log research` surface) — retrofit engine, work-queue tooling, and master template design were explicitly deferred per the YAGNI principle (since revoked, but the deferred items have not surfaced as live needs). If those capabilities surface, they land in their own focused changes rather than retrofit into the foundation.

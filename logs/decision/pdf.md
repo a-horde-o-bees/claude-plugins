@@ -4,7 +4,9 @@ log-role: reference
 
 # PDF
 
-Decisions governing the `/ocd:pdf` skill and its PDF generation stack.
+Decisions governing the PDF generation stack for the `pdf` skill.
+
+> **Status (2026-05-13)** — Skill currently lives at `plugins/ocd-old/systems/pdf/` pending Phase E migration. After migration, the WeasyPrint dependency moves from the ocd plugin's `pyproject.toml` into the skill's `scripts/` via PEP 723 inline-script directives per `skill-authoring.md`. The rendering decisions below remain unchanged; only the dependency-declaration substrate evolves.
 
 ## WeasyPrint over md-to-pdf (Puppeteer/Chromium)
 

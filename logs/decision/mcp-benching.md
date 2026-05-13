@@ -4,7 +4,9 @@ log-role: reference
 
 # MCP Benching
 
-Decision to bench existing MCP servers (transcripts, navigator) and route their functionality through bash CLIs (`ocd-run <system> <verb>`) instead. Reactivate MCPs only when a context-cost case justifies their always-on overhead.
+Decision to bench existing MCP servers (transcripts, navigator) and route their functionality through bash CLIs instead. Reactivate MCPs only when a context-cost case justifies their always-on overhead.
+
+> **Status (2026-05-13)** — Benching decision holds. Phase D of `plans/architecture-refactor.md` handles the migration: transcripts and navigator skills move out of `ocd-old/systems/`, MCP server registrations drop from `plugin.json`, and invocation routes through `uv run -m scripts.<verb>` per `skill-authoring.md`. Reactivation criteria below remain the bar for re-enabling any MCP.
 
 ## Context
 
