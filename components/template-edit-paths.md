@@ -4,21 +4,21 @@ Where to edit when changing rules, conventions, log-type templates, or shared ca
 
 | Content | Edit path |
 |---------|-----------|
-| All rule canonicals (18 files) | `shared/dependencies/<name>.md` |
+| All rule canonicals | `shared/_dependencies/<name>.md` |
 | Shared cross-skill scripts (`_environment.py`, `_deps.py`) | `shared/scripts/<name>.py` |
 | Log-type templates (legacy) | `plugins/ocd-old/systems/log/templates/<type>/_template.md` |
 | Conventions templates (source-only; deployment dormant) | `plugins/ocd-old/systems/conventions/templates/<convention>.md` |
 
 ## Deployment
 
-Currently manual — sync from canonicals into `.claude/rules/dependencies/` when content changes substantively. The legacy per-system setup handler (`/ocd:setup <system> install`) is dormant during the architecture refactor; conventions and system rules are not deployed at all (see `plans/architecture-refactor.md` *Stopgap: manual rules deployment* section for the always-on set criterion).
+Rules deploy via `/ocd:rules install <name> --scope <user|project>` — copies from the rules skill's bundled seed at `<skill>/_dependencies/<name>.md` to the scope's always-on path `<scope>/rules/dependencies/<name>.md`. The underscore-prefix bundled folder marks install-source-only storage; the discovery `find` filter excludes it from runtime resolution per markdown-dependency-resolution.
 
-Pre-commit globs `shared/scripts/*.py` and `shared/dependencies/*.md`, propagating each staged canonical into every `plugins/<x>/skills/<y>/<dir>/<file>` that already exists (file-existence opt-in). See `.githooks/pre-commit`.
+Pre-commit globs `shared/scripts/*.py` and `shared/_dependencies/*.md`, propagating each staged canonical into every `plugins/<x>/skills/<y>/<dir>/<file>` that already exists (file-existence opt-in). See `.githooks/pre-commit`.
 
 ## Never edit
 
 - Deployed copies in `.claude/rules/` — guard hook blocks the write
-- Propagated copies in `plugins/<x>/skills/<y>/scripts/` and `plugins/<x>/skills/<y>/dependencies/` for files that exist as canonicals under `shared/` — guard blocks
+- Propagated copies in `plugins/<x>/skills/<y>/scripts/` and `plugins/<x>/skills/<y>/_dependencies/` for files that exist as canonicals under `shared/` — guard blocks
 - Deployed log templates at `logs/<type>/_template.md` — guard blocks
 
-If you find yourself wanting to edit a deployed or propagated file, edit the source at the path above and re-deploy / let pre-commit re-propagate.
+If you find yourself wanting to edit a deployed or propagated file, edit the source at the path above and let pre-commit re-propagate (or re-run `/ocd:rules install <name> --scope <scope> --force` for deployed rules).

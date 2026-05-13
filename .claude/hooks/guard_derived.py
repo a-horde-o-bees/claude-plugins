@@ -7,10 +7,12 @@ Two categories of derived files should not be edited directly:
 2. Propagated files — copies of canonicals under project-root `shared/`
    bundled into each skill's matching subfolder by the pre-commit hook.
    `shared/scripts/X.py` lands in `<skill>/scripts/X.py`;
-   `shared/dependencies/X.md` lands in `<skill>/dependencies/X.md`.
+   `shared/_dependencies/X.md` lands in `<skill>/_dependencies/X.md`.
+   The underscore-prefix folder marks install-source-only storage per
+   markdown-dependency-resolution.
 
 Edit canonical sources instead:
-- Rule canonicals (all 18 always-on rules): shared/dependencies/<name>.md
+- Rule canonicals: shared/_dependencies/<name>.md
 - Shared scripts (_environment.py, _deps.py): shared/scripts/<name>.py
 - Conventions: plugins/ocd-old/systems/conventions/templates/ (source-only;
   no current deployment target)
@@ -25,7 +27,7 @@ GUARDED_PATTERNS = [
     re.compile(r"^\.claude/(rules|conventions)/"),    # deployed from templates
     re.compile(r"^logs/[^/]+/_(?:template|samples-template)\.md$"),  # deployed log templates
     re.compile(r"^plugins/[^/]+/skills/[^/]+/scripts/(_environment|_deps)\.py$"),  # propagated python canonicals
-    re.compile(r"^plugins/[^/]+/skills/[^/]+/dependencies/[^/]+\.md$"),  # propagated rule canonicals
+    re.compile(r"^plugins/[^/]+/skills/[^/]+/_dependencies/[^/]+\.md$"),  # propagated rule canonicals (seed storage)
 ]
 
 

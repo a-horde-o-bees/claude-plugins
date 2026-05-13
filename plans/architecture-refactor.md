@@ -266,12 +266,12 @@ Frontmatter-strip-only canonicals (body untouched, e.g., capture-rationale, idem
 
 The shared dependencies governing how agent-facing instructions are authored cluster under the working name `agent-instruction-authoring`. Members so far:
 
-- `shared/dependencies/process-flow-notation.md` — the workflow notation spec
-- `shared/dependencies/trigger-specificity.md` — single-mechanism + right-level (principle, not symptom) — merged from former `principle-not-symptom.md` and `trigger-specificity.md` rules; convergence ran 3 iterations of concise-output
+- `shared/_dependencies/process-flow-notation.md` — the workflow notation spec
+- `shared/_dependencies/trigger-specificity.md` — single-mechanism + right-level (principle, not symptom) — merged from former `principle-not-symptom.md` and `trigger-specificity.md` rules; convergence ran 3 iterations of concise-output
 
 The eventual AIA-cluster skills (rules, skill-authoring, etc.) will declare these as deps via SKILL.md frontmatter and `_deps.py` will resolve them at invocation time. Until those skills exist, the deps deploy as always-on rules in this project for working continuity.
 
-Open question: does `shared/dependencies/description-authoring.md` (formerly `purpose-statement.md`) join the cluster? Defer until first AIA skill is built.
+Open question: does `shared/_dependencies/description-authoring.md` (formerly `purpose-statement.md`) join the cluster? Defer until first AIA skill is built.
 
 ## Open questions
 

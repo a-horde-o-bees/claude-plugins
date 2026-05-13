@@ -37,9 +37,9 @@
 7. On approval, scaffold `{destination}/{name}/`:
     1. `SKILL.md` from `assets/skill-template.md`, substituting values from the dialogue.
     2. For each cognitive moment in {surface}, `_<verb>.md` from `assets/verb-workflow-template.md`.
-    3. For each verb with verb-specific runtime deps, add `dependencies:` frontmatter to the component file and a `### Requirements` step invoking the resolver with the component file's path.
-    4. Bundle resolver: `scripts/_deps.py` + `scripts/_environment.py` (copies of project canonicals at `shared/scripts/`).
-    5. Bundle dep fallbacks: for each name in skill-level + verb-level `dependencies:`, copy `shared/dependencies/<name>.md` into `{destination}/{name}/dependencies/<name>.md`.
+    3. For each verb with verb-specific runtime deps, add a `### Dependencies` body section to the component file declaring `[[name]]` references per [[markdown-dependency-resolution]].
+    4. Bundle resolver scripts (if needed): `scripts/_environment.py` (copy of project canonical at `shared/scripts/`).
+    5. Bundle dep seeds: for each name in skill-level + verb-level `## Dependencies` declarations, copy `shared/_dependencies/<name>.md` into `{destination}/{name}/_dependencies/<name>.md`. The underscore-prefix folder marks install-source storage; the discovery find filter excludes it from runtime resolution per [[markdown-dependency-resolution]].
 
 8. If test cases were chosen (step 1.6 = yes), scaffold `evals/evals.json` with 2–3 prompt entries the user dictates. The embedded source's schema at `sources/anthropics-skills--skill-creator/references/schemas.md` documents the full eval entry shape.
 

@@ -14,7 +14,7 @@ allowed-tools:
 
 [Include this section only if the skill declares runtime deps; omit otherwise.]
 
-Read each if not already in context. Discover via `find ~/.claude <project>/.claude -path "*dependencies/<name>.md" -type f 2>/dev/null`. Selection: prefer user-scope; prefer `rules/dependencies/` over plain `dependencies/`; skill-bundled is last resort. User-scope skills skip project matches.
+Read each if not already in context. Discover via `find ~/.claude <project>/.claude -path "*dependencies/<name>.md" -not -path "*/_dependencies/*" -type f 2>/dev/null`. Selection: prefer user-scope; prefer `rules/dependencies/` over plain `dependencies/`. User-scope skills skip project matches. If discovery returns nothing, the dep is not deployed — operate without it.
 
 - [[<dep-name>]]
 - ... (one per dep)

@@ -10,9 +10,12 @@ Verbs:
   ``<scope>/rules/dependencies/<name>.md``
 - ``uninstall <name>... --scope <user|project>`` — remove deployed rules from scope
 
-Catalog source: ``<skill>/dependencies/`` — auto-propagated from project-root
-``shared/dependencies/`` via pre-commit. Each file is a complete rule canonical
-with ``# Title`` heading followed by a description paragraph per markdown.md.
+Catalog source: ``<skill>/_dependencies/`` — auto-propagated from project-root
+``shared/_dependencies/`` via pre-commit. The underscore-prefix folder name
+marks install-source-only storage so the discovery convention's find filter
+(``-not -path "*/_dependencies/*"``) cleanly excludes bundled seeds from
+runtime resolution. Each file is a complete rule canonical with ``# Title``
+heading followed by a description paragraph per markdown.md.
 
 Deploy targets follow markdown-dependency-resolution: ``<scope>/rules/dependencies/<name>.md``
 is the always-on path Claude Code auto-loads. The lazy ``<scope>/dependencies/<name>.md``
@@ -38,8 +41,14 @@ def _skill_root() -> Path:
 
 
 def _catalog_dir() -> Path:
-    """The bundled rule catalog — also serves as this skill's own dep bundle."""
-    return _skill_root() / "dependencies"
+    """The bundled rule catalog at `<skill>/_dependencies/`.
+
+    Underscore-prefix marks internal install-source storage; the
+    discovery convention's find filter excludes any path under
+    `*/_dependencies/*` so bundled seeds don't surface as runtime
+    fallback candidates. See [[markdown-dependency-resolution]].
+    """
+    return _skill_root() / "_dependencies"
 
 
 def _scope_root(scope: str) -> Path:

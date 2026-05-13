@@ -141,13 +141,13 @@ def _resolve(name: str, skill_root: Path, scope_claude: Path) -> tuple[str, Path
         if candidate.is_file():
             return (location, candidate)
 
-    bundled = skill_root / "dependencies" / f"{name}.md"
+    bundled = skill_root / "_dependencies" / f"{name}.md"
     if not bundled.is_file():
         raise RuntimeError(
             f"dependency '{name}' is not present at any deployed location and "
             f"the skill has no bundled copy at {bundled} — declare the dep in "
-            f"SKILL.md frontmatter only when the skill bundles its fallback at "
-            f"<skill>/dependencies/{name}.md"
+            f"SKILL.md frontmatter only when the skill bundles its seed at "
+            f"<skill>/_dependencies/{name}.md"
         )
     target = scope_claude / "dependencies" / f"{name}.md"
     target.parent.mkdir(parents=True, exist_ok=True)

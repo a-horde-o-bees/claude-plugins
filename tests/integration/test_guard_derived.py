@@ -57,13 +57,13 @@ class TestPropagatedSkillScriptsBlocked:
         "plugins/skill-authoring/skills/skill-composer/scripts/_deps.py",
         "plugins/some-plugin/skills/some-skill/scripts/_environment.py",
         "plugins/some-plugin/skills/some-skill/scripts/_deps.py",
-        "plugins/some-plugin/skills/some-skill/dependencies/process-flow-notation.md",
-        "plugins/some-plugin/skills/some-skill/dependencies/file-decomposition.md",
-        "plugins/some-plugin/skills/some-skill/dependencies/dependency-resolution.md",
+        "plugins/some-plugin/skills/some-skill/_dependencies/process-flow-notation.md",
+        "plugins/some-plugin/skills/some-skill/_dependencies/file-decomposition.md",
+        "plugins/some-plugin/skills/some-skill/_dependencies/markdown-dependency-resolution.md",
     ])
     def test_skill_scripts_denied(self, path: str):
         """Each skill's scripts/_environment.py, scripts/_deps.py, and
-        dependencies/*.md propagated rule canonicals are copies of the
+        _dependencies/*.md propagated rule canonicals are copies of the
         project-root canonical — block direct edits so changes route
         through the canonical."""
         result = _run_hook(path)
@@ -85,9 +85,9 @@ class TestPropagatedSkillScriptsBlocked:
         for path in (
             "shared/scripts/_environment.py",
             "shared/scripts/_deps.py",
-            "shared/dependencies/process-flow-notation.md",
-            "shared/dependencies/file-decomposition.md",
-            "shared/dependencies/dependency-resolution.md",
+            "shared/_dependencies/process-flow-notation.md",
+            "shared/_dependencies/file-decomposition.md",
+            "shared/_dependencies/markdown-dependency-resolution.md",
         ):
             result = _run_hook(path)
             assert result.returncode == 0, f"{path} should be editable"

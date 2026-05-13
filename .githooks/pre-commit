@@ -10,7 +10,7 @@
 #
 # Architectural model: project-root `shared/` is canonical storage only, never
 # imported from at runtime in distributed code. `shared/scripts/` and
-# `shared/dependencies/` mirror the skill-internal layout. Each skill bundles
+# `shared/_dependencies/` mirror the skill-internal layout. Each skill bundles
 # its own copies (so it runs independently of any project import path) and
 # this hook keeps those bundled copies byte-equal to canonical.
 
@@ -54,12 +54,16 @@ fi
 
 # --- Propagate canonical shared files into skills ---
 #
-# Every file under `shared/scripts/` (*.py) and `shared/dependencies/`
+# Every file under `shared/scripts/` (*.py) and `shared/_dependencies/`
 # (*.md) is a canonical whose content propagates into every
 # `<plugin>/skills/<name>/<subfolder>/<file>` that already exists. The
 # subfolder under `shared/` mirrors the same subfolder under each skill —
 # `shared/scripts/X.py` lands in `<skill>/scripts/X.py`,
-# `shared/dependencies/X.md` lands in `<skill>/dependencies/X.md`.
+# `shared/_dependencies/X.md` lands in `<skill>/_dependencies/X.md`. The
+# underscore prefix on the dep folder signals "internal storage, install
+# source only" — distinguishes seed canonicals from deployed rules under
+# `<scope>/rules/dependencies/` or `<scope>/dependencies/`, so the
+# discovery `find` filter can cleanly exclude internal storage.
 # File-existence opt-in: a skill only receives propagation once its
 # maintainer has placed an initial copy.
 #
@@ -70,7 +74,7 @@ fi
 # markers for their own modules.
 
 shopt -s nullglob
-canonicals=( shared/scripts/*.py shared/dependencies/*.md shared/assets/*.md )
+canonicals=( shared/scripts/*.py shared/_dependencies/*.md shared/assets/*.md )
 shopt -u nullglob
 
 for canonical in "${canonicals[@]}"; do

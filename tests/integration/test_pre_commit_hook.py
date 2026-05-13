@@ -112,11 +112,13 @@ class TestPreCommitPropagation:
             self._unstage_file(canonical)
 
     def test_propagates_pfn_to_skill_dependencies(self):
-        """Canonical shared/dependencies/process-flow-notation.md propagates
-        into each skill's dependencies/ folder that already has a copy
-        (the subfolder under shared/ mirrors the subfolder under each skill)."""
-        canonical = self.root / "shared" / "dependencies" / "process-flow-notation.md"
-        skill_deps = self.plugin_dir / "skills" / "test-skill" / "dependencies"
+        """Canonical shared/_dependencies/process-flow-notation.md propagates
+        into each skill's _dependencies/ folder that already has a copy
+        (the subfolder under shared/ mirrors the subfolder under each skill).
+        The underscore-prefix folder marks install-source storage per
+        markdown-dependency-resolution."""
+        canonical = self.root / "shared" / "_dependencies" / "process-flow-notation.md"
+        skill_deps = self.plugin_dir / "skills" / "test-skill" / "_dependencies"
         skill_deps.mkdir(parents=True, exist_ok=True)
         target = skill_deps / "process-flow-notation.md"
         target.write_text("placeholder\n")
