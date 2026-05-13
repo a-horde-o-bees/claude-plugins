@@ -1,16 +1,23 @@
 # Release Synthesize
 
-> Spawned-agent component that reads commit history since the last tag and produces (1) a Keep-a-Changelog-formatted entry for the new release, with cross-commit deconfliction so add→refactor→retire chains collapse to net-state rather than three separate entries, and (2) a recommended next version derived from the bump-axis decision rules in the project methodology.
+> Spawned-agent component: reads commits in {commit-range}, produces a Keep-a-Changelog entry with cross-commit deconfliction, and recommends a next version per the project methodology's bump-axis rules.
 
-The agent runs in isolated context with only the inputs it needs. Returns the recommended version, the bump-axis rationale, and a markdown section ready to insert into `CHANGELOG.md`.
+> Runs in isolated context — only the inputs it needs. Cross-commit deconfliction collapses add→refactor→retire chains to net-state rather than three separate entries.
 
 ### Dependencies
 
-Read each if not already in context. Discover via `find ~/.claude <project>/.claude -path "*dependencies/<name>.md" -not -path "*/_dependencies/*" -type f 2>/dev/null`. Selection: prefer user-scope; prefer `rules/dependencies/` over plain `dependencies/`. User-scope skills skip project matches. If discovery returns nothing, the dep is not deployed — operate without it.
-
-- [[description-authoring]]
-- [[concise-prose]]
-- [[honesty]]
+1. {dependencies}:
+    - [[description-authoring]]
+    - [[concise-prose]]
+    - [[honesty]]
+2. For each {dependency} in {dependencies}:
+    1. {found}: bash: `find ~/.claude <project>/.claude -path "*dependencies/{dependency}.md" -not -path "*/_dependencies/*" -type f 2>/dev/null`
+    2. If {found} is empty:
+        1. {scope}: `<project>` if `<skill-base>` starts with `<project>`, else `~`
+        2. bash: `cp <skill-base>/_dependencies/{dependency}.md {scope}/.claude/dependencies/{dependency}.md`
+        3. {path}: the cp target
+    3. Else: {path}: first of {found} — prefer user-scope; `rules/dependencies/` over plain `dependencies/`; user-scope skills skip project matches
+    4. Read {path} if not in context
 
 ### Variables
 
@@ -37,7 +44,7 @@ Read each if not already in context. Discover via `find ~/.claude <project>/.cla
 
 2. Read commit history:
     1. bash: `git log {commit-range} --format="%H%n%s%n%b%n--ENDCOMMIT--"` — full subjects + bodies for context
-    2. {commits} = parsed list of {hash, subject, body} tuples
+    2. {commits}: parsed list of {hash, subject, body} tuples
 
 3. Read commit-touched diffstat for richer context:
     1. bash: `git log {commit-range} --stat --format="%H %s"` — file-level scope per commit
@@ -77,12 +84,12 @@ Read each if not already in context. Discover via `find ~/.claude <project>/.cla
     3. Better to surface uncertainty than to confidently mis-categorize or mis-bump
 
 10. Return to caller:
-    - {recommended-version} = computed next version per methodology rules
-    - {bump-axis-rationale} = one-or-two-sentence justification for the chosen axis
-    - {changelog-entry} = composed markdown section
-    - {commits-considered} = count of commits in {commit-range}
-    - {commits-deconflicted} = count of pairs/chains that collapsed
-    - {ambiguity-flags} = count of `(needs review: ...)` entries
+    - {recommended-version}: computed next version per methodology rules
+    - {bump-axis-rationale}: one-or-two-sentence justification for the chosen axis
+    - {changelog-entry}: composed markdown section
+    - {commits-considered}: count of commits in {commit-range}
+    - {commits-deconflicted}: count of pairs/chains that collapsed
+    - {ambiguity-flags}: count of `(needs review: ...)` entries
 
 ### Report
 

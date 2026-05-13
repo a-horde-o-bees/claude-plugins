@@ -1,16 +1,23 @@
 # Commit
 
-> Commit working tree changes grouped by topic for readable git history. Each commit represents one coherent topic — easy to find how a specific change was implemented when examining history later. Grouping separates unrelated changes so each commit is a narrow, focused window into what was done and why.
+> Commit working tree changes grouped by topic. Each commit is one coherent topic for readable history.
 
-Fully automated — analyzes changes, groups by topic, drafts messages, executes commits. No user confirmation needed for grouping or messages. When grouping is ambiguous, keep changes together rather than splitting incorrectly.
+> Fully automated. When grouping is ambiguous, keep changes together rather than splitting incorrectly.
 
 ### Dependencies
 
-Read each if not already in context. Discover via `find ~/.claude <project>/.claude -path "*dependencies/<name>.md" -not -path "*/_dependencies/*" -type f 2>/dev/null`. Selection: prefer user-scope; prefer `rules/dependencies/` over plain `dependencies/`. User-scope skills skip project matches. If discovery returns nothing, the dep is not deployed — operate without it.
-
-- [[description-authoring]]
-- [[concise-prose]]
-- [[honesty]]
+1. {dependencies}:
+    - [[description-authoring]]
+    - [[concise-prose]]
+    - [[honesty]]
+2. For each {dependency} in {dependencies}:
+    1. {found}: bash: `find ~/.claude <project>/.claude -path "*dependencies/{dependency}.md" -not -path "*/_dependencies/*" -type f 2>/dev/null`
+    2. If {found} is empty:
+        1. {scope}: `<project>` if `<skill-base>` starts with `<project>`, else `~`
+        2. bash: `cp <skill-base>/_dependencies/{dependency}.md {scope}/.claude/dependencies/{dependency}.md`
+        3. {path}: the cp target
+    3. Else: {path}: first of {found} — prefer user-scope; `rules/dependencies/` over plain `dependencies/`; user-scope skills skip project matches
+    4. Read {path} if not in context
 
 ### Rules
 
@@ -35,7 +42,7 @@ Read each if not already in context. Discover via `find ~/.claude <project>/.cla
 2. Include untracked files — group with related changes using same topic logic as modified files
     1. If any untracked file seems suspicious (e.g., large generated directories missing from .gitignore, credentials, build artifacts):
         1. Surface exceptions to user before committing — they may belong to group or need exclusion
-3. {commit-groups} = Group changes by topic — goal is readable history where each commit is a focused window into related changes
+3. {commit-groups}: Group changes by topic — goal is readable history where each commit is a focused window into related changes
     1. Evaluate changed files for coherent topics — consider:
         - Tests with code — test files group with code they test
         - Configuration with implementation — config changes group with the code that uses them
@@ -47,7 +54,7 @@ Read each if not already in context. Discover via `find ~/.claude <project>/.cla
 4. Draft commit messages — one per group
     1. Describe end-state results, not change journey
     2. Follow project's recent commit message style
-5. {co-author} = bash: `git config --get user.claude-coauthor`
+5. {co-author}: bash: `git config --get user.claude-coauthor`
 6. For each {group} in {commit-groups}:
     1. Stage files — `git add` specific files for this group
     2. If {co-author} is `true`: append `Co-Authored-By:` trailer with current model name and `<noreply@anthropic.com>`

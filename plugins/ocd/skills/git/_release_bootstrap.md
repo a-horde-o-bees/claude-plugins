@@ -1,15 +1,22 @@
 # Release Bootstrap
 
-> Guided dialogue producing the project's local `.claude/ocd/git/release.md`. Fires the first time `/ocd:git release` runs in a project that has no methodology config. Reads the starter template, detects existing release artifacts (manifests, CHANGELOG, tags, auto-bump hooks), pre-populates suggestions across every section, and presents a single full proposal for batched feedback rather than walking the user section-by-section.
+> Guided dialogue producing the project's local `.claude/ocd/git/release.md`. Fires the first time `/ocd:git release` runs in a project without an existing methodology config.
 
-The output is a populated `.claude/ocd/git/release.md` that future invocations of `/ocd:git release` read directly — no repeat dialogue. The doc becomes the project's record of release methodology.
+> Detection-first: scan project artifacts (manifests, CHANGELOG, tags, auto-bump hooks) and pre-populate suggestions, then present one batched proposal rather than walking the user section-by-section. Subsequent invocations of `/ocd:git release` read the written file directly.
 
 ### Dependencies
 
-Read each if not already in context. Discover via `find ~/.claude <project>/.claude -path "*dependencies/<name>.md" -not -path "*/_dependencies/*" -type f 2>/dev/null`. Selection: prefer user-scope; prefer `rules/dependencies/` over plain `dependencies/`. User-scope skills skip project matches. If discovery returns nothing, the dep is not deployed — operate without it.
-
-- [[confirm-shared-intent]]
-- [[markdown]]
+1. {dependencies}:
+    - [[confirm-shared-intent]]
+    - [[markdown]]
+2. For each {dependency} in {dependencies}:
+    1. {found}: bash: `find ~/.claude <project>/.claude -path "*dependencies/{dependency}.md" -not -path "*/_dependencies/*" -type f 2>/dev/null`
+    2. If {found} is empty:
+        1. {scope}: `<project>` if `<skill-base>` starts with `<project>`, else `~`
+        2. bash: `cp <skill-base>/_dependencies/{dependency}.md {scope}/.claude/dependencies/{dependency}.md`
+        3. {path}: the cp target
+    3. Else: {path}: first of {found} — prefer user-scope; `rules/dependencies/` over plain `dependencies/`; user-scope skills skip project matches
+    4. Read {path} if not in context
 
 ### Variables
 
@@ -25,14 +32,14 @@ Read each if not already in context. Discover via `find ~/.claude <project>/.cla
 ### Process
 
 1. Detect existing release artifacts:
-    1. {manifest-candidates} = bash: `find . -maxdepth 4 \( -name "plugin.json" -o -name "package.json" -o -name "Cargo.toml" -o -name "pyproject.toml" -o -name "*.gemspec" \) -not -path "./.venv/*" -not -path "./node_modules/*" -not -path "./.git/*" 2>/dev/null`
-    2. {has-changelog} = bash: `[ -f CHANGELOG.md ] && echo yes || echo no`
-    3. {existing-tags} = bash: `git tag --sort=-creatordate 2>/dev/null | head -5`
-    4. {tag-format} = derive from {existing-tags} — typically `v<x.y.z>` if first tag matches that pattern
-    5. {auto-bump-hook} = bash: `[ -f .githooks/pre-commit ] && grep -l -i "bump\|version" .githooks/pre-commit 2>/dev/null || echo none`
-    6. {github-release-workflow} = bash: `[ -f .github/workflows/release.yml ] && echo yes || echo no`
+    1. {manifest-candidates}: bash: `find . -maxdepth 4 \( -name "plugin.json" -o -name "package.json" -o -name "Cargo.toml" -o -name "pyproject.toml" -o -name "*.gemspec" \) -not -path "./.venv/*" -not -path "./node_modules/*" -not -path "./.git/*" 2>/dev/null`
+    2. {has-changelog}: bash: `[ -f CHANGELOG.md ] && echo yes || echo no`
+    3. {existing-tags}: bash: `git tag --sort=-creatordate 2>/dev/null | head -5`
+    4. {tag-format}: derive from {existing-tags} — typically `v<x.y.z>` if first tag matches that pattern
+    5. {auto-bump-hook}: bash: `[ -f .githooks/pre-commit ] && grep -l -i "bump\|version" .githooks/pre-commit 2>/dev/null || echo none`
+    6. {github-release-workflow}: bash: `[ -f .github/workflows/release.yml ] && echo yes || echo no`
 
-2. Read the starter template at `${CLAUDE_PLUGIN_ROOT}/skills/git/assets/release.md` to anchor the output structure
+2. {template}: Read `<skill-base>/assets/release.md` — starter template anchoring output structure
 
 3. Compose the full draft `release.md` content using the template structure and detection-driven defaults for every section:
 
@@ -41,27 +48,25 @@ Read each if not already in context. Discover via `find ~/.claude <project>/.cla
     3. **Auto-bump behavior** — if {auto-bump-hook} ≠ none, fill in "auto-bump runs in pre-commit hook on every commit; release stages only manifest + CHANGELOG to skip"; otherwise fill in "no auto-bump"
     4. **Bump axis decision rules** — if semver, fill in the template's recommended defaults (breaking → x, new capability → y, fix or auto-bumped → z); for other schemes fill in equivalent rules from the template
     5. **Commit + tag conventions** — if {existing-tags} or {github-release-workflow} suggest a format, fill it in; otherwise fill in `release v<x.y.z>` commit + annotated tag
-    6. **CHANGELOG format** — if {has-changelog} = yes, read CHANGELOG.md header and fill in detected format hints; otherwise fill in Keep a Changelog 1.1.0
+    6. **CHANGELOG format** — if {has-changelog}: yes, read CHANGELOG.md header and fill in detected format hints; otherwise fill in Keep a Changelog 1.1.0
     7. **Synthesize source** — fill in `git log <last-tag>..HEAD` (or `HEAD` for first release)
-    8. **Post-tag-push automation** — if {github-release-workflow} = yes, read its triggers and fill in a summary of what fires
+    8. **Post-tag-push automation** — if {github-release-workflow}: yes, read its triggers and fill in a summary of what fires
     9. **Preconditions** — fill in the standard set (on default branch, clean tree, aligned with remote, tag doesn't exist, version > current)
 
-4. Present the full draft to the user for batched review:
-    1. Render the composed `release.md` content verbatim
-    2. Include a detection summary (what was auto-detected vs what is a guess)
-    3. Ask user to approve as-is or call out section-level adjustments — Q# format with options
+4. Review gate:
+    1. Display:
+        - Composed `release.md` content verbatim
+        - Detection summary (what was auto-detected vs guessed)
+    2. {decision}: AskUserQuestion — approve as-is or call out section-level adjustments (Q# format)
+    3. If {decision} is approve: proceed to step 5
+    4. Apply user's directives (revise sections, swap defaults, add gates); re-render the revised draft
+    5. Go to step 4.1
 
-5. If the user requests adjustments:
-    1. Apply per their directives (revise sections, swap defaults, add gates)
-    2. Re-render the revised draft
-    3. Re-present (return to step 4)
-    4. Loop until approved
-
-6. On approval, write to {release-md-path}:
+5. Write to {release-md-path}:
     1. Verify parent directory exists; create if absent
     2. Write the composed content via the Write tool
 
-7. Confirm with user that the bootstrap completed and `release.md` is ready for use, then return to caller so the main release flow proceeds
+6. Confirm with user that the bootstrap completed and `release.md` is ready for use, then return to caller
 
 ### Report
 

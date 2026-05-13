@@ -1,6 +1,6 @@
 ---
 name: git
-description: Use this skill when the user wants to commit, push, watch GitHub Actions, run a development checkpoint, or cut a tagged release in the current repository. Verbs are `commit` (analyzes working tree, groups changes by topic, drafts messages, commits — fully automated), `push` (branch-aware push to origin with explicit `--branch` confirmation), `ci` (latest GitHub Actions run state for a branch; dispatches an async watcher when runs are in progress), `checkpoint` (bundles commit + push + ci into one call), and `release` (synthesizes a Keep-a-Changelog entry from commits since the last tag, recommends a version bump from the project methodology, presents both for operator review, then bumps the manifest, commits, tags, and pushes after approval). Trigger on phrases like 'commit', 'commit my changes', 'push my branch', 'check CI', 'is the build green', 'checkpoint', 'cut a release', 'tag a version', or any staging/committing/pushing/releasing context — even when the user doesn't explicitly name a verb. Sandbox-based feature lifecycle (new, pack, open, close, unpack, list) lives under `/ocd:sandbox`, not here.
+description: Use this skill to commit, push, watch GitHub Actions, run a development checkpoint, or cut a tagged release in the current repository. Trigger on phrases like 'commit', 'commit my changes', 'push my branch', 'check CI', 'is the build green', 'checkpoint', 'cut a release', 'tag a version', or any staging/committing/pushing/releasing context — even when the user doesn't explicitly name a verb. Sandbox-based feature lifecycle (new, pack, open, close, unpack, list) lives under `/ocd:sandbox`, not here.
 allowed-tools:
   - Bash(git *)
   - Bash(gh run *)
@@ -13,9 +13,16 @@ Manage local git history and tagged releases. Each verb is an atomic workflow lo
 
 ## Dependencies
 
-Read each if not already in context. Discover via `find ~/.claude <project>/.claude -path "*dependencies/<name>.md" -not -path "*/_dependencies/*" -type f 2>/dev/null`. Selection: prefer user-scope; prefer `rules/dependencies/` over plain `dependencies/`. User-scope skills skip project matches. If discovery returns nothing, the dep is not deployed — operate without it.
-
-- [[process-flow-notation]]
+1. {dependencies}:
+    - [[process-flow-notation]]
+2. For each {dependency} in {dependencies}:
+    1. {found}: bash: `find ~/.claude <project>/.claude -path "*dependencies/{dependency}.md" -not -path "*/_dependencies/*" -type f 2>/dev/null`
+    2. If {found} is empty:
+        1. {scope}: `<project>` if `<skill-base>` starts with `<project>`, else `~`
+        2. bash: `cp <skill-base>/_dependencies/{dependency}.md {scope}/.claude/dependencies/{dependency}.md`
+        3. {path}: the cp target
+    3. Else: {path}: first of {found} — prefer user-scope; `rules/dependencies/` over plain `dependencies/`; user-scope skills skip project matches
+    4. Read {path} if not in context
 
 ## Triggers
 
@@ -48,16 +55,16 @@ The release methodology template ships at [`assets/release.md`](assets/release.m
 ## Workflow
 
 1. If not $ARGUMENTS: Exit to user: skill description and verb list
-2. {verb} = first token of $ARGUMENTS
-3. {verb-args} = remainder of $ARGUMENTS after {verb}
+2. {verb}: first token of $ARGUMENTS
+3. {verb-args}: remainder of $ARGUMENTS after {verb}
 
 > Verb dispatch — each verb lives in its own component file, loaded only when invoked.
 
 4. If {verb} is `commit`: Call: `_commit.md`
-5. Else if {verb} is `push`: Call: `_push.md` ({branch} = {verb-args}'s `--branch` value)
-6. Else if {verb} is `ci`: Call: `_ci.md` ({branch} = {verb-args}'s `--branch` value, default current)
-7. Else if {verb} is `checkpoint`: Call: `_checkpoint.md` ({branch} = {verb-args}'s `--branch` value or current, {no-ci} = `--no-ci` presence)
-8. Else if {verb} is `release`: Call: `_release.md` ({version} = first token of {verb-args})
+5. Else if {verb} is `push`: Call: `_push.md` ({branch}: {verb-args}'s `--branch` value)
+6. Else if {verb} is `ci`: Call: `_ci.md` ({branch}: {verb-args}'s `--branch` value, default current)
+7. Else if {verb} is `checkpoint`: Call: `_checkpoint.md` ({branch}: {verb-args}'s `--branch` value or current, {no-ci}: `--no-ci` presence)
+8. Else if {verb} is `release`: Call: `_release.md` ({version}: first token of {verb-args})
 9. Else: Exit to user: unrecognized verb {verb} — expected commit, push, ci, checkpoint, or release
 
 ### Report

@@ -1,6 +1,8 @@
 # CI Watch (background)
 
-Wait for GitHub Actions CI runs to complete for a given commit SHA and return the final classification to the caller. Spawned asynchronously by `/ocd:git ci` and `/ocd:git checkpoint` so the foreground does not block on CI (typically 30–90s per run, sometimes longer). The parent verb returns immediately after dispatch; this agent runs independently and the session receiving the task-completion result reports the outcome inline.
+> Wait for GitHub Actions CI runs to complete for a commit SHA and return the final classification to the caller.
+
+> Spawned asynchronously by `/ocd:git ci` and `/ocd:git checkpoint` — foreground returns immediately; this agent runs independently; the session receiving the task-completion result reports inline.
 
 ### Variables
 
@@ -15,7 +17,7 @@ Wait for GitHub Actions CI runs to complete for a given commit SHA and return th
 
 ### Process
 
-1. {classification} = bash: `uv run ${CLAUDE_PLUGIN_ROOT}/skills/git/scripts/ci.py watch --sha {sha} --run-ids {run-ids}`
+1. {classification}: bash: `uv run <skill-base>/scripts/ci.py watch --sha {sha} --run-ids {run-ids}`
 2. Parse {classification} JSON. Assigns {sha-short}, {ci-status}, plus per-status fields: {workflow-list} (passed) | {failing-workflow} + {failing-url} (failed) | {trouble-list} (incomplete).
 3. Emit the template matching {ci-status} — see ### Report.
 

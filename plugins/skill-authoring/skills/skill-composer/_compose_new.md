@@ -23,7 +23,7 @@ Workflow component for the `new` verb of compose. Owns new-skill composition fro
     - What distinct cognitive moments should make this skill fire?
     - For each moment: deeper content in a `_<verb>.md` component, or terse enough to inline?
 
-5. {chosen-name} = a skill name derived from the interview answers and Surface. Offer 2–3 lowercase-hyphenated candidates and refine with the user until they settle on one.
+5. {chosen-name}: a skill name derived from the interview answers and Surface. Offer 2–3 lowercase-hyphenated candidates and refine with the user until they settle on one.
 
 6. Agent creates `<destination-parent>/{chosen-name}/composition.md` from `assets/composition-template.md`, substituting placeholders with values from steps 3–5.
 

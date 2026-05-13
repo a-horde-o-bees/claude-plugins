@@ -4,9 +4,16 @@ Structured programming for agent workflows. Loaded by sources that list `[[proce
 
 ## Dependencies
 
-Read each if not already in context. Discover via `find ~/.claude <project>/.claude -path "*dependencies/<name>.md" -type f 2>/dev/null`. Selection: prefer user-scope; prefer `rules/dependencies/` over plain `dependencies/`; skill-bundled is last resort. User-scope skills skip project matches.
-
-- [[workflow-vs-script]]
+1. {dependencies}:
+    - [[workflow-vs-script]]
+2. For each {dependency} in {dependencies}:
+    1. {found}: bash: `find ~/.claude <project>/.claude -path "*dependencies/{dependency}.md" -not -path "*/_dependencies/*" -type f 2>/dev/null`
+    2. If {found} is empty:
+        1. {scope}: `<project>` if `<skill-base>` starts with `<project>`, else `~`
+        2. bash: `cp <skill-base>/_dependencies/{dependency}.md {scope}/.claude/dependencies/{dependency}.md`
+        3. {path}: the cp target
+    3. Else: {path}: first of {found} — prefer user-scope; `rules/dependencies/` over plain `dependencies/`; user-scope skills skip project matches
+    4. Read {path} if not in context
 
 ## Steps
 
@@ -48,16 +55,27 @@ Grouping headings organize contiguous steps within a single process. Steps conti
 
 ## Assignment
 
-**`{name} = value`** — sets a named variable for downstream steps. Names use curly braces and dashes. Variables share scope across the document; assignment makes them available at any subsequent depth. Unassigned references are authoring errors.
+**`{name}: <block>`** — binds a named variable to the value of the block. The block can be:
+
+- An inline value: `{x}: 42` or `{x}: resolved SKILL.md path`
+- A bash command: `{x}: bash: \`command\`` — value is the command's stdout
+- A subroutine call: `{x}: Call: _file.md` — value is the call's return
+- A conditional expression: `{x}: <a> if <cond> else <b>`
+- An indented sub-block of steps — value is whatever the final step assigns to {x} (or its returned value)
+- A loop accumulator — `{filtered}:` followed by a `For each:` block that builds {filtered} across iterations
+
+Names use curly braces and dashes. Variables share scope across the document; binding makes them available at any subsequent depth. Unassigned references are authoring errors.
 
 ```
-1. {target-path} = resolved SKILL.md path
+1. {target-path}: resolved SKILL.md path
 2. If condition:
-    1. {mode} = evaluation
+    1. {mode}: evaluation
 3. Process {target-path}
 ```
 
-Curly-brace notation is reserved for values assigned once and referenced later. When describing the shape of returned data (e.g., fields a `Return to caller:` hands back), use plain prose — decoration without downstream reference adds no execution meaning.
+Curly-brace notation is reserved for values bound once and referenced later. When describing the shape of returned data (e.g., fields a `Return to caller:` hands back), use plain prose — decoration without downstream reference adds no execution meaning.
+
+The `:` operator opens a block in every PFN construct (`If:`, `Else:`, `For each:`, `Call:`, etc.). When the construct binds a variable (`{var}:`), the block's value flows back to that variable. When the construct controls flow (`If condition:`), the block executes conditionally. Same syntax, role determined by what precedes the colon.
 
 ## Conditionals
 
@@ -169,10 +187,10 @@ Component file: an `_*.md` file containing steps extracted for reuse. The unders
 
 ```
 1. Call: `_component-name.md`
-2. Call: `_component-name.md` ({var} = Content)
+2. Call: `_component-name.md` ({var}: Content)
 3. Call: `_component-name.md`
-    - {var-1} = Content
-    - {var-2} = Content
+    - {var-1}: Content
+    - {var-2}: Content
 ```
 
 Arguments passed in parentheses or as indented assignments become variables in the called content. Called files declare expected variables in a `### Variables` section.
@@ -180,7 +198,7 @@ Arguments passed in parentheses or as indented assignments become variables in t
 `Call:` to a section heading invokes an inline subprocess in the same document:
 
 ```
-1. Call: Section-Name ({var} = Content)
+1. Call: Section-Name ({var}: Content)
 
 ## Section-Name
 
@@ -198,9 +216,9 @@ Extracting agent instructions into a component file and using `Spawn: Call:` kee
 
 ```
 1. Spawn: Call: `_component-name.md`
-2. Spawn: Call: `_component-name.md` ({var} = Content)
+2. Spawn: Call: `_component-name.md` ({var}: Content)
 3. Spawn:
-    1. Call: `_component-name.md` ({var} = Content)
+    1. Call: `_component-name.md` ({var}: Content)
     2. Return to caller:
         - Content
 ```
@@ -212,7 +230,7 @@ Extracting agent instructions into a component file and using `Spawn: Call:` kee
 ```
 1. For each {item} in {collection}:
     1. async Spawn:
-        1. Call: `_component-name.md` ({var} = {item})
+        1. Call: `_component-name.md` ({var}: {item})
         2. Return to caller: Content
 2. Action
 ```
@@ -224,7 +242,7 @@ Extracting agent instructions into a component file and using `Spawn: Call:` kee
 ```
 1. Spawn:
     1. Call: `_component-name.md`
-2. {agent-ref} = the spawned agent
+2. {agent-ref}: the spawned agent
 3. If condition:
     1. Continue {agent-ref}:
         1. Call: `_component-name.md`

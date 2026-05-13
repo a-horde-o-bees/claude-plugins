@@ -16,13 +16,20 @@ From-scratch skill authoring with our project's authoring disciplines applied in
 
 ## Dependencies
 
-Read each if not already in context. Discover via `find ~/.claude <project>/.claude -path "*dependencies/<name>.md" -not -path "*/_dependencies/*" -type f 2>/dev/null`. Selection: prefer user-scope; prefer `rules/dependencies/` over plain `dependencies/`. User-scope skills skip project matches. If discovery returns nothing, the dep is not deployed — operate without it.
-
-- [[process-flow-notation]]
-- [[progressive-disclosure]]
-- [[workflow-vs-script]]
-- [[description-authoring]]
-- [[markdown]]
+1. {dependencies}:
+    - [[process-flow-notation]]
+    - [[progressive-disclosure]]
+    - [[workflow-vs-script]]
+    - [[description-authoring]]
+    - [[markdown]]
+2. For each {dependency} in {dependencies}:
+    1. {found}: bash: `find ~/.claude <project>/.claude -path "*dependencies/{dependency}.md" -not -path "*/_dependencies/*" -type f 2>/dev/null`
+    2. If {found} is empty:
+        1. {scope}: `<project>` if `<skill-base>` starts with `<project>`, else `~`
+        2. bash: `cp <skill-base>/_dependencies/{dependency}.md {scope}/.claude/dependencies/{dependency}.md`
+        3. {path}: the cp target
+    3. Else: {path}: first of {found} — prefer user-scope; `rules/dependencies/` over plain `dependencies/`; user-scope skills skip project matches
+    4. Read {path} if not in context
 
 ## Triggers
 
@@ -44,9 +51,9 @@ The community skill-creator source is embedded at `sources/anthropics-skills--sk
 
 ## Workflow
 
-1. {verb} = first token of $ARGUMENTS
-2. {verb-args} = remainder of $ARGUMENTS after {verb}
+1. {verb}: first token of $ARGUMENTS
+2. {verb-args}: remainder of $ARGUMENTS after {verb}
 3. If {verb} is `new`: Call: `_new.md`
-4. Else if {verb} is `refine`: Call: `_refine.md` ({name} = first token of {verb-args})
+4. Else if {verb} is `refine`: Call: `_refine.md` ({name}: first token of {verb-args})
 5. Else if {verb} is `list`: Call: `_list.md`
 6. Else: Exit to user: unrecognized verb {verb} — expected `new`, `refine`, or `list`

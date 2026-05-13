@@ -1,8 +1,8 @@
 # Checkpoint
 
-> Bundle the commit + push + ci cycle into one call. Generic — no marketplace, plugin-lifecycle, or deployment assumptions. Projects that need additional steps between commit and push (auto-init, template syncs, dependency rebuild) should compose the underlying verbs piecewise rather than calling this one.
+> Bundle commit + push + ci into one call. Generic — no marketplace, plugin-lifecycle, or deployment assumptions; projects needing additional steps compose the underlying verbs piecewise.
 
-Branch defaults to current. CI runs by default; `--no-ci` skips it (useful when you want to push without watching, or when the project has no GitHub Actions).
+> Branch defaults to current. CI runs by default; `--no-ci` skips it.
 
 ### Variables
 
@@ -18,11 +18,11 @@ Branch defaults to current. CI runs by default; `--no-ci` skips it (useful when 
 
 ### Process
 
-1. If not {branch}: {branch} = bash: `git branch --show-current`
+1. If not {branch}: {branch}: bash: `git branch --show-current`
 2. Commit — Call: `_commit.md`
-3. Push — Call: `_push.md` ({branch} = {branch})
+3. Push — Call: `_push.md` ({branch}: {branch})
 4. If {no-ci}: skip ci; Return to caller with commit + push reports
-5. CI — Call: `_ci.md` ({branch} = {branch})
+5. CI — Call: `_ci.md` ({branch}: {branch})
 6. Return to caller:
     - Branch
     - Commits made: count and messages (from Commit sub-flow)

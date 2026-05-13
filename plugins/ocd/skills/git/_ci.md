@@ -1,8 +1,8 @@
 # CI
 
-> Report GitHub Actions run state for the latest commit on a branch. Synchronous when runs are already complete at dispatch time; dispatches a background watcher (`_ci_watch.md`) when runs are still in progress, so the foreground does not block on CI (typically 30–90s per run).
+> Report GitHub Actions run state for the latest commit on a branch. Dispatches a background watcher when runs are in flight so the foreground doesn't block.
 
-Branch defaults to current. Useful as a standalone "check the build" verb after manual pushes, and as a composition primitive that `_checkpoint.md` (and project-level checkpoint skills) call to handle CI without re-implementing the watch logic.
+> Branch defaults to current. Standalone "check the build" verb; composition primitive for checkpoint skills.
 
 ### Variables
 
@@ -18,10 +18,10 @@ Branch defaults to current. Useful as a standalone "check the build" verb after 
 
 ### Process
 
-1. If not {branch}: {branch} = bash: `git branch --show-current`
-2. {classification} = bash: `uv run ${CLAUDE_PLUGIN_ROOT}/skills/git/scripts/ci.py classify --branch {branch}`
+1. If not {branch}: {branch}: bash: `git branch --show-current`
+2. {classification}: bash: `uv run <skill-base>/scripts/ci.py classify --branch {branch}`
 3. Parse {classification} JSON. Assigns {sha}, {sha-short}, {ci-status}, plus per-status fields: {workflow-list} (passed) | {failing-workflow} + {failing-url} (failed) | {watch-ids} (dispatched) | {trouble-list} (incomplete) | (no-runs has no extra fields).
-4. If {ci-status} = `dispatched`: async Spawn: Call: `_ci_watch.md` ({sha} = {sha}, {run-ids} = {watch-ids})
+4. If {ci-status}: `dispatched`: async Spawn: Call: `_ci_watch.md` ({sha}: {sha}, {run-ids}: {watch-ids})
 5. Emit the template matching {ci-status} — see ### Report.
 
 ### Report

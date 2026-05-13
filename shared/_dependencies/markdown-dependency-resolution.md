@@ -10,41 +10,50 @@ Authoring disciplines — rules shaping the workflow itself (return-spec design,
 
 ## Dependencies section format
 
-A file declaring runtime deps includes a `## Dependencies` section near the top, using this template:
+A file declaring runtime deps includes a `## Dependencies` section near the top, structured as a PFN block. The list under step 1 is the data the skill author maintains; the procedure under step 2 is templated boilerplate (copy verbatim):
 
 ```
 ## Dependencies
 
-Read each if not already in context. Discover via `find ~/.claude <project>/.claude -path "*dependencies/<name>.md" -not -path "*/_dependencies/*" -type f 2>/dev/null`. Selection: prefer user-scope; prefer `rules/dependencies/` over plain `dependencies/`. User-scope skills skip project matches. If discovery returns nothing, the dep is not deployed — operate without it (graceful degradation) and surface a one-line note when behavior is affected.
-
-- [[name]]
-- [[another-name]]
+1. {dependencies}:
+    - [[name]]
+    - [[another-name]]
+2. For each {dependency} in {dependencies}:
+    1. {found}: bash: `find ~/.claude <project>/.claude -path "*dependencies/{dependency}.md" -not -path "*/_dependencies/*" -type f 2>/dev/null`
+    2. If {found} is empty:
+        1. {scope}: `<project>` if `<skill-base>` starts with `<project>`, else `~`
+        2. bash: `cp <skill-base>/_dependencies/{dependency}.md {scope}/.claude/dependencies/{dependency}.md`
+        3. {path}: the cp target
+    3. Else: {path}: first of {found} — prefer user-scope; `rules/dependencies/` over plain `dependencies/`; user-scope skills skip project matches
+    4. Read {path} if not in context
 ```
 
-The discovery command + selection clause are templated boilerplate — copy verbatim. Each `[[name]]` bullet declares one dependency.
+`{dependency}` extracts the name inside the `[[]]` wikilink during iteration — the loop body substitutes the bare name into shell paths. `<skill-base>` is the skill's runtime base directory (Claude Code emits "Base directory for this skill: ..." in the system reminder when a skill fires; substitute that path).
+
+The auto-deploy step (2.2.2) lazily seeds the rule into `<scope>/.claude/dependencies/<name>.md` (NOT `rules/dependencies/`) on first miss — the deployed file is then discoverable on subsequent invocations across this skill and any other skill that declares the same dep. Promotion to always-on (`rules/dependencies/`) is the `/ocd:rules install` skill's role; auto-deploy stops at lazy.
 
 ## Two storage roles, two folder names
 
 Same rule body, two different filesystem locations with distinct roles:
 
-| Folder | Role | Discoverable |
+| Folder | Role | Find returns? |
 |---|---|---|
 | `<scope>/rules/dependencies/<name>.md` | Deployed always-on. Claude Code auto-loads into every session at session start. | Yes |
 | `<scope>/dependencies/<name>.md` | Deployed lazy. Loaded by skills via this discovery convention when found. | Yes |
-| `<skill>/_dependencies/<name>.md` | Seed canonical. Source content for `/ocd:rules install` to copy from. NOT a runtime fallback. | **No** — excluded by the discovery find filter |
-| `shared/_dependencies/<name>.md` | Project-development canonical. Source of truth that pre-commit propagates into each `<skill>/_dependencies/<name>.md`. | **No** — same exclusion |
+| `<skill>/_dependencies/<name>.md` | Seed canonical. Source content the discovery procedure copies into `<scope>/dependencies/<name>.md` on first miss; also the source `/ocd:rules install` reads when promoting to `rules/dependencies/`. | **No** — excluded by the discovery find filter; reached only by the auto-deploy step's explicit `cp` |
+| `shared/_dependencies/<name>.md` | Project-development canonical. Pre-commit propagates into each `<skill>/_dependencies/<name>.md`. | **No** — same exclusion |
 
-The `_dependencies/` underscore prefix marks internal-storage role: these files exist to seed scope-level deployments via the rules skill, not to act as a discovery fallback. The find filter excludes any path under `*/_dependencies/*` precisely so plugin caches and marketplace clones don't surface their bundled seeds as discovery candidates.
+The `_dependencies/` underscore prefix marks internal-storage role: the discovery find filter excludes any path under `*/_dependencies/*` so plugin caches and marketplace clones don't surface their bundled seeds as direct discovery candidates. Bundled seeds become reachable only through the explicit `cp <skill-base>/_dependencies/{dependency}.md ...` step in the auto-deploy procedure — that's the controlled entry point.
 
 ## Selection rules
 
-Discovery returns all candidate paths from the four valid deployment positions. The agent picks one by applying these rules in order:
+Discovery returns all candidate paths from the two scope × two layer matrix. The agent picks one by applying these rules in order:
 
 1. **User-scope before project-scope.** `~/.claude/...` wins over `<project>/.claude/...`. User-installed disciplines apply consistently across every project the user works in.
 2. **Promoted before lazy.** `rules/dependencies/<name>.md` wins over `dependencies/<name>.md` within each scope. Promoted = explicitly elevated to always-on context (auto-loaded by Claude Code); lazy = on-demand only (loaded via this discovery convention when a skill fires).
 3. **User-scope skills skip project matches.** A skill installed at `~/.claude/skills/<name>/` behaves identically across projects by never reaching into project-scope deps.
 
-If discovery returns no candidates, the dep is not deployed at any reachable scope. The skill operates without it. Skills that need a particular dep should fail gracefully or surface a one-line note recommending `/ocd:rules install <name> --scope <scope>`.
+On empty discovery, the procedure auto-deploys from the skill's bundled seed at `<skill-base>/_dependencies/<name>.md` to `<scope>/.claude/dependencies/<name>.md` (lazy), where `<scope>` is the skill's install scope (project if `<skill-base>` is under `<project>`, else user). After the cp, subsequent discovery finds the deployed copy. If the seed is also missing, the cp fails noisily — that's a skill-authoring failure (the skill declared a dep without bundling its seed), not a runtime case.
 
 ## Cross-reference notation
 

@@ -18,11 +18,11 @@
     6. Should test cases be set up? (default yes for objectively-verifiable outputs; default no for subjective ones)
     7. Where should the skill live? `user` (~/.claude/skills/), `project` (.claude/skills/), or a custom path.
 
-2. {destination} = the chosen location from step 1.7.
+2. {destination}: the chosen location from step 1.7.
 
-3. {surface} = the cognitive moments this skill carries, derived from the interview. Each moment is a candidate `_<verb>.md` component. Single-workflow skills still extract their workflow into a `_<name>.md` component — SKILL.md is the gating layer regardless of verb count.
+3. {surface}: the cognitive moments this skill carries, derived from the interview. Each moment is a candidate `_<verb>.md` component. Single-workflow skills still extract their workflow into a `_<name>.md` component — SKILL.md is the gating layer regardless of verb count.
 
-4. {runtime-deps} = the runtime disciplines the skill needs loaded at invocation. Common cases:
+4. {runtime-deps}: the runtime disciplines the skill needs loaded at invocation. Common cases:
     - `process-flow-notation` — always (the workflow IS PFN)
     - `description-authoring` — when the skill authors descriptions at runtime
     - `concise-prose` — when it authors prose
@@ -30,7 +30,7 @@
 
    Authoring-only rules (e.g., `agent-first-interfaces`, `workflow-vs-script`) don't go in runtime deps — they apply at draft time, not invocation time.
 
-5. {name} = a chosen skill name, derived from the interview answers (what the skill enables, when it fires). Offer 2–3 lowercase-hyphenated candidates and refine with the user until they settle on one.
+5. {name}: a chosen skill name, derived from the interview answers (what the skill enables, when it fires). Offer 2–3 lowercase-hyphenated candidates and refine with the user until they settle on one.
 
 6. Confirm the full design with the user before writing — present {name}, frontmatter description draft, {surface}, {runtime-deps}, {destination}; gate on approval.
 
