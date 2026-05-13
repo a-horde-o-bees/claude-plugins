@@ -1,6 +1,6 @@
 # Rebuild
 
-> Workflow component for the rebuild skill. Audits an artifact against currently-loaded rules and rewrites it preserving identity (scope + role).
+> Workflow component for the rebuild skill. Anti-patching: extract target's identity (scope + role + callable surface + declared rules), set the original aside, compose fresh applying the target's own deps, diff against original to verify identity preserved. The rules applied come from the target — not from this skill.
 
 ### Variables
 
@@ -8,30 +8,37 @@
 
 ### Rules
 
-- Preserve the artifact's identity (scope + role); form changes, function does not
-- Gate before rebuilds that diverge structurally from the original — renames, splits, schema changes, callable-surface changes
-- Empty audit (no gaps) is a no-op, not a forced rewrite
+- Identity = scope + role + callable surface (what the artifact carries downstream). Form may change; function does not.
+- Compose fresh from identity alone — do not anchor on the original's prose, structure, or examples during composition. The original is reference only for the post-composition diff.
+- Gate on structural divergence — renames, splits, schema changes, callable-surface changes affecting downstream consumers.
+- Empty diff (no meaningful change) is a no-op, not a forced rewrite.
 
 ### Process
 
-1. If {artifact} is ambiguous (multiple files match, scope unclear, the named target doesn't resolve uniquely): Exit to user — present candidate interpretations as Q# with lettered options; ask which to rebuild.
-2. Read {artifact} to load its current content.
-3. {applicable-rules} = the currently-loaded rules that bind to the artifact's type:
-    - Any prose the agent generates → concise-prose
-    - Markdown files → markdown
-    - Descriptions, docstrings, commit messages, CHANGELOG entries, frontmatter `description:` fields → description-authoring
-    - PFN workflows → process-flow-notation + workflow-vs-script
-    - Skills, SKILL.md, workflow components, entry-point docs → progressive-disclosure
-    - Test files → test-authoring (or test-driven-development when implementing-then-verifying)
-    - Agent-facing tool output / error messages / return templates → agent-first-interfaces
-    - File or directory structure decisions → file-decomposition + structure-as-documentation
-    - Refactor scope → clean-break
-    - Plus any deps the artifact's frontmatter or enclosing skill's frontmatter declares
-4. Audit {artifact} against each rule in {applicable-rules}. {gaps} = list of (rule, observation) pairs naming where the current artifact misses or violates the discipline.
-5. If {gaps} is empty: Exit to user — "artifact already meets all applicable discipline; no rebuild needed."
-6. If applying {applicable-rules} would require structural divergence from the original (renames, splits, schema changes, callable-surface changes affecting downstream consumers): Exit to user — present {gaps} + proposed structural changes; gate on approval before proceeding.
-7. Rewrite {artifact} applying each rule in {applicable-rules}.
-8. Return to caller:
+1. If {artifact} is ambiguous (multiple files match, scope unclear, target doesn't resolve uniquely): Exit to user — present candidate interpretations as Q# with lettered options; ask which to rebuild.
+
+2. {original}: Read {artifact}.
+
+3. {identity}: extract from {original}:
+    - Scope + role (what the artifact's purpose is, what it carries downstream)
+    - Callable surface (frontmatter name, declared variables, return shape, public interface)
+    - Declared dependencies (the target's own `## Dependencies` section, if present)
+
+4. If {identity} has declared dependencies: follow the target's `## Dependencies` block — it expresses the dependency-resolution convention as embedded PFN steps, loading each declared rule into context.
+
+5. Set {original} aside. Compose {fresh} from {identity} alone, applying every loaded rule throughout. No referencing {original}'s prose, ordering, or section structure during composition.
+
+6. {diff}: compare {original} vs {fresh}:
+    - **Inline changes**: prose, wording, intra-section order
+    - **Structural changes**: section renames, splits, schema or callable-surface changes affecting downstream consumers
+
+7. If {diff} is empty: Exit to user — "artifact already conforms to its declared discipline; no rebuild needed."
+
+8. If {diff} contains structural changes: Exit to user — present the structural changes; gate on approval before writing.
+
+9. Write {fresh} to {artifact}.
+
+10. Return to caller:
     - Artifact rebuilt: {artifact}
-    - Gaps closed: list of (gap, rule-that-applied) pairs
-    - Structural changes: any (renames, splits, format adjustments); empty when only inline edits were made
+    - Structural changes: list (empty when only inline changes were made)
+    - Inline-change summary: count of sections rewritten + brief characterization
