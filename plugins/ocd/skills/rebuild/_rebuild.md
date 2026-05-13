@@ -1,6 +1,6 @@
 # Rebuild
 
-> Workflow component for the rebuild skill. Anti-patching: extract target's identity (scope + role + callable surface + declared rules), set the original aside, compose fresh applying the target's own deps, diff against original to verify identity preserved. The rules applied come from the target — not from this skill.
+> Workflow component for the rebuild skill. Three-agent orchestration: extract, compose, verify. Each agent runs in an isolated spawned context so the rebuild composes free of the orchestrator's session history and the agent's own prior reads. The orchestrator never reads `{artifact}` directly — only the agents do, each in their own scoped context.
 
 ### Variables
 
@@ -8,37 +8,59 @@
 
 ### Rules
 
-- Identity = scope + role + callable surface (what the artifact carries downstream). Form may change; function does not.
-- Compose fresh from identity alone — do not anchor on the original's prose, structure, or examples during composition. The original is reference only for the post-composition diff.
-- Gate on structural divergence — renames, splits, schema changes, callable-surface changes affecting downstream consumers.
-- Empty diff (no meaningful change) is a no-op, not a forced rewrite.
+- Identity = scope + role + callable surface + declared rules + accumulated edge-case knowledge. Form changes; function doesn't.
+- Spawn isolation is load-bearing — the orchestrator never reads `{artifact}`'s content; the composer never receives a path to the original. Mechanical, not advisory.
+- Verifier reports findings; orchestrator triages them. Identity defects halt; structural changes gate on user; observations surface and proceed.
+- Empty diff is a no-op.
+- `_rubric.md` is loaded in unison by the composer and the verifier — patterns apply together, not as sequential waves.
 
 ### Process
 
 1. If {artifact} is ambiguous (multiple files match, scope unclear, target doesn't resolve uniquely): Exit to user — present candidate interpretations as Q# with lettered options; ask which to rebuild.
 
-2. {original}: Read {artifact}.
+2. {workspace}: `tmp/rebuild-workspace`
+3. {basename}: filename portion of {artifact}
+4. {extract-path}: `{workspace}/{basename}.extract.md`
+5. {compose-path}: `{workspace}/{basename}.fresh`
 
-3. {identity}: extract from {original}:
-    - Scope + role (what the artifact's purpose is, what it carries downstream)
-    - Callable surface (frontmatter name, declared variables, return shape, public interface)
-    - Declared dependencies (the target's own `## Dependencies` section, if present)
+6. bash: `mkdir -p {workspace}`
 
-4. If {identity} has declared dependencies: follow the target's `## Dependencies` block — it expresses the dependency-resolution convention as embedded PFN steps, loading each declared rule into context.
+7. Spawn:
+    1. Call: `_extract.md` ({artifact}: {artifact}, {extract-path}: {extract-path})
+    2. Return to caller: one-line confirmation that {extract-path} was written
 
-5. Set {original} aside. Compose {fresh} from {identity} alone, applying every loaded rule throughout. No referencing {original}'s prose, ordering, or section structure during composition.
+8. Spawn:
+    1. Call: `_compose.md` ({extract-path}: {extract-path}, {compose-path}: {compose-path})
+    2. Return to caller: one-line confirmation that {compose-path} was written
 
-6. {diff}: compare {original} vs {fresh}:
-    - **Inline changes**: prose, wording, intra-section order
-    - **Structural changes**: section renames, splits, schema or callable-surface changes affecting downstream consumers
+9. {verification}: Spawn:
+    1. Call: `_verify.md` ({original-path}: {artifact}, {compose-path}: {compose-path}, {extract-path}: {extract-path})
+    2. Return to caller: the structured verification report
 
-7. If {diff} is empty: Exit to user — "artifact already conforms to its declared discipline; no rebuild needed."
+10. If identity defects in {verification} are non-empty:
+    1. {retry-compose}: Spawn:
+        1. Call: `_compose.md` ({extract-path}: {extract-path}, {compose-path}: {compose-path}, {corrective-guidance}: identity-defect entries from {verification})
+        2. Return to caller: one-line confirmation that {compose-path} was rewritten
+    2. {verification}: Spawn:
+        1. Call: `_verify.md` ({original-path}: {artifact}, {compose-path}: {compose-path}, {extract-path}: {extract-path})
+        2. Return to caller: the structured verification report
 
-8. If {diff} contains structural changes: Exit to user — present the structural changes; gate on approval before writing.
+11. Triage {verification}:
+    1. If diff summary is empty: Exit to user — "{artifact} already conforms to its declared discipline; no rebuild needed."
+    2. If identity defects are still non-empty after the retry: Exit to user — present both pre-retry and post-retry defects verbatim; recommend understanding the spec gap or composer drift before re-invoking. Do not write.
+    3. If structural changes are non-empty: Exit to user — present structural changes; gate on user approval. If approved, proceed; if not, exit without writing.
+    4. Else: proceed with observations to surface in the final report.
 
-9. Write {fresh} to {artifact}.
+12. bash: `cp {compose-path} {artifact}`
 
-10. Return to caller:
+13. Return to caller:
     - Artifact rebuilt: {artifact}
     - Structural changes: list (empty when only inline changes were made)
-    - Inline-change summary: count of sections rewritten + brief characterization
+    - Observations: from verification report
+    - Retry occurred: yes/no — note when the retry path fired
+    - Workspace retained at: {workspace} — clear manually if no longer needed
+    - <rebuild-complete>
+
+14. Error Handling:
+    1. If any spawned agent fails to produce its output file: Exit to user — name which phase failed, show the agent's return message, retain workspace for inspection
+    2. If triage exits at step 11.2 or 11.3: workspace is retained at {workspace} for inspection; no cleanup

@@ -1,7 +1,7 @@
 {
   "name": "ocd",
   "description": "Skill-based discipline plugin \u2014 each system from the legacy monolithic ocd plugin is being migrated into a self-contained skill that bundles its own dependencies. Currently empty; skills land here as migration proceeds.",
-  "version": "0.3.7",
+  "version": "0.3.8",
   "author": {
     "name": "a-horde-o-bees"
   }

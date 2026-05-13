@@ -130,8 +130,174 @@ If discoverability suffers, the trims can be partially reverted to surface more 
 
 ## Next-session candidates
 
-- Decide on skill-composer SKILL.md body split (move Storage / Authoring discipline / Compositions of compositions / Complementary tools to ARCHITECTURE.md + README.md per progressive-disclosure)
 - Verify `_checkpoint.md`'s sub-call return-binding actually works end-to-end (invoke `/ocd:git checkpoint`, confirm return values flow through `{commit-report}`, `{push-report}`, `{ci-report}`)
 - Spot-check `_release.md` step renumbering: do internal `Go to step 10.1` and `re-validate per step 9` references resolve correctly when the workflow fires?
 - Deeper pass on `_refine.md` (skill-creator) with the same binding discipline applied throughout
 - Consider whether description trims went too far on discoverability; revert specific frontmatter `description:` fields if the marketplace surface needs more keyword density
+
+## Audit learnings (from idempotence test)
+
+A second `/ocd:rebuild` pass on `_release.md` produced an empty diff (confirming idempotence) and surfaced one false-positive that the first pass also flagged: extracting the Execute step into a script per workflow-vs-script. The user corrected: the workflow-vs-script audit needs to consider input provenance, not just write-side mechanical-ness.
+
+**Corrected lens:** "Could a deterministic function with no agent context produce this result correctly?" — *including the function's inputs*. For Execute step:
+
+- `{changelog-entry}` is synthesized markdown from a spawned agent (judgment)
+- `{final-version}` is from synthesizer or user override (judgment / dialogue)
+- Manifest paths come from `{methodology}` the agent interprets (judgment)
+
+Every input traces to agent reasoning. A script wrapping the writes would either still need the agent to compose-and-marshal CLI args, or would reach into agent state mid-execution (explicitly an antipattern per the rule). So step 11 is appropriately workflow-form.
+
+**Implication for the deferred structural items above:** skill-composer SKILL.md's Storage / Authoring discipline baked in / Compositions of compositions / Complementary tools sections were flagged as "leak workflow content into entry point". Re-reading progressive-disclosure: entry-point body should be "triggers + topography + **orientation**". Storage and Authoring discipline are legitimate orientation — they help a user understand what the skill creates and what shapes its output. Compositions of compositions is rule-like (could move to Rules). Complementary tools is external-reference orientation. The "move all four to ARCHITECTURE.md / README.md" recommendation was over-strict; the appropriate move is narrower: Compositions of compositions → Rules section (single-line), the rest stays.
+
+That item is removed from "Next-session candidates" above. The audit lens correction applies to any future rebuild work: don't over-strictly read the rules; consider context and whether each section earns its place in the entry point.
+
+### Rebuild itself was never rebuilt
+
+User caught: across 22 file rebuilds + 1 idempotence test, `/ocd:rebuild` itself wasn't audited. Its SKILL.md description duplicated internals from `_rebuild.md`'s Process (the "extract → set aside → compose → diff" sequence), carried a redundant "Triggers explicitly when..." tail, and the body line included a PFN-rationale parenthetical that belongs in ARCHITECTURE not entry-point orientation. `_rebuild.md`'s blockquote tried to recap the whole process in one sentence; that's not scope+role, that's the algorithm.
+
+All three trimmed in the rebuild-of-rebuild. Lesson: include the orchestrating skill in the sweep next time. The blind spot was "rebuild is the tool, not the target" — but the tool is also a skill bound by the same discipline.
+
+### Rebuild-of-rebuild was itself partial on first pass
+
+After the description trim, the user asked again — "was that a full rebuild of its markdown parts?" — and forced honesty: no, three targeted edits to descriptions / one body line, not a fresh compose of Rules + Process. A genuine fresh compose tightened 4 Rules per concise-prose (dropping parenthetical clarifications, redundant qualifiers) and dropped a duplicate reinforcement in Process step 5 (Rule 2 already prohibits referencing `{original}` during composition; the step 5 sentence was belt-and-suspenders).
+
+Two-step lesson: patches can masquerade as rebuilds when the surface diff happens to align with what a fresh compose would produce in the visible sections (description, frontmatter). The hidden sections (Rules, Process, sub-bullets, parentheticals) need explicit per-rule audit. The discipline isn't "rebuild = make the file better"; it's "rebuild = compose fresh applying every loaded rule to every section". Without explicitly walking each section through each rule, patch-flavor leaks in.
+
+## Prior-art research (four parallel agents, 2026-05-13)
+
+Researched whether anyone else has built this skill or solved adjacent problems. Punchline: **the "compose fresh while preserving identity of an existing artifact" middle ground is unoccupied** in published skill ecosystems. Closest matches encode adjacent disciplines (red-green-refactor, rationalizations-to-reject, clean-room rewrite, role-split editor) that combine to give a strong recipe.
+
+### Repo / URL catalog
+
+**Skills ecosystems surveyed (no direct match found):**
+
+- [anthropics/skills](https://github.com/anthropics/skills) — `skill-creator`, `claude-api`, `web-artifacts-builder`, `mcp-builder` — all create new from spec, none rebuild
+- [vercel-labs/skills](https://github.com/vercel-labs/skills) + [skills.sh](https://skills.sh) — discovery / install ecosystem; no rebuild skill
+- [Leonxlnx/taste-skill — redesign-skill](https://github.com/Leonxlnx/taste-skill/blob/main/skills/redesign-skill/SKILL.md) — closest verbal match; *explicitly forbids rewrite from scratch* (inverse exemplar). Borrow: dial-based forced parameter declaration to anchor against drift
+- [mattpocock/skills — improve-codebase-architecture](https://github.com/mattpocock/skills/tree/main/skills/engineering/improve-codebase-architecture) — vocabulary-first patch with `CONTEXT.md` / `LANGUAGE.md` anchors. Borrow: persistent domain vocabulary as drift anchor
+- [mattpocock/skills — tdd / diagnose / grill-me](https://github.com/mattpocock/skills/tree/main/skills/engineering) — workflow-phase gates ("no edit until hypothesis confirmed")
+- [mattpocock/skills — write-a-skill](https://github.com/mattpocock/skills/tree/main/skills/productivity/write-a-skill) — checkpoint gates on creation
+- [pbakaus/impeccable](https://github.com/pbakaus/impeccable) — `polish`, `harden`, `optimize`, `distill` (23 verb-per-discipline commands). Each is a transform-in-place
+- [trailofbits/skills — skill-improver](https://github.com/trailofbits/skills/tree/main/plugins/skill-improver) — **strongest borrow source**: iterative review loop with explicit completion marker `<skill-improvement-complete>`, severity categorization, and a *"Rationalizations to Reject"* section that pre-counters drift
+- [trailofbits/skills — semgrep-rule-variant-creator](https://github.com/trailofbits/skills/tree/main/plugins/semgrep-rule-variant-creator) — identity-preserving cross-substrate rewrite (port rules to new target languages)
+- [obra/superpowers — writing-skills](https://github.com/obra/superpowers/tree/main/skills/writing-skills) — **strongest borrow source**: iron-law framing *"Edit without [discipline] = same violation as authoring without [discipline]. Delete. Start over."* Treats patching as a violation
+- [citypaul refactoring skill](https://github.com/citypaul/.dotfiles/blob/main/claude/.claude/skills/refactoring/SKILL.md) — TDD-anchored, preserve-behavior-via-tests
+- [ksimback/tech-debt-skill](https://github.com/ksimback/tech-debt-skill) — explicit "forbids recommending rewrites" stance (principled contrast)
+- [softaworks/agent-toolkit — agent-md-refactor](https://agentskillsfinder.com/skills/agent-md-refactor) — restructures via progressive disclosure; patches
+- [elifiner/refactoring](https://github.com/elifiner/refactoring) ([Show HN](https://news.ycombinator.com/item?id=46817508)) — "very small and very safe refactoring steps" — canonical patch-flow framing
+- [howardmann/rewrite](https://github.com/howardmann/rewrite) — `/rewrite` for prose simplification (false-positive on the name)
+- [AlexMini2517/skills — logic-rewrite](https://github.com/AlexMini2517/skills/tree/main/skills/logic-rewrite) — **closest skill-ecosystem match found**: explicit refactor-vs-rewrite distinction, "rewrite from first principles" workflow step, guardrails section, structured comparison template (Intent / Old approach / Problem / New approach / Why better / Trade-offs). Single-agent advisory-only — has the vocabulary, lacks the structural enforcement (no role split, no mechanical isolation, no rationalizations-as-injection, no identity-preservation gates). Useful positive-and-negative control
+- [diegopetrucci/starting-from-scratch](https://github.com/diegopetrucci/starting-from-scratch/tree/main/skills/starting-from-scratch) — analytical verb (commentary, not action): "say what should change if it were being started again from scratch". Different category — code-review / retrospective, not rewrite-executor. Cataloged to note that searches for "rewrite" / "from scratch" surface adjacent categories not in scope
+
+**Awesome-lists (URL bank for future reference):**
+
+- [hesreallyhim/awesome-claude-code](https://github.com/hesreallyhim/awesome-claude-code)
+- [ComposioHQ/awesome-claude-skills](https://github.com/ComposioHQ/awesome-claude-skills)
+- [travisvn/awesome-claude-skills](https://github.com/travisvn/awesome-claude-skills)
+- [sickn33/antigravity-awesome-skills](https://github.com/sickn33/antigravity-awesome-skills)
+- [rohitg00/awesome-claude-code-toolkit](https://github.com/rohitg00/awesome-claude-code-toolkit)
+- [Chat2AnyLLM/awesome-claude-plugins](https://github.com/Chat2AnyLLM/awesome-claude-plugins)
+- [quemsah/awesome-claude-plugins](https://github.com/quemsah/awesome-claude-plugins)
+- [jeremylongshore/claude-code-plugins-plus-skills](https://github.com/jeremylongshore/claude-code-plugins-plus-skills)
+- [alirezarezvani/claude-skills](https://github.com/alirezarezvani/claude-skills)
+- [agentskills.io](https://agentskills.io), [agentskills.in/marketplace](https://agentskills.in/marketplace)
+- [tasteskill.dev](https://www.tasteskill.dev)
+
+**AI coding tool implementations (system prompts published):**
+
+- [Aider — Chat modes](https://aider.chat/docs/usage/modes.html) — architect/editor role split: architect plans, editor writes
+- [Aider — Edit formats](https://aider.chat/docs/more/edit-formats.html) — `whole` vs `diff` vs `editor-whole` vs `editor-diff` (udiff was added specifically to counter GPT-4 Turbo's "lazy coding" elisions)
+- [Aider wholefile_prompts.py](https://github.com/Aider-AI/aider/blob/main/aider/coders/wholefile_prompts.py) — *"NEVER skip, omit or elide content from a file listing"*
+- [Aider architect_prompts.py](https://github.com/Aider-AI/aider/blob/main/aider/coders/architect_prompts.py) — *"DO NOT show the entire updated function/file"* (planner is structurally forbidden from emitting code)
+- [Aider editor_whole_prompts.py](https://github.com/Aider-AI/aider/blob/main/aider/coders/editor_whole_prompts.py) — *"Output a copy of each file that needs changes."* No problem-solving framing
+- [Cline — Improving Diff Edits by 10%](https://cline.bot/blog/improving-diff-edits-by-10) — `write_to_file` (whole) vs `replace_in_file` (diff) — tool-shape asymmetry
+- [Continue edit.ts templates](https://github.com/continuedev/continue/blob/main/core/llm/templates/edit.ts) — `<START EDITING HERE>` / `<STOP EDITING HERE>` sentinel-bracketed regenerate-in-place; prefix/suffix preserved verbatim
+- [Cursor leaked system prompt](https://github.com/jujumilk3/leaked-system-prompts/blob/main/cursor-ide-sonnet_20241224.md) — no whole-file-rewrite affordance (negative control: Cursor's Cmd+K is surgical by default)
+- [nrehiew — Coding Models Are Doing Too Much](https://nrehiew.github.io/blog/minimal_editing/) — **load-bearing empirical study**: documents patch-bias / over-editing as reasoning-model-amplified. The discipline of "preserve original" measurably reduces over-edits; the inverse (forcing fresh compose) faces the same attractor in mirror
+
+**Real-world rewrite case studies and discussion:**
+
+- [Simon Willison — Dan Blanchard's clean-room rewrite of chardet](https://simonwillison.net/2026/Mar/5/chardet/) — **archetypal case study**: brainstorm design doc → build in empty repo with no access to original tree → JPlag verification (1.29% max similarity confirmed clean compose)
+- [Patch Spiral / 5 Reasons Your Claude Skills Keep Breaking](https://alexmcfarland.substack.com/p/5-reasons-your-claude-skills-keep) — coins *"patch spiral"* phrase; baseline-build-refine loop antidote
+- [Refactoring Agent Skills — context explosion](https://dev.to/superorange0707/refactoring-agent-skills-from-context-explosion-to-a-fast-reliable-workflow-5hg6) — "The fix wasn't a clever prompt. It was an architectural refactor."
+- [Rebuild 93 skills (Medium, paywalled)](https://medium.com/product-powerhouse/a-pull-request-made-me-rebuild-all-93-of-my-claude-skills-then-i-added-7-more-16d5fe3e7f85)
+
+**Software-engineering canon:**
+
+- [Joel Spolsky — Things You Should Never Do, Part I](https://www.joelonsoftware.com/2000/04/06/things-you-should-never-do-part-i/) — caveat: messy-looking code is often crystallized bug fixes; capture before rewriting
+- [Martin Fowler — Substitute Algorithm](https://refactoring.com/catalog/substituteAlgorithm.html) — named refactoring for "rewrite a function from scratch"; interface stays, body replaced, tests verify
+- [Martin Fowler — Strangler Fig](https://martinfowler.com/bliki/StranglerFigApplication.html) — seam discipline; interface contract survives
+- [Mikado Method](https://understandlegacycode.com/blog/a-process-to-do-safe-changes-in-a-complex-codebase/) — revert on dependency discovery; mandatory reversion when scope creeps
+- [Michael Feathers — Characterization Testing](https://michaelfeathers.silvrback.com/characterization-testing) / [comparison with approval tests](https://understandlegacycode.com/blog/characterization-tests-or-approval-tests/) — capture current behavior as safety net
+- [OpenRewrite — LST philosophy](https://docs.openrewrite.org/) — parse → transform → reprint via Lossless Semantic Trees
+- [Cleanroom Software Engineering](https://en.wikipedia.org/wiki/Cleanroom_software_engineering) — build from spec, never from existing code
+
+### Patterns worth borrowing (synthesis)
+
+1. **Role-split into phases with output-shape asymmetry** (Aider architect/editor + Cline write_to_file vs replace_in_file). Phase 1 *extracts* identity to a separate document (no code emission allowed). Phase 2 *composes* the artifact from the extract alone (original removed from context). The phases have different tool grants — the extract phase can't write to the target file; the compose phase can't read from the original. Structural prevention of patch-flow.
+
+2. **Mechanical isolation, not advisory** (Blanchard's clean-room chardet). When step 3 says "set the original aside", do it literally — `mv` the file to a holding path, or copy contents to a temp file the compose phase has no read access to. "Set aside" as instruction loses; as mv-and-revert, it wins.
+
+3. **Anti-elision verbatim from Aider**: *"NEVER skip, omit or elide content from a file listing. Output the entire file."* Drop this line into the compose-phase prompt.
+
+4. **Authoritative-state cue from Aider**: *"Trust this extract as the true specification. The original is set aside."* Eliminates the model's default attractor toward whatever-it-last-saw.
+
+5. **Rationalizations-to-reject list** (Trail of Bits skill-improver). Pre-enumerate the rationalizations the agent will produce mid-rebuild and rebut each:
+   - "I'll just adjust this one line" → no; if the line needs changing, the whole section recomposes
+   - "The original is mostly fine here" → no; "mostly fine" judgements are how patch-flow leaks in
+   - "This section already conforms" → maybe; verify against the extract, not against the original's appearance
+   - "Rebuilding loses tested behavior" → no; characterization-test verification gates that
+
+6. **Iron-law framing** (obra writing-skills). *"Patching during rebuild = abort and restart from extract."* Make patching textually a violation, not a soft preference.
+
+7. **Completion marker** (Trail of Bits). The workflow emits a literal token like `<rebuild-complete>` after the verification step; "looks good" doesn't satisfy. Forces traversal of the verification step.
+
+8. **Diff-after-compose as structural gate, not audit pass**. The workflow MUST emit the diff before requesting user approval — diff is part of the deliverable, not an after-the-fact check.
+
+9. **Characterization-test identity gate** (Feathers + Fowler Substitute Algorithm). Identity preservation isn't "looks similar" — it's enumerated: callable surface present, declared rules intact, return shape preserved, downstream consumer contract unchanged. Each check passes or surfaces a gap. No "trust me" verification.
+
+10. **Tool-naming after output shape, not intent** (Cline). "Rebuild" stays as user-facing trigger phrasing, but internal steps name themselves by what they produce: `extract-identity`, `compose-from-spec`, `diff-and-verify`. Intent words ("refactor", "rewrite") the model can reinterpret; shape words ("output entire file") it can't.
+
+11. **Sibling-skill cross-reference for trigger correctness** (AlexMini2517 logic-rewrite). Explicit "use X, not this skill, when..." pointers in the entry-point body sharpen the trigger by making the inverse concrete. logic-rewrite's body opens with "Use `refactor` for incremental cleanup that preserves behavior and overall structure. Use `logic-rewrite` when..." — false-positive triggers exit immediately because the alternative skill is named. `/ocd:rebuild` could analogously point at `/ocd:rules` (for adding new rule), at the verb-specific skill (for fixing one workflow step), and at `/ocd:check` (for verifying conformance) — naming what the user *probably* wanted when rebuild was misfired.
+
+12. **Structured comparison template for the verify phase** (logic-rewrite). Rather than free-form "explain what changed", a fixed shape — Intent / Old approach / Problem / New approach / Why better / Trade-offs — gives the verify-phase output a predictable structure. For `/ocd:rebuild`'s diff-and-verify, the template would be Identity (callable surface, declared rules, return shape) / Old form / Drift detected / New form / Discipline applied / Risk introduced. Predictable shape = parseable by downstream skills + comparable across runs.
+
+### Patterns to avoid
+
+- **Single-agent "rewrite mode" via system prompt alone**. No published tool succeeds at this. Patch-bias re-asserts on each turn, especially in reasoning models. Most-recent confirming case: AlexMini2517's logic-rewrite (above) has explicit "rewrite from first principles" + guardrails forbidding old-structure preservation + clear refactor-vs-rewrite separation — and still relies on the agent self-policing within a single context. The vocabulary is right; without role-split or mechanical isolation, the discipline depends on prompt adherence the model is empirically bad at sustaining.
+- **Intent words as the only signal**. Cursor's Cmd+K is marketed as "Refactor" but its prompt makes no distinction; it's surgical by default. Naming doesn't change behavior without structural enforcement.
+- **Letting the model see its previous patch-shaped output**. Re-biases toward partial edits. The compose phase needs a clean slate.
+- **Recommending rewrite without capturing the original first**. Spolsky's warning — messy code often crystallizes bug fixes. The extract step must be sufficient or the rebuild is worse than the original.
+
+### Sketch of revised skill shape (for next pass)
+
+Two-phase workflow, each phase with a different output contract:
+
+**Phase 1 — Extract** (no code emission allowed; produces a contract document):
+1. Read {artifact}
+2. Write to a holding file: `<workspace>/<artifact-name>.extract.md` — captures scope + role + callable surface + declared rules + edge cases / accumulated knowledge (per Spolsky caveat)
+3. Move original to `<workspace>/<artifact-name>.original` (mechanical isolation)
+4. Gate: "extract complete; ready to compose"
+
+**Phase 2 — Compose** (cannot read original; produces the rebuilt artifact):
+1. Read only `<artifact-name>.extract.md`
+2. Compose fresh applying every rule from the extract
+3. Anti-elision injunction loaded into the prompt
+4. Output the complete new artifact
+
+**Phase 3 — Verify** (diff against original, enumerated identity gates):
+1. Diff `<artifact-name>.original` vs fresh
+2. Identity checks: callable surface present? declared rules intact? return shape preserved?
+3. Each check passes or surfaces a gap with corrective action
+4. Emit `<rebuild-complete>` marker only on clean pass
+5. Gate on structural divergence per current design
+
+**Phase 4 — Clean up**: move original out of holding, write fresh to target path.
+
+**Rationalizations-to-reject section** at end of SKILL.md as last-thing-agent-sees pre-action.
+
+**Iron-law statement** in body: *"Patching during rebuild = abort and restart from extract."*
+
+### Verdict
+
+No existing skill does this. Closest design: combine obra's iron-law framing + Aider's role-split + Blanchard's clean-room isolation + Trail of Bits' rationalizations-to-reject + Fowler's Substitute Algorithm identity-preservation discipline. Worth a focused rebuild of `/ocd:rebuild` informed by these patterns before further mass-rebuilds.

@@ -1,18 +1,21 @@
 ---
 name: rebuild
-description: Use whenever the user says "rebuild X" (or "redo X", "rewrite X from scratch", "reauthor X", "regenerate X") or asks to reconstruct an existing artifact from the ground up. Anti-patching discipline: extract what the artifact carries (scope + role + callable surface), set the original aside, compose fresh applying the artifact's own declared rules, then diff to confirm identity preserved. Stackable on any prompt that names a target — file, section, function, or other addressable artifact. Triggers explicitly when the user signals rebuild rather than patch.
+description: Use whenever the user says "rebuild X" (or "redo X", "rewrite X from scratch", "reauthor X", "regenerate X") or asks to reconstruct an existing artifact from the ground up. Anti-patching alternative to surgical edits — rewrites the target applying its own declared rules, preserving identity. Stackable on any prompt that names a target (file, section, function, or other addressable artifact).
 allowed-tools:
   - Read
   - Edit
   - Write
   - Bash(find *)
   - Bash(diff *)
+  - Bash(mkdir *)
+  - Bash(cp *)
+  - Task
   - AskUserQuestion
 ---
 
 # rebuild
 
-Anti-patching discipline for reconstructing artifacts from scratch. The audit-applicable rules come from the target's own `## Dependencies` declaration; the only rule this skill loads is PFN (needed to interpret `Call:` and the workflow component's process steps).
+Anti-patching discipline. Reconstruct the target from scratch applying its own declared rules; preserve identity. Three-agent orchestration — extract, compose, verify — each in an isolated spawned context so composition is structurally insulated from patch-bias. The audit-applicable rules come from the target's own `## Dependencies` declaration; rebuild doesn't impose its own ruleset.
 
 ## Dependencies
 
@@ -35,6 +38,13 @@ Anti-patching discipline for reconstructing artifacts from scratch. The audit-ap
 | Audit-and-rewrite after rule evolution | "reapply rules to X", "X needs to follow [discipline]" |
 | Discipline-drift cleanup | "X still uses old terminology", "audit X against [discipline]" |
 | Anti-patching modifier on any rebuild request | User wants the target reconstructed from scratch, not surgically patched |
+
+## When NOT to use
+
+- Adding a new rule or discipline that didn't previously exist — that's a content change, not a rebuild. Add the rule directly.
+- Fixing a localized bug in one workflow step — use a targeted edit; rebuild's overhead isn't warranted.
+- Verifying conformance without changing the artifact — use `/ocd:check` if available, or audit the file in place.
+- Renaming a symbol or moving a file — that's a refactor, not a rebuild.
 
 ## Workflow
 
