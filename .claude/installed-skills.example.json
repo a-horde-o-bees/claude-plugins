@@ -1,0 +1,6 @@
+{
+  "_comment": "Per-user manifest of skills to install at user-scope via `npx skills`. Copy to `.claude/installed-skills.json` (gitignored) and edit. /checkpoint reads this on main and reinstalls any skill whose source plugin version has changed since last install.",
+  "skills": [
+    {"name": "<skill-name>", "plugin": "<source-plugin>", "repo": "<owner>/<repo>"}
+  ]
+}
