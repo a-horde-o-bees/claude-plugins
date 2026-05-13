@@ -1,6 +1,6 @@
 ---
 name: skill-composer
-description: Use this skill when the user wants to design a new skill from one or more exemplar source skills, iterate on an in-progress composition, or list deployed compositions with optional upstream-drift detection. Provides the meta-tool layer for goal-driven skill composition with our authoring discipline (PFN notation + progressive disclosure) baked into the output. Each composed skill is self-contained — composition.md (the recipe), embedded source skills (the ingredients), and SKILL.md (the dish) live together in one folder. For installing an unmodified upstream skill kept as-is, use Vercel's `npx skills` instead — this skill focuses on composition, not installation.
+description: Use this skill when the user wants to design a new skill from one or more exemplar source skills, iterate on an in-progress composition, or list deployed compositions with optional upstream-drift detection. Each composed skill is self-contained — composition.md + embedded sources + SKILL.md live together in one folder. For installing an unmodified upstream skill kept as-is, use Vercel's `npx skills` instead — this skill focuses on composition, not installation.
 ---
 
 # skill-composer

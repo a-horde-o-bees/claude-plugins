@@ -15,16 +15,25 @@
 ### Process
 
 1. Parse {args}; extract {scope}, {targets}, {force}, {all}.
+
 2. If {scope} missing: {scope}: AskUserQuestion — `user` vs `project`
+
 3. If neither {all} nor any {target} given:
-    1. bash: `uv run -m scripts.rules list` — surface the catalog
-    2. Render in chat as a lettered list per [[confirm-shared-intent]]: `Q1 Which rules to install?` with `A) <name> — <description>`, `B) ...`, plus a final `all` option
-    3. Accept the user's reply as letters, bare rule names, or `all`
-    4. {targets}: resolved list of rule names; or {all}: true if user picked `all`
-4. Confirm with the user — show {targets} (or `--all`), {scope}, and what's about to deploy
-5. Invoke — bash: `uv run -m scripts.rules install {targets} --scope {scope} [--force]` (or `--all` in place of {targets})
-6. Surface the per-file transition output to the user
-7. If any file remained `divergent` (no `--force`): tell the user to re-run with `--force` to overwrite
+    1. {catalog}: bash: `uv run --directory <skill-base> -m scripts.rules list`
+    2. Render {catalog} in chat as a lettered list per [[confirm-shared-intent]]: `Q1 Which rules to install?` with `A) <name> — <description>`, `B) ...`, plus a final `all` option
+    3. {reply}: accept user's response as letters, bare rule names, or `all`
+    4. If {reply} is `all`: {all}: true
+    5. Else: {targets}: rule names resolved from {reply}
+
+4. {approval}: AskUserQuestion — confirm or cancel; show {targets} (or `--all`), {scope}, and what's about to deploy
+
+5. If {approval} is cancel: Exit to user: install cancelled
+
+6. {result}: bash: `uv run --directory <skill-base> -m scripts.rules install {targets} --scope {scope} [--force]` (or `--all` in place of {targets})
+
+7. Surface {result} to the user.
+
+8. If any file in {result} ended `divergent` (no `--force` passed): tell the user to re-run with `--force` to overwrite the drifted copy.
 
 ### Report
 

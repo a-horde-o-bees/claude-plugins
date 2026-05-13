@@ -4,8 +4,8 @@
 
 ### Process
 
-1. Invoke — bash: `uv run -m scripts.rules list`
-2. Surface the catalog to the user.
+1. {catalog}: bash: `uv run -m scripts.rules list`
+2. Surface {catalog} to the user.
 
 ### Report
 

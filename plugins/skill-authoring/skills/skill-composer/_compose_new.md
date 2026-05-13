@@ -1,6 +1,6 @@
 # Compose new
 
-Workflow component for the `new` verb of compose. Owns new-skill composition from one or more exemplar sources.
+> Workflow component for the `new` verb of compose. Owns new-skill composition from one or more exemplar sources.
 
 ## Arguments
 
@@ -10,45 +10,39 @@ Workflow component for the `new` verb of compose. Owns new-skill composition fro
 
 ## Process
 
-1. Invoke — bash: `uv run -m scripts.compose new --destination <user|project|path>`
+1. {state}: bash: `uv run --directory <skill-base> -m scripts.compose new --destination <user|project|path>` — emits resolved scope + target composition.md path with `<chosen-name>` as placeholder
 
-2. The script emits resolved state — scope and the target composition.md path with `<chosen-name>` as placeholder.
-
-3. Agent collects the skill's **high-level intent** through dialogue:
+2. {intent}: collect via dialogue:
     - What should this skill enable Claude to do?
     - When should it fire? (user phrases / contexts)
     - What's the expected output format?
 
-4. Agent collects the **Surface** — the cognitive moments the skill carries and where each routes:
+3. {surface}: collect via dialogue — the cognitive moments the skill carries and where each routes:
     - What distinct cognitive moments should make this skill fire?
     - For each moment: deeper content in a `_<verb>.md` component, or terse enough to inline?
 
-5. {chosen-name}: a skill name derived from the interview answers and Surface. Offer 2–3 lowercase-hyphenated candidates and refine with the user until they settle on one.
+4. {chosen-name}: 2–3 lowercase-hyphenated candidates from {intent} + {surface}; refine with user until one is settled
 
-6. Agent creates `<destination-parent>/{chosen-name}/composition.md` from `assets/composition-template.md`, substituting placeholders with values from steps 3–5.
+5. Write `<destination-parent>/{chosen-name}/composition.md` from `<skill-base>/assets/composition-template.md`, substituting placeholders with {intent}, {surface}, {chosen-name}
 
-7. Agent asks about exemplar sources. For each chosen source:
+6. {sources}: AskUserQuestion — enumerate exemplar sources, each as `<url>:<skill>[@<ref>]`
 
-    ```
-    uv run -m scripts.compose add-source {chosen-name} <url>:<skill>[@<ref>] --destination <destination>
-    ```
+7. For each {source} in {sources}:
+    1. bash: `uv run --directory <skill-base> -m scripts.compose add-source {chosen-name} {source} --destination <destination>` — sparse-checks source into `<destination-parent>/{chosen-name}/sources/<source-slug>/`; appends to composition.md frontmatter with pinned commit
+    2. Read embedded source's `SKILL.md` (and supporting files) at `<destination-parent>/{chosen-name}/sources/<source-slug>/` to understand what it offers
 
-   The sub-op sparse-checks the source into `<destination-parent>/{chosen-name}/sources/<source-slug>/` and appends it to composition.md frontmatter with a pinned commit.
-
-8. Agent reads each embedded source's `SKILL.md` (and supporting files) at `<destination-parent>/{chosen-name}/sources/<source-slug>/` to understand what each exemplar offers.
-
-9. Agent populates the `## Sources` section in composition.md. For each source:
+8. Populate `## Sources` section in composition.md. For each {source}:
     - What's worth keeping verbatim?
     - What needs adapting to fit our Surface?
     - What should be rejected or replaced?
     - Which Surface entries does it inform?
 
-10. Agent scaffolds the live skill from bundled templates:
-    1. `<destination-parent>/{chosen-name}/SKILL.md` from `assets/skill-template.md`, substituting from composition.md.
-    2. For each cognitive moment in `## Surface`, `<destination-parent>/{chosen-name}/_<verb>.md` from `assets/verb-workflow-template.md`.
-    3. If any verb has mechanical work, create `<destination-parent>/{chosen-name}/scripts/__init__.py` and the relevant Python module; the workflow invokes it via `uv run`.
+9. Scaffold the live skill from bundled templates:
+    1. Write `<destination-parent>/{chosen-name}/SKILL.md` from `<skill-base>/assets/skill-template.md`, substituting from composition.md
+    2. For each cognitive moment in `## Surface`, write `<destination-parent>/{chosen-name}/_<verb>.md` from `<skill-base>/assets/verb-workflow-template.md`
+    3. If any verb has mechanical work, create `<destination-parent>/{chosen-name}/scripts/__init__.py` and the relevant Python module; the workflow invokes it via `uv run`
 
-    Refinement continues live — composition.md tracks intent; the skill files are the implementation. `compose refine` re-engages this dialogue when sources drift upstream.
+> Refinement continues live — composition.md tracks intent; the skill files are the implementation. `compose refine` re-engages this dialogue when sources drift upstream.
 
 ## Body section conventions
 

@@ -14,18 +14,26 @@
 ### Process
 
 1. Parse {args}; extract {scope}, {targets}, {all}.
+
 2. If {scope} missing: {scope}: AskUserQuestion — `user` vs `project`
+
 3. If neither {all} nor any {target} given:
-    1. bash: `uv run -m scripts.rules status --scope {scope}` — surface what's currently deployed
-    2. Render deployed rules as a lettered list per [[confirm-shared-intent]]: `Q1 Which rules to remove?` with `A) <name>`, `B) ...`, plus a final `all` option
-    3. Accept letters, bare names, or `all`
-    4. {targets}: resolved list; or {all}: true
-4. Confirm with the user — show {targets} (or `--all`), {scope}, what will be removed
-5. Invoke — bash: `uv run -m scripts.rules uninstall {targets} --scope {scope}` (or `--all` in place of {targets})
-6. Surface the per-file transition output
+    1. {deployed}: bash: `uv run --directory <skill-base> -m scripts.rules status --scope {scope}`
+    2. Render {deployed} as a lettered list per [[confirm-shared-intent]]: `Q1 Which rules to remove?` with `A) <name>`, `B) ...`, plus a final `all` option
+    3. {reply}: accept user's response as letters, bare rule names, or `all`
+    4. If {reply} is `all`: {all}: true
+    5. Else: {targets}: rule names resolved from {reply}
+
+4. {approval}: AskUserQuestion — confirm or cancel; show {targets} (or `--all`), {scope}, what will be removed
+
+5. If {approval} is cancel: Exit to user: uninstall cancelled
+
+6. {result}: bash: `uv run --directory <skill-base> -m scripts.rules uninstall {targets} --scope {scope}` (or `--all` in place of {targets})
+
+7. Surface {result} to the user.
 
 ### Report
 
 - Scope uninstalled from
 - Files removed (with `current → absent` transitions)
-- If nothing was deployed at {scope}: report that and skip
+- If nothing was deployed at {scope}: report that and exit

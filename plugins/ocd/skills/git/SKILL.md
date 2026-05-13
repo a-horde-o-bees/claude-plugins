@@ -9,7 +9,7 @@ allowed-tools:
 
 # git
 
-Manage local git history and tagged releases. Each verb is an atomic workflow loaded on demand — invoking `commit` does not pay for `release` synthesis context, and vice versa.
+Manage local git history and tagged releases. Each verb is an atomic workflow loaded on demand.
 
 ## Dependencies
 

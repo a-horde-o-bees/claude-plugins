@@ -11,14 +11,20 @@
 
 ### Rules
 
-- {ci-status} after watching is one of `passed`, `failed`, `incomplete` (the `dispatched` and `no-runs` states from `_ci.md` don't apply post-watch — by construction we always have a tracked in-flight set)
-- `scripts/ci.py watch` blocks until each watched run completes, then re-lists all runs for the SHA and re-classifies the final state via the same `classify_runs` logic `_ci.md` uses
-- Template emission matches the matching three states of `_ci.md` § Report; emit verbatim, no inventing or paraphrasing
+- {ci-status} post-watch is one of `passed`, `failed`, `incomplete` (the `dispatched` and `no-runs` states from `_ci.md` don't apply — by construction we always have a tracked in-flight set)
+- `<skill-base>/scripts/ci.py watch` blocks until each watched run completes, then re-lists all runs for the SHA and re-classifies via the same `classify_runs` logic `_ci.md` uses
+- Template emission matches the three matching states of `_ci.md` § Report; emit verbatim, no inventing or paraphrasing
 
 ### Process
 
 1. {classification}: bash: `uv run <skill-base>/scripts/ci.py watch --sha {sha} --run-ids {run-ids}`
-2. Parse {classification} JSON. Assigns {sha-short}, {ci-status}, plus per-status fields: {workflow-list} (passed) | {failing-workflow} + {failing-url} (failed) | {trouble-list} (incomplete).
+
+2. From {classification} JSON, bind:
+    - {sha-short}, {ci-status} — always present
+    - {workflow-list} — when {ci-status} is `passed`
+    - {failing-workflow}, {failing-url} — when `failed`
+    - {trouble-list} — when `incomplete`
+
 3. Emit the template matching {ci-status} — see ### Report.
 
 ### Report

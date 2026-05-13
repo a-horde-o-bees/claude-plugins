@@ -9,9 +9,9 @@
 ### Process
 
 1. If {name} is empty: Exit to user: `show` requires a rule name — run `list` for the catalog
-2. Invoke — bash: `uv run -m scripts.rules show {name}`
-3. Surface the rule body to the user.
+2. {body}: bash: `uv run -m scripts.rules show {name}`
+3. Surface {body} to the user.
 
 ### Error Handling
 
-1. If the script exits nonzero (unknown rule): surface the error message and the list of available rules from the script's stderr.
+1. If the script exits nonzero (unknown rule): surface stderr verbatim — it includes the available-rules list for the user's next attempt.

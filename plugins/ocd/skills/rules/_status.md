@@ -8,8 +8,8 @@
 
 ### Process
 
-1. Invoke — bash: `uv run -m scripts.rules status {args}`
-2. Surface the status table to the user.
+1. {table}: bash: `uv run -m scripts.rules status {args}`
+2. Surface {table} to the user.
 
 ### Report
 

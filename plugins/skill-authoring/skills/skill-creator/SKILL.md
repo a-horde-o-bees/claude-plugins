@@ -1,6 +1,6 @@
 ---
 name: skill-creator
-description: Use whenever the user wants to create a new skill from scratch — interview, draft, iterate, optimize the trigger, and package — with PFN + progressive-disclosure + description-authoring + workflow-vs-script disciplines applied at every authoring moment. Companion to skill-composer (compose layers existing sources; create authors from scratch with discipline). Trigger on phrases like "create a new skill", "make a skill for X", "design a skill that...", "I want to write a skill", "draft a skill", "skill from scratch", or any context where the user is initiating a new skill rather than composing from sources or rebuilding an existing one.
+description: Use whenever the user wants to create a new skill from scratch — interview, draft, iterate, package — with project authoring discipline applied inline. Companion to skill-composer (compose layers existing sources; create authors from scratch). Trigger on phrases like "create a new skill", "make a skill for X", "design a skill that...", "I want to write a skill", "draft a skill", "skill from scratch".
 allowed-tools:
   - Read
   - Edit

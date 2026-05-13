@@ -1,6 +1,6 @@
 ---
 name: rules
-description: Use this skill to manage always-on agent guidance — deploy rule canonicals at user or project scope so Claude Code auto-loads them into every session, or remove deployed rules to take them out of always-on. Provides verbs to list available rules, read individual rule bodies, report deployment state per scope, install rules as always-on, and uninstall them. Each rule deploys to `<scope>/rules/dependencies/<name>.md` per the markdown-dependency-resolution convention. Trigger on phrases like "install rule X", "deploy rule Y always-on", "what rules are deployed", "show me the rule on honesty", "list available rules", "remove rule Z", or any context where the user wants to manage the always-on rule layer.
+description: Use this skill to manage always-on agent guidance — deploy rule canonicals at user or project scope so Claude Code auto-loads them, or remove them. Trigger on phrases like "install rule X", "deploy rule Y always-on", "what rules are deployed", "show me the rule on honesty", "list available rules", "remove rule Z", or any context where the user wants to manage the always-on rule layer.
 allowed-tools:
   - Read
   - Bash(uv run *)
@@ -11,7 +11,9 @@ allowed-tools:
 
 # rules
 
-Catalog management for always-on agent guidance. Deploys rule canonicals at user or project scope so Claude Code auto-loads them; uninstalls remove the deployed copy without touching the bundled seed. The catalog ships bundled with this skill at `_dependencies/` (underscore-prefix marks internal install-source storage; excluded from runtime discovery per [[markdown-dependency-resolution]]) and propagates from project-root `shared/_dependencies/` via pre-commit.
+Catalog management for always-on agent guidance. Deploys rule canonicals at user or project scope so Claude Code auto-loads them; uninstalls remove the deployed copy.
+
+> The catalog ships bundled at `_dependencies/` (excluded from runtime discovery per [[markdown-dependency-resolution]]); pre-commit propagates from project-root `shared/_dependencies/`.
 
 ## Dependencies
 
@@ -50,7 +52,7 @@ Catalog management for always-on agent guidance. Deploys rule canonicals at user
 | `install ...` | [`_install.md`](_install.md) |
 | `uninstall ...` | [`_uninstall.md`](_uninstall.md) |
 
-Mechanical work lives in `scripts/rules.py`; workflow files orchestrate user-facing surface (argument prompts, catalog browsing, confirmations).
+Mechanical work lives in `scripts/rules.py` per [[workflow-vs-script]]; workflow files orchestrate user-facing surface (argument prompts, catalog browsing, confirmations).
 
 ## Scope and deployment paths
 

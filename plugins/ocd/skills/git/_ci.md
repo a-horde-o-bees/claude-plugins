@@ -6,22 +6,31 @@
 
 ### Variables
 
-- {branch} — branch name; defaults to current when not provided
+- {branch} — branch name; defaults to current when omitted
 
 ### Rules
 
-- Branch defaults to current when --branch is omitted
+- Branch defaults to current when `--branch` is omitted
 - No-runs-scheduled is reported, not an error — CI may not have triggered for this commit, or GitHub may not have scheduled runs yet
-- Already-failed runs at dispatch time are flagged synchronously with workflow name + URL — no background watcher needed
-- In-progress runs spawn an async watcher; foreground returns immediately. The session receiving the agent's task-completion result reports the outcome inline as text
-- {ci-status} is a 5-value enum: `passed`, `failed`, `dispatched`, `incomplete`, `no-runs`. Classification is deterministic and lives in `scripts/ci.py`; the workflow consumes its JSON output and emits the template matching {ci-status} — see ### Report. Emit verbatim, no inventing or paraphrasing
+- Already-failed runs at dispatch are flagged synchronously with workflow name + URL — no background watcher
+- In-progress runs spawn an async watcher; foreground returns immediately. Task-completion text reports the outcome inline
+- {ci-status} is a 5-value enum: `passed`, `failed`, `dispatched`, `incomplete`, `no-runs`. Classification is deterministic and lives in `<skill-base>/scripts/ci.py`; the workflow consumes its JSON output and emits the template matching {ci-status} — see ### Report. Emit verbatim, no inventing or paraphrasing
 
 ### Process
 
 1. If not {branch}: {branch}: bash: `git branch --show-current`
+
 2. {classification}: bash: `uv run <skill-base>/scripts/ci.py classify --branch {branch}`
-3. Parse {classification} JSON. Assigns {sha}, {sha-short}, {ci-status}, plus per-status fields: {workflow-list} (passed) | {failing-workflow} + {failing-url} (failed) | {watch-ids} (dispatched) | {trouble-list} (incomplete) | (no-runs has no extra fields).
-4. If {ci-status}: `dispatched`: async Spawn: Call: `_ci_watch.md` ({sha}: {sha}, {run-ids}: {watch-ids})
+
+3. From {classification} JSON, bind:
+    - {sha}, {sha-short}, {ci-status} — always present
+    - {workflow-list} — when {ci-status} is `passed`
+    - {failing-workflow}, {failing-url} — when `failed`
+    - {watch-ids} — when `dispatched`
+    - {trouble-list} — when `incomplete`
+
+4. If {ci-status} is `dispatched`: async Spawn: Call: `_ci_watch.md` ({sha}: {sha}, {run-ids}: {watch-ids})
+
 5. Emit the template matching {ci-status} — see ### Report.
 
 ### Report
