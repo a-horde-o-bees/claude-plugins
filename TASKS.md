@@ -6,14 +6,18 @@ Project-scoped scan-once view. Per-sandbox `SANDBOX-TASKS.md` files (seeded by t
 
 ## In progress
 
-- **Phase G — Plugin compartmentalization** — [plan](plans/architecture-refactor.md). Active next phase. Break the `ocd` plugin into domain buckets (proposed: `git`, `discipline`); retire the `composed-skills` bucket — composed skills land in their domain bucket with `composition.md` marking origin. `skill-authoring` stays as-is (the domain IS skill authoring). Per-domain plugin manifests update `marketplace.json` so downstream consumers can `/plugin install <domain>@a-horde-o-bees` per bucket.
+- **Phase I — Decision log review** — [plan](plans/architecture-refactor.md). 18 of 19 decision logs reviewed (slimmed, reframed, or deleted) against final implementation. One remaining: `logs/decision/progressive-skill-composer.md` deferred to a focused session — it's a ~375-line log whose content surgery is non-trivial.
+
+## Next up
+
+- **Phase G — Plugin compartmentalization** — [plan](plans/architecture-refactor.md). Break the `ocd` plugin into domain buckets (proposed: `git`, `discipline`); retire the `composed-skills` bucket — composed skills land in their domain bucket with `composition.md` marking origin. `skill-authoring` stays as-is (the domain IS skill authoring). Per-domain plugin manifests update `marketplace.json` so downstream consumers can `/plugin install <domain>@a-horde-o-bees` per bucket.
+
+    **Next concrete step:** define the domain plugin layout in `.claude-plugin/marketplace.json` and pilot with `git` — move `plugins/ocd/skills/git/` to `plugins/git/skills/git/`, update marketplace.json, update `.claude/installed-skills.json` entries' `plugin` fields to match the new domain plugin name, verify `/git` skill still resolves and CI passes. Then repeat for `discipline` (`rebuild` + `rules`).
 
     **Distribution model after reorg.** Two parallel channels remain first-class:
 
     1. **Plugin install (marketplace)** — `/plugin install <plugin>@a-horde-o-bees` for downstream users who want bundles. Marketplace listing continues to increment as skills evolve.
     2. **Individual skill install (npx)** — `npx skills add a-horde-o-bees/claude-plugins --skill <name> -g` for users who want one skill at a time. This project uses npx for its own consumption per `.claude/installed-skills.json`.
-
-- **Phase I — Decision log review** — review `logs/decision/*.md` against final implementation; slim scaffolding, remove obsolete options-considered branches, drop logs whose decisions are superseded. Active this session.
 
 ## Upcoming
 
