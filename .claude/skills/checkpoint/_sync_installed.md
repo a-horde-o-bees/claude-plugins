@@ -6,5 +6,5 @@
 
 ### Process
 
-1. {sync-output}: bash: `uv run .claude/skills/checkpoint/scripts/sync_skills.py`
+1. {sync-output}: bash: `uv run <THIS-FILE-DIR>/scripts/sync_skills.py`
 2. Return to caller: {sync-output}
