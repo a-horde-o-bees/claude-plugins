@@ -54,18 +54,19 @@ class TestDeployedFilesBlocked:
 class TestPropagatedSkillScriptsBlocked:
     @pytest.mark.parametrize("path", [
         "plugins/skill-authoring/skills/skill-composer/scripts/_environment.py",
-        "plugins/skill-authoring/skills/skill-composer/scripts/_deps.py",
+        "plugins/skill-authoring/skills/skill-composer/_read_deps.py",
         "plugins/some-plugin/skills/some-skill/scripts/_environment.py",
-        "plugins/some-plugin/skills/some-skill/scripts/_deps.py",
+        "plugins/some-plugin/skills/some-skill/_read_deps.py",
+        "plugins/some-plugin/skills/some-skill/_dependencies/_read_deps.py",
         "plugins/some-plugin/skills/some-skill/_dependencies/process-flow-notation.md",
         "plugins/some-plugin/skills/some-skill/_dependencies/file-decomposition.md",
         "plugins/some-plugin/skills/some-skill/_dependencies/markdown-dependency-resolution.md",
     ])
     def test_skill_scripts_denied(self, path: str):
-        """Each skill's scripts/_environment.py, scripts/_deps.py, and
-        _dependencies/*.md propagated rule canonicals are copies of the
-        project-root canonical — block direct edits so changes route
-        through the canonical."""
+        """Propagated canonicals are blocked from direct edit so changes
+        route through the project-root canonical: scripts/_environment.py,
+        _read_deps.py at both skill root and _dependencies/, and rule seed
+        markdown under _dependencies/."""
         result = _run_hook(path)
         assert result.returncode == 2
         decision = json.loads(result.stdout)["hookSpecificOutput"]
@@ -84,7 +85,7 @@ class TestPropagatedSkillScriptsBlocked:
         """Canonical sources at project root are editable."""
         for path in (
             "shared/scripts/_environment.py",
-            "shared/scripts/_deps.py",
+            "shared/_dependencies/_read_deps.py",
             "shared/_dependencies/process-flow-notation.md",
             "shared/_dependencies/file-decomposition.md",
             "shared/_dependencies/markdown-dependency-resolution.md",
