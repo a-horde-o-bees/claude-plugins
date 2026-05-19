@@ -6,19 +6,5 @@
       "Bash(plugins/ocd/bin/ocd-run:*)",
       "mcp__plugin_ocd_navigator__*"
     ]
-  },
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Edit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 .claude/hooks/guard_derived.py",
-            "timeout": 5
-          }
-        ]
-      }
-    ]
   }
 }

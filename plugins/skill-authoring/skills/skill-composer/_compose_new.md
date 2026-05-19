@@ -23,7 +23,10 @@
 
 4. {chosen-name}: 2–3 lowercase-hyphenated candidates from {intent} + {surface}; refine with user until one is settled
 
-5. Write `<destination-parent>/{chosen-name}/composition.md` from `<skill-base>/assets/composition-template.md`, substituting placeholders with {intent}, {surface}, {chosen-name}
+5. Scaffold the skill directory:
+    1. Write `<destination-parent>/{chosen-name}/composition.md` from `<skill-base>/assets/composition-template.md`, substituting placeholders with {intent}, {surface}, {chosen-name}
+    2. Create the `<destination-parent>/{chosen-name}/sources/` subfolder (empty; sources land here when added)
+    3. Copy `<skill-base>/assets/skill-gitignore` to `<destination-parent>/{chosen-name}/.gitignore` — bundled template alongside the other `assets/*` templates. Currently lists `sources/`. Vendored source content is fetch-on-demand per composition.md pins; the local copy is a cache, not a tracked artifact. The rule travels with the skill if extracted to another repo
 
 6. {sources}: AskUserQuestion — enumerate exemplar sources, each as `<url>:<skill>[@<ref>]`
 

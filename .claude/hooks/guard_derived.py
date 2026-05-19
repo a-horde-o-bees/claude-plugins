@@ -13,7 +13,9 @@ Two categories of derived files should not be edited directly:
 
 Edit canonical sources instead:
 - Rule canonicals: shared/_dependencies/<name>.md
-- Shared scripts (_environment.py, _deps.py): shared/scripts/<name>.py
+- Resolver script: shared/_dependencies/_read_deps.py (propagates to
+  <skill>/_read_deps.py and <skill>/_dependencies/_read_deps.py)
+- Shared scripts (_environment.py): shared/scripts/<name>.py
 - Conventions: plugins/ocd-old/systems/conventions/templates/ (source-only;
   no current deployment target)
 - Log templates: plugins/ocd-old/systems/log/templates/<type>/
@@ -26,8 +28,9 @@ import sys
 GUARDED_PATTERNS = [
     re.compile(r"^\.claude/(rules|conventions)/"),    # deployed from templates
     re.compile(r"^logs/[^/]+/_(?:template|samples-template)\.md$"),  # deployed log templates
-    re.compile(r"^plugins/[^/]+/skills/[^/]+/scripts/(_environment|_deps)\.py$"),  # propagated python canonicals
-    re.compile(r"^plugins/[^/]+/skills/[^/]+/_dependencies/[^/]+\.md$"),  # propagated rule canonicals (seed storage)
+    re.compile(r"^plugins/[^/]+/skills/[^/]+/scripts/_environment\.py$"),  # propagated env canonical
+    re.compile(r"^plugins/[^/]+/skills/[^/]+/_read_deps\.py$"),  # propagated resolver canonical (skill root)
+    re.compile(r"^plugins/[^/]+/skills/[^/]+/_dependencies/[^/]+$"),  # propagated rule canonicals + resolver in seed storage
 ]
 
 

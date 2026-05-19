@@ -37,8 +37,6 @@
 7. Scaffold `{destination}/{name}/`:
     1. Write `SKILL.md` from `<skill-base>/assets/skill-template.md`, substituting values from the dialogue
     2. For each cognitive moment in {surface}, write `_<verb>.md` from `<skill-base>/assets/verb-workflow-template.md`
-    3. For each verb with verb-specific runtime deps, add a `### Dependencies` body section declaring `[[name]]` references per [[markdown-dependency-resolution]]
-    4. Bundle dep seeds: copy each declared `shared/_dependencies/<name>.md` into `{destination}/{name}/_dependencies/<name>.md`
 
 8. If {test-cases} is yes: scaffold `evals/evals.json` with 2–3 prompt entries the user dictates. The embedded source's schema at `sources/anthropics-skills--skill-creator/references/schemas.md` documents the full eval entry shape.
 

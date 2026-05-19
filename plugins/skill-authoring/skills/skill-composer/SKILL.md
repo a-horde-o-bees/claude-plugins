@@ -7,23 +7,6 @@ description: Use this skill when the user wants to design a new skill from one o
 
 Compose new skills from one or more exemplar sources, with PFN + progressive-disclosure authoring discipline applied automatically. Drift detection against pinned upstream commits via non-mutating `git ls-remote`.
 
-## Dependencies
-
-1. {dependencies}:
-    - [[progressive-disclosure]]
-    - [[process-flow-notation]]
-    - [[workflow-vs-script]]
-    - [[description-authoring]]
-    - [[markdown]]
-2. For each {dependency} in {dependencies}:
-    1. {found}: bash: `find ~/.claude <project>/.claude -path "*dependencies/{dependency}.md" -not -path "*/_dependencies/*" -type f 2>/dev/null`
-    2. If {found} is empty:
-        1. {scope}: `<project>` if `<skill-base>` starts with `<project>`, else `~`
-        2. bash: `cp <skill-base>/_dependencies/{dependency}.md {scope}/.claude/dependencies/{dependency}.md`
-        3. {path}: the cp target
-    3. Else: {path}: first of {found} — prefer user-scope; `rules/dependencies/` over plain `dependencies/`; user-scope skills skip project matches
-    4. Read {path} if not in context
-
 ## Triggers
 
 | Cognitive moment | Verb |
@@ -87,10 +70,10 @@ No shared cache directory; no central registry. Each composition.md IS the per-s
 
 `compose new` and `compose refine` scaffold and edit live skill files directly from bundled templates at `assets/skill-template.md`, `assets/verb-workflow-template.md`, and `assets/composition-template.md`. The disciplines that shape the output:
 
-- **SKILL.md body shape** — [[progressive-disclosure]]: frontmatter description as cognitive trigger, body holds Triggers + Verb topography pointing at `_<verb>.md` workflow files
-- **Workflow files** (`_<verb>.md`) — [[process-flow-notation]]: numbered steps, indentation-scoped blocks, `Call:` refs to components, `bash:` / `skill:` invocation prefixes
-- **Python implementation** — `scripts/` package skeleton; mechanically resolvable work goes there per [[workflow-vs-script]]
-- **Frontmatter descriptions** — [[description-authoring]]: scope + role, exclude internals / contents / history
+- **SKILL.md body shape** — /progressive-disclosure: frontmatter description as cognitive trigger, body holds Triggers + Verb topography pointing at `_<verb>.md` workflow files
+- **Workflow files** (`_<verb>.md`) — /process-flow-notation: numbered steps, indentation-scoped blocks, `Call:` refs to components, `bash:` / `skill:` invocation prefixes
+- **Python implementation** — `scripts/` package skeleton; mechanically resolvable work goes there per /workflow-vs-script
+- **Frontmatter descriptions** — /description-authoring: scope + role, exclude internals / contents / history
 
 `composition.md` tracks intent and source provenance; `SKILL.md` + `_<verb>.md` are the live implementation. The agent edits both in place.
 

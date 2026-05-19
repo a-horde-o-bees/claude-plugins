@@ -1,217 +1,227 @@
 # Architecture refactor
 
-Skills-as-atomic-unit architecture with hybrid distribution. Each capability is a folder following the universal `<skill-name>/SKILL.md` format. Two distribution channels deliver them: marketplace plugin install (`/plugin install <plugin>@<marketplace>`) for users who want bundles, and individual user-scope install (`npx skills add ...`) for users who want one skill at a time. This project uses the npx channel for its own consumption while preserving plugin install as a first-class downstream option.
+Skills-as-atomic-unit architecture with hybrid distribution and first-class plugin-deps composition. Each capability is a self-contained `<skill-name>/SKILL.md` folder. Plugins bundle cohesive skill sets and compose via Claude Code's 2026 plugin-deps mechanism (semver-pinned, declared in `plugin.json`). Two distribution channels deliver them: marketplace plugin install for bundles, `npx skills add` for individual skills.
+
+Grounded in `logs/research/ai-coding-tool-survey/consolidated.md` (shapes #2 plugin marketplace with deps, #10 skills as units, #16 skill/rule distribution via package registry) and the 2026-05-19 community survey of multi-skill composition patterns.
 
 ## Goal
 
-Reduce always-on context cost while making skills mainstream-discoverable on aggregators and individually installable. Plugins remain a packaging convenience for marketplace bundles; the source-of-truth content is skill folders. Domain-based plugin bucketing (Phase G) replaces the monolithic `ocd` plugin with thematic bundles.
+Reduce always-on context cost while making skills mainstream-discoverable and individually installable. Plugins are cohesive packaging units composing via plugin-deps — not bundles of everything-and-the-kitchen-sink. Skills are the atomic unit and source of truth.
 
 ## Architecture
 
-### Three-mechanism content delivery
+### Skills as the atomic unit
 
-**Rules system — always-on discipline library.** Curated behavioral disciplines that fire on every utterance (honesty, principled-pushback, trigger-specificity, etc.). Deployed to `<scope>/.claude/rules/dependencies/` (flat). Project opts into specific rules via the `rules` skill. New behavioral content defaults to skills, not rules — rules are the always-on layer for disciplines that genuinely cannot be reach-for.
+Each skill is fully self-contained in `<skill-name>/SKILL.md`:
 
-**Skills — reach-for capabilities.** Procedural workflows, tool bridges, behavioral guides. Standard mainstream `<skill-name>/SKILL.md` folder format — folder names hyphenated per agentskills.io spec. Frontmatter `description` does double-duty: discoverable on marketplaces AND cognitive-trigger-precise. Body shape: triggers + command topography; deeper procedural content reached via `Call: _<component>.md` or `uv run -m scripts.<verb> <args>` invocation. Flat layout — `_<verb>.md` and `_<component>.md` siblings of SKILL.md; underscore prefix signals "called only, never opened directly." Python implementation lives in `<skill>/scripts/`.
+- Standard `name`, `description`, `argument-hint`, `allowed-tools` frontmatter per `agentskills.io` spec
+- Body shape: process flow; components reached via `Call: _<component>.md`; scripts invoked via `cd <THIS-FILE-DIR> && python3 -m scripts <verb>`
+- Flat layout — `_<verb>.md` and `_<component>.md` siblings of SKILL.md; underscore prefix signals "called only, never opened directly"
+- Python implementation in `<skill>/scripts/`; vendor minimal helpers inline rather than introduce cross-skill shared modules
 
-**Dependencies — shared content.** Single canonical copy at `<scope>/.claude/dependencies/<name>.md`. Sources declare deps in a `## Dependencies` body section using `[[name]]` wikilinks. Discovery is filesystem-based: skill workflow finds the deployed file at session-fire time; auto-deploys from skill-bundled seed at `<skill-base>/_dependencies/<name>.md` on first miss. Two access patterns share the same root files:
+No shared content files across skills. No `## Dependencies` declarative blocks. No resolver script. Cross-skill references happen by prose invocation: `/skill-name` or namespace-qualified `/plugin:skill-name` when disambiguation matters.
 
-1. **Skill-declared deps** — the active skill's workflow lists its deps; they auto-load when the skill fires.
-2. **Situational user load** — a planned skill (Phase H) lets the user pull a convention into context on demand for any task, regardless of which skill is active.
+Grounded in Anthropic's own `anthropics/skills` repo pattern — each skill self-contained; where genuine reuse exists (the `claude-api` skill's `shared/`), it sits *inside* one skill, not across them.
+
+### Plugin composition via plugin-deps
+
+Claude Code shipped [first-class plugin dependencies](https://code.claude.com/docs/en/plugin-dependencies) in 2026:
+
+- Plugins declare deps on other plugins in `.claude-plugin/plugin.json` with semver pins via `{plugin-name}--v{version}` git tags
+- `claude plugin disable` refuses if another enabled plugin depends on it
+- Cross-marketplace deps via `allowCrossMarketplaceDependenciesOn`
+
+A consuming plugin (e.g., `git`) declares `dependencies` on the bundles its skills invoke (e.g., `writing`, `communication`). Users installing `git` automatically get the dep bundles. Cross-skill invocation resolves through the global skill registry; namespace-qualified form (`/writing:concise-prose`) guarantees the source when name collisions exist.
+
+This supersedes the prior `## Dependencies` + `_read_deps.py` + pre-commit-propagation machinery — that solved the same problem at the file level before Anthropic shipped it at the plugin level.
 
 ### Distribution model — hybrid (both channels first-class)
 
-**Plugin packaging (marketplace surface).** N thematic plugins from this source repo, each bundling a curated set of skills. Users installing via `/plugin install <plugin>@<marketplace>` get the bundle atomically. Plugin manifests in `.claude-plugin/marketplace.json` carve the repo into packaging units. Mirrors anthropics/skills (multiple plugins per repo).
+**Plugin packaging.** N cohesive plugins from this source repo. `.claude-plugin/marketplace.json` lists them. Users installing via `/plugin install <plugin>@<marketplace>` get the bundle plus its declared deps atomically.
 
-**Individual skill installation (npx surface).** Each skill folder is independently portable. Users (and this project itself) install via `npx skills add <owner>/<repo> --skill <name> -g`, which symlinks the skill folder into `~/.claude/skills/<name>/`. Per the discovery convention, the skill appears in the agent's `<available_skills>` registry mid-session — no restart required. This is the path this project uses for its own consumption per `.claude/installed-skills.json`.
+**Individual skill installation.** Each skill folder is independently portable. Users install via `npx skills add <owner>/<repo> --skill <name> -a claude-code -g`, which lands at `~/.claude/skills/<name>/` (use `-a claude-code` — the default lands at `~/.agents/skills/` which Claude Code doesn't scan). Personal-scope and plugin-scope live in different namespaces; no collision.
 
-Both materialize from the same source repo. The npx path benefits from Claude Code's user-scope discovery without depending on plugin install correctness (currently affected by harness regression [#15178](https://github.com/anthropics/claude-code/issues/15178)).
+This project consumes its own skills via the npx path per `.claude/installed-skills.json`.
 
 ### Source repo layout
 
 ```
 <repo-root>/
 ├── .claude-plugin/
-│   └── marketplace.json          # defines N thematic plugin bundles
-├── plugins/                       # domain-organized plugin packages
-│   ├── <domain>/
+│   └── marketplace.json          # defines the plugins below
+├── plugins/
+│   ├── <plugin-name>/
 │   │   ├── .claude-plugin/
-│   │   │   └── plugin.json
-│   │   └── skills/                # skill folders (one per skill, hyphenated)
+│   │   │   └── plugin.json       # name, version, dependencies: [...]
+│   │   └── skills/
 │   │       └── <skill-name>/
 │   │           ├── SKILL.md
-│   │           ├── composition.md  # present only for composed skills
-│   │           ├── _<verb>.md      # internal verb workflows
-│   │           ├── _<component>.md # internal sub-procedures
-│   │           ├── scripts/        # python implementation
-│   │           └── _dependencies/  # bundled seeds for runtime resolution
+│   │           ├── _<verb>.md       # internal verbs
+│   │           ├── _<component>.md  # internal sub-procedures
+│   │           ├── composition.md   # present only for composed skills
+│   │           └── scripts/         # python implementation
 │   └── ...
-├── shared/                        # cross-skill canonicals (deps, scripts)
 └── README.md
 ```
 
-`composition.md` is the marker for composed skills (built via `skill-composer`) — it travels with the skill regardless of which domain plugin holds it. No separate "composed-skills" bucket; composition is a *how it was made* attribute, not a *what domain* attribute.
+`composition.md` is the marker for composed skills built via `skill-composer` — travels with the skill. No separate "composed-skills" bucket.
 
-### Plugin compartmentalization
+### Plugin inventory
 
-Domain-based plugin bucketing. Migrate skills out of the legacy `ocd` plugin into domain plugins as Phase G executes. Active proposal:
+Each plugin is a cohesive bundle. Plugin-deps wire cross-plugin needs.
 
-- `plugins/git/` — version-control operations (currently `plugins/ocd/skills/git/`)
-- `plugins/discipline/` — `rebuild`, `rules` (currently `plugins/ocd/skills/{rebuild,rules}/`)
-- `plugins/skill-authoring/` — `skill-creator`, `skill-composer` (unchanged)
-- Future domains as new skills land (e.g., `python` for `claude-python` composition)
+| Plugin | Purpose | Skills |
+|---|---|---|
+| `git/` | Version-control discipline | git (verbs: commit, checkpoint, ci, push, release), checkpoint |
+| `transcripts/` | Transcript querying | transcripts (9 verbs) |
+| `writing/` | Prose/artifact authoring discipline | concise-prose, description-authoring, markdown-authoring, process-flow-notation, reauthor, trigger-specificity |
+| `communication/` | Agent⇄user interaction discipline | honesty, principled-pushback, confirm-shared-intent |
+| `testing/` | Testing discipline | test-authoring, test-driven-development, test-maintenance, testing-decisions |
+| `design/` | Engineering design discipline | agent-first-interfaces, borrow-before-build, clean-break, composability, fix-foundations-not-symptoms, graceful-degradation, structure-as-documentation, workflow-vs-script, file-decomposition, progressive-disclosure |
+| `pdf-plus/` | One-shot markdown→PDF rendering | pdf-plus |
+| `skill-authoring/` | Skill creation + maintenance | skill-creator, skill-composer, rules |
+| `permissions/` (pending — #20) | Hook-based permission management | permissions |
+| `navigator/` (future) | Project navigation (post-MCP) | navigator |
 
-The `ocd` plugin retires once its skills move out. The `composed-skills` plugin retires alongside the bucket concept. The source repo stays one unit; plugin manifests carve it as packaging convenience.
+### Naming framing
 
-### skill-authoring plugin
+Discipline skills invoke as `apply /<skill-name>` — e.g., "apply /concise-prose when writing the commit message." Names stay specific; truncating to short adjectives loses information (tested via "be /X" framing, abandoned in favor of "apply /X").
 
-Meta-plugin for skill authoring discipline. Two skills:
+Renames executed during Phase G:
+- `concise` → `concise-prose` (specificity; the skill is about prose, not just brevity)
+- `markdown` → `markdown-authoring` (parallels `description-authoring`)
+- `rebuild` → `reauthor` (verb-form noun; clearer authoring framing than reconstruction connotation)
 
-| Skill | Purpose |
-|---|---|
-| `skill-creator` | Author a new skill from scratch via dialogue + scaffolding |
-| `skill-composer` | Author a new skill from one or more exemplar source skills with drift tracking against pinned commits |
+`process-flow-notation` promoted from a shared dep file to its own skill in `writing/`, with scope narrowed to control-flow-bearing workflows (conditionals, loops, variable binding, sub-routine calls, error handling, nested indented blocks). Plain numbered markdown lists don't need PFN.
 
-Both apply PFN + progressive-disclosure + description-authoring + workflow-vs-script disciplines inline. Composer's drift tracking lives in each composition's `composition.md`. Direct install of unmodified upstream skills is covered by `npx skills add`; skill-authoring focuses on the authoring + composition layer.
+### Rules skill
 
-### Hook scoping — Pattern B for installer skills
+The `rules` skill (in `skill-authoring/`) elevates a skill to always-on guidance by appending a prose directive to CLAUDE.md:
 
-Per [Hooks doc](https://code.claude.com/docs/en/hooks):
+- `/rules add <skill>` — append a `Read /<skill>` (or similar) directive between sentinel comments for idempotent edit
+- `/rules remove <skill>` — strip the directive
+- `/rules list` — show current always-on directives
+
+The skill body stays at its canonical location; only the directive lives in CLAUDE.md. Simple; refine as use exposes friction.
+
+### Hook scoping
 
 - **Pattern A** — skill frontmatter declares `hooks:`. Lifecycle-scoped to skill activation.
 - **Pattern B** — skill body deploys hook config to `<scope>/.claude/settings.json` on invocation. Persistent.
 
-Permissions becomes a standalone Pattern B skill (Phase F).
+The `permissions/` plugin is Pattern B by definition.
 
 ### MCP benching
 
-Existing MCP servers (transcripts, navigator) move to bash-CLI-only via their existing `ocd-run <system> <verb>` interfaces (Phase D). MCP servers cost always-on tool definitions even when unused; bash CLIs cost zero until invoked. Reactivate MCPs when a context-cost case demonstrates they're worth the always-on overhead.
+Existing MCP servers move to bash CLI via per-skill `python3 -m scripts <verb>` invocation (Phase D). MCP servers cost always-on tool definitions even when unused; bash CLIs cost zero until invoked. Reactivate MCP only when an always-on case justifies the overhead.
 
 ### What dies
 
-- `bin/<plugin>-run` dispatcher pattern (`bin/ocd-run`, `bin/ocd-path`) — community pattern is direct `uv run -m scripts.<verb>` invocation
-- `plugins/<plugin>/run.py` module loader — same fate as the dispatcher
-- Underscored skill folder names (`needs_map`, etc.) — agentskills.io spec mandates `[a-z0-9-]+`
-- The `composed-skills` plugin bucket — composition history travels via `composition.md`, location organizes by domain
-- Discovery substrate (`triggers.md`, `CLAUDE.md` operational refs at system level) — folded into SKILL.md
-- The `convention_gate` hook + `.claude/conventions/` deployment directory — conventions become situationally-loaded dep files
-- Tagline frontmatter — description does both general-purpose discovery and cognitive-trigger work
+- `bin/<plugin>-run` dispatchers (`bin/ocd-run`, `bin/ocd-path`)
+- `plugins/<plugin>/run.py` module loader
+- `composed-skills` plugin bucket
+- `convention_gate` hook + `.claude/conventions/` deployment directory
+- Tagline frontmatter — `description` does both discovery and trigger work
 - `includes/excludes` path-glob mechanism — replaced by frontmatter-description triggering
+- `## Dependencies` body sections + `[[wikilink]]` resolution
+- `_read_deps.py` and pre-commit propagation tooling
+- `shared/_dependencies/` directory at repo root
+- `markdown-dependency-resolution` skill
+- Three-mechanism content delivery model (rules + skills + deps) — skills-only is the architecture
+- `plugins/ocd/` and `plugins/ocd-old/` shells once skills disperse to new plugin homes
 
 ### What survives
 
-- State location convention — plugin data dir for cache and per-project state keyed on path-hash
-- Dependencies layer — leave-on-uninstall, no refcount
-- Rules system — always-on discipline library
+- Skills-as-folder format (`SKILL.md` + siblings + `scripts/`)
+- Plugin install path — first-class downstream distribution
+- `composition.md` marker for composed skills
 - MCP servers themselves (benched, not deleted) — reactivate when justified
-- Plugin install path — preserved as a first-class downstream distribution channel
+- State location convention — plugin data dir for cache; per-project state keyed on path-hash
 
 ## Phases
 
 ### Phase A — Decisions and plan ✓ done
+Captured in this file and `logs/decision/*.md`.
 
-Captured in `plans/architecture-refactor.md` (this file) and the relevant `logs/decision/*.md`.
-
-### Phase B — Build skill-authoring plugin ✓ shipped
-
-skill-authoring landed with `skill-composer` + `skill-creator`. Final design (after several pivots captured in `logs/decision/progressive-skill-composer.md`):
-
-- Hyphenated folder names; `scripts/` Python package; uniform `uv run -m scripts.<verb>` invocation
-- Compose verb workflow with `composition.md` as alignment doc + pinned source provenance
-- `--destination <user|project|path>` accepts any path including custom bundle locations
-- skill-composer focuses on composition + drift tracking; `npx skills add` covers unmodified upstream install
-
-The skill-authoring *plugin install* path is no longer used by this project (we run the skills via npx at user scope) but remains available for downstream consumers.
+### Phase B — skill-authoring plugin ✓ done
+Shipped with `skill-creator` + `skill-composer`. Final design in `logs/decision/progressive-skill-composer.md`. Gains `rules` skill in Phase G.
 
 ### Phase C — Pilot conversion ✓ done
+`git` skill migrated 2026-05-12. Validated post-refactor authoring shape end-to-end.
 
-`git` skill migrated from `plugins/ocd/systems/git/` to `plugins/ocd/skills/git/` (2026-05-12); validated the post-refactor authoring shape end-to-end including the AIA-cluster dependency pattern.
+### Phase D — Transcripts and navigator off MCP — partially done
+- Transcripts ✓ done 2026-05-19. Currently at `plugins/ocd/skills/transcripts/`; moves to `plugins/transcripts/` in Phase G.
+- Navigator pending. Same migration pattern.
 
-### Phase D — Transcripts and navigator off MCP — pending
-
-Both systems still in `plugins/ocd-old/systems/`. Migrate each to skill format bridging the existing `ocd-run <system> <verb>` bash CLI; remove MCP server registration to recover always-on context cost.
-
-### Phase E — Convert remaining ocd-old systems to skill format — in progress
-
-Pending systems with `SKILL.md` in `plugins/ocd-old/systems/`: transcripts, needs-map, check, pdf, sandbox, log, navigator, setup, retrospective, refactor.
+### Phase E — Convert remaining ocd-old systems — in progress
+9 systems remain in `plugins/ocd-old/systems/`: needs-map, check, pdf, sandbox, log, navigator, setup, retrospective, refactor.
 
 For each:
-
-- Move to `plugins/<domain>/skills/<skill-name>/` (hyphenated); domain bucket per Phase G layout
-- Author SKILL.md per format conventions
+- Author SKILL.md per format conventions; move to `plugins/<target-plugin>/skills/<skill-name>/`
 - Extract verbs and components to `_<name>.md` siblings
-- Move Python implementation into `skills/<skill-name>/scripts/`; replace `ocd-run <sys> <verb>` invocations with `uv run -m scripts.<verb>`
-- Update marketplace.json to include the migrated skill in the appropriate plugin bundle
-- PFN sweep on the migrated skill's procedural content
+- Move Python into `scripts/`; replace `ocd-run` invocations with `python3 -m scripts.<verb>`
+- Vendor minimal dependencies inline (transcripts migration pattern); no cross-skill shared modules
+- Update marketplace.json for the plugin home
 
-When the last system migrates, the dispatcher infrastructure retires:
-
+When the last system migrates:
 - Delete `plugins/ocd-old/bin/ocd-run`, `bin/ocd-path`, `run.py`
-- Delete `plugins/ocd-old/dependencies/environment.py`, `errors.py` (or inline what scripts still need)
-- Strip propagation rules from `.githooks/pre-commit` for the deleted shared files
+- Delete `plugins/ocd-old/dependencies/environment.py`, `errors.py`
+- Strip propagation rules from `.githooks/pre-commit`
 - Revoke `ocd-run`/`ocd-path` allowlist entries in `.claude/settings.json`
 
-### Phase F — Permissions to Pattern B — pending
+### Phase F — Permissions plugin — pending
+1. Author `plugins/permissions/` with a Pattern B skill that deploys hook config on invocation
+2. Verify hook continuity across sessions and subagent contexts
+3. Remove permissions verbs from `setup` system
+4. `setup` dissolves once all verbs absorb elsewhere
 
-1. Author permissions skill that, on invocation, deploys hook config to `<scope>/.claude/settings.json`
-2. Verify hook continuity — hooks fire on every Bash call regardless of permissions skill activation
-3. Remove permissions from setup system; setup loses one of its reasons to exist
-4. Possibly: setup system fully dissolves once all its verbs are absorbed elsewhere
+### Phase G — Plugin compartmentalization — mostly complete (2026-05-19)
+Architecture finalized + execution landed in one session. 9 of 10 sub-tasks done; #20 (permissions plugin authoring) is the remaining lift.
 
-### Phase G — Plugin compartmentalization — active next
+Plugin layout finalized per inventory above. Sub-tasks:
 
-1. Define domain plugin layout — `plugins/git/`, `plugins/discipline/`, `plugins/skill-authoring/` (kept), plus future domain plugins as new skills land
-2. Move `plugins/ocd/skills/git/` to the `git` domain plugin
-3. Move `plugins/ocd/skills/{rebuild,rules}/` to the `discipline` domain plugin
-4. Update `marketplace.json` to list the new domain plugins
-5. Retire `plugins/ocd/` and `plugins/composed-skills/` plugin shells
-6. Update `.claude/installed-skills.json` manifest entries' `plugin` fields to match new domain plugins so version-tracking continues
-7. Update any cross-references in docs and skill workflows
+1. Create `plugins/{writing,communication,testing,design}/` shells with `plugin.json` and `skills/` directories
+2. Move the 21 discipline skills from `.claude/skills/` to their target plugin's `skills/` directory
+3. Apply renames: `concise` → `concise-prose`, `markdown` → `markdown-authoring`
+4. Move `plugins/ocd/skills/git/` to `plugins/git/`
+5. Move `plugins/ocd/skills/transcripts/` to `plugins/transcripts/`
+6. Move `plugins/ocd/skills/rules/` to `plugins/skill-authoring/skills/rules/`; refactor to CLAUDE.md-directive deployment model
+7. Author `plugins/permissions/` (Phase F overlaps here)
+8. Declare initial cross-plugin deps in each `plugin.json`:
+   - `git/` → `["writing", "communication"]` (checkpoint composes commit messages applying writing + communication discipline)
+   - `skill-authoring/` → `["writing", "communication"]`
+   - Other deps as workflows surface them
+9. Update `marketplace.json` to list the new plugins
+10. Retire `plugins/ocd/` and `plugins/composed-skills/` shells
+11. Delete `markdown-dependency-resolution` skill
+12. Delete `shared/_dependencies/` and `_read_deps.py`; strip propagation rules from `.githooks/pre-commit`
+13. Update `.claude/installed-skills.json` `plugin` fields
+14. Update cross-references in docs and skill workflows
 
-### Phase H — Conventions as situational-load skill — pending
+### Phase H — RETIRED
+Original "conventions as situational-load skill" no longer applies. Under skills-only architecture, `/skill-name` invocation IS the situational-load mechanism. The `rules` skill covers the user-driven always-on promotion path.
 
-Conventions stay as dependency files (`<scope>/.claude/dependencies/<name>.md`). A new user-facing skill lets the user call a convention into context on demand for any task. Same root files; two access patterns:
-
-- **Skill-declared deps** — skill's workflow lists deps that auto-load when the skill fires (existing pattern)
-- **User-driven on-demand load** — new skill takes a convention name and loads it into context regardless of which skill is active (this phase)
-
-Pre-work done: `convention_gate` hook removed; `.claude/conventions/` directory wiped from this project; canonicals remain at `plugins/ocd-old/systems/conventions/templates/` as source-of-truth pending migration.
-
-### Phase I — Decision log review — active this session
-
+### Phase I — Decision log review — active
 Walking `logs/decision/*.md` against final implementation. Per the survey:
-
 - ESSENTIAL (8): keep as-is — blueprint, database, framework, mcp, navigator, principles, skill-architecture, skill-authoring
-- SLIM (6): trim options-considered scaffolding, drop resolved-context preludes — check, log, mcp-benching, ocd-run-self-update, progressive-skill-composer (large; possibly deferred), sandbox
-- REFRAME (4): update framing to reflect post-pivot reality — hook-scoping, pdf, plugin-compartmentalization, state-location
-- OBSOLETE (1): delete — yagni-revocation (one-time rule-removal record; no ongoing rationale; covered in skill-architecture.md)
+- SLIM (6): trim options-considered scaffolding — check, log, mcp-benching, ocd-run-self-update, progressive-skill-composer, sandbox
+- REFRAME (4): update framing post-pivot — hook-scoping, pdf, plugin-compartmentalization, state-location
+- OBSOLETE (1): delete — yagni-revocation
 
-## AIA cluster — agent-instruction-authoring
-
-Shared dependencies governing how agent-facing instructions are authored. Current members in `shared/_dependencies/`:
-
-- `process-flow-notation.md` — workflow notation spec
-- `trigger-specificity.md` — single-mechanism + right-level (principle, not symptom)
-- `description-authoring.md`, `concise-prose.md`, `file-decomposition.md`, `progressive-disclosure.md` (and others) — see `.claude/rules/dependencies/` for the current always-on set
-
-Access patterns (Phase H formalizes the on-demand path):
-
-1. **Skill-declared** — skills list deps in their `## Dependencies` body section using `[[name]]` wikilinks; deps auto-resolve and load when the skill fires
-2. **On-demand** — user calls a convention into context for a given task via a planned Phase H skill; same root files, different access path
-
-## Stopgap: manual rules deployment
-
-Until the rules-skill rebuild ships full coverage, this project deploys the always-on rules set manually via the `rules` skill's `install` verb. The current deployed set lives in `.claude/rules/dependencies/` (flat); see `plugins/ocd/skills/rules/_dependencies/` and `shared/_dependencies/` for the source canonicals.
+18 of 19 logs reviewed per TASKS.md; one remains.
 
 ## Open questions
 
+- **Plugin-dep version pinning conventions** — how strict do we pin (caret? exact?). Sketch a release-tag discipline alongside the first cross-plugin dep we declare.
 - **Hook lifecycle empirical verification** — Pattern A may fire only during skill invocation, or whenever the skill is loaded for discovery. Test before any Pattern A skill ships hooks expecting always-on behavior.
-- **Multi-skill disambiguation rule** — when conversation context surfaces multiple parallel skill opportunities, agent should show the user candidates and let them pick. New always-on rule when authored.
-- **Permissions Pattern B against subagent contexts** — does the deployed settings.json hook fire in spawned subagent contexts the same way as in the main agent? Verify before relying on it.
-- **Domain plugin naming** — `git`, `discipline`, `skill-authoring` is the current proposal; finalize during Phase G start.
+- **Multi-skill disambiguation** — when conversation context surfaces multiple parallel skill opportunities, agent should show the user candidates and let them pick. Currently captured in `trigger-specificity` authoring guidance.
+- **Permissions Pattern B in subagent contexts** — does the deployed `settings.json` hook fire in spawned subagent contexts the same way as in the main agent? Verify before relying on it.
+- **`/rules` directive wording** — exact text appended to CLAUDE.md (`Read /<skill>` vs `Always apply /<skill> when ...` vs `@<absolute-path-to-SKILL.md>` import syntax). Defer until first implementation surfaces what the model actually responds to.
+- **Default deps for tooling plugins** — most tooling plugins (git, transcripts, navigator) arguably benefit from `writing` + `communication`. Decide per-plugin during Phase G execution, or set a default convention for tooling plugins.
+- **Name-collision behavior on short alias** — when two plugins ship the same skill name, the namespaced form (`plugin:name`) always disambiguates but the short `/name` alias resolution is undocumented (open Anthropic issue [#50486](https://github.com/anthropics/claude-code/issues/50486)). Audit our marketplace for name overlap before publishing.
 
 ## State
 
-Phases A, B, C complete. Phase E in progress (git migrated; 10 systems remain in `ocd-old`). Phase G next-up (domain reorg + composed-skills strip). Phase I active this session. Phases D, F, H pending.
+Phases A, B, C complete. Phase D partial — transcripts done 2026-05-19, navigator pending. Phase E in progress (9 systems remain). Phase G in progress (architecture finalized this session, execution next). Phase F pending. Phase H retired. Phase I active.
 
-Pre-refactor artifacts surviving as legacy infrastructure: `plugins/ocd-old/bin/ocd-run`, `bin/ocd-path`, `run.py`, `dependencies/environment.py`, the permissions allowlist for `ocd-path` and `ocd-run`. All retire when Phase E completes.
+Pre-pivot infrastructure surviving as legacy: `plugins/ocd-old/bin/ocd-run`, `bin/ocd-path`, `run.py`, `dependencies/environment.py`, the permissions allowlist. All retire when Phase E completes.

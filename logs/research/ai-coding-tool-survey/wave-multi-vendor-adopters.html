@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Alignment Shapes Matrix — Multi-vendor AGENTS.md adopter survey</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; }
+  table { border-collapse: separate; border-spacing: 0; }
+  th, td {
+    border-right: 1px solid #d4d4d8;
+    border-bottom: 1px solid #d4d4d8;
+    padding: 6px 8px;
+    text-align: center;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  thead th {
+    position: sticky;
+    top: 0;
+    background: #18181b;
+    color: #fafafa;
+    z-index: 3;
+    font-weight: 600;
+    border-bottom: 2px solid #18181b;
+  }
+  tbody th {
+    position: sticky;
+    left: 0;
+    background: #f4f4f5;
+    z-index: 2;
+    text-align: left;
+    font-weight: 600;
+    border-right: 2px solid #18181b;
+    padding-right: 14px;
+  }
+  thead th:first-child {
+    position: sticky;
+    top: 0;
+    left: 0;
+    z-index: 4;
+    text-align: left;
+    padding-right: 14px;
+  }
+  .ref-row th { background: #fef9c3; }
+  .ref-row td { background: #fefce8; }
+  .cell-y { background: #dcfce7; color: #166534; }
+  .cell-p { background: #fef3c7; color: #92400e; }
+  .cell-n { background: #fee2e2; color: #991b1b; }
+  .cell-na { background: #e4e4e7; color: #52525b; }
+  .cell-u { background: #e0f2fe; color: #075985; }
+  .cell-y:hover, .cell-p:hover, .cell-n:hover, .cell-u:hover { filter: brightness(0.95); cursor: help; }
+  .dim-head { writing-mode: vertical-rl; transform: rotate(180deg); padding: 12px 4px; min-width: 36px; height: 180px; }
+  .legend-swatch { display: inline-block; width: 14px; height: 14px; border-radius: 3px; vertical-align: middle; margin-right: 4px; border: 1px solid #d4d4d8; }
+  @media print {
+    body { font-size: 10px; }
+    .no-print { display: none; }
+    thead th, tbody th { position: static !important; }
+    .dim-head { height: 140px; }
+  }
+</style>
+</head>
+<body class="bg-white text-zinc-900 p-6">
+
+<header class="mb-6 max-w-6xl">
+  <h1 class="text-2xl font-bold mb-1">Alignment Shapes Matrix — Multi-vendor AGENTS.md adopter survey</h1>
+  <p class="text-sm text-zinc-600 mb-3">11 surveyed tools + Claude Code &amp; Codex CLI reference rows · 17 alignment shape dimensions · sampled 2026-05-18</p>
+  <p class="text-sm text-zinc-700">Companion to <a class="underline text-blue-700" href="./wave-multi-vendor-adopters.md">wave-multi-vendor-adopters.md</a>. Hover any non-trivial cell for citation evidence.</p>
+</header>
+
+<section class="mb-6 max-w-6xl">
+  <h2 class="text-lg font-semibold mb-2">Summary panel</h2>
+  <div class="grid grid-cols-2 md:grid-cols-6 gap-3 text-sm">
+    <div class="border border-zinc-300 rounded p-3 bg-zinc-50"><div class="text-xs text-zinc-500">Total cells</div><div class="text-xl font-bold">221</div><div class="text-xs text-zinc-500">13 tools × 17 dims</div></div>
+    <div class="border border-zinc-300 rounded p-3 bg-green-50"><div class="text-xs text-zinc-500">yes</div><div class="text-xl font-bold text-green-800">115</div><div class="text-xs text-zinc-500">52%</div></div>
+    <div class="border border-zinc-300 rounded p-3 bg-amber-50"><div class="text-xs text-zinc-500">partial</div><div class="text-xl font-bold text-amber-800">14</div><div class="text-xs text-zinc-500">6%</div></div>
+    <div class="border border-zinc-300 rounded p-3 bg-red-50"><div class="text-xs text-zinc-500">no</div><div class="text-xl font-bold text-red-800">69</div><div class="text-xs text-zinc-500">31%</div></div>
+    <div class="border border-zinc-300 rounded p-3 bg-sky-50"><div class="text-xs text-zinc-500">unverified</div><div class="text-xl font-bold text-sky-800">22</div><div class="text-xs text-zinc-500">10%</div></div>
+    <div class="border border-zinc-300 rounded p-3 bg-zinc-100"><div class="text-xs text-zinc-500">n/a</div><div class="text-xl font-bold text-zinc-700">1</div><div class="text-xs text-zinc-500">&lt;1%</div></div>
+  </div>
+  <div class="mt-3 text-sm text-zinc-700">
+    <strong>Verification posture:</strong> Of 91 gap-candidates (cells that could have been asserted <code>no</code>), 69 were confirmed <code>no</code> against vendor docs and 22 were left as <code>unverified</code> rather than asserted — applying the wave's verification rule (no false-gap assertions). The <code>no</code> cells cluster on Aider, Zed, and the hosted-only tools (Devin/Copilot) where the relevant capability genuinely isn't part of the product surface.
+  </div>
+  <div class="mt-3 text-sm">
+    <strong>Legend:</strong>
+    <span class="ml-3"><span class="legend-swatch" style="background:#dcfce7"></span>yes</span>
+    <span class="ml-3"><span class="legend-swatch" style="background:#fef3c7"></span>partial</span>
+    <span class="ml-3"><span class="legend-swatch" style="background:#fee2e2"></span>no</span>
+    <span class="ml-3"><span class="legend-swatch" style="background:#e0f2fe"></span>unverified</span>
+    <span class="ml-3"><span class="legend-swatch" style="background:#e4e4e7"></span>n/a</span>
+  </div>
+</section>
+
+<section class="overflow-auto" style="max-height: 80vh;">
+<table class="text-xs">
+  <thead>
+    <tr>
+      <th class="text-left">Tool</th>
+      <th class="dim-head">1 · Layered config</th>
+      <th class="dim-head">2 · Plugin marketplace</th>
+      <th class="dim-head">3 · Hooks</th>
+      <th class="dim-head">4 · Subagents</th>
+      <th class="dim-head">5 · SKILL.md skills</th>
+      <th class="dim-head">6 · MCP</th>
+      <th class="dim-head">7 · AGENTS.md memory</th>
+      <th class="dim-head">8 · Managed floor</th>
+      <th class="dim-head">9 · Hosted variant</th>
+      <th class="dim-head">10 · User slash commands</th>
+      <th class="dim-head">11 · OS-enforced sandbox</th>
+      <th class="dim-head">12 · Tenant admin plane</th>
+      <th class="dim-head">13 · Compliance log export</th>
+      <th class="dim-head">14 · Vetted connector catalog</th>
+      <th class="dim-head">15 · Server-hosted versioned prompts</th>
+      <th class="dim-head">16 · OpenTelemetry</th>
+      <th class="dim-head">17 · Auto-memory</th>
+    </tr>
+  </thead>
+  <tbody>
+    <!-- Reference rows -->
+    <tr class="ref-row">
+      <th>Claude Code (ref)</th>
+      <td class="cell-y" title="5-layer JSON settings, managed-settings.json + drop-in + policyHelper">y</td>
+      <td class="cell-y" title=".claude-plugin/marketplace.json; first-class plugin deps with semver">y</td>
+      <td class="cell-y" title="31 events, 4 handler types (command/http/mcp_tool/prompt/agent)">y</td>
+      <td class="cell-y" title=".claude/agents/ md+frontmatter; preload skills, fork via context: fork">y</td>
+      <td class="cell-y" title="SKILL.md with rich frontmatter; agentskills.io open standard">y</td>
+      <td class="cell-y" title="HTTP/stdio; SSE deprecated; Channels for server-push">y</td>
+      <td class="cell-p" title="Uses CLAUDE.md, not AGENTS.md; /init does one-shot AGENTS.md import">p</td>
+      <td class="cell-y" title="managed-settings.json + .d/ + managed-mcp.json + Windows registry + Jamf preference domain">y</td>
+      <td class="cell-y" title="Managed Agents (REST API), public beta since 2026-04-09">y</td>
+      <td class="cell-y" title=".claude/commands/*.md user-authored first-class">y</td>
+      <td class="cell-y" title="/sandbox + @anthropic-ai/sandbox-runtime; Seatbelt / bwrap+seccomp / WSL2">y</td>
+      <td class="cell-y" title="Admin API, parent-org → child-org, cross-org SSO/SCIM, 25 endpoints">y</td>
+      <td class="cell-y" title="Compliance API, ~30 events, 180-day retention, SIEM push">y</td>
+      <td class="cell-y" title="Anthropic Connectors Directory, 398 vetted entries">y</td>
+      <td class="cell-n" title="No analog; prompt sharing is file-based via repos/plugins">n</td>
+      <td class="cell-y" title="CLAUDE_CODE_ENABLE_TELEMETRY=1 emits OTel GenAI semconv">y</td>
+      <td class="cell-y" title="autoMemoryEnabled; Claude writes ~/.claude/projects/.../memory/MEMORY.md">y</td>
+    </tr>
+    <tr class="ref-row">
+      <th>Codex CLI (ref)</th>
+      <td class="cell-y" title="TOML; user → project (trust-gated) → admin → requirements.toml">y</td>
+      <td class="cell-y" title=".codex-plugin/; launched 2026-03-27; CLAUDE_PLUGIN_ROOT compat aliases">y</td>
+      <td class="cell-y" title="6 events including PermissionRequest as distinct">y</td>
+      <td class="cell-y" title="TOML in .codex/agents/; built-ins default/worker/explorer; agents.max_threads=6">y</td>
+      <td class="cell-y" title="SKILL.md from .agents/skills/, ~/.agents/skills/">y</td>
+      <td class="cell-y" title="[mcp_servers.&lt;id&gt;] in config.toml">y</td>
+      <td class="cell-y" title="AGENTS.md concat from CODEX_HOME down to cwd; AGENTS.override.md per dir">y</td>
+      <td class="cell-y" title="requirements.toml with allow_managed_hooks_only, guardian_policy_config, forced_login_method">y</td>
+      <td class="cell-y" title="Codex Cloud; one agent across CLI / IDE / desktop / web / ChatGPT">y</td>
+      <td class="cell-n" title="Slash commands extended via skills/plugins, not user-authored .md files">n</td>
+      <td class="cell-y" title="Seatbelt / bwrap+seccomp / WSL2; read-only / workspace-write / danger-full-access">y</td>
+      <td class="cell-n" title="OpenAI Global Admin Console covers product family, but Codex has no parent-org → child-org Admin API surface">n</td>
+      <td class="cell-y" title="Compliance Logs Platform; includes prompts/tool calls; 30-day default retention">y</td>
+      <td class="cell-n" title="No equivalent to Anthropic Connectors Directory at Codex level">n</td>
+      <td class="cell-y" title="Responses API Prompts (OpenAI platform); not Codex-specific but reachable">y</td>
+      <td class="cell-y" title="[otel] block in config.toml">y</td>
+      <td class="cell-p" title="AGENTS.override.md as user-authored local memory; no Claude-style auto-written notes">p</td>
+    </tr>
+
+    <!-- Cursor -->
+    <tr>
+      <th>Cursor</th>
+      <td class="cell-y" title="Project .cursor/rules/, team rules, user rules; .cursorrules legacy compat — cursor.com/docs/rules">y</td>
+      <td class="cell-y" title="Cursor Marketplace launched 2026-02-17; .cursor-plugin/plugin.json; one-click install — cursor.com/docs/plugins/building">y</td>
+      <td class="cell-y" title="hooks/hooks.json in plugins; pre/post tool, prompt, stop — cursor.com/docs/plugins/building">y</td>
+      <td class="cell-y" title="Cursor 2.4 subagents (Jan 2026); parallel, custom prompts/tools/models — cursor.com/changelog/2-4">y</td>
+      <td class="cell-y" title="SKILL.md with name/description frontmatter; dynamic load via 2.4 skills marketplace">y</td>
+      <td class="cell-y" title="MCP first-class; one-click install via marketplace; admin allowlists — cursor.com/docs/mcp">y</td>
+      <td class="cell-y" title="AGENTS.md supported alongside .cursor/rules/ and legacy .cursorrules — cursor.com/docs/rules">y</td>
+      <td class="cell-y" title="Admin blocklist/whitelist repos/models/MCP/agent run settings; MDM deployment — cursor.com/enterprise">y</td>
+      <td class="cell-n" title="No managed-agent REST API surface; product is IDE-only">n</td>
+      <td class="cell-n" title="No user-authored slash command file convention surfaced">n</td>
+      <td class="cell-n" title="No OS-enforced sandbox at IDE level; relies on user permissions">n</td>
+      <td class="cell-y" title="cursor.com/dashboard; SSO/SCIM; role permissions — cursor.com/docs/enterprise/identity-and-access-management">y</td>
+      <td class="cell-p" title="Audit log streams to Splunk/Sumo Logic/Datadog/webhook/S3; but 'We do not log agent responses or generated code content' — cursor.com/docs/enterprise/compliance-and-monitoring">p</td>
+      <td class="cell-y" title="Cursor Marketplace verified plugins with security scores; launch partners Amplitude/AWS/Figma/Linear/Stripe/Cloudflare/Vercel/Databricks/Snowflake/Hex">y</td>
+      <td class="cell-u" title="No first-party versioned-prompts service found; needs verification">u</td>
+      <td class="cell-p" title="Third-party cursor-otel-hook integration exists; no first-party OTel emitter documented">p</td>
+      <td class="cell-n" title="No agent-authored auto-memory surfaced">n</td>
+    </tr>
+
+    <!-- Copilot Coding Agent -->
+    <tr>
+      <th>Copilot Coding Agent</th>
+      <td class="cell-y" title=".github/copilot-instructions.md + AGENTS.md + agent-specific instructions — docs.github.com/en/copilot/reference/custom-instructions-support">y</td>
+      <td class="cell-n" title="No first-class plugin marketplace for the coding agent; awesome-copilot is a community catalog">n</td>
+      <td class="cell-y" title="8 events: sessionStart, userPromptSubmitted, PreToolUse, PostToolUse, agentStop, subagentStop, errorOccurred, sessionEnd — docs.github.com/en/copilot/reference/hooks-configuration">y</td>
+      <td class="cell-n" title="No subagent primitive for the coding agent path">n</td>
+      <td class="cell-n" title="Agent skills exist in VS Code Copilot but not the cloud coding agent path">n</td>
+      <td class="cell-y" title="MCP with allow lists; docs.github.com/en/copilot/how-tos/use-copilot-agents/cloud-agent/extend-cloud-agent-with-mcp">y</td>
+      <td class="cell-y" title="AGENTS.md added 2025-08-28; nested AGENTS.md supported — github.blog/changelog/2025-08-28-copilot-coding-agent-now-supports-agents-md-custom-instructions">y</td>
+      <td class="cell-y" title="Enterprise policies gate cloud-agent enablement; repo-owner opt-out — docs.github.com/en/copilot/concepts/agents/cloud-agent/access-management">y</td>
+      <td class="cell-y" title="Hosted by design; ephemeral GitHub Actions environment">y</td>
+      <td class="cell-na" title="Cloud agent context; slash-commands concept doesn't apply">n/a</td>
+      <td class="cell-y" title="GitHub Actions ephemeral environment provides OS sandbox">y</td>
+      <td class="cell-y" title="GitHub Enterprise org admin surface">y</td>
+      <td class="cell-y" title="GitHub Audit Log with SIEM streaming; cloud-agent events surface">y</td>
+      <td class="cell-u" title="GitHub Marketplace + MCP allow lists; vetted catalog less explicit than Anthropic Connectors Directory">u</td>
+      <td class="cell-u" title="No clear versioned prompt service for the coding agent">u</td>
+      <td class="cell-u" title="OTel emission not confirmed for coding agent">u</td>
+      <td class="cell-n" title="No agent-authored auto-memory">n</td>
+    </tr>
+
+    <!-- Gemini CLI -->
+    <tr>
+      <th>Gemini CLI</th>
+      <td class="cell-y" title="System / Workspace / User settings.json with System highest-precedence — geminicli.com/docs/reference/configuration">y</td>
+      <td class="cell-y" title="Extensions are the unit; bundle prompts/MCP/commands/themes/hooks/subagents/skills — geminicli.com/extensions">y</td>
+      <td class="cell-y" title="hooks/hooks.json in extension; v0.26.0 makes hooks default-on — github.com/google-gemini/gemini-cli/discussions/17812">y</td>
+      <td class="cell-y" title="Markdown agent definitions in extension agents/ — developers.googleblog.com/subagents-have-arrived-in-gemini-cli">y</td>
+      <td class="cell-y" title="skills/&lt;name&gt;/SKILL.md in extensions — medium.com/google-cloud/...agent-skills">y</td>
+      <td class="cell-y" title="Native MCP via settings.json + extensions — geminicli.com/docs/tools/mcp-server">y</td>
+      <td class="cell-y" title="AGENTS.md and GEMINI.md both supported">y</td>
+      <td class="cell-y" title="System-tier settings.json; Policy Engine — geminicli.com/docs/reference/policy-engine">y</td>
+      <td class="cell-y" title="Jules / Gemini Enterprise Agent Platform on Google Cloud">y</td>
+      <td class="cell-y" title="TOML files in ~/.gemini/commands/ or .gemini/commands/; namespaced via subdirs — geminicli.com/docs/cli/custom-commands">y</td>
+      <td class="cell-u" title="CLI doesn't expose /sandbox primitive in docs sampled">u</td>
+      <td class="cell-y" title="Gemini Enterprise governance; IAM via Google Workspace / Cloud IAM — docs.cloud.google.com/gemini-enterprise-agent-platform/govern">y</td>
+      <td class="cell-p" title="Gemini Enterprise 'Operational Oversight' pillar covers audit; details vary by GCP tier">p</td>
+      <td class="cell-y" title="Browse Extensions catalog at geminicli.com/extensions">y</td>
+      <td class="cell-n" title="Extensions package prompts; no server-hosted versioned prompt service">n</td>
+      <td class="cell-u" title="OTel emission not confirmed in CLI; GCP platform-level OTel exists">u</td>
+      <td class="cell-u" title="Memory primitives exist; agent-authored auto-write not confirmed">u</td>
+    </tr>
+
+    <!-- Aider -->
+    <tr>
+      <th>Aider</th>
+      <td class="cell-y" title=".aider.conf.yml walks home → repo root → cwd — aider.chat/docs/config/aider_conf.html">y</td>
+      <td class="cell-n" title="No first-party plugin marketplace">n</td>
+      <td class="cell-n" title="No lifecycle hooks system">n</td>
+      <td class="cell-n" title="No subagent primitive (chat modes are modal, not delegated)">n</td>
+      <td class="cell-n" title="No SKILL.md adoption">n</td>
+      <td class="cell-p" title="Community shims (mcpm-aider, MCP-Bridge); not first-party — github.com/lutzleonhardt/mcpm-aider">p</td>
+      <td class="cell-p" title="Soft adoption; CONVENTIONS.md is canonical; AGENTS.md via read: declaration — aider.chat/docs/usage/conventions.html">p</td>
+      <td class="cell-n" title="No managed-floor / SSO / audit story; no commercial enterprise tier">n</td>
+      <td class="cell-n" title="No hosted variant">n</td>
+      <td class="cell-y" title="/code, /ask, /architect, /help, /chat-mode — aider.chat/docs/usage/modes.html">y</td>
+      <td class="cell-n" title="No OS sandbox">n</td>
+      <td class="cell-n" title="No tenant plane">n</td>
+      <td class="cell-n" title="No audit/compliance log export">n</td>
+      <td class="cell-n" title="No connector catalog">n</td>
+      <td class="cell-n" title="No versioned prompts service">n</td>
+      <td class="cell-n" title="No OTel emission">n</td>
+      <td class="cell-n" title="No auto-memory">n</td>
+    </tr>
+
+    <!-- Continue.dev -->
+    <tr>
+      <th>Continue.dev</th>
+      <td class="cell-y" title="config.yaml per-project + hub config; hub-vs-local explicit duality — docs.continue.dev/guides/understanding-configs">y</td>
+      <td class="cell-y" title="Continue Hub for assistants/models/rules/prompts/tools — hub.continue.dev">y</td>
+      <td class="cell-y" title="Plugins can include hooks; quality-gate pattern documented">y</td>
+      <td class="cell-p" title="Agents are composed bundles; no dedicated subagent-delegation primitive surfaced">p</td>
+      <td class="cell-y" title="continuedev/skills reusable library — github.com/continuedev/skills">y</td>
+      <td class="cell-y" title="First-class; agent mode only; mcpServers in hub configs — docs.continue.dev/customize/deep-dives/mcp">y</td>
+      <td class="cell-y" title="AGENTS.md supported; agents update AGENTS.md on PR open">y</td>
+      <td class="cell-y" title="Team/Company plans add SSO + access controls + BYOK">y</td>
+      <td class="cell-n" title="No hosted agent product">n</td>
+      <td class="cell-y" title="Prompt files in .continue/prompts/ (slashCommands array deprecated)">y</td>
+      <td class="cell-n" title="No OS-enforced sandbox documented">n</td>
+      <td class="cell-y" title="Continue for Teams admin surface">y</td>
+      <td class="cell-u" title="Audit/governance log export not prominently documented">u</td>
+      <td class="cell-u" title="Hub is a catalog of components; vetted MCP tier not surfaced">u</td>
+      <td class="cell-n" title="Prompts are hub-distributed files; not server-hosted versioned API">n</td>
+      <td class="cell-u" title="OTel emission not surfaced">u</td>
+      <td class="cell-n" title="No agent-authored auto-memory">n</td>
+    </tr>
+
+    <!-- Zed -->
+    <tr>
+      <th>Zed</th>
+      <td class="cell-y" title="Zed settings JSON; project + user level">y</td>
+      <td class="cell-n" title="No plugin marketplace for the agent (Zed extensions exist for editor, not agent)">n</td>
+      <td class="cell-n" title="No lifecycle hooks for the agent panel">n</td>
+      <td class="cell-n" title="No subagent system; Zed hosts external agents via ACP instead">n</td>
+      <td class="cell-n" title="No SKILL.md support">n</td>
+      <td class="cell-y" title="context_servers config; forwarded to embedded agents via ACP — zed.dev/docs/ai/mcp">y</td>
+      <td class="cell-y" title="AGENTS.md via .rules files + CLAUDE.md compatibility — zed.dev/docs/ai/rules">y</td>
+      <td class="cell-p" title="Zed for Business announced May 2026; SAML/OIDC/SCIM/SOC 2 are roadmap not shipped">p</td>
+      <td class="cell-n" title="No hosted agent variant">n</td>
+      <td class="cell-n" title="No user-authored slash command file convention">n</td>
+      <td class="cell-n" title="No OS sandbox">n</td>
+      <td class="cell-u" title="Zed for Business admin surface in early state">u</td>
+      <td class="cell-u" title="Audit log not yet documented for Business tier">u</td>
+      <td class="cell-n" title="No connector catalog">n</td>
+      <td class="cell-n" title="No server-hosted prompts">n</td>
+      <td class="cell-n" title="No OTel emission">n</td>
+      <td class="cell-n" title="No auto-memory">n</td>
+    </tr>
+
+    <!-- goose -->
+    <tr>
+      <th>goose</th>
+      <td class="cell-y" title="config.yaml based; multi-level">y</td>
+      <td class="cell-y" title="Extensions are plugins; 70+ documented, 3000+ MCP servers — block.github.io/goose/docs/guides/recipes">y</td>
+      <td class="cell-p" title="Lifecycle event surface for 'unified agent execution' — github.com/block/goose/discussions/4389; not first-class taxonomy">p</td>
+      <td class="cell-y" title="Recipes invoke subrecipes concurrently — block.github.io/goose/docs/guides/recipes">y</td>
+      <td class="cell-y" title="Skills supported; unification with subagents+recipes proposed — github.com/block/goose/discussions/6202">y</td>
+      <td class="cell-y" title="Earliest deepest MCP adopter; AAIF inaugural project alongside MCP and AGENTS.md">y</td>
+      <td class="cell-y" title="AGENTS.md supported">y</td>
+      <td class="cell-u" title="No public MDM/managed-settings surface; Block runs 12k internal users on goose">u</td>
+      <td class="cell-p" title="No first-party hosted; community sandboxing tools (zuplo, rivet) exist">p</td>
+      <td class="cell-y" title="Recipes invokable as commands; user-authored YAML">y</td>
+      <td class="cell-n" title="No OS sandbox surfaced in core">n</td>
+      <td class="cell-u" title="No public tenant admin plane">u</td>
+      <td class="cell-n" title="No public audit/compliance log export">n</td>
+      <td class="cell-n" title="Extensions catalog is community; no vetted-tier mechanism documented">n</td>
+      <td class="cell-n" title="No server-hosted prompts">n</td>
+      <td class="cell-u" title="OTel emission not confirmed">u</td>
+      <td class="cell-p" title="opencode-agent-memory pattern referenced; not first-party">p</td>
+    </tr>
+
+    <!-- Devin -->
+    <tr>
+      <th>Devin</th>
+      <td class="cell-u" title="User-side config story unclear; hosted product centralizes most config">u</td>
+      <td class="cell-n" title="No plugin marketplace; Knowledge + Skills are the customization surfaces">n</td>
+      <td class="cell-n" title="No documented hook system">n</td>
+      <td class="cell-n" title="No subagent primitive documented for end users">n</td>
+      <td class="cell-y" title=".agents/skills/&lt;name&gt;/SKILL.md open Agent Skills standard — docs.devin.ai/product-guides/skills">y</td>
+      <td class="cell-y" title="MCP supported">y</td>
+      <td class="cell-y" title="AGENTS.md supported as primary onboarding; auto-pulls from .cursorrules/.windsurf/CLAUDE.md too — docs.devin.ai/onboard-devin/agents-md">y</td>
+      <td class="cell-y" title="VPC deployment + SSO; enterprise-only">y</td>
+      <td class="cell-y" title="Hosted by design; web at app.devin.ai">y</td>
+      <td class="cell-y" title="/handoff and related; CLI commands available">y</td>
+      <td class="cell-y" title="Implicit via hosted container per session">y</td>
+      <td class="cell-y" title="Cognition admin surface for VPC enterprises; trust.cognition.ai (NDA-gated)">y</td>
+      <td class="cell-u" title="Trust center NDA-gated; public compliance details not surfaced">u</td>
+      <td class="cell-u" title="Curated integrations exist (Slack, Teams, GitHub); vetted connector catalog not explicit">u</td>
+      <td class="cell-n" title="No server-hosted versioned prompt service">n</td>
+      <td class="cell-u" title="OTel emission not confirmed">u</td>
+      <td class="cell-y" title="Knowledge Graph auto-pulled per session — docs.devin.ai/product-guides/knowledge">y</td>
+    </tr>
+
+    <!-- Windsurf -->
+    <tr>
+      <th>Windsurf</th>
+      <td class="cell-y" title="System / user / workspace hooks.json + .windsurfrules — docs.windsurf.com/windsurf/cascade/hooks">y</td>
+      <td class="cell-n" title="No plugin marketplace; workflows + hooks are the surfaces">n</td>
+      <td class="cell-y" title="Cascade Hooks: 12 events (pre/post for read_code, write_code, run_command, mcp_tool_use, prompts, responses, worktree)">y</td>
+      <td class="cell-p" title="Cascade is the agent; not a multi-agent subagent system">p</td>
+      <td class="cell-n" title="No SKILL.md adoption">n</td>
+      <td class="cell-y" title="MCP with admin allow-lists">y</td>
+      <td class="cell-y" title="AGENTS.md supported per adopters list">y</td>
+      <td class="cell-y" title="Cloud dashboard hook enforcement + MDM (Jamf/Intune) system-level hooks.json">y</td>
+      <td class="cell-n" title="Local agent + cloud-hybrid; not a fully-hosted agent product">n</td>
+      <td class="cell-y" title="Workflows in .windsurf/workflows/*.md invokable via /slash">y</td>
+      <td class="cell-n" title="No OS-enforced sandbox; relies on hooks for control">n</td>
+      <td class="cell-y" title="Cloud dashboard team settings">y</td>
+      <td class="cell-y" title="Full audit logs via enterprise tier; SOC2 + FedRAMP High + HIPAA BAA + ITAR via Palantir FedStart">y</td>
+      <td class="cell-u" title="MCP catalog and enterprise allow-lists exist; vetted-tier specifics need verification">u</td>
+      <td class="cell-n" title="No server-hosted prompts">n</td>
+      <td class="cell-u" title="OTel emission not confirmed">u</td>
+      <td class="cell-y" title="Memories feature documented in Windsurf docs">y</td>
+    </tr>
+
+    <!-- JetBrains Junie -->
+    <tr>
+      <th>JetBrains Junie</th>
+      <td class="cell-y" title=".junie/ directory with guidelines/AGENTS.md/commands/agents/skills — junie.jetbrains.com/docs/junie-cli-configuration">y</td>
+      <td class="cell-n" title="No plugin marketplace shape for Junie itself; lives within JetBrains plugin ecosystem">n</td>
+      <td class="cell-n" title="No documented hook system at sampling time">n</td>
+      <td class="cell-y" title=".junie/agents/ or .agents/ markdown with YAML; auto-delegation only — junie.jetbrains.com/docs/junie-cli-subagents">y</td>
+      <td class="cell-y" title=".junie/skills/SKILL.md Agent Skills standard — junie.jetbrains.com/docs/agent-skills">y</td>
+      <td class="cell-y" title="MCP via .junie/mcp.json — junie.jetbrains.com/docs/junie-cli-mcp-configuration">y</td>
+      <td class="cell-y" title=".junie/AGENTS.md + .junie/guidelines.md — junie.jetbrains.com/docs/guidelines-and-memory">y</td>
+      <td class="cell-y" title="IDE-policy-based; JetBrains corporate management channels; Action Allowlist enforcement">y</td>
+      <td class="cell-n" title="No hosted-agent variant">n</td>
+      <td class="cell-y" title=".junie/commands/ markdown with YAML; $argumentName substitution — junie.jetbrains.com/docs/custom-slash-commands">y</td>
+      <td class="cell-n" title="No OS-enforced sandbox; Action Allowlist instead">n</td>
+      <td class="cell-y" title="JetBrains Account admin surface for Enterprise tier">y</td>
+      <td class="cell-u" title="Junie-specific audit log surface not prominently documented; parent JetBrains audit posture exists">u</td>
+      <td class="cell-n" title="No vetted connector catalog">n</td>
+      <td class="cell-n" title="No server-hosted prompts">n</td>
+      <td class="cell-n" title="No OTel emission">n</td>
+      <td class="cell-y" title="Guidelines and memory primitives — junie.jetbrains.com/docs/guidelines-and-memory">y</td>
+    </tr>
+
+    <!-- opencode -->
+    <tr>
+      <th>opencode</th>
+      <td class="cell-y" title="opencode.json + /etc/opencode (highest); macOS Managed Preferences via MDM .mobileconfig — opencode.ai/docs/config">y</td>
+      <td class="cell-y" title="JS/TS plugins; project + global + npm; auto-installed via Bun — opencode.ai/docs/plugins">y</td>
+      <td class="cell-y" title="Extensive lifecycle: session/tool/file/message/permission/server/todo/shell/TUI event families">y</td>
+      <td class="cell-y" title="Primary + subagent split; @-mention manual invocation or auto-delegation — opencode.ai/docs/agents">y</td>
+      <td class="cell-y" title="SKILL.md from .opencode/skills/ AND .claude/skills/ AND .agents/skills/ — opencode.ai/docs/skills">y</td>
+      <td class="cell-y" title="MCP first-class">y</td>
+      <td class="cell-y" title="AGENTS.md primary memory file; opencode generates it">y</td>
+      <td class="cell-y" title="/etc/opencode admin config tier; macOS MDM .mobileconfig support — opencode.ai/docs/enterprise">y</td>
+      <td class="cell-n" title="No first-party hosted agent">n</td>
+      <td class="cell-n" title="No user-authored slash command file convention surfaced as first-class">n</td>
+      <td class="cell-n" title="No OS-enforced sandbox; external tools (rivet-dev/sandbox-agent) exist">n</td>
+      <td class="cell-n" title="No tenant admin plane (vs SSO/internal AI gateway as the admin model)">n</td>
+      <td class="cell-n" title="No documented compliance log export">n</td>
+      <td class="cell-n" title="No vetted connector catalog">n</td>
+      <td class="cell-n" title="No server-hosted prompts">n</td>
+      <td class="cell-n" title="No OTel emission">n</td>
+      <td class="cell-p" title="opencode-agent-memory third-party extension (Letta-style memory blocks); not first-party">p</td>
+    </tr>
+  </tbody>
+</table>
+</section>
+
+<footer class="mt-6 text-xs text-zinc-600 max-w-6xl">
+  <p><strong>Sources:</strong> Per-cell <code>title</code> attributes hold the primary citation. Full evidence and qualitative discussion lives in the companion markdown report. Cells marked <code>unverified</code> are explicit non-assertions; do not treat as <code>no</code>.</p>
+  <p class="mt-1"><strong>Methodology note:</strong> WebFetch + WebSearch sampling May 18, 2026. Vendor docs vary widely in marketing density; verification rule (per consolidated.md guidance): when evidence is thin, mark <code>unverified</code> rather than assert absence.</p>
+</footer>
+
+</body>
+</html>

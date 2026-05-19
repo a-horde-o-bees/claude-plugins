@@ -1,0 +1,14 @@
+{
+  "name": "pdf-plus",
+  "version": "0.0.3",
+  "description": "One-shot markdown\u2192PDF rendering using a bundled reportlab-based renderer. Single-page documents like resumes, cover letters, recommendation letters with tuned visual style. Distinct from the base pdf skill (which handles read, merge, split, OCR, forms).",
+  "author": {
+    "name": "a-horde-o-bees"
+  },
+  "homepage": "https://github.com/a-horde-o-bees/claude-plugins",
+  "repository": "https://github.com/a-horde-o-bees/claude-plugins",
+  "license": "MIT",
+  "skills": [
+    "./skills/"
+  ]
+}

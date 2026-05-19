@@ -302,6 +302,17 @@ def cmd_add_source(args: argparse.Namespace) -> int:
 
     embed_path = source_embed_path(args.name, source_slug, args.destination)
     embed_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Defensive: backfill skill-level .gitignore for compositions predating the
+    # compose-new scaffolding step. Copy the bundled template at
+    # assets/skill-gitignore so changes to it propagate; leave any existing
+    # composition .gitignore alone (the author may have customized it).
+    target_gitignore = embed_path.parent.parent / ".gitignore"
+    if not target_gitignore.exists():
+        template = Path(__file__).resolve().parent.parent / "assets" / "skill-gitignore"
+        if template.exists():
+            target_gitignore.write_text(template.read_text())
+
     commit = sparse_checkout_skill(url, skill_path, ref, embed_path)
 
     source = Source(url=url, skill=skill, ref=ref, commit=commit)

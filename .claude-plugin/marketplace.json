@@ -1,27 +1,57 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "a-horde-o-bees",
-  "description": "Claude Code plugins for agent discipline, workflow conventions, and project navigation. Add with no ref for dev channel (tracks main); add with `@vX.Y.Z` to pin to a stable release.",
+  "description": "Claude Code plugins for agent discipline, tool workflows, and project tooling. Discipline plugins (writing, communication, testing, design) ship behavioral skills you invoke as `apply /<skill>`. Tool plugins (git, transcripts, pdf-plus) ship workflow CLIs. skill-authoring ships the meta-toolkit for authoring new skills. Add with no ref for dev channel (tracks main); add with `@vX.Y.Z` to pin to a stable release.",
   "owner": {
     "name": "a-horde-o-bees"
   },
   "plugins": [
     {
-      "name": "ocd",
-      "source": "./plugins/ocd",
-      "description": "Deterministic enforcement of permissions, rules, and structural conventions with agent-facing project navigation",
+      "name": "writing",
+      "source": "./plugins/writing",
+      "description": "Prose and artifact authoring discipline — apply concise-prose, description-authoring, markdown-authoring, process-flow-notation, reauthor, trigger-specificity at the matching authoring moment.",
+      "category": "discipline"
+    },
+    {
+      "name": "communication",
+      "source": "./plugins/communication",
+      "description": "Agent⇄user interaction discipline — apply honesty, principled-pushback, confirm-shared-intent at the matching interaction moment.",
+      "category": "discipline"
+    },
+    {
+      "name": "testing",
+      "source": "./plugins/testing",
+      "description": "Testing discipline — apply test-authoring, test-driven-development, test-maintenance, testing-decisions at the matching testing moment.",
+      "category": "discipline"
+    },
+    {
+      "name": "design",
+      "source": "./plugins/design",
+      "description": "Engineering design discipline — apply 10 design principles (agent-first-interfaces, borrow-before-build, clean-break, composability, fix-foundations-not-symptoms, graceful-degradation, structure-as-documentation, workflow-vs-script, file-decomposition, progressive-disclosure) at the matching design moment.",
+      "category": "discipline"
+    },
+    {
+      "name": "git",
+      "source": "./plugins/git",
+      "description": "Git workflow plugin — commit, push, watch GitHub Actions, run a development checkpoint cycle, cut a tagged release. Includes the git skill (verbs) and the checkpoint orchestration skill.",
+      "category": "development"
+    },
+    {
+      "name": "transcripts",
+      "source": "./plugins/transcripts",
+      "description": "Query Claude Code session transcripts as structured data — projects, sessions, exchanges with time accounting, full chat content, and persistent per-exchange descriptions. Backed by SQLite ingested from ~/.claude/projects/.",
+      "category": "development"
+    },
+    {
+      "name": "pdf-plus",
+      "source": "./plugins/pdf-plus",
+      "description": "One-shot markdown→PDF rendering for single-page documents (resume, cover letter, recommendation letter) using a tuned visual style. Distinct from the base pdf skill which handles read/merge/split/OCR/forms.",
       "category": "development"
     },
     {
       "name": "skill-authoring",
       "source": "./plugins/skill-authoring",
-      "description": "Two companion skills for authoring new skills: skill-composer composes from exemplar sources via goal-driven dialogue with drift tracking against pinned upstream commits; skill-creator creates from scratch via interview-driven dialogue layered on Anthropic's skill-creator. Both apply PFN, progressive-disclosure, description-authoring, and workflow-vs-script disciplines at every authoring moment.",
-      "category": "development"
-    },
-    {
-      "name": "composed-skills",
-      "source": "./plugins/composed-skills",
-      "description": "Curated bundle of skills composed via skill-authoring:skill-composer. Each skill carries its own composition.md (design intent + pinned source provenance). Install the bundle via /plugin install, or pick individual skills via Vercel's npx skills.",
+      "description": "Meta-toolkit for authoring new skills. skill-composer composes from exemplar sources with drift tracking against pinned upstream commits; skill-creator creates from scratch via interview-driven dialogue layered on Anthropic's skill-creator. The rules skill manages always-on skill promotion via CLAUDE.md directives.",
       "category": "development"
     }
   ]

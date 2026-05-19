@@ -1,0 +1,17 @@
+{
+  "name": "writing",
+  "version": "0.0.4",
+  "description": "Prose and artifact authoring discipline. Apply each skill when composing the matching surface: concise-prose for prose anywhere, description-authoring for descriptions at any scale, markdown-authoring for markdown surfaces, trigger-specificity for matcher-readable description: fields.",
+  "author": {
+    "name": "a-horde-o-bees"
+  },
+  "homepage": "https://github.com/a-horde-o-bees/claude-plugins",
+  "repository": "https://github.com/a-horde-o-bees/claude-plugins",
+  "license": "MIT",
+  "skills": [
+    "./skills/"
+  ],
+  "dependencies": [
+    "design"
+  ]
+}
