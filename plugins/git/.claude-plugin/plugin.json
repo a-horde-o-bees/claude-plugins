@@ -1,6 +1,6 @@
 {
   "name": "git",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "Version-control discipline. Commit, push, watch GitHub Actions, run a development checkpoint, or cut a tagged release. Includes the git skill (commit + checkpoint + ci + push + release verbs) and the checkpoint orchestration skill.",
   "author": {
     "name": "a-horde-o-bees"

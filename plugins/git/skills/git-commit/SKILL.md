@@ -1,12 +1,12 @@
 ---
-name: commit
+name: git-commit
 description: Use when uncommitted working-tree changes should land in git history — explicit signals "commit", "commit my changes", "stage and commit", "save these edits", or any context where committing is the natural next step. Multi-topic working trees produce multiple atomic commits grouped by topic; single-topic produces one. Each commit message is authored against the diff, not the change journey.
 allowed-tools:
   - Bash(git *)
   - AskUserQuestion
 ---
 
-# /commit
+# /git-commit
 
 Commit working-tree changes as one or more topic-grouped commits.
 
