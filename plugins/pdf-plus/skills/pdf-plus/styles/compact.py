@@ -41,9 +41,20 @@ BULLET_CHAR = "•"
 BULLET_INDENT = 14
 BULLET_FONT_SIZE = 10
 
-# Inline code
-CODE_FONT_NAME = "Courier"
+# Inline code — JetBrains Mono Regular (bundled under fonts/, OFL-1.1).
+# JBM has a noticeably taller x-height than Courier, so 9pt visually matches
+# 10pt Helvetica body. Text color intentionally unset so inline code inside a
+# link inherits the link color rather than overriding it.
+CODE_FONT_FILE = "fonts/JetBrainsMono-Regular.ttf"
+CODE_FONT_NAME = "JetBrainsMono"
 CODE_FONT_SIZE = 9
+CODE_BG_COLOR = colors.HexColor("#d8dde2")
+
+# Tables
+TABLE_HEADER_BG_COLOR = colors.HexColor("#f6f8fa")
+TABLE_GRID_COLOR = colors.HexColor("#d0d7de")
+TABLE_FONT_SIZE = 8
+TABLE_PADDING = 3
 
 
 def make_styles():

@@ -5,7 +5,7 @@ description: Use whenever a markdown file needs to be rendered to PDF as a singl
 
 # pdf-plus
 
-Render a markdown artifact to PDF using the bundled `scripts/pdf-render.py` — a reportlab renderer with PEP 723 inline metadata declaring `reportlab` as a dep. Invocation via `uv run` resolves the dependency ephemerally each call; no persistent venv to maintain. Style presets are selectable via `--style <name>` and live as Python modules under `styles/`.
+Render a markdown artifact to PDF using the bundled `scripts/pdf-render.py` — a reportlab renderer with PEP 723 inline metadata declaring `reportlab` and `markdown-it-py` as deps. Invocation via `uv run` resolves dependencies ephemerally each call; no persistent venv to maintain. Style presets are selectable via `--style <name>` and live as Python modules under `styles/`.
 
 ## Workflow
 
@@ -20,7 +20,17 @@ Render a markdown artifact to PDF using the bundled `scripts/pdf-render.py` — 
    ```
    `--style` defaults to `compact`. If `--dest` is omitted, the output PDF goes next to the source markdown with the `.pdf` extension. Existing PDFs are overwritten.
 
-3. **Verify output exists**:
+   **Link rewriting** is on by default: `[label](X.md)` and `[label](X.md#anchor)` are rewritten to `[label](X.pdf)` / `[label](X.pdf#anchor)` so cross-document links resolve to rendered companions. Each rewritten target is checked at end of render; missing companions emit a stderr `Warning:` block. Override flags:
+   - `--no-rewrite-md-links` — keep `.md` targets unchanged in the PDF (rare).
+   - `--strip-local-links` — escape hatch that drops the link wrapper entirely for any non-`http(s)`/`mailto:`/`#anchor` target. Use only when the recipient won't have *any* companion files.
+
+3. **Post-batch link check** (run after all PDFs in a delivery are generated):
+   ```
+   uv run ~/.claude/skills/pdf-plus/scripts/pdf-link-check.py <pdf>... [--ignore <glob>]
+   ```
+   Walks each PDF's link annotations and reports any local-file URI whose target doesn't exist relative to the PDF's directory. Per-render warnings can have false positives in a batch (a later render may produce the missing target); the post-batch check is the definitive verdict. Exits 0 when all local links resolve.
+
+4. **Verify output exists**:
    ```
    test -f <path/to/output.pdf>
    ```
@@ -52,6 +62,10 @@ Style presets are Python modules under `~/.claude/skills/pdf-plus/styles/<name>.
 | Bullets | `BULLET_CHAR` | Bullet glyph |
 | | `BULLET_INDENT`, `BULLET_FONT_SIZE` | ListFlowable indent + bullet font size |
 | Inline code | `CODE_FONT_NAME`, `CODE_FONT_SIZE` | `<font face="…" size="…">` wrapping ``code`` |
+| Tables | `TABLE_HEADER_BG_COLOR` | Header-row background fill (no default — omit for no fill) |
+| | `TABLE_GRID_COLOR` | Grid line color (falls back to `RULE_COLOR`, then reportlab grey) |
+| | `TABLE_FONT_SIZE` | Cell font size (default 9) |
+| | `TABLE_PADDING` | Cell padding (default 4) |
 
 **`make_styles()`** is optional. If a style module doesn't define it, the renderer uses an internal minimum-sufficient default that produces size-differentiated headings via reportlab's `Times-Roman` (no font/color opinions). When defined, it returns a six-key dict (`h1`, `h2`, `h3`, `h4`, `body`, `bullet_text`) and the renderer uses it verbatim.
 
@@ -101,15 +115,16 @@ Render with `--style <your-name>`.
 - Inline code (`` `text` `` — renders in Courier 9pt)
 - Links (`[label](url)` — underlined, blue)
 - Horizontal rules (`---`)
+- GFM tables (`| a | b |\n|---|---|\n| 1 | 2 |`) — equal column widths, header row bold, inline formatting inside cells. Alignment markers (`:---`, `:---:`, `---:`) honored.
 - XML-safe (auto-escapes `&`, `<`, `>` in content)
 
-Not implemented (rare in single-page documents): tables, blockquotes, ordered lists, nested lists, footnotes, images, fenced code blocks. If a future artifact needs one, extend `scripts/pdf-render.py` rather than forking the workflow.
+Not implemented (rare in single-page documents): blockquotes, ordered lists, nested lists, footnotes, images, fenced code blocks. If a future artifact needs one, extend `scripts/pdf-render.py` rather than forking the workflow.
 
 ## Inputs
 
 - The markdown source(s) to render
 - `uv` must be installed on the system
-- The bundled `scripts/pdf-render.py` (PEP 723 metadata handles `reportlab` resolution)
+- The bundled `scripts/pdf-render.py` (PEP 723 metadata handles `reportlab` + `markdown-it-py` resolution)
 
 Does NOT read project-state files. Pure file-conversion workflow with no project-context dependencies.
 
