@@ -34,4 +34,3 @@ Claim scope — bound conclusions to what was examined.
 - Findings reflect the entities examined and whatever selection criteria, discovery paths, and depth limits shaped the sample; claims apply to the sample, not the population, unless the sample demonstrably covers it
 - Default to "not yet found" rather than "does not exist"
 - When summarizing research findings: distinguish what was directly observed from what was inferred, and from what wasn't investigated. Absence of evidence is not evidence of absence
-- When listing examples in prose or parenthetical asides: signal non-exhaustiveness with "e.g.", ", etc.", or "..." so readers cannot mistake an illustrative list for a complete enumeration. Unqualified lists implicitly claim the items are the full set

@@ -1,6 +1,6 @@
 {
   "name": "writing",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Prose and artifact authoring discipline. Apply each skill when composing the matching surface: concise-prose for prose anywhere, description-authoring for descriptions at any scale, markdown-authoring for markdown surfaces, trigger-specificity for matcher-readable description: fields.",
   "author": {
     "name": "a-horde-o-bees"
