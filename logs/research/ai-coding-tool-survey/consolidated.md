@@ -1,18 +1,18 @@
----
-log-role: reference
-scope: shapes for aligning AI coding tooling, rules, skills, and governance across multiple projects and across vendors
----
-
 # Alignment Shapes for AI Coding Tools at Scale
 
-How to bring multiple AI coding projects into alignment on tooling, rules, skills, governance, and cost. Catalog of viable shapes plus footguns, organized by **platform applicability** since the alignment problem is multi-vendor.
+Reference catalog of viable shapes for aligning AI coding tooling, rules, skills, governance, and cost across multiple projects and across vendors — plus footguns, organized by **platform applicability** since the alignment problem is multi-vendor.
 
 **State of play (May 2026).** The ecosystem has converged. Claude Code, Codex, Cursor, Gemini CLI, JetBrains Junie, opencode, and GitHub Copilot Coding Agent all ship comparable plug-skill-hook-subagent-MCP stacks on top of a cross-tool substrate ([`AGENTS.md`](https://agents.md/) + `.agents/`, 60k+ projects). Differentiation for company-scale advisory has moved from "does the tool have shape X" to:
 
 - **Enterprise compliance depth** — Windsurf (FedRAMP High + ITAR via Palantir FedStart), Cursor (SOC 2 + SIEM streaming), Anthropic Claude for Government (FedRAMP High, but not yet including Claude Code / Cowork).
 - **Plugin model architecture** — markdown+frontmatter (Cursor, Junie, Gemini), JavaScript modules (opencode), YAML recipes (goose), TOML configs (Codex).
 
-Claude Code stays on `CLAUDE.md` / `.claude/` rather than the AGENTS.md substrate; its `/init` reads AGENTS.md as a one-shot import. Substrate adoption itself has behavioral variance — Aider opts in via `read:` rather than auto-loading, Zed surfaces AGENTS.md via `.rules` / CLAUDE.md interop, Devin promiscuously reads `AGENTS.md` + `.cursorrules` + `.windsurf` + `CLAUDE.md` + `.mdc` + `.rules` with no canonical priority. See [`wave-multi-vendor-adopters.md`](./wave-multi-vendor-adopters.md) and the HTML matrix at [`wave-multi-vendor-adopters.html`](./wave-multi-vendor-adopters.html).
+Substrate adoption itself has behavioral variance. Platform comparison:
+
+- **Claude Code** — stays on `CLAUDE.md` / `.claude/` rather than the AGENTS.md substrate; `/init` reads AGENTS.md as a one-shot import.
+- **Aider** — opts in via `read:` rather than auto-loading.
+- **Zed** — surfaces AGENTS.md via `.rules` / CLAUDE.md interop.
+- **Devin** — promiscuously reads `AGENTS.md` + `.cursorrules` + `.windsurf` + `CLAUDE.md` + `.mdc` + `.rules` with no canonical priority.
 
 **Dual scope:** personal multi-project alignment (now) and company-scale advisory (next).
 
@@ -34,26 +34,35 @@ The right pose on each axis depends on team maturity and trust. High-trust small
 
 ## Platform applicability matrix
 
-| Shape | Claude Code | Codex CLI | OpenAI Agents SDK | ChatGPT / Workspace | Cross-tool substrate |
-|---|---|---|---|---|---|
-| Layered config | yes ([JSON, 5 layers](https://code.claude.com/docs/en/settings)) | yes ([TOML, trust-gated](https://developers.openai.com/codex/config-reference)) | — | Admin Console hierarchy | — |
-| Plugin marketplace | yes — [`.claude-plugin/`](https://code.claude.com/docs/en/plugin-marketplaces) | yes — [`.codex-plugin/`](https://developers.openai.com/codex/plugins) | — | curated MCP connectors only | shared examples like [duyet/codex-claude-plugins](https://github.com/duyet/codex-claude-plugins) |
-| Hooks | yes — [31 events, 4 handler types](https://code.claude.com/docs/en/hooks) (payloads omit tokens/cost for most events) | yes — [6 events](https://developers.openai.com/codex/hooks), `CLAUDE_PLUGIN_ROOT` compat aliases | [RunHooks / AgentHooks + 3 guardrail families](https://openai.github.io/openai-agents-python/guardrails/) | workspace policies | — |
-| Subagents | yes — [`.claude/agents/` md+frontmatter](https://code.claude.com/docs/en/sub-agents) | yes — [`.codex/agents/` TOML](https://developers.openai.com/codex/subagents) | Agents SDK handoffs | n/a | — |
-| Skills (`SKILL.md`+frontmatter) | yes ([Agent Skills open standard](https://agentskills.io)) | yes ([same shape](https://developers.openai.com/codex/skills)) | — | — | `.agents/skills/` |
-| MCP | yes ([HTTP / stdio; SSE deprecated](https://code.claude.com/docs/en/mcp)) | yes | yes ([5 transports](https://openai.github.io/openai-agents-python/mcp/)) | yes (OAuth-CIMD + curated tier) | open protocol |
-| Memory file | [`CLAUDE.md`](https://code.claude.com/docs/en/memory) | [`AGENTS.md`](https://developers.openai.com/codex/guides/agents-md) | n/a | n/a | `AGENTS.md` standard |
-| Enterprise floor | [managed-settings.json + `.d/` + registry + managed-mcp.json](https://code.claude.com/docs/en/settings) | [requirements.toml](https://developers.openai.com/codex/enterprise/admin-setup) | — | [Global Admin Console](https://help.openai.com/en/articles/12289294-global-admin-console) | — |
-| Hosted agent (managed) | [Managed Agents (REST)](https://platform.claude.com/docs/en/managed-agents/overview) | Codex Cloud | [Responses API](https://developers.openai.com/api/reference/responses/overview) | [Workspace Agents](https://openai.com/academy/workspace-agents/) | — |
-| User-authored slash commands | yes (first-class; merging with skills) | no (extended via skills/plugins) | — | — | — |
-| OS-enforced sandbox | yes ([`/sandbox` + `@anthropic-ai/sandbox-runtime`](https://code.claude.com/docs/en/sandboxing): Seatbelt / bwrap+seccomp / WSL2) | yes (Seatbelt / bwrap+seccomp / WSL2) | — | — | — |
-| Tenant-level admin plane | yes ([parent-org → child-org, cross-org SSO/SCIM, 25-endpoint Admin API](https://docs.anthropic.com/en/api/admin-api)) | — | — | yes ([admin.openai.com](https://help.openai.com/en/articles/12289294-global-admin-console), more unified UX) | — |
-| Compliance log export | yes ([Compliance API, ~30 governance events, 180-day retention](https://platform.claude.com/docs/en/manage-claude/compliance-api)) | yes ([Compliance Logs Platform, includes prompt/tool calls, 30-day default](https://help.openai.com/en/articles/11509118-admin-controls-security-and-compliance-in-apps-enterprise-edu-and-business)) | — | yes (same Compliance Logs Platform) | — |
-| Vetted connector catalog | yes ([Anthropic Connectors Directory, 398 entries](https://support.claude.com/en/articles/11596036-anthropic-connectors-directory-faq)) | — | — | yes (reviewed-MCP-connector tier) | — |
-| Server-hosted versioned prompts | no | no | yes ([Responses API Prompts](https://developers.openai.com/api/reference/responses/overview)) | — | — |
-| Auto memory | yes ([Claude-authored notes](https://code.claude.com/docs/en/memory#auto-memory)) | partial (`AGENTS.override.md`) | — | — | — |
+Column key:
 
-Empty cell = no native equivalent.
+- **A** — Claude Code
+- **B** — Codex CLI
+- **C** — OpenAI Agents SDK
+- **D** — ChatGPT / Workspace
+
+| Shape | A | B | C | D |
+|---|---|---|---|---|
+| Layered config | X | X |   | X |
+| Plugin marketplace † | X | X |   | X |
+| Hooks | X | X | X | X |
+| Subagents | X | X | X |   |
+| Skills (`SKILL.md`+frontmatter) † | X | X |   |   |
+| MCP † | X | X | X | X |
+| Memory file † | X | X |   |   |
+| Enterprise floor | X | X |   | X |
+| Hosted agent (managed) | X | X | X | X |
+| User-authored slash commands | X |   |   |   |
+| OS-enforced sandbox | X | X |   |   |
+| Tenant-level admin plane | X |   |   | X |
+| Compliance log export | X | X |   | X |
+| Vetted connector catalog | X |   |   | X |
+| Server-hosted versioned prompts |   |   | X |   |
+| Auto memory | X | X |   |   |
+
+Empty cell = no native equivalent. Each row's nuance — protocol, scope, limitations, links — lives in the matching section below.
+
+**† Cross-tool / vendor-neutral form exists** in addition to the per-tool implementations marked above — `AGENTS.md` + `.agents/` for memory file and skills, MCP as a cross-vendor protocol, and compatible `*-plugin/` registry shape (Claude Code's `.claude-plugin` and Codex's `.codex-plugin` interoperate via shared env aliases).
 
 ## Common shapes (cross-platform)
 
@@ -61,7 +70,10 @@ Shapes that appear in some recognizable form across Claude Code, Codex, and adja
 
 ### 1. Layered configuration (foundation) — (P)(T)(O)
 
-**What:** Hierarchy of config files; each layer overrides the layers below; topmost layer optionally locks fields. Claude Code: enterprise-managed → command-line → project local → project shared → user ([settings docs](https://code.claude.com/docs/en/settings)). Codex: user `~/.codex/config.toml` → project `.codex/config.toml` (trust-gated on first load) → admin → `requirements.toml` ([reference](https://developers.openai.com/codex/config-reference)).
+**What:** Hierarchy of config files; each layer overrides the layers below; topmost layer optionally locks fields. Platform comparison:
+
+- **Claude Code** — enterprise-managed → command-line → project local → project shared → user ([settings docs](https://code.claude.com/docs/en/settings)).
+- **Codex** — user `~/.codex/config.toml` → project `.codex/config.toml` (trust-gated on first load) → admin → `requirements.toml` ([reference](https://developers.openai.com/codex/config-reference)).
 
 **Fits when:** Always. Every other shape sits on this foundation.
 
@@ -71,7 +83,10 @@ Shapes that appear in some recognizable form across Claude Code, Codex, and adja
 
 ### 2. Plugin marketplace — (P)(T)(O)
 
-**What:** Git-hosted registry of installable bundles. Claude Code: [`.claude-plugin/marketplace.json`](https://code.claude.com/docs/en/plugin-marketplaces); plugins bundle skills/commands/agents/hooks/MCP/[LSP servers](https://code.claude.com/docs/en/plugins)/background monitors/bin/. Codex: [`.codex-plugin/`](https://developers.openai.com/codex/plugins), launched 2026-03-27, with `CLAUDE_PLUGIN_ROOT`/`CLAUDE_PLUGIN_DATA` env aliases for compatibility.
+**What:** Git-hosted registry of installable bundles. Platform comparison:
+
+- **Claude Code** — [`.claude-plugin/marketplace.json`](https://code.claude.com/docs/en/plugin-marketplaces); plugins bundle skills/commands/agents/hooks/MCP/[LSP servers](https://code.claude.com/docs/en/plugins)/background monitors/bin/.
+- **Codex** — [`.codex-plugin/`](https://developers.openai.com/codex/plugins), launched 2026-03-27, with `CLAUDE_PLUGIN_ROOT`/`CLAUDE_PLUGIN_DATA` env aliases for compatibility.
 
 **Fits when:** Distributing reusable, composable units across multiple consumers; want versioning, discoverability, single source of truth.
 
@@ -83,7 +98,11 @@ Shapes that appear in some recognizable form across Claude Code, Codex, and adja
 
 ### 3. Subagent specialization — (P)(T)(O)
 
-**What:** Specialized agents with restricted tools and focused prompts. Claude Code: markdown+frontmatter at [`.claude/agents/`](https://code.claude.com/docs/en/sub-agents); ships Explore, Plan, general-purpose, code-reviewer, statusline-setup. Codex: TOML at `~/.codex/agents/` or `.codex/agents/` ([reference](https://developers.openai.com/codex/subagents)); ships `default`, `worker`, `explorer` with `agents.max_threads = 6` and `agents.max_depth = 1` defaults. OpenAI Agents SDK: `Handoffs` primitive in code.
+**What:** Specialized agents with restricted tools and focused prompts. Platform comparison:
+
+- **Claude Code** — markdown+frontmatter at [`.claude/agents/`](https://code.claude.com/docs/en/sub-agents); ships Explore, Plan, general-purpose, code-reviewer, statusline-setup.
+- **Codex** — TOML at `~/.codex/agents/` or `.codex/agents/` ([reference](https://developers.openai.com/codex/subagents)); ships `default`, `worker`, `explorer` with `agents.max_threads = 6` and `agents.max_depth = 1` defaults.
+- **OpenAI Agents SDK** — `Handoffs` primitive in code.
 
 **Fits when:** Work decomposes into clear specialist domains. Context window protection. Parallel work across independent tasks.
 
@@ -93,7 +112,11 @@ Shapes that appear in some recognizable form across Claude Code, Codex, and adja
 
 ### 4. Hooks-based governance — (P)(T)(O)
 
-**What:** Lifecycle hooks enforce policy. Claude Code: [31 events](https://code.claude.com/docs/en/hooks) across session/turn/tool/subagent/tasks/environment/compact/worktree/notification/MCP lifecycles, with handler types beyond shell (`command`/`http`/`mcp_tool`/`prompt`/`agent`). Codex: [6 events](https://developers.openai.com/codex/hooks) (`SessionStart`, `PreToolUse`, `PermissionRequest`, `PostToolUse`, `UserPromptSubmit`, `Stop`). OpenAI Agents SDK: [RunHooks + AgentHooks + 3 guardrail families](https://openai.github.io/openai-agents-python/guardrails/) (input, output, tool).
+**What:** Lifecycle hooks enforce policy. Platform comparison:
+
+- **Claude Code** — [31 events](https://code.claude.com/docs/en/hooks) across session/turn/tool/subagent/tasks/environment/compact/worktree/notification/MCP lifecycles, with handler types beyond shell (`command`/`http`/`mcp_tool`/`prompt`/`agent`).
+- **Codex** — [6 events](https://developers.openai.com/codex/hooks) (`SessionStart`, `PreToolUse`, `PermissionRequest`, `PostToolUse`, `UserPromptSubmit`, `Stop`).
+- **OpenAI Agents SDK** — [RunHooks + AgentHooks + 3 guardrail families](https://openai.github.io/openai-agents-python/guardrails/) (input, output, tool).
 
 **Composable sub-shapes:**
 
@@ -112,7 +135,10 @@ Shapes that appear in some recognizable form across Claude Code, Codex, and adja
 
 ### 5. Enterprise managed floor — (O)
 
-**What:** OS-level config that locks specific fields below user/project. Managed via MDM or config management. Claude Code: `/etc/claude-code/managed-settings.json` (Linux), `/Library/Application Support/ClaudeCode/managed-settings.json` (macOS, plus `com.anthropic.claudecode` preference domain for Jamf/Kandji), `C:\Program Files\ClaudeCode\managed-settings.json` (Windows, plus registry policies), drop-in directory, [`managed-mcp.json`](https://code.claude.com/docs/en/settings), managed-CLAUDE.md, dynamic `policyHelper`. Codex: [`requirements.toml`](https://developers.openai.com/codex/enterprise/admin-setup) with `allow_managed_hooks_only`, `[features]` enforcement, `managed_dir` for hook scripts, `guardian_policy_config`, `forced_login_method`, plugin allow/block policy.
+**What:** OS-level config that locks specific fields below user/project. Managed via MDM or config management. Platform comparison:
+
+- **Claude Code** — `/etc/claude-code/managed-settings.json` (Linux), `/Library/Application Support/ClaudeCode/managed-settings.json` (macOS, plus `com.anthropic.claudecode` preference domain for Jamf/Kandji), `C:\Program Files\ClaudeCode\managed-settings.json` (Windows, plus registry policies), drop-in directory, [`managed-mcp.json`](https://code.claude.com/docs/en/settings), managed-CLAUDE.md, dynamic `policyHelper`.
+- **Codex** — [`requirements.toml`](https://developers.openai.com/codex/enterprise/admin-setup) with `allow_managed_hooks_only`, `[features]` enforcement, `managed_dir` for hook scripts, `guardian_policy_config`, `forced_login_method`, plugin allow/block policy.
 
 **Fits when:** Compliance requires specific tools blocked, specific MCPs always enabled, specific audit hooks always on.
 
@@ -122,7 +148,12 @@ Shapes that appear in some recognizable form across Claude Code, Codex, and adja
 
 ### 6. Memory file convention — (P)(T)(O)
 
-**What:** Project-rooted markdown file always loaded into context. Claude Code: [`CLAUDE.md`](https://code.claude.com/docs/en/memory) at user/project root + `@path` imports up to depth 5 + managed-CLAUDE.md at policy paths + `claudeMdExcludes` for monorepo noise. Codex: [`AGENTS.md`](https://developers.openai.com/codex/guides/agents-md) concatenated from `$CODEX_HOME` down to cwd, with `AGENTS.override.md` per-directory + `project_doc_max_bytes` (default 32 KiB). Same conceptual shape, divergent filenames.
+**What:** Project-rooted markdown file always loaded into context. Platform comparison:
+
+- **Claude Code** — [`CLAUDE.md`](https://code.claude.com/docs/en/memory) at user/project root + `@path` imports up to depth 5 + managed-CLAUDE.md at policy paths + `claudeMdExcludes` for monorepo noise.
+- **Codex** — [`AGENTS.md`](https://developers.openai.com/codex/guides/agents-md) concatenated from `$CODEX_HOME` down to cwd, with `AGENTS.override.md` per-directory + `project_doc_max_bytes` (default 32 KiB).
+
+Same conceptual shape, divergent filenames.
 
 **Fits when:** Project has non-obvious conventions, terminology, or orientation guidance. Cold pickups need fast onboarding.
 
@@ -132,7 +163,10 @@ Shapes that appear in some recognizable form across Claude Code, Codex, and adja
 
 ### 7. Path-scoped rules — (P)(T)(O)
 
-**What:** Rule files that only fire when the agent is working on matching paths. Claude Code: [`.claude/rules/`](https://code.claude.com/docs/en/memory) directory with glob-frontmatter on each rule file; symlinks supported for shared rule libraries. Codex: skill-frontmatter `paths` field plays a similar role for `.agents/skills/`.
+**What:** Rule files that only fire when the agent is working on matching paths. Platform comparison:
+
+- **Claude Code** — [`.claude/rules/`](https://code.claude.com/docs/en/memory) directory with glob-frontmatter on each rule file; symlinks supported for shared rule libraries.
+- **Codex** — skill-frontmatter `paths` field plays a similar role for `.agents/skills/`.
 
 **Fits when:** Discipline important only when working on certain file types or paths (test-authoring rules on test files; SQL conventions in migration directories).
 
@@ -140,7 +174,12 @@ Shapes that appear in some recognizable form across Claude Code, Codex, and adja
 
 ### 8. MCP servers — (P)(T)(O)
 
-**What:** [Model Context Protocol](https://modelcontextprotocol.io/) — open standard for tool servers. Claude Code: [HTTP / stdio transports](https://code.claude.com/docs/en/mcp) (SSE deprecated), three scopes (`local`/`project`/`user`), [Channels for server-push events](https://code.claude.com/docs/en/channels), `Elicitation` hook events for mid-tool-call user input, auto-reconnect with exponential backoff. Codex: same protocol via `[mcp_servers.<id>]` in `config.toml`. OpenAI Agents SDK: [5 transport variants](https://openai.github.io/openai-agents-python/mcp/) including Hosted MCP (Responses API executes server-side). ChatGPT Apps: MCP via OAuth-CIMD.
+**What:** [Model Context Protocol](https://modelcontextprotocol.io/) — open standard for tool servers. Platform comparison:
+
+- **Claude Code** — [HTTP / stdio transports](https://code.claude.com/docs/en/mcp) (SSE deprecated), three scopes (`local`/`project`/`user`), [Channels for server-push events](https://code.claude.com/docs/en/channels), `Elicitation` hook events for mid-tool-call user input, auto-reconnect with exponential backoff.
+- **Codex** — same protocol via `[mcp_servers.<id>]` in `config.toml`.
+- **OpenAI Agents SDK** — [5 transport variants](https://openai.github.io/openai-agents-python/mcp/) including Hosted MCP (Responses API executes server-side).
+- **ChatGPT Apps** — MCP via OAuth-CIMD.
 
 **Fits when:** Capabilities need shared server-side logic (credential rotation, audit emission, internal-API gateways, RBAC). Or capability authors want versioning without each project bundling code.
 
@@ -150,7 +189,10 @@ Shapes that appear in some recognizable form across Claude Code, Codex, and adja
 
 ### 9. Vetted MCP connector catalog — (T)(O)
 
-**What:** Vendor-curated catalog of pre-vetted MCP connectors employees can pull into agent runtimes. Claude: [Anthropic Connectors Directory](https://support.claude.com/en/articles/11596036-anthropic-connectors-directory-faq), 398 vetted entries. OpenAI: reviewed-MCP-connector tier (Amplitude, Stripe, Vercel, Hex, etc.) used by Workspace Agents and ChatGPT Apps.
+**What:** Vendor-curated catalog of pre-vetted MCP connectors employees can pull into agent runtimes. Platform comparison:
+
+- **Claude** — [Anthropic Connectors Directory](https://support.claude.com/en/articles/11596036-anthropic-connectors-directory-faq), 398 vetted entries.
+- **OpenAI** — reviewed-MCP-connector tier (Amplitude, Stripe, Vercel, Hex, etc.) used by Workspace Agents and ChatGPT Apps.
 
 **Fits when:** Want governance over which MCPs employees can pull in; don't want to vet every third-party MCP yourselves.
 
@@ -158,7 +200,12 @@ Shapes that appear in some recognizable form across Claude Code, Codex, and adja
 
 ### 10. Skills as units — (P)(T)(O)
 
-**What:** Markdown files with name+description frontmatter that the agent runtime loads conditionally. Claude Code: [`SKILL.md`](https://code.claude.com/docs/en/skills) with rich frontmatter (`when_to_use`, `disable-model-invocation`, `user-invocable`, `allowed-tools`, `model`, `effort`, `context: fork`, `agent`, `hooks`, `paths`, `shell`, `argument-hint`, `arguments`). Codex: same `SKILL.md`+frontmatter shape ([skills docs](https://developers.openai.com/codex/skills)), discovered from `.agents/skills/` and `~/.agents/skills/`. Both follow the [Agent Skills open standard](https://agentskills.io).
+**What:** Markdown files with name+description frontmatter that the agent runtime loads conditionally. Platform comparison:
+
+- **Claude Code** — [`SKILL.md`](https://code.claude.com/docs/en/skills) with rich frontmatter (`when_to_use`, `disable-model-invocation`, `user-invocable`, `allowed-tools`, `model`, `effort`, `context: fork`, `agent`, `hooks`, `paths`, `shell`, `argument-hint`, `arguments`).
+- **Codex** — same `SKILL.md`+frontmatter shape ([skills docs](https://developers.openai.com/codex/skills)), discovered from `.agents/skills/` and `~/.agents/skills/`.
+
+Both follow the [Agent Skills open standard](https://agentskills.io).
 
 **Fits when:** Discipline or capability that should load only when relevant — saves context budget vs. always-on.
 
@@ -168,11 +215,20 @@ Shapes that appear in some recognizable form across Claude Code, Codex, and adja
 
 **Open-standard portability:** Same `SKILL.md` works across Claude Code and Codex with path adjustment (`.claude/skills/` vs `.agents/skills/`). Real-world repos already ship to both — see [netresearch/claude-code-marketplace](https://github.com/netresearch/claude-code-marketplace).
 
-**Polyglot skill-path discovery (cross-tool):** Some tools read multiple skill-path conventions simultaneously. [opencode](https://opencode.ai/docs/skills/) discovers skills from `.opencode/skills/`, `.claude/skills/`, *and* `.agents/skills/` in one pass — turns "which path do we ship to?" into a non-question for that tool. Cursor reads `.cursor/rules/` plus AGENTS.md. JetBrains Junie reads `.junie/skills/` plus `.agents/skills/`. When portability matters more than canonical paths, polyglot-reading tools are the bridge.
+**Polyglot skill-path discovery (cross-tool):** Some tools read multiple skill-path conventions simultaneously. Platform comparison:
+
+- **[opencode](https://opencode.ai/docs/skills/)** — discovers skills from `.opencode/skills/`, `.claude/skills/`, *and* `.agents/skills/` in one pass; turns "which path do we ship to?" into a non-question.
+- **Cursor** — reads `.cursor/rules/` plus AGENTS.md.
+- **JetBrains Junie** — reads `.junie/skills/` plus `.agents/skills/`.
+
+When portability matters more than canonical paths, polyglot-reading tools are the bridge.
 
 ### 11. Compliance / governance log export — (O)
 
-**What:** Vendor-emitted, immutable, structured logs of governance events. Anthropic: [Compliance API](https://platform.claude.com/docs/en/manage-claude/compliance-api), GA 2026-03-30, ~30 typed events, JSON/CSV export, SIEM push (Splunk/Datadog/Elastic), **180-day retention**. OpenAI: [Compliance Logs Platform](https://help.openai.com/en/articles/11509118-admin-controls-security-and-compliance-in-apps-enterprise-edu-and-business) with immutable JSONL exports (Admin Audit, User Auth, Codex Usage), **30-day default retention**, broader scope (includes prompts, completions, tool calls).
+**What:** Vendor-emitted, immutable, structured logs of governance events. Platform comparison:
+
+- **Anthropic** — [Compliance API](https://platform.claude.com/docs/en/manage-claude/compliance-api), GA 2026-03-30, ~30 typed events, JSON/CSV export, SIEM push (Splunk/Datadog/Elastic), **180-day retention**.
+- **OpenAI** — [Compliance Logs Platform](https://help.openai.com/en/articles/11509118-admin-controls-security-and-compliance-in-apps-enterprise-edu-and-business) with immutable JSONL exports (Admin Audit, User Auth, Codex Usage), **30-day default retention**, broader scope (includes prompts, completions, tool calls).
 
 **Fits when:** Regulated industries (finance, healthcare, government), org-wide audit requirements, anomaly detection.
 
@@ -185,7 +241,12 @@ If audit requires prompt/completion/tool-call content, OpenAI's catalog is broad
 
 ### 12. OpenTelemetry — (P)(T)(O)
 
-**What:** Cross-platform observability via OTel exporters. Claude Code emits when `CLAUDE_CODE_ENABLE_TELEMETRY=1` ([monitoring docs](https://code.claude.com/docs/en/monitoring-usage)). Codex emits when configured via `[otel]` block in `config.toml`. The [GenAI semantic conventions](https://opentelemetry.io/docs/specs/semconv/gen-ai/gen-ai-metrics/) (experimental, March 2026) standardize fields across vendors.
+**What:** Cross-platform observability via OTel exporters. Platform comparison:
+
+- **Claude Code** — emits when `CLAUDE_CODE_ENABLE_TELEMETRY=1` ([monitoring docs](https://code.claude.com/docs/en/monitoring-usage)).
+- **Codex** — emits when configured via `[otel]` block in `config.toml`.
+
+The [GenAI semantic conventions](https://opentelemetry.io/docs/specs/semconv/gen-ai/gen-ai-metrics/) (experimental, March 2026) standardize fields across vendors.
 
 **Fits when:** Already running Datadog / Grafana / Honeycomb / SigNoz / Dynatrace; want a unified observability path that survives vendor churn. The most portable cost/usage telemetry shape.
 
@@ -193,7 +254,10 @@ If audit requires prompt/completion/tool-call content, OpenAI's catalog is broad
 
 ### 13. Tenant-level admin plane — (O)
 
-**What:** Unified admin surface spanning multiple workspaces / products under one SSO + verified-domains tenant. Anthropic: [Admin API](https://docs.anthropic.com/en/api/admin-api), 25 endpoints, parent-org → child-org hierarchy, cross-org SSO/SCIM. OpenAI: [admin.openai.com](https://help.openai.com/en/articles/12289294-global-admin-console) spanning ChatGPT workspaces and API orgs.
+**What:** Unified admin surface spanning multiple workspaces / products under one SSO + verified-domains tenant. Platform comparison:
+
+- **Anthropic** — [Admin API](https://docs.anthropic.com/en/api/admin-api), 25 endpoints, parent-org → child-org hierarchy, cross-org SSO/SCIM.
+- **OpenAI** — [admin.openai.com](https://help.openai.com/en/articles/12289294-global-admin-console) spanning ChatGPT workspaces and API orgs.
 
 **Fits when:** Org needs single governance surface across multiple product lines from one vendor.
 
@@ -201,7 +265,10 @@ If audit requires prompt/completion/tool-call content, OpenAI's catalog is broad
 
 ### 14. OS-enforced sandbox — (P)(T)(O)
 
-**What:** OS-level sandboxing on the tool's tool-use (file write, process exec, network). Both vendors ship this. Claude Code: [`/sandbox` + `@anthropic-ai/sandbox-runtime`](https://code.claude.com/docs/en/sandboxing) — Seatbelt on macOS, bubblewrap+seccomp on Linux, WSL2/native on Windows. Codex: same OS surface; modes `read-only` / `workspace-write` / `danger-full-access`.
+**What:** OS-level sandboxing on the tool's tool-use (file write, process exec, network). Both vendors ship this. Platform comparison:
+
+- **Claude Code** — [`/sandbox` + `@anthropic-ai/sandbox-runtime`](https://code.claude.com/docs/en/sandboxing) — Seatbelt on macOS, bubblewrap+seccomp on Linux, WSL2/native on Windows.
+- **Codex** — same OS surface; modes `read-only` / `workspace-write` / `danger-full-access`.
 
 **Fits when:** Untrusted code execution; agent operating with broad permissions where a misstep could damage the host.
 
@@ -254,7 +321,7 @@ Two substrates carry portability across vendors: one for *context* (AGENTS.md), 
 - **Hosted-managed adopters** — GitHub Copilot Coding Agent, Devin, Workspace Agents read AGENTS.md but govern sandbox + admin from vendor side rather than user/repo side.
 - **Promiscuous readers** — Devin auto-pulls from `AGENTS.md`, `.cursorrules`, `.windsurf`, `CLAUDE.md`, `.mdc`, `.rules` — no canonical priority.
 
-The same `AGENTS.md` file loads across these tools, but *priority*, *layering*, *override semantics*, and *nested-file handling* vary materially. See [`wave-multi-vendor-adopters.md`](./wave-multi-vendor-adopters.md) and the HTML matrix at [`wave-multi-vendor-adopters.html`](./wave-multi-vendor-adopters.html) for per-tool inventory; track [v1.1 spec proposal](https://github.com/agentsmd/agents.md/issues/135) to make these semantics explicit.
+The same `AGENTS.md` file loads across these tools, but *priority*, *layering*, *override semantics*, and *nested-file handling* vary materially. Track [v1.1 spec proposal](https://github.com/agentsmd/agents.md/issues/135) to make these semantics explicit.
 
 **Strategic call:** For company-scale advisory where the org uses multiple AI coding tools, the AGENTS.md substrate is the most portable *context* shape available today. Adopting it doesn't preclude Claude Code; it does mean shipping double config paths until Claude Code adopts (or you commit to single-vendor). For maximum bridge value, opencode-style polyglot-path readers minimize the duplication tax.
 
@@ -604,7 +671,6 @@ Subsequent research waves should each target one of these and produce a `wave-<t
 
 ## Sources
 
-- Wave reports (this directory): [`wave-anthropic-claude-code.md`](./wave-anthropic-claude-code.md), [`wave-openai-platform.md`](./wave-openai-platform.md), [`wave-openai-codex-cli.md`](./wave-openai-codex-cli.md), [`wave-prior-art-verification.md`](./wave-prior-art-verification.md), [`wave-cost-attribution.md`](./wave-cost-attribution.md), [`wave-compliance-audit.md`](./wave-compliance-audit.md), [`wave-multi-vendor-adopters.md`](./wave-multi-vendor-adopters.md). Visual HTML comparison matrix: [`wave-multi-vendor-adopters.html`](./wave-multi-vendor-adopters.html).
 - Cross-tool substrate: [agents.md](https://agents.md/).
 - Anthropic: [Claude Code docs](https://code.claude.com/docs/en/), [Claude Platform docs](https://platform.claude.com/docs/en/), [Admin API](https://docs.anthropic.com/en/api/admin-api), [Compliance API](https://platform.claude.com/docs/en/manage-claude/compliance-api), [Anthropic Connectors Directory FAQ](https://support.claude.com/en/articles/11596036-anthropic-connectors-directory-faq), [Trust Center](https://trust.anthropic.com/).
 - OpenAI: [OpenAI developers](https://developers.openai.com/), [Codex docs](https://developers.openai.com/codex), [Agents SDK](https://openai.github.io/openai-agents-python/), [Workspace Agents](https://openai.com/academy/workspace-agents/), [Global Admin Console help](https://help.openai.com/en/articles/12289294-global-admin-console), [Compliance Logs Platform](https://help.openai.com/en/articles/11509118-admin-controls-security-and-compliance-in-apps-enterprise-edu-and-business), [Trust Portal](https://trust.openai.com/).
