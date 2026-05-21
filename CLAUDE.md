@@ -14,4 +14,5 @@ A Claude Code plugin marketplace + skill development project. Most work is itera
 | Project-level skills (wrappers around plugin skills) | `.claude/skills/<name>/SKILL.md` |
 | Plans (workstreams) | `plans/<name>.md` |
 | Logs (by type) | `logs/<decision\|friction\|idea\|pattern\|problem\|research>/<title>.md` |
+| Assertions (durable platform-behavior tests) | `logs/assertions/<topic>/<assertion>.md` — re-runnable; see `logs/assertions/README.md` |
 | Sandboxes | `sandbox/<name>/SANDBOX-TASKS.md` per branch |
