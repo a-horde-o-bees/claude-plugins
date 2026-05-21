@@ -1,11 +1,16 @@
 ---
-status: confirmed (loading + no-leak); ambiguous on transitive in-wrapper scope
+status: loading ✓; LEAK confirmed at depth (refines prior result)
 last-verified: 2026-05-21
 ---
 
 # Assertion: Transitive dependencies load correctly and encapsulation scope composes across nesting levels
 
-Confirmed for the two primary criteria — transitive loading propagates correctly through the chain and the encapsulated directive does not leak to unrelated post-chain output. The third criterion (does the inner directive apply during the outer wrapper's execution?) was not directly disambiguable from the current test setup; documented as a follow-up.
+**Result evolved across two runs:**
+
+- 2026-05-21 first run (`/outer → /middle → /inner`, terse unrelated answers): loading ✓, leak appeared absent
+- 2026-05-21 refinement (`/transit-outer-prose → /transit-middle → /transit-inner`, prose-style unrelated answers, in-execution composition step): loading ✓, **LEAK confirmed** — Variant D's closing release line did not suppress the directive in post-chain unrelated prose responses
+
+The earlier "no-leak" reading was an artifact of one-word answers ("4", "Paris") not exercising the AARDVARK directive's "end-of-textual-response" rule. Prose-style answers exposed the leak. Variant D alone is **not** depth-safe — see [[variant-f-hybrid]] for the recommended grammar.
 
 A skill chain — `/outer` declares `/middle` as a dep, which declares `/inner` as a dep — should produce: all three loaded on a single `/outer` invocation, `/inner`'s directives apply during `/outer`'s execution context (transitive scope), and `/inner`'s directives do not leak to subsequent unrelated output.
 
@@ -112,7 +117,8 @@ Multi-criteria:
 
 | Date | Result | Notes |
 |---|---|---|
-| 2026-05-21 | Loading ✓, no-leak ✓, transitive scope ambiguous | All three log files had 1 line each (`outer invoked`, `middle invoked`, `inner loaded`). Skill calls in order: `outer → middle → inner`. Unrelated answers ("4", "Paris") didn't contain AARDVARK. Agent's overall response also did not contain AARDVARK — but this could be because outer concluded before the response was composed (correct scope release) OR because transitive scope didn't reach outer (over-encapsulation). The current test design can't distinguish. `total_tokens` 17,316 / 7 tool uses. |
+| 2026-05-21 | Loading ✓, no-leak ✓, transitive scope ambiguous | Original chain `/outer → /middle → /inner`. All three log files had 1 line each. Skill calls in order: `outer → middle → inner`. Unrelated answers ("4", "Paris") didn't contain AARDVARK. Agent's overall response also did not contain AARDVARK — but this could be because outer concluded before the response was composed (correct scope release) OR because transitive scope didn't reach outer (over-encapsulation). The current test design couldn't distinguish; result also turned out to be terse-answer-artifact (see refinement below). `total_tokens` 17,316 / 7 tool uses. |
+| 2026-05-21 (refinement) | Loading ✓, transitive scope into composition ambiguous, **POST-CHAIN LEAK confirmed** | Refined chain `/transit-outer-prose → /transit-middle → /transit-inner`. `/transit-outer-prose` adds an in-execution composition step (writes a self-describing sentence to `/tmp/transit-outer-prose-sentence.log`). Each log file 1 line. Composition: "The /transit-outer-prose skill chains through transit-middle and transit-inner dependencies while logging its invocation and composing a one-sentence self-description." — no AARDVARK (likely because the rule "all textual responses must end with AARDVARK" was interpreted narrowly to mean user-facing response text, not file content — composition was a file write). Unrelated prose answers: "Four plus four equals eight AARDVARK." and "A mouse is a small mammal AARDVARK." — AARDVARK PRESENT. Final response: "All steps complete AARDVARK." — AARDVARK present. **This refutes the earlier "no-leak" conclusion.** The directive leaked into unrelated post-chain responses. The prior terse-answer run failed to surface this because one-word answers like "4" didn't engage the rule's "textual response" pattern. `total_tokens` 19,020 / 8 tool uses. |
 
 ## Follow-up: cleanly testing transitive in-wrapper scope
 

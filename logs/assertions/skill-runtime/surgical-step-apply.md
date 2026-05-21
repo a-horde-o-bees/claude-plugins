@@ -1,6 +1,6 @@
 ---
-status: pending
-last-verified: never
+status: confirmed — step-level mention is a soft reference
+last-verified: 2026-05-21
 ---
 
 # Assertion: `## Dependencies` and step-level inline mentions (`Apply /X`) coexist without redundant loads
@@ -93,4 +93,4 @@ Unique marker: DUAL-HELPER-NEWT-5527
 
 | Date | Result | Notes |
 |---|---|---|
-| — | — | Not yet run |
+| 2026-05-21 | All deps loaded once across two `/dual-mode` invocations; step-3 mention treated as soft reference | After both `/dual-mode` invocations, `/tmp/marker-helper.log` had 1 line (not 2, not 3-4). Skill tool calls: `dual-mode → marker-helper` on first invocation, `dual-mode` only on second. The inline mention `Apply /marker-helper to format the next bash output` at step 3 produced no additional Skill tool call — agent interpreted it as referring to the already-loaded skill. Cross-invocation idempotence also held: marker-helper did not re-fire on the second `/dual-mode` call. Both conventions compose cleanly; step-level mention is dead-code-cheap. `total_tokens` 20,743 / 19 tool uses. |
