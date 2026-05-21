@@ -6,9 +6,15 @@ These exist because Claude Code (and any platform we build on) evolves. An asser
 
 ## File anatomy
 
-Each assertion file declares:
+**Frontmatter** — two fields only:
 
-- **Status** — `pending` (not yet tested), `confirmed` (verified), `refuted` (verified false), `needs-recheck` (last verification is stale or the platform changed)
+- `status` — `pending` (not yet tested), `confirmed` (verified), `refuted` (verified false), `needs-recheck` (last verification stale or platform changed)
+- `last-verified` — date of the most recent run, or `never`
+
+Omit any field with no value to convey. Don't include empty placeholders like `depends-on: []` — they're dead clutter. Inter-file dependencies live in the topic README's graph table, not in per-file frontmatter.
+
+**Body** — describes the assertion and its test:
+
 - **Hypothesis** — the specific claim being tested
 - **Why it matters** — what design decisions depend on the answer
 - **Test design** — full content of any test artifact (skill body, prompt, etc.), the run procedure, and the detection method that discriminates outcomes

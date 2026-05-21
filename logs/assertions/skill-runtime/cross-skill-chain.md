@@ -1,7 +1,6 @@
 ---
 status: pending
 last-verified: never
-depends-on: [skill-caching.md, body-persistence.md]
 ---
 
 # Assertion: When skill A loads /X and later skill B also declares /X, B's idempotent check correctly skips

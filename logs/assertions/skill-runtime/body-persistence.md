@@ -1,10 +1,11 @@
 ---
-status: pending
-last-verified: never
-depends-on: [skill-caching.md]
+status: confirmed
+last-verified: 2026-05-21
 ---
 
 # Assertion: Once injected, a skill body persists in context for the rest of the session
+
+Confirmed: injected skill bodies remain in conversation history as ordinary tool-result content, available to subsequent reasoning without re-invocation, until context-window pressure or compaction evicts them.
 
 Claude Code docs claim: *"the rendered SKILL.md content enters the conversation as a single message and stays there for the rest of the session."* This assertion verifies that claim experimentally. The idempotent-dependency directive relies on it — if bodies drop out of context, the "already loaded" check would fail honestly and re-fire.
 
@@ -60,4 +61,4 @@ The marker phrase must be unique enough that it can't be guessed or confused wit
 
 | Date | Result | Notes |
 |---|---|---|
-| — | — | Not yet run |
+| 2026-05-21 | `persists` | Agent invoked `/marker-skill` once, performed 10 unrelated tool calls, then quoted `PERSIST-CHECK-MARMOSET-3142` verbatim from session context without re-invoking or reading the file. `/tmp/marker.log` had 1 line confirming single invocation. `total_tokens` 19,931 across 14 tool uses. |

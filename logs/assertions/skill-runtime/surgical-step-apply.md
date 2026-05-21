@@ -1,7 +1,6 @@
 ---
 status: pending
 last-verified: never
-depends-on: [skill-caching.md, body-persistence.md]
 ---
 
 # Assertion: `## Dependencies` and step-level inline mentions (`Apply /X`) coexist without redundant loads

@@ -1,7 +1,6 @@
 ---
 status: confirmed
 last-verified: 2026-05-21
-depends-on: []
 ---
 
 # Assertion: `## Dependencies` section requires imperative + idempotent phrasing to work

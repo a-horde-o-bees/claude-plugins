@@ -1,10 +1,11 @@
 ---
-status: pending
-last-verified: never
-depends-on: []
+status: confirmed (H-A — re-injection)
+last-verified: 2026-05-21
 ---
 
-# Assertion: Does the Skill tool re-inject body on every call, or cache after first?
+# Assertion: The Skill tool re-injects the full body on every invocation; no harness-level cache exists
+
+Confirmed: every Skill-tool invocation returns the full SKILL.md body byte-for-byte. There is no cached marker, no "already loaded" detection, no shortening of subsequent returns. Token cost scales linearly with call count.
 
 Two competing hypotheses to discriminate:
 
@@ -93,4 +94,10 @@ The side-effect file rules out the "silent skip" failure mode — both hypothese
 
 | Date | Result | Notes |
 |---|---|---|
-| — | — | Not yet run |
+| 2026-05-21 | `full-reinject` | 5 calls returned byte-for-byte identical body (~2,790 chars each). Marker `UNIQUE-MARKER-PIZZADAEMON-7349` appeared 5 times in conversation. Side-effect file confirmed all 5 invocations executed. `total_tokens` 24,818 across 17 tool uses. Agent confirmed observing five distinct "Launching skill" / full-body return pairs in scrollable history. |
+
+## Implication confirmed
+
+The idempotent `## Dependencies` directive (from `dep-test-iterations.md`) is the correct mitigation. Without it, every redundant invocation pays the full body re-injection cost. With it, agent-side judgment skips the re-fire, avoiding the redundant return.
+
+This also confirms the cost numbers from `dep-test-iterations.md` were real, not artifacts of agent self-reporting. Re-injection is the platform's actual behavior.
