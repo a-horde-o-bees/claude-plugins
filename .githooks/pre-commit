@@ -1,34 +1,16 @@
 #!/usr/bin/env bash
 #
-# Pre-commit:
-#   1. Verify cross-plugin /skill invocations have matching plugin.json deps
-#      (runs on every commit; catches violations before they reach main)
-#   2. Bump plugin patch versions on main
-#      For each plugin/<name>/.claude-plugin/plugin.json whose plugin has staged
-#      changes (excluding plugin.json itself), increment z in version. Feature
-#      branches skip the bump — only commits landing on main fire dev-channel
-#      reload detection, and bumping on sandbox branches creates rebase conflicts
-#      at update time when origin/main has advanced past the branch's z value.
+# Pre-commit: bump plugin patch versions on main.
+#
+# For each plugins/<name>/.claude-plugin/plugin.json whose plugin has staged
+# changes (excluding plugin.json itself), increment z in version. Feature
+# branches skip the bump — only commits landing on main fire dev-channel
+# reload detection, and bumping on sandbox branches creates rebase conflicts
+# at update time when origin/main has advanced past the branch's z value.
 
 set -euo pipefail
 
 staged=$(git diff --cached --name-only)
-
-# --- 1. Plugin dependency check ---
-#
-# For each plugin with staged changes, verify cross-plugin /skill invocations
-# in its body files resolve through declared dependencies in plugin.json.
-# Runs on every branch — sandbox + feature commits should fail fast rather
-# than carry latent violations to main.
-
-staged_plugins=$(echo "$staged" | grep -oE "^plugins/[^/]+" | sort -u | sed 's|^plugins/||' || true)
-if [ -n "$staged_plugins" ]; then
-    hook_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-    # shellcheck disable=SC2086
-    python3 "$hook_dir/check_plugin_deps.py" $staged_plugins
-fi
-
-# --- 2. Version bump on main ---
 
 current_branch=$(git rev-parse --abbrev-ref HEAD)
 if [ "$current_branch" = "main" ]; then

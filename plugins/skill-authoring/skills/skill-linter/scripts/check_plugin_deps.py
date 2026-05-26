@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Pre-commit check: cross-plugin `/skill-name` invocations must have declared deps.
+"""Skill-linter check: cross-plugin `/skill-name` invocations must have declared deps.
 
 Walks `plugins/*/.claude-plugin/plugin.json` to inventory declared deps. Walks
 `plugins/*/skills/*/SKILL.md` to build a `skill-name → owning-plugin` index.
@@ -124,7 +124,7 @@ def check(plugins_to_check: list[str]) -> int:
         print("", file=sys.stderr)
     print(
         f"{len(violations)} violation(s) across {len(by_plugin)} plugin(s). "
-        "Reconcile plugin.json dependencies and re-commit.",
+        "Reconcile plugin.json dependencies.",
         file=sys.stderr,
     )
     return 1
