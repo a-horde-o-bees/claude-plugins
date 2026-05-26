@@ -30,7 +30,7 @@ Everything else — organization, phrasing, ordering, examples, headings — is 
 
 ## When not to reauthor
 
-- Few-line correction or clarification — apply the change in place. Reauthor scope kicks in when the change touches more than a handful of lines.
+- Local correction or clarification — apply it in place. Reauthor only when the change reaches the artifact's structure, ordering, or coherence, not a single spot.
 - Localized bug fix — patch it.
 - Rename, file move, pure refactor.
 - Conformance check without intent to change — audit.

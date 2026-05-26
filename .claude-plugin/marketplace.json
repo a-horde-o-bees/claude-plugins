@@ -9,7 +9,7 @@
     {
       "name": "writing",
       "source": "./plugins/writing",
-      "description": "Prose and artifact authoring discipline — apply concise-prose, description-authoring, markdown-authoring, process-flow-notation, reauthor, trigger-specificity at the matching authoring moment.",
+      "description": "Prose and artifact authoring discipline — apply concise-prose, description-authoring, markdown-authoring, process-flow-notation, reauthor, rule-authoring at the matching authoring moment.",
       "category": "discipline"
     },
     {

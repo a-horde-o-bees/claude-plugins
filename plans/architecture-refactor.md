@@ -74,7 +74,7 @@ Each plugin is a cohesive bundle. Plugin-deps wire cross-plugin needs.
 |---|---|---|
 | `git/` | Version-control discipline | git (verbs: commit, checkpoint, ci, push, release), checkpoint |
 | `transcripts/` | Transcript querying | transcripts (9 verbs) |
-| `writing/` | Prose/artifact authoring discipline | concise-prose, description-authoring, markdown-authoring, process-flow-notation, reauthor, trigger-specificity |
+| `writing/` | Prose/artifact authoring discipline | concise-prose, description-authoring, markdown-authoring, process-flow-notation, reauthor, rule-authoring |
 | `communication/` | Agent⇄user interaction discipline | honesty, principled-pushback, confirm-shared-intent |
 | `testing/` | Testing discipline | test-authoring, test-driven-development, test-maintenance, testing-decisions |
 | `design/` | Engineering design discipline | agent-first-interfaces, borrow-before-build, clean-break, composability, fix-foundations-not-symptoms, graceful-degradation, structure-as-documentation, workflow-vs-script, file-decomposition, progressive-disclosure |
@@ -214,7 +214,7 @@ Walking `logs/decision/*.md` against final implementation. Per the survey:
 
 - **Plugin-dep version pinning conventions** — how strict do we pin (caret? exact?). Sketch a release-tag discipline alongside the first cross-plugin dep we declare.
 - **Hook lifecycle empirical verification** — Pattern A may fire only during skill invocation, or whenever the skill is loaded for discovery. Test before any Pattern A skill ships hooks expecting always-on behavior.
-- **Multi-skill disambiguation** — when conversation context surfaces multiple parallel skill opportunities, agent should show the user candidates and let them pick. Currently captured in `trigger-specificity` authoring guidance.
+- **Multi-skill disambiguation** — when conversation context surfaces multiple parallel skill opportunities, agent should show the user candidates and let them pick. Currently captured in `rule-authoring` authoring guidance.
 - **Permissions Pattern B in subagent contexts** — does the deployed `settings.json` hook fire in spawned subagent contexts the same way as in the main agent? Verify before relying on it.
 - **`/rules` directive wording** — exact text appended to CLAUDE.md (`Read /<skill>` vs `Always apply /<skill> when ...` vs `@<absolute-path-to-SKILL.md>` import syntax). Defer until first implementation surfaces what the model actually responds to.
 - **Default deps for tooling plugins** — most tooling plugins (git, transcripts, navigator) arguably benefit from `writing` + `communication`. Decide per-plugin during Phase G execution, or set a default convention for tooling plugins.

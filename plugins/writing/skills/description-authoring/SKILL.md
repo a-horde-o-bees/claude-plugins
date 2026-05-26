@@ -1,41 +1,34 @@
 ---
 name: description-authoring
-description: Use whenever writing a description of any artifact at any scale — directory, file header, section head, docstring (function/class/module), skill frontmatter, navigator entry, tool help text, commit subject, log entry opener, schema title — where a reader (human or matcher) decides engage-vs-skip from the description alone.
+description: Use whenever writing a description for any artifact at any scale — directory, file header, section head, docstring (function/class/module), skill frontmatter, navigator entry, tool help text, commit subject, log entry opener, schema title — where a reader decides engage-vs-skip from the description alone.
 ---
 
 # Description Authoring
 
-A description tells a reader what something is and whether to go deeper — required at every structural boundary where a reader makes an include-or-skip decision, from a directory down to a single function.
+A description is the line a reader uses to decide engage-or-skip — often the only thing they have. Readers are users, other agents, or downstream tools. A vague one makes the content effectively invisible.
 
-A description conveys:
+## Directives
 
-- **Scope** — what domain or responsibility it covers
-- **Role** — what kind of thing it is (e.g., business logic, CLI, config, rule, section, function)
+**Substance**
+- Describe what the artifact is for, not how it does it — its responsibility or the outcome it produces, never the method behind it. "Rank search results by relevance" is a what; "rank results with TF-IDF scoring" is a how.
+- Convey two things: what the artifact covers and what kind of thing it is (e.g. directory, module, CLI, config, rule, schema, section, function).
+- Weave both into fluent prose — never expose them as labeled fields or split halves. "Retry and backoff helpers for outbound HTTP calls," not "Scope: HTTP retries. Role: helper module." The reader should see no seam.
+- Match the abstraction to the artifact's size — a directory's coverage is coarser than a file's, a package's coarser than a function's.
+- Third person.
 
-A description excludes:
+**Length**
+- Run as long as granularity requires, no longer — the quality tests below decide when it's enough, not a word budget. Most descriptions are one sentence; a broad or multi-faceted artifact may run to a few. Don't pad toward a paragraph, don't compress past distinguishability.
 
-- Internal mechanics — how algorithms work, what patterns are used
-- Content listing — section names, function names, class names
-- History — why it exists, what it replaced, when it was added
+**Exclude**
+- How it works — the method, steps, or approach it uses (for a skill, the technique it teaches; not only code).
+- Content listing — section, function, or class names.
+- History — why it exists, what it replaced, when it was added.
 
-The same scope + role test applies at every size — abstraction level scales, structure does not.
+**Consistency**
+- The same artifact described at any boundary reuses one description — single source of truth.
 
-Quality tests:
+## Quality tests
 
-- If two descriptions are interchangeable: too vague
-- If the description would change when internals are refactored but responsibility stays the same: too detailed
-- If the same statement would fit at two different scales: one is the wrong granularity
-
-The same artifact described at different boundaries uses the same description — single source of truth.
-
-## Description and body
-
-Description and body are distinct surfaces — one decides engage-vs-skip, the other guides operation. Content appearing in both isn't duplication; the body should re-state its operating principle so a reader landing there has it without re-reading the description.
-
-## Example: skill descriptions
-
-The matcher reads a skill's `description:` field to decide whether to surface the skill — nothing else. For a matcher, scope is the cognitive moment (when to reach for the skill) and the artifact or task type it applies to. Exclusions are unchanged.
-
-- `Use when authoring an artifact another agent will read — SKILL.md, workflow markdown, rule file, description, error message.` — names the cognitive moment + artifact types.
-- `Loads concise-prose, description-authoring, and related authoring rules.` — inventories contents; not a trigger.
-- `Project authoring disciplines.` — too vague; any authoring task could match.
+- Interchangeable with another artifact's description → too vague.
+- Would change when internals are refactored though the responsibility holds → too detailed.
+- Would fit equally at a different scale → wrong granularity.
