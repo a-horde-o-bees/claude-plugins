@@ -9,31 +9,37 @@ Raise signal, cut noise — minimize reader overhead without losing meaning. Rea
 
 ## Directives
 
-**Voice**
+### Voice
+
 - Active imperative, not passive.
 - Report facts — no speculation, no hedging.
 - No preambles, no narrative overhead, no cheerleading, no self-congratulation.
 
-**Structure**
+### Structure
+
 - Reshape before trimming — structural choices convey meaning and often cut more than word-trimming does.
 - Align parallel or comparative content using bullet lists or tables, and preserve that alignment — do not collapse parallel items into prose.
 
-**Restraint**
+### Restraint
+
 - No examples unless the content is ambiguous without one. Counter-examples only when essential to clarify a positive example.
 - Signal non-exhaustiveness in parenthetical lists with leading "e.g." — an unqualified list implicitly claims completeness; the qualifier is signal, not filler.
 - Cross-reference only when the reader must consult the source to understand the current surface.
 - Never enumerate content from a linked source — parenthetical summaries are redundant, cherry-picked, and prone to drift.
 
-**Anti-staleness**
+### Anti-staleness
+
 - No commentary on prior states the artifact no longer reflects — the artifact represents current reality only.
 - No references to temporary phases, processes, or labels that may not exist when the artifact is read.
 
-**Context leverage**
+### Context leverage
+
 - Lean on shared vocabulary — content compacts when it leverages concepts the reader already holds (e.g. established upstream in this surface, general knowledge a generalist would recognize).
 - Siblings carry context — items in a complementary set (e.g. failure modes, axes, angles) compact further than items read alone. Each only describes what it covers; the surrounding siblings clarify what it excludes. A gap that persists across all siblings together is a legitimate hole to address.
 - Dedup within a surface, not across surfaces — e.g. frontmatter, body, metadata, docstring, error codes, error messages are distinct mechanical surfaces with distinct readers and triggers; the same content appearing in two is not duplication.
 
-**Length**
+### Length
+
 - Prose length follows information, not prompt length — prose runs as long as the content requires after every other directive is applied.
 
 ## Safety checks
