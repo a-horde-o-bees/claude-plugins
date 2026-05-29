@@ -1,0 +1,15 @@
+# Markdown paths the linter skips — content we don't author to our standard.
+# One git glob pathspec per line; '#' comments and blank lines ignored.
+# Consumed by scripts/lint-markdown.sh as :(glob,exclude) pathspecs over the
+# git-tracked markdown set, so patterns match real paths (special characters
+# and all), not git's quoted display form.
+
+# Legacy plugin, pending removal
+plugins/ocd-old/**
+tests/plugins/ocd-old/**
+
+# Vendored upstream skill sources (kept verbatim, not ours to restyle)
+plugins/skill-authoring/skills/*/sources/**
+
+# Working notes, decision/idea journals, and captured research corpora
+logs/**

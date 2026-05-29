@@ -20,3 +20,22 @@ jobs:
 
       - name: Validate marketplace and plugin manifests
         run: python3 scripts/validate-manifests.py
+
+  markdown-lint:
+    # Probation: report violations, do not gate merges. Flip continue-on-error
+    # off (or remove this comment + the line) once the team is ready to enforce.
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install markdown linter
+        run: npm install --no-audit --no-fund
+
+      - name: Lint markdown (report-only)
+        run: npm run lint:md

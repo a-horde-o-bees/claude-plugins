@@ -1,0 +1,24 @@
+{
+  // Gating markdown lint — violations fail CI.
+  // Enforces the deterministic criteria in
+  // plugins/writing/skills/markdown-linter/criteria.md.
+  // Warn-level criteria run from warn.markdownlint-cli2.jsonc.
+  // Loaded only via --config; the name is intentionally not the
+  // auto-discovered ".markdownlint-cli2.jsonc" so the warn pass stays isolated.
+  "config": {
+    "default": true,
+    "line-length": false, // MD013 — single-line paragraphs are intentional here
+    "no-inline-html": false, // MD033 — literal <> handled by warn pass
+    "fenced-code-language": false, // MD040 — plain fences are allowed
+    "no-duplicate-heading": { "siblings_only": true }, // MD024 — repeated section names across blocks are fine
+    "no-space-in-code": false, // MD038 — edge spaces inside code spans can be deliberate (documenting a literal token like `- `); unsafe to enforce or auto-fix
+    "ul-indent": { "indent": 4 }, // MD007 — project standard is 4-space nesting (PFN; see conventions/templates/workflows-md.md)
+    "first-line-heading": true, // MD041 — file opens with an H1
+    "single-h1": true // MD025 — exactly one level-1 heading
+  },
+  "customRules": [
+    "./rules/one-line-paragraph.cjs",
+    "./rules/continuous-list-blank.cjs",
+    "./rules/fence-body-boundary-blank.cjs"
+  ]
+}

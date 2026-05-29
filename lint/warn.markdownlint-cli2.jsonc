@@ -1,0 +1,15 @@
+{
+  // Non-gating markdown lint — reported, does not fail CI.
+  // Holds the context-dependent criteria whose matches are lenient or
+  // false-positive-prone (see criteria.md). markdownlint has no native
+  // severity, so warn-level rules run as a separate, non-failing pass.
+  "config": {
+    "default": false,
+    "heading-names-file": true,
+    "literal-special-chars": true
+  },
+  "customRules": [
+    "./rules/heading-names-file.cjs",
+    "./rules/literal-special-chars.cjs"
+  ]
+}
