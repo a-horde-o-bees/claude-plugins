@@ -7,6 +7,8 @@ log-role: reference
 Where plugin-managed working files (DBs, indices, caches) live, keyed on whether the agent or Claude Code reads them directly versus only through bin tools.
 
 > **Status (2026-05-13)** — Four-category matrix (bin-mediated, user-edited, scope-required, plugin-namespaced user-edited) remains the framework. The `skill-authoring` plugin (formerly `progressive-skill-composer`) embeds `composition.md` inside each skill's folder rather than using plugin-namespaced storage — the recipe travels with the skill. The plugin-namespaced extension stays valid for plugins that need plugin-managed user-edited content not tied to any specific skill.
+>
+> **Status (2026-05-21)** — Migration candidates listed under §Consequences below are still pending. Transcripts modernization (`plans/transcripts.md` Workstream A) is routing the transcripts DB to `~/.claude/transcripts/transcripts.db` rather than the plugins-data-dir path prescribed on line 54 below — a deliberate deviation under that plan's Open Question 4. Reconciling the framework (allow simpler top-level paths for single-DB plugins, vs. conform new migrations to the prescribed namespacing) is open. Navigator's state-location migration is also pending and will be guided by whatever shape transcripts lands.
 
 ## Context
 
