@@ -1,36 +1,30 @@
 # List — show currently promoted skills
 
-### Variables
+## Variables
 
 - {args} — verb arguments: `[--scope <user | project>]`
 
-### Process
+## Process
 
 1. Parse {args}:
     1. {scope}: value of `--scope` flag if present, else `both`
 
 2. If {scope} not in (`user`, `project`, `both`): Exit to user: invalid scope {scope} — expected `user`, `project`, or omit for both
-
 3. For each target in scopes-to-list:
     1. If target is `user`: {target-file} = `~/.claude/CLAUDE.md`
     2. Else: {target-file} = `<project-root>/CLAUDE.md`
-
-    1. If {target-file} doesn't exist:
+    3. If {target-file} doesn't exist:
         1. Render: `{target}: (no CLAUDE.md)`
         2. Continue next
-
-    2. {body}: Read: {target-file}
-
-    3. Locate sentinel block:
+    4. {body}: Read: {target-file}
+    5. Locate sentinel block:
         1. {begin-line}: line matching `<!-- BEGIN rules:promoted -->`
         2. {end-line}: line matching `<!-- END rules:promoted -->`
-
-    4. If block missing:
+    6. If block missing:
         1. Render: `{target}: (no promotions)`
         2. Continue next
-
-    5. {block-lines}: lines between sentinels (exclusive)
-    6. {promoted}: each line matching `Read /<name>` → extract `<name>`
-    7. Render: `{target}: {promoted-list}`
+    7. {block-lines}: lines between sentinels (exclusive)
+    8. {promoted}: each line matching `Read /<name>` → extract `<name>`
+    9. Render: `{target}: {promoted-list}`
 
 4. Exit to user: rendered list

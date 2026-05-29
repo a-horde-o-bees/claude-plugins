@@ -34,13 +34,11 @@ Push local commits to a named remote branch.
         2. If no commits were produced: Exit to user: commit step produced nothing — investigate and re-invoke
 
 3. {upstream-set}: bash: `git rev-parse --abbrev-ref @{upstream} 2>/dev/null` exits 0
-
 4. If {upstream-set}:
     1. {unpushed}: bash: `git log --oneline @{upstream}..HEAD`
     2. If {unpushed} is empty: Exit to user: nothing to push — local and remote in sync
 
 5. Present push preview — branch, remote, commit count + oneline list
-
 6. Push:
     1. If {upstream-set}: bash: `git push origin {branch}`
     2. Else: bash: `git push -u origin {branch}` — first push sets upstream

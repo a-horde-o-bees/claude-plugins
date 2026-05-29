@@ -111,8 +111,7 @@ Default scope on `sessions` and `exchanges` is the current project. `--all-proje
 2. {verb} = first token of $ARGUMENTS
 3. {verb-args} = remainder of $ARGUMENTS after {verb}
 
-> Most verbs run the Python CLI in `scripts/`. `report` is skill-orchestrated — it dispatches to a format-specific component file that drives a multi-step workflow.
-
+    > Most verbs run the Python CLI in `scripts/`. `report` is skill-orchestrated — it dispatches to a format-specific component file that drives a multi-step workflow.
 4. If {verb} is `projects`:
     1. bash: `cd <THIS-FILE-DIR> && python3 -m scripts projects`
 5. Else if {verb} is `sessions`:

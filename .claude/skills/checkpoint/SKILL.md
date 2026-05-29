@@ -38,13 +38,12 @@ The commit + push + CI steps are delegated to `/git-commit`, `/git-push`, and `/
 
 1. {branch} = bash: `git branch --show-current`
 
-> Branch awareness — checkpoint runs the same commit/push/ci cycle on any branch. The skills sync is main-only because both sync modes pull from the repo's main branch.
+    > Branch awareness — checkpoint runs the same commit/push/ci cycle on any branch. The skills sync is main-only because both sync modes pull from the repo's main branch.
 
 2. Commit — skill: `/git-commit`
 3. {pending-paths} = bash: `git diff --name-only origin/{branch}..HEAD 2>/dev/null` — empty when local is at origin/{branch} or origin/{branch} doesn't exist yet
 4. Push — skill: `/git-push --branch {branch}`
 5. CI gate — skill: `/git-ci --branch {branch}`
-
 6. If {branch} is `main`:
     1. {sync-mode}: bash: `cd <THIS-FILE-DIR> && uv run python -c "import json; print(json.load(open('settings.json'))['sync_mode'])"`
     2. If {sync-mode} is `marketplace`: {sync-result}: Call: `_sync_marketplace.md` ({pending-paths}: {pending-paths})

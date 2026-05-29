@@ -44,6 +44,7 @@ Read /principled-pushback
 `add` inserts the block (or adds a line to an existing block); `remove` strips the matching line and prunes an emptied block; `list` reads the block.
 
 Idempotency rules:
+
 - `add /X` to a file that already contains `Read /X` in the block is a no-op
 - `remove /X` from a file that doesn't contain `Read /X` is a no-op (reports "not promoted")
 - If `remove` empties the block, the sentinels and block are stripped together

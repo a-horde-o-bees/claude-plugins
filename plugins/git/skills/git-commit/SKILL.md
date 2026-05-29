@@ -29,7 +29,6 @@ Commit working-tree changes as one or more topic-grouped commits.
 
 2. {suspicious-untracked}: untracked files matching suspicious patterns
 3. If {suspicious-untracked} non-empty: surface to the user; confirm include, exclude, or `.gitignore` before proceeding
-
 4. {commit-groups}: partition changes by topic. Indicators of a shared topic:
     - Tests beside the code they exercise
     - Configuration beside the consuming implementation
@@ -38,9 +37,7 @@ Commit working-tree changes as one or more topic-grouped commits.
     One group when changes are coherent or grouping is ambiguous; multiple groups only when topics are clearly separable. Multi-group order: dependencies before consumers.
 
 5. {commit-messages}: draft one message per group — subject + body. Apply /concise-prose, /description-authoring, /honesty. Body lines describe end-state results visible in the diff or decisions not visible there. Strip process narration (`reauthored`, `sweep applied`), restated principles when the diff already shows the principle applied, and meta-commentary about earlier steps in the change journey. Project-internal phase labels (`Phase G`, `Sprint 4`) are meaningless to future readers — strip them.
-
 6. {co-author}: bash: `git config --get user.claude-coauthor`
-
 7. For each {group} in {commit-groups}:
     1. bash: `git add <files-in-group>`
     2. {message}: corresponding entry from {commit-messages}; if {co-author} is `true`, append a `Co-Authored-By:` trailer with the current model name and `<noreply@anthropic.com>`

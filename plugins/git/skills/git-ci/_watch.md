@@ -1,33 +1,32 @@
 # CI Watch (background)
 
 > Wait for GitHub Actions CI runs to complete for a commit SHA and return the final classification to the caller.
-
+>
 > Spawned asynchronously by `/git-ci` and `/git-checkpoint` — foreground returns immediately; this agent runs independently; the session receiving the task-completion result reports inline.
 
-### Variables
+## Variables
 
 - {sha} — commit SHA whose CI runs to watch
 - {run-ids} — space-separated list of GitHub Actions databaseIds to watch
 
-### Rules
+## Rules
 
 - {ci-status} post-watch is one of `passed`, `failed`, `incomplete` (the `dispatched` and `no-runs` states from `SKILL.md` don't apply — by construction we always have a tracked in-flight set)
 - `<THIS-FILE-DIR>/scripts/ci.py watch` blocks until each watched run completes, then re-lists all runs for the SHA and re-classifies via the same `classify_runs` logic `SKILL.md` uses
 - Template emission matches the three matching states of `SKILL.md` § Report; emit verbatim, no inventing or paraphrasing
 
-### Process
+## Process
 
 1. {classification}: bash: `uv run <THIS-FILE-DIR>/scripts/ci.py watch --sha {sha} --run-ids {run-ids}`
-
 2. From {classification} JSON, bind:
     - {sha-short}, {ci-status} — always present
     - {workflow-list} — when {ci-status} is `passed`
     - {failing-workflow}, {failing-url} — when `failed`
     - {trouble-list} — when `incomplete`
 
-3. Emit the template matching {ci-status} — see ### Report.
+3. Emit the template matching {ci-status} — see ## Report.
 
-### Report
+## Report
 
 Pick the literal template for the current {ci-status} and emit verbatim.
 

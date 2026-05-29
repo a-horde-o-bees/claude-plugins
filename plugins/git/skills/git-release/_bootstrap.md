@@ -1,20 +1,20 @@
 # Release Bootstrap
 
 > Guided dialogue producing the project's local `.claude/git/release.md`. Fires the first time `/git-release` runs in a project without an existing methodology config.
-
+>
 > Detection-first: scan project artifacts (manifests, CHANGELOG, tags, auto-bump hooks) and pre-populate suggestions, then present one batched proposal rather than walking the user section-by-section. Subsequent invocations of `/git-release` read the written file directly.
 
-### Variables
+## Variables
 
 - {release-md-path} — destination path for the populated methodology doc (typically `.claude/git/release.md`)
 
-### Rules
+## Rules
 
 - Single batched proposal: render the full draft `release.md` content for one-shot user review rather than walking section-by-section
 - Q# format on the approval question
 - Write only after the user approves — no partial writes that leave the file in an inconsistent state
 
-### Process
+## Process
 
 1. Detect existing release artifacts:
     1. {manifest-candidates}: bash: `find . -maxdepth 4 \( -name "plugin.json" -o -name "package.json" -o -name "Cargo.toml" -o -name "pyproject.toml" -o -name "*.gemspec" \) -not -path "./.venv/*" -not -path "./node_modules/*" -not -path "./.git/*" 2>/dev/null`
@@ -25,7 +25,6 @@
     6. {github-release-workflow}: bash: `[ -f .github/workflows/release.yml ] && echo yes || echo no`
 
 2. {template}: Read `<THIS-FILE-DIR>/assets/release.md` — starter template anchoring output structure
-
 3. Compose draft `release.md` using {template} structure and detection-driven defaults for every section. Apply /markdown-authoring and /concise-prose:
     1. **Versioning scheme** — if {existing-tags} match `v\d+\.\d+\.\d+`, fill in semver `x.y.z`; otherwise list semver/calver/custom as choices
     2. **Manifest paths** — fill in {manifest-candidates}; flag version-bearing best guesses for user confirmation
@@ -50,7 +49,7 @@
     1. Verify {release-md-path}'s parent directory exists; create if absent
     2. Write composed content to {release-md-path}
 
-### Report
+## Report
 
 Return to caller:
 
