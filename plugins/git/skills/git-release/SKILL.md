@@ -1,7 +1,7 @@
 ---
 name: git-release
-description: Use when cutting a tagged release of the current project — explicit signals "cut a release", "tag a version", "ship v...", "release v...", or any context where producing a SemVer tag + CHANGELOG entry + manifest bump is the next action. Reads the project's release methodology, spawns a CHANGELOG synthesizer over commits since the last SemVer tag, gates on human review before any write/commit/tag/push.
-argument-hint: "[<version-override>]"
+description: Use when cutting a tagged release of the current project — explicit signals "cut a release", "tag a version", "ship v...", "release v...", or any context where producing a SemVer tag + CHANGELOG entry + manifest bump is the next action. Reads the project's release methodology, spawns a CHANGELOG synthesizer over commits since the last SemVer tag, gates on human review before any write/commit/tag/push. Does not recurse into submodules by default — each submodule has its own release cadence; pass `--recurse-submodules` to opt in.
+argument-hint: "[<version-override>] [--recurse-submodules]"
 allowed-tools:
   - Read
   - Edit
@@ -22,6 +22,7 @@ Cut a tagged release. Read methodology, synthesize CHANGELOG + version from comm
 
 ## Rules
 
+- Submodule recursion is opt-out by default — each submodule has its own release cadence. The recursion lives in the sibling git skills (`/git-commit`, `/git-push`, `/git-ci`); cutting a release is a deliberate per-project act. Pass `--recurse-submodules` to opt in (each declared submodule then runs its own `/git-release` flow before the parent records the new pin)
 - Intent gate is mandatory — explicit user approval before any release-prep work spends tokens (methodology read, synthesizer spawn). Cheap preconditions run first so failures surface as informative errors, not as "release?" prompts on a dirty tree.
 - Review gate is mandatory — synthesized CHANGELOG and final version are presented for approval before any write/commit/tag/push.
 - Stage only manifest(s) + `CHANGELOG.md` — satisfies the per-commit auto-bump skip condition (manifest-only commits don't trigger the z-bump hook).
