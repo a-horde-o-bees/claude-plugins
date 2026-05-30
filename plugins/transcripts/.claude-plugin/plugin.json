@@ -1,6 +1,6 @@
 {
   "name": "transcripts",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Query Claude Code session transcripts as structured data. Projects, sessions, exchanges with time accounting, full chat content, and persistent per-exchange descriptions. Backed by SQLite ingested from ~/.claude/projects/.",
   "author": {
     "name": "a-horde-o-bees"
