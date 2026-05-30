@@ -6,6 +6,12 @@ A Claude Code plugin marketplace + skill development project. Most work is itera
 
 - **`TASKS.md`** — active workstreams + next concrete steps. The first thing to read.
 
+## Workflow
+
+Avoid feature branches in this repo. Plugin work commits directly to `main` — the pre-commit hook (`.githooks/pre-commit`) auto-bumps each affected plugin's patch version on every commit to `main`, and that bump is the deployment signal for `claude plugins update` via `/checkpoint`. Feature branches and PRs bypass the hook entirely, so the bump never fires and `/checkpoint`'s marketplace sync becomes a no-op against unchanged versions.
+
+Sandboxes are the exception — they live on `sandbox/<name>` branches for isolation (per the Paths table) and are not expected to merge into `main`.
+
 ## Paths
 
 | Area | Path |
