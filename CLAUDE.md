@@ -8,9 +8,9 @@ A Claude Code plugin marketplace + skill development project. Most work is itera
 
 ## Workflow
 
-Avoid feature branches in this repo. Plugin work commits directly to `main` — the pre-commit hook (`.githooks/pre-commit`) auto-bumps each affected plugin's patch version on every commit to `main`, and that bump is the deployment signal for `claude plugins update` via `/checkpoint`. Feature branches and PRs bypass the hook entirely, so the bump never fires and `/checkpoint`'s marketplace sync becomes a no-op against unchanged versions.
+Plugin work lands via PRs to `main`. Required status checks (`test`, `validate`) gate the merge; the server-side workflow `.github/workflows/auto-bump.yml` bumps each affected plugin's patch version on merge, and that bump is the deployment signal for `claude plugins update` via `/checkpoint`. The local `.githooks/pre-commit` is a belt for direct-to-main edge cases (admin bypass on `main`); the canonical path is PR-based.
 
-Sandboxes are the exception — they live on `sandbox/<name>` branches for isolation (per the Paths table) and are not expected to merge into `main`.
+Sandboxes live on `sandbox/<name>` branches for isolation (per the Paths table) and are not expected to merge into `main`.
 
 ## Paths
 

@@ -1,0 +1,88 @@
+name: Auto-bump plugin versions
+
+# Server-side analog to .githooks/pre-commit. Runs on every push to main
+# (which, under branch protection, fires after a PR merges). For each plugin
+# whose tree has non-manifest changes in the push, increments the patch
+# component of plugins/<name>/.claude-plugin/plugin.json and pushes a single
+# bump commit back to main. That bump is the deployment signal that
+# `claude plugins update` and `/checkpoint`'s marketplace sync key off.
+#
+# Loop prevention: the bump commit message carries `[skip-bump]`, which the
+# top-level `if` guard checks before doing anything. The bump itself only
+# touches plugin.json files, so even without the guard the detection step
+# would find no non-manifest changes and exit cleanly.
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  bump:
+    if: ${{ !contains(github.event.head_commit.message, '[skip-bump]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Detect plugins with non-manifest changes
+        id: detect
+        shell: bash
+        run: |
+          set -euo pipefail
+          before="${{ github.event.before }}"
+          after="${{ github.sha }}"
+          # First push or force-push: before is all zeros — fall back to HEAD~1.
+          if [[ "$before" =~ ^0+$ ]]; then before="${after}~1"; fi
+
+          changed=$(git diff --name-only "$before" "$after")
+          bump=()
+          for pjson in plugins/*/.claude-plugin/plugin.json; do
+            [ -f "$pjson" ] || continue
+            name=$(basename "$(dirname "$(dirname "$pjson")")")
+            if echo "$changed" \
+                | grep -E "^plugins/${name}/" \
+                | grep -qvE "^plugins/${name}/\.claude-plugin/plugin\.json$"; then
+              bump+=("$name")
+            fi
+          done
+
+          if [ ${#bump[@]} -eq 0 ]; then
+            echo "no plugins to bump"
+            echo "plugins=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "plugins=${bump[*]}" >> "$GITHUB_OUTPUT"
+
+      - name: Bump and push
+        if: steps.detect.outputs.plugins != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          read -ra plugins <<< "${{ steps.detect.outputs.plugins }}"
+
+          summary=""
+          for p in "${plugins[@]}"; do
+            pjson="plugins/${p}/.claude-plugin/plugin.json"
+            from=$(python3 -c "import json; print(json.load(open('$pjson'))['version'])")
+            to=$(python3 -c "v='$from'.split('.'); v[-1]=str(int(v[-1])+1); print('.'.join(v))")
+            python3 - <<PY
+          import json, pathlib
+          p = pathlib.Path("$pjson")
+          d = json.loads(p.read_text())
+          d["version"] = "$to"
+          p.write_text(json.dumps(d, indent=2) + "\n")
+          PY
+            git add "$pjson"
+            summary+="- ${p}: ${from} → ${to}"$'\n'
+          done
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Bump plugin patch versions [skip-bump]" -m "$summary"
+          git push origin main
