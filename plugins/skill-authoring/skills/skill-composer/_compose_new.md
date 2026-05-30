@@ -11,7 +11,6 @@
 ## Process
 
 1. {state}: bash: `uv run --directory <skill-base> -m scripts.compose new --destination <user|project|path>` — emits resolved scope + target composition.md path with `<chosen-name>` as placeholder
-
 2. {intent}: collect via dialogue:
     - What should this skill enable Claude to do?
     - When should it fire? (user phrases / contexts)
@@ -22,14 +21,12 @@
     - For each moment: deeper content in a `_<verb>.md` component, or terse enough to inline?
 
 4. {chosen-name}: 2–3 lowercase-hyphenated candidates from {intent} + {surface}; refine with user until one is settled
-
 5. Scaffold the skill directory:
     1. Write `<destination-parent>/{chosen-name}/composition.md` from `<skill-base>/assets/composition-template.md`, substituting placeholders with {intent}, {surface}, {chosen-name}
     2. Create the `<destination-parent>/{chosen-name}/sources/` subfolder (empty; sources land here when added)
     3. Copy `<skill-base>/assets/skill-gitignore` to `<destination-parent>/{chosen-name}/.gitignore` — bundled template alongside the other `assets/*` templates. Currently lists `sources/`. Vendored source content is fetch-on-demand per composition.md pins; the local copy is a cache, not a tracked artifact. The rule travels with the skill if extracted to another repo
 
 6. {sources}: AskUserQuestion — enumerate exemplar sources, each as `<url>:<skill>[@<ref>]`
-
 7. For each {source} in {sources}:
     1. bash: `uv run --directory <skill-base> -m scripts.compose add-source {chosen-name} {source} --destination <destination>` — sparse-checks source into `<destination-parent>/{chosen-name}/sources/<source-slug>/`; appends to composition.md frontmatter with pinned commit
     2. Read embedded source's `SKILL.md` (and supporting files) at `<destination-parent>/{chosen-name}/sources/<source-slug>/` to understand what it offers

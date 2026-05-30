@@ -23,9 +23,7 @@ Report GitHub Actions run state for the latest commit on a branch. Async backgro
 ## Process
 
 1. If not {branch}: {branch}: bash: `git branch --show-current`
-
 2. {classification}: bash: `uv run <THIS-FILE-DIR>/scripts/ci.py classify --branch {branch}`
-
 3. Bind from {classification} JSON:
     - {sha}, {sha-short}, {ci-status} — always present
     - {workflow-list} — when {ci-status} is `passed`
@@ -34,7 +32,6 @@ Report GitHub Actions run state for the latest commit on a branch. Async backgro
     - {trouble-list} — when `incomplete`
 
 4. If {ci-status} is `dispatched`: async Spawn: Call: `_watch.md` ({sha}: {sha}, {run-ids}: {watch-ids})
-
 5. Emit the template matching {ci-status} — see ### Report
 
 ## Report

@@ -2,11 +2,11 @@
 
 Per-day time allocation across topic-coalesced exchange groups within the report's target project, with boolean in-scope tagging suitable for client time-charging or per-project rollups.
 
-### Variables
+## Variables
 
 - {format-args} — Filter args passed through to scope queries (`--project X`, `--from D`, `--to D`); empty defaults to current project, all dates
 
-### Concepts
+## Concepts
 
 A **block** groups exchanges from a single session that share a topic or focus. Blocks may span non-contiguous exchanges if an unrelated tangent interrupted the focus (e.g., `S2E1, S2E4-E12, S2E15`).
 
@@ -24,7 +24,7 @@ engaged_s = COALESCE(user_s, avg_user_time_s) + agent_s
 
 **Block time** = sum of `engaged_s` across exchanges in the block. Span math (latest-end minus earliest-start) is *not* used — it would over-count idle gaps within a block.
 
-### Process
+## Process
 
 1. Resolve project scope label:
     1. If `--project X` in {format-args}: {project} = X
@@ -40,7 +40,6 @@ engaged_s = COALESCE(user_s, avg_user_time_s) + agent_s
     - {sessions} = response array, sorted ascending by `first_ts`
 
 4. Assign session indices — for each {session} in {sessions} in chronological order, assign 1-based index; exchanges from session N render as `S{N}E{m}`.
-
 5. For each {session} in {sessions}:
     1. Pull full exchange detail:
         - bash: `cd <THIS-FILE-DIR> && python3 -m scripts exchanges --session {session} --show messages metrics timeframes`
@@ -87,7 +86,7 @@ engaged_s = COALESCE(user_s, avg_user_time_s) + agent_s
 
 10. Return to caller
 
-### Format Conventions
+## Format Conventions
 
 - **Exchange refs** — `S{n}E{m}` where n is the 1-based session index (chronological order across the report's scope) and m is the exchange number within that session.
 - **Range form** — Consecutive exchanges in the same session collapse to a range: `S2E1-E5`. Non-contiguous exchanges within a single block list comma-separated: `S2E1, S2E4-E12, S2E15`.
@@ -95,7 +94,7 @@ engaged_s = COALESCE(user_s, avg_user_time_s) + agent_s
 - **Time rounding** — Ceiling at the block level (each block is the billable unit). Day totals are sums of rounded block minutes — *not* a re-ceiling of day seconds.
 - **In scope? column** — Boolean `yes` / `no`. The question asked: "Is this block directly related to {project}?". Out-of-scope rows may capture sibling-project work, tangents, or meta-explorations.
 
-### Format Example
+## Format Example
 
 ```
 # Time Block Report — example-project

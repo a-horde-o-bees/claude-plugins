@@ -23,3 +23,6 @@ tmp/
 
 # Per-user manifest of skills installed via `npx skills` — downstream users curate their own
 .claude/installed-skills.json
+
+# Node toolchain for the markdown linter (package.json holds the dep manifest)
+node_modules/

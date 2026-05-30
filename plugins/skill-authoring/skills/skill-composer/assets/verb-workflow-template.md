@@ -2,22 +2,22 @@
 
 > <purpose statement — scope + role per description-authoring>
 
-### Variables
+## Variables
 
 - {<variable-name>} — <description>
 - ... (one per variable)
 
-### Rules
+## Rules
 
 - <rule>
 - ... (one per rule)
 
-### Process
+## Process
 
 1. <step>
 2. ... (numbered, PFN-structured)
 
-### Report
+## Report
 
 [Include this section only if the verb returns structured data; omit otherwise.]
 

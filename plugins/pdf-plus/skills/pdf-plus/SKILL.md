@@ -10,14 +10,17 @@ Render a markdown artifact to PDF using the bundled `scripts/pdf-render.py` — 
 ## Workflow
 
 1. **Locate the bundled renderer.** The script lives at `<this-skill-dir>/scripts/pdf-render.py`. When user-scope-installed: `~/.claude/skills/pdf-plus/scripts/pdf-render.py`. Confirm before invoking:
+
    ```
    test -f ~/.claude/skills/pdf-plus/scripts/pdf-render.py && echo "OK"
    ```
 
 2. **Render** (one call per markdown source):
+
    ```
    uv run ~/.claude/skills/pdf-plus/scripts/pdf-render.py --src <path/to/source.md> --dest <path/to/output.pdf> [--style <name>]
    ```
+
    `--style` defaults to `compact`. If `--dest` is omitted, the output PDF goes next to the source markdown with the `.pdf` extension. Existing PDFs are overwritten.
 
    **Link rewriting** is on by default: `[label](X.md)` and `[label](X.md#anchor)` are rewritten to `[label](X.pdf)` / `[label](X.pdf#anchor)` so cross-document links resolve to rendered companions. Each rewritten target is checked at end of render; missing companions emit a stderr `Warning:` block. Override flags:
@@ -25,12 +28,15 @@ Render a markdown artifact to PDF using the bundled `scripts/pdf-render.py` — 
    - `--strip-local-links` — escape hatch that drops the link wrapper entirely for any non-`http(s)`/`mailto:`/`#anchor` target. Use only when the recipient won't have *any* companion files.
 
 3. **Post-batch link check** (run after all PDFs in a delivery are generated):
+
    ```
    uv run ~/.claude/skills/pdf-plus/scripts/pdf-link-check.py <pdf>... [--ignore <glob>]
    ```
+
    Walks each PDF's link annotations and reports any local-file URI whose target doesn't exist relative to the PDF's directory. Per-render warnings can have false positives in a batch (a later render may produce the missing target); the post-batch check is the definitive verdict. Exits 0 when all local links resolve.
 
 4. **Verify output exists**:
+
    ```
    test -f <path/to/output.pdf>
    ```

@@ -2,14 +2,13 @@
 
 > Workflow component for the `list` verb of skill-creator. State report on in-progress skills across destinations.
 
-### Variables
+## Variables
 
 - {destination} — optional; defaults to all three: `user` (~/.claude/skills/), `project` (.claude/skills/), and `plugins/skill-authoring/skills/` (composition-adjacent skills)
 
-### Process
+## Process
 
 1. {destinations}: passed {destination} as a single-item list, else `[user, project, plugins/skill-authoring/skills]`
-
 2. For each {dest} in {destinations}:
     1. {candidates}: child folders containing a `SKILL.md`
     2. For each {name} in {candidates}:
@@ -22,7 +21,7 @@
 
 3. If nothing emitted across all destinations: Emit: `no in-progress skills`
 
-### Report
+## Report
 
 ```
 {destination} > {name}: {state} (iterations: {iterations})

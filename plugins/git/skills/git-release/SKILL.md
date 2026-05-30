@@ -56,17 +56,13 @@ Cut a tagged release. Read methodology, synthesize CHANGELOG + version from comm
     3. {methodology}: Read {release-md-path}
 
 4. {current-version}: per {methodology}, locate manifest path(s) and read
-
 5. Resolve {commit-range}: `HEAD` if {last-tag} is empty, else `{last-tag}..HEAD`
-
 6. Synthesize CHANGELOG + version:
     1. async Spawn: Call: `_synthesize.md` ({commit-range}: {commit-range}, {current-version}: {current-version}, {methodology}: {methodology})
     2. Returns: {recommended-version}, {bump-axis-rationale}, {changelog-entry}
 
 7. {final-version}: {version} if provided (label override in review), else {recommended-version}
-
 8. {tag}: `v{final-version}`
-
 9. Validate:
     1. If {final-version} ≤ {current-version}: Exit to user: version {final-version} is not greater than current ({current-version}) — pass a higher version or omit to use the recommendation
     2. {tag-exists}: bash: `git rev-parse --verify --quiet refs/tags/{tag}` exits 0

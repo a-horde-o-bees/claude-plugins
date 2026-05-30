@@ -12,11 +12,10 @@
 ## Process
 
 1. {report}: bash: `uv run --directory <skill-base> -m scripts.compose list [--destination <user|project|path>] [--drift]`
-
 2. Surface {report} to the user.
 
 > The script walks each requested destination's `<destination-parent>/*/composition.md` files, parses frontmatter, checks whether SKILL.md exists alongside (reports `deployed` or `draft`), and emits name + source count + deployed status. With `--drift`, runs `git ls-remote <url> <ref>` per source and indents drift detail.
-
+>
 > When `project` is requested but cwd isn't inside a git checkout (and `CLAUDE_PROJECT_DIR` is unset), project is silently skipped. Malformed composition.md frontmatter is reported inline rather than crashing the listing.
 
 ## Output

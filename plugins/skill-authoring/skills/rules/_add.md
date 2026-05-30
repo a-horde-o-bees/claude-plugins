@@ -1,19 +1,17 @@
 # Add — promote a skill to always-on
 
-### Variables
+## Variables
 
 - {args} — verb arguments: `<skill> [--scope <user | project>]`
 
-### Process
+## Process
 
 1. Parse {args}:
     1. {skill}: first positional token, stripped of leading `/` if present
     2. {scope}: value of `--scope` flag if present, else `user`
 
 2. If {skill} is empty: Exit to user: skill name required — usage: `/rules add <skill> [--scope <user | project>]`
-
 3. If {scope} not in (`user`, `project`): Exit to user: invalid scope {scope} — expected `user` or `project`
-
 4. Resolve {target-file}:
     - If {scope} is `user`: {target-file} = `~/.claude/CLAUDE.md` (expand `~`)
     - Else: {target-file} = `<project-root>/CLAUDE.md`

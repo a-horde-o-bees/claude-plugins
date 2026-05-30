@@ -88,6 +88,7 @@ Each plugin is a cohesive bundle. Plugin-deps wire cross-plugin needs.
 Discipline skills invoke as `apply /<skill-name>` — e.g., "apply /concise-prose when writing the commit message." Names stay specific; truncating to short adjectives loses information (tested via "be /X" framing, abandoned in favor of "apply /X").
 
 Renames executed during Phase G:
+
 - `concise` → `concise-prose` (specificity; the skill is about prose, not just brevity)
 - `markdown` → `markdown-authoring` (parallels `description-authoring`)
 - `rebuild` → `reauthor` (verb-form noun; clearer authoring framing than reconstruction connotation)
@@ -141,22 +142,28 @@ Existing MCP servers move to bash CLI via per-skill `python3 -m scripts <verb>` 
 ## Phases
 
 ### Phase A — Decisions and plan ✓ done
+
 Captured in this file and `logs/decision/*.md`.
 
 ### Phase B — skill-authoring plugin ✓ done
+
 Shipped with `skill-creator` + `skill-composer`. Final design in `logs/decision/progressive-skill-composer.md`. Gains `rules` skill in Phase G.
 
 ### Phase C — Pilot conversion ✓ done
+
 `git` skill migrated 2026-05-12. Validated post-refactor authoring shape end-to-end.
 
 ### Phase D — Transcripts and navigator off MCP — partially done
-- Transcripts ✓ done 2026-05-19. Currently at `plugins/ocd/skills/transcripts/`; moves to `plugins/transcripts/` in Phase G.
-- Navigator pending. Same migration pattern.
+
+- Transcripts CLI-from-MCP migration ✓ done 2026-05-19. Moved to `plugins/transcripts/` in Phase G. Storage-location move and content hash-reference table tracked as a separate workstream in `plans/transcripts.md` (the CLI migration completed the MCP exit but left those two pieces unfinished).
+- Navigator pending. Same CLI-from-MCP migration pattern; navigator's state-location move parallels transcripts' and should follow the pattern that `plans/transcripts.md` lands.
 
 ### Phase E — Convert remaining ocd-old systems — in progress
-9 systems remain in `plugins/ocd-old/systems/`: needs-map, check, pdf, sandbox, log, navigator, setup, retrospective, refactor.
+
+8 systems remain in `plugins/ocd-old/systems/`: needs-map, check, pdf, sandbox, log, navigator, setup, refactor. `retrospective` migrated 2026-05-21 to `plugins/memory/skills/retrospective/`.
 
 For each:
+
 - Author SKILL.md per format conventions; move to `plugins/<target-plugin>/skills/<skill-name>/`
 - Extract verbs and components to `_<name>.md` siblings
 - Move Python into `scripts/`; replace `ocd-run` invocations with `python3 -m scripts.<verb>`
@@ -164,18 +171,21 @@ For each:
 - Update marketplace.json for the plugin home
 
 When the last system migrates:
+
 - Delete `plugins/ocd-old/bin/ocd-run`, `bin/ocd-path`, `run.py`
 - Delete `plugins/ocd-old/dependencies/environment.py`, `errors.py`
 - Strip propagation rules from `.githooks/pre-commit`
 - Revoke `ocd-run`/`ocd-path` allowlist entries in `.claude/settings.json`
 
 ### Phase F — Permissions plugin — pending
+
 1. Author `plugins/permissions/` with a Pattern B skill that deploys hook config on invocation
 2. Verify hook continuity across sessions and subagent contexts
 3. Remove permissions verbs from `setup` system
 4. `setup` dissolves once all verbs absorb elsewhere
 
 ### Phase G — Plugin compartmentalization — mostly complete (2026-05-19)
+
 Architecture finalized + execution landed in one session. 9 of 10 sub-tasks done; #20 (permissions plugin authoring) is the remaining lift.
 
 Plugin layout finalized per inventory above. Sub-tasks:
@@ -199,10 +209,13 @@ Plugin layout finalized per inventory above. Sub-tasks:
 14. Update cross-references in docs and skill workflows
 
 ### Phase H — RETIRED
+
 Original "conventions as situational-load skill" no longer applies. Under skills-only architecture, `/skill-name` invocation IS the situational-load mechanism. The `rules` skill covers the user-driven always-on promotion path.
 
 ### Phase I — Decision log review — active
+
 Walking `logs/decision/*.md` against final implementation. Per the survey:
+
 - ESSENTIAL (8): keep as-is — blueprint, database, framework, mcp, navigator, principles, skill-architecture, skill-authoring
 - SLIM (6): trim options-considered scaffolding — check, log, mcp-benching, ocd-run-self-update, progressive-skill-composer, sandbox
 - REFRAME (4): update framing post-pivot — hook-scoping, pdf, plugin-compartmentalization, state-location
@@ -222,6 +235,6 @@ Walking `logs/decision/*.md` against final implementation. Per the survey:
 
 ## State
 
-Phases A, B, C complete. Phase D partial — transcripts done 2026-05-19, navigator pending. Phase E in progress (9 systems remain). Phase G in progress (architecture finalized this session, execution next). Phase F pending. Phase H retired. Phase I active.
+Phases A, B, C complete. Phase D partial — transcripts CLI-from-MCP done 2026-05-19 (state-location + content extraction tracked in `plans/transcripts.md`), navigator pending. Phase E in progress (9 systems remain). Phase G in progress (architecture finalized this session, execution next). Phase F pending. Phase H retired. Phase I active.
 
 Pre-pivot infrastructure surviving as legacy: `plugins/ocd-old/bin/ocd-run`, `bin/ocd-path`, `run.py`, `dependencies/environment.py`, the permissions allowlist. All retire when Phase E completes.

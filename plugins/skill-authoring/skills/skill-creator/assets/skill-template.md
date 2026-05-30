@@ -15,14 +15,16 @@ allowed-tools:
 | Cognitive moment | Verb |
 |---|---|
 | <cognitive moment 1> | `<verb-1>` |
-| ... (one row per trigger) |
+
+Add one row per trigger.
 
 ## Verbs
 
 | Verb | Workflow file |
 |---|---|
 | `<verb-1>` | [`_<verb-1>.md`](_<verb-1>.md) |
-| ... (one row per verb) |
+
+Add one row per verb.
 
 ## Workflow
 

@@ -17,7 +17,6 @@
     - Per-source classification: drifted (with old/new SHA pair), in-sync, or issue (e.g., ls-remote failure)
 
 2. {drifted-sources}: subset of {state}'s per-source list where classification is `drifted`
-
 3. For each {source} in {drifted-sources}:
     1. Present: `<source-slug>:<skill>` changed from `<old-short>` to `<new-short>` upstream
     2. {update-this}: AskUserQuestion — incorporate update into the composition? (yes / no)

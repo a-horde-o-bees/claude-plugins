@@ -76,6 +76,7 @@ Not done — moving content across files is a content reorganization that should
 ### `plugins/ocd/skills/git/_commit.md` — process step restructure
 
 Original had:
+
 - Step 1 (analyze working tree, 4 substeps)
 - Step 2 (include untracked files, with a substep about suspicious files)
 - Step 3 (group commits, with multi-substep evaluation criteria)
@@ -86,6 +87,7 @@ Original had:
 - Step 8 (return)
 
 New form:
+
 - Step 1 (analyze working tree, 4 substeps — same)
 - Step 2 ({suspicious-untracked} binding)
 - Step 3 (conditional handling of suspicious untracked)
@@ -235,13 +237,9 @@ Researched whether anyone else has built this skill or solved adjacent problems.
 ### Patterns worth borrowing (synthesis)
 
 1. **Role-split into phases with output-shape asymmetry** (Aider architect/editor + Cline write_to_file vs replace_in_file). Phase 1 *extracts* identity to a separate document (no code emission allowed). Phase 2 *composes* the artifact from the extract alone (original removed from context). The phases have different tool grants — the extract phase can't write to the target file; the compose phase can't read from the original. Structural prevention of patch-flow.
-
 2. **Mechanical isolation, not advisory** (Blanchard's clean-room chardet). When step 3 says "set the original aside", do it literally — `mv` the file to a holding path, or copy contents to a temp file the compose phase has no read access to. "Set aside" as instruction loses; as mv-and-revert, it wins.
-
 3. **Anti-elision verbatim from Aider**: *"NEVER skip, omit or elide content from a file listing. Output the entire file."* Drop this line into the compose-phase prompt.
-
 4. **Authoritative-state cue from Aider**: *"Trust this extract as the true specification. The original is set aside."* Eliminates the model's default attractor toward whatever-it-last-saw.
-
 5. **Rationalizations-to-reject list** (Trail of Bits skill-improver). Pre-enumerate the rationalizations the agent will produce mid-rebuild and rebut each:
    - "I'll just adjust this one line" → no; if the line needs changing, the whole section recomposes
    - "The original is mostly fine here" → no; "mostly fine" judgements are how patch-flow leaks in
@@ -249,17 +247,11 @@ Researched whether anyone else has built this skill or solved adjacent problems.
    - "Rebuilding loses tested behavior" → no; characterization-test verification gates that
 
 6. **Iron-law framing** (obra writing-skills). *"Patching during rebuild = abort and restart from extract."* Make patching textually a violation, not a soft preference.
-
 7. **Completion marker** (Trail of Bits). The workflow emits a literal token like `<rebuild-complete>` after the verification step; "looks good" doesn't satisfy. Forces traversal of the verification step.
-
 8. **Diff-after-compose as structural gate, not audit pass**. The workflow MUST emit the diff before requesting user approval — diff is part of the deliverable, not an after-the-fact check.
-
 9. **Characterization-test identity gate** (Feathers + Fowler Substitute Algorithm). Identity preservation isn't "looks similar" — it's enumerated: callable surface present, declared rules intact, return shape preserved, downstream consumer contract unchanged. Each check passes or surfaces a gap. No "trust me" verification.
-
 10. **Tool-naming after output shape, not intent** (Cline). "Rebuild" stays as user-facing trigger phrasing, but internal steps name themselves by what they produce: `extract-identity`, `compose-from-spec`, `diff-and-verify`. Intent words ("refactor", "rewrite") the model can reinterpret; shape words ("output entire file") it can't.
-
 11. **Sibling-skill cross-reference for trigger correctness** (AlexMini2517 logic-rewrite). Explicit "use X, not this skill, when..." pointers in the entry-point body sharpen the trigger by making the inverse concrete. logic-rewrite's body opens with "Use `refactor` for incremental cleanup that preserves behavior and overall structure. Use `logic-rewrite` when..." — false-positive triggers exit immediately because the alternative skill is named. `/ocd:rebuild` could analogously point at `/ocd:rules` (for adding new rule), at the verb-specific skill (for fixing one workflow step), and at `/ocd:check` (for verifying conformance) — naming what the user *probably* wanted when rebuild was misfired.
-
 12. **Structured comparison template for the verify phase** (logic-rewrite). Rather than free-form "explain what changed", a fixed shape — Intent / Old approach / Problem / New approach / Why better / Trade-offs — gives the verify-phase output a predictable structure. For `/ocd:rebuild`'s diff-and-verify, the template would be Identity (callable surface, declared rules, return shape) / Old form / Drift detected / New form / Discipline applied / Risk introduced. Predictable shape = parseable by downstream skills + comparable across runs.
 
 ### Patterns to avoid
@@ -274,18 +266,21 @@ Researched whether anyone else has built this skill or solved adjacent problems.
 Two-phase workflow, each phase with a different output contract:
 
 **Phase 1 — Extract** (no code emission allowed; produces a contract document):
+
 1. Read {artifact}
 2. Write to a holding file: `<workspace>/<artifact-name>.extract.md` — captures scope + role + callable surface + declared rules + edge cases / accumulated knowledge (per Spolsky caveat)
 3. Move original to `<workspace>/<artifact-name>.original` (mechanical isolation)
 4. Gate: "extract complete; ready to compose"
 
 **Phase 2 — Compose** (cannot read original; produces the rebuilt artifact):
+
 1. Read only `<artifact-name>.extract.md`
 2. Compose fresh applying every rule from the extract
 3. Anti-elision injunction loaded into the prompt
 4. Output the complete new artifact
 
 **Phase 3 — Verify** (diff against original, enumerated identity gates):
+
 1. Diff `<artifact-name>.original` vs fresh
 2. Identity checks: callable surface present? declared rules intact? return shape preserved?
 3. Each check passes or surfaces a gap with corrective action
