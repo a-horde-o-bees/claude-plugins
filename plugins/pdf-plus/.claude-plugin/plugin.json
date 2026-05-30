@@ -1,6 +1,6 @@
 {
   "name": "pdf-plus",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "One-shot markdown\u2192PDF rendering using a bundled reportlab-based renderer. Single-page documents like resumes, cover letters, recommendation letters with tuned visual style. Distinct from the base pdf skill (which handles read, merge, split, OCR, forms).",
   "author": {
     "name": "a-horde-o-bees"
