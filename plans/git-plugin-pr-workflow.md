@@ -32,7 +32,7 @@ The current `auto-bump.yml` (server-side push-back after merge) is structurally 
 
 Result: the bump lives in the PR atomically with the change. Merge produces one commit on `main` containing both. `/checkpoint` on `main` syncs immediately. No push-back, no branch-protection conflict, no bypass-actor configuration needed.
 
-**Retirement:** `.github/workflows/auto-bump.yml` deletes when the new mechanic ships. The local `.githooks/pre-commit` bump logic retires too — direct-to-main admin-bypass edge cases either include their own bumps or accept the deployment-signal mismatch (no longer worth carrying the hook for that case alone).
+**Retirement:** `.github/workflows/auto-bump.yml` was deleted ahead of the new mechanic — every plugin PR was triggering it, the push-back was rejected by branch protection, and (after the first in-PR bump landed on `transcripts`) the workflow would have produced a duplicate bump if the bypass actor were ever configured. Until `bump-check.yml` ships, authors include the bump in their PR; reviewers catch missing bumps; the post-merge `/checkpoint` no-op exposes any that slipped through (cache version unchanged → nothing to update). The local `.githooks/pre-commit` bump logic retires when `bump-check.yml` ships — direct-to-main admin-bypass edge cases either include their own bumps or accept the deployment-signal mismatch.
 
 ## Open items
 
