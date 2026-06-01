@@ -21,6 +21,19 @@ One skill `/git-pr` with verbs, `gh` CLI under the hood. Verbs share preconditio
 - `/git-pr merge [--strategy squash|merge|rebase] [--cleanup]` — gates on green CI + required reviews per branch protection; merges via `gh pr merge`; deletes the remote head branch. Strategy default reads project policy (see methodology file below). With `--cleanup`, also runs the local cleanup verb.
 - `/git-pr cleanup` — `git checkout {base} && git pull && git branch -D {head-branch}`. Safe-by-default: refuses if the local branch has unmerged commits that aren't in the just-merged PR.
 
+## Bump-check mechanic (replaces `.github/workflows/auto-bump.yml`)
+
+The current `auto-bump.yml` (server-side push-back after merge) is structurally unsuited to a PR-gated `main`: the bot's push is blocked by branch protection, and even when bypassed the "second commit after merge" pattern decouples the deployment signal from the content change. The fix is to move the bump into the PR itself, with CI enforcing.
+
+`/git-pr` takes over the responsibility, with two complementary pieces:
+
+- **Author-side** (`/git-pr open` and `/git-pr status`): detect plugin code changes in the PR's diff (any `plugins/<name>/` file outside `.claude-plugin/plugin.json` itself). For each affected plugin, ensure `plugin.json` increments its patch version base→head. `open` either applies the bumps automatically and includes them in the PR's commit chain, or surfaces missing bumps as a precondition. `status` reports any missing bump as a blocker before merge.
+- **CI-side** (`.github/workflows/bump-check.yml`, replacing `auto-bump.yml`): a `pull_request` job that runs the same detection and fails if any plugin code changed without a corresponding version increment. Becomes a required status check on `main` so branch protection gates on it.
+
+Result: the bump lives in the PR atomically with the change. Merge produces one commit on `main` containing both. `/checkpoint` on `main` syncs immediately. No push-back, no branch-protection conflict, no bypass-actor configuration needed.
+
+**Retirement:** `.github/workflows/auto-bump.yml` deletes when the new mechanic ships. The local `.githooks/pre-commit` bump logic retires too — direct-to-main admin-bypass edge cases either include their own bumps or accept the deployment-signal mismatch (no longer worth carrying the hook for that case alone).
+
 ## Open items
 
 - **Skill granularity** — one skill with verbs vs. four skills (`/git-pr-open`, `/git-pr-status`, …). Verbs are more compact; separate skills allow richer per-verb description matching. Current plugin uses one-skill-per-verb (`/git-commit`, `/git-push`); a verbed skill would be a precedent break worth confirming.

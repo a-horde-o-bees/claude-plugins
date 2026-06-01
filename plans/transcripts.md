@@ -42,15 +42,15 @@ Both problems compound: a bigger DB in a wrong location is more damaging than a 
 **DB moves to `~/.claude/transcripts.db`** — a single top-level file under `~/.claude/`, no enclosing directory.
 
 - Cross-project by design — one DB serves all projects the user works in.
-- Project filtering remains at query time via existing `--project X` / `--all-projects` flags.
-- **Default scope is current-project** (via `get_project_dir()`); `--all-projects` opts out. Preserves today's mental model — global default would surprise users used to per-project data.
+- **No automatic project detection.** All per-project read verbs (`sessions`, `exchanges`, etc.) require an explicit `--project <name>` argument. The `projects` verb lists available names; users consult it to choose. `--all-projects` remains as the explicit opt-in for cross-project queries.
+- Removes `get_project_dir()` and its resolver-chain complexity entirely from this skill. The platform-discovery assertion at `plugins/skill-authoring/skills/skill-architecture/assertions/platform-discovery/project-dir-resolution.md` is retained for other consumers (navigator, future plugins); transcripts no longer needs it because the project is now always an explicit arg.
 - Top-level path under `~/.claude/` is the chosen convention for plugin state going forward. The earlier `~/.claude/plugins/data/<plugin>-<author>/` framework was retired 2026-05-31 — it assumed bin-mediated state (the ocd-run helper pattern) which the project no longer uses. New plugins choose their own top-level path; transcripts.db is the precedent.
 
 **Mechanics:**
 
-- `_environment.py` resolves DB path. Change the DB-path branch (currently `<project>/.claude/transcripts/transcripts.db`) to `~/.claude/transcripts.db`. The project-dir resolver itself (`get_project_dir`) stays — still needed for the current-project marker on `projects` and as the default filter for `sessions`/`exchanges` queries.
+- `_environment.py` exposes `get_db_path()` returning `~/.claude/transcripts.db`. The previous DB-path branch (currently `<project>/.claude/transcripts/transcripts.db`) and the entire `get_project_dir()` function are removed.
 - `init` / `reset` target the new location.
-- Auto-sync source unchanged (`~/.claude/projects/*.jsonl`).
+- Ingest source unchanged: `~/.claude/projects/` is the Claude Code session-log directory (where Claude Code writes `<project>/<session-id>.jsonl` files for every session). The skill scans that directory and inserts rows into `~/.claude/transcripts.db`. The two paths are unrelated targets — `~/.claude/projects/` is read-only source, `~/.claude/transcripts.db` is the skill's own writable store.
 - One-time migration: deletion is acceptable. Existing DBs at `<project>/.claude/transcripts/transcripts.db` should be wiped after confirming zero user-authored descriptions (the only non-derivable state). This repo's DB had zero; sweep other projects before deleting.
 - Drop the `.gitignore` block at `claude-plugins/.gitignore:20-22` once the move ships.
 
@@ -128,27 +128,24 @@ Anything beyond this list waits for empirical evidence that the marker is reliab
 
 Lower-risk refactor with immediate security win. Land before Workstream B so the content-dedup work happens in the right home.
 
-### A1 — Path resolution
+### A1 — Path + project handling
 
-- `_environment.py`: add `get_db_path()` returning `~/.claude/transcripts.db`; replace project-derived DB-path callers with this.
+- `_environment.py`: add `get_db_path()` returning `~/.claude/transcripts.db` (expanduser, no enclosing directory); replace all project-derived DB-path callers with this.
+- `_environment.py`: **remove `get_project_dir()`** and any helpers in the resolver chain (`_reject_if_inside_home`, env-var lookup, session-tail scan, git-toplevel fallback). They were only needed to derive a "current project" — that concept is gone now that callers must supply `--project` explicitly.
 - `_init.py`: `init` and `reset` target the new path.
-- `get_project_dir()` updated to use the verified resolver chain (validated 2026-05-21 in interactive + headless `claude -p`):
-    1. `CLAUDE_PROJECT_DIR` env var (honors explicit override / hook setups).
-    2. `CLAUDE_CODE_SESSION_ID` → tail-scan `~/.claude/projects/*/<sid>.jsonl` for latest line with `cwd` field. Authoritative; handles non-git projects and mid-session cwd switches; inherited into sub-agents.
-    3. `git rev-parse --show-toplevel` from cwd (tail safety net for early-session probes before first user-turn JSONL line).
-    4. `_reject_if_inside_home` guard stays — plugin-cache git-checkout trap protection.
-- Assertion landed 2026-05-21 at `plugins/skill-authoring/skills/skill-architecture/assertions/platform-discovery/project-dir-resolution.md` (status: confirmed, last-verified: 2026-05-21). A1 references it as the canonical source of truth for the resolver mechanism.
+- The platform-discovery assertion at `plugins/skill-authoring/skills/skill-architecture/assertions/platform-discovery/project-dir-resolution.md` is retained as a reference for future plugins (navigator); transcripts no longer depends on it.
 
-### A2 — Default-scope behavior (resolved)
+### A2 — Explicit `--project` for all per-project verbs
 
-- `sessions` / `exchanges` default to **current-project** filter (via `get_project_dir()`); `--all-projects` opts out.
-- Preserves today's per-project mental model; global default would surprise users used to project-scoped data.
-- Existing `--project <substring>` continues to work; `--all-projects` continues to bypass the filter.
+- `sessions`, `exchanges`, `descriptions-set`, `descriptions-clear`, `report`, and any other verb that filters by project: **require `--project <name>`**. No default detection, no fallback to a current project.
+- `projects` lists available names with no required arg; users consult it to pick a `--project` value for subsequent commands.
+- `--all-projects` remains as the explicit opt-in for cross-project queries.
+- Verbs missing `--project` exit with a usage error pointing at `projects` for the available list. No silent default.
 
 ### A3 — Migration handling
 
-- Wipe-on-init: when the new path's DB is absent on first run, build fresh from `~/.claude/projects/`.
-- Existing project-tree DBs become orphaned. Document in the SKILL that they can be deleted manually; descriptions in them are lost (consistent with "no user state in DB" being the design assumption — sweep before deleting).
+- Wipe-on-init: when `~/.claude/transcripts.db` is absent (first run or after manual deletion), `init` ingests from the Claude Code session-log directory at `~/.claude/projects/` (Claude Code's writable session-storage path; format is `~/.claude/projects/<project>/<session-id>.jsonl`) and populates the new DB.
+- Existing project-tree DBs at `<project>/.claude/transcripts/transcripts.db` become orphaned by the move. Document in SKILL.md that they can be deleted manually; user-authored descriptions in them are lost (consistent with "no user state in DB" being the design assumption — sweep before deleting).
 
 ### A4 — Gitignore cleanup
 
@@ -157,14 +154,17 @@ Lower-risk refactor with immediate security win. Land before Workstream B so the
 
 ### A5 — SKILL.md updates
 
-- Description (frontmatter) updated to reflect cross-project DB + current-project default scope.
-- Argument-hint reviewed — no flag changes from A2 (defaults shift, flags unchanged).
-- Process Model section: replace "The DB lives at `<project>/.claude/transcripts/transcripts.db`" with `~/.claude/transcripts.db`.
+- Frontmatter description: cross-project DB at `~/.claude/transcripts.db`; per-project queries require explicit `--project <name>` (run `projects` to list names).
+- Argument-hint: per-project verbs now show `--project <name>` as required (not optional).
+- Process Model section: replace "The DB lives at `<project>/.claude/transcripts/transcripts.db`" with `~/.claude/transcripts.db`; remove any "current project" / cwd-detection language.
+- Add a short "Choosing a project" note pointing users at `projects` as the canonical list.
+- Add a "Migrating from a per-project DB" note for users with old DBs (delete the old file; init creates the new one).
 
 ### A6 — Test pass
 
 - Existing test suite (`plugins/transcripts/skills/transcripts/scripts/` — verify whether there's a tests/ dir, add if missing).
-- New tests cover: path resolution returns `~/.claude/transcripts.db`; init creates the DB at that path; queries work against the new path; current-project marker still resolves correctly.
+- New tests cover: `get_db_path()` returns `~/.claude/transcripts.db`; `init` creates the DB at that path; per-project verbs error cleanly when `--project` is omitted; queries with `--project <name>` and `--all-projects` work against the new DB; `projects` lists ingested project names.
+- Removed-feature tests: confirm `get_project_dir()` and its resolver helpers are gone (no dead imports, no stale env-var references).
 
 ---
 
@@ -212,8 +212,8 @@ Lower-risk refactor with immediate security win. Land before Workstream B so the
 
 ```
 A (storage location)
-├── A1 path resolution
-├── A2 default scope ✓ resolved (current-project default)
+├── A1 path + project handling (drop get_project_dir entirely)
+├── A2 explicit --project for all per-project verbs
 ├── A3 migration
 ├── A4 gitignore cleanup
 ├── A5 SKILL.md updates
@@ -237,7 +237,7 @@ A is short; B has the empirical gate at B3. Don't ship B4 patterns until B3 resu
 
 2. **What does the navigator state-location migration look like once transcripts ships?** Same top-level-path pattern; target shape is `~/.claude/navigator.db` (or whatever the navigator's primary store is). Cross-reference once this plan completes.
 
-(Closed questions — moved into Decisions captured above: default scope → A2 current-project; references table location → same DB; marker-in-hash → no, marker stays verbatim; state-location framework → retired 2026-05-31.)
+(Closed questions — moved into Decisions captured above: project scope → A2 explicit `--project` required (no default detection); references table location → same DB; marker-in-hash → no, marker stays verbatim; state-location framework → retired 2026-05-31.)
 
 ---
 
