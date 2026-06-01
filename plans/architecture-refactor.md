@@ -156,7 +156,7 @@ Shipped with `skill-creator` + `skill-composer`. Final design in `logs/decision/
 ### Phase D — Transcripts and navigator off MCP — partially done
 
 - Transcripts CLI-from-MCP migration ✓ done 2026-05-19. Moved to `plugins/transcripts/` in Phase G. Storage-location move and content hash-reference table tracked as a separate workstream in `plans/transcripts.md` (the CLI migration completed the MCP exit but left those two pieces unfinished).
-- Navigator pending. Same CLI-from-MCP migration pattern; navigator's state-location move parallels transcripts' and should follow the pattern that `plans/transcripts.md` lands.
+- Navigator pending. Same CLI-from-MCP migration pattern; navigator's storage-location move parallels transcripts' and should follow the pattern that `plans/transcripts.md` lands (top-level path under `~/.claude/`).
 
 ### Phase E — Convert remaining ocd-old systems — in progress
 

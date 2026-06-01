@@ -1,6 +1,6 @@
 # Transcripts — modernization plan
 
-Active workstream to bring the `transcripts` skill up to its intended architecture. Two coupled gaps to close: where the DB lives, and how repeated content is stored. Authored 2026-05-21 against the current `plugins/transcripts/skills/transcripts/` skill (post-Phase-G compartmentalization, post-CLI-from-MCP migration).
+Active workstream to bring the `transcripts` skill up to its intended architecture. Two coupled gaps to close: where the DB lives, and how repeated content is stored. Authored 2026-05-21 against the current `plugins/transcripts/skills/transcripts/` skill (post-Phase-G compartmentalization, post-CLI-from-MCP migration). Unblocked + promoted to In progress 2026-05-31 (gating questions resolved; state-location framework retired).
 
 This plan is the canonical "what's being done and why" for transcripts. Read it cold without conversation context. Cross-references at the bottom point at the design decisions and historical artifacts that fed into it.
 
@@ -39,16 +39,16 @@ Both problems compound: a bigger DB in a wrong location is more damaging than a 
 
 ### A. Storage location
 
-**DB moves to `~/.claude/transcripts/transcripts.db`.**
+**DB moves to `~/.claude/transcripts.db`** — a single top-level file under `~/.claude/`, no enclosing directory.
 
 - Cross-project by design — one DB serves all projects the user works in.
-- Project filtering remains at query time via existing `--project X` / `--all-projects` flags. Default behavior may shift (TBD: whether default scope is current-project-via-cwd-detection or all-projects).
-- `~/.claude/transcripts/` is chosen as a simple top-level path under `~/.claude/`. This deviates from the `logs/decision/state-location.md` framework, which prescribed `~/.claude/plugins/data/<plugin>-<author>/` for bin-mediated state. The deviation is intentional ("for now" per project owner); revisit if framework consistency matters across other plugin DBs (notably navigator's pending state-location move).
-- The `.claude/` approval-friction rule from state-location.md does not apply here because the skill invokes via `python3 -m scripts <verb>` subprocess — the user approves the bash invocation once, and internal writes go through wherever the subprocess targets.
+- Project filtering remains at query time via existing `--project X` / `--all-projects` flags.
+- **Default scope is current-project** (via `get_project_dir()`); `--all-projects` opts out. Preserves today's mental model — global default would surprise users used to per-project data.
+- Top-level path under `~/.claude/` is the chosen convention for plugin state going forward. The earlier `~/.claude/plugins/data/<plugin>-<author>/` framework was retired 2026-05-31 — it assumed bin-mediated state (the ocd-run helper pattern) which the project no longer uses. New plugins choose their own top-level path; transcripts.db is the precedent.
 
 **Mechanics:**
 
-- `_environment.py` resolves DB path. Change the DB-path branch (currently `<project>/.claude/transcripts/transcripts.db`) to `~/.claude/transcripts/transcripts.db`. The project-dir resolver itself (`get_project_dir`) stays — still needed for the current-project marker on `projects` and as a default filter for `sessions`/`exchanges` queries.
+- `_environment.py` resolves DB path. Change the DB-path branch (currently `<project>/.claude/transcripts/transcripts.db`) to `~/.claude/transcripts.db`. The project-dir resolver itself (`get_project_dir`) stays — still needed for the current-project marker on `projects` and as the default filter for `sessions`/`exchanges` queries.
 - `init` / `reset` target the new location.
 - Auto-sync source unchanged (`~/.claude/projects/*.jsonl`).
 - One-time migration: deletion is acceptable. Existing DBs at `<project>/.claude/transcripts/transcripts.db` should be wiped after confirming zero user-authored descriptions (the only non-derivable state). This repo's DB had zero; sweep other projects before deleting.
@@ -67,8 +67,8 @@ Both problems compound: a bigger DB in a wrong location is more damaging than a 
 #### B.2 — References table scope: user-global
 
 - Skill bodies repeat across **projects**, not just sessions in one project. Same skill invoked in 10 projects = 10 copies of the same body in a project-scoped references table.
-- One references table at `~/.claude/transcripts/` amortizes maximally.
-- Schema-side decision deferred: same DB (`transcripts.db`) with a `references` table, or sibling DB (`references.db`). Both feasible; the same-DB version is simpler and avoids cross-DB JOINs.
+- One references table at the user level amortizes maximally.
+- Schema: same DB (`~/.claude/transcripts.db`) with a `references` table — simpler JOINs, atomic migrations, no cross-DB coordination.
 
 #### B.3 — Reference format: opaque hash only
 
@@ -82,9 +82,9 @@ Both problems compound: a bigger DB in a wrong location is more damaging than a 
   ```
 
 - Rationale for opaque-hash-only:
-  - A name embedded in the ref implies identity. Two skill versions with the same name have different content → different hash → must not be conflated.
-  - Skills carry too much information to encapsulate meaningfully in a short name+version stub.
-  - The leading marker already self-reads — the agent can identify content kind from the marker, then decide whether to dereference based on what it already knows in-session.
+    - A name embedded in the ref implies identity. Two skill versions with the same name have different content → different hash → must not be conflated.
+    - Skills carry too much information to encapsulate meaningfully in a short name+version stub.
+    - The leading marker already self-reads — the agent can identify content kind from the marker, then decide whether to dereference based on what it already knows in-session.
 - Failure mode is safe: a `[[ref:nonexistent]]` ref renders as literal text. A broken or hand-edited ref doesn't corrupt downstream consumption — at worst, the message is slightly noisier than intended.
 
 #### B.4 — Empirical validation before scale-up
@@ -129,37 +129,42 @@ Anything beyond this list waits for empirical evidence that the marker is reliab
 Lower-risk refactor with immediate security win. Land before Workstream B so the content-dedup work happens in the right home.
 
 ### A1 — Path resolution
-- `_environment.py`: add `get_db_path()` returning `~/.claude/transcripts/transcripts.db`; replace project-derived DB-path callers with this.
+
+- `_environment.py`: add `get_db_path()` returning `~/.claude/transcripts.db`; replace project-derived DB-path callers with this.
 - `_init.py`: `init` and `reset` target the new path.
 - `get_project_dir()` updated to use the verified resolver chain (validated 2026-05-21 in interactive + headless `claude -p`):
-  1. `CLAUDE_PROJECT_DIR` env var (honors explicit override / hook setups).
-  2. `CLAUDE_CODE_SESSION_ID` → tail-scan `~/.claude/projects/*/<sid>.jsonl` for latest line with `cwd` field. Authoritative; handles non-git projects and mid-session cwd switches; inherited into sub-agents.
-  3. `git rev-parse --show-toplevel` from cwd (tail safety net for early-session probes before first user-turn JSONL line).
-  4. `_reject_if_inside_home` guard stays — plugin-cache git-checkout trap protection.
+    1. `CLAUDE_PROJECT_DIR` env var (honors explicit override / hook setups).
+    2. `CLAUDE_CODE_SESSION_ID` → tail-scan `~/.claude/projects/*/<sid>.jsonl` for latest line with `cwd` field. Authoritative; handles non-git projects and mid-session cwd switches; inherited into sub-agents.
+    3. `git rev-parse --show-toplevel` from cwd (tail safety net for early-session probes before first user-turn JSONL line).
+    4. `_reject_if_inside_home` guard stays — plugin-cache git-checkout trap protection.
 - Assertion landed 2026-05-21 at `plugins/skill-authoring/skills/skill-architecture/assertions/platform-discovery/project-dir-resolution.md` (status: confirmed, last-verified: 2026-05-21). A1 references it as the canonical source of truth for the resolver mechanism.
 
-### A2 — Default-scope behavior
-Decide and document:
-- **Option A:** `sessions` / `exchanges` default to current-project filter (via `get_project_dir()`); `--all-projects` opts out.
-- **Option B:** They default to all-projects; `--project current` or detected-default opts in.
-- Today: project-filtering is `--project <substring>` or `--all-projects`. Behavior with the move: TBD — depends on whether the user wants the new global DB to feel "global by default" or "local by default."
+### A2 — Default-scope behavior (resolved)
+
+- `sessions` / `exchanges` default to **current-project** filter (via `get_project_dir()`); `--all-projects` opts out.
+- Preserves today's per-project mental model; global default would surprise users used to project-scoped data.
+- Existing `--project <substring>` continues to work; `--all-projects` continues to bypass the filter.
 
 ### A3 — Migration handling
+
 - Wipe-on-init: when the new path's DB is absent on first run, build fresh from `~/.claude/projects/`.
 - Existing project-tree DBs become orphaned. Document in the SKILL that they can be deleted manually; descriptions in them are lost (consistent with "no user state in DB" being the design assumption — sweep before deleting).
 
 ### A4 — Gitignore cleanup
+
 - Remove `.claude/transcripts/*.db` and `.claude/transcripts/*.db.backup-*` lines from `claude-plugins/.gitignore`.
 - Add a note to the SKILL.md and the project's README if they reference the old path.
 
 ### A5 — SKILL.md updates
-- Description (frontmatter) updated to reflect cross-project default scope.
-- Argument-hint reviewed for any `--project` / `--all-projects` flag changes implied by A2.
-- Process Model section: replace "The DB lives at `<project>/.claude/transcripts/transcripts.db`" with the new path.
+
+- Description (frontmatter) updated to reflect cross-project DB + current-project default scope.
+- Argument-hint reviewed — no flag changes from A2 (defaults shift, flags unchanged).
+- Process Model section: replace "The DB lives at `<project>/.claude/transcripts/transcripts.db`" with `~/.claude/transcripts.db`.
 
 ### A6 — Test pass
+
 - Existing test suite (`plugins/transcripts/skills/transcripts/scripts/` — verify whether there's a tests/ dir, add if missing).
-- New tests cover: path resolution returns `~/.claude/transcripts/transcripts.db`; init creates dir + DB at that path; queries work against the new path; current-project marker still resolves correctly.
+- New tests cover: path resolution returns `~/.claude/transcripts.db`; init creates the DB at that path; queries work against the new path; current-project marker still resolves correctly.
 
 ---
 
@@ -167,7 +172,7 @@ Decide and document:
 
 ### B1 — Schema + extraction infrastructure
 
-- New `references` table: `(hash TEXT PRIMARY KEY, payload TEXT NOT NULL, byte_size INTEGER, first_seen TIMESTAMP, hit_count INTEGER)`.
+- New `references` table inside `~/.claude/transcripts.db`: `(hash TEXT PRIMARY KEY, payload TEXT NOT NULL, byte_size INTEGER, first_seen TIMESTAMP, hit_count INTEGER)`.
 - Ingest pipeline gains an extraction stage between JSONL read and `events.text` write. The stage runs each registered pattern; on match, computes hash, upserts the references row (incrementing `hit_count`), and substitutes `[[ref:<hash>]]` in the text.
 - `events.text` becomes "rewritten text" — original JSONL content is *not* stored in `events.text` for matched patterns. The references table is the truth for matched payloads; the JSONL is the original source of truth for everything.
 - First pattern shipped: skill body injections.
@@ -185,8 +190,8 @@ Decide and document:
 - Test query: spawn a sub-agent over a transcript-with-refs and ask a real analytical question (e.g. "what was the decision path on X").
 - Measure: how many refs did the agent dereference vs total refs in the transcript; output quality vs un-extracted control.
 - Decide based on results:
-  - Surgical dereferencing → ship read-side as designed.
-  - Reflexive full dereferencing → ship storage-only; rethink read-side presentation (different ref form? expansion-on-prompt? cache hint in the ref itself?).
+    - Surgical dereferencing → ship read-side as designed.
+    - Reflexive full dereferencing → ship storage-only; rethink read-side presentation (different ref form? expansion-on-prompt? cache hint in the ref itself?).
 - Document validation results in `extraction-patterns.md` skill-body row as evidence.
 
 ### B4 — Audit doc rollout
@@ -208,7 +213,7 @@ Decide and document:
 ```
 A (storage location)
 ├── A1 path resolution
-├── A2 default-scope decision  ← needs user call
+├── A2 default scope ✓ resolved (current-project default)
 ├── A3 migration
 ├── A4 gitignore cleanup
 ├── A5 SKILL.md updates
@@ -228,27 +233,16 @@ A is short; B has the empirical gate at B3. Don't ship B4 patterns until B3 resu
 
 ## Open questions
 
-1. **Default-scope behavior** (A2). Cross-project by default, or current-project by default? Affects every read query's expected output. Author lean: current-project default (preserves today's mental model) with `--all-projects` opt-out; global default would surprise users used to project-scoped data.
+1. **Hash algorithm + display.** sha256 (64 chars) vs sha1 (40 chars). Non-cryptographic dedup — sha1 is fine. Truncation in `[[ref:...]]` rendering: full hash, first 12, first 16? Affects readability vs collision-safety (collision prob is astronomically small at any reasonable truncation for dedup). Defer until B3.
 
-2. **References schema location**. Same `transcripts.db` (one table among many), or `~/.claude/transcripts/references.db` (sibling)? Author lean: same DB; simpler JOINs, atomic migrations.
+2. **What does the navigator state-location migration look like once transcripts ships?** Same top-level-path pattern; target shape is `~/.claude/navigator.db` (or whatever the navigator's primary store is). Cross-reference once this plan completes.
 
-3. **Hash algorithm + display**. sha256 (64 chars) vs sha1 (40 chars). Non-cryptographic dedup — sha1 is fine. Truncation in `[[ref:...]]` rendering: full hash, first 12, first 16? Affects readability vs collision-safety (collision prob is astronomically small at any reasonable truncation for dedup). Defer until B3.
-
-4. **State-location framework reconciliation**. The plan deviates from `logs/decision/state-location.md` by choosing `~/.claude/transcripts/` over `~/.claude/plugins/data/<plugin>-<author>/`. Either:
-   - (a) Update state-location.md to allow simpler top-level paths for plugins whose data dirs would otherwise be redundant.
-   - (b) Leave state-location.md as the framework, document this as a one-off deviation.
-   - (c) Conform — move transcripts to `~/.claude/plugins/data/transcripts-a-horde-o-bees/`.
-   Author lean: (a) — the framework was authored when most plugin DBs were ocd-bundled; standalone-plugin-with-one-DB doesn't need the namespacing dir.
-
-5. **Should the leading marker be part of the hashed body?** Currently planned: no — the marker line is per-message context (file path can differ per invocation). Excluded keeps marker visible for self-reading; only the dedupable body is hashed. Confirmed; no change needed.
-
-6. **What does the navigator state-location migration look like once transcripts ships?** Same pattern, same target shape. Cross-reference once this plan completes.
+(Closed questions — moved into Decisions captured above: default scope → A2 current-project; references table location → same DB; marker-in-hash → no, marker stays verbatim; state-location framework → retired 2026-05-31.)
 
 ---
 
 ## Cross-references
 
-- **Design framework:** `logs/decision/state-location.md` — bin-mediated state location convention; this plan partially conforms and partially deviates (see Open Question 4).
 - **Original friction:** Pre-modernization, surfaced during 2026-05-01 consolidated-profile refresh. The skill-template injection observation drove Workstream B. The friction log itself (`logs/problem/transcripts.md`) was deleted on 2026-05-21; the substantive item is captured in B above.
 - **Architecture context:** `plans/architecture-refactor.md` Phase D (transcripts CLI-from-MCP migration, completed 2026-05-19) and Phase G (plugin compartmentalization). This plan resumes where Phase D left off — the storage-location move was implicitly deferred during Phase D and never tracked.
 - **MCP retirement:** `logs/decision/mcp-benching.md` — historical decision to bench MCP servers; transcripts portion executed in Phase D.
@@ -258,7 +252,7 @@ A is short; B has the empirical gate at B3. Don't ship B4 patterns until B3 resu
 ## Out of scope
 
 - Verb-naming-rectification — broader project-wide naming plan (`logs/idea/verb-naming-rectification.md`); separate decision pending whether to revive or retire it.
-- Navigator state-location move — same pattern as Workstream A; separate workstream once this plan ships.
+- Navigator storage-location move — same top-level-path pattern as Workstream A; separate workstream once this plan ships.
 - ocd-old Phase E migration — orthogonal.
 - Performance work on the SQL queries themselves — only if validation surfaces query-side bottlenecks.
 - Adding new report formats — `time-blocks` is the only one today; new formats are independent feature work.
