@@ -6,12 +6,15 @@ events table populated from Claude Code JSONL transcripts under
 lines (PK is `(file, line)`, JSONL is append-only). Settings and derived
 stats are queryable independently; see `_settings` and `_stats`.
 
+The DB lives at `~/.claude/transcripts.db` — a single top-level file under
+Claude home, shared across every project the user works in. Per-project
+filtering applies at query time via an explicit `--project` argument.
+
 Interface contract: init() and status() return
 {"files": [...], "extra": [...]}.
 """
 
 import sqlite3
-import shutil
 from pathlib import Path
 
 from . import _db, _settings
@@ -21,30 +24,11 @@ from ._errors import NotReadyError
 
 
 def _db_path() -> Path:
-    return (
-        environment.get_project_dir()
-        / ".claude"
-        / "transcripts"
-        / "transcripts.db"
-    )
-
-
-def _legacy_db_path() -> Path:
-    """One-time migration source — the path used when transcripts lived under
-    the ocd plugin's namespace. If the new path is absent and this is present,
-    init moves it before rectifying.
-    """
-    return (
-        environment.get_project_dir()
-        / ".claude"
-        / "ocd"
-        / "transcripts"
-        / "transcripts.db"
-    )
+    return environment.get_claude_home() / "transcripts.db"
 
 
 def _db_rel_path() -> str:
-    return ".claude/transcripts/transcripts.db"
+    return "~/.claude/transcripts.db"
 
 
 def _build_schema(target_path: str) -> None:
@@ -55,26 +39,6 @@ def _build_schema(target_path: str) -> None:
         _settings.init_settings(conn)
     finally:
         conn.close()
-
-
-def _maybe_migrate_legacy_db() -> dict | None:
-    """Move a pre-migration DB from the old ocd-plugin path into the new path.
-
-    Triggered when the new path is absent and the old path exists. Idempotent —
-    after the move, the legacy path no longer exists. Returns a `files` entry
-    describing the move, or None if no migration was needed.
-    """
-    new = _db_path()
-    old = _legacy_db_path()
-    if new.exists() or not old.exists():
-        return None
-    new.parent.mkdir(parents=True, exist_ok=True)
-    shutil.move(str(old), str(new))
-    return {
-        "path": _db_rel_path(),
-        "before": "absent",
-        "after": "migrated from .claude/ocd/transcripts/transcripts.db",
-    }
 
 
 def ready(db_path: Path | None = None) -> bool:
@@ -124,23 +88,15 @@ def _status_extra(db_path: Path) -> list[dict]:
 
 def init(force: bool = False) -> dict:
     """Rectify the transcripts database to the canonical schema."""
-    files: list[dict] = []
-    migrated = _maybe_migrate_legacy_db()
-    if migrated:
-        files.append(migrated)
-    files.extend(dbtools.rectify(
+    files = dbtools.rectify(
         _db_path(), _build_schema, _db_rel_path(), force=force,
-    ))
+    )
     return {"files": files, "extra": _status_extra(_db_path())}
 
 
 def reset() -> dict:
     """Backup, wipe, and rebuild — the explicit destructive verb."""
-    files: list[dict] = []
-    migrated = _maybe_migrate_legacy_db()
-    if migrated:
-        files.append(migrated)
-    files.extend(dbtools.reset_db(_db_path(), _build_schema, _db_rel_path()))
+    files = dbtools.reset_db(_db_path(), _build_schema, _db_rel_path())
     return {"files": files, "extra": _status_extra(_db_path())}
 
 

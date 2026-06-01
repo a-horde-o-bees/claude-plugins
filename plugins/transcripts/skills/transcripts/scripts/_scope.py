@@ -3,7 +3,7 @@
 Returns plain Python data structures (dicts and lists) for JSON serialization.
 Each layer surfaces only what's needed to navigate to the next:
 
-- projects(): all projects with current-project marker
+- projects(): all projects present in the DB
 - sessions(): session metadata, filterable, default-lean with `show` opt-ins
 - exchanges(): per-exchange rows, filterable, default-lean with `show` opt-ins
 
@@ -13,14 +13,16 @@ Filtering on `sessions` and `exchanges`:
 - range_from/range_to: exchange-number bounds within the matched scope
 - from_ts/to_ts: ISO timestamp bounds applied alongside any scope filter
 
+The CLI enforces that callers supply explicit scope (`--project`,
+`--all-projects`, or `--session`) — this layer accepts whatever scope it's
+given without inventing a default.
+
 Output verbosity is controlled by a `show` list. Defaults are lean — heavy or
 domain-specific fields are opt-in. See SHOW_EXCHANGES / SHOW_SESSIONS for the
 recognized values; unknown values raise ValueError.
 """
 
 import sqlite3
-
-from . import _db
 
 
 SHOW_EXCHANGES = {"messages", "active", "breakdown", "metrics", "timeframes"}
@@ -55,18 +57,11 @@ def resolve_session(conn: sqlite3.Connection, prefix: str) -> str:
 
 
 def projects(conn: sqlite3.Connection) -> dict:
-    """All projects with the current-project marker."""
-    try:
-        current = _db.current_project_name()
-    except RuntimeError:
-        current = ""
+    """All projects present in the DB."""
     rows = conn.execute(
         "SELECT DISTINCT project_name FROM events ORDER BY project_name"
     ).fetchall()
-    return {
-        "current": current,
-        "projects": [r[0] for r in rows],
-    }
+    return {"projects": [r[0] for r in rows]}
 
 
 def sessions(

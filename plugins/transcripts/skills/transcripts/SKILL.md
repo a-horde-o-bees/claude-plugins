@@ -1,7 +1,7 @@
 ---
 name: transcripts
-description: Query Claude Code session transcripts as structured data — projects, sessions, exchanges (user_msg + agent response groups), with time accounting, full chat content, and persistent per-exchange descriptions. Backed by a SQLite DB ingested from ~/.claude/projects/. Default-lean output; opt into detail (messages, metrics, timeframes) via --show. Auto-syncs new lines on every query.
-argument-hint: "<projects | sessions [--project X | --all-projects] [--from D --to D] [--show timeframes bytes] | exchanges [--project X | --session Y [--range R] | --all-projects] [--from D --to D] [--show messages active breakdown metrics timeframes] | descriptions-set <session> <json> | descriptions-clear <session> <exchange ...> | report [<format> [--project X | --all-projects] [--from D --to D]] | settings [<key> [<value>]] | init [--force] | reset>"
+description: Query Claude Code session transcripts as structured data — projects, sessions, exchanges (user_msg + agent response groups), with time accounting, full chat content, and persistent per-exchange descriptions. Backed by a SQLite DB at `~/.claude/transcripts.db` ingested from `~/.claude/projects/`. Per-project verbs require explicit `--project X` or `--all-projects`; run `projects` to list available names. Default-lean output; opt into detail (messages, metrics, timeframes) via `--show`. Auto-syncs new lines on every query.
+argument-hint: "<projects | sessions (--project X | --all-projects) [--from D --to D] [--show timeframes bytes] | exchanges (--project X | --session Y [--range R] | --all-projects) [--from D --to D] [--show messages active breakdown metrics timeframes] | descriptions-set <session> <json> | descriptions-clear <session> <exchange ...> | report [<format> [--project X | --all-projects] [--from D --to D]] | settings [<key> [<value>]] | init [--force] | reset>"
 allowed-tools:
   - Bash(python3 -m scripts:*)
   - Bash(python -m scripts:*)
@@ -13,13 +13,13 @@ Query Claude Code session transcripts. Each verb emits JSON; `report` is skill-o
 
 ## Process Model
 
-The DB lives at `<project>/.claude/transcripts/transcripts.db`. Initialize via `init` (or `reset` to wipe + rebuild). Every verb other than `init`/`reset` auto-syncs new transcript lines from `~/.claude/projects/` before querying — there is no separate ingest step.
+The DB lives at `~/.claude/transcripts.db` — a single top-level file under Claude home, shared across every project the user works in. Initialize via `init` (or `reset` to wipe + rebuild). Every verb other than `init`/`reset` auto-syncs new transcript lines from `~/.claude/projects/` (Claude Code's session-log directory — distinct from the skill's DB) before querying.
 
 Nine verbs:
 
 | Verb | Effect |
 |------|--------|
-| `projects` | List all projects in the DB with the current-project marker |
+| `projects` | List all projects present in the DB |
 | `sessions` | Session metadata; default-lean ({project, session, n_exchanges, n_described}); `--show` opts into timeframes/bytes |
 | `exchanges` | Per-exchange rows; default-lean ({project, session, exchange, description}); `--show` opts into messages/active/breakdown/metrics/timeframes |
 | `descriptions-set` | Batch upsert per-exchange descriptions from a JSON map |
@@ -69,13 +69,13 @@ With `--show metrics timeframes messages`:
 ]
 ```
 
-`projects` returns `{current, projects[]}`. `sessions` returns `{filter, n_sessions, sessions[]}`. `settings` returns `{config, derived}`.
+`projects` returns `{projects[]}`. `sessions` returns `{filter, n_sessions, sessions[]}`. `settings` returns `{config, derived}`.
 
 ## Scope
 
 The unit hierarchy: **project → session → exchange**.
 
-- **Project** — Claude Code's encoded directory under `~/.claude/projects/`, e.g., `-home-dev-projects-monaco`. The current project resolves from `CLAUDE_PROJECT_DIR` or git root.
+- **Project** — Claude Code's encoded directory under `~/.claude/projects/`, e.g., `-home-dev-projects-monaco`. Run `projects` to list available names; pass one via `--project X` on the per-project verbs.
 - **Session** — top-level JSONL transcript (one per `claude` invocation). Identified by UUID; queries accept unique prefix.
 - **Exchange** — the unit of conversation: one user_msg + the agent's response (including tool use, thinking, queued user input absorbed during the response) until the next user_msg. Numbered 1+ within each session.
 
@@ -91,7 +91,7 @@ Threshold (default 15 min) is configurable via `settings`.
 
 `--show` buckets on `exchanges`: `messages` (chat content), `active` (active_s only), `breakdown` (active_s + user_s/agent_s), `metrics` (full hierarchy), `timeframes` (start/end). `--show` buckets on `sessions`: `timeframes` (first_ts/last_ts), `bytes`.
 
-Default scope on `sessions` and `exchanges` is the current project. `--all-projects` widens. `--project X` filters by name substring. `--session Y` (on `exchanges`) takes precedence over project filters. Date filters `--from D --to D` apply on top of any scope filter.
+Scope on `sessions` and `exchanges` is required, not defaulted: pass `--project X` (substring match against project names — run `projects` for the list), `--all-projects` (every project), or for `exchanges` `--session Y` (single session). The CLI rejects invocations missing an explicit scope. Date filters `--from D --to D` apply on top.
 
 **Descriptions** are persistent per-exchange annotations stored in the `exchanges` table. Write each per /description-authoring — one line, scope + role, no mechanics, no history. They survive sync; only `reset` wipes them. `sessions` reports `n_described` per session; `exchanges` includes the `description` field per row (null when unset). When an agent reads an exchange's content and would benefit from re-finding it later, author a description and persist via `descriptions-set`. Both write verbs are batch-shaped — single-key maps and one-element lists handle the singular case naturally.
 
@@ -103,7 +103,7 @@ Default scope on `sessions` and `exchanges` is the current project. `--all-proje
 - `descriptions-set` JSON map keys must coerce to integer exchange numbers (e.g. `'{"5": "...", "12": "..."}'`).
 - `reset` backs up to a timestamped sibling file before wiping. Use when schema migrations land or to start fresh.
 - Agents that need cross-project rollups iterate via `projects` → `sessions --project X` → `exchanges --session Y`. The CLI does not aggregate across projects in a single call by design.
-- On first run after the 2026-05-19 migration off the ocd plugin namespace, `init` auto-moves the DB from `.claude/ocd/transcripts/transcripts.db` to `.claude/transcripts/transcripts.db`. Existing ingested events and descriptions survive.
+- Older project-tree DBs (`<project>/.claude/transcripts/transcripts.db` or `<project>/.claude/ocd/transcripts/transcripts.db`) become orphaned by the move to `~/.claude/transcripts.db` — `init` will not migrate them. Delete them manually; descriptions in them are lost (sweep before deleting if you authored any).
 
 ## Workflow
 
@@ -136,7 +136,7 @@ Default scope on `sessions` and `exchanges` is the current project. `--all-proje
     1. bash: `cd <THIS-FILE-DIR> && python3 -m scripts reset`
 13. Else: Exit to user: unrecognized verb {verb} — expected projects, sessions, exchanges, descriptions-set, descriptions-clear, report, settings, init, or reset
 
-**Important:** the `cd <THIS-FILE-DIR>` is required so Python can find the `scripts` package; `get_project_dir()` inside the package consults `CLAUDE_PROJECT_DIR` (or falls back to git rev-parse from cwd, which would now resolve from the skill dir — set `CLAUDE_PROJECT_DIR` explicitly when invoking from outside a git checkout).
+**Important:** the `cd <THIS-FILE-DIR>` is required so Python can find the `scripts` package. The skill no longer resolves a "current project" from cwd, env, or git — the project is always an explicit `--project` argument. `CLAUDE_HOME` overrides `~/.claude` if set; otherwise the DB lives at `~/.claude/transcripts.db` regardless of where the verb is invoked from.
 
 ### Report
 
