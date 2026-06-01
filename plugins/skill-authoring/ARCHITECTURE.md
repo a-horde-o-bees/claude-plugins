@@ -54,7 +54,7 @@ Each composed skill is self-contained at `<destination-parent>/<name>/`:
 
 **Plugin data dir is reserved but unused.** No transient state currently goes through `~/.claude/plugins/data/skill-authoring-a-horde-o-bees/`. Reserved per Claude Code convention for future verbs that might need disk space.
 
-State location follows project-root `logs/decision/state-location.md`. The plugin-namespaced extension (`<destination>/.claude/<plugin>-<author>/<concern>/`) remains a valid pattern for plugins that need plugin-managed user-edited content separate from any specific skill; skill-authoring doesn't currently use it.
+State location is per-plugin choice — typically a top-level path under `~/.claude/` (e.g. `~/.claude/transcripts.db` for transcripts). The plugin-namespaced extension (`<destination>/.claude/<plugin>-<author>/<concern>/`) remains a valid pattern for plugins that need plugin-managed user-edited content separate from any specific skill; skill-authoring doesn't currently use it.
 
 ## Sparse-checkout primitive
 
