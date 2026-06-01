@@ -17,10 +17,6 @@ tmp/
 # Auto-init DB backups awaiting schema reconciliation — non-empty means work in flight
 .claude/pre-sync/
 
-# Transcripts DB grows on every session use (auto-syncs ~/.claude/projects/) — purely local
-.claude/transcripts/*.db
-.claude/transcripts/*.db.backup-*
-
 # Per-user manifest of skills installed via `npx skills` — downstream users curate their own
 .claude/installed-skills.json
 

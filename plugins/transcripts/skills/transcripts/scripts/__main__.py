@@ -4,20 +4,23 @@ JSON output throughout — agent-consumable. Each verb except `reset`
 requires the DB to be ready; init/reset rebuild the schema.
 
 Verbs:
-    projects                                                                  All projects, current marked
-    sessions   [--project X | --all-projects] [--from D --to D] [--show ...]  Sessions in scope
-    exchanges  [--project X | --session Y [--range R] | --all-projects]
-               [--from D --to D] [--show ...]                                 Per-exchange rows; default lean
+    projects                                                                  All projects in the DB
+    sessions   (--project X | --all-projects) [--from D --to D] [--show ...]  Sessions in scope (scope required)
+    exchanges  (--project X | --session Y [--range R] | --all-projects)
+               [--from D --to D] [--show ...]                                 Per-exchange rows (scope required)
     descriptions-set    <session> <json>                                      Batch upsert descriptions
     descriptions-clear  <session> <exchange1> [<exchange2> ...]               Batch clear descriptions
     settings   [<key> [<value>]]                                              Config + derived stats
     init       [--force]                                                      Rectify DB to canonical schema
     reset                                                                     Backup + wipe DB
 
-Scope precedence on `exchanges`: --session > --all-projects > --project >
-current project (default). Date filters apply on top of any scope filter.
-The `--show` flag accepts space-separated bucket names; see
-`SHOW_EXCHANGES` / `SHOW_SESSIONS` in `_scope.py` for the recognized values.
+Per-project verbs (`sessions`, `exchanges`) require an explicit scope
+argument — there is no current-project default. Run `projects` to list
+available names, then pass one via `--project`, or use `--all-projects`
+for a cross-project query, or `--session <id>` to scope directly to one
+session. Date filters apply on top of any scope filter. The `--show`
+flag accepts space-separated bucket names; see `SHOW_EXCHANGES` /
+`SHOW_SESSIONS` in `_scope.py` for the recognized values.
 """
 
 import argparse
@@ -54,7 +57,9 @@ def cmd_projects(_args: argparse.Namespace) -> int:
 def cmd_sessions(args: argparse.Namespace) -> int:
     conn = _connect()
     try:
-        project_filter = "" if args.all_projects else (args.project or _db.current_project_name())
+        # argparse enforces exactly one of (--project, --all-projects); empty
+        # project_filter means cross-project.
+        project_filter = "" if args.all_projects else args.project
         _ingest.sync(conn, project_filter)
         data = _scope.sessions(
             conn,
@@ -75,6 +80,7 @@ def cmd_exchanges(args: argparse.Namespace) -> int:
         threshold_min = _settings.get(conn, "threshold_min")
         threshold_s = float(threshold_min) * 60.0  # type: ignore[arg-type]
 
+        # argparse enforces exactly one of (--project, --all-projects, --session).
         if args.session:
             project_filter = ""
             session_id = args.session
@@ -82,7 +88,7 @@ def cmd_exchanges(args: argparse.Namespace) -> int:
             project_filter = ""
             session_id = ""
         else:
-            project_filter = args.project or _db.current_project_name()
+            project_filter = args.project
             session_id = ""
 
         _ingest.sync(conn, project_filter)
@@ -197,12 +203,13 @@ def main() -> None:
     )
     sub = ap.add_subparsers(dest="verb", required=True)
 
-    p_projects = sub.add_parser("projects", help="All projects with current marker")
+    p_projects = sub.add_parser("projects", help="All projects in the DB")
     p_projects.set_defaults(func=cmd_projects)
 
     p_sessions = sub.add_parser("sessions", help="Sessions in scope")
-    p_sessions.add_argument("--project", default="", help="Filter by name substring (default: current project)")
-    p_sessions.add_argument("--all-projects", action="store_true", help="Include every project")
+    sessions_scope = p_sessions.add_mutually_exclusive_group(required=True)
+    sessions_scope.add_argument("--project", default="", help="Filter by name substring (run `projects` for the list)")
+    sessions_scope.add_argument("--all-projects", action="store_true", help="Include every project")
     p_sessions.add_argument("--from", dest="from_ts", default="", help="ISO timestamp lower bound")
     p_sessions.add_argument("--to", dest="to_ts", default="", help="ISO timestamp upper bound")
     p_sessions.add_argument("--show", nargs="*", default=[],
@@ -210,9 +217,10 @@ def main() -> None:
     p_sessions.set_defaults(func=cmd_sessions)
 
     p_exchanges = sub.add_parser("exchanges", help="Exchanges with optional metrics + messages")
-    p_exchanges.add_argument("--project", default="", help="Filter by name substring (default: current project)")
-    p_exchanges.add_argument("--all-projects", action="store_true", help="Include every project")
-    p_exchanges.add_argument("--session", default="", help="Exact session id or unique prefix")
+    exchanges_scope = p_exchanges.add_mutually_exclusive_group(required=True)
+    exchanges_scope.add_argument("--project", default="", help="Filter by name substring (run `projects` for the list)")
+    exchanges_scope.add_argument("--all-projects", action="store_true", help="Include every project")
+    exchanges_scope.add_argument("--session", default="", help="Exact session id or unique prefix")
     p_exchanges.add_argument("--range", default="", help="Exchange number ('5') or range ('5-10'); requires --session")
     p_exchanges.add_argument("--from", dest="from_ts", default="", help="ISO timestamp lower bound")
     p_exchanges.add_argument("--to", dest="to_ts", default="", help="ISO timestamp upper bound")

@@ -1,14 +1,12 @@
 """transcripts database infrastructure.
 
-Schema, connection factory, and the encoded-project-name helper. The DB
-location is owned by `_init._db_path()`; this module exposes only schema
-mechanics so `_schema.rectify` can drive schema management.
+Schema and connection factory. The DB location is owned by
+`_init._db_path()`; this module exposes only schema mechanics so
+`_schema.rectify` can drive schema management.
 """
 
 import sqlite3
 from pathlib import Path
-
-from . import _environment as environment
 
 
 SCHEMA = """
@@ -100,14 +98,3 @@ def init_db(db_path: str) -> None:
         conn.commit()
     finally:
         conn.close()
-
-
-def current_project_name() -> str:
-    """Encode the current project root as Claude Code's project-name string.
-
-    Claude Code stores transcripts under ~/.claude/projects/<encoded>/, where
-    <encoded> is the absolute project path with separators replaced by dashes.
-    Used as the default sync filter so we only ingest transcripts belonging
-    to this project unless the caller widens scope.
-    """
-    return str(environment.get_project_dir()).replace("/", "-").replace("\\", "-")
