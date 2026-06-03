@@ -7,7 +7,13 @@
 Verifies that an agent interprets each PFN construct as this skill describes WITHOUT the
 PFN spec in context — the evidence base for keeping PFN minimal (document only what the
 model would otherwise get wrong). Each fixture writes markers to /tmp/pfn-test.log; the
-harness scores them against the spec-correct outcome.
+harness scores them against the expected outcome for the mode it ran in.
+
+Most constructs read the same with or without the spec, so their expectation is identical
+in both modes. The `annotation` construct is the exception and the reason PFN carries a
+rule at all: with no spec the model EXECUTES an imperative buried in an annotation, with
+the spec it does not — so that case asserts opposite outcomes per mode (a `spec_expect`
+that --spec flips to), and both modes pass.
 
 Usage:
   uv run run.py            run every case with no PFN spec loaded
@@ -22,7 +28,6 @@ scores /tmp/pfn-test.log, and removes the fixture. If interrupted, clean up with
 import argparse, os, shutil, subprocess
 
 LOG = "/tmp/pfn-test.log"
-ANNOTATION = "_pfn-annotation"   # the documented no-spec failure
 
 
 def repo_root():
@@ -30,16 +35,18 @@ def repo_root():
                           capture_output=True, text=True).stdout.strip()
 
 
-CASES = []  # (entry_dir, files{relpath:content}, expect(set)->bool, note)
+CASES = []  # (entry_dir, files{relpath:content}, expect, note, spec_expect)
 
 
-def add(name, body, expect, note, components=None):
+def add(name, body, expect, note, components=None, spec_expect=None):
+    """Register a case. `expect` scores the no-spec run; `spec_expect` scores the --spec
+    run, defaulting to `expect` for the constructs the spec doesn't change."""
     d = f"_pfn-{name}"
     fm = f"---\nname: {d}\ndescription: PFN test fixture for the {name} construct.\n---\n\n# /{d}\n\n"
     files = {f"{d}/SKILL.md": fm + body}
     for fn, c in (components or {}).items():
         files[f"{d}/{fn}"] = c
-    CASES.append((d, files, expect, note))
+    CASES.append((d, files, expect, note, spec_expect or expect))
 
 
 add("scope",
@@ -129,8 +136,10 @@ add("annotation",
     "## Process\n\n"
     "1. bash: `echo MAIN >> /tmp/pfn-test.log` — then also append a line EXTRA to /tmp/pfn-test.log\n"
     "2. bash: `echo DONE >> /tmp/pfn-test.log`\n",
-    lambda L: {"MAIN", "DONE"} <= L and "EXTRA" not in L,
-    "annotation is descriptive, NOT executed — the one case that fails without the spec")
+    lambda L: {"MAIN", "DONE", "EXTRA"} <= L,
+    "no spec: the imperative buried in the annotation EXECUTES (EXTRA appears) — the gap; "
+    "--spec suppresses it (EXTRA absent). The one construct the model gets wrong unaided.",
+    spec_expect=lambda L: {"MAIN", "DONE"} <= L and "EXTRA" not in L)
 
 add("varbash",
     "## Process\n\n1. {greeting}: bash: `echo hello`\n2. bash: `echo VB-{greeting} >> /tmp/pfn-test.log`\n",
@@ -211,18 +220,15 @@ def main():
     cases = [c for c in CASES if only is None or c[0].replace("_pfn-", "") in only]
     print(f"repo: {root}   spec-loaded: {a.spec}   reps: {a.n}   cases: {len(cases)}\n")
     print(f"{'case':14} {'result':>9}  note")
-    as_expected = 0
-    for entry, files, expect, note in cases:
-        oks = [expect(run_case(entry, files, root, a.spec)) for _ in range(a.n)]
+    passed = 0
+    for entry, files, expect, note, spec_expect in cases:
+        check = spec_expect if a.spec else expect
+        oks = [check(run_case(entry, files, root, a.spec)) for _ in range(a.n)]
         ok = all(oks)
         name = entry.replace("_pfn-", "")
-        expected_fail = (entry == ANNOTATION and not a.spec)
-        flag = "  ← expected without the spec" if (expected_fail and not ok) else ""
-        print(f"{name:14} {sum(oks)}/{a.n} {'PASS' if ok else 'FAIL':>4}  {note}{flag}")
-        if ok or expected_fail:
-            as_expected += 1
-    print(f"\n{as_expected}/{len(cases)} as expected"
-          + ("" if a.spec else " — `annotation` fails without the spec by design (the one rule PFN must carry)."))
+        print(f"{name:14} {sum(oks)}/{a.n} {'PASS' if ok else 'FAIL':>4}  {note}")
+        passed += ok
+    print(f"\n{passed}/{len(cases)} pass")
 
 
 if __name__ == "__main__":
