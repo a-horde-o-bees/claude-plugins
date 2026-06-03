@@ -107,7 +107,7 @@ Scope on `sessions` and `exchanges` is required, not defaulted: pass `--project 
 
 ## Workflow
 
-1. If not $ARGUMENTS: Exit to user: skill description and argument-hint
+1. If not $ARGUMENTS: Exit process: skill description and argument-hint
 2. {verb} = first token of $ARGUMENTS
 3. {verb-args} = remainder of $ARGUMENTS after {verb}
 
@@ -129,12 +129,12 @@ Scope on `sessions` and `exchanges` is required, not defaulted: pass `--project 
 11. Else if {verb} is `report`:
     1. {format} = first token of {verb-args}
     2. {format-args} = remainder of {verb-args} after {format}
-    3. If not {format}: Exit to user: available report formats — `time-blocks`
+    3. If not {format}: Exit process: available report formats — `time-blocks`
     4. Else if {format} is `time-blocks`: Call: `_report-time-blocks.md` ({format-args} = {format-args})
-    5. Else: Exit to user: unrecognized format {format} — expected `time-blocks`
+    5. Else: Exit process: unrecognized format {format} — expected `time-blocks`
 12. Else if {verb} is `reset`:
     1. bash: `cd <THIS-FILE-DIR> && python3 -m scripts reset`
-13. Else: Exit to user: unrecognized verb {verb} — expected projects, sessions, exchanges, descriptions-set, descriptions-clear, report, settings, init, or reset
+13. Else: Exit process: unrecognized verb {verb} — expected projects, sessions, exchanges, descriptions-set, descriptions-clear, report, settings, init, or reset
 
 **Important:** the `cd <THIS-FILE-DIR>` is required so Python can find the `scripts` package. The skill no longer resolves a "current project" from cwd, env, or git — the project is always an explicit `--project` argument. `CLAUDE_HOME` overrides `~/.claude` if set; otherwise the DB lives at `~/.claude/transcripts.db` regardless of where the verb is invoked from.
 

@@ -4,7 +4,7 @@ Tools installed globally on the user's system (npm globals, system packages, sta
 
 ```
 1. Verify tool available — bash: `command -v <tool>`
-    1. If not found: Exit to user — `<tool>` is required; install with `<install command>`
+    1. If not found: Exit process — `<tool>` is required; install with `<install command>`
 ```
 
 Use `SessionStart` hooks for Python packages (isolated in plugin venv). Use runtime checks in skills for everything else.

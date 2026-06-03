@@ -53,8 +53,8 @@ Idempotency rules:
 
 1. {verb}: first token of $ARGUMENTS
 2. {verb-args}: remainder of $ARGUMENTS after {verb}
-3. If {verb} is empty: Exit to user: skill description and argument-hint
+3. If {verb} is empty: Exit process: skill description and argument-hint
 4. Else if {verb} is `add`: Call: `_add.md` ({args}: {verb-args})
 5. Else if {verb} is `remove`: Call: `_remove.md` ({args}: {verb-args})
 6. Else if {verb} is `list`: Call: `_list.md` ({args}: {verb-args})
-7. Else: Exit to user: unrecognized verb {verb} — expected `add`, `remove`, or `list`
+7. Else: Exit process: unrecognized verb {verb} — expected `add`, `remove`, or `list`

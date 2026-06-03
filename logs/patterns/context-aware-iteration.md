@@ -83,7 +83,7 @@ batch_01,2026-04-24T10:17:00Z,5,22431,67812,34918,1.557,1.557,false,
     1. {running_window_ratio} = trailing-N window ratio (default N=3) — see "Ratio estimator"
     2. {batch_capacity} = {work_budget} / {running_window_ratio}
     3. {batch} = bin-pack pending items up to {batch_capacity}
-    4. If {batch} is empty AND pending items remain: Exit to user — all remaining items oversized; flag unconsumable and stop
+    4. If {batch} is empty AND pending items remain: Exit process — all remaining items oversized; flag unconsumable and stop
     5. Spawn agent with: {agent_instructions} + item list for {batch}
     6. Read total_tokens; compute work_tokens, ratio
     7. If batch ran out of tokens (truncated reply, unfinished items): handle per "Token exhaustion handling" — do not silently roll the failure into running calc
@@ -93,7 +93,7 @@ batch_01,2026-04-24T10:17:00Z,5,22431,67812,34918,1.557,1.557,false,
 > Completion. Summarize from the queue + log. Archive or leave in place
 > depending on whether the workflow may rerun.
 
-19. Exit to user:
+19. Exit process:
     - Item counts by status
     - Final running_avg_ratio and variance across batches
     - Pointer to {queue_path} and {log_path} for inspection

@@ -48,7 +48,7 @@ The commit + push + CI steps are delegated to `/git-commit`, `/git-push`, and `/
     1. {sync-mode}: bash: `cd <THIS-FILE-DIR> && uv run python -c "import json; print(json.load(open('settings.json'))['sync_mode'])"`
     2. If {sync-mode} is `marketplace`: {sync-result}: Call: `_sync_marketplace.md` ({pending-paths}: {pending-paths})
     3. Else if {sync-mode} is `installed`: {sync-result}: Call: `_sync_installed.md`
-    4. Else: Exit to user: unknown sync_mode `{sync-mode}` in `<THIS-FILE-DIR>/settings.json` — expected `marketplace` or `installed`
+    4. Else: Exit process: unknown sync_mode `{sync-mode}` in `<THIS-FILE-DIR>/settings.json` — expected `marketplace` or `installed`
 
 ### Report
 

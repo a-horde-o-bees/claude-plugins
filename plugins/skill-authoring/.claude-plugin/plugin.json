@@ -1,6 +1,6 @@
 {
   "name": "skill-authoring",
-  "version": "0.0.23",
+  "version": "0.0.24",
   "description": "Two companion skills for authoring new skills with project authoring discipline applied inline. skill-composer composes from exemplar sources with drift tracking against pinned upstream commits; skill-creator creates from scratch via interview-driven dialogue layered on Anthropic's skill-creator. Both apply PFN, progressive-disclosure, description-authoring, and workflow-vs-script at every authoring moment.",
   "author": {
     "name": "a-horde-o-bees"

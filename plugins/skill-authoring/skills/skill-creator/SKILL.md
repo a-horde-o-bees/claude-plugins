@@ -34,10 +34,10 @@ The community skill-creator source is referenced at `sources/anthropics-skills--
 
 ## Workflow
 
-1. Ensure upstream sources are present at their pinned commits — bash: `cd <THIS-FILE-DIR> && uv run python -m scripts._sources` — clones missing sources from each entry in `composition.md`; reuses cached checkouts at the pin
+1. bash: `cd <THIS-FILE-DIR> && uv run python -m scripts._sources` — ensures upstream sources are present at their pinned commits; clones missing sources from each entry in `composition.md`, reusing cached checkouts at the pin
 2. {verb}: first token of $ARGUMENTS
 3. {verb-args}: remainder of $ARGUMENTS after {verb}
 4. If {verb} is `new`: Call: `_new.md`
 5. Else if {verb} is `refine`: Call: `_refine.md` ({name}: first token of {verb-args})
 6. Else if {verb} is `list`: Call: `_list.md`
-7. Else: Exit to user: unrecognized verb {verb} — expected `new`, `refine`, or `list`
+7. Else: Exit process: unrecognized verb {verb} — expected `new`, `refine`, or `list`
