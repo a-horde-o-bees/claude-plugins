@@ -28,7 +28,7 @@ Rewrite every occurrence of a symbol, path, or pattern across a codebase in one 
 
 6. Present plan to user — per-category counts, full lists, proposed disposition for interactive categories
 7. AskUserQuestion with options: `["Proceed", "Adjust", "Cancel"]`
-8. If cancel: Exit to user: mass rename cancelled
+8. If cancel: Exit process: mass rename cancelled
 9. If adjust: take refinements, update plan, Go to step 6. Present plan
 
 > Apply: run the right tool for each category. AST-aware tools prevent the false-positive that doomed the ad-hoc sed approach. Regex is the fallback for categories where no AST tool applies (prose, non-Python files, path strings).
@@ -42,14 +42,14 @@ Rewrite every occurrence of a symbol, path, or pattern across a codebase in one 
 
 11. Re-scan with the same `grep` calls from step 4
 12. {remaining} = re-scan output minus the documented exceptions from classification
-13. If {remaining} is non-empty: Exit to user:
+13. If {remaining} is non-empty: Exit process:
     - unexpected occurrences of `{old}` remain after apply
     - {remaining}
     - re-classify and re-invoke
 
 > Test: hand off to the test runner in an isolated worktree. Failures here should expose runtime issues (path resolution, attribute lookup), not missed renames.
 
-14. Exit to user:
+14. Exit process:
     - Total files rewritten, per-category counts
     - Next step: `/ocd:sandbox tests` to verify against a clean ref
 ```

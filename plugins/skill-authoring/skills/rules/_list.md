@@ -9,7 +9,7 @@
 1. Parse {args}:
     1. {scope}: value of `--scope` flag if present, else `both`
 
-2. If {scope} not in (`user`, `project`, `both`): Exit to user: invalid scope {scope} — expected `user`, `project`, or omit for both
+2. If {scope} not in (`user`, `project`, `both`): Exit process: invalid scope {scope} — expected `user`, `project`, or omit for both
 3. For each target in scopes-to-list:
     1. If target is `user`: {target-file} = `~/.claude/CLAUDE.md`
     2. Else: {target-file} = `<project-root>/CLAUDE.md`
@@ -27,4 +27,4 @@
     8. {promoted}: each line matching `Read /<name>` → extract `<name>`
     9. Render: `{target}: {promoted-list}`
 
-4. Exit to user: rendered list
+4. Exit process: rendered list

@@ -40,4 +40,4 @@ Add one row per verb.
 2. {verb-args}: remainder of $ARGUMENTS after {verb}
 3. If {verb} is `<verb-1>`: Call: `_<verb-1>.md`
 4. ... (one branch per verb)
-5. Else: Exit to user: unrecognized verb {verb} — expected <verb-list>
+5. Else: Exit process: unrecognized verb {verb} — expected <verb-list>

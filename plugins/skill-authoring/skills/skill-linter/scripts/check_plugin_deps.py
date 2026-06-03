@@ -68,13 +68,14 @@ def find_cross_plugin_invocations(
 ) -> dict[str, str]:
     """Map skill-name → target-plugin for every cross-plugin invocation in this plugin's bodies.
 
-    Skips vendored upstream content under any `sources/` subdirectory — those are
-    third-party files (e.g., embedded Anthropic skills referenced by skill-composer)
-    and their contents don't represent this plugin's invocation surface.
+    Skips vendored upstream content under any `sources/` subdirectory and a skill's
+    `tests/` subdirectory — third-party files (e.g., embedded Anthropic skills
+    referenced by skill-composer) and test fixtures/docs don't represent this plugin's
+    invocation surface.
     """
     invocations: dict[str, str] = {}
     for md_file in (PLUGINS_DIR / plugin).rglob("*.md"):
-        if "sources" in md_file.parts:
+        if "sources" in md_file.parts or "tests" in md_file.parts:
             continue
         for match in INVOCATION_RE.finditer(md_file.read_text()):
             skill = match.group(1)

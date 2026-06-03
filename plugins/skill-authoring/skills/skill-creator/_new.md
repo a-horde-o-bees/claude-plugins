@@ -29,7 +29,7 @@
 
 4. {name}: 2–3 lowercase-hyphenated candidates from {goal} + {triggers}; refine with the user until one is settled
 5. {approval}: AskUserQuestion — confirm the full design: present {name}, frontmatter description draft, {surface}, {runtime-deps}, {destination}
-6. If {approval} is cancel: Exit to user: skill creation cancelled
+6. If {approval} is cancel: Exit process: skill creation cancelled
 7. Scaffold `{destination}/{name}/`:
     1. Write `SKILL.md` from `<skill-base>/assets/skill-template.md`, substituting values from the dialogue
     2. For each cognitive moment in {surface}, write `_<verb>.md` from `<skill-base>/assets/verb-workflow-template.md`
