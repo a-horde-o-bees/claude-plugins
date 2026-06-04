@@ -15,9 +15,11 @@ Verified: `pr.py gate` classified PR #20 live (protection, strategies, mergeabil
 
 ## Active workstreams (this push)
 
-Independent; can land in any order. Each is its own PR + `git` patch-bump.
+W2/W3/W4 landed this session (#21 harden+self-containment, #22 merge-gate, #23 Dependabot); **W1 (CI-doctor) is the remaining build.** git is at 0.0.12.
 
-### W1 — CI doctor / integration capability (the gap)
+### W1 — CI doctor / integration capability (the gap) — first slice landed
+
+**Built (this session):** `git-ci-doctor` skill + `scripts/ci_doctor.py` — `audit` (unpinned actions, missing `permissions:`, missing job timeout, missing concurrency; severity-classified JSON) and `reconcile` (branch-protection required contexts ↔ defined job names; flags required-without-job and jobs-not-required). Tested with synthetic + unit checks; dogfooded clean against our hardened workflows; `harden` verb proposes scoped fixes (SHA resolution via `gh api`) + applies on approval + offers Dependabot. **Follow-ons (not yet built):** wrap `actionlint` as a deeper validator; the per-stack hardened scaffolder; `tests/` harness beside the skill; `startup_failure` detector.
 
 A `git-doctor`-shaped capability for **CI**, not submodules: diagnose → classify by fix-risk → propose scoped diffs → apply on approval. Research (2026-06) confirmed **no community Claude skill does CI setup/hardening** — genuine gap. Self-contained, `gh`-native, deterministic-script-backed (same shape as `ci.py`/`pr.py`), project-agnostic (no hardcoded project specifics).
 
@@ -36,7 +38,9 @@ A `git-doctor`-shaped capability for **CI**, not submodules: diagnose → classi
 
 Prior art URLs to mine during build: rhysd/actionlint, suzuki-shunsuke/pinact, ossf/scorecard, actions/starter-workflows, akin-ozer/cc-devops-skills (generator→validator loop).
 
-### W2 — Merge-gate → required-checks (correctness + extension API)
+### W2 — Merge-gate → required-checks ✅ LANDED (#22)
+
+Done: `pr.py` reads `required_status_checks.contexts`; required-check fail/pending → hard, non-required fail/pending + annotation counts → advisory (never gate); conflicts/behind hard; review/draft soft. Verified live on #22 (required pass, markdown-lint + 7 annotations → advisory, `merge_ready: true`). Original design notes below.
 
 `pr.py gate` currently **hard-blocks on any failing rollup check**, independent of branch protection — so this repo's perpetual report-only `markdown-lint` would block every PR even though GitHub reports `mergeStateStatus: UNSTABLE` (mergeable; only the non-required check fails) and required `test`/`validate` pass. Surfaced live on #20. **Standard team convention** (GitHub auto-merge, Mergify, Git Town, Graphite, merge trains) gates on *required* checks + reviews, never "any red."
 
@@ -46,7 +50,7 @@ Touches `plugins/git/skills/git-pr-status/scripts/pr.py` (`classify_gate`) + `gi
 
 Decision settled: gate on required checks (the team standard). Open sub-choice at build time: read `required_status_checks.contexts` explicitly vs. trust `mergeStateStatus` — prefer reading contexts (explicit, lets us name *which* required check is red).
 
-### W3 — Harden our own workflows (dogfood)
+### W3 — Harden our own workflows ✅ LANDED (#21, Dependabot #23)
 
 We don't follow the practices W1 would enforce. Audit of `.github/workflows/`:
 
@@ -59,7 +63,7 @@ We don't follow the practices W1 would enforce. Audit of `.github/workflows/`:
 
 Fix all four: SHA-pin every `uses:` (with `# vX.Y.Z` comment), add top-level `permissions: contents: read` (escalate per-job where a job writes — release pushes tags/commits), add `timeout-minutes`, add `concurrency` to PR-feedback workflows. These workflows become W1's first test subject. Not plugin code → no plugin bump, but lands via PR (required `test`/`validate`).
 
-### W4 — Self-containment fixes (shippable skills carry no project specifics)
+### W4 — Self-containment fixes ✅ LANDED (#21)
 
 A shippable skill must not name the containing project's concepts. Leaks found:
 
