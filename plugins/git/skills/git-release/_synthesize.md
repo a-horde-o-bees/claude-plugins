@@ -8,7 +8,7 @@
 
 - {commit-range} — git log range to read (e.g., `v0.1.0..HEAD`, or `HEAD` for first release)
 - {current-version} — current manifest version string; the synthesizer applies the bump rule against this
-- {methodology} — content of the project's `.claude/ocd/git/release.md`; defines CHANGELOG format, what counts as user-facing, and bump-axis decision rules
+- {methodology} — content of the project's `.claude/git/release.md`; defines CHANGELOG format, what counts as user-facing, and bump-axis decision rules
 
 ## Rules
 
@@ -29,7 +29,7 @@
 
 2. {diffstat-raw}: bash: `git log {commit-range} --stat --format="%H %s"` — file-level scope per commit; used to weight which commits introduce user-facing surface area vs internal-only
 3. Group commits by topic:
-    1. The project's commit-message convention is `Topic — subject`; the prefix word groups commits naturally (e.g., "Transcripts —", "Principles —", "Docs —")
+    1. If the project uses a `Topic — subject` commit convention, the prefix word groups commits naturally (e.g., `Auth —`, `API —`, `Docs —`)
     2. Group by prefix; if no clear prefix, group by file scope from {diffstat-raw}
 
 4. Apply cross-commit deconfliction within each group:
