@@ -1,6 +1,6 @@
 ---
 name: git-checkpoint
-description: Bundle the development checkpoint for the current branch into one call. On a feature branch it runs the full lifecycle — commit → push → CI → open PR → merge (gated) → cleanup + sync base — taking a messy tree to a merged, up-to-date base. On the base branch it runs commit → push → CI. Submodule recursion is inherited from the leaves (`/git-commit`, `/git-push`, `/git-ci` each walk `.gitmodules`-declared submodules depth-first). Generic; no marketplace, plugin-lifecycle, or deployment concerns. Branch defaults to current.
+description: Bundle the development checkpoint for the current branch into one call. On a feature branch it runs the full lifecycle — commit → push → CI → open PR → merge (gated) → cleanup + sync base — taking a messy tree to a merged, up-to-date base. On the base branch it runs commit → push → CI. Submodule recursion is inherited from the leaves (`/git-commit`, `/git-push`, `/git-ci` each walk `.gitmodules`-declared submodules depth-first). Generic git automation; project-specific delivery (deployment, artifact publishing) stays in a project-level wrapper. Branch defaults to current.
 argument-hint: "[--branch <name>]"
 allowed-tools:
   - Skill
@@ -27,7 +27,7 @@ Bundle the checkpoint for the current branch. Branches on context: the full feat
 - **Context is the branch.** `{branch}` == the repo's default branch → base-mode (commit + push + CI). Otherwise → feature-mode (full lifecycle).
 - **No optimistic merge.** Merge runs through `/git-pr-merge`, whose hard gate (red or pending CI, conflicts, behind-base) exits rather than merging on unknown state. If CI is still in flight at the merge gate, checkpoint stops there and the merge completes on a re-invocation once green — honest about the async-CI boundary.
 - **Skip the commit/push portion silently when nothing is pending** — not an error. The PR/merge phase still proceeds on a feature branch (you may checkpoint solely to land an already-pushed branch).
-- Marketplace refresh, plugin-version sync, and restart recommendations are project-specific — a project-level wrapper composes around this skill; the plugin skill carries none of it.
+- Project-specific delivery — deployment, artifact publishing, environment sync, post-merge automation — is not this skill's concern; a project-level wrapper composes around it for those. The plugin skill carries none.
 
 ## Process
 
