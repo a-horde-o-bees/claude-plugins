@@ -2,11 +2,11 @@
 
 `x.y.z` semver in each plugin's `.claude-plugin/plugin.json`. Tags live on main; no release branches.
 
-## Pre-commit auto-bump
+## Version bump (at integration)
 
-The pre-commit hook auto-bumps `z` on every commit that stages changes to the plugin tree other than `plugin.json` itself (see `.githooks/pre-commit`). This keeps Claude Code's reload detection firing as dev-channel users track main.
+Each plugin's `z` is bumped to `z+1` of `main` when a change integrates — applied by `/git-checkpoint`'s pre-land augmentation (`scripts/bump-apply.py --fetch origin/main`, declared in `.claude/git/checkpoint.md`) so the bump rides in the PR, and verified by the required `bump-check` CI. Idempotent: a manual `y`/`x` bump, or a version already ahead of `main`, is respected.
 
-Commits that stage only `plugin.json` (and `CHANGELOG.md`) skip the auto-bump — that's the escape hatch release cuts use.
+A commit that stages only `plugin.json` (and `CHANGELOG.md`) changes no plugin code, so nothing is bumped — the escape hatch release cuts use. (The former per-commit `.githooks/pre-commit` bump is retired; the bump now happens once, at integration.)
 
 ## Release cut
 
