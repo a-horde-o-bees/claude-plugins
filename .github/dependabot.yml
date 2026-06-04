@@ -1,0 +1,9 @@
+# Keep the SHA-pinned GitHub Actions current via reviewed PRs: Dependabot
+# advances each `uses:` pin (and its `# vX.Y.Z` comment) when a new release
+# ships, so the pins stay immutable in the steady state but never go stale.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
