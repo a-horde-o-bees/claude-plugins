@@ -15,7 +15,7 @@ Verified: `pr.py gate` classified PR #20 live (protection, strategies, mergeabil
 
 ## Active workstreams (this push)
 
-W2/W3/W4 landed this session (#21 harden+self-containment, #22 merge-gate, #23 Dependabot); **W1 (CI-doctor) is the remaining build.** git is at 0.0.12.
+W2/W3/W4 + the CI-doctor first slice landed (#21–28). **Bump/checkpoint architecture reworked:** the version bump moved to `/git-checkpoint`'s **pre-land augmentation**, declared in a new `.claude/git/checkpoint.md` extension layer (the generic skill loads + honors project augmentations, bootstraps the config on first run, and selects `Path: pr|direct`); the per-commit `.githooks/` bump+sync hooks were retired; the bespoke project `/checkpoint` wrapper was dropped, its delivery sync ported to `scripts/checkpoint-sync.py` (the `on-main` augmentation). Bump = apply-at-integration (`bump-apply.py --fetch`) + verify (`bump-check`, required). git is at 0.0.14.
 
 ### W1 — CI doctor / integration capability (the gap) — first slice landed
 
