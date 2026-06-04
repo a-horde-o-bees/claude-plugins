@@ -1,7 +1,7 @@
 ---
 name: git-commit
 description: Use when uncommitted working-tree changes should land in git history — explicit signals "commit", "commit my changes", "stage and commit", "save these edits", or any context where committing is the natural next step. Recurses depth-first into `.gitmodules`-declared submodules so submodule commits land before the parent records its pin advance. Multi-topic working trees produce multiple atomic commits grouped by topic; single-topic produces one. Each commit message is authored against the diff, not the change journey.
-argument-hint: "[--cwd <path>]"
+argument-hint: "[--cwd <path>] [<pathspec>...]"
 allowed-tools:
   - Bash(git *)
   - Skill
@@ -21,6 +21,7 @@ Commit working-tree changes as one or more topic-grouped commits. Recurses depth
 ## Variables
 
 - `{cwd}` — `--cwd <path>` argument; defaults to `.` (top-level invocation). All git operations use `git -C {cwd}`. Recursive calls pass `{cwd}/{sub}` so depth flows through one variable.
+- `{paths}` — optional trailing pathspec(s) (the non-flag arguments). When given, only matching working-tree paths are inspected and committed; everything else is left untouched (scoped commit). Top-level only — not passed into submodule recursion.
 
 ## Rules
 
@@ -29,6 +30,7 @@ Commit working-tree changes as one or more topic-grouped commits. Recurses depth
 - No minimum commit size — a single-file change is a valid commit if it's a distinct topic
 - Commit order: dependencies first, consumers after; submodule commits land before the parent commit that records their pin advance
 - Stage specific files by name; never `git add -A` or `git add .`
+- When {paths} is given, inspect and commit only matching paths — the rest of the working tree is left parked untouched (a scoped commit, for landing one coherent slice of a mixed tree)
 - Submodule pin advance is explicit — never bumped as a silent side effect of recursion; bumps require approval and are surfaced in the parent commit's diff
 - Surface suspicious untracked files (large generated dirs, credentials, build artifacts) before staging
 - Never amend previous commits unless the user explicitly requests it
@@ -45,10 +47,10 @@ Commit working-tree changes as one or more topic-grouped commits. Recurses depth
     1. {submodules}: bash: `git config -f {cwd}/.gitmodules --get-regexp '^submodule\..+\.path$' 2>/dev/null | awk '{print $2}'` — direct submodules at this level; empty if no `.gitmodules`
     2. For each {sub} in {submodules}: skill: `/git-commit --cwd {cwd}/{sub}` — recursive call walks any sub-submodules first by the same step 2 before its own local commit
 
-3. Inspect the working tree:
-    1. bash: `git -C {cwd} status`
-    2. If no changes: Exit process: clean working tree
-    3. bash: `git -C {cwd} diff --stat`
+3. Inspect the working tree (scoped to {paths} when given — `-- {paths}` with no scope lists everything):
+    1. bash: `git -C {cwd} status -- {paths}`
+    2. If no changes in scope: Exit process: clean working tree (within scope {paths})
+    3. bash: `git -C {cwd} diff --stat -- {paths}`
 
 4. Resolve submodule pin advances:
     1. For each {sub} in {submodules}: bash: `git -C {cwd} diff --quiet -- {sub}`; non-zero exit means the pin at HEAD differs from the submodule's working-tree HEAD (the submodule advanced)

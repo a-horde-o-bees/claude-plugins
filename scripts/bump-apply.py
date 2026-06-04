@@ -72,11 +72,12 @@ def _changed_plugins(files: list[str]) -> set[str]:
     return names
 
 
-def apply_bumps(base: str, staged: bool) -> list[str]:
-    if staged:
-        files = _run(["git", "diff", "--cached", "--name-only"]).stdout.splitlines()
-    else:
-        files = _run(["git", "diff", "--name-only", base]).stdout.splitlines()
+def apply_bumps(base: str, staged: bool, paths: list[str] | None = None) -> list[str]:
+    cmd = ["git", "diff", "--cached", "--name-only"] if staged \
+        else ["git", "diff", "--name-only", base]
+    if paths:
+        cmd += ["--", *paths]
+    files = _run(cmd).stdout.splitlines()
 
     bumped: list[str] = []
     for name in sorted(_changed_plugins([f for f in files if f])):
@@ -102,6 +103,8 @@ def main(argv: list[str]) -> int:
     ap.add_argument("base", nargs="?", default="origin/main", help="base ref (default origin/main)")
     ap.add_argument("--staged", action="store_true", help="bump the staged set and git-add (pre-commit)")
     ap.add_argument("--fetch", action="store_true", help="fetch the base branch first (merge-time freshness)")
+    ap.add_argument("--paths", nargs="*", metavar="PATHSPEC",
+                    help="scope the bump to plugins under these paths (scoped checkpoint)")
     a = ap.parse_args(argv)
 
     if a.fetch:
@@ -109,7 +112,7 @@ def main(argv: list[str]) -> int:
         remote = a.base.split("/", 1)[0] if "/" in a.base else "origin"
         _run(["git", "fetch", "-q", remote, branch])
 
-    for line in apply_bumps(a.base, a.staged):
+    for line in apply_bumps(a.base, a.staged, a.paths):
         print(f"bump-apply: {line}")
     return 0
 
