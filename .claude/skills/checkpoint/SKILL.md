@@ -40,11 +40,12 @@ The commit + push + CI steps are delegated to `/git-commit`, `/git-push`, and `/
 
     > Branch awareness — checkpoint runs the same commit/push/ci cycle on any branch. The skills sync is main-only because both sync modes pull from the repo's main branch.
 
-2. Commit — skill: `/git-commit`
-3. {pending-paths} = bash: `git diff --name-only origin/{branch}..HEAD 2>/dev/null` — empty when local is at origin/{branch} or origin/{branch} doesn't exist yet
-4. Push — skill: `/git-push --branch {branch}`
-5. CI gate — skill: `/git-ci --branch {branch}`
-6. If {branch} is `main`:
+2. Apply the project version bump — bash: `python3 scripts/bump-apply.py --fetch origin/main` — for each plugin with code changes versus a freshly-fetched `main`, set its version to `z+1` (idempotent; a manual higher bump is respected). The bump rides in this commit, so change + version land together — no server-side push-back. Running it here, against a just-fetched `main`, is the merge-time recompute: it keeps the landing version `z+1` of the latest base even if `main` advanced while the branch was open. `bump-check.yml` (required) is the belt.
+3. Commit — skill: `/git-commit`
+4. {pending-paths} = bash: `git diff --name-only origin/{branch}..HEAD 2>/dev/null` — empty when local is at origin/{branch} or origin/{branch} doesn't exist yet
+5. Push — skill: `/git-push --branch {branch}`
+6. CI gate — skill: `/git-ci --branch {branch}`
+7. If {branch} is `main`:
     1. {sync-mode}: bash: `cd <THIS-FILE-DIR> && uv run python -c "import json; print(json.load(open('settings.json'))['sync_mode'])"`
     2. If {sync-mode} is `marketplace`: {sync-result}: Call: `_sync_marketplace.md` ({pending-paths}: {pending-paths})
     3. Else if {sync-mode} is `installed`: {sync-result}: Call: `_sync_installed.md`

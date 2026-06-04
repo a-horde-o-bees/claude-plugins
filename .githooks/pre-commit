@@ -1,40 +1,20 @@
 #!/usr/bin/env bash
 #
-# Pre-commit: bump plugin patch versions on main.
+# Pre-commit: apply the in-PR plugin patch-version bump.
 #
-# For each plugins/<name>/.claude-plugin/plugin.json whose plugin has staged
-# changes (excluding plugin.json itself), increment z in version. Feature
-# branches skip the bump — only commits landing on main fire dev-channel
-# reload detection, and bumping on sandbox branches creates rebase conflicts
-# at update time when origin/main has advanced past the branch's z value.
+# For each plugin with staged code changes (any plugins/<name>/ file other than
+# its own plugin.json), set the version to z+1 of origin/main — unless it's
+# already ahead (idempotent; a manual minor/major bump is respected). The bump
+# is staged into the commit, so the change and its version land together (no
+# server-side push-back to a protected main — the failure that retired
+# auto-bump.yml). Runs on every branch; the prior hook's deliberate "feature
+# branches skip" is now safe because the /checkpoint flow recomputes against a
+# freshly-fetched main at landing time, and bump-check.yml is the CI belt.
+#
+# Logic lives in scripts/bump-apply.py (stdlib only). The post-commit hook syncs
+# the main index under partial-commit semantics. If origin/main is unavailable
+# the script no-ops gracefully (the CI belt still catches a missing bump).
 
 set -euo pipefail
 
-staged=$(git diff --cached --name-only)
-
-current_branch=$(git rev-parse --abbrev-ref HEAD)
-if [ "$current_branch" = "main" ]; then
-    for plugin_json in plugins/*/.claude-plugin/plugin.json; do
-        plugin_dir=$(dirname "$(dirname "$plugin_json")")
-        plugin_name=$(basename "$plugin_dir")
-
-        # Skip if only plugin.json changed (avoid double-bump on amend)
-        if echo "$staged" | grep -v "\.claude-plugin/plugin\.json" | grep -q "^plugins/${plugin_name}/"; then
-            current=$(python3 -c "import json; print(json.load(open('${plugin_json}'))['version'])")
-            new=$(python3 -c "v='${current}'.split('.'); v[-1]=str(int(v[-1])+1); print('.'.join(v))")
-            python3 -c "
-import json, pathlib
-p = pathlib.Path('${plugin_json}')
-d = json.loads(p.read_text())
-d['version'] = '${new}'
-p.write_text(json.dumps(d, indent=2) + '\n')
-"
-            # Stage to whichever index is current (the temp index during
-            # partial-commit, the main index otherwise). The main-index
-            # sync under partial-commit happens in the post-commit hook —
-            # pre-commit can't write the main index while git holds its
-            # commit-level lock.
-            git add "$plugin_json"
-        fi
-    done
-fi
+python3 scripts/bump-apply.py --staged origin/main
