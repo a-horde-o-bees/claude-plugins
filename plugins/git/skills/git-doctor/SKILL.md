@@ -11,6 +11,10 @@ allowed-tools:
 
 Diagnose and repair git submodule conformance so canonical git (`submodule status --recursive`, `foreach`, `--show-superproject-working-tree`) works. Detects drift, classifies by risk tier, proposes scoped fixes, applies only on approval.
 
+## Dependencies
+
+- `/process-flow-notation` — this body uses PFN; a cold session needs the spec in context.
+
 ## Rules
 
 - **Conform, don't circumvent** — repairs restore proper submodule structure (gitlinks) so standard git commands operate; never substitute a filesystem-scan workaround for git's own machinery.
@@ -25,8 +29,8 @@ Diagnose and repair git submodule conformance so canonical git (`submodule statu
 ## Process
 
 1. {gate}: bash: `sh ${CLAUDE_SKILL_DIR}/scripts/git-roots.sh roots` (capture stderr + exit code)
-2. If {gate} exit 0: Exit to user — repo conforming, emit ### healthy with the printed roots
-3. If {gate} exit 2: Exit to user — not a git repository
+2. If {gate} exit 0: Exit process — repo conforming, emit ### healthy with the printed roots
+3. If {gate} exit 2: Exit process — not a git repository
 4. Bind from the {gate} stderr table — it already enumerates every detected submodule (declared OR found on disk) with its state and scope counts:
     - {superproject}: the `superproject:` line
     - For each non-conforming row: {path}, {detect-state} (`broken-link` | `undeclared` | `uninitialized` | `anomaly`), {staged}, {history}

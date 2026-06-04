@@ -14,6 +14,8 @@ Commit working-tree changes as one or more topic-grouped commits. Recurses depth
 
 ## Dependencies
 
+- `/process-flow-notation` — this body uses PFN; a cold session needs the spec in context.
+- `/concise-prose`, `/description-authoring`, `/honesty` — the commit messages are authored under these (applied at step 8; the inline mention there is the surgical reminder).
 - `/git-doctor` — submodule conformance pre-check; refusing to commit through Tier 1 drift is what prevents escalation into Tier 2 history pollution.
 
 ## Variables
@@ -37,7 +39,7 @@ Commit working-tree changes as one or more topic-grouped commits. Recurses depth
 1. Top-level pre-check (skip when invoked recursively):
     1. If `--cwd` was provided: skip to step 2
     2. {doctor-result}: skill: `/git-doctor`
-    3. If {doctor-result} is not `healthy` or `repaired-and-verified`: Exit to user — repo not commit-safe per git-doctor; resolve before retrying
+    3. If {doctor-result} is not `healthy` or `repaired-and-verified`: Exit process — repo not commit-safe per git-doctor; resolve before retrying
 
 2. Recurse into submodules first (depth-first):
     1. {submodules}: bash: `git config -f {cwd}/.gitmodules --get-regexp '^submodule\..+\.path$' 2>/dev/null | awk '{print $2}'` — direct submodules at this level; empty if no `.gitmodules`
@@ -45,7 +47,7 @@ Commit working-tree changes as one or more topic-grouped commits. Recurses depth
 
 3. Inspect the working tree:
     1. bash: `git -C {cwd} status`
-    2. If no changes: Exit to user: clean working tree
+    2. If no changes: Exit process: clean working tree
     3. bash: `git -C {cwd} diff --stat`
 
 4. Resolve submodule pin advances:
