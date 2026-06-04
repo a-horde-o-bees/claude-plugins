@@ -1,7 +1,7 @@
 ---
 name: git-checkpoint
 description: Bundle the development checkpoint for the current branch into one call. Reads `.claude/git/checkpoint.md` for the project's integration path (`pr` — feature branch → PR → merge; or `direct` — commit straight to the base) and any augmentation steps (e.g. a version bump before commit, a delivery sync after landing on the base), bootstrapping that config on first run. On `pr` a feature branch runs the full lifecycle — commit → push → CI → open PR → merge (gated) → cleanup + sync base; the base branch runs commit → push → CI. Submodule recursion is inherited from the leaves. Generic git automation; every project specific lives in the config + the scripts it names.
-argument-hint: "[--branch <name>] [--path pr|direct]"
+argument-hint: "[--branch <name>] [--path pr|direct] [--paths <pathspec>...]"
 allowed-tools:
   - Skill
   - Read
@@ -26,6 +26,7 @@ Bundle the checkpoint for the current branch. Branches on the project's configur
 
 - `{branch}` — `--branch <name>`; defaults to current. Explicit `--branch` must match current (the push leaf enforces this).
 - `{path}` — `--path`; else the config's `Path:`; else `pr`.
+- `{paths}` — optional `--paths <pathspec>...`; scopes the whole checkpoint to those paths — only they are committed and landed, the rest of the working tree stays parked. Empty = the whole tree. Passed to `/git-commit` and exposed to the pre-land augmentation for scoping its bump.
 
 ## Rules
 
@@ -49,10 +50,10 @@ Bundle the checkpoint for the current branch. Branches on the project's configur
     3. {path}: `--path` if given, else `Path:` read from {config}, else `pr`
     4. If {config} exists: Read it — bind its `## Augmentations` steps ({pre-land}, {on-main}), each empty if not declared
 
-3. Pre-land — if {pre-land}: bash: run it (e.g. the version bump), before committing so CI validates the result
+3. Pre-land — if {pre-land}: bash: run it (e.g. the version bump), before committing so CI validates the result. When {paths} is set, scope the augmentation to it (the augmentation references `{paths}` — e.g. the bump runs `--paths {paths}`) so only in-scope plugins bump.
 
 4. Commit + push + CI (every context):
-    1. {commit-report}: skill: `/git-commit`
+    1. {commit-report}: skill: `/git-commit {paths}`
     2. {push-report}: skill: `/git-push --branch {branch}`
     3. {ci-report}: skill: `/git-ci --branch {branch}`
 
