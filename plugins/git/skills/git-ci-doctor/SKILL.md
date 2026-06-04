@@ -35,7 +35,7 @@ Audit and harden a repository's GitHub Actions CI configuration. Diagnoses deter
 
 ## Process
 
-1. {verb}: first token of $ARGUMENTS (default `audit`); {branch}: `--branch` value, else bash: `git symbolic-ref --short refs/remotes/origin/HEAD | sed 's@^origin/@@'`
+1. {verb}: first token of $ARGUMENTS (default `audit`); {branch}: `--branch` value, else bash: `git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's@^origin/@@' | grep . || gh api repos/{owner}/{repo} --jq .default_branch 2>/dev/null || echo main` — robust default-branch resolution (origin/HEAD is often unset)
 2. If {verb} is `reconcile`: Call: Reconcile; Exit process
 3. {audit}: bash: `uv run --directory . ${CLAUDE_SKILL_DIR}/scripts/ci_doctor.py audit .github/workflows`
 4. Bind from {audit} JSON: {clean}, {severity-counts}, {results} (per-file findings, each with check / severity / detail / fix)
