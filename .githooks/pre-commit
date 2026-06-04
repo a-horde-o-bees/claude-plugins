@@ -1,20 +1,21 @@
 #!/usr/bin/env bash
 #
-# Pre-commit: apply the in-PR plugin patch-version bump.
+# Pre-commit: apply the plugin patch-version bump on direct-to-main commits.
 #
-# For each plugin with staged code changes (any plugins/<name>/ file other than
-# its own plugin.json), set the version to z+1 of origin/main — unless it's
-# already ahead (idempotent; a manual minor/major bump is respected). The bump
-# is staged into the commit, so the change and its version land together (no
-# server-side push-back to a protected main — the failure that retired
-# auto-bump.yml). Runs on every branch; the prior hook's deliberate "feature
-# branches skip" is now safe because the /checkpoint flow recomputes against a
-# freshly-fetched main at landing time, and bump-check.yml is the CI belt.
+# The version bump belongs at integration into main, never on a feature branch
+# (two branches bumping the same plugin would both claim the same "next"
+# version — fractured bookkeeping that collides at merge). The PR path applies
+# the bump at merge time against the then-current main (see the merge driver).
+# This hook covers the OTHER integration path: a commit made directly on main
+# (admin bypass), where bump-check.yml (pull_request-only) can't reach. On any
+# other branch it is a no-op.
 #
 # Logic lives in scripts/bump-apply.py (stdlib only). The post-commit hook syncs
-# the main index under partial-commit semantics. If origin/main is unavailable
-# the script no-ops gracefully (the CI belt still catches a missing bump).
+# the main index under partial-commit semantics.
 
 set -euo pipefail
+
+branch=$(git rev-parse --abbrev-ref HEAD)
+[ "$branch" = "main" ] || exit 0
 
 python3 scripts/bump-apply.py --staged origin/main

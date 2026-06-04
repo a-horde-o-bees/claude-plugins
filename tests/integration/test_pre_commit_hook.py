@@ -110,8 +110,11 @@ class TestPreCommitVersionBump:
         assert self._run_hook().returncode == 0
         assert self._version() == "0.0.2"
 
-    def test_bumps_on_feature_branch(self):
-        """The bump now fires on any branch (the prior hook skipped non-main)."""
+    def test_skips_bump_on_feature_branch(self):
+        """The hook bumps only on direct-to-main commits. On a feature branch it
+        is a no-op — the version bump for the PR path is applied at merge time
+        against the then-current main, not eagerly on the branch (which would
+        fracture: two branches both claiming the same next version)."""
         subprocess.run(
             ["git", "checkout", "-q", "-b", "feature"],
             cwd=self.root, capture_output=True, check=True,
@@ -119,7 +122,7 @@ class TestPreCommitVersionBump:
         self._stage_code_change()
         result = self._run_hook()
         assert result.returncode == 0, result.stderr
-        assert self._version() == "0.0.2"
+        assert self._version() == self.STARTING_VERSION  # unchanged on a feature branch
 
     def test_bump_under_partial_commit_leaves_clean_status(self, project_root: Path):
         """Partial-commit form (`git commit -m msg <file>`) must leave the main
