@@ -1,6 +1,6 @@
 {
   "name": "git",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "description": "Version-control discipline across the full lifecycle. Per-verb skills — commit, push, CI watch, PR open/status/merge/cleanup, release, submodule doctor — composed by a checkpoint orchestrator that takes a feature branch from a messy tree to a merged, up-to-date base. Submodule-aware (depth-first recursion); adapts solo vs team by reading branch protection.",
   "author": {
     "name": "a-horde-o-bees"

@@ -24,7 +24,7 @@ Report merge-readiness for the open PR on a branch. The gate classification is d
 
 - The gate is read-only — it inspects and reports, never merges, pushes, or mutates the PR.
 - `{merge-ready}` and the blocker set come from `scripts/pr.py` and are emitted verbatim. The script is the single source of truth for review state, CI, annotations, mergeability, and the solo/team path.
-- Blocker severity is the script's call: **hard** blockers (merge conflicts, red or pending CI, behind base) gate every path; **soft** blockers (review not approved, protection-BLOCKED, CI annotations) gate the team path and are confirmable-bypass on the solo path. This skill reports both; it does not decide bypass — that is `/git-pr-merge`'s call.
+- Severity is the script's call. **hard** (merge conflicts, behind base, a *required* check failing or pending) gate every path; **soft** (review unmet, protection-BLOCKED, draft) gate the team path and are confirmable-bypass on the solo path. **Advisories** (non-required checks failing/pending, and CI annotation counts) never gate — GitHub reports such a PR mergeable and never blocks on annotations; surfaced for visibility only. The script reads branch protection's `required_status_checks.contexts` to tell required from advisory, so a repo's report-only check or benign CI warnings never block the gate. This skill reports all three; bypass is `/git-pr-merge`'s call.
 - No PR for the branch is a reported state, not an error.
 
 ## Process
@@ -34,7 +34,7 @@ Report merge-readiness for the open PR on a branch. The gate classification is d
 3. Bind from {gate} JSON:
     - {pr-exists} — always present
     - When {pr-exists} is `false`: nothing further; emit the `no-pr` template
-    - When `true`: {pr-number}, {base}, {url}, {is-draft}, {head-sha-short}, {protection}, {recommended-path}, {merge-ready}, {checks}, {annotation-count}, {review-decision}, {merge-state-status}, {mergeable}, {blockers}, {allowed-strategies}, {has-admin}
+    - When `true`: {pr-number}, {base}, {url}, {is-draft}, {head-sha-short}, {protection}, {required-contexts}, {recommended-path}, {merge-ready}, {checks}, {annotation-count}, {review-decision}, {merge-state-status}, {mergeable}, {blockers}, {advisories}, {allowed-strategies}, {has-admin}
 4. Emit the template matching {pr-exists} / {merge-ready} — see ### Report
 
 ## Report
@@ -54,7 +54,8 @@ PR #{pr-number} → {base}   ({url})
 Head: {head-sha-short}
 Path: {recommended-path}   (protection: {protection})
 Review: {review-decision}   Merge state: {merge-state-status}   Mergeable: {mergeable}
-CI: {checks}   Annotations: {annotation-count}
+Required CI: {checks}   (required: {required-contexts})   Annotations: {annotation-count}
+Advisories: {advisories or none — non-required checks; informational}
 Merge-ready: yes
 Next: `/git-pr-merge` — strategy from {allowed-strategies} / project pr.md.
 ```
@@ -66,10 +67,11 @@ PR #{pr-number} → {base}   ({url})
 Head: {head-sha-short}
 Path: {recommended-path}   (protection: {protection})
 Review: {review-decision}   Merge state: {merge-state-status}   Mergeable: {mergeable}
-CI: {checks}   Annotations: {annotation-count}
+Required CI: {checks}   (required: {required-contexts})   Annotations: {annotation-count}
 Merge-ready: no
 Admin: {has-admin}
 Blockers:
 {per blocker in {blockers}: <severity> — <detail>}
+Advisories: {advisories or none — non-required checks; informational, never block}
 Next: clear hard blockers before merge; soft blockers are confirmable-bypass on the solo path via `/git-pr-merge` (or an admin override on a protected base).
 ```
