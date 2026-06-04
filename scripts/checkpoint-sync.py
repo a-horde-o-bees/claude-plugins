@@ -5,9 +5,9 @@ Runs after new content lands on main (a feature merge or a base-mode push) to
 refresh how this repo's plugins reach a running session. Two modes:
 
   marketplace  Refresh the marketplace cache and run `claude plugins update`
-               for each plugin whose code changed in the just-landed commit.
-               Recommends a session restart (the plugin install is cached and
-               only re-reads at session start).
+               for each plugin whose VERSION changed in the just-landed commit
+               (the bump is the deploy signal). Recommends a session restart
+               (the plugin install is cached and only re-reads at session start).
   installed    Reinstall any user-scope skill in .claude/installed-skills.json
                whose source plugin version changed, via `npx skills add`. No
                restart needed (npx symlinks into ~/.claude/skills and the
@@ -41,18 +41,39 @@ def _last_landed_files() -> list[str]:
     return [f for f in r.stdout.splitlines() if f] if r.returncode == 0 else []
 
 
-def _changed_plugins(files: list[str]) -> list[str]:
-    names: list[str] = []
-    for f in files:
-        parts = f.split("/")
-        if len(parts) >= 2 and parts[0] == "plugins" and parts[1] not in names:
-            names.append(parts[1])
-    return names
+def _version_at(ref: str, path: str) -> str | None:
+    r = subprocess.run(["git", "show", f"{ref}:{path}"], capture_output=True, text=True)
+    if r.returncode != 0:
+        return None
+    try:
+        return json.loads(r.stdout)["version"]
+    except (json.JSONDecodeError, KeyError):
+        return None
+
+
+def _redeliver_plugins(files: list[str]) -> list[str]:
+    """Plugins to redeliver = those whose version changed in the last commit.
+
+    The version bump is the deploy signal, so delivery keys off the version, not
+    file paths: a code change without a bump shouldn't have merged (bump-check),
+    and a manifest-only edit that didn't change the version (e.g. a description
+    tweak) needs no redelivery. A newly-added plugin (no prior manifest) delivers.
+    """
+    candidates = {
+        p.split("/")[1] for p in files
+        if p.startswith("plugins/") and len(p.split("/")) >= 2
+    }
+    out: list[str] = []
+    for name in sorted(candidates):
+        m = f"plugins/{name}/.claude-plugin/plugin.json"
+        if _version_at("HEAD", m) not in (None, _version_at("HEAD~1", m)):
+            out.append(name)
+    return out
 
 
 def _marketplace(root: Path) -> int:
     files = _last_landed_files()
-    changed = _changed_plugins(files)
+    changed = _redeliver_plugins(files)
     marketplace_changed = ".claude-plugin/marketplace.json" in files
     if not changed and not marketplace_changed:
         print("sync (marketplace): skipped — no plugin code or marketplace manifest in the last commit")
