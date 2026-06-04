@@ -14,6 +14,10 @@ allowed-tools:
 
 Report GitHub Actions run state for the latest commit on a branch. Recurses depth-first into declared submodules; submodules without `.github/workflows/` are soft-skipped as `no-ci`. Async background watcher when runs are in flight; foreground returns immediately.
 
+## Dependencies
+
+- `/process-flow-notation` — this body uses PFN; a cold session needs the spec in context.
+
 ## Variables
 
 - `{cwd}` — `--cwd <path>` argument; defaults to `.` (top-level invocation). All git operations use `git -C {cwd}`. Recursive calls pass `{cwd}/{sub}` so depth flows through one variable.
@@ -39,7 +43,7 @@ Report GitHub Actions run state for the latest commit on a branch. Recurses dept
 
 4. If {has-workflows} is `no`: bind {sha}, {sha-short} from bash: `git -C {cwd} rev-parse HEAD` and `git -C {cwd} rev-parse --short HEAD`; set {ci-status} = `no-ci`; skip to step 7
 
-5. {classification}: bash: `uv run --directory {cwd} <THIS-FILE-DIR>/scripts/ci.py classify --branch {branch}` — `uv run --directory` sets the project root for the script so `gh` auto-detects the right repo
+5. {classification}: bash: `uv run --directory {cwd} ${CLAUDE_SKILL_DIR}/scripts/ci.py classify --branch {branch}` — `${CLAUDE_SKILL_DIR}` resolves to this skill's directory; `uv run --directory {cwd}` sets the project root so `gh` auto-detects the right repo
 
 6. Bind from {classification} JSON:
     - {sha}, {sha-short}, {ci-status} — always present

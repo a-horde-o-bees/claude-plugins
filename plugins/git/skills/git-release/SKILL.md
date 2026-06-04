@@ -16,6 +16,11 @@ Cut a tagged release. Read methodology, synthesize CHANGELOG + version from comm
 
 > Synthesis is non-deterministic and a tagged release is hard to amend; the human review gate is mandatory. Everything after approval is automated.
 
+## Dependencies
+
+- `/process-flow-notation` — this body uses PFN; a cold session needs the spec in context.
+- `/concise-prose`, `/description-authoring`, `/honesty` — the CHANGELOG entry and review presentation are authored under these.
+
 ## Variables
 
 - `{version}` — optional positional override; replaces the synthesizer's recommendation when provided
@@ -36,20 +41,20 @@ Cut a tagged release. Read methodology, synthesize CHANGELOG + version from comm
 
 1. Preconditions:
     1. {current-branch}: bash: `git rev-parse --abbrev-ref HEAD`
-    2. If {current-branch} ≠ `main`: Exit to user: releases cut from main; currently on {current-branch} — switch to main or rebase the change onto main first
-    3. bash: `git diff --quiet`; if non-zero: Exit to user: working tree has unstaged changes — clean or commit before releasing
-    4. bash: `git diff --cached --quiet`; if non-zero: Exit to user: working tree has staged changes — commit or reset before releasing
+    2. If {current-branch} ≠ `main`: Exit process: releases cut from main; currently on {current-branch} — switch to main or rebase the change onto main first
+    3. bash: `git diff --quiet`; if non-zero: Exit process: working tree has unstaged changes — clean or commit before releasing
+    4. bash: `git diff --cached --quiet`; if non-zero: Exit process: working tree has staged changes — commit or reset before releasing
     5. bash: `git fetch origin main --quiet`
     6. {head-sha}: bash: `git rev-parse HEAD`
     7. {origin-sha}: bash: `git rev-parse origin/main`
-    8. If {head-sha} ≠ {origin-sha}: Exit to user: local main not aligned with origin/main — pull or push first
+    8. If {head-sha} ≠ {origin-sha}: Exit process: local main not aligned with origin/main — pull or push first
 
 2. Intent gate:
     1. {last-tag}: bash: `git tag --sort=-version:refname | grep -E '^v?[0-9]+\.[0-9]+\.[0-9]+$' | head -1` — most recent SemVer-shaped tag, empty if none
     2. {commits-since}: bash: `git rev-list --count {last-tag}..HEAD` if {last-tag} is non-empty, else bash: `git rev-list --count HEAD`
     3. Present: about to cut a tagged release; will read methodology, spawn synthesizer over {commits-since} commits since {last-tag} (or full history if no prior SemVer tag), then review gate before any write/commit/tag/push. Cancel here to avoid the synthesis cost. Apply /concise-prose.
     4. {approval}: AskUserQuestion — approve / cancel. Apply /confirm-shared-intent.
-    5. If {approval} is cancel: Exit to user: release cancelled
+    5. If {approval} is cancel: Exit process: release cancelled
 
 3. Resolve methodology:
     1. {release-md-path}: `.claude/git/release.md`
@@ -65,9 +70,9 @@ Cut a tagged release. Read methodology, synthesize CHANGELOG + version from comm
 7. {final-version}: {version} if provided (label override in review), else {recommended-version}
 8. {tag}: `v{final-version}`
 9. Validate:
-    1. If {final-version} ≤ {current-version}: Exit to user: version {final-version} is not greater than current ({current-version}) — pass a higher version or omit to use the recommendation
+    1. If {final-version} ≤ {current-version}: Exit process: version {final-version} is not greater than current ({current-version}) — pass a higher version or omit to use the recommendation
     2. {tag-exists}: bash: `git rev-parse --verify --quiet refs/tags/{tag}` exits 0
-    3. If {tag-exists}: Exit to user: tag {tag} already exists — pass a different version or delete the existing tag if it was created in error
+    3. If {tag-exists}: Exit process: tag {tag} already exists — pass a different version or delete the existing tag if it was created in error
 
 10. Review gate:
     1. Display the following. Apply /concise-prose:

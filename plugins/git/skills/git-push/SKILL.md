@@ -13,6 +13,7 @@ Push local commits to a named remote branch. Recurses depth-first into `.gitmodu
 
 ## Dependencies
 
+- `/process-flow-notation` — this body uses PFN; a cold session needs the spec in context.
 - `/git-doctor` — submodule conformance pre-check before any push
 
 ## Variables
@@ -36,7 +37,7 @@ Push local commits to a named remote branch. Recurses depth-first into `.gitmodu
 1. Top-level pre-check (skip when invoked recursively):
     1. If `--cwd` was provided: skip to step 2
     2. {doctor-result}: skill: `/git-doctor`
-    3. If {doctor-result} is not `healthy` or `repaired-and-verified`: Exit to user — repo not push-safe per git-doctor
+    3. If {doctor-result} is not `healthy` or `repaired-and-verified`: Exit process — repo not push-safe per git-doctor
 
 2. Recurse into submodules first (depth-first):
     1. {sub-entries}: bash: `git config -f {cwd}/.gitmodules --get-regexp '^submodule\..+\.path$' 2>/dev/null` — emits `submodule.<name>.path <path>` per line; empty if no `.gitmodules`
@@ -44,23 +45,23 @@ Push local commits to a named remote branch. Recurses depth-first into `.gitmodu
         1. {sub-name}: from {entry} — the `<name>` between `submodule.` and `.path`
         2. {sub}: from {entry} — the `<path>` value
         3. {declared}: bash: `git config -f {cwd}/.gitmodules submodule.{sub-name}.branch`
-        4. If {declared} is empty: Exit to user — submodule {sub} has no `branch =` declaration in .gitmodules; recursive push needs that contract. Add it (`git config -f .gitmodules submodule.{sub-name}.branch <branch>`) or push the submodule manually.
+        4. If {declared} is empty: Exit process — submodule {sub} has no `branch =` declaration in .gitmodules; recursive push needs that contract. Add it (`git config -f .gitmodules submodule.{sub-name}.branch <branch>`) or push the submodule manually.
         5. {current}: bash: `git -C {cwd}/{sub} rev-parse --abbrev-ref HEAD`
         6. If {current} is `HEAD` (detached): bash: `git -C {cwd}/{sub} checkout {declared}` — normalize off detached
-        7. Else if {current} ≠ {declared}: Exit to user — submodule {sub} on unexpected branch ({current}, expected {declared}); manual handling
+        7. Else if {current} ≠ {declared}: Exit process — submodule {sub} on unexpected branch ({current}, expected {declared}); manual handling
         8. skill: `/git-push --cwd {cwd}/{sub} --branch {declared}` — recursive call handles sub-submodules and the fetch+rebase+ff-push of {sub} itself
 
 3. Preconditions (parent level):
     1. {current-branch}: bash: `git -C {cwd} rev-parse --abbrev-ref HEAD`
-    2. If {current-branch} is `HEAD`: Exit to user: detached HEAD — checkout or create a branch before pushing
-    3. If not --branch: Exit to user: push requires `--branch <name>`
-    4. If {current-branch} ≠ {branch}: Exit to user — branch mismatch (current `{current-branch}`, requested `{branch}`). To push the current branch: re-invoke with `--branch {current-branch}`. To move commits to {branch} first: ask for rebase/merge help.
+    2. If {current-branch} is `HEAD`: Exit process: detached HEAD — checkout or create a branch before pushing
+    3. If not --branch: Exit process: push requires `--branch <name>`
+    4. If {current-branch} ≠ {branch}: Exit process — branch mismatch (current `{current-branch}`, requested `{branch}`). To push the current branch: re-invoke with `--branch {current-branch}`. To move commits to {branch} first: ask for rebase/merge help.
 
 4. Auto-commit pending changes:
     1. {pending}: bash: `git -C {cwd} status --short`
     2. If {pending} non-empty:
         1. skill: `/git-commit --cwd {cwd}`
-        2. If no commits were produced: Exit to user: commit step produced nothing — investigate and re-invoke
+        2. If no commits were produced: Exit process: commit step produced nothing — investigate and re-invoke
 
 5. {upstream-set}: bash: `git -C {cwd} rev-parse --abbrev-ref @{upstream} 2>/dev/null` exits 0
 
@@ -69,9 +70,9 @@ Push local commits to a named remote branch. Recurses depth-first into `.gitmodu
     2. {behind}: bash: `git -C {cwd} rev-list HEAD..origin/{branch} --count`
     3. If {behind} > 0:
         1. bash: `git -C {cwd} rebase origin/{branch}` (capture exit)
-        2. If exit non-zero: Exit to user — needs manual rebase against `origin/{branch}`; aborting push
+        2. If exit non-zero: Exit process — needs manual rebase against `origin/{branch}`; aborting push
     4. {unpushed}: bash: `git -C {cwd} log --oneline @{upstream}..HEAD`
-    5. If {unpushed} is empty: Exit to user: nothing to push — local and remote in sync
+    5. If {unpushed} is empty: Exit process: nothing to push — local and remote in sync
 
 7. Present push preview — branch, remote, commit count + oneline list
 

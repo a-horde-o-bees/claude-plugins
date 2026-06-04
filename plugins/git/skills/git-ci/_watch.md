@@ -12,12 +12,12 @@
 ## Rules
 
 - {ci-status} post-watch is one of `passed`, `failed`, `incomplete` (the `dispatched` and `no-runs` states from `SKILL.md` don't apply — by construction we always have a tracked in-flight set)
-- `<THIS-FILE-DIR>/scripts/ci.py watch` blocks until each watched run completes, then re-lists all runs for the SHA and re-classifies via the same `classify_runs` logic `SKILL.md` uses
+- `${CLAUDE_SKILL_DIR}/scripts/ci.py watch` blocks until each watched run completes, then re-lists all runs for the SHA and re-classifies via the same `classify_runs` logic `SKILL.md` uses
 - Template emission matches the three matching states of `SKILL.md` § Report; emit verbatim, no inventing or paraphrasing
 
 ## Process
 
-1. {classification}: bash: `uv run <THIS-FILE-DIR>/scripts/ci.py watch --sha {sha} --run-ids {run-ids}`
+1. {classification}: bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/ci.py watch --sha {sha} --run-ids {run-ids}`
 2. From {classification} JSON, bind:
     - {sha-short}, {ci-status} — always present
     - {workflow-list} — when {ci-status} is `passed`

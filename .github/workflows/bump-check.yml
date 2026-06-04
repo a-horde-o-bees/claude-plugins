@@ -1,0 +1,27 @@
+name: Bump check
+
+# Enforce the in-PR plugin-version bump: a PR that changes plugin code must
+# increment that plugin's patch version, so merge yields one `main` commit
+# carrying change + bump (the /checkpoint deployment signal). Replaces the
+# retired server-side auto-bump.yml. Make this a required status check.
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  bump-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Check plugin version bumps
+        run: python3 scripts/bump-check.py "origin/${{ github.base_ref }}"

@@ -8,7 +8,7 @@ A Claude Code plugin marketplace + skill development project. Most work is itera
 
 ## Workflow
 
-Plugin work lands via PRs to `main`. Required status checks (`test`, `validate`) gate the merge; the server-side workflow `.github/workflows/auto-bump.yml` bumps each affected plugin's patch version on merge, and that bump is the deployment signal for `claude plugins update` via `/checkpoint`. The local `.githooks/pre-commit` is a belt for direct-to-main edge cases (admin bypass on `main`); the canonical path is PR-based.
+Plugin work lands via PRs to `main`. Required status checks (`test`, `validate`) gate the merge. Each affected plugin's patch version is bumped in the PR itself, and that bump is the deployment signal for `claude plugins update` via `/checkpoint`. The server-side `auto-bump.yml` that previously bumped on merge was retired — its push-back conflicts with branch protection. The in-PR bump is now enforced by `bump-check.yml` (`scripts/bump-check.py`), which fails a PR that changes `plugins/<name>/` code without incrementing that plugin's version; add it to branch protection as a required check to gate merges. The local `.githooks/pre-commit` bumps on direct-to-main commits (admin-bypass belt on `main`) and retires once `bump-check.yml` is enforced as required; the canonical path is PR-based.
 
 Sandboxes live on `sandbox/<name>` branches for isolation (per the Paths table) and are not expected to merge into `main`.
 
@@ -19,6 +19,5 @@ Sandboxes live on `sandbox/<name>` branches for isolation (per the Paths table) 
 | Plugin-bundled skills | `plugins/<plugin>/skills/<name>/SKILL.md` |
 | Project-level skills (wrappers around plugin skills) | `.claude/skills/<name>/SKILL.md` |
 | Plans (workstreams) | `plans/<name>.md` |
-| Logs (by type) | `logs/<decision\|friction\|idea\|pattern\|problem\|research>/<title>.md` |
-| Assertions (durable platform-behavior tests) | `logs/assertions/<topic>/<assertion>.md` — re-runnable; see `logs/assertions/README.md` |
+| Logs (by type) | `logs/<decision\|friction\|idea\|patterns\|problem\|research>/<title>.md` |
 | Sandboxes | `sandbox/<name>/SANDBOX-TASKS.md` per branch |
