@@ -13,17 +13,19 @@ Raise signal, cut noise — minimize reader overhead without losing meaning. Rea
 
 - Active imperative, not passive.
 - Report facts — no speculation, no hedging.
-- No preambles, no narrative overhead, no cheerleading, no self-congratulation.
+- No preambles, narrative overhead, cheerleading, or self-congratulation. Direct the action, don't narrate it ("Map the callers", not "This section helps you understand the callers"). Where describing or analyzing an action *is* the content (e.g. discussion, postmortems, design rationale, change summaries), describe it in full.
 
 ### Structure
 
 - Reshape before trimming — structural choices convey meaning and often cut more than word-trimming does.
 - Align parallel or comparative content using bullet lists or tables, and preserve that alignment — do not collapse parallel items into prose.
+- Mark the load-bearing claim and let the rest visibly support it — the reader should find the one thing that matters without weighing every sentence equally.
 
 ### Restraint
 
-- No examples unless the content is ambiguous without one. Counter-examples only when essential to clarify a positive example.
+- No examples unless the content is ambiguous without one. Counter-examples only when essential to clarify a positive example. A paired contrast that *defines* the behavior (`Not: … / Yes: …`, wrong/right) is the content itself, not an illustration of it — keep those; the bar is whether the pair carries the spec, not whether it decorates it.
 - Signal non-exhaustiveness in parenthetical lists with leading "e.g." — an unqualified list implicitly claims completeness; the qualifier is signal, not filler.
+- Quantify only when the number is load-bearing — a threshold, a tracked discrepancy, or a result whose value a decision turns on ("0 failures", "158/205 over credit"). A decorative count (totals, tallies, sizes no decision reads) rots and demands upkeep; state the qualitative fact instead ("suite green", "balances reconcile").
 - Cross-reference only when the reader must consult the source to understand the current surface.
 - Never enumerate content from a linked source — parenthetical summaries are redundant, cherry-picked, and prone to drift.
 
