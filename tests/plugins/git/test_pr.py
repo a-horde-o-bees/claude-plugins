@@ -76,6 +76,24 @@ def test_classify_repo_case_insensitive_perm_and_update():
     assert pr.classify_repo("admin", False, False, "", True)["integration"] == "direct"
 
 
+# --- branch_gap: undeclared-branch gate -------------------------------------
+
+@pytest.mark.parametrize(
+    "integration,is_sub,declared,expected",
+    [
+        ("direct", True, False, True),    # will-push submodule, undeclared → gap
+        ("pr", True, False, True),        # pr submodule, undeclared → gap
+        ("direct", True, True, False),    # declared → no gap
+        ("pr", True, True, False),
+        ("read-only", True, False, False),  # vendored never pushes → no gap
+        ("direct", False, False, False),  # the parent is always on a real branch
+        ("pr", False, False, False),
+    ],
+)
+def test_branch_gap(integration, is_sub, declared, expected):
+    assert pr.branch_gap(integration, is_sub, declared) is expected
+
+
 # --- reconcile_merge: pin-advance guard -------------------------------------
 
 @pytest.mark.parametrize(

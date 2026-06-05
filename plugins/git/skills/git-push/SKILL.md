@@ -23,7 +23,7 @@ Push local commits to a named remote branch. Recurses depth-first into `.gitmodu
 ## Rules
 
 - Pre-check submodule conformance via `/git:git-doctor` at the top level; declines stop the flow
-- Submodule recursion uses `.gitmodules` `submodule.<name>.branch` when declared, else falls back to the submodule's currently checked-out branch; it exits only when the submodule is detached AND no `branch =` is declared (no branch to publish). `/git:git-doctor` can write the native `branch =` key
+- Submodule recursion requires `.gitmodules` to declare `submodule.<name>.branch` — without that contract recursive push exits, never inferring it from the checked-out branch (a silent guess that could push wherever HEAD points). Checkpoint's routing pre-flight catches this up front; `/git:git-doctor` writes the native key on approval
 - A `{pin-only}` submodule (PR-governed or vendored) is never direct-pushed — a protected branch refuses direct pushes by design; its changes land via its own PR (`/git:git-checkpoint` runs that lifecycle). The parent pins whatever sha it is on
 - `fetch` + `rebase` onto `origin/{branch}` before pushing; conflicts exit to user
 - Fast-forward only — the rebase makes fast-forward the steady state, so non-fast-forward pushes are refused by definition
@@ -47,8 +47,8 @@ Push local commits to a named remote branch. Recurses depth-first into `.gitmodu
         2. {sub}: from {entry} — the `<path>` value
         3. If {sub} in {pin-only}: record `pin-only` for {sub} and continue — never direct-push it; the parent pins its current sha
         4. {current}: bash: `git -C {cwd}/{sub} rev-parse --abbrev-ref HEAD`
-        5. {declared}: bash: `git config -f {cwd}/.gitmodules submodule.{sub-name}.branch` — if empty AND {current} ≠ `HEAD`: {declared}: {current} (fall back to the checked-out branch)
-        6. If {declared} is empty: Exit process — submodule {sub} is detached with no `branch =` in .gitmodules; declare it (`git config -f .gitmodules submodule.{sub-name}.branch <branch>`, or let `/git:git-doctor` write it) or normalize it onto a branch before pushing
+        5. {declared}: bash: `git config -f {cwd}/.gitmodules submodule.{sub-name}.branch`
+        6. If {declared} is empty: Exit process — submodule {sub} has no `branch =` in .gitmodules; recursive push needs that contract. Declare it (`git config -f .gitmodules submodule.{sub-name}.branch <branch>`) or run `/git:git-doctor` to write it. Never inferred from the checked-out branch — that would silently push wherever HEAD happens to point
         7. If {current} is `HEAD` (detached): normalize onto {declared} without discarding work — {head}: bash: `git -C {cwd}/{sub} rev-parse HEAD`; {decl}: bash: `git -C {cwd}/{sub} rev-parse --verify {declared} 2>/dev/null`. If {decl} is empty: bash: `git -C {cwd}/{sub} checkout -b {declared}`. Else if {decl} == {head}: bash: `git -C {cwd}/{sub} checkout {declared}`. Else: Exit process — {declared} ({decl}) diverges from the detached HEAD ({head}); a commit was made off-branch — resolve manually (commit-time normalization belongs in `/git:git-commit`)
         8. Else if {current} ≠ {declared}: Exit process — submodule {sub} on unexpected branch ({current}, expected {declared}); manual handling
         9. skill: `/git:git-push --cwd {cwd}/{sub} --branch {declared}` — recursive call handles sub-submodules and the fetch+rebase+ff-push of {sub} itself
