@@ -1,6 +1,6 @@
 ---
 name: reauthor
-description: Use whenever the user says "rebuild X", "redo X", "rewrite X from scratch", "reauthor X", or "regenerate X" — or whenever a correction or clarification should land without comparative residue ("previously X, now Y", "removed the old approach", "this replaces…"). X is any addressable artifact: file, section, function, paragraph, schema, anything nameable.
+description: Use when the user wants an artifact composed fresh rather than patched — "rebuild X", "rewrite from scratch", "reauthor", "regenerate" — or when a correction should land cleanly, with no comparative residue ("previously X, now Y", "this replaces the old approach"). X is any nameable artifact: file, section, function, paragraph, schema.
 ---
 
 # Reauthor

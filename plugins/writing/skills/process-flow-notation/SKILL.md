@@ -1,6 +1,6 @@
 ---
 name: process-flow-notation
-description: Apply when authoring an agent process flow with control flow beyond a linear sequence — conditionals, loops, variable binding, sub-routine calls, error handling, or nested blocks. Defines the notation that keeps non-trivial workflows readable and unambiguously executable. Plain sequential steps don't need PFN — write them as ordinary numbered markdown.
+description: Apply when authoring an agent process flow with control flow beyond a linear sequence — conditionals, loops, variable binding, sub-routine calls, error handling, nested blocks — to keep non-trivial workflows readable and unambiguously executable. Plain sequential steps don't need it; write them as numbered markdown.
 ---
 
 # Process Flow Notation

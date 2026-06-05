@@ -1,6 +1,6 @@
 ---
 name: description-authoring
-description: Use whenever writing a description for any artifact at any scale — directory, file header, section head, docstring (function/class/module), skill frontmatter, navigator entry, tool help text, commit subject, log entry opener, schema title — where a reader decides engage-vs-skip from the description alone.
+description: Use whenever writing the line a reader uses to decide engage-or-skip — a directory or file header, docstring, skill frontmatter, section head, navigator entry, tool help text, commit subject, log opener, schema title, or any artifact's description at any scale.
 ---
 
 # Description Authoring
