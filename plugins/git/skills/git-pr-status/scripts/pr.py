@@ -300,17 +300,89 @@ def _has_admin() -> bool:
     return r.returncode == 0 and (r.stdout or "").strip() == "true"
 
 
-def _origin_slug(remote: str = "origin") -> str | None:
+def _origin_slug(remote: str = "origin", cwd: str | None = None) -> str | None:
     """`owner/repo` parsed from a remote URL (https or scp-like ssh), or None.
 
     Parsing the slug ourselves and pinning it on every gh call is the fix for
     gh's ambiguous repo resolution when a repo has both origin and upstream."""
-    r = subprocess.run(["git", "remote", "get-url", remote], capture_output=True, text=True)
+    cmd = ["git", *(["-C", cwd] if cwd else []), "remote", "get-url", remote]
+    r = subprocess.run(cmd, capture_output=True, text=True)
     if r.returncode != 0 or not r.stdout.strip():
         return None
     url = r.stdout.strip().removesuffix(".git").replace(":", "/")
     parts = [p for p in url.split("/") if p]
     return "/".join(parts[-2:]) if len(parts) >= 2 else None
+
+
+def branch_gap(integration: str, is_submodule: bool, branch_declared: bool) -> bool:
+    """Whether an undeclared `branch =` is a routing gap for this repo.
+
+    Pure. A will-push submodule (direct/pr integration) with no declared branch
+    is a gap — checkpoint halts rather than guess which branch edits push to.
+    The parent is always on a real branch, so it never has this gap; a
+    read-only submodule never pushes, so it doesn't either."""
+    return is_submodule and not branch_declared and integration in ("direct", "pr")
+
+
+def _git_out(args: list[str], cwd: str | None = None) -> str:
+    cmd = ["git", *(["-C", cwd] if cwd else []), *args]
+    r = subprocess.run(cmd, capture_output=True, text=True)
+    return r.stdout.strip() if r.returncode == 0 else ""
+
+
+def _gitmodules(name: str, key: str) -> str:
+    return _git_out(["config", "-f", ".gitmodules", f"submodule.{name}.{key}"])
+
+
+def _resolve_route(path: str, name: str | None = None) -> dict:
+    """Mechanical routing verdict for one repo. `path` is "." for the parent or
+    a submodule path; `name` is the submodule's .gitmodules section name (None
+    for the parent). Runs all gh/git probes in-process — no caller reasoning."""
+    is_sub = path != "."
+    cwd = None if path == "." else path
+    slug = _origin_slug(cwd=cwd)
+    branch = _git_out(["branch", "--show-current"], cwd=cwd)
+    meta = _repo_meta(slug) if slug else {}
+    perm = meta.get("viewerPermission")
+    is_fork = bool(meta.get("isFork"))
+    protected = _protection(branch, repo=slug)[0] if branch and slug else False
+
+    update_mode = _gitmodules(name, "update") if is_sub and name else ""
+    x_int = (_gitmodules(name, "x-integration") if is_sub and name else "") or None
+    branch_declared = bool(_gitmodules(name, "branch")) if is_sub and name else True
+
+    if is_sub:
+        has_edits = bool(_git_out(["status", "--short", "--", path]) or _git_out(["status", "--short"], cwd=path))
+    else:
+        has_edits = bool(_git_out(["status", "--short"]))
+
+    route = classify_repo(perm, is_fork, protected, update_mode, has_edits, x_int)
+    if branch_gap(route["integration"], is_sub, branch_declared):
+        route["gaps"].append("undeclared-branch")
+
+    parent = meta.get("parent") or {}
+    route.update({
+        "path": path,
+        "name": name,
+        "branch": branch,
+        "perm": perm,
+        "is_fork": is_fork,
+        "protected": protected,
+        "parent": f"{parent['owner']['login']}/{parent['name']}" if parent else None,
+        "has_edits": has_edits,
+    })
+    return route
+
+
+def _gap_fix(gap: str, route: dict) -> str:
+    name = route.get("name") or route["path"]
+    if gap == "undeclared-branch":
+        return f"git config -f .gitmodules submodule.{name}.branch {route.get('branch') or '<branch>'}  (or run /git:git-doctor)"
+    if gap == "permission-undeterminable":
+        return f"check gh auth / access to {route.get('path')} (gh repo view) — cannot read viewerPermission"
+    if gap == "edits-to-readonly":
+        return f"{route['path']} has local edits but you only have READ — land them in a writable fork, or set submodule.{name}.x-integration"
+    return "resolve the routing ambiguity (see /git:git-doctor)"
 
 
 def _repo_meta(slug: str) -> dict:
@@ -370,6 +442,27 @@ def _route_cmd(args: argparse.Namespace) -> int:
         "parent": parent_slug,
     })
     print(json.dumps(result))
+    return 0
+
+
+def _routes_cmd(args: argparse.Namespace) -> int:
+    """One mechanical pass: route the parent + every declared submodule, collect
+    all gaps. Checkpoint calls this once as its routing pre-flight — a single
+    verdict, so no per-repo reasoning is spent in the skill body."""
+    if args.cwd:
+        os.chdir(args.cwd)
+    repos = [_resolve_route(".")]
+    entries = _git_out(["config", "-f", ".gitmodules", "--get-regexp", r"^submodule\..+\.path$"])
+    for line in entries.splitlines():
+        key, _, path = line.partition(" ")
+        name = key[len("submodule."):-len(".path")]
+        path = path.strip()
+        if args.paths and not any(path == p or path.startswith(p.rstrip("/") + "/") for p in args.paths):
+            continue
+        repos.append(_resolve_route(path, name))
+
+    gaps = [{"repo": r["path"], "gap": g, "fix": _gap_fix(g, r)} for r in repos for g in r["gaps"]]
+    print(json.dumps({"ok": not gaps, "gaps": gaps, "repos": repos}))
     return 0
 
 
@@ -435,6 +528,11 @@ def main(argv: list[str]) -> int:
     route.add_argument("--x-integration", choices=["read-only", "direct", "pr"], help="native integration override")
     route.add_argument("--has-edits", action="store_true", help="local work is pending to land")
     route.set_defaults(func=_route_cmd)
+
+    routes = sub.add_parser("routes", help="route parent + all submodules in one pass (checkpoint pre-flight)")
+    routes.add_argument("--cwd", help="run against the superproject at this path")
+    routes.add_argument("--paths", nargs="*", default=[], help="limit to submodules under these pathspecs")
+    routes.set_defaults(func=_routes_cmd)
 
     args = parser.parse_args(argv)
     return args.func(args)
