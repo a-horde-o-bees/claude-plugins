@@ -1,7 +1,7 @@
 ---
 name: git-pr-merge
-description: Use when an open PR is ready to land — "merge the PR", "merge this", "land it", "ship the PR", or the merge step of a checkpoint. Runs the merge gate, then merges per the detected path — solo (immediate once CI is green) or team (required approvals + green CI). Hard blockers (red or pending CI, merge conflicts, behind base) are never bypassed; soft blockers (review not approved, CI annotations) are confirmable-bypass on the solo path or admin-override on a protected base. Strategy is project `pr.md` ∩ repo-allowed. `--cleanup` chains /git:git-pr-cleanup.
-argument-hint: "[--strategy squash|merge|rebase] [--cleanup]"
+description: Use when an open PR is ready to land — "merge the PR", "merge this", "land it", "ship the PR", or the merge step of a checkpoint. Runs the merge gate, then merges per the detected path — solo (immediate once CI is green) or team (required approvals + green CI). Hard blockers (red or pending CI, merge conflicts, behind base) are never bypassed; soft blockers (review not approved, CI annotations) are confirmable-bypass on the solo path or admin-override on a protected base. Strategy is project `pr.md` ∩ repo-allowed. `--cleanup` chains /git:git-pr-cleanup. `--auto` runs hands-off — bypasses soft-blocker prompts, watches in-flight CI to green before merging, and admin-overrides on a protected base where the viewer has rights; hard failures still stop it.
+argument-hint: "[--strategy squash|merge|rebase] [--cleanup] [--auto]"
 allowed-tools:
   - Bash(git *)
   - Bash(gh *)
@@ -23,12 +23,13 @@ Merge the open PR for the current branch, gating on the merge check and adapting
 
 - `{strategy}` — `--strategy`; defaults to the methodology default ∩ repo-allowed.
 - `{cleanup}` — `--cleanup` present.
+- `{auto}` — `--auto` present: hands-off. Watch pending CI to green, bypass soft blockers without prompting, admin-override on a protected base when the viewer has rights.
 
 ## Rules
 
 - **The gate is `scripts/pr.py`.** Merge never re-computes review/CI/mergeability — it runs `pr.py gate` and acts on the JSON verdict, rather than re-invoking the status skill. The verdict is computed fresh at merge time.
-- **Hard blockers are never bypassed** — red or pending CI, merge conflicts, behind-base. Pending CI exits to the watch step (`/git:git-ci`), never `--auto`; v1 prefers an explicit watch-then-merge over fire-and-forget auto-merge.
-- **Soft blockers branch by path.** Solo (no base protection): present them, confirm bypass, merge. Team (protected base): wait by default; offer an `--admin` override only when the viewer has admin rights (the solo-author-on-a-protected-repo case), and only as an explicit confirmed choice — never silent.
+- **Hard blockers are never bypassed** — red CI, merge conflicts, and behind-base always exit, with or without `--auto`. Pending CI exits to the watch step (`/git:git-ci`) by default; under `--auto` the skill watches CI to completion in-process, then merges if it lands green — a blocking watch-then-merge, never GitHub's fire-and-forget queued auto-merge.
+- **Soft blockers branch by path.** Solo (no base protection): present them, confirm bypass, merge. Team (protected base): wait by default; offer an `--admin` override only when the viewer has admin rights (the solo-author-on-a-protected-repo case), and only as an explicit confirmed choice — never silent. `--auto` takes that choice automatically: soft blockers bypass without a prompt, and on a protected base where the viewer has admin the override is applied and reported in full — automatic, never hidden. Without admin on a protected base, `--auto` still cannot merge and exits.
 - **Strategy must be repo-allowed** — `{strategy}` is validated against the gate's `allowed-strategies`; an unallowed strategy exits.
 - Merge only; branch deletion and base sync are `/git:git-pr-cleanup`'s job (chained by `--cleanup`). Keeps merge single-purpose and cleanup idempotent across squash/rebase merges.
 - Never force-push or run destructive git operations.
@@ -44,7 +45,13 @@ Merge the open PR for the current branch, gating on the merge check and adapting
 
 5. Hard gate:
     1. {hard}: blockers in {blockers} with severity `hard`
-    2. If {hard} non-empty: Exit process — list {hard}. Red/pending CI → watch with `/git:git-ci`; conflicts or behind-base → `git rebase {base}` then re-push. Never bypassed.
+    2. {ci-pending}: {hard} is exactly one blocker and it is pending CI
+    3. If {hard} non-empty AND NOT {ci-pending}: Exit process — list {hard}. Red CI → inspect the run; conflicts or behind-base → `git rebase {base}` then re-push. Never bypassed.
+    4. If {ci-pending}:
+        1. If NOT {auto}: Exit process — CI in flight; watch with `/git:git-ci --branch {branch}`, then re-invoke merge once green.
+        2. If {auto}:
+            1. bash: `gh pr checks {pr-number} --watch --interval 20` — block until every check settles
+            2. Re-run steps 2–3 (a fresh gate verdict; re-bind {blockers}, {merge-ready}, {recommended-path}), then go to 5.1 — a green landing empties {hard} and the gate proceeds; a red landing falls to 5.3 and exits
 
 6. Resolve {strategy}:
     1. {pr-md-path}: `.claude/git/pr.md`; if it exists: {methodology}: Read {pr-md-path}
@@ -54,14 +61,17 @@ Merge the open PR for the current branch, gating on the merge check and adapting
 7. Soft gate (only when {merge-ready} is false):
     1. {soft}: blockers in {blockers} with severity `soft`
     2. If {recommended-path} is `solo-immediate`:
-        1. AskUserQuestion — present {soft}; merge anyway / cancel. Apply /communication:confirm-shared-intent.
-        2. If cancel: Exit process — merge cancelled; soft blockers stand
-        3. {admin-flag}: empty (no protection to override)
+        1. If NOT {auto}:
+            1. AskUserQuestion — present {soft}; merge anyway / cancel. Apply /communication:confirm-shared-intent.
+            2. If cancel: Exit process — merge cancelled; soft blockers stand
+        2. {admin-flag}: empty (no protection to override)
     3. If {recommended-path} is `team-gated`:
         1. If {has-admin} is false: Exit process — team path; soft blockers unmet ({soft}) and no admin rights to override. Wait for required approvals / clear annotations.
-        2. AskUserQuestion — present {soft}; wait (exit) / admin-override merge. Apply /communication:confirm-shared-intent.
-        3. If wait: Exit process — waiting on {soft}
-        4. {admin-flag}: `--admin`
+        2. If {auto}: {admin-flag}: `--admin` — override applied automatically; surface it in the report
+        3. If NOT {auto}:
+            1. AskUserQuestion — present {soft}; wait (exit) / admin-override merge. Apply /communication:confirm-shared-intent.
+            2. If wait: Exit process — waiting on {soft}
+            3. {admin-flag}: `--admin`
 8. Else (merge-ready): {admin-flag}: empty
 
 9. Merge: bash: `gh pr merge {pr-number} --{strategy} {admin-flag}`
@@ -72,5 +82,6 @@ Merge the open PR for the current branch, gating on the merge check and adapting
 Return to caller:
 
 - Merged: PR #{pr-number} → {base} via {strategy}{` (admin override)` if admin-flag}
+- Mode: {`--auto` (hands-off) if auto, else interactive}{`; CI watched to green` if it was pending under --auto}
 - Path: {recommended-path}; soft blockers bypassed: {soft or none}
 - Cleanup: chained ({cleanup-report}) | pending — run `/git:git-pr-cleanup`
