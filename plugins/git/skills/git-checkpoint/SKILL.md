@@ -1,7 +1,7 @@
 ---
 name: git-checkpoint
-description: Bundle the development checkpoint for the current branch into one call. Reads `.claude/git/checkpoint.md` for the project's integration path (`pr` — feature branch → PR → merge; or `direct` — commit straight to the base) and any augmentation steps (e.g. a version bump before commit, a delivery sync after landing on the base), bootstrapping that config on first run. On `pr`, a feature branch runs the full lifecycle — commit → push → CI → open PR → merge (gated) → cleanup + sync base — and checkpointing from the base branch auto-creates a feature branch named from the change topic to run it; `--base-mode` lands directly on the base instead. On `direct`, any branch runs commit → push → CI. Submodule recursion is inherited from the leaves. Generic git automation; every project specific lives in the config + the scripts it names.
-argument-hint: "[--branch <name>] [--path pr|direct] [--base-mode] [--paths <pathspec>...]"
+description: Bundle the development checkpoint for the current branch into one call. Reads `.claude/git/checkpoint.md` for the project's integration path (`pr` — feature branch → PR → merge; or `direct` — commit straight to the base) and any augmentation steps (e.g. a version bump before commit, a delivery sync after landing on the base), bootstrapping that config on first run. On `pr`, a feature branch runs the full lifecycle — commit → push → CI → open PR → merge (gated) → cleanup + sync base — and checkpointing from the base branch auto-creates a feature branch named from the change topic to run it; `--base-mode` lands directly on the base instead. On `direct`, any branch runs commit → push → CI. `--auto` runs the whole lifecycle hands-off — threaded to the PR-open and merge leaves, which skip their prompts, watch pending CI to green, and admin-override where the viewer has rights. Submodule recursion is inherited from the leaves. Generic git automation; every project specific lives in the config + the scripts it names.
+argument-hint: "[--branch <name>] [--path pr|direct] [--base-mode] [--paths <pathspec>...] [--auto]"
 allowed-tools:
   - Skill
   - Read
@@ -27,6 +27,7 @@ Bundle the checkpoint for the current branch. Branches on the project's configur
 - `{path}` — `--path`; else the config's `Path:`; else `pr`.
 - `{paths}` — optional `--paths <pathspec>...`; scopes the whole checkpoint to those paths — only they are committed and landed, the rest of the working tree stays parked. Empty = the whole tree. Passed to `/git:git-commit` and exposed to the pre-land augmentation for scoping its bump.
 - `{base-mode}` — `--base-mode` present: land directly on the base branch (the admin/direct-land exception) instead of auto-creating a feature branch under `pr`.
+- `{auto}` — `--auto` present: hands-off. Threaded verbatim to `/git:git-pr-open` and `/git:git-pr-merge`; the leaves own what it bypasses (the description review gate; soft-blocker prompts; the pending-CI watch). Checkpoint adds no auto behavior of its own.
 - `{feature-branch}` — the topic-derived `<area>/<topic>` branch auto-created when checkpointing from the base branch under `pr`.
 
 ## Rules
@@ -35,7 +36,7 @@ Bundle the checkpoint for the current branch. Branches on the project's configur
 - **Path selects the flow.** `pr` → on a feature branch, run the PR lifecycle; on the base branch with pending in-scope changes, auto-create a feature branch named from the change topic, then run it. `direct` → any branch runs commit + push + CI, no PR. Landing directly on the base under `pr` is the explicit exception — `--base-mode`.
 - **Submodules get no PR of their own.** Recursion (the commit/push/CI leaves) commits and pushes each submodule direct to its declared branch; only the superproject runs the PR lifecycle. The `pr` path is single-repo — for PR-governed submodules, land their PRs first, then checkpoint the superproject to pin the merged shas.
 - **Augmentations are honored, not hardcoded.** `checkpoint.md` may declare project steps to run *before the commit* (pre-land — e.g. the version bump) and *after content reaches the base* (on-main — e.g. a delivery sync). This skill runs them at those points and carries none of their content; the project owns its bump, delivery, and the scripts they name. Absent config ⇒ pure generic flow.
-- **No optimistic merge.** Merge runs through `/git:git-pr-merge`, whose hard gate (red or pending CI, conflicts, behind-base) exits rather than merging on unknown state. If CI is still in flight at the merge gate, checkpoint stops there and the merge completes on a re-invocation once green.
+- **No optimistic merge.** Merge runs through `/git:git-pr-merge`, whose hard gate (red or pending CI, conflicts, behind-base) exits rather than merging on unknown state. If CI is still in flight at the merge gate, checkpoint stops there and the merge completes on a re-invocation once green. Under `--auto`, the merge leaf watches in-flight CI to green and merges in the same run instead of stopping; only a hard failure (red CI, conflict, behind-base) halts.
 - **Skip the commit/push portion silently when nothing is pending** — not an error. The PR/merge phase still proceeds on a feature branch.
 
 ## Process
@@ -72,8 +73,8 @@ Bundle the checkpoint for the current branch. Branches on the project's configur
 
 7. Feature-PR lifecycle — when {path} is `pr` AND {branch} ≠ {default-branch}:
     1. {pr-status}: skill: `/git:git-pr-status --branch {branch}`
-    2. If {pr-status} reports no open PR: skill: `/git:git-pr-open`
-    3. {merge-report}: skill: `/git:git-pr-merge --cleanup` — runs the shared gate script directly (fresh, no skill round-trip) and gates internally; on pending/red CI, conflicts, behind-base, or unmet reviews it exits with the surface and checkpoint stops here. On merge-ready it merges, deletes the head, and syncs the base.
+    2. If {pr-status} reports no open PR: skill: `/git:git-pr-open` + ` --auto` if {auto}
+    3. {merge-report}: skill: `/git:git-pr-merge --cleanup` + ` --auto` if {auto} — runs the shared gate script directly (fresh, no skill round-trip) and gates internally; on pending/red CI, conflicts, behind-base, or unmet reviews it exits with the surface and checkpoint stops here. Under `--auto` it instead watches in-flight CI to green and admin-overrides soft blockers where the viewer has rights. On merge-ready it merges, deletes the head, and syncs the base.
     4. If the merge completed and {on-main}: bash: run it (content just landed on the base); {sync-report}: its output
 
 8. Emit the ### feature-mode report
