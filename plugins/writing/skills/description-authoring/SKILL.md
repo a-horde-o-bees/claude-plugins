@@ -7,7 +7,7 @@ description: Use whenever writing a description for any artifact at any scale �
 
 A description is the line a reader uses to decide engage-or-skip — often the only thing they have. Readers are users, other agents, or downstream tools. A vague one makes the content effectively invisible.
 
-## Directives
+## Rules
 
 ### Substance
 
@@ -23,9 +23,9 @@ A description is the line a reader uses to decide engage-or-skip — often the o
 
 ### Exclude
 
-- How it works — the method, steps, or approach it uses (for a skill, the technique it teaches; not only code).
-- Content listing — section, function, or class names.
-- History — why it exists, what it replaced, when it was added.
+- Don't describe how it works — the method, steps, or approach it uses (for a skill, the technique it teaches; not only code).
+- Don't list contents — section, function, or class names.
+- Don't recount history — why it exists, what it replaced, when it was added.
 
 ### Consistency
 

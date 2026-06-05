@@ -7,7 +7,7 @@ description: Use whenever the agent is writing or editing prose (e.g. chat repli
 
 Raise signal, cut noise — minimize reader overhead without losing meaning. Readers can be users, other agents, or downstream tools.
 
-## Directives
+## Rules
 
 ### Voice
 
