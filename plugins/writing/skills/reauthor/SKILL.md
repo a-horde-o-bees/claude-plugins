@@ -14,19 +14,16 @@ Compose the artifact as if authoring it for the first time. The current form is 
 
 Everything else — organization, phrasing, ordering, examples, headings — is yours to set from the constraints in play now.
 
-## Do
+## Rules
 
 - Read the current artifact along with every rule, convention, and skill in context, plus the surrounding conversation. Let all of them shape the new version at once.
 - Build the structure from what the artifact must do now, not what it used to do.
 - Eliminate duplication: content stated twice, examples making the same point, parallel sections that hedge each other.
 - Rephrase whenever rephrasing tightens. Don't keep a sentence just because it survived.
 - Output the whole artifact end-to-end. No `...`, no `[unchanged]`, no implied continuation.
-
-## Don't
-
-- Spot-edit section by section. Local fixes accumulate as patches; only an end-to-end pass restores coherence.
-- Anchor on existing phrasing or organization — both solved a problem set that may no longer apply.
-- Leave comparative residue. No "previously this was X", "removed the old behavior", "as opposed to before". A reader picking the artifact up cold should see no trace of prior versions.
+- Don't spot-edit section by section — local fixes accumulate as patches; only an end-to-end pass restores coherence.
+- Don't anchor on existing phrasing or organization — both solved a problem set that may no longer apply.
+- Don't leave comparative or relational residue: no temporal trace ("previously this was X", "removed the old behavior", "as opposed to before"), and no dependence on context that no longer sits with the artifact — a pointer to a sibling that's been cleared away, or a position/sequence label (`Phase 2`, `Step 3`, "see the fix below", "carried from above") that only meant something beside what's now gone. A reader picking the artifact up cold should see no trace of prior versions and need nothing absent to understand it — every fact stated directly, not by reference.
 
 ## When not to reauthor
 

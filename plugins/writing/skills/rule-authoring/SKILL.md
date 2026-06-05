@@ -30,6 +30,11 @@ Examples of principle vs symptom:
 - **Splitting a rule in two**: "names two distinct mechanisms" — not "covers more than one paragraph"
 - **Component reuse**: "referenced from multiple places" — not "more than three callers"
 
+## Self-carrying polarity
+
+- A rule carries its own polarity — prescribe or prohibit stated in the line, never inferred from the section heading. The heading names the cluster; the rule states the direction.
+- A rule may lean on sibling rules for clarifying context, staying compact — but never on the heading to signal whether it prescribes or prohibits.
+
 ## When a rule is missed
 
 - When a rule should have triggered but did not: surface which rule was missed and what should have happened; proceed after the user acknowledges.
