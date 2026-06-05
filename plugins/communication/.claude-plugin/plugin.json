@@ -1,6 +1,6 @@
 {
   "name": "communication",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Agent\u21c4user interaction discipline. Apply each skill at the matching moment: honesty when asserting facts or evaluating evidence, principled-pushback when the user proposes something I disagree with, confirm-shared-intent when the user's request might mean two different things.",
   "author": {
     "name": "a-horde-o-bees"
