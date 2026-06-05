@@ -49,6 +49,26 @@ if [ -z "$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null)" ]; th
 "
 fi
 
+# --- submodule routing native-key gaps (ADVISORY) — local, no network ---
+# A declared submodule with no `branch =` makes recursive push fall back to the
+# checked-out branch (or exit if detached). Flag it so the native key can be
+# written into the parent's .gitmodules. The gh-based routing audit (ownership,
+# fork-contribution, protection) is computed live by /git-checkpoint, not here.
+if [ -f .gitmodules ]; then
+  routing_gaps=$(git config -f .gitmodules --get-regexp '^submodule\..+\.path$' 2>/dev/null \
+    | while read -r key path; do
+        name=$(printf '%s' "$key" | sed -E 's/^submodule\.(.+)\.path$/\1/')
+        if [ -z "$(git config -f .gitmodules --get "submodule.${name}.branch" 2>/dev/null)" ]; then
+          printf 'submodule-routing ADVISORY submodule %s has no `branch =` in .gitmodules — recursive push falls back to the checked-out branch; git-doctor can write the native key\n' "$path"
+        fi
+      done)
+  if [ -n "$routing_gaps" ]; then
+    advisory=$((advisory + 1))
+    lines="${lines}${routing_gaps}
+"
+  fi
+fi
+
 # --- CI config (ADVISORY, on-workflow-change only) ---
 # The CI domain is on-demand; the detector flags it only when the change being
 # committed touches workflows, so a CI-config edit gets a hardening pass.

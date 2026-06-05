@@ -39,6 +39,7 @@ The repo-health doctor. A cheap, local detector (`scripts/detect.sh`) scans the 
 5. If `STATUS: healthy`: Exit process — emit ### healthy
 6. For each problem line in {detect} stdout (`<domain> <severity> <detail>`), dispatch by domain:
     - `submodule` → Call: `_submodule.md` (the {detect} stderr state table is its diagnosis input)
+    - `submodule-routing` → Call: `_submodule.md` (routing-gap mode — write the missing native `.gitmodules` key)
     - `default-branch` → Call: `_default-branch.md`
     - `ci` → Call: `_ci.md` ({ci-args}: `audit`)
 7. Emit ### result
