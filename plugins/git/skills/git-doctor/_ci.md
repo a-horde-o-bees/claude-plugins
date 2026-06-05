@@ -1,6 +1,6 @@
 # git-doctor — CI domain
 
-> The GitHub Actions CI-config domain of `/git-doctor`. On demand (`/git-doctor ci [audit|harden|reconcile]`) or when `detect.sh` flags workflow files in the change. Diagnoses deterministically (classification lives in `scripts/ci_doctor.py`), proposes scoped edits, applies only on approval — never rewrites a workflow wholesale. Config hardening, not code review.
+> The GitHub Actions CI-config domain of `/git:git-doctor`. On demand (`/git:git-doctor ci [audit|harden|reconcile]`) or when `detect.sh` flags workflow files in the change. Diagnoses deterministically (classification lives in `scripts/ci_doctor.py`), proposes scoped edits, applies only on approval — never rewrites a workflow wholesale. Config hardening, not code review.
 
 ## Variables
 
@@ -29,7 +29,7 @@
     2. For each {finding} in {results} (high → low):
         1. If {finding} is `unpinned-action`: {sha}: bash: `gh api repos/{action}/commits/{ref} --jq .sha`; propose `uses: {action}@{sha} # {ref}`
         2. Else: propose the edit from {finding}'s `fix` hint (top-level `permissions: contents: read`, `timeout-minutes`, `concurrency` block)
-    3. Present all proposed edits as one batched diff. AskUserQuestion — apply all / select / cancel. Apply /confirm-shared-intent
+    3. Present all proposed edits as one batched diff. AskUserQuestion — apply all / select / cancel. Apply /communication:confirm-shared-intent
     4. On approval: apply each via Edit
     5. If any SHA pin was applied AND no `.github/dependabot.yml`: offer to scaffold it (github-actions, weekly)
 9. Emit the ### Harden report
@@ -52,7 +52,7 @@ CI audit: .github/workflows ({workflow-count} workflows)
 Status: {clean ? hardened : findings by severity — high {h} / medium {m} / low {l}}
 {per finding, grouped high→low: <file> — <check>: <detail>  → <fix>}
 Required checks: {reconcile summary — mismatches or "all required checks map to a job"}
-Next: `/git-doctor ci harden` to apply the fixes (gated on review).
+Next: `/git:git-doctor ci harden` to apply the fixes (gated on review).
 ```
 
 ### Harden

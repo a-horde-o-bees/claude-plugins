@@ -1,19 +1,15 @@
 ---
 name: git-pr-cleanup
-description: Use when a merged PR's branch should be torn down and local base restored — "clean up the branch", "delete the merged branch", "restore main after merge", or the cleanup step chained from /git-pr-merge. Switches to base, pulls with prune, deletes the remote head branch, and deletes the local head — safe-by-default: refuses if the branch has unmerged commits and no merged PR. Idempotent across squash/rebase merges (uses the PR's merged state as the authority, not git ancestry).
+description: Use when a merged PR's branch should be torn down and local base restored — "clean up the branch", "delete the merged branch", "restore main after merge", or the cleanup step chained from /git:git-pr-merge. Switches to base, pulls with prune, deletes the remote head branch, and deletes the local head — safe-by-default: refuses if the branch has unmerged commits and no merged PR. Idempotent across squash/rebase merges (uses the PR's merged state as the authority, not git ancestry).
 argument-hint: "[--head <name>] [--base <name>]"
 allowed-tools:
   - Bash(git *)
   - Bash(gh *)
 ---
 
-# /git-pr-cleanup
+# /git:git-pr-cleanup
 
 Restore local base and tear down a merged head branch. Safe-by-default; idempotent.
-
-## Dependencies
-
-- `/process-flow-notation` — this body uses PFN.
 
 ## Variables
 

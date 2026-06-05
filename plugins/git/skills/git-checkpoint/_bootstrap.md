@@ -1,6 +1,6 @@
 # Checkpoint Bootstrap
 
-> Guided dialogue producing the project's local `.claude/git/checkpoint.md`. Fires the first time `/git-checkpoint` runs in a project without one and with no `--path` override. Detection-first: read repo state, pre-fill a draft, present one batched proposal. Subsequent runs read the written file directly.
+> Guided dialogue producing the project's local `.claude/git/checkpoint.md`. Fires the first time `/git:git-checkpoint` runs in a project without one and with no `--path` override. Detection-first: read repo state, pre-fill a draft, present one batched proposal. Subsequent runs read the written file directly.
 
 ## Variables
 
@@ -25,10 +25,10 @@
 
 3. Compose the draft `checkpoint.md`:
     - `Path: {path-default}`
-    - `## Augmentations` with the detected suggestions as bullet instructions (omit the section if none detected). Apply /concise-prose.
+    - `## Augmentations` with the detected suggestions as bullet instructions (omit the section if none detected). Apply /writing:concise-prose.
 
 4. Review gate:
-    1. Present the full draft. Apply /confirm-shared-intent.
+    1. Present the full draft. Apply /communication:confirm-shared-intent.
     2. {decision}: AskUserQuestion — approve / adjust path / adjust augmentations / cancel
     3. If adjust: revise per feedback; go to 4.1
     4. If cancel: Return to caller — bootstrap declined; proceeding this run with `Path: {path-default}` and no augmentations (nothing written)

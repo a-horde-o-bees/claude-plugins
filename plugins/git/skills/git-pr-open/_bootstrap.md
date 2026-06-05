@@ -1,6 +1,6 @@
 # PR Bootstrap
 
-> Guided dialogue producing the project's local `.claude/git/pr.md`. Fires the first time `/git-pr-open` runs in a project without an existing methodology config.
+> Guided dialogue producing the project's local `.claude/git/pr.md`. Fires the first time `/git:git-pr-open` runs in a project without an existing methodology config.
 >
 > Detection-first: scan the repo's default branch, protection, allowed merge strategies, CODEOWNERS, and PR template, pre-populate suggestions, then present one batched proposal rather than walking section-by-section. Subsequent PR-skill invocations read the written file directly.
 
@@ -25,7 +25,7 @@
     5. {pr-template}: bash: `for f in .github/pull_request_template.md .github/PULL_REQUEST_TEMPLATE.md; do [ -f "$f" ] && echo "$f" && break; done` — empty if none
 
 2. {template}: Read `<THIS-FILE-DIR>/assets/pr.md` — starter structure
-3. Compose draft `pr.md` from {template} with detection-driven defaults. Apply /markdown-authoring and /concise-prose:
+3. Compose draft `pr.md` from {template} with detection-driven defaults. Apply /writing:markdown-authoring and /writing:concise-prose:
     1. **Base branch** — fill in {default-branch}
     2. **Merge strategy** — default to the first of {allowed-strategies} (squash/merge/rebase order); list {allowed-strategies} as the allowed set
     3. **Draft** — default `no` unless the project signals otherwise
@@ -36,7 +36,7 @@
 
 4. Review gate:
     1. Display the composed `pr.md` verbatim + a detection summary (auto-detected vs guessed)
-    2. {decision}: AskUserQuestion — approve as-is or call out section-level adjustments. Apply /confirm-shared-intent.
+    2. {decision}: AskUserQuestion — approve as-is or call out section-level adjustments. Apply /communication:confirm-shared-intent.
     3. If approve: proceed to step 5
     4. Apply directives; re-render; go to 4.1
 
