@@ -37,3 +37,6 @@ jobs:
 
       - name: Run skill-authoring tests
         run: bin/project-run tests --plugin skill-authoring
+
+      - name: Run git tests
+        run: bin/project-run tests --plugin git

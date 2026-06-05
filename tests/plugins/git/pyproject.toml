@@ -1,0 +1,4 @@
+[tool.pytest.ini_options]
+pythonpath = ["../../../plugins/git/skills/git-pr-merge/scripts"]
+addopts = "--import-mode=importlib"
+testpaths = ["."]

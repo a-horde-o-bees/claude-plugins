@@ -1,7 +1,7 @@
 ---
 name: git-commit
 description: Use when uncommitted working-tree changes should land in git history — explicit signals "commit", "commit my changes", "stage and commit", "save these edits", or any context where committing is the natural next step. Recurses depth-first into `.gitmodules`-declared submodules, normalizing each detached submodule onto its declared branch before committing so its work isn't orphaned; submodule commits land before the parent records its pin advance. Multi-topic working trees produce multiple atomic commits grouped by topic; single-topic produces one. Each commit message is authored against the diff, not the change journey. Under `pr` integration it refuses to commit onto the repo's default branch — the change belongs on a feature branch; `--on-base` overrides.
-argument-hint: "[--cwd <path>] [--on-base] [<pathspec>...]"
+argument-hint: "[--cwd <path>] [--on-base] [--auto] [--pin-only <path>]... [<pathspec>...]"
 allowed-tools:
   - Bash(git *)
   - Skill
@@ -22,6 +22,8 @@ Commit working-tree changes as one or more topic-grouped commits. Recurses depth
 - `{cwd}` — `--cwd <path>` argument; defaults to `.` (top-level invocation). All git operations use `git -C {cwd}`. Recursive calls pass `{cwd}/{sub}` so depth flows through one variable.
 - `{paths}` — optional trailing pathspec(s) (the non-flag arguments). When given, only matching working-tree paths are inspected and committed; everything else is left untouched (scoped commit). Top-level only — not passed into submodule recursion.
 - `{on-base}` — `--on-base` present: permit committing onto the repo's default branch even under `pr` integration (the base-branch guard skips). For an intentional admin/base commit; `/git:git-checkpoint` passes it in base-mode.
+- `{auto}` — `--auto` present: auto-consume submodule pin advances (no consume/revert prompt). Set by `/git:git-checkpoint --auto`, which produced those advances deliberately by landing the submodules.
+- `{pin-only}` — `--pin-only <path>` (repeatable); submodules to skip in recursion — checkpoint already landed (PR-governed) or pins them (vendored). Their pin advance is still recorded in step 4.
 
 ## Rules
 
@@ -50,15 +52,16 @@ Commit working-tree changes as one or more topic-grouped commits. Recurses depth
     1. {sub-entries}: bash: `git config -f {cwd}/.gitmodules --get-regexp '^submodule\..+\.path$' 2>/dev/null` — emits `submodule.<name>.path <path>` per line; empty if no `.gitmodules`
     2. For each {entry} in {sub-entries}:
         1. {sub-name}: from {entry} — the `<name>` between `submodule.` and `.path`; {sub}: the `<path>` value
-        2. {current}: bash: `git -C {cwd}/{sub} rev-parse --abbrev-ref HEAD`
-        3. If {current} is `HEAD` (detached) — normalize onto the declared branch before committing, so a new commit lands on a branch rather than an orphaned detached HEAD:
+        2. If {sub} in {pin-only}: continue — checkpoint already landed or pins it; its pin advance is still recorded in step 4
+        3. {current}: bash: `git -C {cwd}/{sub} rev-parse --abbrev-ref HEAD`
+        4. If {current} is `HEAD` (detached) — normalize onto the declared branch before committing, so a new commit lands on a branch rather than an orphaned detached HEAD:
             1. {declared}: bash: `git config -f {cwd}/.gitmodules submodule.{sub-name}.branch`
             2. If {declared} is empty: Exit process — submodule {sub} is detached with no `branch =` in .gitmodules; declare it (`git config -f .gitmodules submodule.{sub-name}.branch <branch>`) or handle the submodule manually before committing
             3. {head}: bash: `git -C {cwd}/{sub} rev-parse HEAD`; {decl}: bash: `git -C {cwd}/{sub} rev-parse --verify {declared} 2>/dev/null` (empty if no local branch)
             4. If {decl} is empty: bash: `git -C {cwd}/{sub} checkout -b {declared}` — create the branch at the current sha
             5. Else if {decl} == {head}: bash: `git -C {cwd}/{sub} checkout {declared}` — attach at the same sha; nothing lost
             6. Else: Exit process — submodule {sub}'s `{declared}` ({decl}) diverges from its checked-out HEAD ({head}); resolve manually rather than discard work
-        4. skill: `/git:git-commit --cwd {cwd}/{sub}` — recursive call walks any sub-submodules first, then commits {sub} on its declared branch
+        5. skill: `/git:git-commit --cwd {cwd}/{sub}` + ` --auto` if {auto} — recursive call walks any sub-submodules first, then commits {sub} on its declared branch
 
 3. Inspect the working tree (scoped to {paths} when given — `-- {paths}` with no scope lists everything):
     1. bash: `git -C {cwd} status -- {paths}`
@@ -71,7 +74,7 @@ Commit working-tree changes as one or more topic-grouped commits. Recurses depth
         1. {pinned-sha}: bash: `git -C {cwd} ls-tree HEAD -- {sub} | awk '{print $3}'`
         2. {head-sha}: bash: `git -C {cwd}/{sub} rev-parse HEAD`
         3. {advance-log}: bash: `git -C {cwd}/{sub} log --oneline {pinned-sha}..{head-sha}`
-        4. AskUserQuestion — show {advance-log} and the new {head-sha}; offer **consume** (stage the pin advance in the parent commit) or **revert** (restore the submodule to {pinned-sha})
+        4. If {auto}: consume — stage the pin advance (checkpoint produced it deliberately by landing the submodule; no prompt). Else: AskUserQuestion — show {advance-log} and the new {head-sha}; offer **consume** (stage the pin advance in the parent commit) or **revert** (restore the submodule to {pinned-sha})
         5. If consume: the pin advance enters the staging set for grouping in step 7
         6. If revert: bash: `git -C {cwd} submodule update -- {sub}` — restores HEAD to {pinned-sha}; the diff disappears
 

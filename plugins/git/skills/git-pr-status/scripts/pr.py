@@ -32,6 +32,7 @@ advisory.
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 
@@ -177,14 +178,19 @@ def _gh_json(args: list[str]):
     return json.loads(out)
 
 
-def _protection(base: str) -> tuple[bool, list[str]]:
+def _protection(base: str, repo: str | None = None) -> tuple[bool, list[str]]:
     """(enforced, required_contexts) for the base branch.
 
     A 404 (no protection) is the solo signal — gh exits non-zero, read as
     (False, []). When protection exists, return its required-status-check
-    contexts (empty list if protection has no required checks)."""
+    contexts (empty list if protection has no required checks).
+
+    `repo` pins an explicit `owner/repo` slug — required when the repo has
+    more than one remote (gh's `{owner}/{repo}` placeholder resolves
+    ambiguously then). When None, gh resolves from the current repo."""
+    slug = repo or "{owner}/{repo}"
     r = subprocess.run(
-        ["gh", "api", f"repos/{{owner}}/{{repo}}/branches/{base}/protection"],
+        ["gh", "api", f"repos/{slug}/branches/{base}/protection"],
         capture_output=True, text=True,
     )
     if r.returncode != 0:
@@ -195,6 +201,67 @@ def _protection(base: str) -> tuple[bool, list[str]]:
         return True, list(contexts)
     except (json.JSONDecodeError, AttributeError):
         return True, []
+
+
+def classify_repo(
+    perm: str | None,
+    is_fork: bool,
+    protected: bool,
+    update_mode: str | None,
+    has_origin_edits: bool,
+    x_integration: str | None = None,
+) -> dict:
+    """Pure per-repo routing decision — root or submodule, same logic.
+
+    Inputs are the detected signals plus parent-owned native `.gitmodules`
+    overrides; no `gh`/`git` calls here so it is fully unit-testable.
+
+    - perm: viewerPermission on origin (ADMIN/WRITE/READ/NONE).
+    - is_fork: origin is a fork (has an upstream parent).
+    - protected: the working branch on origin carries branch protection.
+    - update_mode: `submodule.<n>.update` (none/checkout/rebase/merge/'') → pin vs track.
+    - has_origin_edits: there is local work to land (gitlink will move / dirty tree).
+    - x_integration: explicit native override read-only|direct|pr, else None.
+
+    Returns {integration, sync, upstream, gaps}. `gaps` lists routing-blocking
+    ambiguities the parent must resolve before a deterministic checkpoint.
+    """
+    perm_u = (perm or "").upper()
+    writable = perm_u in ("ADMIN", "WRITE")
+
+    if x_integration in ("read-only", "direct", "pr"):
+        integration = x_integration
+    elif not writable:
+        integration = "read-only"
+    elif protected:
+        integration = "pr"
+    else:
+        integration = "direct"
+
+    sync = "track" if (update_mode or "").lower() in ("rebase", "merge") else "pin"
+    upstream = "fork" if is_fork else "none"
+
+    gaps: list[str] = []
+    if perm_u not in ("ADMIN", "WRITE", "READ", "NONE"):
+        gaps.append("permission-undeterminable")
+    if has_origin_edits and integration == "read-only":
+        gaps.append("edits-to-readonly")
+
+    return {"integration": integration, "sync": sync, "upstream": upstream, "gaps": gaps}
+
+
+def reconcile_merge(merge_commit_sha: str | None, local_head: str | None) -> str:
+    """Verdict that a submodule's HEAD matches its PR's recorded merge commit.
+
+    Guards the parent pin advance against trusting `git pull`'s side effect:
+    after a squash/rebase merge the merged sha is new, and the pin must capture
+    *that* sha, not the discarded feature-branch tip. Prefix-tolerant (short vs
+    full). 'unknown' when either sha is missing."""
+    a = (merge_commit_sha or "").strip()
+    b = (local_head or "").strip()
+    if not a or not b:
+        return "unknown"
+    return "ok" if a == b or a.startswith(b) or b.startswith(a) else "mismatch"
 
 
 def _annotation_count(sha: str) -> int:
@@ -231,6 +298,79 @@ def _has_admin() -> bool:
         capture_output=True, text=True,
     )
     return r.returncode == 0 and (r.stdout or "").strip() == "true"
+
+
+def _origin_slug(remote: str = "origin") -> str | None:
+    """`owner/repo` parsed from a remote URL (https or scp-like ssh), or None.
+
+    Parsing the slug ourselves and pinning it on every gh call is the fix for
+    gh's ambiguous repo resolution when a repo has both origin and upstream."""
+    r = subprocess.run(["git", "remote", "get-url", remote], capture_output=True, text=True)
+    if r.returncode != 0 or not r.stdout.strip():
+        return None
+    url = r.stdout.strip().removesuffix(".git").replace(":", "/")
+    parts = [p for p in url.split("/") if p]
+    return "/".join(parts[-2:]) if len(parts) >= 2 else None
+
+
+def _repo_meta(slug: str) -> dict:
+    """viewerPermission + fork metadata for an explicit repo slug ({} on failure)."""
+    r = subprocess.run(
+        ["gh", "repo", "view", slug, "--json", "viewerPermission,isFork,parent"],
+        capture_output=True, text=True,
+    )
+    if r.returncode != 0:
+        return {}
+    try:
+        return json.loads(r.stdout)
+    except json.JSONDecodeError:
+        return {}
+
+
+def _default_branch() -> str:
+    r = subprocess.run(
+        ["git", "symbolic-ref", "--short", "refs/remotes/origin/HEAD"],
+        capture_output=True, text=True,
+    )
+    return r.stdout.strip().removeprefix("origin/") or "main"
+
+
+def _protection_cmd(args: argparse.Namespace) -> int:
+    if args.cwd:
+        os.chdir(args.cwd)
+    branch = args.branch or _default_branch()
+    enforced, contexts = _protection(branch, repo=args.repo or _origin_slug())
+    print(json.dumps({"branch": branch, "enforced": enforced, "required_contexts": sorted(contexts)}))
+    return 0
+
+
+def _route_cmd(args: argparse.Namespace) -> int:
+    """Resolve a repo's routing (--cwd points at the repo). Combines detected
+    gh signals with parent-supplied native overrides (--update-mode/--x-integration)."""
+    if args.cwd:
+        os.chdir(args.cwd)
+    slug = args.repo or _origin_slug()
+    branch = args.branch or subprocess.run(
+        ["git", "branch", "--show-current"], capture_output=True, text=True,
+    ).stdout.strip()
+    meta = _repo_meta(slug) if slug else {}
+    perm = meta.get("viewerPermission")
+    is_fork = bool(meta.get("isFork"))
+    enforced = _protection(branch, repo=slug)[0] if branch and slug else False
+    parent = meta.get("parent") or {}
+    parent_slug = f"{parent['owner']['login']}/{parent['name']}" if parent else None
+
+    result = classify_repo(perm, is_fork, enforced, args.update_mode, args.has_edits, args.x_integration)
+    result.update({
+        "repo": slug,
+        "branch": branch,
+        "perm": perm,
+        "is_fork": is_fork,
+        "protected": enforced,
+        "parent": parent_slug,
+    })
+    print(json.dumps(result))
+    return 0
 
 
 def _gate_cmd(args: argparse.Namespace) -> int:
@@ -280,6 +420,21 @@ def main(argv: list[str]) -> int:
     gate = sub.add_parser("gate", help="classify merge-readiness for a branch's PR")
     gate.add_argument("--branch", help="branch name (defaults to current)")
     gate.set_defaults(func=_gate_cmd)
+
+    prot = sub.add_parser("protection", help="is a branch PR-governed (branch-protected)")
+    prot.add_argument("--branch", help="branch (defaults to the repo's default branch)")
+    prot.add_argument("--repo", help="owner/repo slug (defaults to origin's)")
+    prot.add_argument("--cwd", help="run against the repo at this path")
+    prot.set_defaults(func=_protection_cmd)
+
+    route = sub.add_parser("repo-route", help="resolve a repo's routing")
+    route.add_argument("--branch", help="working branch (defaults to current)")
+    route.add_argument("--repo", help="owner/repo slug (defaults to origin's)")
+    route.add_argument("--cwd", help="run against the repo at this path")
+    route.add_argument("--update-mode", help="submodule.<n>.update value (pin vs track)")
+    route.add_argument("--x-integration", choices=["read-only", "direct", "pr"], help="native integration override")
+    route.add_argument("--has-edits", action="store_true", help="local work is pending to land")
+    route.set_defaults(func=_route_cmd)
 
     args = parser.parse_args(argv)
     return args.func(args)
