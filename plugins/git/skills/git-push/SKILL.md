@@ -1,20 +1,19 @@
 ---
 name: git-push
-description: Use when local commits need to reach the remote — explicit signals "push", "push my branch", "push to origin", or any context where publishing committed work is the next action. Recurses depth-first into `.gitmodules`-declared submodules: each is normalized off detached HEAD onto its declared branch, fetched, rebased onto its remote tip, and fast-forward-pushed before the parent. Auto-commits uncommitted changes via /git-commit. Requires explicit --branch to confirm the target.
+description: Use when local commits need to reach the remote — explicit signals "push", "push my branch", "push to origin", or any context where publishing committed work is the next action. Recurses depth-first into `.gitmodules`-declared submodules: each is normalized off detached HEAD onto its declared branch, fetched, rebased onto its remote tip, and fast-forward-pushed before the parent. Auto-commits uncommitted changes via /git:git-commit. Requires explicit --branch to confirm the target.
 argument-hint: "--branch <name> [--cwd <path>]"
 allowed-tools:
   - Bash(git *)
   - Skill
 ---
 
-# /git-push
+# /git:git-push
 
 Push local commits to a named remote branch. Recurses depth-first into `.gitmodules`-declared submodules: each is normalized off detached HEAD onto its declared branch, fetched, rebased onto its remote tip, and fast-forward-pushed before the parent.
 
 ## Dependencies
 
-- `/process-flow-notation` — this body uses PFN; a cold session needs the spec in context.
-- `/git-doctor` — submodule conformance pre-check before any push
+- `/git:git-doctor` — submodule conformance pre-check before any push
 
 ## Variables
 
@@ -22,7 +21,7 @@ Push local commits to a named remote branch. Recurses depth-first into `.gitmodu
 
 ## Rules
 
-- Pre-check submodule conformance via `/git-doctor` at the top level; declines stop the flow
+- Pre-check submodule conformance via `/git:git-doctor` at the top level; declines stop the flow
 - Submodule recursion requires `.gitmodules` to declare `submodule.<name>.branch = <name>` for each tracked submodule — without that contract, auto-push refuses and exits
 - `fetch` + `rebase` onto `origin/{branch}` before pushing; conflicts exit to user
 - Fast-forward only — the rebase makes fast-forward the steady state, so non-fast-forward pushes are refused by definition
@@ -36,8 +35,8 @@ Push local commits to a named remote branch. Recurses depth-first into `.gitmodu
 
 1. Top-level pre-check (skip when invoked recursively):
     1. If `--cwd` was provided: skip to step 2
-    2. {doctor-result}: skill: `/git-doctor`
-    3. If {doctor-result} is not `healthy` or `repaired-and-verified`: Exit process — repo not push-safe per git-doctor
+    2. {doctor-result}: skill: `/git:git-doctor`
+    3. If {doctor-result} reports `Blocking unresolved: yes` (a BLOCKING problem it did not repair): Exit process — repo not push-safe per git-doctor. A clean report or an ADVISORY-only result (default-branch, CI) never blocks the push — proceed.
 
 2. Recurse into submodules first (depth-first):
     1. {sub-entries}: bash: `git config -f {cwd}/.gitmodules --get-regexp '^submodule\..+\.path$' 2>/dev/null` — emits `submodule.<name>.path <path>` per line; empty if no `.gitmodules`
@@ -47,9 +46,9 @@ Push local commits to a named remote branch. Recurses depth-first into `.gitmodu
         3. {declared}: bash: `git config -f {cwd}/.gitmodules submodule.{sub-name}.branch`
         4. If {declared} is empty: Exit process — submodule {sub} has no `branch =` declaration in .gitmodules; recursive push needs that contract. Add it (`git config -f .gitmodules submodule.{sub-name}.branch <branch>`) or push the submodule manually.
         5. {current}: bash: `git -C {cwd}/{sub} rev-parse --abbrev-ref HEAD`
-        6. If {current} is `HEAD` (detached): bash: `git -C {cwd}/{sub} checkout {declared}` — normalize off detached
+        6. If {current} is `HEAD` (detached): normalize onto {declared} without discarding work — {head}: bash: `git -C {cwd}/{sub} rev-parse HEAD`; {decl}: bash: `git -C {cwd}/{sub} rev-parse --verify {declared} 2>/dev/null`. If {decl} is empty: bash: `git -C {cwd}/{sub} checkout -b {declared}`. Else if {decl} == {head}: bash: `git -C {cwd}/{sub} checkout {declared}`. Else: Exit process — {declared} ({decl}) diverges from the detached HEAD ({head}); a commit was made off-branch — resolve manually (commit-time normalization belongs in `/git:git-commit`)
         7. Else if {current} ≠ {declared}: Exit process — submodule {sub} on unexpected branch ({current}, expected {declared}); manual handling
-        8. skill: `/git-push --cwd {cwd}/{sub} --branch {declared}` — recursive call handles sub-submodules and the fetch+rebase+ff-push of {sub} itself
+        8. skill: `/git:git-push --cwd {cwd}/{sub} --branch {declared}` — recursive call handles sub-submodules and the fetch+rebase+ff-push of {sub} itself
 
 3. Preconditions (parent level):
     1. {current-branch}: bash: `git -C {cwd} rev-parse --abbrev-ref HEAD`
@@ -60,7 +59,7 @@ Push local commits to a named remote branch. Recurses depth-first into `.gitmodu
 4. Auto-commit pending changes:
     1. {pending}: bash: `git -C {cwd} status --short`
     2. If {pending} non-empty:
-        1. skill: `/git-commit --cwd {cwd}`
+        1. skill: `/git:git-commit --cwd {cwd}`
         2. If no commits were produced: Exit process: commit step produced nothing — investigate and re-invoke
 
 5. {upstream-set}: bash: `git -C {cwd} rev-parse --abbrev-ref @{upstream} 2>/dev/null` exits 0

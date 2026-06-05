@@ -10,13 +10,9 @@ allowed-tools:
   - Skill
 ---
 
-# /git-ci
+# /git:git-ci
 
 Report GitHub Actions run state for the latest commit on a branch. Recurses depth-first into declared submodules; submodules without `.github/workflows/` are soft-skipped as `no-ci`. Async background watcher when runs are in flight; foreground returns immediately.
-
-## Dependencies
-
-- `/process-flow-notation` — this body uses PFN; a cold session needs the spec in context.
 
 ## Variables
 
@@ -35,7 +31,7 @@ Report GitHub Actions run state for the latest commit on a branch. Recurses dept
 
 1. Recurse into submodules first (depth-first):
     1. {submodules}: bash: `git config -f {cwd}/.gitmodules --get-regexp '^submodule\..+\.path$' 2>/dev/null | awk '{print $2}'`
-    2. For each {sub} in {submodules}: skill: `/git-ci --cwd {cwd}/{sub}` — recursive call handles its own sub-submodules and CI check at this submodule
+    2. For each {sub} in {submodules}: skill: `/git:git-ci --cwd {cwd}/{sub}` — recursive call handles its own sub-submodules and CI check at this submodule
 
 2. If not {branch}: {branch}: bash: `git -C {cwd} branch --show-current`
 

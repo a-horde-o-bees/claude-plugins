@@ -1,6 +1,6 @@
 # git-doctor — submodule domain
 
-> Repair component for `/git-doctor`. Diagnoses and repairs submodule conformance so canonical git (`submodule status --recursive`, `foreach`, `--show-superproject-working-tree`) works. Called only when `detect.sh` flags submodule drift (BLOCKING). Detects drift, classifies by risk tier, proposes scoped fixes, applies only on approval.
+> Repair component for `/git:git-doctor`. Diagnoses and repairs submodule conformance so canonical git (`submodule status --recursive`, `foreach`, `--show-superproject-working-tree`) works. Called only when `detect.sh` flags submodule drift (BLOCKING). Detects drift, classifies by risk tier, proposes scoped fixes, applies only on approval.
 
 ## Rules
 

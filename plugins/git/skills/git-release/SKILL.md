@@ -7,10 +7,11 @@ allowed-tools:
   - Edit
   - Write
   - Bash(git *)
+  - Skill
   - AskUserQuestion
 ---
 
-# /git-release
+# /git:git-release
 
 Cut a tagged release. Read methodology, synthesize CHANGELOG + version from commit history, gate on user review, execute on approval.
 
@@ -18,8 +19,7 @@ Cut a tagged release. Read methodology, synthesize CHANGELOG + version from comm
 
 ## Dependencies
 
-- `/process-flow-notation` — this body uses PFN; a cold session needs the spec in context.
-- `/concise-prose`, `/description-authoring`, `/honesty` — the CHANGELOG entry and review presentation are authored under these.
+- `/writing:concise-prose`, `/writing:description-authoring`, `/communication:honesty` — the CHANGELOG entry and review presentation are authored under these.
 
 ## Variables
 
@@ -27,7 +27,7 @@ Cut a tagged release. Read methodology, synthesize CHANGELOG + version from comm
 
 ## Rules
 
-- Submodule recursion is opt-out by default — each submodule has its own release cadence. The recursion lives in the sibling git skills (`/git-commit`, `/git-push`, `/git-ci`); cutting a release is a deliberate per-project act. Pass `--recurse-submodules` to opt in (each declared submodule then runs its own `/git-release` flow before the parent records the new pin)
+- Submodule recursion is opt-out by default — each submodule has its own release cadence. The recursion lives in the sibling git skills (`/git:git-commit`, `/git:git-push`, `/git:git-ci`); cutting a release is a deliberate per-project act. Pass `--recurse-submodules` to opt in (each declared submodule then runs its own `/git:git-release` flow before the parent records the new pin)
 - Intent gate is mandatory — explicit user approval before any release-prep work spends tokens (methodology read, synthesizer spawn). Cheap preconditions run first so failures surface as informative errors, not as "release?" prompts on a dirty tree.
 - Review gate is mandatory — synthesized CHANGELOG and final version are presented for approval before any write/commit/tag/push.
 - Stage only manifest(s) + `CHANGELOG.md` — satisfies the per-commit auto-bump skip condition (manifest-only commits don't trigger the z-bump hook).
@@ -52,8 +52,8 @@ Cut a tagged release. Read methodology, synthesize CHANGELOG + version from comm
 2. Intent gate:
     1. {last-tag}: bash: `git tag --sort=-version:refname | grep -E '^v?[0-9]+\.[0-9]+\.[0-9]+$' | head -1` — most recent SemVer-shaped tag, empty if none
     2. {commits-since}: bash: `git rev-list --count {last-tag}..HEAD` if {last-tag} is non-empty, else bash: `git rev-list --count HEAD`
-    3. Present: about to cut a tagged release; will read methodology, spawn synthesizer over {commits-since} commits since {last-tag} (or full history if no prior SemVer tag), then review gate before any write/commit/tag/push. Cancel here to avoid the synthesis cost. Apply /concise-prose.
-    4. {approval}: AskUserQuestion — approve / cancel. Apply /confirm-shared-intent.
+    3. Present: about to cut a tagged release; will read methodology, spawn synthesizer over {commits-since} commits since {last-tag} (or full history if no prior SemVer tag), then review gate before any write/commit/tag/push. Cancel here to avoid the synthesis cost. Apply /writing:concise-prose.
+    4. {approval}: AskUserQuestion — approve / cancel. Apply /communication:confirm-shared-intent.
     5. If {approval} is cancel: Exit process: release cancelled
 
 3. Resolve methodology:
@@ -75,12 +75,12 @@ Cut a tagged release. Read methodology, synthesize CHANGELOG + version from comm
     3. If {tag-exists}: Exit process: tag {tag} already exists — pass a different version or delete the existing tag if it was created in error
 
 10. Review gate:
-    1. Display the following. Apply /concise-prose:
+    1. Display the following. Apply /writing:concise-prose:
         - {final-version} with source label (recommendation vs override)
         - {bump-axis-rationale} — why the synthesizer chose this axis
         - {changelog-entry} verbatim
         - Proposed manifest changes (paths + version transitions)
-    2. {decision}: AskUserQuestion — approve or describe adjustments. Apply /confirm-shared-intent.
+    2. {decision}: AskUserQuestion — approve or describe adjustments. Apply /communication:confirm-shared-intent.
     3. If {decision} is approve: proceed to step 11
     4. If version change: update {final-version}, re-validate per step 9, re-render rationale
     5. If CHANGELOG edit: re-spawn synthesizer with revision instructions, or edit inline if mechanical

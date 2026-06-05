@@ -1,6 +1,6 @@
 # git-doctor — default-branch domain
 
-> Advisory component for `/git-doctor`. `origin/HEAD` is unset, so `git symbolic-ref --short refs/remotes/origin/HEAD` returns empty and branch-resolving skills fall through to their fallback. Non-blocking — this is a convenience fix, not a safety gate. Called only when `detect.sh` flags `default-branch ADVISORY`.
+> Advisory component for `/git:git-doctor`. `origin/HEAD` is unset, so `git symbolic-ref --short refs/remotes/origin/HEAD` returns empty and branch-resolving skills fall through to their fallback. Non-blocking — this is a convenience fix, not a safety gate. Called only when `detect.sh` flags `default-branch ADVISORY`.
 
 ## Process
 

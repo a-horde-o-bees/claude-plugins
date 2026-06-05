@@ -1,6 +1,6 @@
 # Release Methodology
 
-Project-specific methodology for cutting tagged releases. Read by `/git-release` to validate inputs, locate manifest(s) to bump, format the CHANGELOG, and execute commit/tag/push correctly. Captured during the bootstrap dialogue and refined over time as the project's release practice evolves.
+Project-specific methodology for cutting tagged releases. Read by `/git:git-release` to validate inputs, locate manifest(s) to bump, format the CHANGELOG, and execute commit/tag/push correctly. Captured during the bootstrap dialogue and refined over time as the project's release practice evolves.
 
 This is the *local* version (under `.claude/git/release.md`) — fill in each section with this project's specifics. The plugin ships a starter template at `plugins/git/skills/git-release/assets/release.md`; the bootstrap dialogue uses it as scaffolding.
 
@@ -97,7 +97,7 @@ Project-specific gates that must pass before a release can proceed.
 
 ## Install command for users
 
-How users install or pin to a tagged release. Helps `/git-release` produce a useful post-release report. Examples by ecosystem:
+How users install or pin to a tagged release. Helps `/git:git-release` produce a useful post-release report. Examples by ecosystem:
 
 - Claude Code plugin marketplace: `/plugin marketplace add <org>/<repo>@v<x.y.z>`
 - npm: `npm install <package>@<x.y.z>`

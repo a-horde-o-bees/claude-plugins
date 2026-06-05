@@ -1,8 +1,8 @@
 # Release Bootstrap
 
-> Guided dialogue producing the project's local `.claude/git/release.md`. Fires the first time `/git-release` runs in a project without an existing methodology config.
+> Guided dialogue producing the project's local `.claude/git/release.md`. Fires the first time `/git:git-release` runs in a project without an existing methodology config.
 >
-> Detection-first: scan project artifacts (manifests, CHANGELOG, tags, auto-bump hooks) and pre-populate suggestions, then present one batched proposal rather than walking the user section-by-section. Subsequent invocations of `/git-release` read the written file directly.
+> Detection-first: scan project artifacts (manifests, CHANGELOG, tags, auto-bump hooks) and pre-populate suggestions, then present one batched proposal rather than walking the user section-by-section. Subsequent invocations of `/git:git-release` read the written file directly.
 
 ## Variables
 
@@ -25,7 +25,7 @@
     6. {github-release-workflow}: bash: `[ -f .github/workflows/release.yml ] && echo yes || echo no`
 
 2. {template}: Read `<THIS-FILE-DIR>/assets/release.md` — starter template anchoring output structure
-3. Compose draft `release.md` using {template} structure and detection-driven defaults for every section. Apply /markdown-authoring and /concise-prose:
+3. Compose draft `release.md` using {template} structure and detection-driven defaults for every section. Apply /writing:markdown-authoring and /writing:concise-prose:
     1. **Versioning scheme** — if {existing-tags} match `v\d+\.\d+\.\d+`, fill in semver `x.y.z`; otherwise list semver/calver/custom as choices
     2. **Manifest paths** — fill in {manifest-candidates}; flag version-bearing best guesses for user confirmation
     3. **Auto-bump behavior** — if {auto-bump-hook} ≠ `none`: fill in "auto-bump runs in pre-commit hook on every commit; release stages only manifest + CHANGELOG to skip"; else "no auto-bump"
@@ -40,7 +40,7 @@
     1. Display:
         - Composed `release.md` content verbatim
         - Detection summary (what was auto-detected vs guessed)
-    2. {decision}: AskUserQuestion — approve as-is or call out section-level adjustments. Apply /confirm-shared-intent.
+    2. {decision}: AskUserQuestion — approve as-is or call out section-level adjustments. Apply /communication:confirm-shared-intent.
     3. If {decision} is approve: proceed to step 5
     4. Apply user's directives (revise sections, swap defaults, add gates); re-render the revised draft
     5. Go to step 4.1

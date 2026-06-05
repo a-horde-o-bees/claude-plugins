@@ -2,7 +2,7 @@
 
 > Wait for GitHub Actions CI runs to complete for a commit SHA and return the final classification to the caller.
 >
-> Spawned asynchronously by `/git-ci` and `/git-checkpoint` — foreground returns immediately; this agent runs independently; the session receiving the task-completion result reports inline.
+> Spawned asynchronously by `/git:git-ci` and `/git:git-checkpoint` — foreground returns immediately; this agent runs independently; the session receiving the task-completion result reports inline.
 
 ## Variables
 

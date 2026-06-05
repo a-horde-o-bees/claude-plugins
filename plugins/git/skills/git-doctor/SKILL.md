@@ -12,13 +12,12 @@ allowed-tools:
   - AskUserQuestion
 ---
 
-# /git-doctor
+# /git:git-doctor
 
 The repo-health doctor. A cheap, local detector (`scripts/detect.sh`) scans the problem domains that gate everyday work; each domain's repair workflow loads into context **only when that domain is flagged** — so a healthy repo (the common case) pays just the detector, which is why this is cheap enough to pre-check on every commit and push.
 
 ## Dependencies
 
-- `/process-flow-notation` — this body uses PFN.
 - `_submodule.md`, `_default-branch.md`, `_ci.md` — per-domain workflows, Called only for a detected domain (so unneeded repair content stays out of context).
 
 ## Variables
