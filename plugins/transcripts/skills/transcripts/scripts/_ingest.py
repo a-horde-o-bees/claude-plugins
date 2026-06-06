@@ -18,6 +18,7 @@ from datetime import datetime
 from pathlib import Path
 
 from . import _environment as environment
+from . import _references
 
 
 @dataclass
@@ -167,24 +168,32 @@ def process_transcript(parent: Path) -> list[Event]:
 
 
 def insert_events(conn: sqlite3.Connection, events: list[Event]) -> int:
-    """Insert events into the DB; return count of newly added rows."""
-    before = conn.execute("SELECT COUNT(*) FROM events").fetchone()[0]
-    conn.executemany(
-        """
-        INSERT OR IGNORE INTO events
-            (file, line, project_name, parent_session, ts,
-             label, text, tool_use_label, ref, parent_message, uuid)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-        [
+    """Insert events into the DB; return count of newly added rows.
+
+    Each event's text passes through `_references.extract` so `events.text`
+    holds the ref-substituted form. Ref payloads are recorded (and hit_count
+    incremented) only for rows that actually insert — re-syncs `INSERT OR
+    IGNORE` existing rows (rowcount 0), so hit_count never double-counts.
+    """
+    added = 0
+    for e in events:
+        rewritten, h, payload = _references.extract(e.text)
+        cur = conn.execute(
+            """
+            INSERT OR IGNORE INTO events
+                (file, line, project_name, parent_session, ts,
+                 label, text, tool_use_label, ref, parent_message, uuid)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
             (e.file, e.line, e.project_name, e.parent_session, e.ts.isoformat(),
-             e.label, e.text, e.tool_use_label, e.ref, e.parent_message, e.uuid)
-            for e in events
-        ],
-    )
+             e.label, rewritten, e.tool_use_label, e.ref, e.parent_message, e.uuid),
+        )
+        if cur.rowcount == 1:
+            added += 1
+            if h is not None and payload is not None:
+                _references.upsert_ref(conn, h, payload, e.ts.isoformat())
     conn.commit()
-    after = conn.execute("SELECT COUNT(*) FROM events").fetchone()[0]
-    return after - before
+    return added
 
 
 def discover_transcripts(path: Path) -> list[Path]:

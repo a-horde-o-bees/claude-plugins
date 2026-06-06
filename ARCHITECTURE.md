@@ -17,7 +17,7 @@ Both materialize from the same skill folders in `plugins/<plugin>/skills/<skill>
 
 ## Plugins
 
-Plugin layout is undergoing domain reorganization per `plans/architecture-refactor.md` § Phase G. Current and planned end-state shown together; see TASKS.md for status.
+Plugin layout completed its domain reorganization into thematic plugins (the canonical set is `.claude-plugin/marketplace.json`); see `logs/decision/plugin-compartmentalization.md` for the rationale. The table below is pre-reorganization and is stale — flagged for a fresh pass.
 
 | Plugin | State | Domain |
 |---|---|---|

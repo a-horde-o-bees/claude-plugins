@@ -1,6 +1,6 @@
-# /skill-architecture reassert — verb stub (W5 of plans/skill-architecture.md)
+# /skill-architecture reassert — verb stub
 
-Status: **not yet implemented.** See [`plans/skill-architecture.md`](../../../../plans/skill-architecture.md) Workstream W5 for the implementation plan, including the parseable test-design format (Open Question S3), the scratch-directory destination for ephemeral fixtures (S2), and the detection-method automation approach (S4).
+Status: **not yet implemented.** The build plan was retired 2026-06-01 and this skill is under reconstruction; the runner design (parseable test-design format, scratch-directory destination for ephemeral fixtures, detection-method automation) is pending that work.
 
 ## Intended surface
 
@@ -25,4 +25,4 @@ Status: **not yet implemented.** See [`plans/skill-architecture.md`](../../../..
 
 ## Workflow
 
-1. Exit to user: the `reassert` verb is not yet implemented. To re-verify an assertion manually for now, open `assertions/<topic>/<assertion>.md` and follow its `Test design` section directly. The implementation plan is at `plans/skill-architecture.md` Workstream W5.
+1. Exit process: the `reassert` verb is not yet implemented. To re-verify an assertion manually for now, open `assertions/<topic>/<assertion>.md` and follow its `Test design` section directly. (Runner implementation is pending the skill's reconstruction.)

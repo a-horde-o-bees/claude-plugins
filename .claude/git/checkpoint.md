@@ -3,8 +3,9 @@
 Path: pr
 
 This repo integrates via feature branch → PR → merge (branch protection requires
-`test`, `validate`, `bump-check`). The base branch (`main`) is touched directly
-only by an admin bypass — `/git-checkpoint` handles that as base-mode.
+`test`, `validate`, `bump-check`). Checkpointing from `main` auto-creates a feature
+branch named from the change topic and runs the PR lifecycle; the base branch is
+touched directly only by an admin bypass — pass `--base-mode` to `/git-checkpoint`.
 
 ## Augmentations
 

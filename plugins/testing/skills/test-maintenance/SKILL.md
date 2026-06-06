@@ -31,8 +31,8 @@ Every callable a consumer invokes — CLI verb, subcommand, hook handler, skill 
 
 ## Anti-patterns
 
-**Configuration restating.** If manifest says `pattern: "*.py"` and test asserts `pattern == "*.py"`, the test verifies parsing, not system behavior. Test that pattern matching behaves correctly (file X matches pattern Y).
+**Don't restate configuration.** If the manifest says `pattern: "*.py"` and a test asserts `pattern == "*.py"`, it verifies parsing, not system behavior. Test that pattern matching behaves correctly (file X matches pattern Y).
 
-**Coverage metrics disconnected from risk.** 100% on a formatter has less value than 60% on permission enforcement with adversarial cases. Allocate effort proportional to failure impact.
+**Don't chase coverage metrics disconnected from risk.** 100% on a formatter is worth less than 60% on permission enforcement with adversarial cases. Allocate effort proportional to failure impact.
 
-**Unit-testing non-deterministic behavior.** Agent judgment, NL interpretation, and workflow execution quality can't be caught by unit tests. Don't assert specific strings, tool-call sequences, or prompt interpretations. Test deterministic infrastructure; evaluate agent behavior through protocols.
+**Don't unit-test non-deterministic behavior.** Agent judgment, NL interpretation, and workflow execution quality can't be caught by unit tests. Don't assert specific strings, tool-call sequences, or prompt interpretations. Test deterministic infrastructure; evaluate agent behavior through protocols.

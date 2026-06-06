@@ -24,6 +24,8 @@ recognized values; unknown values raise ValueError.
 
 import sqlite3
 
+from . import _references
+
 
 SHOW_EXCHANGES = {"messages", "active", "breakdown", "metrics", "timeframes"}
 SHOW_SESSIONS = {"timeframes", "bytes"}
@@ -140,6 +142,7 @@ def exchanges(
     from_ts: str | None = None,
     to_ts: str | None = None,
     show: list[str] | None = None,
+    expand_refs: str | set[str] | None = None,
 ) -> list[dict]:
     """Exchanges with metrics + messages, filtered by scope and date.
 
@@ -153,8 +156,13 @@ def exchanges(
     `show=["messages"]` adds messages: [...].
 
     Buckets combine — overlapping buckets union their fields.
+
+    `expand_refs` controls `[[ref:<hash>]]` expansion in message text (only
+    relevant with the messages bucket): `"all"`, a set of hashes, or None/empty
+    to leave refs as tokens (the default — refs in, no expansion).
     """
     show_set = _validate_show(show, SHOW_EXCHANGES)
+    expand = expand_refs if expand_refs is not None else set()
     want_timeframes = "timeframes" in show_set
     want_active = bool(show_set & {"active", "breakdown", "metrics"})
     want_breakdown = bool(show_set & {"breakdown", "metrics"})
@@ -234,6 +242,8 @@ def exchanges(
             """, [sess, *exs]).fetchall()
             for ex, label, text in msg_rows:
                 msg_type = "user" if label == "user_msg" else "assistant"
+                if expand:
+                    text = _references.expand_text(conn, text, expand)
                 msgs_by_pair.setdefault((sess, ex), []).append(
                     {"type": msg_type, "message": text}
                 )

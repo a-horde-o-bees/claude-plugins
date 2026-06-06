@@ -6,6 +6,8 @@
 
 - Skills with subjective outputs (writing style, art) often skip test cases — suggest the default per skill type but let the user decide
 - Gate on the user before writing files; never scaffold based on incomplete inputs
+- SKILL.md is the spine — a reader grasps the skill from it alone and descends to a `_<verb>.md`/reference file only for the path they're on. Keep references one level deep: a component shouldn't require chasing further links to be understood
+- Set `disable-model-invocation: true` for user-only one-shots — skills the model runs only when explicitly invoked, never auto-selects (a "do X now" command, not a capability the model picks among others)
 
 ## Process
 

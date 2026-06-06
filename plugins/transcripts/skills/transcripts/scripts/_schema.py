@@ -86,6 +86,28 @@ def matches_expected(db_path: Path, schema_builder: SchemaBuilder) -> bool:
         return False
 
 
+def _is_additive_upgrade(live: dict, canonical: dict) -> bool:
+    """True when canonical differs from live only by added whole tables.
+
+    The divergence is *additive* — and so safe to resolve by re-running the
+    idempotent builder, which only `CREATE TABLE IF NOT EXISTS` — exactly
+    when every table the live DB already has is present in canonical with an
+    identical definition, and the sole differences are tables canonical
+    declares that live lacks. Any shared table whose definition differs, or
+    any live table canonical doesn't declare, is a genuine conflict: the
+    builder can't reconcile it without dropping data, so it falls to the
+    backup-and-wipe path.
+
+    Callers reach this only after `matches_expected` returned False, so an
+    exact match (nothing to add) is impossible here; a True result always
+    means there is at least one table to create.
+    """
+    for name, live_table in live.items():
+        if name not in canonical or canonical[name] != live_table:
+            return False
+    return True
+
+
 @functools.cache
 def _canonical_signature(schema_builder: SchemaBuilder) -> dict:
     with tempfile.TemporaryDirectory() as tmp:
@@ -118,39 +140,54 @@ def rectify(
     Behavior:
     - Schema absent → build fresh; emit `absent → current`
     - Schema current → no-op; emit `current → current`
-    - Schema divergent + not force → raise InitError
-    - Schema divergent + force → write timestamped backup beside the
-      live DB, wipe, rebuild; emit a backup entry plus
+    - Schema divergent by added tables only → re-run the idempotent builder
+      in place (no backup, no wipe — existing rows are untouched); emit
+      `divergent → upgraded`
+    - Schema divergent by a genuine conflict + not force → raise InitError
+    - Schema divergent by a genuine conflict + force → write timestamped
+      backup beside the live DB, wipe, rebuild; emit a backup entry plus
       `divergent → reinstalled`
+
+    The additive path is what lets new tables (e.g. `references`, `blocks`)
+    land on an already-populated DB without destroying user-authored state
+    like `exchanges.description`, which is non-derivable.
     """
     state = _schema_state(db_path, schema_builder)
 
     if state == "current":
         return [{"path": rel_path, "before": "current", "after": "current"}]
 
-    if state == "divergent" and not force:
-        raise InitError(
-            f"{rel_path} has a divergent schema. Re-run with --force to "
-            f"back up the current file and rebuild, or invoke the system's "
-            f"`reset` verb to wipe and start fresh."
-        )
-
-    files: list[dict] = []
-
     if state == "divergent":
+        if _is_additive_upgrade(
+            schema_signature(db_path), _canonical_signature(schema_builder)
+        ):
+            schema_builder(str(db_path))  # CREATE IF NOT EXISTS only — additive
+            if not matches_expected(db_path, schema_builder):
+                raise InitError(
+                    f"{rel_path} could not be upgraded in place. Re-run with "
+                    f"--force to back up and rebuild, or invoke `reset`."
+                )
+            return [{"path": rel_path, "before": "divergent", "after": "upgraded"}]
+
+        if not force:
+            raise InitError(
+                f"{rel_path} has a divergent schema that can't be upgraded "
+                f"additively. Re-run with --force to back up the current file "
+                f"and rebuild, or invoke the system's `reset` verb to wipe and "
+                f"start fresh."
+            )
+
+        files: list[dict] = []
         backup = write_backup(db_path)
         backup_rel = _relative_backup_path(backup, rel_path)
         files.append({"path": backup_rel, "before": "absent", "after": "current"})
         db_path.unlink()
-        before = "divergent"
-        after = "reinstalled"
-    else:
-        before = "absent"
-        after = "current"
+        schema_builder(str(db_path))
+        files.append({"path": rel_path, "before": "divergent", "after": "reinstalled"})
+        return files
 
     schema_builder(str(db_path))
-    files.append({"path": rel_path, "before": before, "after": after})
-    return files
+    return [{"path": rel_path, "before": "absent", "after": "current"}]
 
 
 def reset_db(

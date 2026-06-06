@@ -41,4 +41,4 @@ Topics are added as rebuilt rungs land.
 
 ## Re-verification
 
-[`reassert`](../_reassert.md) re-runs assertions against the current Claude Code version (pending; see `plans/skill-architecture.md`). For now, follow each `## Procedure` manually, using [`runner.py`](./runner.py) to run and measure.
+[`reassert`](../_reassert.md) re-runs assertions against the current Claude Code version (pending; build plan retired 2026-06-01, reconstruction pending). For now, follow each `## Procedure` manually, using [`runner.py`](./runner.py) to run and measure.

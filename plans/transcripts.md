@@ -1,28 +1,30 @@
 # Transcripts — modernization plan
 
-Active workstream to bring the `transcripts` skill up to its intended architecture. Two coupled gaps to close: where the DB lives, and how repeated content is stored. Authored 2026-05-21 against the current `plugins/transcripts/skills/transcripts/` skill (post-Phase-G compartmentalization, post-CLI-from-MCP migration). Unblocked + promoted to In progress 2026-05-31 (gating questions resolved; state-location framework retired).
+Remaining work on the `transcripts` skill, in two independent workstreams: **B — content hash-reference table** (shrink the DB and read-time context by deduping repeated injected content) and **C — blocks & topics** (persist blocks as DB entities, add a topic axis, enable per-project billable-time reporting). Either may proceed first; they share only the additive-migration discipline (§C.5).
 
-This plan is the canonical "what's being done and why" for transcripts. Read it cold without conversation context. Cross-references at the bottom point at the design decisions and historical artifacts that fed into it.
+Read this cold, no conversation context. This is the canonical "what's being done and why" for transcripts. The workstream lettering starts at B because **Workstream A — the storage-location move (DB → `~/.claude/transcripts.db`, explicit `--project` for all per-project verbs) — shipped 2026-05-31** and is out of this plan; its letter is preserved only because external docs reference "Workstream B" by name.
+
+Open questions a picker-up faces are surfaced first; design detail follows.
+
+---
+
+## Open questions
+
+**Workstream B**
+
+1. **Hash algorithm + display.** sha256 (64 chars) vs sha1 (40). Non-cryptographic dedup — sha1 is fine. Truncation in `[[ref:...]]` rendering: full hash, first 12, first 16? Readability vs collision-safety (collision prob is astronomically small at any reasonable truncation for dedup). Defer until B3.
+
+**Workstream C**
+
+2. **Billable-topic interface.** `--billable-topics a,b,c` (explicit, stateless) vs `--topics-from <file>` (project keeps a list) vs a project-config convention the report auto-reads. Stateless arg is simplest; a project file is more ergonomic for a recurring bill. Pick one before C-4.
+3. **Topic vocabulary governance.** Free-text invites drift ("qbo-oauth" vs "oauth"). Worth a `block-list --topics` summary (distinct topics + counts) so a curator can spot and merge near-duplicates. Lightweight; no topics table.
+4. **Auto vs manual block membership at coalescing.** The topic/summary judgment is LLM work; should the skill offer a "suggest blocks for unblocked exchanges" helper, or stay purely a store the report workflow writes to? Lean: store only; the workflow (LLM) decides grouping.
 
 ---
 
 ## Background
 
-The transcripts skill queries Claude Code session transcripts as structured data. JSONL transcripts at `~/.claude/projects/*.jsonl` are ingested into a SQLite DB; the skill exposes nine verbs over that DB (`projects`, `sessions`, `exchanges`, `descriptions-set`, `descriptions-clear`, `report`, `settings`, `init`, `reset`). Every read verb auto-syncs new JSONL lines before querying.
-
-Two problems surface in the current implementation:
-
-### Problem 1 — DB lives in the calling project's tree
-
-The DB is resolved at `<CLAUDE_PROJECT_DIR>/.claude/transcripts/transcripts.db`, where `CLAUDE_PROJECT_DIR` falls back to `git rev-parse --show-toplevel` from cwd. The auto-sync ingests **all** sessions from `~/.claude/projects/` regardless of which project invoked the skill — so the DB in any given project's tree contains transcript content from every project the user has worked in.
-
-Consequences:
-
-- **Cross-project sensitive-content exposure.** If a user invokes transcripts from a project whose `.gitignore` doesn't cover `.claude/transcripts/*.db`, transcript content from unrelated projects can land in that repo's git history. The current claude-plugins repo gitignores it, but no other project automatically will.
-- **DB sprawl.** Each project the user invokes transcripts from grows its own copy of the full corpus. At ~213 MB observed in this repo, that's substantial duplication.
-- **No cross-project queries by default.** Each per-project DB has the full corpus, but per-project descriptions diverge.
-
-### Problem 2 — Repeated content inflates storage and read context
+### Workstream B — Repeated content inflates storage and read context
 
 Claude Code injects skill bodies, available-skills lists, hook outputs, and similar deterministic-marker content into the conversation stream. These appear in `events.text` for `user_msg` rows verbatim each time the same skill or hook fires. Empirical observation from the original transcripts friction log: skill-template injections inflate session text by 30–50%.
 
@@ -31,30 +33,22 @@ Consequences:
 - **Storage bloat in the DB.** The same skill body is stored once per invocation across sessions.
 - **Read-time context burn.** Any analytical consumer reading transcripts (agent or human) re-reads identical content repeatedly. With `exchanges --show messages` over a 60-exchange session this already exceeded the historical MCP response cap.
 
-Both problems compound: a bigger DB in a wrong location is more damaging than a smaller DB in a wrong location, and a wrong location for a contaminated DB is worse than for a clean one.
+### Workstream C — Blocks are ephemeral, so scope and grouping have nowhere to live
+
+The skill stores one **description** per exchange (`exchanges.description`, verb `descriptions-set`) and generates a `time-blocks` report (skill-orchestrated, see `_report-time-blocks.md`). A **block** groups exchanges that share a topic/focus; the report sums engaged time per block. But blocks exist only as text in rendered report files, recomputed by an LLM pass each run — the DB has only `events`, `exchanges`, `settings` (confirm: `sqlite3 ~/.claude/transcripts.db .tables`).
+
+Two consequences the first real consumer (the Monaco ERP-migration project, which bills client time from these reports) hit:
+
+- **Scope leaks into hard-coded exclusions.** With no persisted scope, billable-vs-not classification was redone each run and degraded into hard-coded session/exchange exclusion sets — unmaintainable, and they silently mis-fire as the corpus grows.
+- **No grouping above the single block.** Related work recurs across many sessions (e.g. an OAuth thread spanning four sessions); the report can't express "these twelve blocks are all one concern."
+
+The fix: persist blocks, let them span sessions, and add a broad **topic** label. Scope becomes a property of the topic, and billability becomes a small per-project **topic→billable** policy — reviewable, auditable ("why was this excluded?" → "its topic isn't billable"), and free of hard-coded refs.
 
 ---
 
 ## Decisions captured
 
-### A. Storage location
-
-**DB moves to `~/.claude/transcripts.db`** — a single top-level file under `~/.claude/`, no enclosing directory.
-
-- Cross-project by design — one DB serves all projects the user works in.
-- **No automatic project detection.** All per-project read verbs (`sessions`, `exchanges`, etc.) require an explicit `--project <name>` argument. The `projects` verb lists available names; users consult it to choose. `--all-projects` remains as the explicit opt-in for cross-project queries.
-- Removes `get_project_dir()` and its resolver-chain complexity entirely from this skill. The platform-discovery assertion at `plugins/skill-authoring/skills/skill-architecture/assertions/platform-discovery/project-dir-resolution.md` is retained for other consumers (navigator, future plugins); transcripts no longer needs it because the project is now always an explicit arg.
-- Top-level path under `~/.claude/` is the chosen convention for plugin state going forward. The earlier `~/.claude/plugins/data/<plugin>-<author>/` framework was retired 2026-05-31 — it assumed bin-mediated state (the ocd-run helper pattern) which the project no longer uses. New plugins choose their own top-level path; transcripts.db is the precedent.
-
-**Mechanics:**
-
-- `_environment.py` exposes `get_db_path()` returning `~/.claude/transcripts.db`. The previous DB-path branch (currently `<project>/.claude/transcripts/transcripts.db`) and the entire `get_project_dir()` function are removed.
-- `init` / `reset` target the new location.
-- Ingest source unchanged: `~/.claude/projects/` is the Claude Code session-log directory (where Claude Code writes `<project>/<session-id>.jsonl` files for every session). The skill scans that directory and inserts rows into `~/.claude/transcripts.db`. The two paths are unrelated targets — `~/.claude/projects/` is read-only source, `~/.claude/transcripts.db` is the skill's own writable store.
-- One-time migration: deletion is acceptable. Existing DBs at `<project>/.claude/transcripts/transcripts.db` should be wiped after confirming zero user-authored descriptions (the only non-derivable state). This repo's DB had zero; sweep other projects before deleting.
-- Drop the `.gitignore` block at `claude-plugins/.gitignore:20-22` once the move ships.
-
-### B. Content hash-reference table
+### B — Content hash-reference table
 
 **Repeated content is extracted into a hash-keyed reference table; the canonical `events.text` stores text with `[[ref:hash]]` substitutions.**
 
@@ -122,49 +116,29 @@ In priority order, smallest mechanical leverage first:
 
 Anything beyond this list waits for empirical evidence that the marker is reliable.
 
----
+### C — Blocks & topics
 
-## Workstream A — Storage-location move (ship first)
+#### C.1 — Blocks are persisted in `~/.claude/transcripts.db`
 
-Lower-risk refactor with immediate security win. Land before Workstream B so the content-dedup work happens in the right home.
+Two new tables (not a project-local sidecar — blocks are a generic skill capability). The skill owns the mechanism; projects own the billable policy (C.4).
 
-### A1 — Path + project handling
+#### C.2 — Blocks may span session boundaries
 
-- `_environment.py`: add `get_db_path()` returning `~/.claude/transcripts.db` (expanduser, no enclosing directory); replace all project-derived DB-path callers with this.
-- `_environment.py`: **remove `get_project_dir()`** and any helpers in the resolver chain (`_reject_if_inside_home`, env-var lookup, session-tail scan, git-toplevel fallback). They were only needed to derive a "current project" — that concept is gone now that callers must supply `--project` explicitly.
-- `_init.py`: `init` and `reset` target the new path.
-- The platform-discovery assertion at `plugins/skill-authoring/skills/skill-architecture/assertions/platform-discovery/project-dir-resolution.md` is retained as a reference for future plugins (navigator); transcripts no longer depends on it.
+A block's membership is a set of `(parent_session, exchange)` pairs that can reference **different** sessions. A block is the right grouping whenever its summary description holds across the member exchanges, regardless of which session they came from. One exchange belongs to **at most one** block (enforced by a unique index). This supersedes the current within-session-only coalescing in `_report-time-blocks.md` step 6.
 
-### A2 — Explicit `--project` for all per-project verbs
+#### C.3 — `topic` is a broad column on the block
 
-- `sessions`, `exchanges`, `descriptions-set`, `descriptions-clear`, `report`, and any other verb that filters by project: **require `--project <name>`**. No default detection, no fallback to a current project.
-- `projects` lists available names with no required arg; users consult it to pick a `--project` value for subsequent commands.
-- `--all-projects` remains as the explicit opt-in for cross-project queries.
-- Verbs missing `--project` exit with a usage error pointing at `projects` for the available list. No silent default.
+A very short phrase naming the block's focus — deliberately **broader** than the per-block `summary`, so multiple blocks (and their summaries) sharing a concern collapse to one topic (e.g. summaries "OAuth writeback patch", "stale-token re-auth", "ngrok callback tunnel" → topic `qbo-oauth`). Free-text column on `blocks` (not a separate `topics` table) — dedup by string convention. Topics are assigned during coalescing by the same LLM pass that writes the summary, per `/writing:description-authoring`.
 
-### A3 — Migration handling
+#### C.4 — Billability is a per-project policy over topics
 
-- Wipe-on-init: when `~/.claude/transcripts.db` is absent (first run or after manual deletion), `init` ingests from the Claude Code session-log directory at `~/.claude/projects/` (Claude Code's writable session-storage path; format is `~/.claude/projects/<project>/<session-id>.jsonl`) and populates the new DB.
-- Existing project-tree DBs at `<project>/.claude/transcripts/transcripts.db` become orphaned by the move. Document in SKILL.md that they can be deleted manually; user-authored descriptions in them are lost (consistent with "no user state in DB" being the design assumption — sweep before deleting).
+The skill stays project-agnostic: it stores topics and offers **topic-filtered** querying/reporting (e.g. "include only blocks whose topic is in this set"). The *project* declares which topics bill. The skill never hard-codes billability. Interface options for the implementer are Open question 2. The consumer keeps its billable/non-billable topic list in its own repo.
 
-### A4 — Gitignore cleanup
+#### C.5 — Migration MUST be additive (no wipe) — shared by B.1 and C.1
 
-- Remove `.claude/transcripts/*.db` and `.claude/transcripts/*.db.backup-*` lines from `claude-plugins/.gitignore`.
-- Add a note to the SKILL.md and the project's README if they reference the old path.
+**Hard requirement for any new table (the `references` table in B and both block tables in C).** `_schema.py` enforces a strict rectify contract: a live DB either *matches* the canonical schema signature or is *divergent*, and the only built-in remediation for divergent is `--force`/`reset`, which **backs up and wipes**. Adding tables naively marks every existing `~/.claude/transcripts.db` divergent → the built-in fix would **destroy all user-authored `descriptions`**, which are the sole non-derivable state (re-sync re-ingests events from `~/.claude/projects/` but cannot restore descriptions).
 
-### A5 — SKILL.md updates
-
-- Frontmatter description: cross-project DB at `~/.claude/transcripts.db`; per-project queries require explicit `--project <name>` (run `projects` to list names).
-- Argument-hint: per-project verbs now show `--project <name>` as required (not optional).
-- Process Model section: replace "The DB lives at `<project>/.claude/transcripts/transcripts.db`" with `~/.claude/transcripts.db`; remove any "current project" / cwd-detection language.
-- Add a short "Choosing a project" note pointing users at `projects` as the canonical list.
-- Add a "Migrating from a per-project DB" note for users with old DBs (delete the old file; init creates the new one).
-
-### A6 — Test pass
-
-- Existing test suite (`plugins/transcripts/skills/transcripts/scripts/` — verify whether there's a tests/ dir, add if missing).
-- New tests cover: `get_db_path()` returns `~/.claude/transcripts.db`; `init` creates the DB at that path; per-project verbs error cleanly when `--project` is omitted; queries with `--project <name>` and `--all-projects` work against the new DB; `projects` lists ingested project names.
-- Removed-feature tests: confirm `get_project_dir()` and its resolver helpers are gone (no dead imports, no stale env-var references).
+`_settings.py` already establishes the codebase's non-destructive pattern: it `CREATE TABLE IF NOT EXISTS` + `ALTER TABLE ADD COLUMN` on the next init call, upgrading in place. Extend that: the init flow must **additively create new tables on existing DBs** rather than treating their absence as wipe-worthy divergence. New tables via `CREATE TABLE IF NOT EXISTS` never touch existing tables' data; the work is teaching `rectify`/init to treat "missing new table" as an additive upgrade. Verify against a *copy* of a real populated DB that descriptions survive.
 
 ---
 
@@ -172,7 +146,7 @@ Lower-risk refactor with immediate security win. Land before Workstream B so the
 
 ### B1 — Schema + extraction infrastructure
 
-- New `references` table inside `~/.claude/transcripts.db`: `(hash TEXT PRIMARY KEY, payload TEXT NOT NULL, byte_size INTEGER, first_seen TIMESTAMP, hit_count INTEGER)`.
+- New `references` table inside `~/.claude/transcripts.db`: `(hash TEXT PRIMARY KEY, payload TEXT NOT NULL, byte_size INTEGER, first_seen TIMESTAMP, hit_count INTEGER)`. Add it additively per §C.5 (no wipe).
 - Ingest pipeline gains an extraction stage between JSONL read and `events.text` write. The stage runs each registered pattern; on match, computes hash, upserts the references row (incrementing `hit_count`), and substitutes `[[ref:<hash>]]` in the text.
 - `events.text` becomes "rewritten text" — original JSONL content is *not* stored in `events.text` for matched patterns. The references table is the truth for matched payloads; the JSONL is the original source of truth for everything.
 - First pattern shipped: skill body injections.
@@ -196,7 +170,7 @@ Lower-risk refactor with immediate security win. Land before Workstream B so the
 
 ### B4 — Audit doc rollout
 
-- `plugins/transcripts/skills/transcripts/extraction-patterns.md` ships as part of B1 with the skill-body row.
+- `extraction-patterns.md` ships as part of B1 with the skill-body row.
 - Subsequent patterns (available-skills, CLAUDE.md, hooks) add rows before deployment.
 - The doc is referenced from SKILL.md so consumers know how to read refs.
 
@@ -208,51 +182,104 @@ Lower-risk refactor with immediate security win. Land before Workstream B so the
 
 ---
 
-## Sequencing
+## Workstream C — Blocks & topics
 
-```
-A (storage location)
-├── A1 path + project handling (drop get_project_dir entirely)
-├── A2 explicit --project for all per-project verbs
-├── A3 migration
-├── A4 gitignore cleanup
-├── A5 SKILL.md updates
-└── A6 tests
-        ↓
-B (hash-reference table)
-├── B1 schema + skill-body extraction
-├── B2 read-side expansion
-├── B3 empirical validation  ← gate before scaling
-├── B4 audit doc + further patterns (gated by B3 result)
-└── B5 backfill
+### C-1 — Schema + additive migration
+
+DDL home: `plugins/transcripts/skills/transcripts/scripts/_db.py` (currently holds `events` + `exchanges`).
+
+```sql
+CREATE TABLE IF NOT EXISTS blocks (
+    block_id    INTEGER PRIMARY KEY,
+    topic       TEXT,              -- broad focus; shared across blocks (C.3)
+    summary     TEXT,              -- the specific block description
+    created_at  TEXT,
+    updated_at  TEXT
+);
+
+CREATE TABLE IF NOT EXISTS block_exchanges (   -- membership; spans sessions (C.2)
+    block_id        INTEGER NOT NULL,
+    parent_session  TEXT    NOT NULL,
+    exchange        INTEGER NOT NULL,
+    PRIMARY KEY (block_id, parent_session, exchange)
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_block_exch_one_block
+    ON block_exchanges(parent_session, exchange);   -- one block per exchange
+CREATE INDEX IF NOT EXISTS idx_blocks_topic ON blocks(topic);
 ```
 
-A is short; B has the empirical gate at B3. Don't ship B4 patterns until B3 results land.
+`(parent_session, exchange)` is the existing exchange identity (see the `exchanges` PK). Membership rows referencing a pruned/absent session are tolerated (a consumer may have lost a source transcript); readers must not assume every member exchange still resolves in `exchanges`/`events`. Add the tables additively per §C.5; test on a copy of a populated DB that descriptions survive.
+
+### C-2 — Block verbs (`__main__.py`)
+
+- `block-create --topic <t> --summary <s> --exchanges <session:exch,...>` → returns `block_id`. Accepts cross-session member lists.
+- `block-set --block <id> [--topic ..] [--summary ..]`, `block-add-exchanges`, `block-remove-exchanges`, `block-delete`.
+- `block-list [--project X | --all-projects] [--topic T]` → blocks with members + computed time.
+- Batch-shaped where natural (mirror `descriptions-set`). Emit JSON like the other passthrough verbs.
+
+### C-3 — Coalescing produces persisted blocks
+
+- Revise `_report-time-blocks.md`: the coalescing step now (a) may group across sessions, (b) writes each block via the verbs with a `topic`, (c) persists once and is reused on later runs (don't re-coalesce already-blocked exchanges).
+- The report step reads persisted blocks instead of recomputing them.
+
+### C-4 — Topic-filtered time-blocks report
+
+Fold the first consumer's hard-won report requirements into `report time-blocks`:
+
+- **Billable filter:** include only blocks whose `topic` is in the project's billable set (interface = Open question 2).
+- **Billing basis = Combined** (User+Agent engaged seconds); default output shows Combined only.
+- **`--fill off|on` toggle (default off):** credit each *unobserved* compose pause one `avg_user_time_s`. Unobserved = `user_s` is NULL **or** 0. Rationale: `user_s` measures the compose gap only when ≤ the idle threshold; a real prompt typed after a long think, or typed-ahead during agent work, registers 0 (the wait is bucketed as `idle_s` on the prior exchange), so 0 ≠ zero effort. OFF bills only measured compose time (conservative); ON estimates true human engagement. Measured magnitude on the first consumer: fill moved User time ~47.5h→66.7h (≈12.6% of Combined).
+- **Column header is "Summary Description"** (the stored field is `description`; "Purpose" was stale wording).
+- **In-scope/billable only in output; a day with no billable blocks produces no file.**
+- **Two-tier layout (consumer convention, keep generic):** top-level per-day = Combined (the bill); `detail/` per-day = User/Agent split (honours `--fill`); plus summaries and a span roll-up.
+
+### C-5 — Docs + version + reinstall
+
+- Update `SKILL.md`: new verbs; blocks can span sessions; topic concept; report's billable-topic filter + `--fill`.
+- Update `_report-time-blocks.md` per C-3/C-4.
+- Bump the plugin version; reinstall so the cache copy at `~/.claude/plugins/cache/a-horde-o-bees/transcripts/<version>/` and the marketplace mirror at `~/.claude/plugins/marketplaces/a-horde-o-bees/` pick up the change. **Never edit the cache copy directly — it is the build artifact.**
+
+### First consumer / reference dataset
+
+The Monaco ERP-migration project (`~/projects/monaco-lock-company--erp-migration`) drove Workstream C and is the test bed:
+
+- **~1,534 exchanges across 18 sessions are already described** in the live DB (`--project monaco...`). Good real corpus for C-3/C-4.
+- Consumer quirk to tolerate, not solve in the skill: one of Monaco's early sessions (2026-04-21..04-26) was pruned from `~/.claude/projects/`, so some blocks' member exchanges won't resolve — the skill needs only C.2's "tolerate absent members" guarantee. The recovered User/Agent split for those pruned days exists only in Monaco's git history (pre-deletion `logs/time-blocks/detail/2026-04-2x.md` in HEAD) — the durable source if those days ever need re-seeding.
+
+The consumer's report requirements are captured forward in C-4 (Combined basis, `--fill` default off, billable-by-topic, "Summary Description"). No project-local prototype is retained on the Monaco side — the design here supersedes it entirely.
 
 ---
 
-## Open questions
+## Sequencing
 
-1. **Hash algorithm + display.** sha256 (64 chars) vs sha1 (40 chars). Non-cryptographic dedup — sha1 is fine. Truncation in `[[ref:...]]` rendering: full hash, first 12, first 16? Affects readability vs collision-safety (collision prob is astronomically small at any reasonable truncation for dedup). Defer until B3.
+```
+B (hash-reference table)              C (blocks & topics)   ── independent of B
+├── B1 schema + skill-body extraction ├── C-1 schema + additive migration
+├── B2 read-side expansion            ├── C-2 block verbs
+├── B3 empirical validation ← gate    ├── C-3 coalescing → persisted blocks
+├── B4 audit doc + further patterns   ├── C-4 topic-filtered report (+ --fill)
+└── B5 backfill                       └── C-5 docs + version + reinstall
+```
 
-2. **What does the navigator state-location migration look like once transcripts ships?** Same top-level-path pattern; target shape is `~/.claude/navigator.db` (or whatever the navigator's primary store is). Cross-reference once this plan completes.
-
-(Closed questions — moved into Decisions captured above: project scope → A2 explicit `--project` required (no default detection); references table location → same DB; marker-in-hash → no, marker stays verbatim; state-location framework → retired 2026-05-31.)
+B and C are independent — either order, or in parallel. Within B, don't ship B4's further patterns until the B3 empirical gate lands. Both B1 and C-1 add tables and so share the §C.5 additive-migration requirement; do that work once and reuse.
 
 ---
 
 ## Cross-references
 
-- **Original friction:** Pre-modernization, surfaced during 2026-05-01 consolidated-profile refresh. The skill-template injection observation drove Workstream B. The friction log itself (`logs/problem/transcripts.md`) was deleted on 2026-05-21; the substantive item is captured in B above.
-- **Architecture context:** `plans/architecture-refactor.md` Phase D (transcripts CLI-from-MCP migration, completed 2026-05-19) and Phase G (plugin compartmentalization). This plan resumes where Phase D left off — the storage-location move was implicitly deferred during Phase D and never tracked.
-- **MCP retirement:** `logs/decision/mcp-benching.md` — historical decision to bench MCP servers; transcripts portion executed in Phase D.
+- **Original friction (B):** Pre-modernization, surfaced during 2026-05-01 consolidated-profile refresh. The skill-template injection observation drove Workstream B. The friction log (`logs/problem/transcripts.md`) was deleted on 2026-05-21; the substantive item is captured in B above.
+- **Architecture context:** the transcripts CLI-from-MCP migration (completed 2026-05-19) and plugin compartmentalization both shipped; see `logs/decision/mcp-benching.md` and `logs/decision/plugin-compartmentalization.md` (the former `architecture-refactor.md` plan was retired 2026-06-01).
+- **Schema mechanics:** `scripts/_schema.py` (rectify-or-wipe contract), `scripts/_db.py` (events/exchanges DDL), `scripts/_settings.py` (the additive ALTER precedent to follow for §C.5).
+- **Report workflow:** `skills/transcripts/_report-time-blocks.md`.
 
 ---
 
 ## Out of scope
 
+- Navigator storage-location move — same top-level-path pattern as the shipped transcripts storage move; separate workstream, lands at `plugins/navigator/`.
 - Verb-naming-rectification — broader project-wide naming plan (`logs/idea/verb-naming-rectification.md`); separate decision pending whether to revive or retire it.
-- Navigator storage-location move — same top-level-path pattern as Workstream A; separate workstream once this plan ships.
 - ocd-old Phase E migration — orthogonal.
 - Performance work on the SQL queries themselves — only if validation surfaces query-side bottlenecks.
-- Adding new report formats — `time-blocks` is the only one today; new formats are independent feature work.
+- Adding new report formats — `time-blocks` is the only one; C-4 enhances it, but new formats are independent feature work.
+- The consumer's project-local report layout and billable-topic list — those stay in the consuming repo.
+- Time-attribution model changes (the `user_s`/`agent_s`/idle bucketing) — the `--fill` toggle works within the existing model; reworking it is separate.

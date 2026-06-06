@@ -34,7 +34,7 @@ Three plausible causes, listed in order of cheapest-to-test:
 Opus dry-test before any description rewriting — distinguishes (1) from (2)/(3). Same query, same SKILL.md, only the model changes. Result either fires or doesn't.
 
 - Fires → description is OK at Opus, Haiku threshold is the explanation, move on.
-- Doesn't fire → description itself needs reshaping. Spawn a Phase 1 agent (per [logs/pattern/description-refinement-two-phase-loop.md](../pattern/description-refinement-two-phase-loop.md)) to derive a fresh candidate without my prior draft visible. Or feed the failed query back through `improve_description.py` for an automated rewrite.
+- Doesn't fire → description itself needs reshaping. Spawn a Phase 1 agent (per [logs/patterns/description-refinement-two-phase-loop.md](../patterns/description-refinement-two-phase-loop.md)) to derive a fresh candidate without my prior draft visible. Or feed the failed query back through `improve_description.py` for an automated rewrite.
 
 ## Status
 

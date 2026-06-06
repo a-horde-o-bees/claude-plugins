@@ -28,7 +28,7 @@ not yet re-probed with `runner.py`; rows marked *confirmed* have a probe.
 
 ## The deeper issue: "project root" is ambiguous under submodules
 
-If plugins become git submodules (see `plans/git-plugin-submodule-expansion.md`), a
+If plugins become git submodules (see `plans/git-plugin.md`), a
 skill running inside `plugins/<x>/` could legitimately want **either**:
 
 - the **submodule's own root** — `--show-toplevel` gives this; or

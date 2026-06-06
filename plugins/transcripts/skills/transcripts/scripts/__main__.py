@@ -10,6 +10,15 @@ Verbs:
                [--from D --to D] [--show ...]                                 Per-exchange rows (scope required)
     descriptions-set    <session> <json>                                      Batch upsert descriptions
     descriptions-clear  <session> <exchange1> [<exchange2> ...]               Batch clear descriptions
+    block-create        [--topic T --summary S --exchanges S:E,...]           Create a block; returns block_id
+    block-set           --block ID [--topic T] [--summary S]                  Update a block's topic/summary
+    block-add-exchanges --block ID --exchanges S:E,...                        Add members (may span sessions)
+    block-remove-exchanges --block ID --exchanges S:E,...                     Remove members
+    block-delete        --block ID                                            Delete a block + membership
+    block-list  (--project X | --all-projects | --session Y) [--topic T]
+                [--billable-topics a,b,c] [--topics] [--fill off|on]          Blocks/topics with engaged time
+    refs       [--limit N | --expand <hash>]                                  Inspect the content hash-reference table
+    backfill                                                                  Apply extraction patterns to existing rows
     settings   [<key> [<value>]]                                              Config + derived stats
     init       [--force]                                                      Rectify DB to canonical schema
     reset                                                                     Backup + wipe DB
@@ -28,7 +37,7 @@ import json
 import sqlite3
 import sys
 
-from . import _db, _descriptions, _ingest, _init, _scope, _settings, _stats
+from . import _blocks, _db, _descriptions, _ingest, _init, _references, _scope, _settings, _stats
 from ._errors import InitError, NotReadyError
 
 
@@ -112,8 +121,126 @@ def cmd_exchanges(args: argparse.Namespace) -> int:
             from_ts=args.from_ts or None,
             to_ts=args.to_ts or None,
             show=args.show or None,
+            expand_refs=_references.parse_expand_refs(args.expand_refs),
         )
         print(json.dumps(data, indent=2))
+    finally:
+        conn.close()
+    return 0
+
+
+def _time_params(conn: sqlite3.Connection) -> tuple[float, float]:
+    """Return (threshold_s, avg_user_time_s) for engaged-time computation."""
+    threshold_s = float(_settings.get(conn, "threshold_min")) * 60.0  # type: ignore[arg-type]
+    return threshold_s, _stats.avg_user_time(conn, threshold_s)
+
+
+def cmd_block_create(args: argparse.Namespace) -> int:
+    conn = _connect()
+    try:
+        members = _blocks.parse_members(args.exchanges, conn) if args.exchanges else []
+        block_id = _blocks.create_block(conn, args.topic or None, args.summary or None, members)
+        print(json.dumps({"block_id": block_id, "n_members": len(members)}, indent=2))
+    finally:
+        conn.close()
+    return 0
+
+
+def cmd_block_set(args: argparse.Namespace) -> int:
+    conn = _connect()
+    try:
+        _blocks.set_block(conn, args.block, topic=args.topic, summary=args.summary)
+        print(json.dumps({"block_id": args.block, "updated": True}, indent=2))
+    finally:
+        conn.close()
+    return 0
+
+
+def cmd_block_add_exchanges(args: argparse.Namespace) -> int:
+    conn = _connect()
+    try:
+        members = _blocks.parse_members(args.exchanges, conn)
+        _blocks.add_exchanges(conn, args.block, members)
+        print(json.dumps({"block_id": args.block, "added": len(members)}, indent=2))
+    finally:
+        conn.close()
+    return 0
+
+
+def cmd_block_remove_exchanges(args: argparse.Namespace) -> int:
+    conn = _connect()
+    try:
+        members = _blocks.parse_members(args.exchanges, conn)
+        removed = _blocks.remove_exchanges(conn, args.block, members)
+        print(json.dumps({"block_id": args.block, "removed": removed}, indent=2))
+    finally:
+        conn.close()
+    return 0
+
+
+def cmd_block_delete(args: argparse.Namespace) -> int:
+    conn = _connect()
+    try:
+        existed = _blocks.delete_block(conn, args.block)
+        print(json.dumps({"block_id": args.block, "deleted": existed}, indent=2))
+    finally:
+        conn.close()
+    return 0
+
+
+def cmd_block_list(args: argparse.Namespace) -> int:
+    conn = _connect()
+    try:
+        _ingest.sync(conn, "" if args.all_projects else args.project)
+        threshold_s, avg_user_s = _time_params(conn)
+        fill = args.fill == "on"
+        if args.topics:
+            data = _blocks.topic_summary(
+                conn, threshold_s, avg_user_s,
+                project_filter="" if args.all_projects else args.project,
+                session_id=args.session, fill=fill,
+            )
+        else:
+            billable = (
+                {t.strip() for t in args.billable_topics.split(",") if t.strip()}
+                if args.billable_topics else None
+            )
+            data = _blocks.list_blocks(
+                conn, threshold_s, avg_user_s,
+                project_filter="" if args.all_projects else args.project,
+                session_id=args.session, topic=args.topic,
+                billable_topics=billable, fill=fill,
+            )
+        print(json.dumps(data, indent=2))
+    finally:
+        conn.close()
+    return 0
+
+
+def cmd_refs(args: argparse.Namespace) -> int:
+    """Inspect the content hash-reference table (storage dedup audit)."""
+    conn = _connect()
+    try:
+        if args.expand:
+            row = conn.execute(
+                "SELECT payload FROM refs WHERE hash = ?", (args.expand,)
+            ).fetchone()
+            if row is None:
+                raise LookupError(f"no ref matching '{args.expand}'")
+            print(json.dumps({"hash": args.expand, "payload": row[0]}, indent=2))
+            return 0
+        print(json.dumps(_references.list_refs(conn, limit=args.limit), indent=2))
+    finally:
+        conn.close()
+    return 0
+
+
+def cmd_backfill(_args: argparse.Namespace) -> int:
+    """Apply extraction patterns to existing events.text in place. Idempotent."""
+    conn = _connect()
+    try:
+        updated = _references.backfill(conn)
+        print(json.dumps({"rows_rewritten": updated}, indent=2))
     finally:
         conn.close()
     return 0
@@ -226,7 +353,58 @@ def main() -> None:
     p_exchanges.add_argument("--to", dest="to_ts", default="", help="ISO timestamp upper bound")
     p_exchanges.add_argument("--show", nargs="*", default=[],
                             help="Add detail buckets: messages, active, breakdown, metrics, timeframes")
+    p_exchanges.add_argument("--expand-refs", dest="expand_refs", default="none",
+                            help="Expand [[ref:hash]] tokens in messages: 'all', 'none' (default), or comma-separated hashes")
     p_exchanges.set_defaults(func=cmd_exchanges)
+
+    p_bc = sub.add_parser("block-create", help="Create a block (topic + summary + members)")
+    p_bc.add_argument("--topic", default="", help="Broad focus label shared across blocks")
+    p_bc.add_argument("--summary", default="", help="The specific block description")
+    p_bc.add_argument("--exchanges", default="",
+                      help="Members: <session>:<exch> or <session>:<a>-<b>, comma-separated; may span sessions")
+    p_bc.set_defaults(func=cmd_block_create)
+
+    p_bs = sub.add_parser("block-set", help="Update a block's topic and/or summary")
+    p_bs.add_argument("--block", type=int, required=True, help="Block id")
+    p_bs.add_argument("--topic", default=None, help="New topic")
+    p_bs.add_argument("--summary", default=None, help="New summary")
+    p_bs.set_defaults(func=cmd_block_set)
+
+    p_bae = sub.add_parser("block-add-exchanges", help="Add members to a block")
+    p_bae.add_argument("--block", type=int, required=True, help="Block id")
+    p_bae.add_argument("--exchanges", required=True, help="Members to add (see block-create)")
+    p_bae.set_defaults(func=cmd_block_add_exchanges)
+
+    p_bre = sub.add_parser("block-remove-exchanges", help="Remove members from a block")
+    p_bre.add_argument("--block", type=int, required=True, help="Block id")
+    p_bre.add_argument("--exchanges", required=True, help="Members to remove (see block-create)")
+    p_bre.set_defaults(func=cmd_block_remove_exchanges)
+
+    p_bd = sub.add_parser("block-delete", help="Delete a block and its membership")
+    p_bd.add_argument("--block", type=int, required=True, help="Block id")
+    p_bd.set_defaults(func=cmd_block_delete)
+
+    p_bl = sub.add_parser("block-list", help="List blocks with members + engaged time")
+    bl_scope = p_bl.add_mutually_exclusive_group()
+    bl_scope.add_argument("--project", default="", help="Blocks with a member in a matching project")
+    bl_scope.add_argument("--all-projects", action="store_true", help="Every block")
+    bl_scope.add_argument("--session", default="", help="Blocks with a member in this session")
+    p_bl.add_argument("--topic", default="", help="Restrict to one topic")
+    p_bl.add_argument("--billable-topics", dest="billable_topics", default="",
+                      help="Comma-separated topic set (the project's billable policy)")
+    p_bl.add_argument("--topics", action="store_true",
+                      help="Return the topic vocabulary (distinct topics + counts + time) instead of blocks")
+    p_bl.add_argument("--fill", choices=["off", "on"], default="off",
+                      help="Credit unobserved compose pauses one avg_user_time_s (default off)")
+    p_bl.set_defaults(func=cmd_block_list)
+
+    p_refs = sub.add_parser("refs", help="Inspect the content hash-reference table")
+    p_refs.add_argument("--limit", type=int, default=50, help="Max refs to list (by reuse weight)")
+    p_refs.add_argument("--expand", default="", help="Print the full payload for one hash")
+    p_refs.set_defaults(func=cmd_refs)
+
+    p_backfill = sub.add_parser("backfill", help="Apply extraction patterns to existing rows (idempotent)")
+    p_backfill.set_defaults(func=cmd_backfill)
 
     p_settings = sub.add_parser("settings", help="Show/set config; lists derived stats")
     p_settings.add_argument("key", nargs="?", default="")

@@ -59,4 +59,4 @@ Proposed, not implemented. Patch lives in user's project, not in upstream `anthr
 ## Related
 
 - [logs/decision/rules-to-skills-pivot.md](../decision/rules-to-skills-pivot.md) — set up the conditions where we need to refine many descriptions
-- [logs/pattern/description-refinement-two-phase-loop.md](../pattern/description-refinement-two-phase-loop.md) — uses run_eval as the Phase 2 tool
+- [logs/patterns/description-refinement-two-phase-loop.md](../patterns/description-refinement-two-phase-loop.md) — uses run_eval as the Phase 2 tool

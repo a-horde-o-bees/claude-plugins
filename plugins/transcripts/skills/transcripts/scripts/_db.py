@@ -43,6 +43,33 @@ CREATE TABLE IF NOT EXISTS exchanges (
 
 CREATE INDEX IF NOT EXISTS idx_exchanges_session ON exchanges(parent_session);
 
+CREATE TABLE IF NOT EXISTS refs (
+    hash       TEXT PRIMARY KEY,
+    payload    TEXT NOT NULL,
+    byte_size  INTEGER,
+    first_seen TEXT,
+    hit_count  INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS blocks (
+    block_id   INTEGER PRIMARY KEY,
+    topic      TEXT,
+    summary    TEXT,
+    created_at TEXT,
+    updated_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS block_exchanges (
+    block_id       INTEGER NOT NULL,
+    parent_session TEXT    NOT NULL,
+    exchange       INTEGER NOT NULL,
+    PRIMARY KEY (block_id, parent_session, exchange)
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_block_exch_one_block
+    ON block_exchanges(parent_session, exchange);
+CREATE INDEX IF NOT EXISTS idx_blocks_topic ON blocks(topic);
+
 DROP VIEW IF EXISTS events_with_gaps;
 CREATE VIEW events_with_gaps AS
 SELECT

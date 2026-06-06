@@ -1,25 +1,19 @@
 # Tasks
 
-Persistent work tracker for the claude-plugins repository. Each entry points at a `plans/<workstream>.md` or a `logs/<type>/<title>.md`. Sections by status; full per-task detail lives in the linked file.
+Persistent work tracker for the claude-plugins repository. Each active workstream is one `plans/<topic>.md`; full detail lives there. Sections by status. Scan-once view — completed work is in `git log`, not here.
 
-Project-scoped scan-once view. Per-sandbox `SANDBOX-TASKS.md` files (seeded by the sandbox skill) own per-branch detail; `logs/idea/` holds the wider backlog.
+## Active
 
-## In progress
+- **agentic-os** — **start here.** — [plan](plans/agentic-os.md). Make the live skill folders (`~/.claude/skills/`, project `.claude/skills/`) the source of truth — instant, no checkpoint cycle — with a one-way publish into this repo as the distribution mirror; plus a home-as-repo backup (bare repo, allowlist gitignore, secrets layers, project-remotes manifest). Phase 1 (skill inversion) is the near-term lift; Phase 2 (home repo) is independent.
+- **transcripts** — [plan](plans/transcripts.md). Two independent workstreams: content hash-reference dedup (shrink DB + read context) and persisted blocks/topics for billable-time reporting. Either may proceed first.
+- **git-plugin** — [plan](plans/git-plugin.md), north star in `plugins/git/GOALS.md`. Full lifecycle shipped; `--auto` runs it hands-off; submodules route by detection (ownership/fork/protection + native `.gitmodules` keys) through one `pr.py routes` pre-flight that halts on any gap. **Remaining (detail in plan):**
+  - **Submodule routing** — Phase 2 (cross-fork upstream contribution: `x-contribute` cadence + cross-fork PR); Phase 3 (track/keep-up sync via `update=rebase|merge`); live e2e against a real protected submodule (never exercised — monaco's branches are unprotected); remove dead `pr.py` `protection`/`repo-route` subcommands + unwired `reconcile_merge`; the `git-pr-status`/`git-pr-merge` `pr.py` copies are hand-synced (propagator disabled) — a divergence trap.
+  - **CI-domain follow-ons** — `actionlint` wrap, per-stack hardened scaffolder, `tests/` harness, `startup_failure` detector (audit/harden/reconcile core built).
+  - default-branch belt-and-suspenders cleanup; `markdown-lint`'s `literal-special-chars` mis-flags PFN notation across skill bodies (a markdown-linter-skill concern).
 
-- **`skill-architecture` skill** — [plan](plans/skill-architecture.md). **Phase 1+2 complete 2026-05-21** (W1 scaffold + W2 assertions relocated from `logs/assertions/skill-runtime/` + W3 platform-discovery topic with `project-dir-resolution` assertion + W4 architecture.md and confirmed-facts.md). **Awaiting user review.** Phase 3 (W5 `reassert` runner + W6 decommission standing fixtures) gated by plan Open Questions S2 (scratch dir), S3 (test-design parseability), S4 (detection-method automation). Phase 4 (W7 wire `skill-creator` + `skill-composer` as consumers) can start in parallel — lighter weight, depends only on architecture.md being stable.
-- **Phase G — permissions plugin authoring** — [plan](plans/architecture-refactor.md). Author a Pattern B skill in `plugins/permissions/` that deploys hook config to `.claude/settings.json` on invocation. Last open piece of Phase G; original setup-system permissions verbs migrate here.
-- **Phase I — decision log review** — [plan](plans/architecture-refactor.md). 1 of 19 logs remaining: `logs/decision/progressive-skill-composer.md` (large; defer to focused session).
+## Deferred
 
-## Upcoming
-
-- **Transcripts modernization** — [plan](plans/transcripts.md). **In progress 2026-05-31.** Two coupled workstreams: (A) move DB to `~/.claude/transcripts.db` (top-level file; security driver — per-project DB pollutes any project lacking the gitignore entry, while auto-sync pulls all sessions across projects); (B) hash-reference table for repeated content (skill bodies, system-reminder lists) to shrink DB and save read-time context. Workstream A ships first with current-project default scope; B has an empirical gate at B3.
-- **Git plugin submodule expansion** — [plan](plans/git-plugin-submodule-expansion.md). Recursive submodule-first commit/push/CI cycle across all 5 git skills. Design aligned 2026-05-21: classifier recurses, always runs submodules, non-blocking on suspicious changes, support script over inline commands. Related pre-rollout adjustments captured in the same plan: `## Dependencies` declarations (PFN universally, prose-discipline skills on /git-commit), frontmatter allowed-tools audit, eventual application of the canonical closing release line once `logs/assertions/skill-runtime/` settles. Submodule recursion itself is grammar-independent and can start any time.
-- **Phase D — navigator off MCP** — [plan](plans/architecture-refactor.md). CLI-from-MCP migration pattern is the same as transcripts; navigator's storage-location move should follow the pattern that `plans/transcripts.md` Workstream A lands — top-level path under `~/.claude/` (likely `~/.claude/navigator.db` or similar), informed by skill-architecture's project-dir-resolution assertion. Lands at `plugins/navigator/`.
-- **Phase E — remaining ocd-old systems** — 8 systems: needs-map, check, pdf, sandbox, log, navigator, setup, refactor. Each migrates to its target plugin home per Phase G layout. `setup` partially dissolves into the `permissions/` plugin (Phase F/Phase G overlap). `retrospective` migrated 2026-05-21 to `plugins/memory/` (holding bucket for session-boundary / memory-adjacent skills).
-- **Universal always-on subset** — which discipline skills to promote via `/rules add <skill>`. Candidates: `honesty`, `concise-prose`, `principled-pushback`, `fix-foundations-not-symptoms`. User decides which to promote.
-- **`claude-python` composition** — unblocked by Phase G defining domain plugin layout.
-- **AskUserQuestion interactive workflow check** — small follow-up; re-evaluate when permissions plugin lands.
-- **Working-directory limitation revocation** — standalone refactor; resolvable independently.
+- **Decision-log review** — walk `logs/decision/*.md` against final implementation and rectify stale references, including dangling links to the plans retired below. Sequenced **after** agentic-os, transcripts, and git-plugin land — rectify once the dev environment is settled and stable. Substantive remainder: `logs/decision/progressive-skill-composer.md` (large), plus the retired-plan links the 2026-06-01 restructure left behind.
 
 ## Active sandbox branches
 
@@ -32,8 +26,15 @@ Each carries its own `SANDBOX-TASKS.md`; open the sandbox and run `/sandbox task
 | audit-static skill | `sandbox/ocd/audit-static` | Active |
 | update-system-docs skill | `sandbox/ocd/update-system-docs` | Active |
 
+## Retired 2026-06-01
+
+Dropped rather than tracked — a stale plan only drifts and accrues maintenance. The underlying files get reviewed fresh once the OS is stable (per the agentic-os direction).
+
+- **`architecture-refactor.md`** — the phased master plan (Phases A–I). Its live work is either shipped (skills-as-unit, plugin-deps, compartmentalization) or moved into the topic plans above; its remaining forward item (decision-log review) is now tracked under Deferred.
+- **`skill-architecture.md`** — build plan for a skill that is itself under reconstruction (prior recommendations rested on a flawed measurement mechanic and were withdrawn). Revisit when the reconstruction direction is set.
+- **permissions plugin / ocd-old legacy migration / navigator-off-MCP** — were Phases F / E / D of architecture-refactor. Not separately tracked; revisit fresh if still wanted.
+- **`pr-workflow-migration.md` / `git-plugin-pr-workflow.md` / `git-plugin-submodule-expansion.md`** — consolidated into `git-plugin.md`; the migration plan (server-side auto-bump) is defunct.
+
 ## Backlog
 
-Lower-priority and exploratory items remain captured under `logs/idea/<title>.md`. Items promote into the sections above when picked up; the `idea/` directory is the queue, this file is the active view.
-
-Completed work is in `git log`, not here — TASKS.md is a living log of what's active and what's coming, not a historical record.
+Lower-priority and exploratory items remain captured under `logs/idea/<title>.md` — the queue; this file is the active view.

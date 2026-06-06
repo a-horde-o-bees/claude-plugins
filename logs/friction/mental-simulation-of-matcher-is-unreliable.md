@@ -22,6 +22,6 @@ Later, a single-query pilot run (`claude -p "Help me write the description for t
 
 ## Related
 
-- [logs/pattern/description-refinement-two-phase-loop.md](../pattern/description-refinement-two-phase-loop.md) — the two-phase pipeline that separates draft (where simulation belongs) from measurement.
+- [logs/patterns/description-refinement-two-phase-loop.md](../patterns/description-refinement-two-phase-loop.md) — the two-phase pipeline that separates draft (where simulation belongs) from measurement.
 - [logs/problem/description-authoring-fails-haiku-matcher.md](../problem/description-authoring-fails-haiku-matcher.md) — the specific instance.
 - `honesty` skill body has the underlying principle as a bullet: "Before any quantitative claim: verify the number against its source. Never state 'X years' or 'N commits' from memory — check." Trigger-rate predictions are quantitative claims.
