@@ -47,12 +47,6 @@ add. Restart the session after install so the skills register.
 /plugin marketplace remove a-horde-o-bees
 ```
 
-## Note for the maintainer
-
-This repo is a **generated mirror** — skills are authored as live files in
-`~/.claude/skills/` and published here by `scripts/publish-skills.py`. See
-[CLAUDE.md](CLAUDE.md). Don't hand-edit `skills/`.
-
 ## License
 
 MIT. See [LICENSE](LICENSE).
