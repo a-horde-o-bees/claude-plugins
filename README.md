@@ -1,161 +1,57 @@
-# a-horde-o-bees Claude Code Plugins
+# a-horde-o-bees Claude Code Skills
 
-Claude Code plugin marketplace for agent discipline, workflow conventions, and project navigation tools.
+One Claude Code plugin — `skills` — bundling agent authoring and interaction
+discipline with a git development-cycle toolkit.
 
 ## Disclaimer
 
-This is a personal development project. It is experimental, actively evolving, and provided as-is with no stability guarantees, support commitments, or backwards compatibility promises. Plugins may be added, removed, renamed, or fundamentally restructured at any time.
+A personal development project: experimental, actively evolving, provided as-is
+with no stability, support, or backwards-compatibility guarantees. Skills may be
+added, removed, renamed, or restructured at any time. Use at your own discretion;
+if something breaks, the LICENSE applies.
 
-Use at your own discretion. If something breaks, the LICENSE applies.
+## What's inside
 
-## Plugins
+- **Authoring discipline** — `concise-prose`, `author-descriptions`,
+  `author-markdown`, `author-processes`, `author-rules`, `reauthor`,
+  `lint-markdown`.
+- **Interaction discipline** — `honesty`, `confirm-shared-intent`.
+- **Git development cycle** — `git-commit`, `git-push`, `git-ci`, `git-doctor`,
+  `git-pr-open`/`-status`/`-merge`/`-cleanup`, `git-checkpoint`, `git-release`.
+- **Transcripts** — query Claude Code session history as structured data.
 
-| Plugin | Description |
-|--------|-------------|
-| [ocd](plugins/ocd/) | Deterministic enforcement of permissions, rules, and structural conventions with agent-facing project navigation |
+Each skill is invoked bare (e.g. `/concise-prose`) and triggers on its own
+description; the git skills also chain each other through the development cycle.
 
 ## Installation
 
-One marketplace, two channels. You pick the channel by pinning (or not pinning) a ref when you add the marketplace.
-
-### Stable channel (recommended)
-
-Pins to a tagged release. Latest stable: `v0.1.0` (cut 2026-04-22).
-
-```
-/plugin marketplace add a-horde-o-bees/claude-plugins@v0.1.0
-/plugin install ocd@a-horde-o-bees
-```
-
-### Dev channel (current — tracks main)
-
-Tracks `main`. Ships with tests, CI configs, and in-flight changes. `plugin.json` auto-bumps on every commit so Claude Code's reload detection fires; current version is `0.1.z` between tagged releases.
-
 ```
 /plugin marketplace add a-horde-o-bees/claude-plugins
-/plugin install ocd@a-horde-o-bees
+/plugin install skills@a-horde-o-bees
 ```
 
-### After install
+Tracks `main` by default. Pin a tagged release with `@vX.Y.Z` on the marketplace
+add. Restart the session after install so the skills register.
 
-Restart Claude session so hooks and commands load, then initialize in target project:
-
-```
-/ocd:setup init
-```
-
-Restart Claude session again so deployed rules auto-load into context.
-
-Update plugins after upstream changes:
+## Updating
 
 ```
 /plugin marketplace update a-horde-o-bees
 /reload-plugins
 ```
 
-After updating, check if deployed rules and conventions need updating:
+## Removing
 
 ```
-/ocd:setup status
-```
-
-If any files show `divergent`, force-update and restart:
-
-```
-/ocd:setup init --force
-/exit
-claude --continue
-```
-
-Restart after init is only needed when rule files change. Convention-only updates take effect immediately.
-
-Remove a plugin or the marketplace:
-
-```
-/plugin uninstall ocd
+/plugin uninstall skills
 /plugin marketplace remove a-horde-o-bees
 ```
 
-### Local development
+## Note for the maintainer
 
-For contributors working on plugin source.
-
-**After cloning, run `bin/project-run setup` once to wire this repo's git hooks (including the pre-commit auto-bump of plugin versions).** Deployed rules, conventions, patterns, and the navigator database travel with the repo as tracked files, so a contributor's clone is immediately usable for development.
-
-Two approaches:
-
-#### Marketplace-based (recommended)
-
-Develop within a clone that is also the marketplace source. Plugins load via the installed marketplace, so changes flow through git:
-
-```
-/push
-```
-
-Commits and pushes all changes. Then refresh the marketplace cache and reload:
-
-```
-/plugin marketplace update a-horde-o-bees
-/reload-plugins
-```
-
-Restart (`/exit` then `claude --continue`) only required when `.claude/rules/` files changed. Skill and convention changes take effect after reload.
-
-#### Plugin-dir (session-only)
-
-Load plugins directly from a local clone without marketplace:
-
-```
-git clone https://github.com/a-horde-o-bees/claude-plugins.git
-claude --plugin-dir ./claude-plugins/plugins/ocd
-```
-
-After making source changes, reload and restart:
-
-```
-/reload-plugins
-/exit
-claude --continue
-```
-
-`/reload-plugins` picks up script changes. Restart is required for skill content (SKILL.md) to take effect. `--continue` resumes the conversation with fresh context.
-
-Check if deployed rules and conventions need updating:
-
-```
-/ocd:setup status
-```
-
-If any files show `divergent`, force-update and restart:
-
-```
-/ocd:setup init --force
-/exit
-claude --continue
-```
-
-Restart after init is only needed when rule files change. Convention-only updates take effect immediately.
-
-Notes:
-
-- `--plugin-dir` is session-only; no persistent setting exists
-- When a `--plugin-dir` plugin shares a name with an installed marketplace plugin, the local copy takes precedence for that session
-- `--debug` flag shows plugin loading diagnostics
-- `claude plugin validate {PATH_TO_PLUGIN}` validates manifest without a session
-
-## Architecture
-
-See [ARCHITECTURE.md](ARCHITECTURE.md) for marketplace structure, shared infrastructure, and how plugins relate. Each plugin documents its own internals:
-
-- [ocd architecture](plugins/ocd/ARCHITECTURE.md) — hooks, rules, navigator, conventions engine
-
-## Versioning
-
-Plugin versions follow `x.y.z` semver in `plugin.json`. Tags live on `main`; no release branches.
-
-- **Pre-first-release.** `plugin.json` tracks `0.0.z` until the first `v0.1.0` tag is cut. A pre-commit hook bumps `z` on every commit that touches the plugin tree so Claude Code's reload detection fires for users tracking main.
-- **Release cut.** `/ocd:git release <version>` — synthesizes a CHANGELOG entry from commit history since the last tag, presents the draft and proposed bump for review, then on approval bumps the manifest, commits, tags, and pushes main + tag.
-- **Patch release.** Tag any main commit as `v<current-version>`; no edit required because `z` already auto-increments per commit. The tag is the "deliberate release" signal.
+This repo is a **generated mirror** — skills are authored as live files in
+`~/.claude/skills/` and published here by `scripts/publish-skills.py`. See
+[CLAUDE.md](CLAUDE.md). Don't hand-edit `skills/`.
 
 ## License
 
