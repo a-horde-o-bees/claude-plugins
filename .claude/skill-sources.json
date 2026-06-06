@@ -7,6 +7,8 @@
     "author-rules",
     "reauthor",
     "lint-markdown",
+    "honesty",
+    "confirm-shared-intent",
     "transcripts",
     "git-checkpoint",
     "git-ci",

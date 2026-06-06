@@ -7,9 +7,9 @@
   },
   "plugins": [
     {
-      "name": "horde",
+      "name": "skills",
       "source": "./",
-      "description": "Agent authoring discipline (prose, descriptions, process flows, rules, markdown), a git development-cycle toolkit (commit, push, PR lifecycle, CI, checkpoint, release), and a transcripts query tool.",
+      "description": "Agent authoring and interaction discipline (prose, descriptions, process flows, rules, markdown, honesty, confirm-shared-intent), a git development-cycle toolkit (commit, push, PR lifecycle, CI, checkpoint, release), and a transcripts query tool.",
       "category": "development"
     }
   ]
