@@ -1,63 +1,15 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "a-horde-o-bees",
-  "description": "Claude Code plugins for agent discipline, tool workflows, and project tooling. Discipline plugins (writing, communication, testing, design) ship behavioral skills you invoke as `apply /<skill>`. Tool plugins (git, transcripts, pdf-plus) ship workflow CLIs. skill-authoring ships the meta-toolkit for authoring new skills. Add with no ref for dev channel (tracks main); add with `@vX.Y.Z` to pin to a stable release.",
+  "description": "Agent authoring discipline and a git development-cycle toolkit, distributed as one plugin. Add with no ref to track main; add with `@vX.Y.Z` to pin a release.",
   "owner": {
     "name": "a-horde-o-bees"
   },
   "plugins": [
     {
-      "name": "writing",
-      "source": "./plugins/writing",
-      "description": "Prose and artifact authoring discipline — apply concise-prose, description-authoring, markdown-authoring, process-flow-notation, reauthor, rule-authoring at the matching authoring moment.",
-      "category": "discipline"
-    },
-    {
-      "name": "communication",
-      "source": "./plugins/communication",
-      "description": "Agent⇄user interaction discipline — apply honesty, principled-pushback, confirm-shared-intent at the matching interaction moment.",
-      "category": "discipline"
-    },
-    {
-      "name": "testing",
-      "source": "./plugins/testing",
-      "description": "Testing discipline — apply test-authoring, test-driven-development, test-maintenance, testing-decisions at the matching testing moment.",
-      "category": "discipline"
-    },
-    {
-      "name": "design",
-      "source": "./plugins/design",
-      "description": "Engineering design discipline — apply 10 design principles (agent-first-interfaces, borrow-before-build, clean-break, composability, fix-foundations-not-symptoms, graceful-degradation, structure-as-documentation, workflow-vs-script, file-decomposition, progressive-disclosure) at the matching design moment.",
-      "category": "discipline"
-    },
-    {
-      "name": "git",
-      "source": "./plugins/git",
-      "description": "Git workflow plugin — commit, push, watch GitHub Actions, run a development checkpoint cycle, cut a tagged release. Includes the git skill (verbs) and the checkpoint orchestration skill.",
-      "category": "development"
-    },
-    {
-      "name": "transcripts",
-      "source": "./plugins/transcripts",
-      "description": "Query Claude Code session transcripts as structured data — projects, sessions, exchanges with time accounting, full chat content, and persistent per-exchange descriptions. Backed by SQLite ingested from ~/.claude/projects/.",
-      "category": "development"
-    },
-    {
-      "name": "pdf-plus",
-      "source": "./plugins/pdf-plus",
-      "description": "One-shot markdown→PDF rendering for single-page documents (resume, cover letter, recommendation letter) using a tuned visual style. Distinct from the base pdf skill which handles read/merge/split/OCR/forms.",
-      "category": "development"
-    },
-    {
-      "name": "skill-authoring",
-      "source": "./plugins/skill-authoring",
-      "description": "Meta-toolkit for authoring new skills. skill-composer composes from exemplar sources with drift tracking against pinned upstream commits; skill-creator creates from scratch via interview-driven dialogue layered on Anthropic's skill-creator. The rules skill manages always-on skill promotion via CLAUDE.md directives.",
-      "category": "development"
-    },
-    {
-      "name": "memory",
-      "source": "./plugins/memory",
-      "description": "Session-boundary tools that preserve context across discontinuities. Currently ships retrospective — session-wrap that walks open threads, then surfaces patterns, friction, ideas, decisions, refinements, and user-memory candidates worth persisting. Holding bucket until a broader memory ecosystem is adopted.",
+      "name": "horde",
+      "source": "./",
+      "description": "Agent authoring discipline (prose, descriptions, process flows, rules, markdown), a git development-cycle toolkit (commit, push, PR lifecycle, CI, checkpoint, release), and a transcripts query tool.",
       "category": "development"
     }
   ]

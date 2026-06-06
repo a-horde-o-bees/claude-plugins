@@ -1,0 +1,22 @@
+{
+  "skills": [
+    "concise-prose",
+    "author-descriptions",
+    "author-markdown",
+    "author-processes",
+    "author-rules",
+    "reauthor",
+    "lint-markdown",
+    "transcripts",
+    "git-checkpoint",
+    "git-ci",
+    "git-commit",
+    "git-doctor",
+    "git-pr-cleanup",
+    "git-pr-merge",
+    "git-pr-open",
+    "git-pr-status",
+    "git-push",
+    "git-release"
+  ]
+}
