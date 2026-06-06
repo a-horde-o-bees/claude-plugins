@@ -1,4 +1,0 @@
-[tool.pytest.ini_options]
-pythonpath = ["../../../plugins/skill-authoring/skills/skill-composer"]
-addopts = "--import-mode=importlib"
-testpaths = ["."]
