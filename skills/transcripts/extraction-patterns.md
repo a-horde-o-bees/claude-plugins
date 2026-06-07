@@ -39,6 +39,7 @@ Use whenever the agent is writing or editing prose...
 #### Sample output
 
 `events.text`:
+
 ```
 Base directory for this skill: /home/dev/.claude/skills/concise-prose
 
@@ -46,6 +47,7 @@ Base directory for this skill: /home/dev/.claude/skills/concise-prose
 ```
 
 `references` row:
+
 - `hash`: `a3f9d2bc8e1f...` (full sha256 of canonicalized body)
 - `payload`: `# /concise-prose\n\nUse whenever the agent is writing or editing prose...\n[full body]`
 - `byte_size`: length of payload

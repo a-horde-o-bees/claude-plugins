@@ -18,7 +18,7 @@ The DB lives at `~/.claude/transcripts.db` — a single top-level file under Cla
 Verbs:
 
 | Verb | Effect |
-|------|--------|
+| --- | --- |
 | `projects` | List all projects present in the DB |
 | `sessions` | Session metadata; default-lean ({project, session, n_exchanges, n_described}); `--show` opts into timeframes/bytes |
 | `exchanges` | Per-exchange rows; default-lean ({project, session, exchange, description}); `--show` opts into messages/active/breakdown/metrics/timeframes; `--expand-refs` expands `[[ref:hash]]` tokens in messages |

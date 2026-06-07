@@ -98,7 +98,7 @@ Decide by asking whether a deterministic function with no agent context could pr
 A skill declares its input surface CLI-style so an invoker knows what to pass — the skill's signature, not control flow. The body references a value as `{flag}` and a flag's presence as `--flag`.
 
 | Format | Means |
-|---|---|
+| --- | --- |
 | `<value>` / `[value]` | required / optional value |
 | `<x \| y>` / `[x \| y]` | choice — one alternative |
 | `[--flag]` | boolean flag |
