@@ -15,7 +15,6 @@ A description is the line a reader uses to decide engage-or-skip — often the o
 - Convey two things: what the artifact covers and what kind of thing it is (e.g. directory, module, CLI, config, rule, schema, section, function).
 - Weave both into fluent prose — never expose them as labeled fields or split halves. "Retry and backoff helpers for outbound HTTP calls," not "Scope: HTTP retries. Role: helper module." The reader should see no seam.
 - Match the abstraction to the artifact's size — a directory's coverage is coarser than a file's, a package's coarser than a function's.
-- When the reader is an agent deciding whether to load the artifact (skill frontmatter, tool help), make the triggering conditions explicit — the situations or keywords that should activate it — not the capability alone; weave them in (often as "Use when …"), don't bolt on a label or force the shape where it doesn't fit.
 - Third person.
 
 ### Length
