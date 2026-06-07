@@ -345,11 +345,21 @@ def _resolve_route(path: str, name: str | None = None) -> dict:
     meta = _repo_meta(slug) if slug else {}
     perm = meta.get("viewerPermission")
     is_fork = bool(meta.get("isFork"))
-    protected = _protection(branch, repo=slug)[0] if branch and slug else False
 
     update_mode = _gitmodules(name, "update") if is_sub and name else ""
     x_int = (_gitmodules(name, "x-integration") if is_sub and name else "") or None
-    branch_declared = bool(_gitmodules(name, "branch")) if is_sub and name else True
+    declared_branch = _gitmodules(name, "branch") if is_sub and name else ""
+    branch_declared = bool(declared_branch) if is_sub else True
+
+    # Integration is a repo property: route on the protection of the branch work
+    # lands on — the repo's default branch (a submodule's declared `branch=` if
+    # set), never whatever branch happens to be checked out now. A checkpoint run
+    # from a feature branch must still read the repo as pr-integrated.
+    default_branch = (meta.get("defaultBranchRef") or {}).get("name") or ""
+    if not default_branch and not is_sub:
+        default_branch = _default_branch()
+    policy_branch = (declared_branch or default_branch) if is_sub else default_branch
+    protected = _protection(policy_branch, repo=slug)[0] if policy_branch and slug else False
 
     if is_sub:
         has_edits = bool(_git_out(["status", "--short", "--", path]) or _git_out(["status", "--short"], cwd=path))
@@ -388,7 +398,7 @@ def _gap_fix(gap: str, route: dict) -> str:
 def _repo_meta(slug: str) -> dict:
     """viewerPermission + fork metadata for an explicit repo slug ({} on failure)."""
     r = subprocess.run(
-        ["gh", "repo", "view", slug, "--json", "viewerPermission,isFork,parent"],
+        ["gh", "repo", "view", slug, "--json", "viewerPermission,isFork,parent,defaultBranchRef"],
         capture_output=True, text=True,
     )
     if r.returncode != 0:
