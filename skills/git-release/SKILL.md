@@ -1,6 +1,6 @@
 ---
 name: git-release
-description: Use when cutting a tagged release of the current project — explicit signals "cut a release", "tag a version", "ship v...", "release v...", or any context where producing a SemVer tag + CHANGELOG entry + manifest bump is the next action. Reads the project's release methodology, spawns a CHANGELOG synthesizer over commits since the last SemVer tag, gates on human review before any write/commit/tag/push. Does not recurse into submodules by default — each submodule has its own release cadence; pass `--recurse-submodules` to opt in.
+description: Cut a tagged SemVer release — CHANGELOG synthesis from commits since the last tag, gated on review before any write, commit, tag, or push. Use for "cut a release", "tag a version", or "ship vX".
 argument-hint: "[<version-override>] [--recurse-submodules]"
 allowed-tools:
   - Read

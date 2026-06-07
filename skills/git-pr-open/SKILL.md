@@ -1,6 +1,6 @@
 ---
 name: git-pr-open
-description: Use when a pushed feature branch needs a pull request opened — "open a PR", "create a pull request", "submit this for review", "PR this branch", or the PR step of a checkpoint. Idempotent — refuses (reports, doesn't duplicate) if a PR already exists for the head branch. Seeds the title and body from the branch diff (`base...HEAD`, all commits since divergence), depth scaling with change weight, authored against the diff via /concise-prose, /author-descriptions, /honesty. Gates on user review before submission; `--auto` skips that gate for hands-off runs.
+description: Open a pull request for a pushed branch, seeding title and body from the branch diff, gated on review. Use for "open a PR", "create a pull request", "submit this for review", or the PR step of a checkpoint.
 argument-hint: "[--draft] [--base <name>] [--auto]"
 allowed-tools:
   - Bash(git *)

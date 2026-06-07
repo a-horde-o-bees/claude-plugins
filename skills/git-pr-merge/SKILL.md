@@ -1,6 +1,6 @@
 ---
 name: git-pr-merge
-description: Use when an open PR is ready to land — "merge the PR", "merge this", "land it", "ship the PR", or the merge step of a checkpoint. Runs the merge gate, then merges per the detected path — solo (immediate once CI is green) or team (required approvals + green CI). Hard blockers (red or pending CI, merge conflicts, behind base) are never bypassed; soft blockers (review not approved, CI annotations) are confirmable-bypass on the solo path or admin-override on a protected base. Strategy is project `pr.md` ∩ repo-allowed. `--cleanup` chains /git-pr-cleanup. `--auto` runs hands-off — bypasses soft-blocker prompts, watches in-flight CI to green before merging, and admin-overrides on a protected base where the viewer has rights; hard failures still stop it.
+description: Merge an open PR through the merge gate on the solo or team path, never bypassing hard blockers. Use for "merge the PR", "land it", "ship the PR", or the merge step of a checkpoint.
 argument-hint: "[--strategy squash|merge|rebase] [--cleanup] [--auto]"
 allowed-tools:
   - Bash(git *)

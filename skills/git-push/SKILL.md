@@ -1,6 +1,6 @@
 ---
 name: git-push
-description: Use when local commits need to reach the remote — explicit signals "push", "push my branch", "push to origin", or any context where publishing committed work is the next action. Recurses depth-first into `.gitmodules`-declared submodules: each is normalized off detached HEAD onto its declared branch, fetched, rebased onto its remote tip, and fast-forward-pushed before the parent. Auto-commits uncommitted changes via /git-commit. Requires explicit --branch to confirm the target.
+description: Push local commits to the remote, recursing into submodules and auto-committing uncommitted changes first. Use for "push", "push my branch", "push to origin"; requires explicit --branch.
 argument-hint: "--branch <name> [--cwd <path>] [--pin-only <path>]..."
 allowed-tools:
   - Bash(git *)

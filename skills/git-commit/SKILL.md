@@ -1,6 +1,6 @@
 ---
 name: git-commit
-description: Use when uncommitted working-tree changes should land in git history — explicit signals "commit", "commit my changes", "stage and commit", "save these edits", or any context where committing is the natural next step. Recurses depth-first into `.gitmodules`-declared submodules, normalizing each detached submodule onto its declared branch before committing so its work isn't orphaned; submodule commits land before the parent records its pin advance. Multi-topic working trees produce multiple atomic commits grouped by topic; single-topic produces one. Each commit message is authored against the diff, not the change journey. Under `pr` integration it refuses to commit onto the repo's default branch — the change belongs on a feature branch; `--on-base` overrides.
+description: Commit working-tree changes as atomic, topic-grouped commits with messages authored from the diff, recursing into submodules. Use for "commit", "stage and commit", "save these edits", or when committing is the next step.
 argument-hint: "[--cwd <path>] [--on-base] [--auto] [--pin-only <path>]... [<pathspec>...]"
 allowed-tools:
   - Bash(git *)

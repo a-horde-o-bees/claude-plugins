@@ -1,6 +1,6 @@
 ---
 name: git-ci
-description: Use when GitHub Actions state for a branch needs surfacing — "check CI", "is the build green", "did CI pass", "watch the build", or any context after a push where the build outcome decides next steps. Recurses depth-first into `.gitmodules`-declared submodules; submodules without `.github/workflows/` are soft-skipped. Returns one of `passed`, `failed`, `dispatched`, `incomplete`, `no-runs`, `no-ci`; in-flight runs trigger a background watcher that reports completion inline as a task-completion event.
+description: Surface GitHub Actions status for a branch and watch in-flight runs to completion. Use for "check CI", "is the build green", "did CI pass", "watch the build", or after a push when the build outcome decides next steps.
 argument-hint: "[--branch <name>] [--cwd <path>]"
 allowed-tools:
   - Bash(git *)

@@ -1,6 +1,6 @@
 ---
 name: git-doctor
-description: Use when a repository's mechanically-detectable health needs checking or repair before commit/push/checkpoint, or on demand. Submodule structure broken — "fix submodules", "git submodule status shows nothing", interior files staged as blobs, a commit pre-check reported drift. CI config on demand — "audit my CI", "harden the workflows", "pin my actions", "are my required checks wired", "why is a required check stuck pending". Runs a cheap mechanical detector and dispatches into the affected domain only — submodule conformance (blocking; reversible index fix vs. destructive history rewrite), default-branch resolvability (advisory), CI config (on demand / when workflows change). Diagnoses, classifies by repair risk, proposes scoped fixes, applies only on approval. Conforms to canonical git; never rewrites history or force-pushes automatically.
+description: Diagnose and repair a repository's mechanical health — submodule conformance and CI config — proposing scoped fixes that apply only on approval. Use for "fix submodules", "audit my CI", "pin my actions", or a pre-commit health check.
 argument-hint: "[ci [audit|harden|reconcile]]"
 allowed-tools:
   - Bash(git *)

@@ -1,6 +1,6 @@
 ---
 name: git-pr-status
-description: Use when the merge-readiness of a branch's open PR needs surfacing — "is the PR ready to merge", "PR status", "can I merge yet", "what's blocking the PR", or any gate check before `/git-pr-merge`. Runs the merge gate: PR review state, CI checks plus commit-level annotations (warnings invisible in the PR summary), mergeability, and base-branch protection — whose presence selects the solo vs team path. Reports blockers by severity; emits the gate classification verbatim, never inventing.
+description: Report an open PR's merge-readiness — review state, CI checks and commit annotations, mergeability, base protection. Use for "is the PR ready to merge", "PR status", "what's blocking the PR", or a gate check before merging.
 argument-hint: "[--branch <name>]"
 allowed-tools:
   - Bash(git *)
