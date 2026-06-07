@@ -18,7 +18,7 @@
 ## Rules
 
 - Pre-check submodule conformance via `/git doctor` at the top level — never commit through Tier 1 drift; declines stop the flow
-- Under `pr` integration (`Path: pr` in `.claude/git/checkpoint.md`), refuse to commit onto the repo's default branch — the change belongs on a feature branch. Point to `/git checkpoint` (it auto-creates one named from the change topic) or a manual branch; `--on-base` overrides. Recursive calls (`--cwd`) and `direct`/unconfigured projects are exempt
+- In a `pr`-integrated repo — detected, not configured: the default branch is protected — refuse to commit onto that default branch; the change belongs on a feature branch. Point to `/git checkpoint` (it auto-creates one named from the change topic) or a manual branch; `--on-base` overrides. Recursive calls (`--cwd`) and `direct` repos (unprotected default) are exempt
 - Group by topic for readable history: one commit when all changes are one coherent topic or grouping is ambiguous; multi-commit only when topics are clearly separable
 - No minimum commit size — a single-file change is a valid commit if it's a distinct topic
 - Commit order: dependencies first, consumers after; submodule commits land before the parent commit that records their pin advance
@@ -36,7 +36,7 @@
     1. If `--cwd` was provided: skip to step 2
     2. {doctor-result}: Call: verbs/doctor.md
     3. If {doctor-result} reports `Blocking unresolved: yes` (a BLOCKING problem it did not repair): Exit process — repo not commit-safe per git doctor; resolve before retrying. A clean report or an ADVISORY-only result (default-branch, CI) never blocks the commit — proceed.
-    4. Base-branch guard (skip if `--on-base`): {integration}: `Path:` from `.claude/git/checkpoint.md` if that file exists, else none; {default}: bash: `git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's@^origin/@@'` (fallback `main`). If {integration} is `pr` AND current branch == {default}: Exit process — `pr` integration forbids committing onto {default}; create a feature branch (or run `/git checkpoint`, which auto-creates one from the change topic), or pass `--on-base` for an intentional admin commit.
+    4. Base-branch guard (skip if `--on-base`): {default}: bash: `git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's@^origin/@@'` (fallback `main`). If current branch == {default}: {protected}: bash: `gh api repos/{owner}/{repo}/branches/{default}/protection >/dev/null 2>&1 && echo yes || echo no` — the repo is `pr`-integrated exactly when its default branch is protected (detected, not read from a config file). If {protected} is `yes`: Exit process — this repo is pr-integrated; committing onto {default} is forbidden. Create a feature branch (or run `/git checkpoint`, which auto-creates one from the change topic), or pass `--on-base` for an intentional admin commit.
 
 2. Recurse into submodules first (depth-first):
     1. {sub-entries}: bash: `git config -f {cwd}/.gitmodules --get-regexp '^submodule\..+\.path$' 2>/dev/null` — emits `submodule.<name>.path <path>` per line; empty if no `.gitmodules`

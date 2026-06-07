@@ -12,7 +12,7 @@
 - **Postpone → stop.** If the caller declines a repair, halt — do not proceed to commit. Committing while a submodule is staged-as-blobs is exactly what escalates Tier 1 into Tier 2.
 - Never force-push or rewrite history without explicit per-item approval.
 - Submodule **name ≠ path** is legal — resolve checkouts by the `.path` field of `.gitmodules`, never the section name.
-- **Routing native keys live in the parent's `.gitmodules`, never in the submodule.** A declared submodule with no `branch =` is a routing gap — recursive push falls back to the checked-out branch (or exits if detached). Offer to write `branch = <current>` on approval. Never write `.claude/git/*` into a submodule (it would pollute a vendored/fork repo). The richer gh-based routing audit (ownership, fork-contribution, protection) is computed live by `/git checkpoint` and is this domain's on-demand extension.
+- **Routing native keys live in the parent's `.gitmodules`, never in the submodule.** Detection (permission, fork, default-branch protection) decides routing by default; the parent's `.gitmodules` keys are the only overrides, and this domain writes them on approval — the four-key vocabulary: `branch` (the branch work targets), `update` (`rebase`/`merge` ⇒ track the upstream tip vs. pin a sha), `x-integration` (force `read-only`|`direct`|`pr` when detection is wrong or can't express the intent — e.g. force a PR on an unprotected branch, or pin a writable repo as read-only), and `x-contribute` (fork contribution target). A declared submodule with no `branch =` is a routing gap — recursive push would fall back to the checked-out branch (or exit if detached); offer `branch = <current>` on approval. Never write `.claude/git/*` into a submodule (it would pollute a vendored/fork repo). `/git checkpoint` computes the live audit and surfaces any gap that needs a key written here.
 
 ## Process
 
@@ -39,8 +39,11 @@
     1. {current}: bash: `git -C {superproject}/{path} rev-parse --abbrev-ref HEAD`
     2. If {current} is `HEAD` (detached): surface — submodule {path} is detached with no declared branch; normalize it onto a branch first (there is no branch to record yet)
     3. Else: AskUserQuestion — write `submodule.{name}.branch = {current}` to the parent's `.gitmodules`? On approval: bash: `git -C {superproject} config -f .gitmodules submodule.{name}.branch {current}`
-10. {verify}: bash: `sh ${CLAUDE_SKILL_DIR}/scripts/git-roots.sh roots` (capture exit)
-11. Return to caller: ### result
+10. Integration override (when a checkpoint routing gap points here — e.g. `edits-to-readonly` — or the user wants a path detection wouldn't pick) — only ever a deliberate override, never to restate what detection already reads:
+    1. AskUserQuestion — write `submodule.{name}.x-integration = <read-only|direct|pr>`? Use it to force a PR on an unprotected branch, pin a writable repo as read-only, or admit a deliberate direct-land; leave unset to let detection decide. On approval: bash: `git -C {superproject} config -f .gitmodules submodule.{name}.x-integration <value>`
+    2. If the submodule's origin is a fork and the contribution target is ambiguous: AskUserQuestion — write `submodule.{name}.x-contribute = <upstream|origin>`? On approval: bash: `git -C {superproject} config -f .gitmodules submodule.{name}.x-contribute <value>`
+11. {verify}: bash: `sh ${CLAUDE_SKILL_DIR}/scripts/git-roots.sh roots` (capture exit)
+12. Return to caller: ### result
 
 ## Report
 
