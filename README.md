@@ -1,7 +1,7 @@
 # a-horde-o-bees Claude Code Skills
 
 One Claude Code plugin — `skills` — bundling agent authoring and interaction
-discipline with a git development-cycle toolkit.
+discipline with a git development-cycle router.
 
 ## Disclaimer
 
@@ -16,12 +16,15 @@ if something breaks, the LICENSE applies.
   `author-markdown`, `author-processes`, `author-rules`, `reauthor`,
   `lint-markdown`.
 - **Interaction discipline** — `honesty`, `confirm-shared-intent`.
-- **Git development cycle** — `git-commit`, `git-push`, `git-ci`, `git-doctor`,
-  `git-pr-open`/`-status`/`-merge`/`-cleanup`, `git-checkpoint`, `git-release`.
+- **Git development cycle** — `git`, one router fronting verbs for `commit`,
+  `push`, `ci`, the PR lifecycle (`pr-open`/`pr-status`/`pr-merge`/`pr-cleanup`),
+  `checkpoint`, `release`, and repo-health `doctor`.
 - **Transcripts** — query Claude Code session history as structured data.
 
-Each skill is invoked bare (e.g. `/concise-prose`) and triggers on its own
-description; the git skills also chain each other through the development cycle.
+Most skills are invoked bare (e.g. `/concise-prose`) and trigger on their own
+description. The git router dispatches to one verb (`/git <verb>`, or bare
+`/git` to pick from a menu); its verbs chain each other through the development
+cycle.
 
 ## Installation
 

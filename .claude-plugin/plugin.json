@@ -1,7 +1,7 @@
 {
   "name": "skills",
   "version": "0.1.0",
-  "description": "Agent authoring and interaction discipline plus a git development-cycle toolkit. Skills for composing prose, descriptions, process flows, rules, and markdown; for honest interaction and confirming shared intent; for running the commit→push→PR→CI→checkpoint→release loop; and for querying Claude Code session transcripts.",
+  "description": "Agent authoring and interaction discipline plus a git development-cycle router. Skills for composing prose, descriptions, process flows, rules, and markdown; for honest interaction and confirming shared intent; for running the commit→push→PR→CI→checkpoint→release loop via the `/git` router; and for querying Claude Code session transcripts.",
   "author": {
     "name": "a-horde-o-bees"
   },

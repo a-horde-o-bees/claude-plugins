@@ -1,0 +1,67 @@
+# git doctor — submodule domain
+
+> Repair component for `/git doctor`. Diagnoses and repairs submodule conformance so canonical git (`submodule status --recursive`, `foreach`, `--show-superproject-working-tree`) works. Called only when `detect.sh` flags submodule drift (BLOCKING). Detects drift, classifies by risk tier, proposes scoped fixes, applies only on approval.
+
+## Rules
+
+- **Conform, don't circumvent** — repairs restore proper submodule structure (gitlinks) so standard git commands operate; never substitute a filesystem-scan workaround for git's own machinery.
+- **Scope every repair to the one broken path** — `git rm --cached`/`git add` target a single submodule border; never project-wide, never `git add -A`.
+- **Tier the risk, never auto-refactor:**
+    - *Tier 1 — index-only* (gitlink missing, interior files staged as blobs, **0 commits in history**): reversible. Propose with file count + exact commands; apply on approval.
+    - *Tier 2 — history-polluted* (interior files committed to superproject history): destructive to fix (history rewrite → SHA churn, force-push, broken clones). **Never automatic.** Surface with a heavy warning as a separate, deliberate decision.
+- **Postpone → stop.** If the caller declines a repair, halt — do not proceed to commit. Committing while a submodule is staged-as-blobs is exactly what escalates Tier 1 into Tier 2.
+- Never force-push or rewrite history without explicit per-item approval.
+- Submodule **name ≠ path** is legal — resolve checkouts by the `.path` field of `.gitmodules`, never the section name.
+- **Routing native keys live in the parent's `.gitmodules`, never in the submodule.** A declared submodule with no `branch =` is a routing gap — recursive push falls back to the checked-out branch (or exits if detached). Offer to write `branch = <current>` on approval. Never write `.claude/git/*` into a submodule (it would pollute a vendored/fork repo). The richer gh-based routing audit (ownership, fork-contribution, protection) is computed live by `/git checkpoint` and is this domain's on-demand extension.
+
+## Process
+
+1. {gate}: bash: `sh ${CLAUDE_SKILL_DIR}/scripts/git-roots.sh roots` (capture stderr + exit code) — re-read the full state table as diagnosis input
+2. Bind from the {gate} stderr table — it enumerates every detected submodule (declared OR found on disk) with its state and scope counts:
+    - {superproject}: the `superproject:` line
+    - For each non-conforming row: {path}, {detect-state} (`broken-link` | `undeclared` | `uninitialized` | `anomaly`), {staged}, {history}
+3. Assign a repair tier per {path} from {detect-state} + {history} (conformance needs BOTH a gitlink AND a `.gitmodules` declaration — `gitsubmodules(7)`):
+    - `broken-link`, {history} = 0 → **Tier 1 (index-only)** — reversible
+    - `broken-link`, {history} > 0 → **Tier 2 (history-polluted)** — destructive fix
+    - `orphan-gitlink` → **declare-or-drop** — gitlink in index, no declaration (invisible to `git submodule`); either add a `.gitmodules` entry to conform, or `git rm --cached` to drop the gitlink
+    - `not-checked-out` / `declared-only` → **init** (`git submodule update --init -- {path}`)
+    - `undeclared` → **ambiguous** — an on-disk repo not in `.gitmodules` and not parent-gitignored; intent unknown (forgotten submodule vs. deliberately vendored code)
+    - `nested-independent` → **benign, skip** — on-disk repo that the parent gitignores (agent-os umbrella pattern); intentionally not a submodule, no action
+    - `anomaly` → **surface** — doesn't fit a known pattern; report, don't act
+4. Emit ### diagnosis (per-path state + tier + scope counts)
+5. For each **Tier 1** {path}: AskUserQuestion — approve the scoped repair? On approval:
+    1. bash: `git -C {superproject} rm -r --cached --quiet -- {path}`
+    2. bash: `git -C {superproject} add -- {path}` (the "adding embedded git repository" warning is expected — not a failure)
+6. If any Tier 1 repaired: bash: `git -C {superproject} commit -m "Repair submodule gitlinks: <paths>"`
+7. For each **undeclared** {path}: AskUserQuestion — declare + link it as a submodule, leave it as vendored content, or stop for manual handling? Act only on the chosen option; never guess intent.
+8. For each **Tier 2** {path}: present the history-rewrite warning; do NOT act — require a separate explicit instruction
+9. Routing native-key gaps (when {detect} flagged `submodule-routing`) — for each declared submodule with no `submodule.<name>.branch` in `.gitmodules`:
+    1. {current}: bash: `git -C {superproject}/{path} rev-parse --abbrev-ref HEAD`
+    2. If {current} is `HEAD` (detached): surface — submodule {path} is detached with no declared branch; normalize it onto a branch first (there is no branch to record yet)
+    3. Else: AskUserQuestion — write `submodule.{name}.branch = {current}` to the parent's `.gitmodules`? On approval: bash: `git -C {superproject} config -f .gitmodules submodule.{name}.branch {current}`
+10. {verify}: bash: `sh ${CLAUDE_SKILL_DIR}/scripts/git-roots.sh roots` (capture exit)
+11. Return to caller: ### result
+
+## Report
+
+### diagnosis
+
+```
+Repo: {superproject}
+Submodule conformance (every detected boundary, declared or on-disk):
+{per-path: <path> — <state> (staged: {staged}, history: {history})}
+Tier 1 (reversible index repair): {tier1-list}
+Tier 2 (history rewrite — needs deliberate decision): {tier2-list}
+Undeclared (on-disk repo not in .gitmodules — intent decision): {undeclared-list}
+Uninitialized: {uninit-list}
+```
+
+### result
+
+```
+Submodule domain:
+Repaired (Tier 1): {repaired-list}
+Deferred (Tier 2 / postponed): {deferred-list}
+Verify: {gate exit 0 = conforming | still drifting — see diagnosis}
+Blocking unresolved: {yes — do not commit until resolved | none}
+```
