@@ -28,6 +28,7 @@ Raise signal, cut noise — minimize reader overhead without losing meaning. Rea
 - Quantify only when the number is load-bearing — a threshold, a tracked discrepancy, or a result whose value a decision turns on ("0 failures", "158/205 over credit"). A decorative count (totals, tallies, sizes no decision reads) rots and demands upkeep; state the qualitative fact instead ("suite green", "balances reconcile").
 - Cross-reference only when the reader must consult the source to understand the current surface.
 - Never enumerate content from a linked source — parenthetical summaries are redundant, cherry-picked, and prone to drift.
+- Assume a capable reader — don't encode general knowledge they already hold; spend words only on non-obvious, domain- or project-specific facts. Cutting a "what is X" explanation of a well-known concept is almost always right.
 
 ### Anti-staleness
 
