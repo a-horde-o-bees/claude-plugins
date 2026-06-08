@@ -42,9 +42,9 @@ def _build_schema(target_path: str) -> None:
 
 
 def ready(db_path: Path | None = None) -> bool:
-    """Return True when the DB structurally matches the canonical schema."""
+    """Return True when the DB satisfies the canonical schema floor (extras OK)."""
     target = db_path if db_path is not None else _db_path()
-    return target.exists() and dbtools.matches_expected(target, _build_schema)
+    return target.exists() and dbtools.satisfies_expected(target, _build_schema)
 
 
 def ensure_ready(db_path: Path | None = None) -> None:
@@ -61,8 +61,13 @@ def _status_extra(db_path: Path) -> list[dict]:
     """Overall status + coverage metrics when operational."""
     if not db_path.exists():
         return [{"label": "overall status", "value": "not initialized"}]
-    if not ready(db_path):
-        return [{"label": "overall status", "value": "error — divergent schema"}]
+    state = dbtools.schema_state(db_path, _build_schema)
+    if state == "upgradable":
+        return [{"label": "overall status", "value": "needs upgrade — run init to add missing tables"}]
+    if state == "conflict":
+        return [{"label": "overall status", "value": "error — schema conflict; run init --force or reset"}]
+    if state != "current":
+        return [{"label": "overall status", "value": f"error — {state} schema"}]
     try:
         conn = _db.get_connection(str(db_path))
         n_events = conn.execute("SELECT COUNT(*) FROM events").fetchone()[0]
@@ -105,12 +110,7 @@ def status() -> dict:
     db = _db_path()
     rel_path = _db_rel_path()
 
-    if not db.exists():
-        state = "absent"
-    elif ready(db):
-        state = "current"
-    else:
-        state = "divergent"
+    state = "absent" if not db.exists() else dbtools.schema_state(db, _build_schema)
 
     files = [{"path": rel_path, "before": state, "after": state}]
     extra = _status_extra(db)
