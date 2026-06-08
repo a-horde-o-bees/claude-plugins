@@ -427,9 +427,9 @@ def main() -> None:
     )
     p_descriptions_clear.set_defaults(func=cmd_descriptions_clear)
 
-    p_init = sub.add_parser("init", help="Rectify DB to canonical schema")
+    p_init = sub.add_parser("init", help="Rectify DB to canonical schema (adds missing tables in place)")
     p_init.add_argument("--force", action="store_true",
-                        help="Back up and rebuild if the live schema is divergent")
+                        help="Back up and rebuild on a genuine schema conflict (missing prescribed column/index)")
     p_init.set_defaults(func=cmd_init)
 
     p_reset = sub.add_parser("reset", help="Backup and wipe the DB")
