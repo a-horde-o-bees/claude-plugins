@@ -1,10 +1,1 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(bash scripts/test.sh:*)",
-      "Bash(bin/project-run:*)",
-      "Bash(plugins/ocd/bin/ocd-run:*)",
-      "mcp__plugin_ocd_navigator__*"
-    ]
-  }
-}
+{}

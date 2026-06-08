@@ -1,6 +1,5 @@
 {
     "extraPaths": [
-        "plugins/ocd",
-        "plugins/skill-authoring/skills/skill-composer"
+        "scripts"
     ]
 }
