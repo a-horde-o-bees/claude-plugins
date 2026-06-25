@@ -6,7 +6,7 @@ Cut a tagged release. Read methodology, synthesize CHANGELOG + version from comm
 
 ## Dependencies
 
-- `/concise-prose`, `/author-descriptions`, `/honesty` — the CHANGELOG entry and review presentation are authored under these.
+- `/concise-prose`, `/description-authoring`, `/grounded` — the CHANGELOG entry and review presentation are authored under these.
 - `partials/release-bootstrap.md`, `partials/release-synthesize.md` — methodology bootstrap + the spawned CHANGELOG synthesizer.
 
 ## Variables

@@ -1,19 +1,22 @@
 {
   "skills": [
     "concise-prose",
-    "author-descriptions",
-    "author-markdown",
-    "author-processes",
-    "author-rules",
-    "author-skills",
     "file-decomposition",
-    "progressive-disclosure",
     "reauthor",
     "lint-markdown",
-    "honesty",
     "confirm-shared-intent",
     "transcripts",
     "git",
-    "apply-over-queue"
+    "apply-over-queue",
+    "description-authoring",
+    "markdown-authoring",
+    "process-authoring",
+    "rule-authoring",
+    "skill-authoring",
+    "grounded",
+    "architecture-authoring",
+    "decision-authoring",
+    "export-pdf",
+    "principled-pushback"
   ]
 }

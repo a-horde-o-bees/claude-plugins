@@ -1,0 +1,46 @@
+%% Timeline skill — systems, interfaces, ownership.
+%% Render: open ../docs/architecture.html in a browser (zero install), or
+%%   npx @mermaid-js/mermaid-cli -i architecture.mmd -o architecture.svg
+%% GitHub renders this file natively in the diff view.
+flowchart TB
+  classDef ext     fill:#2b3550,stroke:#5a6a8a,color:#dfe6f5
+  classDef cache   fill:#3a2f1a,stroke:#b08030,color:#f5ecd8
+  classDef model   fill:#1f3a2a,stroke:#50c878,color:#dff5e8
+  classDef consumer fill:#2b2b40,stroke:#8a7ac0,color:#e8e0f5
+  classDef persist fill:#3a1f2a,stroke:#e05555,color:#f5dfe6
+
+  subgraph HARNESS["Claude Code harness (not owned)"]
+    JSONL["transcript JSONL<br/>~/.claude/projects/&lt;proj&gt;/*.jsonl<br/>+ subagent dirs"]:::ext
+    SET["settings.json<br/>cleanupPeriodDays (history horizon)"]:::ext
+  end
+
+  subgraph SKILL["transcripts skill (the time model)"]
+    direction TB
+    INGEST["raw_db.py<br/>verbs: ingest · reset(gated)<br/>incremental UPSERT by (size,mtime)"]:::cache
+    RAW[("~/.claude/a-horde-o-bees/transcripts/raw.db<br/>regenerable cache — every line,<br/>is_replay / is_meta marked")]:::cache
+
+    MODEL["swimlane_timeline.py — THE MODEL<br/>classify · _role_* / _sweep_points<br/>_pair_points · segment_coverage<br/>gap_spans · gap_adjust (billed/credited)<br/>materialize_exchanges · segment_geometry<br/>+ standalone static render"]:::model
+
+    TREE["branch_tree.py<br/>session segments / flat rail"]:::consumer
+    SERVER["swimlane_server.py<br/>Corpus + HTTP + inline CLIENT_HTML<br/>/api/segment · /api/stats · /api/sessions"]:::consumer
+    EXCH["exchanges.py<br/>verbs: list · describe · topics · assign"]:::consumer
+    REPORT["report (planned)<br/>coverage per exchange/day, topic filter"]:::consumer
+
+    ANNO[("~/.claude/a-horde-o-bees/transcripts/annotations.db<br/>PERSISTENT — UUID-keyed<br/>exchange · topic · exchange_topic")]:::persist
+  end
+
+  USER(["browser / terminal"]):::ext
+
+  SET -. governs retention .-> JSONL
+  JSONL -- ingest --> INGEST --> RAW
+  RAW -- read --> MODEL
+  MODEL --> TREE
+  TREE --> SERVER
+  MODEL --> SERVER
+  MODEL -- materialize_exchanges --> EXCH
+  EXCH <--> ANNO
+  MODEL --> REPORT
+  ANNO -- read --> REPORT
+  SERVER -- interactive UI --> USER
+  MODEL -- static HTML --> USER
+  REPORT -- rollup --> USER

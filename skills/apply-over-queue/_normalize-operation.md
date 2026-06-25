@@ -42,7 +42,7 @@ The instruction qualifies only if all four hold. Judge each against {raw} + {ite
     1. Abstract every concrete target reference to the TARGET role.
     2. Preserve the procedure and any disciplines/criteria verbatim in intent.
     3. State the output as a function of TARGET (a path derived from it, DB rows keyed by it, a file in a named output dir).
-    4. Apply /author-processes to the procedure and /concise-prose to the whole — no target literals, no cross-item language ("for each", "all of them", "the rest") survive.
+    4. Apply /process-authoring to the procedure and /concise-prose to the whole — no target literals, no cross-item language ("for each", "all of them", "the rest") survive.
 4. Write the result to {out}. Return {out}.
 
 ## Note

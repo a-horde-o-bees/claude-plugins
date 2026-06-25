@@ -19,7 +19,7 @@ Everything else — organization, phrasing, ordering, examples, headings — is 
 - Read the current artifact along with every rule, convention, and skill in context, plus the surrounding conversation. Let all of them shape the new version at once.
 - Build the structure from what the artifact must do now, not what it used to do.
 - Eliminate duplication: content stated twice, examples making the same point, parallel sections that hedge each other.
-- Rephrase whenever rephrasing tightens. Don't keep a sentence just because it survived.
+- Rephrase only when it strictly tightens or corrects — a phrasing already at the bar stays; swapping it for an equally good one is churn, not improvement.
 - Output the whole artifact end-to-end. No `...`, no `[unchanged]`, no implied continuation.
 - Don't spot-edit section by section — local fixes accumulate as patches; only an end-to-end pass restores coherence.
 - Don't anchor on existing phrasing or organization — both solved a problem set that may no longer apply.

@@ -13,7 +13,7 @@
 - Submodules without `.github/workflows/` emit the `no-ci` template and recursion still descends into their sub-submodules
 - Failed runs report synchronously with workflow name + URL; no background watcher
 - In-flight runs spawn the async watcher; foreground returns immediately. Task-completion text reports the outcome inline
-- `{ci-status}` is a 6-value enum (`passed`, `failed`, `dispatched`, `incomplete`, `no-runs`, `no-ci`). Classification is deterministic and lives in `scripts/ci.py`; the workflow consumes its JSON output and emits the matching template verbatim — no inventing, paraphrasing, or merging
+- `{ci-status}` is a 6-value enum (`passed`, `failed`, `dispatched`, `incomplete`, `no-runs`, `no-ci`). Classification is deterministic and lives in `scripts/ci.py`; the process consumes its JSON output and emits the matching template verbatim — no inventing, paraphrasing, or merging
 
 ## Process
 

@@ -4,7 +4,7 @@
 
 ## Dependencies
 
-- `/concise-prose`, `/author-descriptions`, `/honesty` — the commit messages are authored under these (applied at step 8; the inline mention there is the surgical reminder).
+- `/concise-prose`, `/description-authoring`, `/grounded` — the commit messages are authored under these (applied at step 8; the inline mention there is the surgical reminder).
 - `verbs/doctor.md` — submodule conformance pre-check; refusing to commit through Tier 1 drift is what prevents escalation into Tier 2 history pollution.
 
 ## Variables
@@ -78,7 +78,7 @@
 
     One group when changes are coherent or grouping is ambiguous; multiple groups only when topics are clearly separable. Multi-group order: dependencies before consumers.
 
-8. {commit-messages}: draft one message per group — subject + body. Apply /concise-prose, /author-descriptions, /honesty. Body lines describe end-state results visible in the diff or decisions not visible there. Strip process narration (`reauthored`, `sweep applied`), restated principles when the diff already shows the principle applied, and meta-commentary about earlier steps in the change journey. Project-internal phase labels (`Phase G`, `Sprint 4`) are meaningless to future readers — strip them. Pin-advance lines name the submodule and summarize the consumed commits.
+8. {commit-messages}: draft one message per group — subject + body. Apply /concise-prose, /description-authoring, /grounded. Body lines describe end-state results visible in the diff or decisions not visible there. Strip process narration (`reauthored`, `sweep applied`), restated principles when the diff already shows the principle applied, and meta-commentary about earlier steps in the change journey. Project-internal phase labels (`Phase G`, `Sprint 4`) are meaningless to future readers — strip them. Pin-advance lines name the submodule and summarize the consumed commits.
 9. {co-author}: bash: `git -C {cwd} config --get user.claude-coauthor`
 10. For each {group} in {commit-groups}:
     1. bash: `git -C {cwd} add <files-in-group>` — pin-advance entries stage as `git -C {cwd} add <submodule-path>`

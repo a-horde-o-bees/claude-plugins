@@ -14,7 +14,7 @@ Each unit is emitted once as a `## <anchor>` section (skill → `name`; componen
 `###`, and every reference rewritten to `Call: ## <anchor>` so the document is
 self-contained. Non-`.md` assets (scripts, templates) are left as runtime file refs.
 
-  flatten.py --skills author-skills,reauthor --operation-file op.md \
+  flatten.py --skills skill-authoring,reauthor --operation-file op.md \
              --skills-root ~/.claude/skills --out instruction.md
 """
 import argparse
@@ -26,6 +26,15 @@ SKILLREF = re.compile(r'(?:(?:skill|Call)\s*:\s*)?`?/([a-z][a-z0-9][a-z0-9-]*)`?
 # a relative .md path, optional skill:/Call: prefix, optional backticks
 MDREF = re.compile(r'(?:(?:skill|Call)\s*:\s*)?`?([\w][\w./-]*\.md)`?')
 HEADING = re.compile(r'^#{1,6}\s')
+# strict /skill discovery for the operation file: the /name must NOT sit inside a path
+# (negative lookbehind on a word char or slash), so a concrete file path like
+# `.../skills/transcripts/x.py` never mis-discovers the `transcripts` skill. A leading
+# backtick / space / `(` is fine; `skills/transcripts` is not.
+DISCOVER = re.compile(r'(?<![\w/])/([a-z][a-z0-9][a-z0-9-]*)')
+# the same path-guarded /name token, optionally backtick-wrapped, for REWRITING a ref to an
+# anchor link — consumes the backticks (so the result is a live link, not inline code), leaves
+# any preceding Call:/Apply: verb. The `in included_skills` check is the final guard.
+REWRITE = re.compile(r'(?<![\w/])`?/([a-z][a-z0-9][a-z0-9-]*)`?')
 
 
 def body_of(text: str) -> str:
@@ -83,13 +92,17 @@ def collect(entries, root: Path, known: set):
 
 
 def rewrite(body: str, owner: str, folder: Path, included_skills: set) -> str:
-    body = SKILLREF.sub(
-        lambda m: f"Call: ## {m.group(1)}" if m.group(1) in included_skills else m.group(0), body)
+    # A /name skill ref (in the inlined set) → an anchor link to its `## name` section, leaving
+    # any Call:/Apply: verb and surrounding prose untouched. So `Apply: /description-authoring`
+    # becomes `Apply: [description-authoring](#description-authoring)`, resolving in the flat payload.
+    body = REWRITE.sub(
+        lambda m: f"[{m.group(1)}](#{m.group(1)})" if m.group(1) in included_skills else m.group(0), body)
 
     def comp_sub(m):
         ref = m.group(1)
         if not ref.endswith("SKILL.md") and (folder / ref).is_file():
-            return f"Call: ## {owner}/{ref[:-3]}"
+            anchor = f"{owner}/{ref[:-3]}"
+            return f"[{anchor}](#{anchor})"
         return m.group(0)
 
     return MDREF.sub(comp_sub, body)
@@ -138,7 +151,11 @@ def section(anchor: str, body: str) -> str:
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--skills", required=True, help="comma-separated entry skills")
+    ap.add_argument("--skills", default="",
+                    help="comma-separated entry skills — OPTIONAL supplement; the operation "
+                         "file's own /skill references are auto-discovered and flattened, so a "
+                         "well-formed instruction needs no --skills. Use it to add a skill the "
+                         "instruction does not name.")
     ap.add_argument("--operation-file", required=True)
     ap.add_argument("--skills-root", required=True)
     ap.add_argument("--out", required=True)
@@ -146,11 +163,14 @@ def main():
 
     root = Path(a.skills_root).expanduser()
     known = {p.name for p in root.iterdir() if (p / "SKILL.md").exists()}
-    entries = [s for s in a.skills.split(",") if s]
+    op = Path(a.operation_file).expanduser().read_text().rstrip()
+    # A well-formed instruction self-declares its disciplines via /skill references; discover
+    # and flatten them so the instruction is self-sufficient. --skills only SUPPLEMENTS this.
+    op_refs = [r for r in DISCOVER.findall(body_of(op)) if r in known]
+    entries = list(dict.fromkeys([s for s in a.skills.split(",") if s] + op_refs))
     units = collect(entries, root, known)
     included_skills = {anchor for anchor, _, owner, _ in units if anchor == owner}
 
-    op = Path(a.operation_file).expanduser().read_text().rstrip()
     parts = [rewrite(op, "", root, included_skills),
              "\n\n---\n\n# Flattened references (each call below points to a `## section`)\n"]
     for anchor, path, owner, folder in units:
