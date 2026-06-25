@@ -16,9 +16,11 @@ Open `http://localhost:<port>/`.
 
 1. Ensure the raw DB exists and is current (`verbs/ingest.md`).
 2. Start the server in the background, redirecting to a log — it runs minutes-plus:
+
    ```
    uv run ${CLAUDE_SKILL_DIR}/swimlane_server.py --db ~/.claude/a-horde-o-bees/transcripts/raw.db --port 8765 > ~/.claude/a-horde-o-bees/transcripts/logs/serve.log 2>&1 &
    ```
+
 3. Note the launch **PID** — stopping the server needs it.
 4. Open the page; expand segment rows to load them (`/api/segment/<uuid>`, lazy, client-cached).
 

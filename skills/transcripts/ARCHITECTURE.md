@@ -7,7 +7,7 @@ The mechanical reconstruction of **engaged time** from raw Claude Code transcrip
 A strict containment hierarchy: each tier groups the one below; time is measured on time-blocks and rolls up.
 
 | Tier | Definition |
-|---|---|
+| --- | --- |
 | **event** | One JSONL row — one record. The atom. |
 | **time-block** | A contiguous span of active processing, bounded by a START and the next END. The unit time is *measured* on. |
 | **exchange** | A run of consecutive time-blocks anchored by one typed prompt — the work that prompt set in motion, across any mid-exchange idle. The unit time is *attributed* to. |
@@ -36,7 +36,7 @@ A time-block is found not by content but by **lines**: a line is a horizontal ma
 The pairing role (`_role_of`, `swimlane_timeline.py`) — a **signature→role** map, not a list of `classify()` outputs: two rows key off something other than a class (`turn_duration` is a record *property*; `user-response` is a `tool_result` reclassified in `build()`). The distinguishing signature is given per row. (Internal class names; UI display names are in `swimlane_server_ui.md`.)
 
 | Signature | Role | Distinguishing test |
-|---|---|---|
+| --- | --- | --- |
 | class `prompt` | START | `type=user` with real text, OR a typed `<command-name>`; excludes isMeta / empty / `<task-notification>` / `[Request interrupted`. Opens a block, anchors an exchange. |
 | property `closure="turn"` | STOP | `type=system AND subtype=turn_duration` — **not a class**; the record's closure property. The machine halted (turn end, AskUserQuestion wait, notification park). |
 | class `user-interrupt` | STOP | `type=user`, text starts `[Request interrupted` (Escape). A hard stop of machine contiguity. |
@@ -88,7 +88,7 @@ The prompt queue holds messages waiting to reach the agent — user prompts type
 **Only `enqueue` carries identity** — the queued `content`, plus the embedded `<task-id>` / `<tool-use-id>` for a notification. The consuming ops carry nothing (`popAll` carries one `content` snapshot, its own submitted message), so every reconstructed relationship anchors on the enqueue.
 
 | op | carries | meaning |
-|---|---|---|
+| --- | --- | --- |
 | enqueue | `content` (+ ids for notifications) | a message entered the queue |
 | dequeue | — | the head was **delivered** to the agent |
 | remove | — | the head was **discarded** (never delivered) |
@@ -99,7 +99,7 @@ Enqueue content splits three ways and `classify` labels the dot accordingly (`en
 **The resolution — dissolve to direct bridges** (`Corpus._queue_relationships`, thick amber arcs). Once each chain is reconstructed (spawn → consume → deliver), the queue ops are **dissolved**: the kept dots are the **fate-coded prompt markers** in the prompt lane — an emitted prompt's enqueue (`○`→`●`) and a consumed interjection's enqueue + remove (`△`→`▲`); notification enqueues and the remaining ops are dropped (the queue column disappears). One `qbridge` edge connects the two ends a chain actually bridged:
 
 | chain | bridge drawn | when |
-|---|---|---|
+| --- | --- | --- |
 | queued prompt **emitted** | `○` enqueue → `●` delivered prompt | dequeued (consume + deliver collapse; the enqueue re-attaches to the real prompt) |
 | **consumed interjection** | `△` enqueue → `▲` at the `remove` | removed AND content delivered nowhere — the running turn answered it inline (`_mark_interjections`) |
 | background **notification** | tool_use → delivered notification | spawn id matched **and** delivered |

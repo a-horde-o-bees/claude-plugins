@@ -21,6 +21,7 @@ The unit references both as `/skill` calls, and `/apply-over-queue` discovers an
     - bash: `ls <corpus dir>/*.jsonl` → full session ids (`--items` wants full ids, not prefixes).
 
 2. **Fan out** — invoke `/apply-over-queue` with the per-session unit as instruction:
+
     ```
     /apply-over-queue \
       --instruction /home/dev/.claude/skills/transcripts/_annotate-session.md \
@@ -29,6 +30,7 @@ The unit references both as `/skill` calls, and `/apply-over-queue` discovers an
       --cwd /home/dev/.claude/skills/transcripts \
       --add-dir /home/dev/.claude/a-horde-o-bees/transcripts
     ```
+
     - `--isolation none` — the side effect is a SQLite write to `annotations.db`, outside any repo; a worktree diff can't capture DB rows.
     - `--add-dir` the working dir so spawns reach `raw.db` (read) and `annotations.db` (write).
     - **Sequential only** — `annotations.db` is one SQLite writer, and sequential spawns keep the prompt cache warm. Run no other annotation command during the fan-out.

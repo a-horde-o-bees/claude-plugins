@@ -27,7 +27,7 @@ The raw DB (default `~/.claude/a-horde-o-bees/transcripts/raw.db`, override `TRA
 Each verb's process lives in its own file under `verbs/`. Signatures here; open the file for the step-by-step.
 
 | Verb | Signature | Does | Process |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | **ingest** | `ingest (--file F \| --dir D) [--db DB]` · `reset [--db DB] [--yes]` | JSONL → raw scratch DB; every line, nothing interpreted, sub-agent dir pulled in, idempotent per file. `reset` (gated) drops the cache for a clean rebuild. | `verbs/ingest.md` |
 | **serve** | `serve [--db DB] [--port 8765]` | Launch the interactive flat-rail timeline UI (sessions as segments, time-blocks, coverage). The exploration surface. | `verbs/serve.md` |
 | **render** | `render [--db DB] [--lines N] [--out HTML]` | Static single-session timeline HTML + its entity-key companion `.md`. For a fixed artifact, no server. | `verbs/render.md` |
@@ -55,4 +55,3 @@ Sources live in `docs/`; generated HTML lands in the working dir's `diagrams/` (
 ## Server lifecycle
 
 `serve` is a long-running process. **Never `pkill -f swimlane_server`** — the pattern self-matches the launcher's own command line and kills the calling shell (exit 144). Kill by PID number. A code edit needs a restart to take effect (the geometry model is server-side). Full cycle in `verbs/serve.md`.
-

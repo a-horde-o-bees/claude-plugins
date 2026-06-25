@@ -54,7 +54,7 @@ Style presets are Python modules under `~/.claude/skills/export-pdf/styles/<name
 **Overridable constants** (all optional; consumed by the renderer if set):
 
 | Group | Constant | Effect (when set) |
-|---|---|---|
+| --- | --- | --- |
 | Fonts | `BODY_FONT` | Bullet marker font |
 | | `BOLD_FONT`, `ITALIC_FONT` | Available to `make_styles()` for ParagraphStyle composition |
 | Colors | `LINK_COLOR` | Adds `color="…"` to inline links |
@@ -85,7 +85,7 @@ Everything else (margins, page size, HR thickness, HR color, bullet character, b
 Shipped presets:
 
 | Preset | Description |
-|--------|-------------|
+| --- | --- |
 | `compact` (default) | Tight single-page document layout — Helvetica family, 1.3cm margins, 10pt body, UPPERCASE H2 with hairline `#d0d7de` rule, `•` bullets, blue `#0550ae` links. Tuned for resumes, cover letters, recommendation letters. Declares every constant explicitly to serve as the canonical example. |
 
 If invoked with `--style <name>` for a preset that doesn't exist, the renderer prints the available presets and exits 2.
