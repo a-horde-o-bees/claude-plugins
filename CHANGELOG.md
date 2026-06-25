@@ -8,6 +8,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 Populated at release time by `/ocd:git release <version>`. The verb crawls git history since the last tag, agent-synthesizes a Keep-a-Changelog entry with cross-commit deconfliction, presents a draft + proposed bump for operator review, then on approval bumps the manifest, commits, tags, and pushes. Between releases, in-flight changes live in git history; this section is not maintained manually.
 
+## [0.3.0] - 2026-06-25
+
+Claude-plugins is now a single flat `skills` plugin generated from `~/.claude/skills`. The multi-plugin `ocd` marketplace model is retired: skills are authored in the live `~/.claude/skills/` source and mirrored into `skills/` by `scripts/sync_skills.py` per `.claude/skill-manifest.json` — `skills/` is generated and never edited directly. Eighteen skills ship.
+
+### Added
+
+- Authoring-discipline skills — `description-authoring`, `markdown-authoring`, `process-authoring`, `rule-authoring`, `skill-authoring`, `architecture-authoring`, `decision-authoring`: author each artifact type (engage-or-skip descriptions, markdown, process flows, rules, skills, ARCHITECTURE.md, DECISIONS.md) to the project's disciplines.
+- Interaction-discipline skills — `grounded` (verify before acting and before asserting; bound conclusions to what was examined), `principled-pushback` (voice a warranted objection before complying), `confirm-shared-intent` (align before acting on ambiguity), `concise-prose` (slim content without losing meaning).
+- `export-pdf` — render a markdown file to a tuned PDF (single- or multi-page; GFM tables and pagination handled) via a bundled reportlab renderer.
+- `/git` — one router fronting the development cycle: commit, push, CI, the PR lifecycle, the all-in-one checkpoint, release, and repo-health doctor.
+- `apply-over-queue`, `file-decomposition`, `reauthor`, `lint-markdown`, and a restructured `transcripts` (verb-based: ingest, serve, render, exchanges, report).
+
+### Changed
+
+- Repository inverted to a generated mirror (#45). The published plugin is `skills/`; everything else is packaging and the sync tooling. `sync-skills` reconciles `.claude/skill-manifest.json` against the live source, then regenerates the mirror.
+
+### Removed
+
+- The `ocd` plugin and its marketplace model — per-plugin `/ocd:*` namespacing, `enabled-systems` opt-in, the navigator / needs-map / check / sandbox / setup systems, and the `scripts/release.sh`-era tooling. The repo now holds only the `skills` plugin, its packaging, and the sync scripts.
+
 ## [0.2.0] - 2026-05-05
 
 First minor release after v0.1.0. Adds three new skills (retrospective, transcripts, needs-map), a transcripts MCP server, an end-to-end release workflow under `/ocd:git`, async CI watching, and substantial expansions to the `/ocd:check` discipline harness, alongside a steady stream of rule, convention, and principle refinements.
