@@ -7,7 +7,7 @@ The mechanically-checkable formatting rules a project markdown linter must enfor
 - The first content line is a level-1 heading (`#`). [built-in: first-line-heading]
 - The heading text names the file. [custom rule, warn — lenient normalized match; for `SKILL.md` the parent folder is the name; descriptive container files (README, criteria, ...) are skipped]
 
-The description beneath the heading is authoring judgment, not mechanical — out of scope for the linter. See `/author-descriptions`.
+The description beneath the heading is authoring judgment, not mechanical — out of scope for the linter. See `/description-authoring`.
 
 ## Blank-line separation
 

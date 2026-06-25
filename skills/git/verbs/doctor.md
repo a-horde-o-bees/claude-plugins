@@ -1,10 +1,10 @@
 # git doctor
 
-> The repo-health doctor. A cheap, local detector (`scripts/detect.sh`) scans the problem domains that gate everyday work; each domain's repair workflow loads into context **only when that domain is flagged** — so a healthy repo (the common case) pays just the detector, which is why this is cheap enough to pre-check on every commit and push.
+> The repo-health doctor. A cheap, local detector (`scripts/detect.sh`) scans the problem domains that gate everyday work; each domain's repair process loads into context **only when that domain is flagged** — so a healthy repo (the common case) pays just the detector, which is why this is cheap enough to pre-check on every commit and push.
 
 ## Dependencies
 
-- `partials/doctor-submodule.md`, `partials/doctor-default-branch.md`, `partials/doctor-ci.md` — per-domain workflows, Called only for a detected domain (so unneeded repair content stays out of context).
+- `partials/doctor-submodule.md`, `partials/doctor-default-branch.md`, `partials/doctor-ci.md` — per-domain processes, Called only for a detected domain (so unneeded repair content stays out of context).
 
 ## Variables
 
@@ -13,7 +13,7 @@
 ## Rules
 
 - **Detect cheap, repair lazy.** `detect.sh` is local and fast; heavy per-domain content reads in only when its domain is flagged.
-- **Severity gates the workflow.** `BLOCKING` (submodule drift — committing through it escalates Tier 1 into Tier 2 history pollution) halts until resolved or deliberately deferred. `ADVISORY` (default-branch, CI) is surfaced, never blocks.
+- **Severity gates the process.** `BLOCKING` (submodule drift — committing through it escalates Tier 1 into Tier 2 history pollution) halts until resolved or deliberately deferred. `ADVISORY` (default-branch, CI) is surfaced, never blocks.
 - **Conform, don't circumvent.** Repairs restore canonical git structure; never a workaround. Per-domain risk-tiering and scoping live in the components.
 
 ## Process

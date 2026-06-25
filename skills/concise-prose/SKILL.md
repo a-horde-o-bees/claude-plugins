@@ -1,11 +1,11 @@
 ---
 name: concise-prose
-description: Use whenever the agent is writing or editing prose (e.g. chat replies, documentation, markdown, code comments, log entries, commit messages, descriptions, error strings) to slim content without losing meaning.
+description: Use whenever the agent writes or edits prose for any reader — chat replies, docs, markdown, comments, logs, commit messages, descriptions, error strings — to slim content without losing meaning. A concision pass that layers on top of surface-specific authoring skills (e.g. description-authoring, commit guidance), never replacing their structure.
 ---
 
 # concise-prose
 
-Raise signal, cut noise — minimize reader overhead without losing meaning. Readers can be users, other agents, or downstream tools.
+Minimize reader overhead without losing meaning. Readers can be users, other agents, or downstream tools.
 
 ## Rules
 
@@ -23,12 +23,16 @@ Raise signal, cut noise — minimize reader overhead without losing meaning. Rea
 
 ### Restraint
 
-- No examples unless the content is ambiguous without one. Counter-examples only when essential to clarify a positive example. A paired contrast that *defines* the behavior (`Not: … / Yes: …`, wrong/right) is the content itself, not an illustration of it — keep those; the bar is whether the pair carries the spec, not whether it decorates it.
+- No examples or counter-examples unless the content is ambiguous without one — and a `Not:/Yes:` (wrong/right) pair only when the contrast *is* the spec, not decoration of a rule already stated. This bar gates inclusion; it never licenses keeping or adding a pair.
 - Signal non-exhaustiveness in parenthetical lists with leading "e.g." — an unqualified list implicitly claims completeness; the qualifier is signal, not filler.
 - Quantify only when the number is load-bearing — a threshold, a tracked discrepancy, or a result whose value a decision turns on ("0 failures", "158/205 over credit"). A decorative count (totals, tallies, sizes no decision reads) rots and demands upkeep; state the qualitative fact instead ("suite green", "balances reconcile").
 - Cross-reference only when the reader must consult the source to understand the current surface.
 - Never enumerate content from a linked source — parenthetical summaries are redundant, cherry-picked, and prone to drift.
 - Assume a capable reader — don't encode general knowledge they already hold; spend words only on non-obvious, domain- or project-specific facts. Cutting a "what is X" explanation of a well-known concept is almost always right.
+
+### Correction
+
+- **Correct by reduction, not accretion.** When a passage reads wrong, sharpen or cut the offending line rather than layer a clarifying sentence over it. A passage that passed review is not proven minimal: the sharper, shorter form is often still unarticulated.
 
 ### Anti-staleness
 

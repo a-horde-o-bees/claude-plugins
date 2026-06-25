@@ -4,7 +4,7 @@
 
 ## Dependencies
 
-- `/concise-prose`, `/author-descriptions`, `/honesty` — the description is authored under these (applied at the author step; the inline mention there is the surgical reminder).
+- `/concise-prose`, `/description-authoring`, `/grounded` — the description is authored under these (applied at the author step; the inline mention there is the surgical reminder).
 
 ## Variables
 
@@ -44,7 +44,7 @@
     1. {subjects}: bash: `git log --no-merges --pretty=format:'%s%n%b' {base}...HEAD` — commit subjects + bodies, the primary seed
     2. {stat}: bash: `git diff --stat {base}...HEAD` — change weight (file count, churn)
     3. Assess weight from {stat}; pick the depth tier (one/two sentences → summary+what/why → full design notes). Descend to bash: `git show <sha>` or `git diff {base}...HEAD` only if {subjects} leave intent ambiguous.
-    4. Draft {title} (≤ ~70 chars, no trailing period) and {body}. Apply /concise-prose, /author-descriptions, /honesty. Body leads with why; omit empty sections; no `#1.` list items.
+    4. Draft {title} (≤ ~70 chars, no trailing period) and {body}. Apply /concise-prose, /description-authoring, /grounded. Body leads with why; omit empty sections; no `#1.` list items.
 
 4. Review gate — skip when {auto}:
     1. Present {title}, {base}, {draft}, and {body} verbatim. Apply /concise-prose.

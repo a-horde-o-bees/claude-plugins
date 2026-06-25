@@ -50,14 +50,14 @@
     3. {recommended-version}: apply the bump to {current-version} per the methodology's reset rules (e.g., "y bump resets z to 0")
     4. {bump-axis-rationale}: one or two sentences naming which categories drove the chosen axis (e.g., "y-bump: two Added entries for new user-facing capabilities; no Removed or breaking Changed entries triggered x")
 
-7. Compose the CHANGELOG section. Apply /author-descriptions and /concise-prose:
+7. Compose the CHANGELOG section. Apply /description-authoring and /concise-prose:
     1. Heading: `## [{recommended-version}] - YYYY-MM-DD`
     2. Optional one-line lead paragraph if the release has a coherent theme (e.g., "Skill-orchestrated reports + Q#/letter prompt convention")
     3. Categorized bullets per step 5
     4. Bullets concise but specific — name the thing, name the user-visible effect
     5. {changelog-entry}: composed markdown section
 
-8. Flag ambiguity. Apply /honesty:
+8. Flag ambiguity. Apply /grounded:
     1. If commits suggest a change but the user-facing effect is unclear: include the bullet annotated with `(needs review: <reason>)` so the operator catches it during the review gate
     2. If bump-axis decision is ambiguous (e.g., a Changed entry could be breaking or non-breaking): pick the more conservative axis (higher impact = larger bump) and flag the rationale with `(needs review: ...)`
 

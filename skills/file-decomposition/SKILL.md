@@ -7,13 +7,11 @@ description: Use when deciding whether to split or merge an agent-consumed file 
 
 Whether to split or merge a file is governed by how an agent loads and consumes it — not by extension, length, or organizational symmetry. Each load brings in only what its consumer needs; what travels together stays together.
 
-Applies to any agent-consumable artifact: Python modules, markdown workflows, skill components, rule files, configuration, schemas. File-type-specific guidance (e.g., python.md's *Module Decomposition*, the workflow-component split in skill folders) illustrates the principle in one substrate; this rule names the mechanism.
+The principle activates when an agent loads a file, or part of one, to understand, reason about, or modify the system — Python modules, markdown processes, skill components, rule files, configuration, schemas. A file qualifies even when tooling also consumes it, so long as an agent loads it. File-type-specific guidance (e.g. python.md's *Module Decomposition*, the process-component split in skill folders) illustrates the principle in one substrate; this rule names the mechanism.
 
 ## Out of scope
 
-Files that never enter an agent's context — generated data (CSV indexes, SQLite databases, pickle caches), build outputs, intermediate state. Their structure is determined by the data model, not agent access patterns.
-
-The principle activates when an agent loads a file (or part of it) to understand, reason about, or modify the system. Source code, documentation, configuration, schemas, workflow definitions, and rule files qualify even when also consumed by tooling.
+Files that never enter an agent's context — generated data (e.g. CSV indexes, SQLite databases, pickle caches), build outputs, intermediate state. The data model determines their structure, not agent access patterns.
 
 ## Split when
 

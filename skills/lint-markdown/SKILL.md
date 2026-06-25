@@ -7,7 +7,7 @@ description: Use when standing up or updating this project's markdown linter —
 
 Stand up project tooling that enforces our markdown formatting mechanically, so authoring skills carry only judgment. The rules to enforce live in `criteria.md`; this skill realizes them as runnable lint configuration.
 
-## Workflow
+## Process
 
 1. Read `criteria.md` — the enforce-list, each criterion tagged built-in or custom.
 2. {linter}: the project's existing markdown linter if one is configured, else `markdownlint-cli2`.
@@ -24,4 +24,4 @@ Stand up project tooling that enforces our markdown formatting mechanically, so 
 
 ## Keeping criteria current
 
-`criteria.md` is the source of truth. When it changes, rerun this workflow against the diff — add, retune, or remove rules so the linter and the criteria stay matched.
+`criteria.md` is the source of truth. When it changes, rerun this process against the diff — add, retune, or remove rules so the linter and the criteria stay matched.

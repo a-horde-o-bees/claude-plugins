@@ -25,7 +25,7 @@
     6. {github-release-workflow}: bash: `[ -f .github/workflows/release.yml ] && echo yes || echo no`
 
 2. {template}: Read `${CLAUDE_SKILL_DIR}/assets/release.md` — starter template anchoring output structure
-3. Compose draft `release.md` using {template} structure and detection-driven defaults for every section. Apply /author-markdown and /concise-prose:
+3. Compose draft `release.md` using {template} structure and detection-driven defaults for every section. Apply /markdown-authoring and /concise-prose:
     1. **Versioning scheme** — if {existing-tags} match `v\d+\.\d+\.\d+`, fill in semver `x.y.z`; otherwise list semver/calver/custom as choices
     2. **Manifest paths** — fill in {manifest-candidates}; flag version-bearing best guesses for user confirmation
     3. **Auto-bump behavior** — if {auto-bump-hook} ≠ `none`: fill in "auto-bump runs in pre-commit hook on every commit; release stages only manifest + CHANGELOG to skip"; else "no auto-bump"

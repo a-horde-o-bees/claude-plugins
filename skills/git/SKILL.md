@@ -1,6 +1,6 @@
 ---
 name: git
-description: Router for the whole git development workflow — dispatches to one verb and runs its integrated flow. Use for any git operation in a repo: committing working-tree changes ("commit", "save these edits"), pushing to a remote ("push"), checking GitHub Actions CI ("is the build green", "did CI pass"), the pull-request lifecycle ("open a PR", "is the PR ready", "merge the PR", "clean up the branch"), the all-in-one development checkpoint ("checkpoint", "ship it" — commit→push→CI→PR→merge), cutting a tagged release ("cut a release", "tag a version"), or diagnosing and repairing repo health ("fix submodules", "audit my CI", "pin my actions"). Bare `/git` lists the verbs; `/git <verb> [args]` runs one directly; natural-language requests route to the matching verb.
+description: Router for the whole git development process — dispatches to one verb and runs its integrated flow. Use for any git operation in a repo: committing working-tree changes ("commit", "save these edits"), pushing to a remote ("push"), checking GitHub Actions CI ("is the build green", "did CI pass"), the pull-request lifecycle ("open a PR", "is the PR ready", "merge the PR", "clean up the branch"), the all-in-one development checkpoint ("checkpoint", "ship it" — commit→push→CI→PR→merge), cutting a tagged release ("cut a release", "tag a version"), or diagnosing and repairing repo health ("fix submodules", "audit my CI", "pin my actions"). Bare `/git` lists the verbs; `/git <verb> [args]` runs one directly; natural-language requests route to the matching verb.
 argument-hint: "[<verb> [args...]]  — commit | push | ci | pr-open | pr-status | pr-merge | pr-cleanup | checkpoint | release | doctor"
 allowed-tools:
   - Skill
@@ -19,7 +19,7 @@ allowed-tools:
 
 # /git
 
-The router for this project's git development workflow. One trigger fronts ten verbs; each verb is a component file under `verbs/` that owns its own gates, submodule recursion, and message authoring. This file only routes — it parses the verb, forwards the remaining arguments, and returns the verb's report. The value is the integrated workflow: the verbs call each other (checkpoint sequences commit → push → CI → the PR loop; commit and push pre-check via doctor), so they live together rather than as isolated skills.
+The router for this project's git development process. One trigger fronts ten verbs; each verb is a component file under `verbs/` that owns its own gates, submodule recursion, and message authoring. This file only routes — it parses the verb, forwards the remaining arguments, and returns the verb's report. The value is the integrated process: the verbs call each other (checkpoint sequences commit → push → CI → the PR loop; commit and push pre-check via doctor), so they live together rather than as isolated skills.
 
 ## Verbs
 

@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 """Atomic file-backed work queue for apply-over-queue.
 
-  queue.py --dir D seed <item>...   initialize the pending list
-  queue.py --dir D next             atomically claim + print the next item (or NONE)
-  queue.py --dir D done <item>      record an item as complete
-  queue.py --dir D status           print pending/claimed/done counts
+  queue.py --dir D seed [<item>...]  initialize the pending list (empty for feeder mode)
+  queue.py --dir D push <item>       append one item to pending, keeping claimed/done
+  queue.py --dir D next              atomically claim + print the next item (or NONE)
+  queue.py --dir D done <item>       record an item as complete
+  queue.py --dir D status            print pending/claimed/done counts
 
 State lives in D/{pending,claimed,done}.txt; an exclusive lock serializes claims
-so concurrent spawns never grab the same item.
+so concurrent spawns never grab the same item. A static run seeds the full list
+up front; a dynamic run seeds empty and `push`es one item per feeder iteration.
 """
 import argparse
 import fcntl
@@ -22,9 +24,10 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dir", required=True)
     sub = ap.add_subparsers(dest="cmd", required=True)
-    sd = sub.add_parser("seed"); sd.add_argument("items", nargs="+")
+    sd = sub.add_parser("seed"); sd.add_argument("items", nargs="*")
     sub.add_parser("next"); sub.add_parser("status")
     dn = sub.add_parser("done"); dn.add_argument("item")
+    pu = sub.add_parser("push"); pu.add_argument("item")
     a = ap.parse_args()
 
     D = Path(a.dir); D.mkdir(parents=True, exist_ok=True)
@@ -32,9 +35,13 @@ def main():
     with open(D / "lock", "w") as lk:
         fcntl.flock(lk, fcntl.LOCK_EX)
         if a.cmd == "seed":
-            pend.write_text("\n".join(a.items) + "\n")
+            pend.write_text("\n".join(a.items) + ("\n" if a.items else ""))
             claim.write_text(""); done.write_text("")
             print(f"seeded {len(a.items)}")
+        elif a.cmd == "push":
+            with open(pend, "a") as f:
+                f.write(a.item + "\n")
+            print("pushed")
         elif a.cmd == "next":
             items = _lines(pend)
             if not items:
