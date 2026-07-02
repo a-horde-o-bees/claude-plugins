@@ -4,6 +4,9 @@
   queue.py --dir D seed [<item>...]  initialize the pending list (empty for feeder mode)
   queue.py --dir D push <item>       append one item to pending, keeping claimed/done
   queue.py --dir D next              atomically claim + print the next item (or NONE)
+                                     (with AOQ_EMPTY set in the env, prints NONE and claims nothing —
+                                      lets a warmup / keepalive spawn re-read the shared prefix using
+                                      the IDENTICAL stub without consuming real work)
   queue.py --dir D done <item>       record an item as complete
   queue.py --dir D status            print pending/claimed/done counts
 
@@ -13,6 +16,7 @@ up front; a dynamic run seeds empty and `push`es one item per feeder iteration.
 """
 import argparse
 import fcntl
+import os
 from pathlib import Path
 
 
@@ -43,6 +47,8 @@ def main():
                 f.write(a.item + "\n")
             print("pushed")
         elif a.cmd == "next":
+            if os.environ.get("AOQ_EMPTY"):     # warmup / keepalive spawn — refresh cache, claim nothing
+                print("NONE"); return
             items = _lines(pend)
             if not items:
                 print("NONE"); return

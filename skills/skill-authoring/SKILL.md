@@ -13,7 +13,7 @@ Apply each as it bites while authoring or refining a skill:
 
 - `/markdown-authoring`
 - `/description-authoring`
-- `/process-authoring`
+- `/procedure-authoring`
 - `/rule-authoring`
 - `/concise-prose`
 - `/file-decomposition`

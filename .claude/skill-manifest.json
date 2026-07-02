@@ -10,13 +10,14 @@
     "apply-over-queue",
     "description-authoring",
     "markdown-authoring",
-    "process-authoring",
     "rule-authoring",
     "skill-authoring",
     "grounded",
     "architecture-authoring",
     "decision-authoring",
     "export-pdf",
-    "principled-pushback"
+    "principled-pushback",
+    "procedure-authoring",
+    "system-authoring"
   ]
 }

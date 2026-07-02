@@ -42,10 +42,20 @@ if [ "$roots_rc" -eq 1 ]; then
 fi
 rm -f /tmp/.gd-roots-err 2>/dev/null || true
 
-# --- default-branch resolvability (ADVISORY) ---
-if [ -z "$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null)" ]; then
+# --- default-branch resolvability + main-standard conformance (ADVISORY) ---
+# Two local-only findings on one domain. origin/HEAD unset: branch resolution
+# falls back AND the default can't be checked here against the `main` standard
+# (the partial resolves both over the network). origin/HEAD set but != main: the
+# repo silently contradicts the modern default — raise it; the rename is the
+# partial's, gated on approval. Flexible (ADVISORY, declinable), never a gate.
+origin_head=$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's@^origin/@@')
+if [ -z "$origin_head" ]; then
   advisory=$((advisory + 1))
-  lines="${lines}default-branch ADVISORY origin/HEAD unset — branch resolution falls back; fix with: git remote set-head origin -a
+  lines="${lines}default-branch ADVISORY origin/HEAD unset — branch resolution falls back, and the default can't be checked against the \`main\` standard; /git doctor resolves both
+"
+elif [ "$origin_head" != "main" ]; then
+  advisory=$((advisory + 1))
+  lines="${lines}default-branch ADVISORY default branch is \`${origin_head}\`, not \`main\` (the modern standard) — /git doctor can rename it across every remote
 "
 fi
 

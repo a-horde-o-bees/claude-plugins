@@ -16,18 +16,21 @@ For each statement ask: **would a full rewrite of this scope's code have to hono
 
 This is the slim test specialized to architecture. A line that feels essential but fails the test is usually *curse of knowledge* — it reads as load-bearing to the author who built it, but the reader gets the same fact from the code or the external spec.
 
-## What a record contains
+## What belongs in an architecture record
+
+Keep — each survives a reimplementation:
 
 - **External facts the scope conforms to** — the truths of the systems it integrates that constrain every implementation: source-system structure, sentinels, entity shapes, a chart of accounts, protocol constraints. Not our choice; the ground the scope is built on.
 - **Durable structure** — how the scope divides into parts and the contracts across their seams: what each part is responsible for, what crosses the boundary. The map a reader needs before the code, stated at the level that survives a rewrite — never the line-by-line mechanics the code already shows.
 - **Invariants** — what must stay true across any reimplementation: an ordering guarantee, a balance that must hold, a one-way data-flow direction.
 
-## Cut
+Route elsewhere — each fails the reimplementation test, so it owns no place here:
 
-- **Decisions** — a choice with alternatives and rejected reasoning lives in `DECISIONS.md`; architecture states *what is*, not *why this and not that*. Link.
-- **Code mechanics** — the current implementation's step-by-step; the code is the authority. Describe the shape, not the lines.
-- **External specs better linked** — point to the source-of-truth spec; restate only the facts the scope is built around, not the spec itself.
-- **Status, dates, counts, progress** — tracker state; it rots fastest.
+- **Why this and not that** → `decision-authoring`. A choice made over rejected alternatives; architecture states *what is*, not why. Link to the decision.
+- **Operator steps / a how-to sequence** → `procedure-authoring`. A runnable flow is a procedure, not a structural fact.
+- **Code mechanics** → the code. The current implementation's step-by-step; describe the shape, not the lines.
+- **External specs** → the source-of-truth spec. Restate only the facts the scope is built around, not the spec itself.
+- **Status, counts, progress, version numbers** → cut. Tracker state and self-declaring artifact metadata, which rot fastest; point to the artifact, never pin the number in prose.
 
 ## Supersede, never accrete
 

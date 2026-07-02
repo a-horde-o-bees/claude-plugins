@@ -2,7 +2,7 @@
 # /// script
 # requires-python = ">=3.9"
 # ///
-"""Construct-interpretation tests for the process-authoring notation.
+"""Construct-interpretation tests for the procedure-authoring notation.
 
 The notation is a construction guide for authors; an agent executes a finished flow by
 reading it, without the guide in context. These tests prove that holds: each case is a
@@ -46,7 +46,7 @@ CASES = []  # (entry_dir, files{relpath:content}, expect, note, prompt_tmpl)
 
 
 def _skill(name, body):
-    fm = f"---\nname: {name}\ndescription: process-authoring test fixture: {name}.\n---\n\n# /{name}\n\n"
+    fm = f"---\nname: {name}\ndescription: procedure-authoring test fixture: {name}.\n---\n\n# /{name}\n\n"
     return fm + body
 
 

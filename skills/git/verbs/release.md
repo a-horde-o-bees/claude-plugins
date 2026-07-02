@@ -12,6 +12,7 @@ Cut a tagged release. Read methodology, synthesize CHANGELOG + version from comm
 ## Variables
 
 - `{version}` — optional positional override; replaces the synthesizer's recommendation when provided
+- `{default-branch}` — the repo's default branch, resolved from `origin/HEAD` (fallback `main`) like every other verb; releases are cut from it
 
 ## Rules
 
@@ -20,7 +21,7 @@ Cut a tagged release. Read methodology, synthesize CHANGELOG + version from comm
 - Review gate is mandatory — synthesized CHANGELOG and final version are presented for approval before any write/commit/tag/push.
 - Stage only manifest(s) + `CHANGELOG.md` — satisfies the per-commit auto-bump skip condition (manifest-only commits don't trigger the z-bump hook).
 - Annotated tag (`git tag -a`); tag message matches the commit message.
-- Push branch + tag together with a single `git push origin {branch} {tag}`.
+- Push branch + tag together with a single `git push origin {default-branch} {tag}`.
 - Final version strictly greater than current; tag must not already exist.
 - Bootstrap dialogue fires only when `.claude/git/release.md` is absent.
 - Stage by name (never `git add -A`); never amend; never force-push; never rewrite history.
@@ -28,14 +29,15 @@ Cut a tagged release. Read methodology, synthesize CHANGELOG + version from comm
 ## Process
 
 1. Preconditions:
-    1. {current-branch}: bash: `git rev-parse --abbrev-ref HEAD`
-    2. If {current-branch} ≠ `main`: Exit process: releases cut from main; currently on {current-branch} — switch to main or rebase the change onto main first
-    3. bash: `git diff --quiet`; if non-zero: Exit process: working tree has unstaged changes — clean or commit before releasing
-    4. bash: `git diff --cached --quiet`; if non-zero: Exit process: working tree has staged changes — commit or reset before releasing
-    5. bash: `git fetch origin main --quiet`
-    6. {head-sha}: bash: `git rev-parse HEAD`
-    7. {origin-sha}: bash: `git rev-parse origin/main`
-    8. If {head-sha} ≠ {origin-sha}: Exit process: local main not aligned with origin/main — pull or push first
+    1. {default-branch}: bash: `git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's@^origin/@@'` — fallback `main`
+    2. {current-branch}: bash: `git rev-parse --abbrev-ref HEAD`
+    3. If {current-branch} ≠ {default-branch}: Exit process: releases cut from the default branch ({default-branch}); currently on {current-branch} — switch to {default-branch} or rebase the change onto it first
+    4. bash: `git diff --quiet`; if non-zero: Exit process: working tree has unstaged changes — clean or commit before releasing
+    5. bash: `git diff --cached --quiet`; if non-zero: Exit process: working tree has staged changes — commit or reset before releasing
+    6. bash: `git fetch origin {default-branch} --quiet`
+    7. {head-sha}: bash: `git rev-parse HEAD`
+    8. {origin-sha}: bash: `git rev-parse origin/{default-branch}`
+    9. If {head-sha} ≠ {origin-sha}: Exit process: local {default-branch} not aligned with origin/{default-branch} — pull or push first
 
 2. Intent gate:
     1. {last-tag}: bash: `git tag --sort=-version:refname | grep -E '^v?[0-9]+\.[0-9]+\.[0-9]+$' | head -1` — most recent SemVer-shaped tag, empty if none
@@ -80,7 +82,7 @@ Cut a tagged release. Read methodology, synthesize CHANGELOG + version from comm
     3. bash: `git add <manifest-path-1> [<manifest-path-N> ...] CHANGELOG.md`
     4. bash: `git commit -m "release {tag}"`
     5. bash: `git tag -a {tag} -m "release {tag}"`
-    6. bash: `git push origin main {tag}`
+    6. bash: `git push origin {default-branch} {tag}`
 
 ## Report
 
