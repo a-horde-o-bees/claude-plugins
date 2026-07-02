@@ -27,6 +27,7 @@
 - When {paths} is given, inspect and commit only matching paths — the rest of the working tree is left parked untouched (a scoped commit, for landing one coherent slice of a mixed tree)
 - Submodule pin advance is explicit — never bumped as a silent side effect of recursion; bumps require approval and are surfaced in the parent commit's diff
 - Surface suspicious untracked files (large generated dirs, credentials, build artifacts) before staging
+- Public-bound repo hygiene — when the repo is a fork or GitHub-public, audit staged content for client/PII leakage before committing (step 10); step 8's message-style inference follows project `git log` and won't enforce client-neutrality. A private repo you intend to publish isn't auto-detected — flag it yourself
 - Never amend previous commits unless the user explicitly requests it
 - Never force-push or run destructive git operations
 
@@ -37,6 +38,7 @@
     2. {doctor-result}: Call: verbs/doctor.md
     3. If {doctor-result} reports `Blocking unresolved: yes` (a BLOCKING problem it did not repair): Exit process — repo not commit-safe per git doctor; resolve before retrying. A clean report or an ADVISORY-only result (default-branch, CI) never blocks the commit — proceed.
     4. Base-branch guard (skip if `--on-base`): {default}: bash: `git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's@^origin/@@'` (fallback `main`). If current branch == {default}: {protected}: bash: `gh api repos/{owner}/{repo}/branches/{default}/protection >/dev/null 2>&1 && echo yes || echo no` — the repo is `pr`-integrated exactly when its default branch is protected (detected, not read from a config file). If {protected} is `yes`: Exit process — this repo is pr-integrated; committing onto {default} is forbidden. Create a feature branch (or run `/git checkpoint`, which auto-creates one from the change topic), or pass `--on-base` for an intentional admin commit.
+    5. {public-bound}: bash: `gh api repos/{owner}/{repo} --jq 'if .private==false or .fork then "yes" else "no" end' 2>/dev/null` — `yes` when the repo is GitHub-public or a fork; empty when private non-fork or no GitHub remote. A private repo you intend to publish isn't detected here — set it `yes` yourself.
 
 2. Recurse into submodules first (depth-first):
     1. {sub-entries}: bash: `git config -f {cwd}/.gitmodules --get-regexp '^submodule\..+\.path$' 2>/dev/null` — emits `submodule.<name>.path <path>` per line; empty if no `.gitmodules`
@@ -80,12 +82,13 @@
 
 8. {commit-messages}: draft one message per group — subject + body. Apply /concise-prose, /description-authoring, /grounded. Body lines describe end-state results visible in the diff or decisions not visible there. Strip process narration (`reauthored`, `sweep applied`), restated principles when the diff already shows the principle applied, and meta-commentary about earlier steps in the change journey. Project-internal phase labels (`Phase G`, `Sprint 4`) are meaningless to future readers — strip them. Pin-advance lines name the submodule and summarize the consumed commits.
 9. {co-author}: bash: `git -C {cwd} config --get user.claude-coauthor`
-10. For each {group} in {commit-groups}:
+10. Public-bound hygiene gate: If {public-bound} is `yes`: before committing, audit the staged diff and drafted {commit-messages} for client/PII leakage — real customer names or codes in comments, test names, and fixtures; client references or "for the X migration" phrasing in messages; freshly-authored top-of-tree docs (README, ARCHITECTURE); and `git -C {cwd} config user.email`. Surface anything suspect and confirm before proceeding — conventional-commit style is the client-neutral default.
+11. For each {group} in {commit-groups}:
     1. bash: `git -C {cwd} add <files-in-group>` — pin-advance entries stage as `git -C {cwd} add <submodule-path>`
     2. {message}: corresponding entry from {commit-messages}; if {co-author} is `true`, append a `Co-Authored-By:` trailer with the current model name and `<noreply@anthropic.com>`
     3. bash: `git -C {cwd} commit -m "{message}"`
 
-11. {final-status}: bash: `git -C {cwd} status --short`
+12. {final-status}: bash: `git -C {cwd} status --short`
 
 ## Report
 
