@@ -18,19 +18,22 @@ For each sentence ask: **can a reader derive this by reading the artifacts this 
 
 This is the slim test specialized to decisions. When a line feels important but fails the test, it is almost always *curse of knowledge* — it reads as essential to the author because they remember the decision, but the reader gets the same fact from the artifact.
 
-## What a record contains
+## What belongs in a decision record
+
+Keep — none of it derivable from the artifact:
 
 - **Forces / context** — the constraints and the problem that made the obvious choice wrong, so a reader sees why a decision was needed at all. Not discernible from the solution, which shows only the resolution.
 - **The decision** — one claim a reader can agree or disagree with, plus a pointer to where the resulting design is documented. Reference the design; never restate its structure, file roles, or mechanics.
 - **Rejected alternatives, each with its reasoning** — the paths not taken leave no trace in the artifact, so this is the most irreplaceable content. The fence: a future reader must know why X was tried and dropped, or they re-propose it.
 - **Consequences** — only the non-obvious ones: a tradeoff accepted, a constraint now imposed, a cost paid. Skip any consequence the artifact makes evident.
 
-## Cut
+Route elsewhere — each is derivable from the artifact, so it owns no place here:
 
-- Any description of *what was built* — structure, file roles, section contents, the mechanics of the chosen design. It lives in the artifact; link to it.
-- Restatement of a rule, schema, contract, or process documented elsewhere — point, don't duplicate.
-- "How it works" walkthroughs — the code is the authority.
-- Status, dates, counts, and progress — those are tracker state, not a decision; they rot fastest.
+- **Durable structure / external facts** → `architecture-authoring`. The shape the choice produced is architecture; the decision links to it, never restates it.
+- **Operator steps** → `procedure-authoring`. How to carry out the chosen design is a procedure, not its rationale.
+- **What was built** → the artifact. Structure, file roles, section contents, "how it works" walkthroughs, the mechanics of the chosen design — the code and docs are the authority; link.
+- **A rule, schema, contract, or process documented elsewhere** → point, don't duplicate.
+- **Status, dates, counts, progress** → cut. Tracker state, not a decision; it rots fastest.
 
 ## One decision per record
 

@@ -1,11 +1,11 @@
 ---
-name: process-authoring
-description: Apply when authoring an agent process with control flow beyond a linear sequence (e.g. conditionals, loops, variable binding, sub-routine calls, error handling, nested blocks) to keep non-trivial processes readable and unambiguously executable. Not needed for simple sequential steps or lists.
+name: procedure-authoring
+description: Apply when authoring an agent procedure with control flow beyond a linear sequence (e.g. conditionals, loops, variable binding, sub-routine calls, error handling, nested blocks) to keep non-trivial procedures readable and unambiguously executable. Not needed for simple sequential steps or lists.
 ---
 
-# process-authoring
+# procedure-authoring
 
-**process-authoring sets expectations, not meanings.** This guide is never in the executing agent's context — only the authored process is. So a construct cannot *define* a meaning the executor is bound to honor; it can only pick wording whose plain reading **reliably evokes the intended behavior in an agent that has never read this guide.**
+**procedure-authoring sets expectations, not meanings.** This guide is never in the executing agent's context — only the authored procedure is. So a construct cannot *define* a meaning the executor is bound to honor; it can only pick wording whose plain reading **reliably evokes the intended behavior in an agent that has never read this guide.**
 
 The bar is therefore empirical. Each construct below names a behavior and the wording meant to evoke it cold; when wording fails to evoke its behavior, the *phrasing* is the defect to strengthen — never the executor faulted for "misreading" a meaning it was never given. `tests/` measures each construct this way (cold `claude -p`, no guide loaded), so a weak-evoking construct shows as a low hit-rate rather than a surprise in production.
 
@@ -77,14 +77,15 @@ Return:
 - **`Glob:`** — matches file paths.
 - **`Tool: args`** — any other MCP tool, invoked by name.
 
-### Procedure vs script
+### What belongs in a procedure — the gate on every line
 
-A process is **agent-facing instructions** (procedures) plus the **mechanical code** they invoke (scripts). Splitting it wrong is the defect this notation exists to expose, so classify every step by one test: *could a deterministic function with no agent context produce this result?* Yes → script; no → procedure.
+The executor sees only the authored procedure, cold, and runs any instruction it reads wherever it sits — so descriptive prose mixed into the steps both dilutes the actionable signal and risks being executed as a step. Classify every line by the **actionability test**: *would an executor need this to perform the task?* (Parallel to architecture's reimplementation test and decisions' necessity test.)
 
-- **Procedure** — reasoning, judgment, and contextual sequencing the agent steers; orchestration whose composition depends on intermediate results (skill calls, tool invocations, agent spawns); and the user-facing surface (review gates, clarifying questions, error-recovery dialogue).
-- **Script** (a `Bash:` call or invoked module) — deterministic operations with no agent context (parsing, filtering, aggregation, format conversion, fixed-rule classification).
-
-Prefer a script wherever one suffices — it preserves the agent's focus and context for the judgment only an agent can supply.
+- **Procedure** (keep) — reasoning, judgment, and contextual sequencing the agent steers; orchestration whose composition depends on intermediate results (skill calls, tool invocations, agent spawns); and the user-facing surface (review gates, clarifying questions, error-recovery dialogue).
+- **Script** (→ a `Bash:` call or invoked module) — deterministic operations with no agent context: parsing, filtering, aggregation, format conversion, fixed-rule classification. The tell: *could a deterministic function with no agent context produce this result?* Yes → script. Prefer one wherever it suffices; it preserves the agent's focus for the judgment only an agent can supply.
+- **Durable structure** (→ `architecture-authoring`) — the shape, boundaries, and external facts a reader needs *before* the steps make sense and that survive a rewrite. Not a step; state it in the architecture doc and link.
+- **Why this and not that** (→ `decision-authoring`) — a choice made over rejected alternatives. The procedure *runs* the choice; the reasoning belongs in the decision record. Link.
+- **Derivable** (cut) — anything the executor reconstructs from the steps themselves or the artifacts they touch.
 
 Two misclassifications to catch, each corrected in one direction:
 
