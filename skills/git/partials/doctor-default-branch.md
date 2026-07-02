@@ -6,11 +6,9 @@
 
 1. {origin-head}: bash: `git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's@^origin/@@'` — empty when unset
 2. {default}: if {origin-head} is non-empty, {origin-head}; else bash: `gh api repos/{owner}/{repo} --jq .default_branch 2>/dev/null || echo main` — the repo's true default (network call, only when the local pointer is unset)
-
 3. Set `origin/HEAD` — only when {origin-head} is empty:
     1. AskUserQuestion — set `refs/remotes/origin/HEAD` → {default} now? A local, reversible pointer that makes `git symbolic-ref` resolve without a network call, so every verb's default-branch lookup is correct (not just falling back to `main`).
     2. If approved: bash: `git remote set-head origin {default}`
-
 4. Rename to the `main` standard — only when {default} ≠ `main`:
     1. AskUserQuestion — the default branch is `{default}`, not `main`; rename it to `main` across every remote now? This is the modern standard, not a hard requirement — decline to keep `{default}`. The rename is outward-facing: it changes what new clones check out and touches every remote's forge default.
     2. If declined: surface the finding in the report unchanged — the repo keeps `{default}`, no gloss over the contradiction.
