@@ -9,7 +9,7 @@
     {
       "name": "skills",
       "source": "./",
-      "description": "Agent authoring and interaction discipline (prose, descriptions, process flows, rules, markdown, honesty, confirm-shared-intent), a git development-cycle router (`/git`: commit, push, CI, PR lifecycle, checkpoint, release, repo health), and a transcripts query tool.",
+      "description": "Agent authoring and conduct discipline (skills, rules, descriptions, procedures, prose, markdown; grounded, confirm-shared-intent, principled-pushback), a git development-cycle router (`/git`: commit, push, CI, PR lifecycle, checkpoint, release, repo health), a prompt-cached fan-out driver, PDF export, and engaged-time transcript analytics.",
       "category": "development"
     }
   ]
