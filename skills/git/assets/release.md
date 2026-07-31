@@ -92,7 +92,7 @@ Project-specific gates that must pass before a release can proceed.
 - **Working tree**: clean (no uncommitted changes)
 - **Remote alignment**: local branch matches origin
 - **Tag uniqueness**: target tag does not yet exist
-- **Version monotonicity**: target version > current manifest version
+- **Version monotonicity**: target version `>` current manifest version
 - **Additional**: any other gates (e.g., specific tests that must pass, specific files that must exist)
 
 ## Install command for users

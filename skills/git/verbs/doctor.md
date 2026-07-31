@@ -1,6 +1,6 @@
 # git doctor
 
-> The repo-health doctor. A cheap, local detector (`scripts/detect.sh`) scans the problem domains that gate everyday work; each domain's repair process loads into context **only when that domain is flagged** — so a healthy repo (the common case) pays just the detector, which is why this is cheap enough to pre-check on every commit and push.
+> The repo-health doctor. The driver's detector scans the problem domains that gate everyday work; each domain's repair process loads into context **only when that domain is flagged** — so a healthy repo (the common case) pays just the detector, which is why this is cheap enough to pre-check on every commit and push.
 
 ## Dependencies
 
@@ -12,22 +12,22 @@
 
 ## Rules
 
-- **Detect cheap, repair lazy.** `detect.sh` is local and fast; heavy per-domain content reads in only when its domain is flagged.
+- **Detect cheap, repair lazy.** `doctor-detect` is local and fast; heavy per-domain content reads in only when its domain is flagged.
 - **Severity gates the process.** `BLOCKING` (submodule drift — committing through it escalates Tier 1 into Tier 2 history pollution) halts until resolved or deliberately deferred. `ADVISORY` (default-branch, CI) is surfaced, never blocks.
-- **Conform, don't circumvent.** Repairs restore canonical git structure; never a workaround. Per-domain risk-tiering and scoping live in the components.
+- **Conform, don't circumvent.** Repairs restore canonical git structure; never a workaround. Per-domain risk-tiering and scoping live in the components; the driver's repairs refuse the cases that need a deliberate decision.
 
 ## Process
 
-1. {verb}: first token of this verb's arguments
-2. If {verb} is `ci`: Call: partials/doctor-ci.md ({ci-args}: remainder of this verb's arguments); Exit process — on-demand CI domain
-3. {detect}: bash: `sh ${CLAUDE_SKILL_DIR}/scripts/detect.sh` — capture stdout + exit code + stderr
-4. If `STATUS: not-a-repo`: Exit process — not a git repository
-5. If `STATUS: healthy`: Exit process — emit ### healthy
-6. For each problem line in {detect} stdout (`<domain> <severity> <detail>`), dispatch by domain:
-    - `submodule` → Call: partials/doctor-submodule.md (the {detect} stderr state table is its diagnosis input)
-    - `submodule-routing` → Call: partials/doctor-submodule.md (routing-gap mode — write the missing native `.gitmodules` key)
-    - `default-branch` → Call: partials/doctor-default-branch.md
-    - `ci` → Call: partials/doctor-ci.md ({ci-args}: `audit`)
+1. `{verb}`: first token of this verb's arguments
+2. If `{verb}` is `ci`: Call: partials/doctor-ci.md (`{ci-args}`: remainder of this verb's arguments); Exit process — on-demand CI domain
+3. `{detect}`: bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py doctor-detect` — bind `{status}`, `{problems}` (each `{domain, severity, detail}`), `{superproject}`, `{submodules}` (the per-path state table)
+4. If `{status}` is `not-a-repo`: Exit process — not a git repository
+5. If `{status}` is `healthy`: Exit process — emit ### healthy
+6. For each `{problem}` in `{problems}`, dispatch by `{problem}`.domain:
+    - `submodule` → Call: partials/doctor-submodule.md (`{detect}` is its diagnosis input)
+    - `submodule-routing` → Call: partials/doctor-submodule.md (routing-gap mode — write the missing native key)
+    - `default-branch` → Call: partials/doctor-default-branch.md (`{detail}`: `{problem}`.detail)
+    - `ci` → Call: partials/doctor-ci.md (`{ci-args}`: `audit`)
 7. Emit ### result
 
 ## Report

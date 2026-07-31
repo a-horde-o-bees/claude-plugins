@@ -1,90 +1,70 @@
 # git ci
 
-> Report GitHub Actions run state for the latest commit on a branch. Recurses depth-first into declared submodules; submodules without `.github/workflows/` are soft-skipped as `no-ci`. Async background watcher when runs are in flight; foreground returns immediately.
+> Report GitHub Actions run state for the latest pushed commit, parent and submodules alike. The driver recurses declared submodules deepest-first and classifies each repo deterministically; this verb emits the matching template per repo verbatim — no inventing, paraphrasing, or merging.
 
 ## Variables
 
-- `{cwd}` — `--cwd <path>` argument; defaults to `.` (top-level invocation). All git operations use `git -C {cwd}`. Recursive calls pass `{cwd}/{sub}` so depth flows through one variable.
+- `{cwd}` — `--cwd <path>`; defaults to `.`
+- `{branch}` — `--branch <name>`: confirmation at the top level; a mismatch with the current branch blocks. Omitted: each repo's current branch.
 
 ## Rules
 
-- Branch defaults to current when `--branch` is omitted
-- No-runs-scheduled is reported, not an error — CI may not have triggered for this commit or GitHub may not have scheduled runs yet
-- Submodules without `.github/workflows/` emit the `no-ci` template and recursion still descends into their sub-submodules
-- Failed runs report synchronously with workflow name + URL; no background watcher
-- In-flight runs spawn the async watcher; foreground returns immediately. Task-completion text reports the outcome inline
-- `{ci-status}` is a 6-value enum (`passed`, `failed`, `dispatched`, `incomplete`, `no-runs`, `no-ci`). Classification is deterministic and lives in `scripts/ci.py`; the process consumes its JSON output and emits the matching template verbatim — no inventing, paraphrasing, or merging
+- `{ci-status}` is a 7-value enum: `passed`, `failed`, `dispatched`, `incomplete`, `no-runs`, `no-ci`, `unavailable`. Classification lives in the driver; emit the matching template verbatim.
+- `no-runs` (CI not triggered or not yet scheduled), `no-ci` (no `.github/workflows/`), and `unavailable` (gh could not answer — no remote or no auth) are reported states, not errors. Never substitute a guessed status for one the driver didn't return.
+- Failed runs report synchronously with workflow name + URL; no watcher.
+- In-flight runs spawn the async watcher per `watches[]` entry; foreground returns immediately. Task-completion text reports the outcome inline.
 
 ## Process
 
-1. Recurse into submodules first (depth-first):
-    1. {submodules}: bash: `git config -f {cwd}/.gitmodules --get-regexp '^submodule\..+\.path$' 2>/dev/null | awk '{print $2}'`
-    2. For each {sub} in {submodules}: Call: verbs/ci.md --cwd {cwd}/{sub} — recursive call handles its own sub-submodules and CI check at this submodule
-
-2. If not {branch}: {branch}: bash: `git -C {cwd} branch --show-current`
-3. {has-workflows}: bash: `test -d {cwd}/.github/workflows && echo yes || echo no`
-4. If {has-workflows} is `no`: bind {sha}, {sha-short} from bash: `git -C {cwd} rev-parse HEAD` and `git -C {cwd} rev-parse --short HEAD`; set {ci-status} = `no-ci`; skip to step 7
-5. {classification}: bash: `uv run --directory {cwd} ${CLAUDE_SKILL_DIR}/scripts/ci.py classify --branch {branch}` — `${CLAUDE_SKILL_DIR}` resolves to this skill's directory; `uv run --directory {cwd}` sets the project root so `gh` auto-detects the right repo
-6. Bind from {classification} JSON:
-    - {sha}, {sha-short}, {ci-status} — always present
-    - {workflow-list} — when {ci-status} is `passed`
-    - {failing-workflow}, {failing-url} — when `failed`
-    - {watch-ids} — when `dispatched`
-    - {trouble-list} — when `incomplete`
-
-7. If {ci-status} is `dispatched`: async Spawn: Call: partials/ci-watch.md ({sha}: {sha}, {run-ids}: {watch-ids})
-8. Emit the template matching {ci-status} — see ### Report
+1. `{result}`: bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py ci --cwd {cwd}` (append ` --branch {branch}` when given). BLOCKED (branch mismatch): surface it and stop.
+2. For each `{repo}` in `{result}`.repos (already deepest-first, parent last): emit the template matching `{repo}`.ci_status — see ## Report.
+3. For each `{watch}` in `{result}`.watches: async Spawn: Call: partials/ci-watch.md (`{cwd}`: `{watch}`.cwd, `{sha}`: `{watch}`.sha, `{run-ids}`: `{watch}`.watch_ids)
 
 ## Report
 
-Emit the literal template for the current {ci-status} verbatim. Templates close with `Next:` corrective guidance where action is implied.
+One block per repo, in the driver's order. Emit the literal template for the repo's `{ci-status}` verbatim; templates close with `Next:` corrective guidance where action is implied.
 
 **`passed`:**
 
 ```
-Branch: {branch}
-SHA: {sha-short}
+Repo: {cwd}   Branch: {branch}   SHA: {sha_short}
 CI: passed
-Workflows: {workflow-list}
+Workflows: {workflow_list}
 ```
 
 **`failed`:**
 
 ```
-Branch: {branch}
-SHA: {sha-short}
+Repo: {cwd}   Branch: {branch}   SHA: {sha_short}
 CI: FAILED
-Failing workflow: {failing-workflow}
-Run URL: {failing-url}
+Failing workflow: {failing_workflow}
+Run URL: {failing_url}
 Next: open the run URL to inspect logs; fix the failure and re-push.
 ```
 
 **`dispatched`:**
 
 ```
-Branch: {branch}
-SHA: {sha-short}
+Repo: {cwd}   Branch: {branch}   SHA: {sha_short}
 CI: dispatched (async watch in flight)
-Watching run IDs: {watch-ids}
+Watching run IDs: {watch_ids}
 Next: result lands as task-completion text in this session; no action required now.
 ```
 
 **`incomplete`:**
 
 ```
-Branch: {branch}
-SHA: {sha-short}
+Repo: {cwd}   Branch: {branch}   SHA: {sha_short}
 CI: incomplete (cancelled / timed-out / non-success conclusion)
 Runs:
-{trouble-list}
+{trouble_list}
 Next: rerun via `gh run rerun <id>` or inspect each run for cause.
 ```
 
 **`no-runs`:**
 
 ```
-Branch: {branch}
-SHA: {sha-short}
+Repo: {cwd}   Branch: {branch}   SHA: {sha_short}
 CI: no runs scheduled
 Next: check manually via `gh run list --branch {branch}` — GitHub may not have triggered yet, or no workflows match this branch.
 ```
@@ -92,9 +72,14 @@ Next: check manually via `gh run list --branch {branch}` — GitHub may not have
 **`no-ci`:**
 
 ```
-Branch: {branch}
-SHA: {sha-short}
+Repo: {cwd}   Branch: {branch}   SHA: {sha_short}
 CI: no-ci (no .github/workflows/ in this repo)
 ```
 
-Recursed submodule results are returned alongside this level's template — one block per submodule, in depth-first order, followed by the parent block.
+**`unavailable`:**
+
+```
+Repo: {cwd}   Branch: {branch}   SHA: {sha_short}
+CI: unavailable — gh could not read runs (no remote, or gh unauthenticated)
+Next: check the repo's origin remote and `gh auth status`, then re-run.
+```

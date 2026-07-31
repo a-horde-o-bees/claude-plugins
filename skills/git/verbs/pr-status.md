@@ -1,6 +1,6 @@
 # git pr status
 
-> Report merge-readiness for the open PR on a branch. The gate classification is deterministic and lives in `scripts/pr.py`; this verb emits the matching template verbatim — no inventing, paraphrasing, or merging.
+> Report merge-readiness for the open PR on a branch. The gate classification is deterministic and lives in the driver (`gitflow.py gate`); this verb emits the matching template verbatim — no inventing, paraphrasing, or merging.
 
 ## Variables
 
@@ -9,19 +9,18 @@
 ## Rules
 
 - The gate is read-only — it inspects and reports, never merges, pushes, or mutates the PR.
-- `{merge-ready}` and the blocker set come from `scripts/pr.py` and are emitted verbatim. The script is the single source of truth for review state, CI, annotations, mergeability, and the solo/team path.
+- `{merge-ready}` and the blocker set come from the driver and are emitted verbatim. The driver is the single source of truth for review state, CI, annotations, mergeability, and the solo/team path.
 - Severity is the script's call. **hard** (merge conflicts, behind base, a *required* check failing or pending) gate every path; **soft** (review unmet, protection-BLOCKED, draft) gate the team path and are confirmable-bypass on the solo path. **Advisories** (non-required checks failing/pending, and CI annotation counts) never gate — GitHub reports such a PR mergeable and never blocks on annotations; surfaced for visibility only. The script reads branch protection's `required_status_checks.contexts` to tell required from advisory, so a repo's report-only check or benign CI warnings never block the gate. This verb reports all three; bypass is `/git pr-merge`'s call.
 - No PR for the branch is a reported state, not an error.
 
 ## Process
 
-1. If not {branch}: {branch}: bash: `git branch --show-current`
-2. {gate}: bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/pr.py gate --branch {branch}`
-3. Bind from {gate} JSON:
-    - {pr-exists} — always present
-    - When {pr-exists} is `false`: nothing further; emit the `no-pr` template
-    - When `true`: {pr-number}, {base}, {url}, {is-draft}, {head-sha-short}, {protection}, {required-contexts}, {recommended-path}, {merge-ready}, {checks}, {annotation-count}, {review-decision}, {merge-state-status}, {mergeable}, {blockers}, {advisories}, {allowed-strategies}, {has-admin}
-4. Emit the template matching {pr-exists} / {merge-ready} — see ### Report
+1. `{gate}`: bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py gate` (append ` --branch {branch}` when given; the driver defaults to the current branch)
+3. Bind from `{gate}` JSON:
+    - `{pr-exists}` — always present
+    - When `{pr-exists}` is `false`: nothing further; emit the `no-pr` template
+    - When `true`: `{pr-number}`, `{base}`, `{url}`, `{is-draft}`, `{head-sha-short}`, `{protection}`, `{required-contexts}`, `{recommended-path}`, `{merge-ready}`, `{checks}`, `{annotation-count}`, `{review-decision}`, `{merge-state-status}`, `{mergeable}`, `{blockers}`, `{advisories}`, `{allowed-strategies}`, `{has-admin}`
+4. Emit the template matching `{pr-exists}` / `{merge-ready}` — see ### Report
 
 ## Report
 

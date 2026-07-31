@@ -1,36 +1,14 @@
-# /// script
-# requires-python = ">=3.9"
-# dependencies = ["pyyaml"]
-# ///
-"""GitHub Actions CI auditor — deterministic config-hardening classification.
-
-Subcommands:
-  audit [<dir>]        scan workflow files (default .github/workflows) for
-                       config-hardening findings; emit JSON. No network.
-  reconcile [--branch] cross-check branch-protection required-status-check
-                       contexts against the job names CI actually defines;
-                       needs `gh`. Flags required checks that match no job
-                       (the "required check never reports → PR stuck" failure)
-                       and gating jobs that are not required.
-
-Output (stdout) is JSON. The skill body consumes named fields verbatim and
-proposes scoped fixes; it never re-derives the classification.
-
-Severity: high — security (unpinned actions, broad token permissions);
-medium — robustness (missing job timeout); low — efficiency (missing
-concurrency on PR-feedback workflows). Each finding carries a fix hint.
-"""
-
-import argparse
+"""CI doctor: workflow hardening audit (pin/permissions/timeout/concurrency
+findings, SHA resolution) and required-check reconciliation."""
 import json
 import re
-import subprocess
-import sys
 from pathlib import Path
+
+from gitflow_core import _default_branch, run
 
 try:
     import yaml
-except ImportError:  # pragma: no cover - yaml ships with the project venv
+except ImportError:  # structural workflow checks degrade to regex-only
     yaml = None
 
 HIGH, MEDIUM, LOW = "high", "medium", "low"
@@ -41,14 +19,14 @@ USES_RE = re.compile(r"^\s*-?\s*uses:\s*([^\s#]+)")
 FIRST_PARTY = ("actions/", "github/")
 
 
-def _ref_of(uses: str) -> str | None:
+def _ref_of(uses):
     """The ref after '@' in a `uses:` value, or None for a local/docker action."""
     if uses.startswith("./") or uses.startswith("docker://"):
         return None
     return uses.split("@", 1)[1] if "@" in uses else ""
 
 
-def audit_uses(uses: str) -> dict | None:
+def audit_uses(uses):
     """Return a pin finding for one `uses:` value, or None if acceptably pinned."""
     ref = _ref_of(uses)
     if ref is None:
@@ -60,16 +38,18 @@ def audit_uses(uses: str) -> dict | None:
     return {
         "check": "unpinned-action",
         "severity": HIGH,
+        "action": action,
+        "ref": ref,
         "detail": f"{action} pinned to mutable ref '{ref or '(none)'}' ({party})",
         "fix": f"pin to a full commit SHA: resolve `gh api repos/{action}/commits/{ref or 'TAG'} --jq .sha`, "
                f"then `uses: {action}@<sha> # {ref or 'vX.Y.Z'}`",
     }
 
 
-def audit_workflow(text: str, data: dict | None) -> list[dict]:
+def audit_workflow(text, data):
     """Findings for one workflow. `data` is the parsed YAML (or None if unparseable);
     `text` is the raw source (used for a regex fallback on `uses:` lines)."""
-    findings: list[dict] = []
+    findings = []
 
     # --- unpinned actions (parse-independent regex over uses: lines) ---
     for line in text.splitlines():
@@ -133,8 +113,19 @@ def audit_workflow(text: str, data: dict | None) -> list[dict]:
     return findings
 
 
-def _audit_cmd(args: argparse.Namespace) -> int:
-    wf_dir = Path(args.dir)
+def _resolve_pin(finding, cwd):
+    """Fill an unpinned-action finding with its resolved SHA and replacement line."""
+    action, ref = finding.get("action"), finding.get("ref")
+    if not action or not ref:
+        return
+    rc, sha, _ = run(["gh", "api", f"repos/{action}/commits/{ref}", "--jq", ".sha"], cwd)
+    if rc == 0 and SHA_RE.match(sha):
+        finding["resolved_sha"] = sha
+        finding["pinned_line"] = f"uses: {action}@{sha} # {ref}"
+
+
+def cmd_ci_audit(a):
+    wf_dir = Path(a.cwd) / a.dir
     files = sorted([*wf_dir.glob("*.yml"), *wf_dir.glob("*.yaml")]) if wf_dir.is_dir() else []
     results = []
     counts = {HIGH: 0, MEDIUM: 0, LOW: 0}
@@ -147,20 +138,21 @@ def _audit_cmd(args: argparse.Namespace) -> int:
         findings = audit_workflow(text, data)
         for fi in findings:
             counts[fi["severity"]] = counts.get(fi["severity"], 0) + 1
+            if a.resolve and fi["check"] == "unpinned-action":
+                _resolve_pin(fi, a.cwd)
         results.append({"file": str(f), "findings": findings})
-    clean = all(not r["findings"] for r in results)
     print(json.dumps({
         "dir": str(wf_dir),
         "workflow_count": len(files),
-        "clean": clean,
+        "yaml_available": yaml is not None,
+        "clean": all(not r["findings"] for r in results),
         "severity_counts": counts,
         "results": results,
     }, indent=2))
-    return 0
 
 
-def _job_names(wf_dir: Path) -> set[str]:
-    names: set[str] = set()
+def _job_names(wf_dir):
+    names = set()
     if not (yaml and wf_dir.is_dir()):
         return names
     for f in [*wf_dir.glob("*.yml"), *wf_dir.glob("*.yaml")]:
@@ -175,52 +167,26 @@ def _job_names(wf_dir: Path) -> set[str]:
     return names
 
 
-def _reconcile_cmd(args: argparse.Namespace) -> int:
-    r = subprocess.run(
-        ["gh", "api", f"repos/{{owner}}/{{repo}}/branches/{args.branch}/protection"],
-        capture_output=True, text=True,
-    )
-    if r.returncode != 0:
-        print(json.dumps({"branch": args.branch, "protection": False,
+def cmd_ci_reconcile(a):
+    branch = a.branch or _default_branch(a.cwd)
+    rc, out, _ = run(["gh", "api", f"repos/{{owner}}/{{repo}}/branches/{branch}/protection"], a.cwd)
+    if rc != 0:
+        print(json.dumps({"branch": branch, "protection": False,
                           "note": "no branch protection — nothing to reconcile"}))
-        return 0
-    data = json.loads(r.stdout)
+        return
+    data = json.loads(out)
     required = set((data.get("required_status_checks") or {}).get("contexts") or [])
-    jobs = _job_names(Path(args.dir))
+    jobs = _job_names(Path(a.cwd) / a.dir)
     # A required context may name a job, or be an external check (CodeQL, a bot) — we
     # can only confirm the ones that should map to a local job. Flag required names
     # that match no job (likely stuck-pending) and local jobs not marked required.
-    unmatched_required = sorted(required - jobs)
-    unrequired_jobs = sorted(jobs - required)
     print(json.dumps({
-        "branch": args.branch,
+        "branch": branch,
         "protection": True,
         "required_contexts": sorted(required),
         "job_names": sorted(jobs),
-        "required_without_matching_job": unmatched_required,
-        "jobs_not_required": unrequired_jobs,
+        "required_without_matching_job": sorted(required - jobs),
+        "jobs_not_required": sorted(jobs - required),
         "note": "required_without_matching_job may hang as 'Expected — waiting' (or be an external check); "
                 "jobs_not_required gate nothing until added to protection",
     }, indent=2))
-    return 0
-
-
-def main(argv: list[str]) -> int:
-    p = argparse.ArgumentParser(description="GitHub Actions CI auditor")
-    sub = p.add_subparsers(dest="cmd", required=True)
-
-    a = sub.add_parser("audit", help="scan workflow files for hardening findings")
-    a.add_argument("dir", nargs="?", default=".github/workflows")
-    a.set_defaults(func=_audit_cmd)
-
-    rc = sub.add_parser("reconcile", help="required-check contexts vs defined job names")
-    rc.add_argument("--branch", default="main")
-    rc.add_argument("--dir", default=".github/workflows")
-    rc.set_defaults(func=_reconcile_cmd)
-
-    args = p.parse_args(argv)
-    return args.func(args)
-
-
-if __name__ == "__main__":
-    sys.exit(main(sys.argv[1:]))

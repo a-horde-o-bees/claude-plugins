@@ -1,49 +1,43 @@
 # git doctor — submodule domain
 
-> Repair component for `/git doctor`. Diagnoses and repairs submodule conformance so canonical git (`submodule status --recursive`, `foreach`, `--show-superproject-working-tree`) works. Called only when `detect.sh` flags submodule drift (BLOCKING). Detects drift, classifies by risk tier, proposes scoped fixes, applies only on approval.
+> Repair component for `/git doctor`. Diagnoses and repairs submodule conformance so canonical git (`submodule status --recursive`, `foreach`, `--show-superproject-working-tree`) works. Called only when the detector flags submodule drift (BLOCKING) or a routing gap. The driver runs every repair; this component classifies, gets approval, and dispatches — the deliberate cases (tier 2, unknown intent) are refused by the driver even if asked.
 
 ## Rules
 
 - **Conform, don't circumvent** — repairs restore proper submodule structure (gitlinks) so standard git commands operate; never substitute a filesystem-scan workaround for git's own machinery.
-- **Scope every repair to the one broken path** — `git rm --cached`/`git add` target a single submodule border; never project-wide, never `git add -A`.
+- **Every repair is scoped to one broken path** — the driver's subcommands take explicit paths; never project-wide.
 - **Tier the risk, never auto-refactor:**
-    - *Tier 1 — index-only* (gitlink missing, interior files staged as blobs, **0 commits in history**): reversible. Propose with file count + exact commands; apply on approval.
-    - *Tier 2 — history-polluted* (interior files committed to superproject history): destructive to fix (history rewrite → SHA churn, force-push, broken clones). **Never automatic.** Surface with a heavy warning as a separate, deliberate decision.
+    - *Tier 1 — index-only* (gitlink missing, interior files staged as blobs, **0 commits in history**): reversible. Propose with the state row + what `sub-repair` will do; apply on approval. The driver refuses any path with history — the tier boundary is enforced mechanically.
+    - *Tier 2 — history-polluted* (interior files committed to superproject history): destructive to fix (history rewrite → SHA churn, force-push, broken clones). **Never automatic.** Surface with a heavy warning as a separate, deliberate decision; there is no driver subcommand for it.
 - **Postpone → stop.** If the caller declines a repair, halt — do not proceed to commit. Committing while a submodule is staged-as-blobs is exactly what escalates Tier 1 into Tier 2.
-- Never force-push or rewrite history without explicit per-item approval.
-- Submodule **name ≠ path** is legal — resolve checkouts by the `.path` field of `.gitmodules`, never the section name.
-- **Routing native keys live in the parent's `.gitmodules`, never in the submodule.** Detection (permission, fork, default-branch protection) decides routing by default; the parent's `.gitmodules` keys are the only overrides, and this domain writes them on approval — the four-key vocabulary: `branch` (the branch work targets), `update` (`rebase`/`merge` ⇒ track the upstream tip vs. pin a sha), `x-integration` (force `read-only`|`direct`|`pr` when detection is wrong or can't express the intent — e.g. force a PR on an unprotected branch, or pin a writable repo as read-only), and `x-contribute` (fork contribution target). A declared submodule with no `branch =` is a routing gap — recursive push would fall back to the checked-out branch (or exit if detached); offer `branch = <current>` on approval. Never write `.claude/git/*` into a submodule (it would pollute a vendored/fork repo). `/git checkpoint` computes the live audit and surfaces any gap that needs a key written here.
+- Submodule **name ≠ path** is legal — the driver resolves by `.gitmodules` `.path`; this component always passes paths.
+- **Routing native keys live in the parent's `.gitmodules`, never in the submodule.** Detection decides routing by default; the four-key vocabulary (`branch`, `update`, `x-integration`, `x-contribute`) is the only override surface, written via `write-native-key` on approval (the driver validates key and value). Never write `.claude/git/*` into a submodule.
 
 ## Process
 
-1. {gate}: bash: `sh ${CLAUDE_SKILL_DIR}/scripts/git-roots.sh roots` (capture stderr + exit code) — re-read the full state table as diagnosis input
-2. Bind from the {gate} stderr table — it enumerates every detected submodule (declared OR found on disk) with its state and scope counts:
-    - {superproject}: the `superproject:` line
-    - For each non-conforming row: {path}, {detect-state} (`broken-link` | `undeclared` | `uninitialized` | `anomaly`), {staged}, {history}
-3. Assign a repair tier per {path} from {detect-state} + {history} (conformance needs BOTH a gitlink AND a `.gitmodules` declaration — `gitsubmodules(7)`):
-    - `broken-link`, {history} = 0 → **Tier 1 (index-only)** — reversible
-    - `broken-link`, {history} > 0 → **Tier 2 (history-polluted)** — destructive fix
-    - `orphan-gitlink` → **declare-or-drop** — gitlink in index, no declaration (invisible to `git submodule`); either add a `.gitmodules` entry to conform, or `git rm --cached` to drop the gitlink
-    - `not-checked-out` / `declared-only` → **init** (`git submodule update --init -- {path}`)
+1. `{detect}`: the caller's doctor-detect JSON (re-run `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py doctor-detect` if stale). Bind `{superproject}` and the `{submodules}` state rows (`{state, path, staged, history}`).
+2. Assign a disposition per row from `{state}` + `{history}` (conformance needs BOTH a gitlink AND a `.gitmodules` declaration — `gitsubmodules(7)`):
+    - `broken-link`, history 0 → **Tier 1** — reversible index repair (`sub-repair`)
+    - `broken-link`, history `> 0` → **Tier 2** — destructive fix; surface only
+    - `orphan-gitlink` → **declare-or-drop** — gitlink with no declaration (invisible to `git submodule`); `sub-declare` to conform, or `gitlink-drop` to remove
+    - `not-checked-out` / `declared-only` → **init** (`sub-init`)
     - `undeclared` → **ambiguous** — an on-disk repo not in `.gitmodules` and not parent-gitignored; intent unknown (forgotten submodule vs. deliberately vendored code)
-    - `nested-independent` → **benign, skip** — on-disk repo that the parent gitignores (agent-os umbrella pattern); intentionally not a submodule, no action
+    - `nested-independent` → **benign, skip** — parent-gitignored on-disk repo (umbrella pattern); intentionally not a submodule
     - `anomaly` → **surface** — doesn't fit a known pattern; report, don't act
-4. Emit ### diagnosis (per-path state + tier + scope counts)
-5. For each **Tier 1** {path}: AskUserQuestion — approve the scoped repair? On approval:
-    1. bash: `git -C {superproject} rm -r --cached --quiet -- {path}`
-    2. bash: `git -C {superproject} add -- {path}` (the "adding embedded git repository" warning is expected — not a failure)
-6. If any Tier 1 repaired: bash: `git -C {superproject} commit -m "Repair submodule gitlinks: <paths>"`
-7. For each **undeclared** {path}: AskUserQuestion — declare + link it as a submodule, leave it as vendored content, or stop for manual handling? Act only on the chosen option; never guess intent.
-8. For each **Tier 2** {path}: present the history-rewrite warning; do NOT act — require a separate explicit instruction
-9. Routing native-key gaps (when {detect} flagged `submodule-routing`) — for each declared submodule with no `submodule.<name>.branch` in `.gitmodules`:
-    1. {current}: bash: `git -C {superproject}/{path} rev-parse --abbrev-ref HEAD`
-    2. If {current} is `HEAD` (detached): surface — submodule {path} is detached with no declared branch; normalize it onto a branch first (there is no branch to record yet)
-    3. Else: AskUserQuestion — write `submodule.{name}.branch = {current}` to the parent's `.gitmodules`? On approval: bash: `git -C {superproject} config -f .gitmodules submodule.{name}.branch {current}`
-10. Integration override (when a checkpoint routing gap points here — e.g. `edits-to-readonly` — or the user wants a path detection wouldn't pick) — only ever a deliberate override, never to restate what detection already reads:
-    1. AskUserQuestion — write `submodule.{name}.x-integration = <read-only|direct|pr>`? Use it to force a PR on an unprotected branch, pin a writable repo as read-only, or admit a deliberate direct-land; leave unset to let detection decide. On approval: bash: `git -C {superproject} config -f .gitmodules submodule.{name}.x-integration <value>`
-    2. If the submodule's origin is a fork and the contribution target is ambiguous: AskUserQuestion — write `submodule.{name}.x-contribute = <upstream|origin>`? On approval: bash: `git -C {superproject} config -f .gitmodules submodule.{name}.x-contribute <value>`
-11. {verify}: bash: `sh ${CLAUDE_SKILL_DIR}/scripts/git-roots.sh roots` (capture exit)
-12. Return to caller: ### result
+3. Emit ### diagnosis (per-path state + disposition + scope counts)
+4. Tier 1 — AskUserQuestion per path: approve the scoped repair? Then one batch: bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py sub-repair` with one `--path {p}` per approved path — re-borders each as a gitlink and commits the batch (the "adding embedded git repository" warning is the expected outcome)
+5. Init — for each `not-checked-out` / `declared-only` path: bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py sub-init --path {p}`
+6. Undeclared / orphan-gitlink — AskUserQuestion per path: declare + link it as a submodule (`sub-declare --path {p}`, url from its origin), leave as vendored content (no action), drop the orphan gitlink (`gitlink-drop --path {p}`, orphan only), or stop for manual handling. Act only on the chosen option; never guess intent.
+7. Tier 2 — present the history-rewrite warning per path; do NOT act — require a separate explicit instruction
+8. Routing native-key gaps (when the detector flagged `submodule-routing`) — for each declared submodule with no `branch =`:
+    1. `{current}`: bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py read --cwd {superproject}/{path} -- rev-parse --abbrev-ref HEAD`
+    2. If `{current}` is `HEAD` (detached): surface — `{path}` is detached with no declared branch; normalize it onto a branch first (there is no branch to record yet)
+    3. Else: AskUserQuestion — record `branch = {current}`? On approval: bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py write-native-key --path {path} --key branch --value {current}`
+9. Integration override (when a checkpoint routing gap points here — e.g. `edits-to-readonly` — or the user wants a path detection wouldn't pick) — only ever a deliberate override, never to restate what detection already reads:
+    1. AskUserQuestion — write `x-integration = <read-only|direct|pr>`? Use it to force a PR on an unprotected branch, pin a writable repo as read-only, or admit a deliberate direct-land; leave unset to let detection decide. On approval: bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py write-native-key --path {path} --key x-integration --value {v}`
+    2. If the submodule's origin is a fork and the contribution target is ambiguous: AskUserQuestion — `x-contribute = <upstream|origin>`? On approval: the same `write-native-key` with `--key x-contribute`
+10. `{verify}`: bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py doctor-detect` — bind the fresh `{status}`
+11. Return to caller: ### result
 
 ## Report
 
@@ -55,7 +49,7 @@ Submodule conformance (every detected boundary, declared or on-disk):
 {per-path: <path> — <state> (staged: {staged}, history: {history})}
 Tier 1 (reversible index repair): {tier1-list}
 Tier 2 (history rewrite — needs deliberate decision): {tier2-list}
-Undeclared (on-disk repo not in .gitmodules — intent decision): {undeclared-list}
+Undeclared (intent decision): {undeclared-list}
 Uninitialized: {uninit-list}
 ```
 
@@ -63,8 +57,11 @@ Uninitialized: {uninit-list}
 
 ```
 Submodule domain:
-Repaired (Tier 1): {repaired-list}
+Repaired (Tier 1): {repaired-list + commit}
+Initialized: {init-list}
+Declared / dropped: {declare-drop-list}
 Deferred (Tier 2 / postponed): {deferred-list}
-Verify: {gate exit 0 = conforming | still drifting — see diagnosis}
+Native keys written: {key-list}
+Verify: {status healthy = conforming | still drifting — see diagnosis}
 Blocking unresolved: {yes — do not commit until resolved | none}
 ```
