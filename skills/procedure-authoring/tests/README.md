@@ -37,6 +37,8 @@ Every case but one asserts a clean behavior. `annotation` asserts a **hazard**: 
 
 **Finding:** at n=6 and n=8, `Call:` and `Execute:` scored identically at 100% — no measurable difference, so the proposed `Execute:` rename was reverted. The arms saturate because a cold, single-task agent with no real prior and no context load just opens the file; this harness cannot reproduce the trained prior + orchestration load that drove the original miss.
 
+**Resolution:** wording A/Bs for this construct are closed as a dead end absent a loaded-context harness. The guide instead presumes a file-target invocation unreliable under load and requires a load-bearing target to be force-loaded (`/skill`) or gated on an artifact only its steps produce (`../SKILL.md` § Invocations).
+
 **The negative control is what makes that finding trustworthy.** A green-everywhere arm table is ambiguous: it could mean "both verbs work" or "the fixture can't register failure at all." So every discrimination group ships a `control=True` arm that *should* fail to produce the marker — here `fidelity_control` invokes the file with `Read:` (loads without executing), so `REC-Q8Z4` must stay absent. `main` enforces it: a group whose control's marker *appears* — or that ships no control — is flagged **non-discriminating / unvalidated**, and the arm table must not be read as "no effect." A passing control is what licenses the comparison: it proves a difference *could* have shown.
 
 ```

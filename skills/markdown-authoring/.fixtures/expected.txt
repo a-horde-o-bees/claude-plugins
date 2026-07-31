@@ -1,0 +1,13 @@
+violations.md:1 error opening-heading
+violations.md:2 error one-line-paragraphs
+violations.md:3 warn heading-names-file
+violations.md:3 error blanks-around
+violations.md:4 error blanks-around
+violations.md:6 error continuous-list
+violations.md:8 error one-line-items
+violations.md:9 error blanks-around
+violations.md:9 error list-indent
+violations.md:11 warn escape-special
+violations.md:14 error fence-padding
+violations.md:16 error fence-padding
+violations.md:18 error blanks-around
