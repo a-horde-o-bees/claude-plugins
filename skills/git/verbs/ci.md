@@ -1,6 +1,6 @@
 # git ci
 
-> Report GitHub Actions run state for the latest pushed commit, parent and submodules alike. The driver recurses declared submodules deepest-first and classifies each repo deterministically; this verb emits the matching template per repo verbatim — no inventing, paraphrasing, or merging.
+Report GitHub Actions run state for the latest pushed commit, parent and submodules alike. The driver recurses declared submodules deepest-first and classifies each repo deterministically; this verb emits the matching template per repo verbatim — no inventing, paraphrasing, or merging.
 
 ## Variables
 
@@ -16,9 +16,9 @@
 
 ## Process
 
-1. `{result}`: bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py ci --cwd {cwd}` (append ` --branch {branch}` when given). BLOCKED (branch mismatch): surface it and stop.
+1. `{result}`: Bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py ci --cwd {cwd}` (append ` --branch {branch}` when given). BLOCKED (branch mismatch): Exit process: the driver's surface.
 2. For each `{repo}` in `{result}`.repos (already deepest-first, parent last): emit the template matching `{repo}`.ci_status — see ## Report.
-3. For each `{watch}` in `{result}`.watches: async Spawn: Call: partials/ci-watch.md (`{cwd}`: `{watch}`.cwd, `{sha}`: `{watch}`.sha, `{run-ids}`: `{watch}`.watch_ids)
+3. For each `{watch}` in `{result}`.watches: Spawn async agent to: Call: partials/ci-watch.md (`{cwd}`: `{watch}`.cwd, `{sha}`: `{watch}`.sha, `{run-ids}`: `{watch}`.watch_ids)
 
 ## Report
 

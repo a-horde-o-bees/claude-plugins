@@ -1,6 +1,6 @@
 # git pr cleanup
 
-> Restore local base and tear down a merged head branch. Fully deterministic — the driver runs the whole flow; this verb reports its verdict verbatim. Safe-by-default; idempotent.
+Restore local base and tear down a merged head branch. Fully deterministic — the driver runs the whole flow; this verb reports its verdict verbatim. Safe-by-default; idempotent.
 
 ## Variables
 
@@ -15,8 +15,8 @@
 
 ## Process
 
-1. `{result}`: bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py pr-cleanup` (append ` --head {head}` / ` --base {base}` when given)
-2. If BLOCKED (head is base, detached with no `--head`, or unmerged commits with no merged PR): Exit process — surface the driver's message verbatim; merging or discarding is the user's explicit call.
+1. `{result}`: Bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py pr-cleanup` (append ` --head {head}` / ` --base {base}` when given)
+2. If BLOCKED (head is base, detached with no `--head`, or unmerged commits with no merged PR): Exit process: the driver's message verbatim — merging or discarding is the user's explicit call.
 3. Report from `{result}` — see ## Report.
 
 ## Report

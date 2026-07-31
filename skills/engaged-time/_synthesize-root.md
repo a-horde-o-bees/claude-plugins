@@ -1,6 +1,6 @@
 # Synthesize root focus-threads
 
-Coalesce ONE root's per-exchange descriptions into **focus-threads** — each a coherent objective the work pursued, owning a one-line `summary` and the member exchange UUIDs it spans. A ROOT is the visualization's connected work-tree: usually one session file, but a cross-file resume continues the thread into a later file, and both files are ONE root — so a thread may span them. The apply-over-queue fan-out runs this across many roots; it also runs standalone for one. Each spawn reads and writes only its own root, so parallel runs never contend.
+Coalesce ONE root's per-exchange descriptions into **focus-threads** — each a coherent objective the work pursued, owning a one-line `summary` and the member exchange UUIDs it spans. A ROOT is the visualization's connected work-tree: usually one session file, but a cross-file resume continues the thread into a later file, and both files are ONE root — so a thread may span them. The apply-over-queue fan-out runs this across many roots; it also runs standalone for one. Each run reads and writes only its own root, so no two ever contend over the same threads.
 
 Threads only — never assign topics. Topics come from a separate global pass over every thread at once (`exchanges.py thread-assign`); a coherent vocabulary can't be set one root at a time, and the vocabulary is refined against the full thread set. Narrative + billing lineage — a thread's member exchanges are what its topic bills, so membership must be faithful: every substantive exchange belongs to exactly one thread; genuinely incidental turns belong to none.
 
@@ -22,7 +22,4 @@ Commands reference `${CLAUDE_SKILL_DIR}`. apply-over-queue resolves it to this f
     - **Past tense** summaries; threads in the order each objective first appears.
 3. Persist: Bash: `uv run ${CLAUDE_SKILL_DIR}/exchanges.py threads --root TARGET --set '{threads}'` — `{threads}` a JSON array `[{"summary": "<one line>", "uuids": ["<uuid>", ...]}, ...]`. The store recomputes TARGET's content hash from the live descriptions and validates every uuid belongs to TARGET; an out-of-root uuid is rejected (re-check your membership).
 
-> Writes land in `annotations.db` `root_thread`, keyed by the root's content hash — content-
-> addressed, so a later description edit re-keys the root and this re-runs; the stale entry is
-> orphaned (harmless). Each thread's stable identity (for the topic pass) is the hash of its sorted
-> member UUIDs, so re-running with the same grouping preserves any topic already assigned.
+> Writes land in `annotations.db` `root_thread`, keyed by the root's content hash — content-addressed, so a later description edit re-keys the root and this re-runs; the stale entry is orphaned (harmless). Each thread's stable identity (for the topic pass) is the hash of its sorted member UUIDs, so re-running with the same grouping preserves any topic already assigned.

@@ -29,15 +29,10 @@ Then open `http://localhost:8765/`.
 ## Process
 
 1. Ensure the raw DB exists and is current (`verbs/ingest.md`).
-2. Start the server in the background, redirecting to a log — it runs minutes-plus. `mkdir -p` guards the case where `init` was skipped, since the shell redirect fails before Python can create anything:
-
-   ```
-   mkdir -p ~/.claude/engaged-time/logs
-   uv run ${CLAUDE_SKILL_DIR}/swimlane_server.py --db ~/.claude/engaged-time/raw.db --port 8765 > ~/.claude/engaged-time/logs/serve.log 2>&1 &
-   ```
-
-3. Note the launch **PID** — stopping the server needs it.
-4. Open the page; expand segment rows to load them (`/api/segment/<uuid>`, lazy, client-cached).
+2. Bash: `mkdir -p ~/.claude/engaged-time/logs` — guards the case where `init` was skipped, since the shell redirect fails before Python can create anything.
+3. Bash: `uv run ${CLAUDE_SKILL_DIR}/swimlane_server.py --db ~/.claude/engaged-time/raw.db --port 8765 > ~/.claude/engaged-time/logs/serve.log 2>&1 &` — background it and redirect to a log; the server runs minutes-plus.
+4. Note the launch **PID** — stopping the server needs it.
+5. Open the page; expand segment rows to load them (`/api/segment/<uuid>`, lazy, client-cached).
 
 ## Lifecycle — stopping and restarting
 

@@ -17,7 +17,7 @@ The shared instruction — the coalescing rule plus `/description-authoring` + `
 1. **Build the queue** — the roots needing (re)synthesis:
 
     ```
-    uv run exchanges.py roots --pending
+    uv run ${CLAUDE_SKILL_DIR}/exchanges.py roots --pending
     ```
 
     Each line is a full root id whose threads are not yet cached (or whose descriptions changed, re-keying the root). Empty → nothing to do. `--items` wants full ids, which this emits.
@@ -38,13 +38,13 @@ The shared instruction — the coalescing rule plus `/description-authoring` + `
     - `--model opus` — bulk synthesis doesn't need the premium default the CLI would otherwise inherit; Opus is the pipeline's model.
     - **Sequential only** — `annotations.db` is one SQLite writer, and sequential spawns keep the cache warm. The unit self-declares its disciplines, so no `--skills` flag is needed.
 
-3. **Assign topics (the global pass — NOT fanned out).** Once every root is synthesized, review all threads at once and assign each one topic. This is also where the vocabulary is tuned to the real threads:
-    - `uv run exchanges.py thread-list` → every thread (key, root, summary, current topic).
-    - Refine the vocabulary if the threads warrant it: `uv run exchanges.py topics --set '{…}'`.
-    - `uv run exchanges.py thread-assign --set '{"<thread_key>": "<topic>", …}'` — one topic each.
-    - `uv run exchanges.py thread-list --unassigned` → expect `[]` (every thread classified).
+3. **Assign topics — the global pass, NOT fanned out.** Once every root is synthesized, review all threads at once and assign each one topic. This is also where the vocabulary is tuned to the real threads:
+    - `uv run ${CLAUDE_SKILL_DIR}/exchanges.py thread-list` → every thread (key, root, summary, current topic).
+    - Refine the vocabulary if the threads warrant it: `uv run ${CLAUDE_SKILL_DIR}/exchanges.py topics --set '{…}'`.
+    - `uv run ${CLAUDE_SKILL_DIR}/exchanges.py thread-assign --set '{"<thread_key>": "<topic>", …}'` — one topic each.
+    - `uv run ${CLAUDE_SKILL_DIR}/exchanges.py thread-list --unassigned` → expect `[]` (every thread classified).
 
-4. **Verify** — `uv run exchanges.py threads` prints the cached root count; `roots --pending` emits nothing (all synthesized).
+4. **Verify** — `uv run ${CLAUDE_SKILL_DIR}/exchanges.py threads` prints the cached root count; `roots --pending` emits nothing (all synthesized).
 
 ## Notes
 

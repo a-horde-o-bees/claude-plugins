@@ -11,11 +11,11 @@ A description is the line a reader uses to decide engage-or-skip — often the o
 
 ### Substance
 
-- Describe what the artifact is for, not how it does it — its responsibility or the outcome it produces, never the method behind it. "Rank search results by relevance" is a what; "rank results with TF-IDF scoring" is a how.
+- Describe what the artifact is for, not how it does it — its responsibility or the outcome it produces, never the method, steps, or approach behind it (for a skill, the technique it teaches; not only code). "Rank search results by relevance" is a what; "rank results with TF-IDF scoring" is a how.
 - Convey two things: what the artifact covers and what kind of thing it is (e.g. directory, module, CLI, config, rule, schema, section, function).
-- Weave both into fluent prose — never expose them as labeled fields or split halves. "Retry and backoff helpers for outbound HTTP calls," not "Scope: HTTP retries. Role: helper module." The reader should see no seam.
+- Weave both into fluent prose with no visible seam — never labeled fields or split halves. "Retry and backoff helpers for outbound HTTP calls," not "Scope: HTTP retries. Role: helper module."
 - Lead with the key case — descriptions are read, and truncated, front-first; the first clause must carry the engage-or-skip decision on its own.
-- Match the abstraction to the artifact's size — a directory's coverage is coarser than a file's, a package's coarser than a function's.
+- Match the abstraction to the artifact's scale — a directory's coverage is coarser than a file's, a package's coarser than a function's.
 - Third person.
 
 ### Length
@@ -25,7 +25,6 @@ A description is the line a reader uses to decide engage-or-skip — often the o
 
 ### Exclude
 
-- Don't describe how it works — the method, steps, or approach it uses (for a skill, the technique it teaches; not only code).
 - Don't list contents — section, function, or class names.
 - Don't recount history — why it exists, what it replaced, when it was added.
 

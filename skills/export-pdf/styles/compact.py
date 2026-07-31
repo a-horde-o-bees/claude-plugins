@@ -4,10 +4,11 @@ Tight single-page document style — resumes, cover letters, recommendation
 letters. Helvetica family, tight margins, uppercase H2 with hairline rule,
 dash bullets, blue links.
 
-Serves as the canonical example for authoring custom styles — declares every
-overridable constant explicitly. A custom style module can omit any subset of
-these; the renderer falls back to its built-in defaults (which match the
-values below).
+Serves as the canonical example for authoring custom styles. A custom style
+module can omit any subset of these constants; whatever is undeclared falls
+through to the renderer's own fallbacks and reportlab's library defaults —
+NOT to the values below (e.g. the renderer's inline-code fallback is Courier
+9pt against this preset's JetBrains Mono 8pt).
 """
 
 from reportlab.lib import colors

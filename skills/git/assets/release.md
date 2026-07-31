@@ -1,8 +1,6 @@
 # Release Methodology
 
-Project-specific methodology for cutting tagged releases. Read by `/git release` to validate inputs, locate manifest(s) to bump, format the CHANGELOG, and execute commit/tag/push correctly. Captured during the bootstrap dialogue and refined over time as the project's release practice evolves.
-
-This is the *local* version (under `.claude/git/release.md`) — fill in each section with this project's specifics. The `git` skill ships a starter template at its `assets/release.md`; the bootstrap dialogue uses it as scaffolding.
+Starter template for a project's release methodology, copied to `.claude/git/release.md` by the `/git release` bootstrap dialogue and refined there as the project's release practice evolves. The written copy tells `/git release` how to validate inputs, which manifest(s) to bump, how to format the CHANGELOG, and how to execute commit/tag/push. Fill in each section with this project's specifics.
 
 ## Versioning scheme
 

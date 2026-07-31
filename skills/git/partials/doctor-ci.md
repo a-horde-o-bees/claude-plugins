@@ -1,6 +1,6 @@
 # git doctor — CI domain
 
-> The GitHub Actions CI-config domain of `/git doctor`. On demand (`/git doctor ci [audit|harden|reconcile]`) or when the detector flags workflow files in the change. The driver diagnoses deterministically; this domain emits its findings verbatim, proposes scoped edits, applies only on approval — never rewrites a workflow wholesale. Config hardening, not code review.
+The GitHub Actions CI-config domain of `/git doctor`. Runs on demand (`/git doctor ci [audit|harden|reconcile]`) or when the detector flags workflow files in the change. The driver diagnoses deterministically; this domain emits its findings verbatim, proposes scoped edits, applies only on approval — never rewrites a workflow wholesale. Config hardening, not code review.
 
 ## Variables
 
@@ -18,10 +18,10 @@
 ## Process
 
 1. `{ci-verb}`: first token of `{ci-args}` (default `audit`); `{branch}`: `--branch` value if given
-2. If `{ci-verb}` is `reconcile`: Call: Reconcile; Return to caller
-3. `{audit}`: bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py ci-audit` (append ` --resolve` when `{ci-verb}` is `harden` — pre-resolves every SHA pin)
+2. If `{ci-verb}` is `reconcile`: Call: [Reconcile](#reconcile); Return to caller
+3. `{audit}`: Bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py ci-audit` (append ` --resolve` when `{ci-verb}` is `harden` — pre-resolves every SHA pin)
 4. Bind from `{audit}` JSON: `{clean}`, `{severity-counts}`, `{results}` (per-file findings, each with check / severity / detail / fix, plus `pinned_line` for resolved pins)
-5. `{reconcile}`: Call: Reconcile — fold its mismatches in as additional findings (a required check matching no job is a `high`: the PR can never merge)
+5. `{reconcile}`: Call: [Reconcile](#reconcile) — fold its mismatches in as additional findings (a required check matching no job is a `high`: the PR can never merge)
 6. Emit the ### Audit report grouped by severity
 7. If `{ci-verb}` is `audit`: Return to caller — report only
 8. If `{ci-verb}` is `harden`:
@@ -34,7 +34,7 @@
 
 ## Reconcile
 
-1. `{rc}`: bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py ci-reconcile` (append ` --branch {branch}` when given)
+1. `{rc}`: Bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py ci-reconcile` (append ` --branch {branch}` when given)
 2. Bind: `{protection}`, `{required-contexts}`, `{job-names}`, `{required-without-matching-job}`, `{jobs-not-required}`
 3. If `{protection}` is false: Return to caller: no branch protection — nothing to reconcile
 4. Return to caller:

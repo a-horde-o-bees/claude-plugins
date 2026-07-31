@@ -1,7 +1,7 @@
 # Release Bootstrap
 
-> Guided dialogue producing the project's local `.claude/git/release.md`. Fires the first time `/git release` runs in a project without an existing methodology config.
->
+Guided dialogue producing the project's local `.claude/git/release.md`. Fires the first time `/git release` runs in a project without an existing methodology config.
+
 > Detection-first: scan project artifacts (manifests, CHANGELOG, tags, auto-bump hooks) and pre-populate suggestions, then present one batched proposal rather than walking the user section-by-section. Subsequent invocations of `/git release` read the written file directly.
 
 ## Variables
@@ -16,7 +16,7 @@
 
 ## Process
 
-1. Detect existing release artifacts: bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py release-bootstrap-detect` — bind `{manifest-candidates}`, `{has-changelog}`, `{existing-tags}`, `{tag-format}`, `{auto-bump-hook}`, `{github-release-workflow}`
+1. Detect existing release artifacts: Bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py release-bootstrap-detect` — bind `{manifest-candidates}`, `{has-changelog}`, `{existing-tags}`, `{tag-format}`, `{auto-bump-hook}`, `{github-release-workflow}`
 2. `{template}`: Read `${CLAUDE_SKILL_DIR}/assets/release.md` — starter template anchoring output structure
 3. Compose draft `release.md` using `{template}` structure and detection-driven defaults for every section. Apply /markdown-authoring and /concise-prose:
     1. **Versioning scheme** — if `{existing-tags}` match `v\d+\.\d+\.\d+`, fill in semver `x.y.z`; otherwise list semver/calver/custom as choices
@@ -34,8 +34,8 @@
         - Composed `release.md` content verbatim
         - Detection summary (what was auto-detected vs guessed)
     2. `{decision}`: AskUserQuestion — approve as-is or call out section-level adjustments. Apply /confirm-shared-intent.
-    3. If `{decision}` is approve: proceed to step 5
-    4. Apply user's directives (revise sections, swap defaults, add gates); re-render the revised draft
+    3. If `{decision}` is approve: go to step 5
+    4. Apply the user's directives (revise sections, swap defaults, add gates); re-render the revised draft
     5. Go to step 4.1
 
 5. Write:

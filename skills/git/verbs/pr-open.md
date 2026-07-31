@@ -1,6 +1,6 @@
 # git pr open
 
-> Open a pull request for the current branch with an authored, weight-appropriate description. The driver runs the preconditions and the creation; judgment enters at the authoring and review stop-points. Idempotent.
+Open a pull request for the current branch with an authored, weight-appropriate description. The driver runs the preconditions and the creation; judgment enters at the authoring and review stop-points. Idempotent.
 
 ## Dependencies
 
@@ -26,17 +26,17 @@
 
 ## Process
 
-1. `{pre}`: bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py pr-preflight` (append ` --base {base}` when given)
-2. If BLOCKED (detached HEAD, branch not on origin, unpushed commits): Exit process — surface the driver's message verbatim (it names the `/git push` fix).
-3. If `{pre}`.pr_exists: Exit process — PR already open for the branch: report its number + URL. To revise the description, edit it directly; this verb only opens.
+1. `{pre}`: Bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py pr-preflight` (append ` --base {base}` when given)
+2. If BLOCKED (detached HEAD, branch not on origin, unpushed commits): Exit process: the driver's message verbatim — it names the `/git push` fix.
+3. If `{pre}`.pr_exists: Exit process: PR already open for the branch — its number + URL. To revise the description, edit it directly; this verb only opens.
 4. Author the description from `{pre}`:
-    1. Assess weight from `{pre}`.diffstat; pick the depth tier (one/two sentences → summary+what/why → full design notes). Seed from `{pre}`.subjects; descend to bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py read -- diff {base}...HEAD` only if the subjects leave intent ambiguous.
+    1. Assess weight from `{pre}`.diffstat; pick the depth tier (one/two sentences → summary+what/why → full design notes). Seed from `{pre}`.subjects; descend to Bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py read -- diff {base}...HEAD` only if the subjects leave intent ambiguous.
     2. Draft `{title}` (≤ ~70 chars, no trailing period) and `{body}`. Apply /concise-prose, /description-authoring. Body leads with why; no claim the diff or a named decision doesn't carry; omit empty sections; no `#1.` list items.
 5. Review gate — skip when `{auto}`:
     1. Present `{title}`, `{pre}`.base, `{draft}`, and `{body}` verbatim. Apply /concise-prose.
     2. `{decision}`: AskUserQuestion — approve / adjust. Apply /confirm-shared-intent.
-    3. If adjust: revise per feedback; go to 5.1
-6. Create: write `{body}` to a temp file; bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py pr-create --title "{title}" --body-file <file>` + ` --base {base}` when given + ` --draft` if `{draft}`
+    3. If adjust: revise per feedback; go to step 5.1
+6. Create: write `{body}` to a temp file; Bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py pr-create --title "{title}" --body-file <file>` + ` --base {base}` when given + ` --draft` if `{draft}`
 
 ## Report
 

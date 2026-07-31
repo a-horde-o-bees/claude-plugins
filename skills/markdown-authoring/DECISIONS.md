@@ -11,7 +11,7 @@ The counterfactual record for markdown-authoring's shape — why the lint lives 
 **Rejected.**
 
 - *Folding markdown-authoring into description-authoring*: description-authoring is scale-general (commit subjects, tool help, docstrings), not markdown-specific; the merge blurs its scope.
-- *A separate project-tooling skill* (lint-markdown, the prior form): enforcement reached only projects that ran the stand-up, the rules split across two homes (its criteria list vs. the authoring skill), and the cluster spent a second listing entry.
+- *A separate project-tooling skill*: enforcement reached only projects that ran the stand-up, the rules split across two homes (its criteria list vs. the authoring skill), and the cluster spent a second listing entry.
 
 ## Overrides are severity-only config; different rules are a skill shadow
 

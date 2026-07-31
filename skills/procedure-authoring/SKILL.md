@@ -16,6 +16,8 @@ The bar is therefore empirical. Each construct below names a behavior and the wo
 - **Indentation** — scope, 4 spaces per level: a construct ending in `:` opens a block, indented lines are its children, and outdenting to the parent ends it.
 - **Grouping subheading** — a label between contiguous steps; numbering continues across them.
 
+A load-bearing step must have a consumer — a step nothing consumes is advisory and often silently skipped under load; bind its finding, write its artifact, or gate a future step or conditional on it.
+
 ## Annotations
 
 - **`—`** (em-dash) — an inline note on a step.
@@ -69,6 +71,8 @@ Return:
 - **`Return to caller`** — hands control back from a called section or file.
 - **`Return to caller:`** — hands a returned result back to the caller (e.g. from a spawned agent).
 
+Never gate an invocation on a judgment the target owns — wrapping `Call:`/`Apply` in a condition that restates the target's own trigger ("/reauthor for entries composed fresh") makes loading contingent on the decision the unloaded target exists to make; the executor skips the load and never meets the discipline that would have flipped its judgment. Invoke unconditionally — the target self-limits.
+
 ### Tools
 
 - **`Bash:`** — runs a shell command: `` `cmd` ``.
@@ -76,21 +80,6 @@ Return:
 - **`Grep:`** — searches file contents.
 - **`Glob:`** — matches file paths.
 - **`Tool: args`** — any other MCP tool, invoked by name.
-
-### What belongs in a procedure — the gate on every line
-
-The executor sees only the authored procedure, cold, and runs any instruction it reads wherever it sits — so descriptive prose mixed into the steps both dilutes the actionable signal and risks being executed as a step. Classify every line by the **actionability test**: *would an executor need this to perform the task?* (Parallel to architecture's reimplementation test and decisions' necessity test.)
-
-- **Procedure** (keep) — reasoning, judgment, and contextual sequencing the agent steers; orchestration whose composition depends on intermediate results (skill calls, tool invocations, agent spawns); and the user-facing surface (review gates, clarifying questions, error-recovery dialogue).
-- **Script** (→ a `Bash:` call or invoked module) — deterministic operations with no agent context: parsing, filtering, aggregation, format conversion, fixed-rule classification. The tell: *could a deterministic function with no agent context produce this result?* Yes → script. Prefer one wherever it suffices; it preserves the agent's focus for the judgment only an agent can supply.
-- **Durable structure** (→ the architecture doc) — the shape, boundaries, and external facts a reader needs *before* the steps make sense and that survive a rewrite. Not a step; state it there and link.
-- **Why this and not that** (→ the decision record) — a choice made over rejected alternatives. The procedure *runs* the choice; the reasoning belongs there. Link.
-- **Derivable** (cut) — anything the executor reconstructs from the steps themselves or the artifacts they touch.
-
-Two misclassifications to catch, each corrected in one direction:
-
-- **Mechanical work stranded in a procedure** — a step doing parsing, filtering, or formatting the agent performs by hand. Tell: a deterministic function could replace it with nothing lost. Push it into a script.
-- **Judgment buried in a script** — code branching on context, resolving ambiguity, or deciding what the agent should steer. Tell: a comment hedges ("if ambiguous…", a heuristic, a guessed default). Lift that decision into the calling procedure; leave the script the deterministic part.
 
 ## Spawn
 
@@ -125,7 +114,17 @@ A process declares its input surface CLI-style so an invoker knows what to pass.
 
 Pair flags with their verb inline — `<verb1 | verb2 --flag <v>>` — rather than at top level. Prefer a positional value for a single required subject; a flag for optional, named, or convention-bound inputs (`--branch`).
 
-## Gotchas
+## What belongs in a procedure — the gate on every line
 
-- **A load-bearing step must have a consumer** — a step nothing consumes is advisory and often silently skipped under load; bind its finding, write its artifact, or gate a future step or conditional on it.
-- **Never gate an invocation on a judgment the target owns** — wrapping `Call:`/`Apply` in a condition that restates the target's own trigger ("/reauthor for entries composed fresh") makes loading contingent on the decision the unloaded target exists to make; the executor skips the load and never meets the discipline that would have flipped its judgment. Invoke unconditionally — the target self-limits.
+The executor sees only the authored procedure, cold, and runs any instruction it reads wherever it sits — so descriptive prose mixed into the steps both dilutes the actionable signal and risks being executed as a step. Classify every line by the **actionability test**: *would an executor need this to perform the task?*
+
+- **Procedure** (keep) — reasoning, judgment, and contextual sequencing the agent steers; orchestration whose composition depends on intermediate results (skill calls, tool invocations, agent spawns); and the user-facing surface (review gates, clarifying questions, error-recovery dialogue).
+- **Script** (→ a `Bash:` call or invoked module) — deterministic operations with no agent context: parsing, filtering, aggregation, format conversion, fixed-rule classification. The tell: *could a deterministic function with no agent context produce this result?* Yes → script. Prefer one wherever it suffices; it preserves the agent's focus for the judgment only an agent can supply.
+- **Durable structure** (→ the architecture doc) — the shape, boundaries, and external facts a reader needs *before* the steps make sense and that survive a rewrite. Not a step; state it there and link.
+- **Why this and not that** (→ the decision record) — a choice made over rejected alternatives. The procedure *runs* the choice; the reasoning belongs there. Link.
+- **Derivable** (cut) — anything the executor reconstructs from the steps themselves or the artifacts they touch.
+
+Two misclassifications to catch, each corrected in one direction:
+
+- **Mechanical work stranded in a procedure** — a step doing parsing, filtering, or formatting the agent performs by hand. Tell: a deterministic function could replace it with nothing lost. Push it into a script.
+- **Judgment buried in a script** — code branching on context, resolving ambiguity, or deciding what the agent should steer. Tell: a comment hedges ("if ambiguous…", a heuristic, a guessed default). Lift that decision into the calling procedure; leave the script the deterministic part.

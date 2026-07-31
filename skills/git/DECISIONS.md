@@ -28,8 +28,8 @@ Choices behind the git skill's script-driven shape, each recorded over its rejec
 
 ## Message authoring applies concise-prose and description-authoring only
 
-**Decision.** The lens for commit messages and PR descriptions is `/concise-prose` + `/description-authoring`; `/grounded` is not applied, and its unverified-assertion guard survives as each surface rule's own clause — no claim the diff or a named decision doesn't carry.
+**Decision.** The lens for commit messages and PR descriptions is concise-prose plus description-authoring; grounded is not applied, and its unverified-assertion guard survives as each surface rule's own clause — no claim the diff or a named decision doesn't carry.
 
 **Forces.** Both surface rules pin every fact to diff visibility, which grounds by construction; the general verification skill adds context weight at the stop-point without adding a constraint that binds there.
 
-**Rejected.** *Applying `/grounded` as a lens* (the prior form, on both surfaces): redundant with the surface rule for everything the message or description can contain, while loading verification machinery — API checks, research-scope bounding — with no referent at the authoring prompt.
+**Rejected.** *Applying grounded as a lens* (the prior form, on both surfaces): redundant with the surface rule for everything the message or description can contain, while loading verification machinery — API checks, research-scope bounding — with no referent at the authoring prompt.

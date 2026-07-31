@@ -1,6 +1,6 @@
 # git checkpoint
 
-> Bundle the checkpoint for the current branch. The driver's preflight routes every repo — parent and submodules alike — by detection (live git/forge state + parent-owned native `.gitmodules` keys), never a config file, and computes the per-submodule plan; this verb sequences the verbs over that plan. Judgment stays here: the feature-branch name, and every land/halt surface.
+Bundle the checkpoint for the current branch. The driver's preflight routes every repo — parent and submodules alike — by detection (live git/forge state + parent-owned native `.gitmodules` keys), never a config file, and computes the per-submodule plan; this verb sequences the verbs over that plan. Judgment stays here: the feature-branch name, and every land/halt surface.
 
 ## Dependencies
 
@@ -15,7 +15,7 @@
 - `{paths}` — optional `--paths <pathspec>...`; scopes the whole checkpoint. Empty = the whole tree.
 - `{base-mode}` — `--base-mode`: the one explicit override — land directly on the base even when detection says `pr` (the admin/direct-land exception).
 - `{auto}` — `--auto`: hands-off. Threaded verbatim to `/git pr-open` and `/git pr-merge`; the verbs own what it bypasses. Checkpoint adds no auto behavior of its own.
-- `--path <pr|direct>` — **internal only**: a parent passes its decided integration into a recursive submodule run, so a parent `x-integration` override the submodule can't see in its own `.gitmodules` is still honored. Forwarded to the preflight.
+- `{path}` — `--path <pr | direct>`, **internal only**: a parent passes its decided integration into a recursive submodule run, so a parent `x-integration` override the submodule can't see in its own `.gitmodules` is still honored. Forwarded to the preflight.
 - `{feature-branch}` — the topic-derived `<area>/<topic>` branch auto-created when checkpointing a `pr` repo from its base branch.
 - From the preflight JSON: `{default-branch}`, `{root}`, `{effective-path}`, `{pending}`, `{needs-feature-branch}`, `{pin-only}` (submodule paths the parent only pins), `{land}` (pr-integrated submodules with work to land), `{ledger}` (per-submodule routing outcomes, surfaced in the report and on a halt), `{augmentations}` (`present` + declared step names — the machine-carried signal that the root `checkpoint.md` has steps to honor).
 - `{pre-land}`, `{on-main}` — augmentation steps from the root `checkpoint.md` `## Augmentations`, each empty when there is no file or the step isn't declared.
@@ -33,40 +33,40 @@
 ## Process
 
 1. Preflight (before anything is committed):
-    1. `{pre}`: bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py checkpoint-preflight` — append ` --branch {branch}` when `--branch` given, ` --paths {paths}` when set, ` --base-mode` when set, ` --path <pr|direct>` when internally supplied
-    2. If BLOCKED (detached HEAD, branch mismatch, or routing gaps): Exit process — surface the driver's output verbatim: each gap as `{repo}: {gap} → {fix}`, with a `/git doctor` pointer. No mid-flight bootstrap, no guessing.
+    1. `{pre}`: Bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py checkpoint-preflight` — append ` --branch {branch}` when `--branch` given, ` --paths {paths}` when set, ` --base-mode` when set, ` --path {path}` when internally supplied
+    2. If BLOCKED (detached HEAD, branch mismatch, or routing gaps): Exit process: the driver's output verbatim — each gap as `{repo}: {gap} → {fix}`, with a `/git doctor` pointer. No mid-flight bootstrap, no guessing.
     3. Bind from `{pre}` JSON: `{branch}`, `{default-branch}`, `{root}`, `{effective-path}`, `{pending}`, `{needs-feature-branch}`, `{pin-only}`, `{land}`, `{ledger}`
 
 2. Land pr-integrated submodules — for each `{sub}` in `{land}` (each is a full lifecycle of its own):
-    1. bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py sub-prep --path {sub.path}` — normalize off detached HEAD; BLOCKED (divergence) → Exit process with `{ledger}`
-    2. bash: `cd {sub.path}` — make the submodule the working directory for the recursive run
+    1. Bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py sub-prep --path {sub.path}` — normalize off detached HEAD; BLOCKED (divergence) → Exit process: `{ledger}`
+    2. Bash: `cd {sub.path}` — make the submodule the working directory for the recursive run
     3. `{sub-report}`: Call: verbs/checkpoint.md --path `{sub.integration}` + ` --auto` if `{auto}` — full lifecycle in the submodule: commit → push → CI → open PR → merge (gated) → cleanup, recursing its own sub-submodules
-    4. bash: `cd {root}` — return to the superproject
-    5. If `{sub-report}` did not land the PR (gate halt — pending/red CI, conflicts, unmet reviews): Exit process — submodule `{sub.path}`'s PR did not land. Landed this run: `{ledger}`. Resolve in `{sub.path}`, then re-invoke (landed submodules are skipped). The parent is not pinned to an unmerged sha
-    6. bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py sub-reconcile --path {sub.path}` — pin to the merged tip; `{merged}`: its `pinned`
+    4. Bash: `cd {root}` — return to the superproject
+    5. If `{sub-report}` did not land the PR (gate halt — pending/red CI, conflicts, unmet reviews): Exit process: submodule `{sub.path}`'s PR did not land. Landed this run: `{ledger}`. Resolve in `{sub.path}`, then re-invoke (landed submodules are skipped). The parent is not pinned to an unmerged sha
+    6. Bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py sub-reconcile --path {sub.path}` — pin to the merged tip; `{merged}`: its `pinned`
     7. add `{sub.path}` to `{pin-only}`; `{ledger}` += `{sub.path}: landed PR, pinned {merged}`
 
 3. Load augmentations — driven by `{augmentations}` from the preflight JSON (the mechanical signal; do not rely on remembering this step). If `{augmentations}.present`: Read `{augmentations}.file` — bind its `## Augmentations` steps (`{pre-land}`, `{on-main}`), each empty if not declared. Else: both empty.
 4. Branch under `pr` — when `{needs-feature-branch}`, or when `{effective-path}` is `pr` AND `{branch}` == `{default-branch}` AND step 2 landed a submodule (the pin advance must route through a PR too):
     1. `{feature-branch}`: author a kebab-case `<area>/<topic>` name from the in-scope change — `{area}` the single plugin or directory the scope sits under (else a short domain word), `{topic}` what the change does. Derive from the diff, not from prompt text.
-    2. bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py branch-create --name {feature-branch}` — carries the working tree onto the new branch
+    2. Bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py branch-create --name {feature-branch}` — carries the working tree onto the new branch
     3. `{branch}`: `{feature-branch}` — subsequent steps route to the feature-PR lifecycle
 
-5. Pre-land — if `{pre-land}`: bash: run it (e.g. the version bump), before committing so CI validates the result. When `{paths}` is set, scope the augmentation to it so only in-scope plugins bump.
+5. Pre-land — if `{pre-land}`: Bash: run it (e.g. the version bump), before committing so CI validates the result. When `{paths}` is set, scope the augmentation to it so only in-scope plugins bump.
 6. Commit + push + CI (every context) — pass `--pin-only {p}` for each `{p}` in `{pin-only}` so the verbs skip submodules checkpoint already landed or pins:
     1. `{commit-report}`: Call: verbs/commit.md `{paths}` + ` --auto` if `{auto}` + ` --pin-only {p}` for each `{pin-only}` — pass `--on-base` when `{branch}` == `{default-branch}` so the verb's base guard permits the intentional base commit
     2. `{push-report}`: Call: verbs/push.md --branch `{branch}` + ` --pin-only {p}` for each `{pin-only}`
     3. `{ci-report}`: Call: verbs/ci.md --branch `{branch}`
 
 7. Base mode — when `{effective-path}` is `direct` OR `{branch}` == `{default-branch}`:
-    1. If `{on-main}`: bash: run it (content is on the base now — e.g. delivery sync); `{sync-report}`: its output
+    1. If `{on-main}`: Bash: run it (content is on the base now — e.g. delivery sync); `{sync-report}`: its output
     2. Emit the ### base-mode report and stop
 
 8. Feature-PR lifecycle — when `{effective-path}` is `pr` AND `{branch}` ≠ `{default-branch}`:
     1. `{pr-status}`: Call: verbs/pr-status.md --branch `{branch}`
     2. If `{pr-status}` reports no open PR: Call: verbs/pr-open.md + ` --auto` if `{auto}`
     3. `{merge-report}`: Call: verbs/pr-merge.md --cleanup + ` --auto` if `{auto}` — gates internally; on pending/red CI, conflicts, behind-base, or unmet reviews it exits with the surface and checkpoint stops here. On merge-ready it merges, deletes the head, and syncs the base
-    4. If the merge completed and `{on-main}`: bash: run it (content just landed on the base); `{sync-report}`: its output
+    4. If the merge completed and `{on-main}`: Bash: run it (content just landed on the base); `{sync-report}`: its output
 
 9. Emit the ### feature-mode report
 

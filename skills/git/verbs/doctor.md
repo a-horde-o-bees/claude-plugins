@@ -1,6 +1,6 @@
 # git doctor
 
-> The repo-health doctor. The driver's detector scans the problem domains that gate everyday work; each domain's repair process loads into context **only when that domain is flagged** — so a healthy repo (the common case) pays just the detector, which is why this is cheap enough to pre-check on every commit and push.
+The repo-health doctor. The driver's detector scans the problem domains that gate everyday work; each domain's repair process loads into context **only when that domain is flagged** — so a healthy repo (the common case) pays just the detector, cheap enough to run before any commit or push.
 
 ## Dependencies
 
@@ -20,15 +20,15 @@
 
 1. `{verb}`: first token of this verb's arguments
 2. If `{verb}` is `ci`: Call: partials/doctor-ci.md (`{ci-args}`: remainder of this verb's arguments); Exit process — on-demand CI domain
-3. `{detect}`: bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py doctor-detect` — bind `{status}`, `{problems}` (each `{domain, severity, detail}`), `{superproject}`, `{submodules}` (the per-path state table)
-4. If `{status}` is `not-a-repo`: Exit process — not a git repository
-5. If `{status}` is `healthy`: Exit process — emit ### healthy
+3. `{detect}`: Bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py doctor-detect` — bind `{status}`, `{problems}` (each `{domain, severity, detail}`), `{superproject}`, `{submodules}` (the per-path state table)
+4. If `{status}` is `not-a-repo`: Exit process: not a git repository
+5. If `{status}` is `healthy`: Exit process: the ### healthy report
 6. For each `{problem}` in `{problems}`, dispatch by `{problem}`.domain:
     - `submodule` → Call: partials/doctor-submodule.md (`{detect}` is its diagnosis input)
     - `submodule-routing` → Call: partials/doctor-submodule.md (routing-gap mode — write the missing native key)
     - `default-branch` → Call: partials/doctor-default-branch.md (`{detail}`: `{problem}`.detail)
     - `ci` → Call: partials/doctor-ci.md (`{ci-args}`: `audit`)
-7. Emit ### result
+7. Emit the ### result report
 
 ## Report
 

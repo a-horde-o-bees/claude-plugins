@@ -1,19 +1,12 @@
 # Annotate the corpus (description fan-out)
 
-Populate per-exchange description lines across the whole corpus, or a chosen session set, by fanning the per-session unit `_annotate-session.md` out over `/apply-over-queue`. This file is the parent orchestration; `_annotate-session.md` is the per-item unit it runs. Topic assignment is a separate global pass (`verbs/exchanges.md` § topics), never fanned out — coherent tags need the full set in view.
+Populate per-exchange description lines across the whole corpus, or a chosen session set, by fanning the per-session unit `_annotate-session.md` out over `/apply-over-queue`. This file is the parent orchestration; `_annotate-session.md` is the per-item unit it runs. Topic assignment is a separate global pass (`verbs/exchanges.md`), never fanned out — coherent tags need the full set in view.
 
 ## Why apply-over-queue
 
 The shared instruction — the writing disciplines plus the per-session unit — is large and identical on every spawn, so `/apply-over-queue` pays for it once and serves it from prompt cache on every later session. The per-session unit is target-shaped, reading and writing only its own session, so spawns never contend.
 
-## Disciplines flatten automatically
-
-`_annotate-session.md` authors each description under two independent disciplines:
-
-- **`/description-authoring`** — what each line must convey.
-- **`/concise-prose`** — raise signal, cut filler.
-
-The unit references both as `/skill` calls, and `/apply-over-queue` discovers and flattens every `/skill` reference in the instruction's latest version. No `--skills` flag is needed — a well-formed instruction self-declares its disciplines. (`--skills` remains available to *supplement* a discipline the instruction doesn't name.)
+The disciplines flatten automatically. `_annotate-session.md` authors each description under two independent disciplines — `/description-authoring` for what each line must convey, `/concise-prose` to raise signal and cut filler — and references both as `/skill` calls. `/apply-over-queue` discovers and flattens every `/skill` reference in the instruction's latest version, so no `--skills` flag is needed: a well-formed instruction self-declares its disciplines. (`--skills` remains available to *supplement* a discipline the instruction doesn't name.)
 
 ## Process
 

@@ -34,5 +34,5 @@ Claude Code prunes session transcripts on the `cleanupPeriodDays` timer in `sett
 
 ## Notes
 
-- The raw DB is a **cache**, not a source — but an incremental one: rerun freely as transcripts grow; only changed files re-parse. `serve`, `render`, and `report` read it and never write it. (The `serve` process still re-reads the whole DB on mtime change; incremental serving is a separate, later optimization.)
+- The raw DB is a **cache**, not a source — but an incremental one: rerun freely as transcripts grow; only changed files re-parse. `serve`, `render`, and `report` read it and never write it, and a running `serve` re-reads the whole DB whenever its mtime changes.
 - Sub-agent transcripts are ingested and retained for analysis even though the time-spent lens doesn't draw them — they're superseded by their main-chain Agent tool dots.

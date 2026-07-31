@@ -1,6 +1,6 @@
 # export
 
-Pretty-print one session's conversation as a markdown file — the readable dialogue, nothing else. User and agent messages only: tool calls, tool results, thinking, meta/command records, replays, compact summaries, and sidechains are all dropped. A horizontal rule separates messages; consecutive records of one role merge into a single message first, so the rules mark logical turns, not storage records.
+Pretty-print one session's conversation as a markdown file — the readable dialogue, nothing else. User and agent messages only: tool calls, tool results, thinking, meta/command records, replays, compact summaries, and sidechains are all dropped. A horizontal rule separates messages; consecutive records of one role merge into a single message first, so the rules mark logical turns, not storage records. A content-level reader of the raw DB, orthogonal to the timeline model — no roles, lines, or time-blocks involved.
 
 ## Signature
 
@@ -35,5 +35,3 @@ _<n> messages · <first ts> → <last ts>_
 
 ...
 ```
-
-This is a content-level reader of the raw DB — it renders dialogue and is orthogonal to the timeline model (no roles, lines, or time-blocks involved).

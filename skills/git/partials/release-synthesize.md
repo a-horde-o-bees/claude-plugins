@@ -1,7 +1,7 @@
 # Release Synthesize
 
-> Spawned-agent component: reads commits in `{commit-range}`, produces a Keep-a-Changelog entry with cross-commit deconfliction, and recommends a next version per the project methodology's bump-axis rules.
->
+Spawned-agent component: reads commits in `{commit-range}`, produces a Keep-a-Changelog entry with cross-commit deconfliction, and recommends a next version per the project methodology's bump-axis rules.
+
 > Runs in isolated context — only the inputs it needs. Cross-commit deconfliction collapses add→refactor→retire chains to net-state rather than three separate entries. Defaults to Keep a Changelog 1.1.0 when `{methodology}` is silent on a question.
 
 ## Variables
@@ -24,10 +24,10 @@
 ## Process
 
 1. Read commit history:
-    1. `{git-log-raw}`: bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py read -- log {commit-range} --format="%H%n%s%n%b%n--ENDCOMMIT--"` — full subjects + bodies
+    1. `{git-log-raw}`: Bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py read -- log {commit-range} --format="%H%n%s%n%b%n--ENDCOMMIT--"` — full subjects + bodies
     2. `{commits}`: parsed list of `{hash, subject, body}` tuples from `{git-log-raw}`
 
-2. `{diffstat-raw}`: bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py read -- log {commit-range} --stat --format="%H %s"` — file-level scope per commit; used to weight which commits introduce user-facing surface area vs internal-only
+2. `{diffstat-raw}`: Bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py read -- log {commit-range} --stat --format="%H %s"` — file-level scope per commit; used to weight which commits introduce user-facing surface area vs internal-only
 3. Group commits by topic:
     1. If the project uses a `Topic — subject` commit convention, the prefix word groups commits naturally (e.g., `Auth —`, `API —`, `Docs —`)
     2. Group by prefix; if no clear prefix, group by file scope from `{diffstat-raw}`
@@ -59,7 +59,7 @@
 
 8. Flag ambiguity:
     1. If commits suggest a change but the user-facing effect is unclear: include the bullet annotated with `(needs review: <reason>)` so the operator catches it during the review gate
-    2. If bump-axis decision is ambiguous (e.g., a Changed entry could be breaking or non-breaking): pick the more conservative axis (higher impact = larger bump) and flag the rationale with `(needs review: ...)`
+    2. If the bump-axis decision is ambiguous (e.g., a Changed entry could be breaking or non-breaking): pick the more conservative axis (higher impact = larger bump) and flag the rationale with `(needs review: ...)`
 
     > Better to surface uncertainty than to confidently mis-categorize or mis-bump.
 
