@@ -26,14 +26,16 @@ The shared instruction — the coalescing rule plus `/description-authoring` + `
 
     ```
     /apply-over-queue \
-      --instruction /home/dev/.claude/skills/transcripts/_synthesize-root.md \
+      --instruction ${CLAUDE_SKILL_DIR}/_synthesize-root.md \
       --items <full root ids, comma-separated> \
       --isolation none \
-      --cwd /home/dev/.claude/skills/transcripts \
-      --add-dir /home/dev/.claude/a-horde-o-bees/transcripts
+      --model opus \
+      --cwd ${CLAUDE_SKILL_DIR} \
+      --add-dir ~/.claude/engaged-time
     ```
 
     - `--isolation none` — the side effect is a SQLite write to `annotations.db`, outside any repo.
+    - `--model opus` — bulk synthesis doesn't need the premium default the CLI would otherwise inherit; Opus is the pipeline's model.
     - **Sequential only** — `annotations.db` is one SQLite writer, and sequential spawns keep the cache warm. The unit self-declares its disciplines, so no `--skills` flag is needed.
 
 3. **Assign topics (the global pass — NOT fanned out).** Once every root is synthesized, review all threads at once and assign each one topic. This is also where the vocabulary is tuned to the real threads:
@@ -47,4 +49,4 @@ The shared instruction — the coalescing rule plus `/description-authoring` + `
 ## Notes
 
 - **Content-addressed, self-invalidating.** A description edit re-keys its root → cache miss → reappears in `roots --pending` → re-synthesized next run; the stale `root_thread` entry is orphaned (GC-able). A thread whose grouping is unchanged keeps its `thread_key`, so its topic assignment survives the re-synthesis.
-- **Affects the bill.** Unlike the old narrative-only synthesis, thread membership IS the billing lineage — time follows threads. Faithful membership is the bar, not just readable bullets.
+- **Affects the bill.** Thread membership IS the billing lineage — time follows threads. Faithful membership is the bar, not just readable bullets.

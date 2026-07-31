@@ -3,9 +3,7 @@
     "concise-prose",
     "file-decomposition",
     "reauthor",
-    "lint-markdown",
     "confirm-shared-intent",
-    "transcripts",
     "git",
     "apply-over-queue",
     "description-authoring",
@@ -13,11 +11,10 @@
     "rule-authoring",
     "skill-authoring",
     "grounded",
-    "architecture-authoring",
-    "decision-authoring",
     "export-pdf",
     "principled-pushback",
     "procedure-authoring",
-    "system-authoring"
+    "context-mechanics",
+    "engaged-time"
   ]
 }

@@ -36,7 +36,7 @@ LAYERS = [
         {"key": "raw_db", "kind": "cache", "file": "raw_db.py",
          "role": "JSONL → raw cache. Verbs: ingest (incremental UPSERT by size+mtime), reset (gated)."},
         {"key": "RAW", "kind": "db", "title": "raw.db",
-         "path": "time/~/.claude/a-horde-o-bees/transcripts/raw.db  (cwd-relative)",
+         "path": "~/.claude/engaged-time/raw.db",
          "role": "Regenerable cache: one row per physical line, full payload, is_replay/is_meta marked.",
          "tables": ["raw(file, line, type, uuid, parent_uuid, timestamp, is_replay, is_compact_summary, json, …)",
                     "file_state(file, size, mtime_ns, n_lines)  — incremental-ingest ledger"]},
@@ -59,7 +59,7 @@ LAYERS = [
     ]),
     ("Persistence (survives cache rebuilds)", [
         {"key": "ANNO", "kind": "db", "title": "annotations.db",
-         "path": "time/~/.claude/a-horde-o-bees/transcripts/annotations.db",
+         "path": "~/.claude/engaged-time/annotations.db",
          "role": "Persistent, UUID-keyed — the only authored state; joined to derived exchanges by prompt UUID.",
          "tables": ["exchange(prompt_uuid PK, description, updated_at)",
                     "topic(name PK, description, updated_at)",

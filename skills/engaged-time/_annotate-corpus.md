@@ -24,19 +24,21 @@ The unit references both as `/skill` calls, and `/apply-over-queue` discovers an
 
     ```
     /apply-over-queue \
-      --instruction /home/dev/.claude/skills/transcripts/_annotate-session.md \
+      --instruction ${CLAUDE_SKILL_DIR}/_annotate-session.md \
       --items <full session ids, comma-separated> \
       --isolation none \
-      --cwd /home/dev/.claude/skills/transcripts \
-      --add-dir /home/dev/.claude/a-horde-o-bees/transcripts
+      --model opus \
+      --cwd ${CLAUDE_SKILL_DIR} \
+      --add-dir ~/.claude/engaged-time
     ```
 
     - `--isolation none` — the side effect is a SQLite write to `annotations.db`, outside any repo; a worktree diff can't capture DB rows.
-    - `--add-dir` the working dir so spawns reach `raw.db` (read) and `annotations.db` (write).
+    - `--model opus` — bulk description-writing doesn't need the premium default the CLI would otherwise inherit; Opus is the pipeline's model.
+    - `--add-dir` the working dir so spawns reach `raw.db` (read) and `annotations.db` (write). The default is shown; if `init --work` repointed it, use the stored value (`~/.config/engaged-time/config.json`).
     - **Sequential only** — `annotations.db` is one SQLite writer, and sequential spawns keep the prompt cache warm. Run no other annotation command during the fan-out.
 
 3. **Verify coverage** — confirm every uuid-anchored exchange is now described:
-    - bash: `uv run /home/dev/.claude/skills/transcripts/exchanges.py list --undescribed` → expect `[]`.
+    - bash: `uv run ${CLAUDE_SKILL_DIR}/exchanges.py list --undescribed` → expect `[]`.
 
 ## Notes
 

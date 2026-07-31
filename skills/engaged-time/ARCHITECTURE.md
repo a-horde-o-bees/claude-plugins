@@ -75,7 +75,7 @@ An **exchange** is the run of consecutive time-blocks from one `prompt`-START up
 
 ## Descriptions and topics
 
-Each exchange carries a persistent **description** — a per-exchange line (scope + role, no mechanics) authored via `/description-authoring`, keyed by its opening typed prompt's canonical UUID (stable across ceiling changes, turn boundaries, and rebuilds). Its input is the opening prompt + every consumed-interjection text the exchange folds in + the agent's response; it regenerates when those inputs change.
+Each exchange carries a persistent **description** — a per-exchange line (scope + role, no mechanics) authored via description-authoring, keyed by its opening typed prompt's canonical UUID (stable across ceiling changes, turn boundaries, and rebuilds). Its input is the opening prompt + every consumed-interjection text the exchange folds in + the agent's response; it regenerates when those inputs change.
 
 A **topic** groups related exchanges by shared focus (many exchanges → one topic), assigned in one global pass over the descriptions from a fixed vocabulary. It is the report filter key and the cross-session rollup unit, carrying what a consuming project bills on; the model stores no topic policy.
 

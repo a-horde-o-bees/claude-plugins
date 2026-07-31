@@ -65,7 +65,3 @@ The live view stays a per-record event stream; the coarser annotation streams (e
 ## The lane render is policy-neutral — every topic a spread-palette colour, none privileged
 
 The viz reads the topic *names* the consumer assigned (annotation data) and colors each from a maximally-distinct, evenly-spaced hue palette sized to the next multiple of 3 ≥ the topic count (spare slots unused); a multi-topic thread shows one stripe per topic. The **Stats** tab filters topics one by one, and the filter **drives the engaged-time totals** — the per-exchange measures sum only over threads with a shown topic (ANY-match), so toggling off all but the billable topics simply *shows the bill*. It embeds no vocabulary and **draws no billable/non-billable line** — every topic is just a colour, equally filterable. **Rejected:** hardcoding the project's vocabulary, graying "non-billable" topics, or a billable highlight even as a launch arg — that imports the consumer's billing policy into the neutral measurement layer; per-topic filtering gives the same isolation (and generalizes `report.py`'s billable measure into the live view) without the policy. **Rejected:** a name-hash hue — collisions land near-identical colours by chance; the spread palette guarantees separation.
-
-## Only one model is the live engaged-time source at a time
-
-The timeline model supersedes the legacy primary-DB `exchange_s` model; they never both claim to be the live source. On graduation the legacy path quarantines. (The graduation steps live in the consuming project's plan.)

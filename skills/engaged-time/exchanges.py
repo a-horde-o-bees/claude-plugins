@@ -2,7 +2,7 @@
 """Annotation store + CLI for the timeline model's prompt-anchored EXCHANGES, per-ROOT
 focus-THREADS, and the TOPIC assignment over those threads.
 
-The raw DB (`raw_db.py`) is a regenerable cache; THIS store (`~/.claude/a-horde-o-bees/transcripts/annotations.db`) is the
+The raw DB (`raw_db.py`) is a regenerable cache; THIS store (`~/.claude/engaged-time/annotations.db`) is the
 PERSISTENT annotation layer, keyed by each exchange's opening-prompt **UUID** — stable across
 rebuilds, ceiling changes, and turn boundaries (the legacy positional `(session, exchange#)`
 key was fragile). See `ARCHITECTURE.md` § Exchange / Topic / Population.

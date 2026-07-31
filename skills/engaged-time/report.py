@@ -81,7 +81,7 @@ def calendar_table(day_secs):
     return L
 
 
-def load(db, anno_path, topics_filter, date_from, date_to):
+def load(db, anno_path, topics_filter, date_from, date_to, narrative_exclude=None):
     """Returns (day_adj, threads).
 
     THREAD LINEAGE: focus-threads are synthesized per ROOT (a connected work-tree, possibly
@@ -129,6 +129,13 @@ def load(db, anno_path, topics_filter, date_from, date_to):
             if topics_filter is not None and not (tags & topics_filter):
                 continue                                # ANY-match: billable if any tag is in filter
             billable_uuid.update(uuids)
+            # Narrative exclusion: the thread's TIME stays counted (billable_uuid above); its
+            # bullet is omitted iff every tag that made it billable is narrative-excluded. A
+            # mixed-tag thread billable via a narrated topic still narrates.
+            if narrative_exclude:
+                effective = (tags & topics_filter) if topics_filter is not None else tags
+                if effective and not (effective - narrative_exclude):
+                    continue
             days = sorted({uuid_day[u] for u in uuids
                            if uuid_day.get(u) and _date_ok(uuid_day[u], date_from, date_to)})
             if not days:
@@ -165,7 +172,7 @@ def load(db, anno_path, topics_filter, date_from, date_to):
     return day_adj, threads_out
 
 
-def render_md(day_adj, threads, topics_filter):
+def render_md(day_adj, threads, topics_filter, narrative_exclude=None, title="Engaged Time Report"):
     total = sum(day_adj.values())                   # authoritative: filter-then-adjust per day
     by_month = collections.Counter()
     for day, s in day_adj.items():
@@ -174,12 +181,15 @@ def render_md(day_adj, threads, topics_filter):
     days = sorted(set(day_adj) | {d for t in threads for d in t["days"]})
     span = f"{days[0]} to {days[-1]}" if days else "no data"
     tset = ", ".join(sorted(topics_filter)) if topics_filter else "all topics (unfiltered)"
-    L = ["# Engaged Time Report — monaco-lock-company--erp-migration", "",
+    L = [f"# {title}", "",
          f"_Topics: {tset} · {span} · machine-evidenced engaged time (idle/suspend/wait "
          f"excluded; operator review not separately billed; background machine runtime "
          f"excluded by design) · time follows threads: only exchanges in a billable-topic "
          f"focus-thread bill · filter-then-adjust: gap ceilings applied to the billable record "
-         f"set · time attributed by day only; totals are minute-ceilings of raw seconds._", ""]
+         f"set · time attributed by day only; totals are minute-ceilings of raw seconds."
+         + (f" · {', '.join(sorted(narrative_exclude))} time is counted in the totals but not "
+            f"itemized in the daily breakdown" if narrative_exclude else "")
+         + "_", ""]
 
     L += ["## Timesheet", ""]
     L += calendar_table(day_adj)            # per-month: H3 title row + grid + italic month total
@@ -231,18 +241,26 @@ def main():
     ap.add_argument("--db", default=_paths.db("raw.db"))
     ap.add_argument("--anno", default=_paths.db("annotations.db"))
     ap.add_argument("--topics", help="comma-separated billable topic set; omit = all (unfiltered)")
+    ap.add_argument("--narrative-exclude",
+                    help="comma-separated topics whose threads keep their TIME in the totals but "
+                    "are omitted from the daily breakdown (a mixed-tag thread billable via a "
+                    "narrated topic still narrates)")
     ap.add_argument("--from", dest="date_from", default="", help="inclusive YYYY-MM-DD lower bound")
     ap.add_argument("--to", dest="date_to", default="", help="inclusive YYYY-MM-DD upper bound")
+    ap.add_argument("--title", default="Engaged Time Report",
+                    help="report H1 (e.g. the engagement or project the report covers)")
     ap.add_argument("--format", choices=["md", "csv"], default="md")
     ap.add_argument("--out", help="write to FILE (default: stdout)")
     a = ap.parse_args()
 
     tf = set(t.strip() for t in a.topics.split(",") if t.strip()) if a.topics else None
-    day_adj, threads = load(a.db, a.anno, tf, a.date_from, a.date_to)
+    ne = (set(t.strip() for t in a.narrative_exclude.split(",") if t.strip())
+          if a.narrative_exclude else None)
+    day_adj, threads = load(a.db, a.anno, tf, a.date_from, a.date_to, narrative_exclude=ne)
     if a.format == "csv":
         text, total = render_csv(day_adj)
     else:
-        text, total = render_md(day_adj, threads, tf)
+        text, total = render_md(day_adj, threads, tf, narrative_exclude=ne, title=a.title)
     if a.out:
         open(a.out, "w").write(text + "\n")
         print(f"wrote {a.out}  ({len(threads)} billable threads, total {hhmm_ceil(total)})")

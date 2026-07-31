@@ -10,17 +10,17 @@ You are given exactly one TARGET — a root id (a queue item, or a root id for a
 
 ## Path
 
-The commands hard-code the absolute path `/home/dev/.claude/skills/transcripts/exchanges.py`. apply-over-queue consumes this file raw, outside the dispatcher that resolves `${CLAUDE_SKILL_DIR}`. `exchanges.py` is a standalone stdlib script — `uv run <path>` runs it from any directory.
+Commands reference `${CLAUDE_SKILL_DIR}`. apply-over-queue resolves it to this file's directory at normalize time — the payload its spawns read is fully literal, and flatten refuses one where the variable survives. `exchanges.py` is a standalone stdlib script — `uv run <path>` runs it from any directory.
 
 ## Process
 
-1. {exchanges}: Bash: `uv run /home/dev/.claude/skills/transcripts/exchanges.py list --root TARGET` — each row is a described exchange of TARGET (across all the root's files): its `uuid`, `ts`, and authored `description`, in time order. A leading keyless `(continuation)` pseudo-exchange (uuid=null) carries no description — ignore it; it is never a thread member.
-2. {threads}: Apply: /description-authoring, /concise-prose — they own the structure (voice, concision, outcome over narration, no decorative facts). This step adds only the **coalescing**: read {exchanges} in full as one root's arc, and partition it into focus-threads.
+1. `{exchanges}`: Bash: `uv run ${CLAUDE_SKILL_DIR}/exchanges.py list --root TARGET` — each row is a described exchange of TARGET (across all the root's files): its `uuid`, `ts`, and authored `description`, in time order. A leading keyless `(continuation)` pseudo-exchange (uuid=null) carries no description — ignore it; it is never a thread member.
+2. `{threads}`: Apply: /description-authoring, /concise-prose — they own the structure (voice, concision, outcome over narration, no decorative facts). This step adds only the **coalescing**: read `{exchanges}` in full as one root's arc, and partition it into focus-threads.
     - **One objective → one thread.** A run of exchanges driving at a single goal — a feature built, a bug traced and fixed, a doc reconciled, a deploy run — collapses to ONE thread, whose `summary` states that objective and its outcome (what it achieved, decided, or fixed). Keep genuinely distinct objectives apart.
     - **Consolidate hard** — far fewer threads than exchanges. The count is the distinct objectives that actually occurred, never padded; most roots are one to three threads.
     - **Faithful membership.** Each thread's `uuids` are exactly the exchanges that served that objective, in time order. Assign every substantive exchange to its thread. Leave genuinely incidental turns (a bare clear, an ack, an interrupted/unanswered turn) out of every thread — unthreaded exchanges do not bill, which is correct for incidental work.
     - **Past tense** summaries; threads in the order each objective first appears.
-3. Persist: Bash: `uv run /home/dev/.claude/skills/transcripts/exchanges.py threads --root TARGET --set '{threads}'` — `{threads}` a JSON array `[{"summary": "<one line>", "uuids": ["<uuid>", ...]}, ...]`. The store recomputes TARGET's content hash from the live descriptions and validates every uuid belongs to TARGET; an out-of-root uuid is rejected (re-check your membership).
+3. Persist: Bash: `uv run ${CLAUDE_SKILL_DIR}/exchanges.py threads --root TARGET --set '{threads}'` — `{threads}` a JSON array `[{"summary": "<one line>", "uuids": ["<uuid>", ...]}, ...]`. The store recomputes TARGET's content hash from the live descriptions and validates every uuid belongs to TARGET; an out-of-root uuid is rejected (re-check your membership).
 
 > Writes land in `annotations.db` `root_thread`, keyed by the root's content hash — content-
 > addressed, so a later description edit re-keys the root and this re-runs; the stale entry is

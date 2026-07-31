@@ -1,14 +1,15 @@
 # report
 
-Roll up time-block coverage into engaged time per day and month — the "Engaged Time Report" — the live engaged-time source (supersedes the legacy `exchange_s` path). Built on the START/STOP/BREAK line model, filtered through the thread-first lineage.
+Roll up time-block coverage into engaged time per day and month — the "Engaged Time Report". Built on the START/STOP/BREAK line model, filtered through the thread-first lineage.
 
 ## Signature
 
 ```
-uv run ${CLAUDE_SKILL_DIR}/report.py [--topics a,b,c] [--from D --to D] [--format md|csv] [--out FILE]
+uv run ${CLAUDE_SKILL_DIR}/report.py [--topics a,b,c] [--narrative-exclude x,y] [--from D --to D] [--format md|csv] [--out FILE]
 ```
 
 - `--topics` — the billable topic set the consuming project bills on (the model stores no topic policy). An exchange counts iff it is a member of a thread whose topic is in this set. Omit for an unfiltered diagnostic view (every exchange, threaded or not).
+- `--narrative-exclude` — topics whose threads keep their **time** in the day/month totals but are omitted from the daily breakdown (a mixed-tag thread that is billable via a narrated topic still narrates). The header discloses the treatment. For upkeep-class topics the consumer counts but doesn't itemize.
 - `--from` / `--to` — inclusive attributed-day range (`YYYY-MM-DD`).
 - `--format` — `md` (default; header + by-month/by-day tables + daily breakdown) or `csv` (by-day).
 - `--out` — write to FILE (default stdout). Reports belong in the **consuming project's** `build/reports/`, never the skill dir.
@@ -25,4 +26,4 @@ uv run ${CLAUDE_SKILL_DIR}/report.py [--topics a,b,c] [--from D --to D] [--forma
 2. Run `report.py --topics <billable set> [--from … --to …] --out <project>/build/reports/<name>.md`.
 3. Render to PDF via the `export-pdf` skill if a prepared deliverable is needed.
 
-The legacy `exchange_s` path (`transcripts-legacy`) is superseded; this is the live source.
+This is the live engaged-time source.

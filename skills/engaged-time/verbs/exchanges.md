@@ -1,11 +1,11 @@
 # exchanges
 
-The persistent **annotation store** for the timeline model and its **thread-first lineage** — `exchange → thread → topic → billable`. Exchanges are *derived* on demand from the raw DB (`materialize_exchanges`), never stored; the store persists the authored per-exchange `description`, the per-root focus-thread synthesis, the topic vocabulary, and the per-thread topic assignment, at `~/.claude/a-horde-o-bees/transcripts/annotations.db`. See `../ARCHITECTURE.md` § Exchange / Topic / Population.
+The persistent **annotation store** for the timeline model and its **thread-first lineage** — `exchange → thread → topic → billable`. Exchanges are *derived* on demand from the raw DB (`materialize_exchanges`), never stored; the store persists the authored per-exchange `description`, the per-root focus-thread synthesis, the topic vocabulary, and the per-thread topic assignment, at `~/.claude/engaged-time/annotations.db`. See `../ARCHITECTURE.md` § Exchange / Topic / Population.
 
 ## Signature
 
 ```
-uv run ${CLAUDE_SKILL_DIR}/exchanges.py <cmd> [--db ~/.claude/a-horde-o-bees/transcripts/raw.db] [--anno ~/.claude/a-horde-o-bees/transcripts/annotations.db]
+uv run ${CLAUDE_SKILL_DIR}/exchanges.py <cmd> [--db ~/.claude/engaged-time/raw.db] [--anno ~/.claude/engaged-time/annotations.db]
 ```
 
 | cmd | args | does |

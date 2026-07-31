@@ -5,8 +5,8 @@ Produce a static single-DB timeline HTML — a fixed artifact, no server. The sa
 ## Signature
 
 ```
-uv run ${CLAUDE_SKILL_DIR}/swimlane_timeline.py [--db ~/.claude/a-horde-o-bees/transcripts/raw.db] \
-    [--lines N] [--compact] [--ui-state] [--out ~/.claude/a-horde-o-bees/transcripts/diagrams/swimlane-timeline.html]
+uv run ${CLAUDE_SKILL_DIR}/swimlane_timeline.py [--db ~/.claude/engaged-time/raw.db] \
+    [--lines N] [--compact] [--ui-state] [--out ~/.claude/engaged-time/diagrams/swimlane-timeline.html]
 ```
 
 - `--lines N` — keep only each file's first N lines (0 = all).

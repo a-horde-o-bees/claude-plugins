@@ -1,4 +1,4 @@
-# Swimlane (live) — UI elements
+# swimlane_server_ui — the live swimlane's UI elements
 
 Element reference for the live swimlane page `swimlane_server.py` serves at `/`: every DOM element, its CSS hook, and what it means, plus the encodings (color/shape) that decorate it.
 

@@ -12,8 +12,8 @@ re-stat the file and a rebuild is picked up with no regenerate step.
 The Python time/layout model (`swimlane_timeline.build`/`ymap`/`session_geometry`)
 stays the single source of truth; the client is a dumb renderer + virtualizer.
 
-    uv run ${CLAUDE_SKILL_DIR}/raw_db.py --dir <project-dir> --db ~/.claude/a-horde-o-bees/transcripts/raw.db
-    uv run ${CLAUDE_SKILL_DIR}/swimlane_server.py --db ~/.claude/a-horde-o-bees/transcripts/raw.db --port 8765
+    uv run ${CLAUDE_SKILL_DIR}/raw_db.py --dir <project-dir> --db ~/.claude/engaged-time/raw.db
+    uv run ${CLAUDE_SKILL_DIR}/swimlane_server.py --db ~/.claude/engaged-time/raw.db --port 8765
     # open http://localhost:8765/
 
 No external dependencies (stdlib http.server + sqlite3, like the rest of the skill).

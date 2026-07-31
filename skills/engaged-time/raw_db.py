@@ -2,14 +2,20 @@
 """Load raw transcript JSONL — EVERY line, every type — into a scratch sqlite DB
 for report/visualization exploration.
 
-Unlike the main transcripts DB (which models the ratified time-accounting layer and
-drops untimestamped UI-state records), this keeps one row per physical line with
-the full record payload in `json`, plus promoted identity / relationship columns
-for joins. Nothing is interpreted and nothing is dropped — when we don't yet know
-what's load-bearing, everything comes in.
+Keeps one row per physical line with the full record payload in `json`, plus
+promoted identity / relationship columns for joins. Nothing is interpreted and
+nothing is dropped — when we don't yet know what's load-bearing, everything comes
+in, including untimestamped UI-state records that a timed model would discard.
 
-    uv run ${CLAUDE_SKILL_DIR}/raw_db.py ingest (--file F | --dir D) [--db ~/.claude/a-horde-o-bees/transcripts/raw.db]
-    uv run ${CLAUDE_SKILL_DIR}/raw_db.py reset  [--db ~/.claude/a-horde-o-bees/transcripts/raw.db] [--yes]
+    uv run ${CLAUDE_SKILL_DIR}/raw_db.py init   [--root PATH] [--work PATH]
+    uv run ${CLAUDE_SKILL_DIR}/raw_db.py ingest [--file F | --dir D] [--db ~/.claude/engaged-time/raw.db]
+    uv run ${CLAUDE_SKILL_DIR}/raw_db.py reset  [--db ~/.claude/engaged-time/raw.db] [--yes]
+
+`init` sets or confirms both path anchors and is re-runnable. `--root` is the
+transcripts corpus to read: it has no default, and bare `ingest` blocks until it is
+set, since a guessed root yields an empty timeline that reads as "no work happened".
+`--work` is where every artifact lands (the DBs, plus logs/, diagrams/, scratch/);
+repointing it warns about artifacts left behind rather than moving them.
 
 `ingest` is always incremental + idempotent: the main file's sibling directory
 (<stem>/**/*.jsonl — sub-agent transcripts) is included automatically, and files
@@ -43,11 +49,10 @@ CREATE TABLE IF NOT EXISTS raw (
     request_id  TEXT,           -- assistant records
     is_compact_summary INTEGER,
     is_meta     INTEGER,
-    -- the primary transcripts DB's canonicality rule (its events-upsert ON
-    -- CONFLICT(uuid) clause), applied as a mark instead of a collapse: 1 when
-    -- this uuid already occurred earlier in (file, line) order — a replay copy
-    -- (compaction / resume / fork re-writing earlier events verbatim). The raw
-    -- DB keeps every copy; readers decide what to do with them.
+    -- canonicality as a mark, not a collapse: 1 when this uuid already
+    -- occurred earlier in (file, line) order — a replay copy (compaction /
+    -- resume / fork re-writing earlier events verbatim). The raw DB keeps
+    -- every copy; readers decide what to do with them.
     is_replay   INTEGER NOT NULL DEFAULT 0,
     json        TEXT NOT NULL,  -- the whole record, untouched
     PRIMARY KEY (file, line)
@@ -142,13 +147,43 @@ def cmd_reset(a):
     print(f"{a.db}: cache cleared — next ingest rebuilds from scratch")
 
 
+def cmd_init(a):
+    """Set or confirm both path anchors. Re-runnable: with no flags it reports what
+    is already stored."""
+    previous = _paths.resolve_work_dir().expanduser().resolve()
+    target = pathlib.Path(a.work).expanduser().resolve() if a.work else previous
+
+    work = _paths.set_work_dir(target)
+    if previous != target and previous.is_dir() and any(previous.iterdir()):
+        print(f"Warning: Existing artifacts remain at {previous}.")
+        print()
+    root = _paths.set_transcripts_root(
+        a.root or _paths.stored_root() or _paths.CONVENTIONAL_ROOT)
+    sessions = len(list(root.glob("*/*.jsonl")))
+    print(f"transcripts root: {root}")
+    print(f"  {sessions} session transcript(s) across {len(list(root.glob('*/')))} project dir(s)")
+    print(f"working dir:      {work}")
+    for name in ("raw.db", "annotations.db"):
+        p = work / name
+        print(f"  {name}: {p.stat().st_size / 1e6:.1f} MB" if p.exists()
+              else f"  {name}: not yet built")
+    print("  logs/, diagrams/, scratch/ ready")
+    print(f"config:           {_paths.CONFIG_FILE}")
+    if not sessions:
+        print("  WARNING: no *.jsonl found one level down — is this the right root?")
+    print()
+    print(_paths.retention_note())
+
+
 def cmd_ingest(a):
     if a.file:
         main_f = pathlib.Path(a.file).resolve()
         mains = [main_f]
-    else:
+    elif a.dir:
         mains = sorted((p for p in pathlib.Path(a.dir).resolve().glob("*.jsonl")),
                        key=_first_ts)
+    else:                                   # whole corpus — needs the configured root
+        mains = sorted(_paths.transcripts_root().glob("*/*.jsonl"), key=_first_ts)
     files: list = []
     for m in mains:
         files.append(m)
@@ -197,8 +232,13 @@ def main():
     common = argparse.ArgumentParser(add_help=False)
     common.add_argument("--db", default=_paths.db("raw.db"))
     sub = ap.add_subparsers(dest="cmd", required=True)
+    p = sub.add_parser("init", help="set or confirm the transcripts root and working dir")
+    p.add_argument("--root", help=f"transcripts root to read (default {_paths.CONVENTIONAL_ROOT})")
+    p.add_argument("--work", help=f"working dir for DBs, logs, diagrams, scratch "
+                                  f"(default {_paths.DEFAULT_WORK})")
+    p.set_defaults(fn=cmd_init)
     p = sub.add_parser("ingest", parents=[common], help="JSONL → raw DB (incremental, idempotent)")
-    g = p.add_mutually_exclusive_group(required=True)
+    g = p.add_mutually_exclusive_group()
     g.add_argument("--file", help="one main transcript .jsonl (+ its subagents dir)")
     g.add_argument("--dir", help="a project dir: EVERY main transcript in it "
                                  "(+ subagent dirs), loaded in session-start order "

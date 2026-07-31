@@ -33,9 +33,9 @@ A companion markdown (same stem, `.md`) documents every entity class: its
 description (also the column header's hover text) and which of its JSONL
 properties the diagram shows vs hides.
 
-    uv run ${CLAUDE_SKILL_DIR}/raw_db.py --file <transcript.jsonl> --db ~/.claude/a-horde-o-bees/transcripts/raw.db
-    uv run ${CLAUDE_SKILL_DIR}/swimlane_timeline.py [--db ~/.claude/a-horde-o-bees/transcripts/raw.db] \
-        [--lines 100] [--out ~/.claude/a-horde-o-bees/transcripts/diagrams/swimlane-timeline.html]
+    uv run ${CLAUDE_SKILL_DIR}/raw_db.py --file <transcript.jsonl> --db ~/.claude/engaged-time/raw.db
+    uv run ${CLAUDE_SKILL_DIR}/swimlane_timeline.py [--db ~/.claude/engaged-time/raw.db] \
+        [--lines 100] [--out ~/.claude/engaged-time/diagrams/swimlane-timeline.html]
 """
 import argparse
 import bisect
