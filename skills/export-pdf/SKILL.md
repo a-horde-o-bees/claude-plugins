@@ -24,8 +24,9 @@ Render a markdown artifact to PDF using the bundled `scripts/pdf-render.py` — 
    `--style` defaults to `compact`. **`--dest` defaults to the source path with a `.pdf` extension** — i.e. the PDF lands next to the source markdown; pass `--dest` only to redirect it elsewhere. Existing PDFs are overwritten.
 
    **Link rewriting** is on by default: `[label](X.md)` and `[label](X.md#anchor)` are rewritten to `[label](X.pdf)` / `[label](X.pdf#anchor)` so cross-document links resolve to rendered companions. Each rewritten target is checked at end of render; missing companions emit a stderr `Warning:` block. Override flags:
-   - `--no-rewrite-md-links` — keep `.md` targets unchanged in the PDF (rare).
-   - `--strip-local-links` — escape hatch that drops the link wrapper entirely for any non-`http(s)`/`mailto:`/`#anchor` target. Use only when the recipient won't have *any* companion files.
+
+    - `--no-rewrite-md-links` — keep `.md` targets unchanged in the PDF (rare).
+    - `--strip-local-links` — escape hatch that drops the link wrapper entirely for any non-`http(s)`/`mailto:`/`#anchor` target. Use only when the recipient won't have *any* companion files.
 
 3. **Post-batch link check** (run after all PDFs in a delivery are generated):
 

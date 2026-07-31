@@ -9,11 +9,11 @@ Run a uniform operation over a queue of targets as a sequence of `claude -p` spa
 
 The saving holds only if **everything in the prompt before the target is byte-identical across spawns**. Three mechanisms guarantee that:
 
-- **Recursive flatten** (`flatten.py`) compiles the referenced skills' bodies — and the components they reference, depth-first and deduplicated — into one self-contained instruction with every `/skill` call inlined as a `## section`. No runtime skill dispatch to vary or re-pay for. **The instruction self-declares its skills:** every `/skill` reference *in the instruction body* is discovered and flattened (latest version), so a well-formed instruction needs no `--skills`. Corollary: only `/`-prefix a skill you want flattened — mention any other skill *without* the leading slash (e.g. "apply-over-queue", not "/apply-over-queue"), or its whole tree gets inlined. (File paths are safe — a `/name` inside a path like `…/skills/transcripts/x.py` is not discovered.)
+- **Recursive flatten** (`flatten.py`) compiles the referenced skills' bodies — and the components they reference, depth-first and deduplicated — into one self-contained instruction with every `/skill` call inlined as a `## section`. No runtime skill dispatch to vary or re-pay for. **The instruction self-declares its skills:** every `/skill` reference *in the instruction body* is discovered and flattened (latest version), so a well-formed instruction needs no `--skills`. Each inlined body has `${CLAUDE_SKILL_DIR}` substituted with that skill's own directory, so dispatcher-convention commands stay runnable in the cold spawns. Corollary: only `/`-prefix a skill you want flattened — mention any other skill *without* the leading slash (e.g. "apply-over-queue", not "/apply-over-queue"), or its whole tree gets inlined. (File paths are safe — a `/name` inside a path like `…/skills/engaged-time/x.py` is not discovered.)
 - **Cache-safe ordering.** Every spawn reads that identical payload **before** claiming its varying target from the queue. The target enters as tool output, after the cached prefix — so the prefix stays byte-identical and cache-reuses across separate `claude -p` processes. A target read ahead of the payload would diverge the prefix and bust the cache.
 - **Fixed location.** cwd and the `--add-dir` set are part of the prefix, so they too must not vary per target. Under `staged` (default) the driver **copies every file/dir target into one run-local workspace** and runs every spawn with cwd fixed to that workspace — targets from different repos no longer diverge the prefix. Under `none` the cwd is the operation's own fixed home, not the target's.
 
-The payload's per-item instruction must therefore be **target-agnostic**. This skill enforces that: it normalizes the raw instruction so the target is abstracted to a queue-supplied role, or exits naming why it can't (`_normalize-operation.md`). The cache saving is then **asserted, not trusted**: a warmup spawn establishes the cached prefix, the first real spawn sets the baseline, and `run.py` requires every later spawn to re-read most of it. The measurement is taken at the **prefix boundary** — the one model call right after the spawn reads the shared instruction and *before* the target's body enters context — so the ratio reflects shared-prefix reuse alone, never the per-target payload (which would otherwise inflate the baseline and the per-spawn total alike, and scale with each spawn's tool-call count). The run aborts if that prefix ever diverges (`--cache-floor`); the whole-turn cumulative usage is reported as cost but never asserted on.
+The payload's per-item instruction must therefore be **target-agnostic**. This skill enforces that: normalization (below) reshapes the raw instruction so the target is abstracted to a queue-supplied role — or exits naming why it can't — and resolves its variables to literals. The cache saving is then **asserted, not trusted**: a warmup spawn establishes the cached prefix, the first real spawn sets the baseline, and `run.py` requires every later spawn to re-read most of it. The measurement is taken at the **prefix boundary** — the one model call right after the spawn reads the shared instruction and *before* the target's body enters context — so the ratio reflects shared-prefix reuse alone, never the per-target payload (which would otherwise inflate the baseline and the per-spawn total alike, and scale with each spawn's tool-call count). The run aborts if that prefix ever diverges (`--cache-floor`); the whole-turn cumulative usage is reported as cost but never asserted on.
 
 **Keeping the prefix hot.** The prompt cache has a ~5-minute TTL, so a single per-item spawn slower than that would let the shared prefix age out before the next spawn reads it. Two empty-target spawns prevent this — both run the **identical stub** with `AOQ_EMPTY=1`, so `queue.py next` returns `NONE` and they re-read the exact cached prefix without claiming work:
 
@@ -21,6 +21,45 @@ The payload's per-item instruction must therefore be **target-agnostic**. This s
 - **keepalive** — fired every `--warm-interval` seconds (default 240, twice per TTL so a single missed ping is survived) *while a work-spawn runs*, refreshing the cache for the next spawn. Work-spawns stay sequential; the only concurrency is one heavy spawn plus a lightweight ping. A failed keepalive retries once if transient (server hiccup) and is skipped if decisive (auth/permission); either way it is non-fatal — the next spawn's reading catches any real divergence.
 
 The queue is **static** (`--items`, a fixed list, each target yielded once) or **dynamic** (`--feeder`, a command yielding the next target until it returns `DONE`). The static list is the degenerate feeder; a feeder that re-yields one target until a pass leaves it unchanged converges it. Either way the operation is invariant and only the target varies — the exact property the cache relies on.
+
+## Normalization
+
+Turn the raw instruction into a **target-normalized, fully-literal** operation file the queue can drive — or exit naming why it can't. Runs once, before flattening; the output is the per-item instruction baked into the cache-warm payload, so a target left un-abstracted here busts the prefix on every spawn, and a variable left unresolved reaches spawns with no dispatcher to bind it.
+
+### The operation contract
+
+A normalized operation operates on **exactly one TARGET per spawn**, supplied at runtime by `queue.py next`. The file must open with the contract, then state the procedure against the abstract target:
+
+```
+# Operation
+
+You will be given exactly one TARGET — {target-kind} — emitted by the queue.
+Operate only on that TARGET; do not reference, read, or depend on any other item.
+
+{the procedure, phrased against TARGET}
+
+Output: {where output lands, expressed purely as a function of TARGET}
+```
+
+### Reshapeability gate
+
+The instruction qualifies only if all four hold. Judge each against the raw instruction and the queue's target tokens; if one fails irreducibly (can't be rewritten to satisfy it), **Exit process** naming the failed criterion and what to change.
+
+1. **Single target axis** — exactly one thing varies per item; the procedure and disciplines are invariant. (Fails: two independent things vary per run and can't collapse to one token.)
+2. **Opaque-token-expressible** — the target is one token a queue can yield (path, id, string). (Fails: the "target" is a structured bundle of unrelated inputs.)
+3. **Independence** — processing one target needs nothing from another target's output or ordering. (Fails: item N consumes item N−1's result — sequential spawns are independent by design.)
+4. **Self-contained output** — where output lands is a function of the target alone. (Fails: output location depends on aggregate/cross-item state.)
+
+The gate protects the cache contract, not correctness of the operation itself — a normalized file can still describe a bad operation. Normalization only guarantees the operation is *shaped* for independent, per-target, cache-warm fan-out.
+
+### Variable resolution
+
+The raw instruction may carry `${CLAUDE_SKILL_DIR}` — the skill-dir binding a normal skill invocation provides and a cold spawn lacks. Normalization is the last point where that binding exists, because the orchestrator knows where it read the instruction from:
+
+- Replace every `${CLAUDE_SKILL_DIR}` with the directory the raw instruction was read from.
+- Any other `${VAR}` with no binding in the invocation context: **Exit process** naming it.
+
+`flatten.py` backstops this mechanically: it substitutes the variable in every skill body it inlines (it resolves each skill's folder itself) and refuses to emit a payload where `${CLAUDE_SKILL_DIR}` survives — a missed resolution aborts loudly instead of letting a spawn guess a path.
 
 ## Output models
 
@@ -48,13 +87,24 @@ The queue is **static** (`--items`, a fixed list, each target yielded once) or *
 ## Process
 
 1. If `--instruction` is missing, or neither `--items` nor `--feeder` is given: Exit process: usage. (`--skills` is optional — the instruction self-declares its skills.)
-2. **Normalize the instruction.** Call: `_normalize-operation.md` ({raw} = `--instruction`, {items} = `--items`, {out} = {normalized}).
-    - If it exits (the instruction can't be reshaped into a per-target operation): propagate that reason and stop — the user adjusts the instruction and re-runs.
+2. **Normalize the instruction** (`{raw}` = the `--instruction` file):
+    1. Read `{raw}` and inspect the queue's target tokens to identify the **varying target** and its kind.
+    2. Run the reshapeability gate:
+        - For each criterion, decide pass / reshapeable / irreducible-fail.
+        - If any criterion is an irreducible fail: **Exit process** — `cannot normalize: {criterion} — {what about {raw} violates it} — {how to adjust}`.
+    3. Rewrite `{raw}` into the operation contract:
+        1. Abstract every concrete target reference to the TARGET role.
+        2. Preserve the procedure and any disciplines/criteria verbatim in intent.
+        3. State the output as a function of TARGET (a path derived from it, DB rows keyed by it, a file in a named output dir).
+        4. Apply /procedure-authoring to the procedure and /concise-prose to the whole — no target literals, no cross-item language ("for each", "all of them", "the rest") survive.
+    4. Apply Variable resolution: `${CLAUDE_SKILL_DIR}` → the directory `{raw}` was read from; any other unbound `${VAR}`: **Exit process** naming it.
+    5. `{normalized}`: write the result to a scratch file.
 3. **Run the driver:**
 
    bash: `python3 scripts/run.py --skills {skills} --operation-file {normalized} <--items {items} | --feeder "{feeder}" [--max {max}]> [--isolation {isolation}] [--repo {repo}] [--cwd {cwd}]`
 
    It flattens the payload, stages the targets (under `staged`), **warms the cache** (one empty-target spawn), then drives the queue sequential — a static list to exhaustion, or a feeder until it returns `DONE` — spawning one `claude -p` per target with a concurrent keepalive holding the cache hot, printing each spawn's prefix re-read fraction, and **aborting if a spawn falls below `--cache-floor`** (the prefix diverged — make the operation target-agnostic and the cwd/`--add-dir` set identical). A work-spawn that hangs past `--max-spawn-minutes` or errors **halts the chain** unless `--continue-on-failure` is set. On completion it prints a **per-target cache breakdown** (each target's input / cache_create / cache_read / prefix-reread, by origin path under `staged`) so the realized saving is auditable at a glance.
+
 4. **Review gate** (apply /confirm-shared-intent — never finalize without explicit approval):
     - `staged`: the driver prints the per-target diff summary and writes the full patch to `{rundir}/diff.patch`. Present it with the done/claimed/pending counts. On approval run the driver's printed `apply` command (`stage.py … apply` — copies each changed copy back to its origin); on rejection run its `discard` command. Republish if the targets are published skills.
     - `none`: side effects are already live. Present the done/pending counts and point the user at the operation's output (the fresh dir it wrote, or the records it changed) for review.
@@ -63,5 +113,6 @@ The queue is **static** (`--items`, a fixed list, each target yielded once) or *
 
 - **Sequential work, not parallel work.** Work-spawns run one at a time — parallel *work*-spawns would race the cold cache and each cold-write the payload. The keepalive is the only thing that runs alongside a work-spawn, and it's a cheap empty-target read, not work. Parallelize work-spawns only on explicit request.
 - **The cache assertion is the safety net.** A silently-diverged prefix re-bills the full payload every spawn; the per-spawn prefix-reuse gate turns that into a loud abort. A spawn whose `usage` can't be read warns (can't verify) but does not abort.
+- **Read an abort by pattern, not by the single reading — ~100% is the healthy norm.** The measurement excludes the per-target payload, so a working chain reads 99–100% every spawn; the 0.95 floor is headroom, not a target. A **one-off** sub-floor spawn is almost always transient — a cache-TTL break on the prefix tail, or the assistant's instruction-read turn generating differently and re-keying the blocks after it. The response is to **resume the pending queue at the same floor** (the queue is resumable; a well-formed operation is idempotent) and judge the next spawns: back at ~100% ⇒ transient, move on. Readings jitter a few points around 100% — including slightly **over** (the measurement call's `cache_read` includes the assistant's own generated turn, which varies a few hundred tokens spawn to spawn); 99–101% are all the same healthy signal, and a genuine divergence reads as a multi-thousand-token drop, not a jitter. **Consistently** low reads mean the prefix genuinely varies per spawn — fix the operation/cwd/`--add-dir`. Never lower `--cache-floor` to make the abort pass; it converts the loud abort back into the silent re-billing the gate exists to catch.
 - **Amortize the warmup** — the warmup spawn pays near-full price to fill the cache; worth it only when the shared payload is large and the queue long enough that the warmup + per-spawn reads beat just paying cold each time.
 - **Pool by home repo only as a fallback** — for an operation that genuinely needs in-repo execution context (e.g. running tests against the live tree) and so can't be staged. The staged workspace is the default and is location-independent; pooling trades that for in-repo context, paying a cold cache per pool.

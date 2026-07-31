@@ -1,98 +1,32 @@
 # git commit
 
-> Commit working-tree changes as one or more topic-grouped commits. Recurses depth-first into `.gitmodules`-declared submodules: each submodule's commits land before the parent records its pin advance.
-
-## Dependencies
-
-- `/concise-prose`, `/description-authoring`, `/grounded` — the commit messages are authored under these (applied at step 8; the inline mention there is the surgical reminder).
-- `verbs/doctor.md` — submodule conformance pre-check; refusing to commit through Tier 1 drift is what prevents escalation into Tier 2 history pollution.
+> Commit working-tree changes as topic-grouped commits. The gitflow driver runs the deterministic pipeline — submodule recursion, pin detection, conformance checks, staging, committing; judgment enters only at the stop-points below and reaches the repo only as a plan file.
 
 ## Variables
 
-- `{cwd}` — `--cwd <path>` argument; defaults to `.` (top-level invocation). All git operations use `git -C {cwd}`. Recursive calls pass `{cwd}/{sub}` so depth flows through one variable.
-- `{paths}` — optional trailing pathspec(s) (the non-flag arguments). When given, only matching working-tree paths are inspected and committed; everything else is left untouched (scoped commit). Top-level only — not passed into submodule recursion.
-- `{on-base}` — `--on-base` present: permit committing onto the repo's default branch even under `pr` integration (the base-branch guard skips). For an intentional admin/base commit; `/git checkpoint` passes it in base-mode.
-- `{auto}` — `--auto` present: auto-consume submodule pin advances (no consume/revert prompt). Set by `/git checkpoint --auto`, which produced those advances deliberately by landing the submodules.
-- `{pin-only}` — `--pin-only <path>` (repeatable); submodules to skip in recursion — checkpoint already landed (PR-governed) or pins them (vendored). Their pin advance is still recorded in step 4.
-
-## Rules
-
-- Pre-check submodule conformance via `/git doctor` at the top level — never commit through Tier 1 drift; declines stop the flow
-- In a `pr`-integrated repo — detected, not configured: the default branch is protected — refuse to commit onto that default branch; the change belongs on a feature branch. Point to `/git checkpoint` (it auto-creates one named from the change topic) or a manual branch; `--on-base` overrides. Recursive calls (`--cwd`) and `direct` repos (unprotected default) are exempt
-- Group by topic for readable history: one commit when all changes are one coherent topic or grouping is ambiguous; multi-commit only when topics are clearly separable
-- No minimum commit size — a single-file change is a valid commit if it's a distinct topic
-- Commit order: dependencies first, consumers after; submodule commits land before the parent commit that records their pin advance
-- Normalize a detached submodule onto its declared `branch =` (`.gitmodules`) before committing in it — a commit made on a detached HEAD is orphaned when the branch is later checked out; if the declared branch has diverged from the checked-out sha, surface rather than discard
-- Stage specific files by name; never `git add -A` or `git add .`
-- When {paths} is given, inspect and commit only matching paths — the rest of the working tree is left parked untouched (a scoped commit, for landing one coherent slice of a mixed tree)
-- Submodule pin advance is explicit — never bumped as a silent side effect of recursion; bumps require approval and are surfaced in the parent commit's diff
-- Surface suspicious untracked files (large generated dirs, credentials, build artifacts) before staging
-- Public-bound repo hygiene — when the repo is a fork or GitHub-public, audit staged content for client/PII leakage before committing (step 10); step 8's message-style inference follows project `git log` and won't enforce client-neutrality. A private repo you intend to publish isn't auto-detected — flag it yourself
-- Never amend previous commits unless the user explicitly requests it
-- Never force-push or run destructive git operations
+- `{cwd}` — `--cwd <path>`; defaults to `.`
+- `{paths}` — optional trailing pathspec(s): scope inspection and commit to matching paths, leaving the rest of the tree untouched
+- `{on-base}` — `--on-base` present: permit committing onto a protected default branch (intentional admin/base commit; checkpoint passes it in base-mode)
+- `{auto}` — `--auto` present: auto-consume submodule pin advances without prompting (checkpoint passes this after landing the submodules deliberately)
+- `{pin-only}` — `--pin-only <path>` (repeatable): submodules whose own changes are not committed here; only their pin advance is recorded in the parent
 
 ## Process
 
-1. Top-level pre-check (skip when invoked recursively):
-    1. If `--cwd` was provided: skip to step 2
-    2. {doctor-result}: Call: verbs/doctor.md
-    3. If {doctor-result} reports `Blocking unresolved: yes` (a BLOCKING problem it did not repair): Exit process — repo not commit-safe per git doctor; resolve before retrying. A clean report or an ADVISORY-only result (default-branch, CI) never blocks the commit — proceed.
-    4. Base-branch guard (skip if `--on-base`): {default}: bash: `git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's@^origin/@@'` (fallback `main`). If current branch == {default}: {protected}: bash: `gh api repos/{owner}/{repo}/branches/{default}/protection >/dev/null 2>&1 && echo yes || echo no` — the repo is `pr`-integrated exactly when its default branch is protected (detected, not read from a config file). If {protected} is `yes`: Exit process — this repo is pr-integrated; committing onto {default} is forbidden. Create a feature branch (or run `/git checkpoint`, which auto-creates one from the change topic), or pass `--on-base` for an intentional admin commit.
-    5. {public-bound}: bash: `gh api repos/{owner}/{repo} --jq 'if .private==false or .fork then "yes" else "no" end' 2>/dev/null` — `yes` when the repo is GitHub-public or a fork; empty when private non-fork or no GitHub remote. A private repo you intend to publish isn't detected here — set it `yes` yourself.
+1. `{state}`: Bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py inspect --cwd {cwd} --paths {paths}`
+2. If `{state}` reports BLOCKED: surface the blockers and stop — resolve before retrying.
+3. If `{state}` reports CLEAN: Exit process: clean working tree within scope.
+4. Build the plan from `{state}`'s NEEDS block:
+    1. Pin advances: If `{auto}`: consume all. Else: AskUserQuestion per advancing submodule — show its advance log; **consume** or **revert**.
+    2. Suspicious untracked files: AskUserQuestion per file — **include**, **exclude**, or **ignore**.
+    3. `{groups}` per changed repo (skip repos under `{pin-only}`): partition changed files by topic — tests beside the code they exercise, configuration beside its consumer, files within one directory, a consumed pin advance grouped with the parent change that consumes it. One group when changes are coherent or grouping is ambiguous; multiple only when topics are clearly separable, dependencies before consumers. A single-file change is a valid commit.
+    4. `{messages}`: Apply /concise-prose, /description-authoring to: draft one message per group — a subject plus body lines of end-state facts visible in the diff or decisions not visible there; no process narration, no restated principles the diff already shows, no project-internal phase labels, no claim the diff or a named decision doesn't carry. Pin-advance lines name the submodule and summarize the consumed commits. Append the co-author trailer when repo config `user.claude-coauthor` is true.
+    5. If `{state}` shows public-bound: audit `{groups}` and `{messages}` for client/PII leakage — customer names in fixtures, comments, and messages; "for the X migration" phrasing; `user.email` — surface anything suspect and confirm before applying.
+5. Write the plan file; Bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py apply --plan <plan-file> --cwd {cwd}` (add `--on-base` if `{on-base}`).
+6. Report from apply's output: commits per repo (sha + subject), pin dispositions, remaining tree state.
 
-2. Recurse into submodules first (depth-first):
-    1. {sub-entries}: bash: `git config -f {cwd}/.gitmodules --get-regexp '^submodule\..+\.path$' 2>/dev/null` — emits `submodule.<name>.path <path>` per line; empty if no `.gitmodules`
-    2. For each {entry} in {sub-entries}:
-        1. {sub-name}: from {entry} — the `<name>` between `submodule.` and `.path`; {sub}: the `<path>` value
-        2. If {sub} in {pin-only}: continue — checkpoint already landed or pins it; its pin advance is still recorded in step 4
-        3. {current}: bash: `git -C {cwd}/{sub} rev-parse --abbrev-ref HEAD`
-        4. If {current} is `HEAD` (detached) — normalize onto the declared branch before committing, so a new commit lands on a branch rather than an orphaned detached HEAD:
-            1. {declared}: bash: `git config -f {cwd}/.gitmodules submodule.{sub-name}.branch`
-            2. If {declared} is empty: Exit process — submodule {sub} is detached with no `branch =` in .gitmodules; declare it (`git config -f .gitmodules submodule.{sub-name}.branch <branch>`) or handle the submodule manually before committing
-            3. {head}: bash: `git -C {cwd}/{sub} rev-parse HEAD`; {decl}: bash: `git -C {cwd}/{sub} rev-parse --verify {declared} 2>/dev/null` (empty if no local branch)
-            4. If {decl} is empty: bash: `git -C {cwd}/{sub} checkout -b {declared}` — create the branch at the current sha
-            5. Else if {decl} == {head}: bash: `git -C {cwd}/{sub} checkout {declared}` — attach at the same sha; nothing lost
-            6. Else: Exit process — submodule {sub}'s `{declared}` ({decl}) diverges from its checked-out HEAD ({head}); resolve manually rather than discard work
-        5. Call: verbs/commit.md --cwd {cwd}/{sub} + ` --auto` if {auto} — recursive call walks any sub-submodules first, then commits {sub} on its declared branch
+## Rules
 
-3. Inspect the working tree (scoped to {paths} when given — `-- {paths}` with no scope lists everything):
-    1. bash: `git -C {cwd} status -- {paths}`
-    2. If no changes in scope: Exit process: clean working tree (within scope {paths})
-    3. bash: `git -C {cwd} diff --stat -- {paths}`
-
-4. Resolve submodule pin advances:
-    1. For each {sub} in {submodules}: bash: `git -C {cwd} diff --quiet -- {sub}`; non-zero exit means the pin at HEAD differs from the submodule's working-tree HEAD (the submodule advanced)
-    2. For each advancing {sub}:
-        1. {pinned-sha}: bash: `git -C {cwd} ls-tree HEAD -- {sub} | awk '{print $3}'`
-        2. {head-sha}: bash: `git -C {cwd}/{sub} rev-parse HEAD`
-        3. {advance-log}: bash: `git -C {cwd}/{sub} log --oneline {pinned-sha}..{head-sha}`
-        4. If {auto}: consume — stage the pin advance (checkpoint produced it deliberately by landing the submodule; no prompt). Else: AskUserQuestion — show {advance-log} and the new {head-sha}; offer **consume** (stage the pin advance in the parent commit) or **revert** (restore the submodule to {pinned-sha})
-        5. If consume: the pin advance enters the staging set for grouping in step 7
-        6. If revert: bash: `git -C {cwd} submodule update -- {sub}` — restores HEAD to {pinned-sha}; the diff disappears
-
-5. {suspicious-untracked}: untracked files matching suspicious patterns (large generated dirs, credentials, build artifacts)
-6. If {suspicious-untracked} non-empty: surface to the user; confirm include, exclude, or `.gitignore` before proceeding
-7. {commit-groups}: partition changes by topic. Indicators of a shared topic:
-    - Tests beside the code they exercise
-    - Configuration beside the consuming implementation
-    - Files within one directory
-    - Approved submodule pin advances grouped with the parent-level change that consumes them
-
-    One group when changes are coherent or grouping is ambiguous; multiple groups only when topics are clearly separable. Multi-group order: dependencies before consumers.
-
-8. {commit-messages}: draft one message per group — subject + body. Apply /concise-prose, /description-authoring, /grounded. Body lines describe end-state results visible in the diff or decisions not visible there. Strip process narration (`reauthored`, `sweep applied`), restated principles when the diff already shows the principle applied, and meta-commentary about earlier steps in the change journey. Project-internal phase labels (`Phase G`, `Sprint 4`) are meaningless to future readers — strip them. Pin-advance lines name the submodule and summarize the consumed commits.
-9. {co-author}: bash: `git -C {cwd} config --get user.claude-coauthor`
-10. Public-bound hygiene gate: If {public-bound} is `yes`: before committing, audit the staged diff and drafted {commit-messages} for client/PII leakage — real customer names or codes in comments, test names, and fixtures; client references or "for the X migration" phrasing in messages; freshly-authored top-of-tree docs (README, ARCHITECTURE); and `git -C {cwd} config user.email`. Surface anything suspect and confirm before proceeding — conventional-commit style is the client-neutral default.
-11. For each {group} in {commit-groups}:
-    1. bash: `git -C {cwd} add <files-in-group>` — pin-advance entries stage as `git -C {cwd} add <submodule-path>`
-    2. {message}: corresponding entry from {commit-messages}; if {co-author} is `true`, append a `Co-Authored-By:` trailer with the current model name and `<noreply@anthropic.com>`
-    3. bash: `git -C {cwd} commit -m "{message}"`
-
-12. {final-status}: bash: `git -C {cwd} status --short`
-
-## Report
-
-- Per recursed submodule: commit count + pin advance summary (none / consumed `<sha-range>` / declined), forwarded from each recursive invocation
-- Per parent-level commit: topic, files included, message
-- Summary: total commits made at this level
-- {final-status}: remaining changes if any, else `clean tree`
+- Never amend previous commits unless the user explicitly requests it; never force-push or run destructive operations.
+- The driver is the only door in a boxed repo — direct `git`/`gh` are denied there, so every change flows inspect → plan → apply.
+- **A plan speaks in whole files.** `apply` resets each repo's index (mixed) before staging, so pre-staged content — including hunk-level staging — folds back into the worktree and commits with whichever group claims its path. Anything no group claims stays pending; it never rides into another group's commit.
+- **The whole plan validates before the first commit.** Every group's pathspec is dry-run (staged deletions included), duplicates across groups and no-change groups are rejected, and a failure reports the full problem list with zero commits made — never a partial apply.

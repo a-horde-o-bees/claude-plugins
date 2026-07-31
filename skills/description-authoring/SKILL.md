@@ -1,6 +1,6 @@
 ---
 name: description-authoring
-description: Use whenever writing the line a reader uses to decide engage-or-skip — a directory or file header, docstring, skill frontmatter, section head, navigator entry, tool help text, commit subject, log opener, schema title, or any artifact's description at any scale.
+description: Use when writing the line a reader uses to decide engage-or-skip — an artifact's description at any scale (e.g. file header, docstring, skill frontmatter, commit subject).
 ---
 
 # description-authoring
@@ -14,12 +14,14 @@ A description is the line a reader uses to decide engage-or-skip — often the o
 - Describe what the artifact is for, not how it does it — its responsibility or the outcome it produces, never the method behind it. "Rank search results by relevance" is a what; "rank results with TF-IDF scoring" is a how.
 - Convey two things: what the artifact covers and what kind of thing it is (e.g. directory, module, CLI, config, rule, schema, section, function).
 - Weave both into fluent prose — never expose them as labeled fields or split halves. "Retry and backoff helpers for outbound HTTP calls," not "Scope: HTTP retries. Role: helper module." The reader should see no seam.
+- Lead with the key case — descriptions are read, and truncated, front-first; the first clause must carry the engage-or-skip decision on its own.
 - Match the abstraction to the artifact's size — a directory's coverage is coarser than a file's, a package's coarser than a function's.
 - Third person.
 
 ### Length
 
 - Run as long as granularity requires, no longer — the quality tests below decide when it's enough, not a word budget. Most descriptions are one sentence; a broad or multi-faceted artifact may run to a few. Don't pad toward a paragraph, don't compress past distinguishability.
+- One distinctive condition outweighs many restatements. The reader — or a matcher deciding whether to engage — needs a single clause that separates this artifact from its neighbors; synonym runs and example-phrasing lists add no distinguishing power, and each restatement widens accidental matches without covering a new case. Distinct cases may be listed (`e.g.`-marked); rephrasings of one case may not.
 
 ### Exclude
 
@@ -36,3 +38,4 @@ A description is the line a reader uses to decide engage-or-skip — often the o
 - Interchangeable with another artifact's description → too vague.
 - Would change when internals are refactored though the responsibility holds → too detailed.
 - Would fit equally at a different scale → wrong granularity.
+- Contains a phrase whose removal loses no case → a restatement; cut it.

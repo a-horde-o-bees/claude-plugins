@@ -206,7 +206,7 @@ def main():
                     "(OPTIONAL — the instruction's own /skill references are auto-discovered; "
                     "use this only to supplement a skill the instruction does not name)")
     ap.add_argument("--operation-file", required=True,
-                    help="target-normalized per-item instruction (see _normalize-operation.md)")
+                    help="target-normalized per-item instruction (see SKILL.md § Normalization)")
     ap.add_argument("--items", default="", help="comma-separated target tokens (static queue)")
     ap.add_argument("--feeder", default=None,
                     help="dynamic queue: a command printing the next target token or DONE[:reason]; "
@@ -387,14 +387,23 @@ def main():
         print(head + f"instr-prefix-reread={frac:.0%} -> done={st['done']} pending={st['pending']}",
               flush=True)
         if base and base >= CACHE_ASSERT_MIN_PREFIX and frac is not None and frac < a.cache_floor:
+            if int(st.get("pending", 0) or 0) == 0:
+                # The abort exists to stop future doomed spawns; with the queue drained there are
+                # none — a sub-floor reading on the final spawn is reported, not fatal.
+                print(f"  note: {label} read {frac:.0%} (below floor {a.cache_floor:.0%}) but the "
+                      f"queue is drained — one-off tail event, no spawns left to protect.", flush=True)
+                return "failed" if fail else "ok"
             raise SystemExit(
                 f"\ncache assertion FAILED at {label}: re-read {frac:.0%} of the instruction prefix "
                 f"(measurement-call cache_read={m_cr} vs prefix baseline {base}), below floor "
-                f"{a.cache_floor:.0%}. The shared prefix (system + stub + flattened instruction) diverged "
-                f"across spawns and is being re-billed instead of cache-served. Keep it byte-identical: "
-                f"make the operation target-agnostic and keep cwd / --add-dir identical every spawn "
-                f"(staged mode fixes cwd to the workspace; check --add-dir and the operation for target "
-                f"literals).")
+                f"{a.cache_floor:.0%}. A healthy chain reads 99-100% every spawn, so react by pattern, "
+                f"not to the single reading. ONE-OFF low read: almost always transient — a cache-TTL "
+                f"break on the prefix tail, or a nondeterministic instruction-read turn re-keying the "
+                f"blocks after it — resume the pending queue AT THE SAME FLOOR and judge the next "
+                f"spawns. CONSISTENT low reads: the shared prefix genuinely varies per spawn — make "
+                f"the operation target-agnostic and keep cwd / --add-dir identical every spawn (staged "
+                f"mode fixes cwd to the workspace; check --add-dir and the operation for target "
+                f"literals). Never lower --cache-floor just to clear this abort.")
         return "failed" if fail else "ok"
 
     # 7. Warm the shared cache once (empty-target), then drive the queue. Warmup is fatal on failure.

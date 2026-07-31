@@ -35,7 +35,7 @@ top=$(git rev-parse --show-toplevel 2>/dev/null) || {
 # filesystem, but only while a real submodule relationship holds — else an unrelated
 # ancestor repo (e.g. ~/.claude) would be mistaken for the superproject. Relationship is
 # proven, linkage-independent, by either signal:
-#   (a) the child's .git is an absorbed gitdir FILE (monaco: `gitdir: ../.git/modules/…`), or
+#   (a) the child's .git is an absorbed gitdir FILE (`gitdir: ../.git/modules/…`), or
 #   (b) the parent's .gitmodules declares the child's path.
 # A parent satisfying neither is a genuine boundary — stop there.
 sup=$top

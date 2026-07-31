@@ -1,11 +1,8 @@
 {
   "name": "claude-plugins-tooling",
   "private": true,
-  "description": "Dev tooling for the claude-plugins repo. Not a published package; holds the markdown linter only.",
+  "description": "Dev tooling for the claude-plugins repo. Not a published package; lint:md runs the suite's own dependency-free linter.",
   "scripts": {
     "lint:md": "scripts/lint-markdown.sh"
-  },
-  "devDependencies": {
-    "markdownlint-cli2": "^0.14.0"
   }
 }

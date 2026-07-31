@@ -30,21 +30,15 @@ jobs:
         run: python3 scripts/validate-manifests.py
 
   markdown-lint:
-    # Probation: report violations, do not gate merges. Flip continue-on-error
-    # off (or remove this comment + the line) once the team is ready to enforce.
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    continue-on-error: true
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Setup Node
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: '20'
+          node-version: '24'
 
-      - name: Install markdown linter
-        run: npm install --no-audit --no-fund
-
-      - name: Lint markdown (report-only)
+      - name: Lint markdown
         run: npm run lint:md

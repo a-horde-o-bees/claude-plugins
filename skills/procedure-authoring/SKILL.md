@@ -25,7 +25,7 @@ An annotation describes, never instructs — keep executable actions out, since 
 
 ## Variables
 
-A variable uses `{curly-dashes}` and is visible at any later depth; bind it before referencing it.
+A variable is written `` `{curly-dashes}` `` — braces inside backticks, a code span, so it sits in standard markdown without renderer or linter collisions — and is visible at any later depth; bind it before referencing it. Inside a larger code span or fence the braces stay bare (`--branch {branch}`).
 
 **`{name}: <block>`** — binds the name to the block's value:
 
@@ -62,7 +62,7 @@ Behaviors:
 Targets:
 
 - **`/skill-name`** — a skill, resolved **by name** through the harness priority chain (never a hard-coded path) and run via the Skill tool. `Call: /skill` dispatches the skill; it does not Read its file. The harness **force-loads** the skill into context, so its steps cannot be paraphrased away unseen — prefer this form for a load-bearing sub-process.
-- **`[label](target)`** — a file or section at a **known path**, resolved by reading it: `Call:` reads the target and follows it inline. Forms: `#anchor` (a `##` section of this document, resolved once the document is read whole or flattened), `relative.md`, `relative.md#section`, or `/absolute.md`. A file target is only as reliable as the executor actually opening it — an un-opened file is invisible, so its steps get improvised from the call site instead of run. When the target's exact steps are load-bearing (their wording carries a constraint unguessable from the call site), prefer the force-loaded `/skill` form, or gate a later step on an outcome only the file's steps produce.
+- **`[label](target)`** — a file or section at a **known path**, resolved by reading it: `Call:` reads the target and follows it inline. Forms: `#anchor` (a `##` section of this document, resolved once the document is read whole or flattened), `relative.md`, `relative.md#section`, or `/absolute.md`. **Presume a file target unreliable under load.** An un-opened file is invisible — its steps get improvised from the call site instead of run — and the miss appears under real orchestration load even though cold single-task tests pass every wording. No verb choice fixes this. When the target's steps are load-bearing (their wording carries a constraint unguessable from the call site), use the force-loaded `/skill` form, or gate a later step on an artifact only the target's steps produce; reserve bare file targets for steps whose miss is cheap.
 
 Return:
 
@@ -83,8 +83,8 @@ The executor sees only the authored procedure, cold, and runs any instruction it
 
 - **Procedure** (keep) — reasoning, judgment, and contextual sequencing the agent steers; orchestration whose composition depends on intermediate results (skill calls, tool invocations, agent spawns); and the user-facing surface (review gates, clarifying questions, error-recovery dialogue).
 - **Script** (→ a `Bash:` call or invoked module) — deterministic operations with no agent context: parsing, filtering, aggregation, format conversion, fixed-rule classification. The tell: *could a deterministic function with no agent context produce this result?* Yes → script. Prefer one wherever it suffices; it preserves the agent's focus for the judgment only an agent can supply.
-- **Durable structure** (→ `architecture-authoring`) — the shape, boundaries, and external facts a reader needs *before* the steps make sense and that survive a rewrite. Not a step; state it in the architecture doc and link.
-- **Why this and not that** (→ `decision-authoring`) — a choice made over rejected alternatives. The procedure *runs* the choice; the reasoning belongs in the decision record. Link.
+- **Durable structure** (→ the architecture doc) — the shape, boundaries, and external facts a reader needs *before* the steps make sense and that survive a rewrite. Not a step; state it there and link.
+- **Why this and not that** (→ the decision record) — a choice made over rejected alternatives. The procedure *runs* the choice; the reasoning belongs there. Link.
 - **Derivable** (cut) — anything the executor reconstructs from the steps themselves or the artifacts they touch.
 
 Two misclassifications to catch, each corrected in one direction:
@@ -98,6 +98,7 @@ Two misclassifications to catch, each corrected in one direction:
 - **`Spawn agent to: Call: [label](_file.md)`** — keeps the caller's context clean; only the agent reads the file.
 - **`Spawn async agent to:`** — runs agents concurrently; the next outdented step runs after they complete.
 - **`Spawn background agent to:`** — runs the agent in the background.
+- **Route data around the caller** — a step whose output only a spawned agent consumes runs inside the spawn: the caller passes the directive and bare variables (paths, ids), never content it doesn't itself consume. Content relayed through the caller is read, written, and re-read — paid in the costliest context — and anchors the spawn to the caller's framing besides.
 
 ## Exit
 
@@ -127,3 +128,4 @@ Pair flags with their verb inline — `<verb1 | verb2 --flag <v>>` — rather th
 ## Gotchas
 
 - **A load-bearing step must have a consumer** — a step nothing consumes is advisory and often silently skipped under load; bind its finding, write its artifact, or gate a future step or conditional on it.
+- **Never gate an invocation on a judgment the target owns** — wrapping `Call:`/`Apply` in a condition that restates the target's own trigger ("/reauthor for entries composed fresh") makes loading contingent on the decision the unloaded target exists to make; the executor skips the load and never meets the discipline that would have flipped its judgment. Invoke unconditionally — the target self-limits.
