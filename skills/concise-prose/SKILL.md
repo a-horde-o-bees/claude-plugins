@@ -1,11 +1,11 @@
 ---
 name: concise-prose
-description: Use whenever the agent writes or edits prose for any reader — chat replies, docs, markdown, comments, logs, commit messages, descriptions, error strings — to slim content without losing meaning. A concision pass that layers on top of surface-specific authoring skills (e.g. description-authoring, commit guidance), never replacing their structure.
+description: Use whenever the agent writes or edits prose for any reader — e.g. chat replies, docs, code comments, commit messages, error strings — to slim content without losing meaning. A concision pass layered on top of surface-specific authoring skills (e.g. description-authoring, commit guidance), never replacing their structure.
 ---
 
 # concise-prose
 
-Minimize reader overhead without losing meaning. Readers can be users, other agents, or downstream tools.
+Minimize reader overhead without losing meaning. Readers can be users, other agents, or downstream tools. Length follows information, not prompt length — prose runs as long as the content requires once every directive below is applied.
 
 ## Rules
 
@@ -28,26 +28,21 @@ Minimize reader overhead without losing meaning. Readers can be users, other age
 - Quantify only when the number is load-bearing — a threshold, a tracked discrepancy, or a result whose value a decision turns on ("0 failures", "158/205 over credit"). A decorative count (totals, tallies, sizes no decision reads) rots and demands upkeep; state the qualitative fact instead ("suite green", "balances reconcile").
 - Cross-reference only when the reader must consult the source to understand the current surface.
 - Never enumerate content from a linked source — parenthetical summaries are redundant, cherry-picked, and prone to drift.
-- Assume a capable reader — don't encode general knowledge they already hold; spend words only on non-obvious, domain- or project-specific facts. Cutting a "what is X" explanation of a well-known concept is almost always right.
 
-### Correction
+### Context leverage
 
-- **Correct by reduction, not accretion.** When a passage reads wrong, sharpen or cut the offending line rather than layer a clarifying sentence over it. A passage that passed review is not proven minimal: the sharper, shorter form is often still unarticulated.
+- Assume a capable reader — lean on the vocabulary and general knowledge they already hold (e.g. concepts established upstream in this surface, anything a generalist would recognize), and spend words only on non-obvious, domain- or project-specific facts. Cutting a "what is X" explanation of a well-known concept is almost always right.
+- Siblings carry context — items in a complementary set (e.g. failure modes, axes, angles) compact further than items read alone. Each only describes what it covers; the surrounding siblings clarify what it excludes. A gap that persists across all siblings together is a legitimate hole to address.
+- Dedup within a surface, not across surfaces — e.g. frontmatter, body, metadata, docstring, error codes, error messages are distinct mechanical surfaces with distinct readers and triggers; the same content appearing in two is not duplication.
 
 ### Anti-staleness
 
 - No commentary on prior states the artifact no longer reflects — the artifact represents current reality only.
 - No references to temporary phases, processes, or labels that may not exist when the artifact is read.
 
-### Context leverage
+### Correction
 
-- Lean on shared vocabulary — content compacts when it leverages concepts the reader already holds (e.g. established upstream in this surface, general knowledge a generalist would recognize).
-- Siblings carry context — items in a complementary set (e.g. failure modes, axes, angles) compact further than items read alone. Each only describes what it covers; the surrounding siblings clarify what it excludes. A gap that persists across all siblings together is a legitimate hole to address.
-- Dedup within a surface, not across surfaces — e.g. frontmatter, body, metadata, docstring, error codes, error messages are distinct mechanical surfaces with distinct readers and triggers; the same content appearing in two is not duplication.
-
-### Length
-
-- Prose length follows information, not prompt length — prose runs as long as the content requires after every other directive is applied.
+- **Correct by reduction, not accretion.** When a passage reads wrong, sharpen or cut the offending line rather than layer a clarifying sentence over it. A passage that passed review is not proven minimal: the sharper, shorter form is often still unarticulated.
 
 ## Safety checks
 
@@ -57,8 +52,6 @@ These bound the cut decision itself, not a separate review pass.
 - **Lossless preservation** — safety boundaries, corrective guidance, and disambiguation survive any cut. A phrase carrying one of these loads stays.
 - **Curse of knowledge** — content that feels redundant to the author often carries the only "why" the reader has: rationale, scope-setting, anti-pattern framing that reads as preamble but makes the rule stick. If content fits a companion surface better, migrate it rather than delete and assume the other surface will catch up.
 - **Chesterton's Fence** — do not remove a fence until you know why it was built. Raise to the user when a candidate for removal has no recoverable purpose.
-
-Lossless preservation and Curse of knowledge jointly bound what the Slim test may remove — the first protects categorical loads (safety, correction, disambiguation), the second protects supporting context (rationale, scope, anti-pattern framing).
 
 ## Exceptions
 

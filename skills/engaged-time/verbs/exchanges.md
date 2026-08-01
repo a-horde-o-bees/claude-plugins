@@ -1,6 +1,6 @@
 # exchanges
 
-The persistent **annotation store** for the timeline model and its **thread-first lineage** — `exchange → thread → topic → billable`. Exchanges are *derived* on demand from the raw DB (`materialize_exchanges`), never stored; the store persists the authored per-exchange `description`, the per-root focus-thread synthesis, the topic vocabulary, and the per-thread topic assignment, at `~/.claude/engaged-time/annotations.db`. See `../ARCHITECTURE.md` § Exchange / Topic / Population.
+The persistent **annotation store** for the timeline model and its **thread-first lineage** — `exchange → thread → topic → billable`. Exchanges are *derived* on demand from the raw DB (`materialize_exchanges`), never stored; the store persists the authored per-exchange `description`, the per-root focus-thread synthesis, the topic vocabulary, and the per-thread topic assignment, at `~/.claude/engaged-time/annotations.db`. See `../ARCHITECTURE.md` § Exchange and § Descriptions and topics.
 
 ## Signature
 
@@ -27,9 +27,9 @@ uv run ${CLAUDE_SKILL_DIR}/exchanges.py <cmd> [--db ~/.claude/engaged-time/raw.d
 
 ## Process
 
-1. **Describe** every exchange (per-session fan-out): `../_annotate-corpus.md` runs the per-session unit `../_annotate-session.md` over `/apply-over-queue`. Descriptions are per-exchange, so the file grain is fine here.
-2. **Synthesize threads** per root (per-root fan-out): `../_synthesize-focus.md` runs the per-root unit `../_synthesize-root.md` over `/apply-over-queue`. Worklist: `roots --pending`.
-3. **Seed + refine the vocabulary** and **assign topics** in one global pass (steps in `../_synthesize-focus.md` § 3): review `thread-list`, tune `topics --set`, then `thread-assign`.
+1. **Describe** every exchange (per-session fan-out): `../_annotate-corpus.md` runs the per-session unit `../_annotate-session.md` over apply-over-queue. Descriptions are per-exchange, so the file grain is fine here.
+2. **Synthesize threads** per root (per-root fan-out): `../_synthesize-focus.md` runs the per-root unit `../_synthesize-root.md` over apply-over-queue. Worklist: `roots --pending`.
+3. **Seed + refine the vocabulary** and **assign topics** in one global pass (steps in `../_synthesize-focus.md`): review `thread-list`, tune `topics --set`, then `thread-assign`.
 
 ## Notes
 

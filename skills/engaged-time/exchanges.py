@@ -5,7 +5,7 @@ focus-THREADS, and the TOPIC assignment over those threads.
 The raw DB (`raw_db.py`) is a regenerable cache; THIS store (`~/.claude/engaged-time/annotations.db`) is the
 PERSISTENT annotation layer, keyed by each exchange's opening-prompt **UUID** — stable across
 rebuilds, ceiling changes, and turn boundaries (the legacy positional `(session, exchange#)`
-key was fragile). See `ARCHITECTURE.md` § Exchange / Topic / Population.
+key was fragile). See `ARCHITECTURE.md` § Exchange and § Descriptions and topics.
 
 Exchanges are **derived** from the raw DB (`swimlane_timeline.materialize_exchanges`), never
 stored — only the authored `description`, the topic vocabulary, the per-root focus-thread

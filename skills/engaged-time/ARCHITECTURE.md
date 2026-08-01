@@ -33,7 +33,7 @@ A time-block is found not by content but by **lines**: a line is a horizontal ma
 
 ### Class → role
 
-The pairing role (`_role_of`, `swimlane_timeline.py`) — a **signature→role** map, not a list of `classify()` outputs: two rows key off something other than a class (`turn_duration` is a record *property*; `user-response` is a `tool_result` reclassified in `build()`). The distinguishing signature is given per row. (Internal class names; UI display names are in `swimlane_server_ui.md`.)
+The pairing role (`_role_of`, `swimlane_timeline.py`) is a **signature→role** map, not a list of `classify()` outputs: two rows key off something other than a class (`turn_duration` is a record *property*; `user-response` is a `tool_result` reclassified in `build()`). The distinguishing signature is given per row. (Internal class names; UI display names are in `swimlane_server_ui.md`.)
 
 | Signature | Role | Distinguishing test |
 | --- | --- | --- |
@@ -49,7 +49,7 @@ Sidechain (sub-agent) records carry no role — their time rides on the main-cha
 
 ### The override rule — STOP consumed by BREAK
 
-When agent activity (a `thinking`, `tool_use`, or `text` record) resumes after a STOP with **no interceding START**, the agent continued the same exchange without a new prompt. Rather than open a fresh START (which would split one exchange into two), this is a BREAK that **overrides the stop** (`_sweep_points`): the resuming dot gets a yellow break line (a START for pairing), and the preceding stop dot gets an *additional* yellow line while keeping its red. A single dot can thus own multiple lines.
+When agent activity (a `thinking`, `tool_use`, or `text` record) resumes after a STOP with **no interceding START**, the agent continued the same exchange without a new prompt. Rather than open a fresh START — which would split one exchange into two — this is a BREAK that **overrides the stop** (`_sweep_points`): the resuming dot gets a yellow break line (a START for pairing), and the preceding stop dot gets an *additional* yellow line while keeping its red. A single dot can thus own multiple lines.
 
 ## Time-blocks and coverage
 
@@ -109,7 +109,9 @@ Enqueue content splits three ways and `classify` labels the dot accordingly (`en
 
 ## Segments — the flat rail
 
-The interactive view organizes each session as a **flat rail of segments** (`branch_tree.py`). The one live thread is split into segments at **re-emission boundaries** (resume/compaction) and at **rewinds** (a same-file fork: the earliest path stays inline as the original continuation, the later paths split off as `rewind` segments). Everything rides one rail in ts order; there are no nested branches. A **segment** is a *structural* unit (an era of the thread), orthogonal to the *temporal* tiers — its duration column is just its coverage (Σ its time-blocks), and a segment may hold several exchanges. Per-segment geometry the UI renders is `segment_geometry`; a cross-segment relationship arc drops (its endpoint lives in another segment — the re-attach point is recorded in the segment's `from`). Why a flat rail and not a deep tree: `DECISIONS.md`.
+The interactive view organizes each session as a **flat rail of segments** (`branch_tree.py`). The one live thread is split into segments at **re-emission boundaries** (resume/compaction) and at **rewinds** (a same-file fork: the earliest path stays inline as the original continuation, the later paths split off as `rewind` segments). Everything rides one rail in ts order; there are no nested branches.
+
+A **segment** is a *structural* unit (an era of the thread), orthogonal to the *temporal* tiers — its duration column is just its coverage (Σ its time-blocks), and a segment may hold several exchanges. Per-segment geometry the UI renders is `segment_geometry`; a cross-segment relationship arc drops (its endpoint lives in another segment — the re-attach point is recorded in the segment's `from`). Why a flat rail and not a deep tree: `DECISIONS.md`.
 
 ## Where the model lives (code)
 

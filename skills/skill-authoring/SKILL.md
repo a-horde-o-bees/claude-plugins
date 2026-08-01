@@ -5,7 +5,7 @@ description: Use when creating or refining a skill, to apply the authoring disci
 
 # skill-authoring
 
-The authoring disciplines a well-formed skill satisfies, and where each one bites. Invoke when creating or refining a skill; apply each discipline at its moment, and hold the trigger frontmatter to the bar below.
+The bar a well-formed skill meets, and the authoring disciplines that get it there.
 
 ## Applied disciplines
 
@@ -28,7 +28,7 @@ The `description:` is the skill's trigger and the only part always in context: t
 - **The listing is a shared budget.** Every entry is permanent per-session context, and each addition taxes every other skill's chance of firing. Trim at the source first; beyond that, `skillOverrides: "name-only"` lists a low-priority skill without its description, and `skillListingMaxDescChars` / `skillListingBudgetFraction` (or `SLASH_COMMAND_TOOL_CHAR_BUDGET`) tune the caps.
 - **Intentionally unused fields.** The suite sets no `when_to_use` (the woven description is the whole trigger surface; the field is appended into the same listing entry under the same 1,536-char cap, adding only a second surface to audit) and no `disable-model-invocation` / `user-invocable` (every skill stays model- and user-invocable at the defaults). Deviate only as a deliberate, recorded exception.
 
-The general exclusions — describe responsibility, never method; never enumerate the skill's contents or verbs — are `/description-authoring`'s; the skill listing is where those leaks cost most, since a leaked description both misfires as a trigger and bloats every session. Test a contested trigger cold with should-trigger / should-not-trigger prompts (`/rule-authoring` § Enforce before wording) rather than arguing the wording.
+The general exclusions — describe responsibility, never method; never enumerate the skill's contents or verbs — are description-authoring's; the skill listing is where those leaks cost most, since a leaked description both misfires as a trigger and bloats every session. Test a contested trigger cold with should-trigger / should-not-trigger prompts (rule-authoring § Enforce before wording) rather than arguing the wording.
 
 ## Skill layout
 
@@ -36,7 +36,7 @@ The general exclusions — describe responsibility, never method; never enumerat
 
 ## Audits
 
-Close an authoring pass with two audits of the finished skill. Both share one shape — a mechanical probe, then judgment made by reading in full. Match-line context is never enough: well-formedness is the thing under audit, so the conventions that make snippets legible cannot be assumed.
+Close an authoring pass with two audits of the finished skill, each judged by reading the affected files whole. Well-formedness is the thing under audit, so match-line context is never enough — the conventions that make a snippet legible cannot be assumed.
 
 **Reference audit.** A slash-reference is an invocation — every mechanical consumer treats `/name` as "load and apply here": apply-over-queue's flatten inlines the referenced skill's whole tree, and a reading agent is pressed to invoke it. Cite a skill for any other reason — provenance, comparison, a shared constant's origin — by bare name.
 

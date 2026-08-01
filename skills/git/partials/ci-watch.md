@@ -1,7 +1,7 @@
 # CI Watch (background)
 
-> Wait for GitHub Actions CI runs to complete for a commit SHA and return the final classification to the caller.
->
+Wait for GitHub Actions CI runs to complete for a commit SHA and return the final classification to the caller.
+
 > Spawned asynchronously by the `/git ci` and `/git checkpoint` verbs — foreground returns immediately; this agent runs independently; the session receiving the task-completion result reports inline.
 
 ## Variables
@@ -17,9 +17,9 @@
 
 ## Process
 
-1. `{classification}`: bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py ci-watch --cwd {cwd} --sha {sha} --run-ids {run-ids}`
+1. `{classification}`: Bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py ci-watch --cwd {cwd} --sha {sha} --run-ids {run-ids}`
 2. Bind from `{classification}` JSON: `{sha_short}`, `{ci-status}`, and the status's variables (`{workflow_list}` | `{failing_workflow}` + `{failing_url}` | `{trouble_list}` | `{watch_ids}`).
-3. If `{ci-status}` is `dispatched`: go to 1 with the new `{watch_ids}`.
+3. If `{ci-status}` is `dispatched`: go to step 1 with the new `{watch_ids}`.
 4. Emit the template matching `{ci-status}` — see ## Report.
 
 ## Report

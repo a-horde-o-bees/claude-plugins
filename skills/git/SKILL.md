@@ -17,7 +17,7 @@ allowed-tools:
 
 # /git
 
-The router for this project's git development process. One trigger fronts eleven verbs; each verb is a component file under `verbs/` that owns its own gates, submodule recursion, and message authoring. This file only routes — it parses the verb, forwards the remaining arguments, and returns the verb's report. The verbs call each other (checkpoint sequences commit → push → CI → the PR loop; commit and push pre-check via doctor).
+The router for this project's git development process. Each verb is a component file under `verbs/` that owns its own gates, submodule recursion, and message authoring; this file binds the verb, forwards the remaining arguments, and returns the verb's report. The verbs call each other — checkpoint sequences commit → push → CI → the PR loop.
 
 ## Verbs
 
@@ -37,7 +37,7 @@ The router for this project's git development process. One trigger fronts eleven
 
 ## Doorway
 
-In a boxed repo, direct `git` and `gh` are denied in project settings and this skill's driver is the only route to them. Box a repo with `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py setup-deny --cwd <repo>`, or box everything at once with `--scope user` (writes `~/.claude/settings.json`; every repo interaction then routes through this skill's verbs — including upstream contributions via `contribute`). Both scopes install two layers: a PreToolUse hook (`scripts/redirect-denied-git.sh`) that denies a raw git/gh call *with a redirect to this skill*, and the bare deny rules as the fail-closed backstop when hooks are off. Judgment steps that inspect history go through `gitflow.py read -- <read-only git>`. The decision, its forces, and the box's limits: [DECISIONS.md](DECISIONS.md).
+In a boxed repo, direct `git` and `gh` are denied in project settings and this skill's driver is the only route to them. Box one repo with `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py setup-deny --cwd <repo>`, or every repo at once with `--scope user` (writes `~/.claude/settings.json`; every repo interaction then routes through this skill's verbs — including upstream contributions via `contribute`). Either scope installs two layers: a PreToolUse hook (`scripts/redirect-denied-git.sh`) that denies a raw git/gh call *with a redirect to this skill*, and the bare deny rules as the fail-closed backstop when hooks are off. Judgment steps that inspect history go through `gitflow.py read -- <read-only git>`. The decision, its forces, and the box's limits: [DECISIONS.md](DECISIONS.md).
 
 ## Rules
 
@@ -49,11 +49,10 @@ In a boxed repo, direct `git` and `gh` are denied in project settings and this s
 ## Process
 
 1. `{args}`: the invocation arguments. `{verb}`: first token; `{rest}`: the remaining tokens.
-2. If `{verb}` is empty: Call: Menu — bind `{verb}` (and `{rest}`, empty) from the user's pick.
-3. If `{verb}` matches a row in ## Verbs: `{target}`: that row's component.
-4. Else (unrecognized `{verb}`): Call: Menu — bind `{verb}` from the pick; `{rest}`: empty.
-5. Call: `{target}` `{rest}` — dispatch to the verb, forwarding `{rest}` verbatim.
-6. Return the verb's report to the user.
+2. If `{verb}` is empty or matches no row in ## Verbs: Call: [Menu](#menu) — bind `{verb}` from the user's pick; `{rest}`: empty.
+3. `{target}`: the component in `{verb}`'s ## Verbs row.
+4. Call: `{target}` `{rest}` — dispatch to the verb, forwarding `{rest}` verbatim.
+5. Return the verb's report to the user.
 
 ## Menu
 

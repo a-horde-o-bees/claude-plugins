@@ -1,6 +1,6 @@
 # DECISIONS
 
-Choices behind apply-over-queue's transport, each recorded over its rejected alternatives.
+Choices behind apply-over-queue's fan-out transport and its cache handling, each recorded over the alternatives it was taken against.
 
 ## The fan-out stays on sequential `claude -p`; baseline context shrinks via CLI flags
 
@@ -32,4 +32,6 @@ Choices behind apply-over-queue's transport, each recorded over its rejected alt
 
 **Forces.** Keepalive pings are near-free prefix reads, while the 1-hour tier doubles the payload's write cost to buy headroom the pings already provide.
 
-**Rejected.** *1-hour TTL instead of keepalives*: pays 2× on every payload write to eliminate a mechanism that costs ~one prefix read per interval and already survives a missed ping.
+**Rejected.**
+
+- *1-hour TTL instead of keepalives*: pays 2× on every payload write to eliminate a mechanism that costs ~one prefix read per interval and already survives a missed ping.

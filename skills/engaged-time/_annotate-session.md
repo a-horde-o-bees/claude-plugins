@@ -1,6 +1,6 @@
 # Annotate session
 
-Author the per-exchange **descriptions** for one transcripts session. The apply-over-queue fan-out runs this across many sessions; it also runs standalone for one. Each spawn reads and writes only its own session, so parallel runs never contend.
+Author the per-exchange **descriptions** for one transcripts session. The apply-over-queue fan-out runs this across many sessions; it also runs standalone for one. Each run reads and writes only its own session, so no two ever contend over the same exchanges.
 
 Descriptions only — never assign topics. Topics come from a separate global pass over every description at once; a coherent vocabulary can't be set one session at a time.
 

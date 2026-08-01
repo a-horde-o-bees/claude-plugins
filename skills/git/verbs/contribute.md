@@ -1,6 +1,6 @@
 # git contribute
 
-> File a change against an upstream repo we don't own: prior-art search → conventions recon → fork → minimal change → PR, driver-backed end to end. The clone lives under a workspace dir (scratchpad), origin is the fork, so the standard commit/push commands work there unchanged — no raw `git`/`gh` anywhere in the flow, and the verb works under a user-level box.
+File a change against an upstream repo we don't own: prior-art search → conventions recon → fork → minimal change → PR, driver-backed end to end. The clone lives under a workspace dir (scratchpad), origin is the fork, so the standard commit/push commands work there unchanged — no raw `git`/`gh` anywhere in the flow, and the verb works under a user-level box.
 
 ## Variables
 
@@ -18,14 +18,14 @@
 
 ## Process
 
-1. `{art}`: bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py search-prior-art --repo {upstream} <keywords>` — JSON of PRs + issues, all states.
-2. If `{art}` holds a live match: Exit process — present the matches; referencing, extending, or abandoning is the user's call before any code.
-3. `{prep}`: bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py contribute-prep --upstream {upstream} --workdir {workdir}` (add `--shallow` for large repos) — forks, clones the fork as origin, wires the `upstream` remote; bind `{clone}`, `{default-branch}` from its JSON.
+1. `{art}`: Bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py search-prior-art --repo {upstream} <keywords>` — JSON of PRs + issues, all states.
+2. If `{art}` holds a live match: Exit process: the matches — referencing, extending, or abandoning is the user's call before any code.
+3. `{prep}`: Bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py contribute-prep --upstream {upstream} --workdir {workdir}` (add `--shallow` for large repos) — forks, clones the fork as origin, wires the `upstream` remote; bind `{clone}`, `{default-branch}` from its JSON.
 4. Conventions recon in `{clone}`: CONTRIBUTING, `.github/` templates, recent subjects via `gitflow.py read -- log --oneline -10`.
 5. Branch in `{clone}`; make the minimal change + mirrored test + docs touch; run their gates on the touched surface and capture results.
 6. Commit + push via the standard flow with `--cwd {clone}`: `inspect` → plan file (house commit style, co-author trailer) → `apply`, then `push`.
-7. `{pr}`: bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py pr-create --cwd {clone} --repo {upstream} --title "..." --body-file <file>` — body authored per /description-authoring, /concise-prose: why → what → testing → attribution trailer.
-8. If `{pr}` carries `fallback_compare_url`: report it with the body file path for manual filing; stop.
+7. `{pr}`: Bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py pr-create --cwd {clone} --repo {upstream} --title "..." --body-file <file>` — body authored per /description-authoring, /concise-prose: why → what → testing → attribution trailer.
+8. If `{pr}` carries `fallback_compare_url`: Exit process: it plus the body file path, for manual filing.
 
 ## Report
 

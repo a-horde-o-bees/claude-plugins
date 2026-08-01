@@ -1,6 +1,6 @@
 # git pr status
 
-> Report merge-readiness for the open PR on a branch. The gate classification is deterministic and lives in the driver (`gitflow.py gate`); this verb emits the matching template verbatim — no inventing, paraphrasing, or merging.
+Report merge-readiness for the open PR on a branch. The gate classification is deterministic and lives in the driver (`gitflow.py gate`); this verb emits the matching template verbatim — no inventing, paraphrasing, or merging.
 
 ## Variables
 
@@ -15,12 +15,12 @@
 
 ## Process
 
-1. `{gate}`: bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py gate` (append ` --branch {branch}` when given; the driver defaults to the current branch)
-3. Bind from `{gate}` JSON:
+1. `{gate}`: Bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py gate` (append ` --branch {branch}` when given; the driver defaults to the current branch)
+2. Bind from `{gate}` JSON:
     - `{pr-exists}` — always present
     - When `{pr-exists}` is `false`: nothing further; emit the `no-pr` template
     - When `true`: `{pr-number}`, `{base}`, `{url}`, `{is-draft}`, `{head-sha-short}`, `{protection}`, `{required-contexts}`, `{recommended-path}`, `{merge-ready}`, `{checks}`, `{annotation-count}`, `{review-decision}`, `{merge-state-status}`, `{mergeable}`, `{blockers}`, `{advisories}`, `{allowed-strategies}`, `{has-admin}`
-4. Emit the template matching `{pr-exists}` / `{merge-ready}` — see ### Report
+3. Emit the template matching `{pr-exists}` / `{merge-ready}` — see ## Report
 
 ## Report
 

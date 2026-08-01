@@ -1,10 +1,9 @@
 # git pr merge
 
-> Merge the open PR for the current branch, gating on the merge check and adapting solo vs team by branch protection. Optionally chains cleanup.
+Merge the open PR for the current branch, gating on the merge check and adapting solo vs team by branch protection. Optionally chains cleanup.
 
 ## Dependencies
 
-- `partials/...` — none; the merge gate is the driver's `gitflow.py gate`.
 - `verbs/pr-cleanup.md` — chained by `--cleanup`.
 
 ## Variables
@@ -24,41 +23,39 @@
 
 ## Process
 
-1. `{status}`: bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py gate` — the gate on the current branch; run directly, computed fresh. Bind `{branch}` from its JSON; an empty branch (detached HEAD) → Exit process — checkout the PR branch
-3. Bind from the `{status}` JSON: `{pr-exists}`, `{pr-number}`, `{base}`, `{recommended-path}`, `{merge-ready}`, `{blockers}` (each with severity), `{allowed-strategies}`, `{has-admin}`
-4. If `{pr-exists}` is false: Exit process — no open PR for `{branch}`; run `/git pr-open` first
-5. Hard gate:
+1. `{status}`: Bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py gate` — the gate on the current branch; run directly, computed fresh. Bind `{branch}` from its JSON; an empty branch (detached HEAD) → Exit process: check out the PR branch first
+2. Bind from the `{status}` JSON: `{pr-exists}`, `{pr-number}`, `{base}`, `{recommended-path}`, `{merge-ready}`, `{blockers}` (each with severity), `{allowed-strategies}`, `{has-admin}`
+3. If `{pr-exists}` is false: Exit process: no open PR for `{branch}` — run `/git pr-open` first
+4. Hard gate:
     1. `{hard}`: blockers in `{blockers}` with severity `hard`
     2. `{ci-pending}`: `{hard}` is exactly one blocker and it is pending CI
-    3. If `{hard}` non-empty AND NOT `{ci-pending}`: Exit process — list `{hard}`. Red CI → inspect the run; conflicts or behind-base → `git rebase {base}` then re-push. Never bypassed.
+    3. If `{hard}` non-empty AND NOT `{ci-pending}`: Exit process: `{hard}`. Red CI → inspect the run; conflicts or behind-base → `git rebase {base}` then re-push. Never bypassed.
     4. If `{ci-pending}`:
-        1. If NOT `{auto}`: Exit process — CI in flight; watch with `/git ci --branch {branch}`, then re-invoke merge once green.
+        1. If NOT `{auto}`: Exit process: CI in flight — watch with `/git ci --branch {branch}`, then re-invoke merge once green.
         2. If `{auto}`:
-            1. bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py pr-watch-checks --pr {pr-number}` — block until every check settles
-            2. Re-run steps 2–3 (a fresh gate verdict; re-bind `{blockers}`, `{merge-ready}`, `{recommended-path}`), then go to 5.1 — a green landing empties `{hard}` and the gate proceeds; a red landing falls to 5.3 and exits
-
-6. Resolve `{strategy}`:
+            1. Bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py pr-watch-checks --pr {pr-number}` — block until every check settles
+            2. Re-run steps 1–2 (a fresh gate verdict; re-bind `{blockers}`, `{merge-ready}`, `{recommended-path}`), then go to step 4.1 — a green landing empties `{hard}` and the gate proceeds; a red landing falls to step 4.3 and exits
+5. Resolve `{strategy}`:
     1. `{pr-md-path}`: `.claude/git/pr.md`; if it exists: `{methodology}`: Read `{pr-md-path}`
     2. `{strategy}`: `--strategy` if given, else `{methodology}` default, else first of `{allowed-strategies}`
-    3. If `{strategy}` not in `{allowed-strategies}`: Exit process — strategy `{strategy}` not allowed by repo settings; allowed: `{allowed-strategies}`
-
-7. Soft gate (only when `{merge-ready}` is false):
+    3. If `{strategy}` not in `{allowed-strategies}`: Exit process: strategy `{strategy}` not allowed by repo settings; allowed: `{allowed-strategies}`
+6. If `{merge-ready}` is false — soft gate:
     1. `{soft}`: blockers in `{blockers}` with severity `soft`
     2. If `{recommended-path}` is `solo-immediate`:
         1. If NOT `{auto}`:
             1. AskUserQuestion — present `{soft}`; merge anyway / cancel. Apply /confirm-shared-intent.
-            2. If cancel: Exit process — merge cancelled; soft blockers stand
+            2. If cancel: Exit process: merge cancelled — soft blockers stand
         2. `{admin-flag}`: empty (no protection to override)
     3. If `{recommended-path}` is `team-gated`:
-        1. If `{has-admin}` is false: Exit process — team path; soft blockers unmet (`{soft}`) and no admin rights to override. Wait for required approvals / clear annotations.
+        1. If `{has-admin}` is false: Exit process: team path; soft blockers unmet (`{soft}`) and no admin rights to override. Wait for required approvals / clear annotations.
         2. If `{auto}`: `{admin-flag}`: `--admin` — override applied automatically; surface it in the report
         3. If NOT `{auto}`:
             1. AskUserQuestion — present `{soft}`; wait (exit) / admin-override merge. Apply /confirm-shared-intent.
-            2. If wait: Exit process — waiting on `{soft}`
+            2. If wait: Exit process: waiting on `{soft}`
             3. `{admin-flag}`: `--admin`
-8. Else (merge-ready): `{admin-flag}`: empty
-9. Merge: bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py merge --pr {pr-number} --strategy {strategy}` + ` --admin` if `{admin-flag}` — the driver re-validates the strategy against repo settings
-10. If `{cleanup}`: Call: verbs/pr-cleanup.md --base `{base}` --head `{branch}`
+7. Else (merge-ready): `{admin-flag}`: empty
+8. Merge: Bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py merge --pr {pr-number} --strategy {strategy}` + ` --admin` if `{admin-flag}` — the driver re-validates the strategy against repo settings
+9. If `{cleanup}`: Call: verbs/pr-cleanup.md --base `{base}` --head `{branch}`
 
 ## Report
 

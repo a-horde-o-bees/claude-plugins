@@ -1,6 +1,6 @@
 # git doctor — submodule domain
 
-> Repair component for `/git doctor`. Diagnoses and repairs submodule conformance so canonical git (`submodule status --recursive`, `foreach`, `--show-superproject-working-tree`) works. Called only when the detector flags submodule drift (BLOCKING) or a routing gap. The driver runs every repair; this component classifies, gets approval, and dispatches — the deliberate cases (tier 2, unknown intent) are refused by the driver even if asked.
+Repair component for `/git doctor`. Diagnoses and repairs submodule conformance so canonical git (`submodule status --recursive`, `foreach`, `--show-superproject-working-tree`) works. Called only when the detector flags submodule drift (BLOCKING) or a routing gap. The driver runs every repair; this component classifies, gets approval, and dispatches — the deliberate cases (tier 2, unknown intent) are refused by the driver even if asked.
 
 ## Rules
 
@@ -25,18 +25,18 @@
     - `nested-independent` → **benign, skip** — parent-gitignored on-disk repo (umbrella pattern); intentionally not a submodule
     - `anomaly` → **surface** — doesn't fit a known pattern; report, don't act
 3. Emit ### diagnosis (per-path state + disposition + scope counts)
-4. Tier 1 — AskUserQuestion per path: approve the scoped repair? Then one batch: bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py sub-repair` with one `--path {p}` per approved path — re-borders each as a gitlink and commits the batch (the "adding embedded git repository" warning is the expected outcome)
-5. Init — for each `not-checked-out` / `declared-only` path: bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py sub-init --path {p}`
+4. Tier 1 — AskUserQuestion per path: approve the scoped repair? Then one batch: Bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py sub-repair` with one `--path {p}` per approved path — re-borders each as a gitlink and commits the batch (the "adding embedded git repository" warning is the expected outcome)
+5. Init — for each `not-checked-out` / `declared-only` path: Bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py sub-init --path {p}`
 6. Undeclared / orphan-gitlink — AskUserQuestion per path: declare + link it as a submodule (`sub-declare --path {p}`, url from its origin), leave as vendored content (no action), drop the orphan gitlink (`gitlink-drop --path {p}`, orphan only), or stop for manual handling. Act only on the chosen option; never guess intent.
 7. Tier 2 — present the history-rewrite warning per path; do NOT act — require a separate explicit instruction
 8. Routing native-key gaps (when the detector flagged `submodule-routing`) — for each declared submodule with no `branch =`:
-    1. `{current}`: bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py read --cwd {superproject}/{path} -- rev-parse --abbrev-ref HEAD`
+    1. `{current}`: Bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py read --cwd {superproject}/{path} -- rev-parse --abbrev-ref HEAD`
     2. If `{current}` is `HEAD` (detached): surface — `{path}` is detached with no declared branch; normalize it onto a branch first (there is no branch to record yet)
-    3. Else: AskUserQuestion — record `branch = {current}`? On approval: bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py write-native-key --path {path} --key branch --value {current}`
+    3. Else: AskUserQuestion — record `branch = {current}`? On approval: Bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py write-native-key --path {path} --key branch --value {current}`
 9. Integration override (when a checkpoint routing gap points here — e.g. `edits-to-readonly` — or the user wants a path detection wouldn't pick) — only ever a deliberate override, never to restate what detection already reads:
-    1. AskUserQuestion — write `x-integration = <read-only|direct|pr>`? Use it to force a PR on an unprotected branch, pin a writable repo as read-only, or admit a deliberate direct-land; leave unset to let detection decide. On approval: bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py write-native-key --path {path} --key x-integration --value {v}`
+    1. AskUserQuestion — write `x-integration = <read-only|direct|pr>`? Use it to force a PR on an unprotected branch, pin a writable repo as read-only, or admit a deliberate direct-land; leave unset to let detection decide. On approval: Bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py write-native-key --path {path} --key x-integration --value {v}`
     2. If the submodule's origin is a fork and the contribution target is ambiguous: AskUserQuestion — `x-contribute = <upstream|origin>`? On approval: the same `write-native-key` with `--key x-contribute`
-10. `{verify}`: bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py doctor-detect` — bind the fresh `{status}`
+10. `{verify}`: Bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py doctor-detect` — bind the fresh `{status}`
 11. Return to caller: ### result
 
 ## Report

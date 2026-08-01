@@ -1,6 +1,6 @@
 # report
 
-Roll up time-block coverage into engaged time per day and month — the "Engaged Time Report". Built on the START/STOP/BREAK line model, filtered through the thread-first lineage.
+Roll up time-block coverage into engaged time per day and month — the "Engaged Time Report", and the authoritative source of engaged-time numbers. Built on the START/STOP/BREAK line model, filtered through the thread-first lineage.
 
 ## Signature
 
@@ -22,8 +22,6 @@ uv run ${CLAUDE_SKILL_DIR}/report.py [--topics a,b,c] [--narrative-exclude x,y] 
 
 ## Process
 
-1. Ensure the raw DB is current (`verbs/ingest.md`), descriptions + threads + topics are current (`_synthesize-focus.md`).
+1. Ensure the raw DB is current (`verbs/ingest.md`), and descriptions, threads, and topics are current (`../_synthesize-focus.md`).
 2. Run `report.py --topics <billable set> [--from … --to …] --out <project>/build/reports/<name>.md`.
 3. Render to PDF via the `export-pdf` skill if a prepared deliverable is needed.
-
-This is the live engaged-time source.

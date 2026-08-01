@@ -28,21 +28,21 @@ from pathlib import Path
 
 # /skill-name token, optional skill:/Call: prefix, optional backticks; path-guarded like
 # DISCOVER/REWRITE so a body's concrete path (`…/skills/engaged-time/x.py`) never mis-discovers a skill
-SKILLREF = re.compile(r'(?:(?:skill|Call)\s*:\s*)?(?<![\w/}])`?/([a-z][a-z0-9][a-z0-9-]*)`?')
+SKILLREF = re.compile(r'(?:(?:skill|Call)\s*:\s*)?(?<![\w/}.])`?/([a-z][a-z0-9][a-z0-9-]*)`?')
 # a relative .md path, optional skill:/Call: prefix, optional backticks
 MDREF = re.compile(r'(?:(?:skill|Call)\s*:\s*)?`?([\w][\w./-]*\.md)`?')
 HEADING = re.compile(r'^#{1,6}\s')
 # the dispatcher-resolved skill-dir variable; spawns reading the payload can't bind it
 SKILL_DIR_VAR = "${CLAUDE_SKILL_DIR}"
 # strict /skill discovery for the operation file: the /name must NOT sit inside a path
-# (negative lookbehind on a word char, slash, or `}` — the last for variable paths like
-# `${VAR}/x`), so a concrete file path like `.../skills/engaged-time/x.py` never
+# (negative lookbehind on a word char, slash, `}`, or `.` — covering variable paths like
+# `${VAR}/x` and dot-relative `../x`), so a concrete file path like `.../skills/engaged-time/x.py` never
 # mis-discovers the `engaged-time` skill. A leading backtick / space / `(` is fine.
-DISCOVER = re.compile(r'(?<![\w/}])/([a-z][a-z0-9][a-z0-9-]*)')
+DISCOVER = re.compile(r'(?<![\w/}.])/([a-z][a-z0-9][a-z0-9-]*)')
 # the same path-guarded /name token, optionally backtick-wrapped, for REWRITING a ref to an
 # anchor link — consumes the backticks (so the result is a live link, not inline code), leaves
 # any preceding Call:/Apply: verb. The `in included_skills` check is the final guard.
-REWRITE = re.compile(r'(?<![\w/}])`?/([a-z][a-z0-9][a-z0-9-]*)`?')
+REWRITE = re.compile(r'(?<![\w/}.])`?/([a-z][a-z0-9][a-z0-9-]*)`?')
 
 
 def body_of(text: str) -> str:
