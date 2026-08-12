@@ -13,7 +13,7 @@ The queue is **static** (`--items`, a fixed list, each target yielded once) or *
 
 The saving holds only if **everything in the prompt before the target is byte-identical across spawns**. Three mechanisms guarantee that:
 
-- **Payload assembly** (`flatten.py`) concatenates the normalized operation with the `--skills` bodies it names — each SKILL.md arriving pre-materialized, its flatten region already carrying the deduplicated closure of its declared dependencies — into one self-contained instruction, leaving no runtime skill dispatch to vary or re-pay for. There is no reference discovery: the operation cites an inlined skill by bare name or its `## <name>` anchor, and the orchestrator passes the names via `--skills`.
+- **Payload assembly** (`flatten.py`) joins the normalized operation with the `--skills` it names, normalized to the **deduplicated union closure**: each named skill's materialized region is stripped, its declaration read, and every unit — named skill or transitive dependency — is emitted exactly once as a `## <name>` section. One self-contained instruction, no runtime skill dispatch to vary or re-pay for, and no duplicate copies when named skills overlap. There is no reference discovery: the operation cites an inlined skill by bare name or its `## <name>` anchor (which resolves to the single copy), and the orchestrator passes the names via `--skills`.
 - **Cache-safe ordering.** Every spawn reads that identical payload **before** claiming its varying target from the queue. The target enters as tool output, after the cached prefix — so the prefix stays byte-identical and cache-reuses across separate `claude -p` processes. A target read ahead of the payload would diverge the prefix and bust the cache.
 - **Fixed location.** cwd and the `--add-dir` set are part of the prefix, so they too must not vary per target. Under `staged` (default) the driver **copies every file/dir target into one run-local workspace** and runs every spawn with cwd fixed to that workspace — targets from different repos no longer diverge the prefix. Under `none` the cwd is the operation's own fixed home, not the target's.
 
@@ -88,7 +88,7 @@ The raw instruction may carry `${CLAUDE_SKILL_DIR}` — the skill-dir binding a 
 - `--items <x,y,...>` — **static queue:** the target tokens, each yielded once. Under `staged` these are file/dir paths; under `none`, any token the operation understands.
 - `--feeder <cmd>` — **dynamic queue** (instead of `--items`): a command printing the next target token or `DONE[:reason]`; `--dir <rundir>` is appended on each call. The queue feeds until the feeder stops.
 - `[--max <n>]` — feeder-mode iteration backstop (default 20); the feeder decides real termination.
-- `[--skills <a,b,...>]` — the skills to inline into the payload; the operation cites each by bare name or its `## <name>` anchor. Each SKILL.md arrives pre-materialized with its declared dependency closure — pass exactly the disciplines the operation applies.
+- `[--skills <a,b,...>]` — the skills to inline into the payload; the operation cites each by bare name or its `## <name>` anchor. Pass the disciplines the operation applies as named — overlap needs no pruning: the payload is normalized to the union closure, so a skill already inside another named skill's closure, or a dependency two named skills share, is emitted once.
 - `[--isolation <staged|none>]` — output model (default `staged`).
 - `[--repo <path>]` — where the inlined skills live (skills-root = `repo/<disciplines-subdir>`; default `~/.claude`). Independent of where the targets live.
 - `[--cwd <path>]` — `none` only: the operation's fixed home cwd (default `--repo`). Ignored under `staged`, where cwd is forced to the workspace.
@@ -114,7 +114,7 @@ The raw instruction may carry `${CLAUDE_SKILL_DIR}` — the skill-dir binding a 
     4. Resolve variables: `${CLAUDE_SKILL_DIR}` → the directory `{raw}` was read from; any other unbound `${VAR}`: **Exit process** naming it.
     5. `{normalized}`: write the result to a scratch file.
 3. Run the driver — bash: `python3 scripts/run.py --operation-file {normalized} <--items {items} | --feeder "{feeder}" [--max {max}]> [--skills {skills}] [--isolation {isolation}] [--repo {repo}] [--cwd {cwd}]`:
-    - It assembles the payload, stages the targets (under `staged`), warms the cache with one empty-target spawn, then drives the queue sequentially — a static list to exhaustion, or a feeder until it returns `DONE` — spawning one `claude -p` per target with a concurrent keepalive holding the cache hot.
+    - It assembles the payload (union-closure normalized), stages the targets (under `staged`), warms the cache with one empty-target spawn, then drives the queue sequentially — a static list to exhaustion, or a feeder until it returns `DONE` — spawning one `claude -p` per target with a concurrent keepalive holding the cache hot.
     - It prints each spawn's prefix re-read fraction, and halts the chain on a spawn that falls below `--cache-floor`, hangs past `--max-spawn-minutes`, or errors (unless `--continue-on-failure` is set).
     - On completion it prints a **per-target cache breakdown** — each target's input / cache_create / cache_read / prefix-reread, by origin path under `staged` — so the realized saving is auditable at a glance.
 4. **Review gate** — never finalize without explicit approval (confirm-shared-intent):
@@ -123,6 +123,7 @@ The raw instruction may carry `${CLAUDE_SKILL_DIR}` — the skill-dir binding a 
 
 ## Notes
 
+- **Overlapping skill sets are expected, not an error.** A request may name disciplines that contain one another — a host skill and one of its own dependencies, or two hosts sharing a dependency. Pass them to `--skills` as named and prune nothing by hand: normalization emits each unit once, and every bare-name or anchor reference resolves to that single copy.
 - **Sequential work, not parallel work.** Work-spawns run one at a time — parallel *work*-spawns would race the cold cache and each cold-write the payload. The only thing running alongside a work-spawn is the keepalive, a cheap empty-target read. Parallelize work-spawns only on explicit request.
 - **Amortize the warmup.** The warmup spawn pays near-full price to fill the cache; it is worth it only when the shared payload is large and the queue long enough that the warmup plus the per-spawn reads beat paying cold each time.
 - **Pool by home repo only as a fallback.** For an operation that genuinely needs in-repo execution context (e.g. running tests against the live tree) and so can't be staged, group the targets by repo and run one queue per repo, paying a cold cache per pool. The staged workspace is the default and is location-independent.
