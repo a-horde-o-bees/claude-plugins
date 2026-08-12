@@ -1,6 +1,6 @@
 # Reauthor a skill file
 
-Reauthor exactly one TARGET — the absolute path of one markdown file in a skill — composing it fresh under the skill-authoring disciplines. Operate only on TARGET; never read, reference, or change another file.
+Composes exactly one markdown file of a skill fresh under the skill-authoring disciplines. Takes `<TARGET>` — the absolute path of that file — and touches nothing else: no other file is read, referenced, or changed.
 
 ## Process
 

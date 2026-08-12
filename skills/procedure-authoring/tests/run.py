@@ -18,7 +18,7 @@ keep actions out of annotations — the guide can't enforce it at execution time
 Usage:
   uv run run.py                      every case
   uv run run.py -n 3                 repeat each case N times (behavior is sampled)
-  uv run run.py --only apply,callskill   run named cases (cheap iteration)
+  uv run run.py --only apply,callvars   run named cases (cheap iteration)
 
 Needs the `claude` CLI on PATH. Each case materializes temp skills under
 <repo>/.claude/skills/_pfn-*/, runs `claude -p` from the repo root so they register,
@@ -50,10 +50,9 @@ def _skill(name, body):
     return fm + body
 
 
-def add(name, body, expect, note, components=None, skills=None, prompt=None,
+def add(name, body, expect, note, components=None, prompt=None,
         group=None, control=False):
-    """Register a case. `components` are non-skill files under the entry dir; `skills` are
-    sibling registered skills (name -> body) the entry can Call/Apply by name. `prompt`
+    """Register a case. `components` are non-skill files under the entry dir. `prompt`
     overrides the default execution prompt (e.g. NEUTRAL_PROMPT for a wording A/B). `group`
     ties an A/B's arms together; `control=True` marks the negative-control arm whose `expect`
     asserts the marker stays ABSENT — `main` requires every group to carry a control that
@@ -62,8 +61,6 @@ def add(name, body, expect, note, components=None, skills=None, prompt=None,
     files = {f"{d}/SKILL.md": _skill(d, body)}
     for fn, c in (components or {}).items():
         files[f"{d}/{fn}"] = c
-    for sname, sbody in (skills or {}).items():
-        files[f"{sname}/SKILL.md"] = _skill(sname, sbody)
     CASES.append((d, files, expect, note, prompt or DEFAULT_PROMPT, group, control))
 
 
@@ -156,16 +153,10 @@ add("goto",
 # --- Invocations: Call ---
 
 add("callvars",
-    "## Process\n\n1. {name}: zed\n2. Call: [g](_g.md)\n",
+    "## Process\n\n1. {name}: zed\n2. Call: [g](#g)\n\n"
+    "## g\n\n1. Bash: `echo CV-{name} >> /tmp/pfn-test.log`\n2. Return to caller: done\n",
     lambda L: "CV-zed" in L,
-    "Call: runs in the current context — a variable bound before the call is visible inside it",
-    components={"_g.md": "# g\n\n1. Bash: `echo CV-{name} >> /tmp/pfn-test.log`\n2. Return to caller: done\n"})
-
-add("callskill",
-    "## Process\n\n1. Call: /_pfn-callee\n",
-    lambda L: "SKILL-RAN" in L,
-    "Call: /skill dispatches the skill via the Skill tool",
-    skills={"_pfn-callee": "## Process\n\n1. Bash: `echo SKILL-RAN >> /tmp/pfn-test.log`\n2. Return to caller: done\n"})
+    "Call: runs in the current context — a variable bound before the call is visible inside it")
 
 add("readnoexec",
     "## Process\n\n1. Read: [data](_data.md)\n2. Bash: `echo READ-OK >> /tmp/pfn-test.log`\n",
@@ -226,17 +217,17 @@ add("fidelity_control", _FIDELITY_ORCH.format(verb="Read:"),
 # --- Invocations: Apply (behavioral lens) ---
 
 add("apply",
-    "## Process\n\n1. Apply /_pfn-lens to:\n    1. Append the word `BASE` as a line to /tmp/pfn-test.log.\n",
+    "## Process\n\n1. Apply [lens](#lens) to:\n    1. Append the word `BASE` as a line to /tmp/pfn-test.log.\n\n"
+    "## Lens\n\nA behavioral lens. When a block of steps runs through you, every word the "
+    "block writes to a file must be prefixed with `PFX-`.\n",
     lambda L: "PFX-BASE" in L and "BASE" not in L,
-    "Apply runs the block THROUGH the target skill as a lens that shapes how it executes",
-    skills={"_pfn-lens": "A behavioral lens. When a block of steps runs through you, every word the "
-                         "block writes to a file must be prefixed with `PFX-`.\n"})
+    "Apply runs the block THROUGH the target section as a lens that shapes how it executes")
 
 # --- Spawn ---
 
 add("async",
     "## Process\n\n1. For each {item} in alpha, beta:\n"
-    "    1. Spawn async agent to: Call: [emit](_emit.md)\n"
+    "    1. Spawn async agent to: read and follow [emit](_emit.md)\n"
     "2. {n}: Bash: `grep -c EMIT /tmp/pfn-test.log`\n"
     "3. Bash: `echo ASYNC-{n} >> /tmp/pfn-test.log`\n",
     lambda L: "ASYNC-2" in L,

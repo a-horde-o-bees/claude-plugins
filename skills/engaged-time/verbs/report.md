@@ -22,6 +22,6 @@ uv run ${CLAUDE_SKILL_DIR}/report.py [--topics a,b,c] [--narrative-exclude x,y] 
 
 ## Process
 
-1. Ensure the raw DB is current (`verbs/ingest.md`), and descriptions, threads, and topics are current (`../_synthesize-focus.md`).
+1. Ensure the raw DB is current (`ingest.md`), and descriptions, threads, and topics are current (`../_synthesize-focus.md`).
 2. Run `report.py --topics <billable set> [--from … --to …] --out <project>/build/reports/<name>.md`.
 3. Render to PDF via the `export-pdf` skill if a prepared deliverable is needed.

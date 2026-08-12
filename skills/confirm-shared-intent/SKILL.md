@@ -1,11 +1,13 @@
 ---
 name: confirm-shared-intent
-description: Use before committing to action when intent, scope, or approach isn't pinned down — e.g. ambiguous instructions, multiple valid approaches, a plan deviation, spawning multiple agents, or acting past a missing or unreadable signal. Surfaces the ambiguity and aligns before acting instead of resolving it with a silent guess; gates on ambiguity and scoping, not on habitual mid-work checkpoints.
+description: Use before committing to action when intent, scope, or approach isn't pinned down — e.g. ambiguous instructions, multiple valid approaches, a plan deviation, spawning multiple agents, or acting past a missing or unreadable signal. Names the open question and settles it with the user instead of a silent guess; gates on ambiguity and scoping, not on habitual mid-work checkpoints.
 ---
 
-# Confirm Shared Intent
+# confirm-shared-intent
 
-Align on intent, scope, and approach before committing to action, instead of settling an open question with a silent default or fallback. A misinterpretation found after the work is rework a five-second confirmation would have prevented; an inferred guess hides the problem and compounds, while a named halt costs a glance.
+Use before committing to action when intent, scope, or approach isn't pinned down — e.g. ambiguous instructions, multiple valid approaches, a plan deviation, spawning multiple agents, or acting past a missing or unreadable signal. Names the open question and settles it with the user instead of a silent guess; gates on ambiguity and scoping, not on habitual mid-work checkpoints.
+
+A guess buries the question and compounds through the work that follows; naming it costs a glance.
 
 ## When to gate
 
@@ -15,15 +17,15 @@ Each gate names what to surface and what releases it.
 - Missing or unreadable signal (e.g. an undeclared value, an undeterminable permission) — halt and name the fix rather than falling back to a guessed default.
 - Multiple valid approaches — present them with trade-offs; proceed once the user selects.
 - Spawning multiple agents — present the expected agent count and token impact; proceed after approval. Skill-prescribed spawning is exempt.
-- Integration tests — confirm scope before running.
+- Integration tests — confirm the scope before running.
 - Plan deviation — explain what changed and why; proceed after approval.
 - A user question during multi-step work — address it, then confirm before resuming the paused operation.
 
-Work that arrives clearly directed needs no gate: proceed. Gates fire on ambiguity, scoping, and deviation, never as habitual mid-phase checkpoints.
+Clearly directed work needs no gate — gates fire on ambiguity, scoping, and deviation, never as habitual mid-phase checkpoints.
 
 ## Asking
 
-- After a reply arrives, check that every question you asked was answered and surface any that weren't.
-- Prefix questions `Q1`, `Q2`, … and letter any options `A)`, `B)`. Use `Q#` even for a single question — it primes a consistent reply shape (`Q1 A`) and disambiguates when option letters repeat across questions.
-- Avoid numbered option lists — they collide with Claude Code's periodic `1/2/3` rating prompt.
-- Avoid terminal "X or Y?" phrasings that force a retype; where a clear default exists, phrase it as "doing Y. Adjust?" so "yes" suffices.
+- Prefix every question `Q1`, `Q2`, … even when there is only one — it primes a consistent reply shape (`Q1 A`) and disambiguates when option letters repeat across questions.
+- Letter the options `A)`, `B)`; never number them — digit lists collide with Claude Code's periodic `1/2/3` rating prompt.
+- Where a clear default exists, phrase the question so "yes" suffices — "doing Y. Adjust?" rather than a terminal "X or Y?" that forces a retype.
+- After a reply arrives, check that every question was answered and surface any that weren't.

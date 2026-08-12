@@ -9,7 +9,7 @@ Report GitHub Actions run state for the latest pushed commit, parent and submodu
 
 ## Rules
 
-- `{ci-status}` is a 7-value enum: `passed`, `failed`, `dispatched`, `incomplete`, `no-runs`, `no-ci`, `unavailable`. Classification lives in the driver; emit the matching template verbatim.
+- `{ci-status}` is a closed enum: `passed`, `failed`, `dispatched`, `incomplete`, `no-runs`, `no-ci`, `unavailable`. Classification lives in the driver; emit the matching template verbatim.
 - `no-runs` (CI not triggered or not yet scheduled), `no-ci` (no `.github/workflows/`), and `unavailable` (gh could not answer — no remote or no auth) are reported states, not errors. Never substitute a guessed status for one the driver didn't return.
 - Failed runs report synchronously with workflow name + URL; no watcher.
 - In-flight runs spawn the async watcher per `watches[]` entry; foreground returns immediately. Task-completion text reports the outcome inline.
@@ -18,7 +18,7 @@ Report GitHub Actions run state for the latest pushed commit, parent and submodu
 
 1. `{result}`: Bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py ci --cwd {cwd}` (append ` --branch {branch}` when given). BLOCKED (branch mismatch): Exit process: the driver's surface.
 2. For each `{repo}` in `{result}`.repos (already deepest-first, parent last): emit the template matching `{repo}`.ci_status — see ## Report.
-3. For each `{watch}` in `{result}`.watches: Spawn async agent to: Call: partials/ci-watch.md (`{cwd}`: `{watch}`.cwd, `{sha}`: `{watch}`.sha, `{run-ids}`: `{watch}`.watch_ids)
+3. For each `{watch}` in `{result}`.watches: Spawn async agent to: read and follow `${CLAUDE_SKILL_DIR}/partials/ci-watch.md` (`{cwd}`: `{watch}`.cwd, `{sha}`: `{watch}`.sha, `{run-ids}`: `{watch}`.watch_ids)
 
 ## Report
 

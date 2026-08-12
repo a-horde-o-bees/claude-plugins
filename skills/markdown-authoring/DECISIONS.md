@@ -1,6 +1,6 @@
 # DECISIONS
 
-The counterfactual record for markdown-authoring's shape — why the lint lives here and why the override surface is severity-only.
+The counterfactual record for markdown-authoring's shape — each decision with the forces that drove it and the alternatives it rejected.
 
 ## Markdown lint lives inside this skill, not as a sibling
 

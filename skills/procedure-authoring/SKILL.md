@@ -1,9 +1,11 @@
 ---
 name: procedure-authoring
-description: Apply when authoring an agent procedure with control flow beyond a linear sequence (e.g. conditionals, loops, variable binding, sub-routine calls, error handling, nested blocks) to keep non-trivial procedures readable and unambiguously executable. Not needed for simple sequential steps or lists.
+description: Apply when authoring an agent procedure with control flow beyond a linear sequence (e.g. conditionals, loops, variable binding, sub-routine calls, error handling) to keep non-trivial procedures readable and unambiguously executable. Not needed for simple sequential steps or lists.
 ---
 
 # procedure-authoring
+
+Apply when authoring an agent procedure with control flow beyond a linear sequence (e.g. conditionals, loops, variable binding, sub-routine calls, error handling) to keep non-trivial procedures readable and unambiguously executable. Not needed for simple sequential steps or lists.
 
 **procedure-authoring sets expectations, not meanings.** This guide is never in the executing agent's context — only the authored procedure is. So a construct cannot *define* a meaning the executor is bound to honor; it can only pick wording whose plain reading **reliably evokes the intended behavior in an agent that has never read this guide.**
 
@@ -33,8 +35,8 @@ A variable is written `` `{curly-dashes}` `` — braces inside backticks, a code
 
 - inline value — `{x}: 42`
 - bash stdout — `` {x}: Bash: `cmd` ``
-- a call's return — `{x}: Call: [label](target)`
-- an applied block's result — `{x}: Apply /skill to: <block>`
+- a call's return — `{x}: Call: [label](#anchor)`
+- an applied block's result — `{x}: Apply [lens](#anchor) to: <block>`
 - a conditional — `{x}: <a> if <cond> else <b>`
 - an indented sub-block — its final assignment or return
 - a loop accumulator — `{acc}:` then a `For each:` block that builds it
@@ -54,26 +56,26 @@ A variable is written `` `{curly-dashes}` `` — braces inside backticks, a code
 
 ## Invocations
 
-A step delegates by a prefix. The **prefix is the behavior**; the **target is what runs and how it resolves** — the two are independent, so each behavior takes either target form.
+A step delegates only to text already in context. The document is loaded whole, so its own `##` sections are reliable targets; text outside it is not — an un-opened file is invisible, its steps get improvised from the call site instead of run, and the miss appears under real orchestration load even though cold single-task tests pass every wording. No verb choice fixes an absent target.
 
-Behaviors:
+- **`Call: [label](#anchor)`** — *procedural*: follow the section as steps within the current context.
+- **`Apply [label](#anchor) to:`** — *behavioral*: run the indented block **through** the section as a lens — a discipline that shapes *how* the steps execute, not steps themselves. Opens a block; binds when assigned (`{x}: Apply [lens](#anchor) to: <block>`). Listed targets combine into a single lens over the block, interpreted together rather than as successive passes: `Apply [a](#a), [b](#b) to:`.
 
-- **`Call: target`** — *procedural*: read and follow the target as steps within the current context.
-- **`Apply target to:`** — *behavioral*: run the indented block **through** the target as a lens — a discipline that shapes *how* the steps execute, not steps themselves. Opens a block; binds when assigned (`{x}: Apply /description-authoring, /concise-prose to: <block>`). Listed targets combine into a single lens over the block, interpreted together rather than as successive passes: `Apply /a, [b](#b) to:`.
+Text a procedure depends on but does not own is materialized or mechanized, never fetched by the executor:
 
-Targets:
-
-- **`/skill-name`** — a skill, resolved **by name** through the harness priority chain (never a hard-coded path) and run via the Skill tool. `Call: /skill` dispatches the skill; it does not Read its file. The harness **force-loads** the skill into context, so its steps cannot be paraphrased away unseen — prefer this form for a load-bearing sub-process.
-- **`[label](target)`** — a file or section at a **known path**, resolved by reading it: `Call:` reads the target and follows it inline. Forms: `#anchor` (a `##` section of this document, resolved once the document is read whole or flattened), `relative.md`, `relative.md#section`, or `/absolute.md`. **Presume a file target unreliable under load.** An un-opened file is invisible — its steps get improvised from the call site instead of run — and the miss appears under real orchestration load even though cold single-task tests pass every wording. No verb choice fixes this. When the target's steps are load-bearing (their wording carries a constraint unguessable from the call site), use the force-loaded `/skill` form, or gate a later step on an artifact only the target's steps produce; reserve bare file targets for steps whose miss is cheap.
+- **A sibling skill's discipline** — declare it as a flatten dependency; the build inlines it under `## Dependencies`, an ordinary in-document target.
+- **Deterministic work** — a script the step runs with `Bash:`. Token relief comes from mechanization, never from making the executor navigate to text stored elsewhere.
+- **Steps meant for a fresh context** — a spawn whose directive names the file; the spawned agent starts empty, so reading the file is its first act, not a hop it may skip (see Spawn).
+- **Provenance or background** — cite by bare name; a citation is not an invocation, and its miss costs nothing.
 
 Return:
 
-- **`Return to caller`** — hands control back from a called section or file.
+- **`Return to caller`** — hands control back from a called section.
 - **`Return to caller:`** — hands a returned result back to the caller (e.g. from a spawned agent).
 
-Never gate an invocation on a judgment the target owns — wrapping `Call:`/`Apply` in a condition that restates the target's own trigger ("/reauthor for entries composed fresh") makes loading contingent on the decision the unloaded target exists to make; the executor skips the load and never meets the discipline that would have flipped its judgment. Invoke unconditionally — the target self-limits.
+Never gate an invocation on a judgment the target owns. A condition restating the target's own trigger — *if the entry needs composing fresh*, over a lens whose whole job is deciding that — makes the discipline contingent on the decision it exists to make; the executor skips it and never meets the text that would have flipped its judgment. Invoke unconditionally — the target self-limits.
 
-### Tools
+## Tools
 
 - **`Bash:`** — runs a shell command: `` `cmd` ``.
 - **`Read:`** — loads content without executing it; the read-only counterpart to `Call:`.
@@ -83,8 +85,7 @@ Never gate an invocation on a judgment the target owns — wrapping `Call:`/`App
 
 ## Spawn
 
-- **`Spawn agent to:`** — delegates to a new agent with its own context.
-- **`Spawn agent to: Call: [label](_file.md)`** — keeps the caller's context clean; only the agent reads the file.
+- **`Spawn agent to:`** — delegates to a new agent with its own context. A directive that names a file (`Spawn agent to: read and follow _plan.md`) keeps the caller's context clean; only the agent reads it.
 - **`Spawn async agent to:`** — runs agents concurrently; the next outdented step runs after they complete.
 - **`Spawn background agent to:`** — runs the agent in the background.
 - **Route data around the caller** — a step whose output only a spawned agent consumes runs inside the spawn: the caller passes the directive and bare variables (paths, ids), never content it doesn't itself consume. Content relayed through the caller is read, written, and re-read — paid in the costliest context — and anchors the spawn to the caller's framing besides.
@@ -118,7 +119,7 @@ Pair flags with their verb inline — `<verb1 | verb2 --flag <v>>` — rather th
 
 The executor sees only the authored procedure, cold, and runs any instruction it reads wherever it sits — so descriptive prose mixed into the steps both dilutes the actionable signal and risks being executed as a step. Classify every line by the **actionability test**: *would an executor need this to perform the task?*
 
-- **Procedure** (keep) — reasoning, judgment, and contextual sequencing the agent steers; orchestration whose composition depends on intermediate results (skill calls, tool invocations, agent spawns); and the user-facing surface (review gates, clarifying questions, error-recovery dialogue).
+- **Procedure** (keep) — reasoning, judgment, and contextual sequencing the agent steers; orchestration whose composition depends on intermediate results (section calls, tool invocations, agent spawns); and the user-facing surface (review gates, clarifying questions, error-recovery dialogue).
 - **Script** (→ a `Bash:` call or invoked module) — deterministic operations with no agent context: parsing, filtering, aggregation, format conversion, fixed-rule classification. The tell: *could a deterministic function with no agent context produce this result?* Yes → script. Prefer one wherever it suffices; it preserves the agent's focus for the judgment only an agent can supply.
 - **Durable structure** (→ the architecture doc) — the shape, boundaries, and external facts a reader needs *before* the steps make sense and that survive a rewrite. Not a step; state it there and link.
 - **Why this and not that** (→ the decision record) — a choice made over rejected alternatives. The procedure *runs* the choice; the reasoning belongs there. Link.

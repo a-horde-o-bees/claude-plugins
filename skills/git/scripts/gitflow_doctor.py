@@ -18,6 +18,18 @@ NATIVE_KEYS = {"branch", "update", "x-integration", "x-contribute"}
 X_INTEGRATION_VALUES = {"read-only", "direct", "pr"}
 
 
+def _disposition(state, history):
+    """Fixed-rule repair disposition per state row; judgment (approvals, intent
+    questions) stays with the caller."""
+    if state == "broken-link":
+        return "tier1-repair" if history == 0 else "tier2-surface-only"
+    return {"orphan-gitlink": "declare-or-drop",
+            "not-checked-out": "init",
+            "declared-only": "init",
+            "undeclared": "ambiguous-intent",
+            "nested-independent": "skip-benign"}.get(state, "surface-anomaly")
+
+
 def _detect(cwd):
     p = subprocess.run(["sh", str(SCRIPTS_DIR / "detect.sh")], cwd=cwd,
                        capture_output=True, text=True)
@@ -34,7 +46,8 @@ def _detect(cwd):
         m = ROW_RE.match(line)
         if m:
             table.append({"state": m[1], "path": m[2],
-                          "staged": int(m[3]), "history": int(m[4])})
+                          "staged": int(m[3]), "history": int(m[4]),
+                          "disposition": _disposition(m[1], int(m[4]))})
         elif "superproject:" in line:
             superproject = line.split("superproject:", 1)[1].strip()
     return {"status": status, "exit": p.returncode, "problems": problems,

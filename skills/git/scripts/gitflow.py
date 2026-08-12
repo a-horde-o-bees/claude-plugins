@@ -57,6 +57,14 @@ Release (synthesis and review stay with the caller):
   read [--cwd] -- <read-only git args>    inspection passthrough for boxed repos
                                           (diff/log/show/…; refuses write-capable forms)
 
+Sync (integration-inbound: bring refs in; conflicts resolve with judgment):
+  fetch --remote R [--cwd]                fetch + prune one remote; refs summary
+  switch --branch B [--cwd]               switch to an existing local branch (clean tree only)
+  integrate --source REF --mode merge|rebase|cherry-pick [--cwd]
+                                          integrate REF into the current branch; on
+                                          conflict: structured file list, exit 1
+  integrate --continue|--abort [--cwd]    finish after resolving (marker-guarded) / back out
+
 Checkpoint sequencing (the mechanical steps between verb calls):
   checkpoint-preflight [--cwd] [--branch B] [--paths P ...] [--base-mode] [--path I]
                                           branch + routes + per-submodule plan
@@ -88,6 +96,7 @@ from gitflow_gate import cmd_gate, cmd_protection, cmd_routes
 from gitflow_pr import cmd_merge, cmd_pr_cleanup, cmd_pr_create, cmd_pr_preflight, cmd_pr_watch_checks, cmd_search_prior_art, cmd_contribute_prep
 from gitflow_release import (cmd_read, cmd_release_bootstrap_detect, cmd_release_cut,
                              cmd_release_preflight, cmd_release_validate)
+from gitflow_sync import cmd_fetch, cmd_integrate, cmd_switch
 
 
 def main():
@@ -225,6 +234,20 @@ def main():
     p.add_argument("--old", default=None, help="defaults to origin/HEAD's current target")
     p.add_argument("--cwd", default=".")
 
+    p = sub.add_parser("fetch")
+    p.add_argument("--remote", required=True)
+    p.add_argument("--cwd", default=".")
+    p = sub.add_parser("switch")
+    p.add_argument("--branch", required=True)
+    p.add_argument("--cwd", default=".")
+    p = sub.add_parser("integrate")
+    p.add_argument("--source", default=None, help="ref (or A..B range for cherry-pick) to integrate")
+    p.add_argument("--mode", choices=["merge", "rebase", "cherry-pick"], default=None)
+    p.add_argument("--continue", dest="cont", action="store_true",
+                   help="finish after conflicts are resolved (refuses leftover markers)")
+    p.add_argument("--abort", action="store_true")
+    p.add_argument("--cwd", default=".")
+
     p = sub.add_parser("checkpoint-preflight")
     p.add_argument("--cwd", default=".")
     p.add_argument("--branch", default=None)
@@ -257,6 +280,7 @@ def main():
         "gitlink-drop": cmd_gitlink_drop, "sub-declare": cmd_sub_declare,
         "write-native-key": cmd_write_native_key, "origin-head-set": cmd_origin_head_set,
         "default-branch-rename": cmd_default_branch_rename,
+        "fetch": cmd_fetch, "switch": cmd_switch, "integrate": cmd_integrate,
         "checkpoint-preflight": cmd_checkpoint_preflight, "sub-prep": cmd_sub_prep,
         "sub-reconcile": cmd_sub_reconcile, "branch-create": cmd_branch_create,
     }[a.cmd](a)

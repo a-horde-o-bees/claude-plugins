@@ -34,8 +34,9 @@ THREAD-FIRST, three layers (lineage: exchange -> thread -> topic -> billable):
                   UUIDs (per-root fan-out). Threads are TOPIC-FREE here — a thread's identity is the
                   sha256 of its sorted member UUIDs (`thread_key`), stable across description edits.
   3. topics + thread-assign — ONE global pass reviews every thread, refines the vocabulary to fit
-                  the real threads, and assigns each thread exactly one topic. The report bills the
-                  exchanges of every thread whose topic is in its filter set.
+                  the real threads, and assigns each thread its topic tags (one or more; single is
+                  the norm). The report bills the exchanges of every thread ANY of whose tags is in
+                  its filter set.
 
 A consumed interjection has no anchor UUID of its own — its text rides on the exchange it folded
 into. The leading `(continuation)` pseudo-exchange (anchor_uuid=None) can't be described or

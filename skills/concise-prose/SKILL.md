@@ -1,62 +1,57 @@
 ---
 name: concise-prose
-description: Use whenever the agent writes or edits prose for any reader — e.g. chat replies, docs, code comments, commit messages, error strings — to slim content without losing meaning. A concision pass layered on top of surface-specific authoring skills (e.g. description-authoring, commit guidance), never replacing their structure.
+description: Use to shape prose for any reader (e.g. chat replies, docs, code comments, commit messages, error strings) to minimize overhead without losing meaning — the foundation for all prose output, which other instructions build on or modify.
 ---
 
 # concise-prose
 
-Minimize reader overhead without losing meaning. Readers can be users, other agents, or downstream tools. Length follows information, not prompt length — prose runs as long as the content requires once every directive below is applied.
+Use to shape prose for any reader (e.g. chat replies, docs, code comments, commit messages, error strings) to minimize overhead without losing meaning — the foundation for all prose output, which other instructions build on or modify.
 
-## Rules
+- **Input contract** — treat all input as intent to recompose, not text to transplant; preserve exact wording only when explicitly directed.
+- **Edit license** — rephrase only to cut or correct: a reduction that preserves meaning is improvement; a swap that trades one adequate phrasing for another is churn.
+- **Output contract** — length follows information, not prompt length: prose runs as long as the content requires once every directive below is applied.
 
-### Voice
+## Voice
 
-- Active imperative, not passive.
+- Write in active imperative voice, never passive.
 - Report facts — no speculation, no hedging.
-- No preambles, narrative overhead, cheerleading, or self-congratulation. Direct the action, don't narrate it ("Map the callers", not "This section helps you understand the callers"). Where describing or analyzing an action *is* the content (e.g. discussion, postmortems, design rationale, change summaries), describe it in full.
+- Cut ceremonial and narrative overhead (e.g. preambles, cheerleading, self-congratulation).
 
-### Structure
+## Structure
 
-- Reshape before trimming — structural choices convey meaning and often cut more than word-trimming does.
-- Align parallel or comparative content using bullet lists or tables, and preserve that alignment — do not collapse parallel items into prose.
+- Reshape to move meaning into structure — give content the shape that carries it most efficiently, not the shape it arrived in; grouping, ordering, and form express relationships that connective wording spells out, and often cut more than trimming does.
+- Trim to shed wording the meaning doesn't need (e.g. modifiers, restatement, filler).
+- Keep parallel or comparative content aligned in bullet lists or tables, never collapsed into prose.
 - Mark the load-bearing claim and let the rest visibly support it — the reader should find the one thing that matters without weighing every sentence equally.
 
-### Restraint
+## Restraint
 
-- No examples or counter-examples unless the content is ambiguous without one — and a `Not:/Yes:` (wrong/right) pair only when the contrast *is* the spec, not decoration of a rule already stated. This bar gates inclusion; it never licenses keeping or adding a pair.
-- Signal non-exhaustiveness in parenthetical lists with leading "e.g." — an unqualified list implicitly claims completeness; the qualifier is signal, not filler.
-- Quantify only when the number is load-bearing — a threshold, a tracked discrepancy, or a result whose value a decision turns on ("0 failures", "158/205 over credit"). A decorative count (totals, tallies, sizes no decision reads) rots and demands upkeep; state the qualitative fact instead ("suite green", "balances reconcile").
+- Drop examples or counter-examples unless the content is incomprehensible without them.
+- Signal non-exhaustiveness with `(e.g. …)`, in exactly that form — an unqualified list implicitly claims completeness; the qualifier is signal, not filler.
+- Quantify only when the number is load-bearing (e.g. a threshold, a tracked discrepancy, a result whose value a decision turns on). A decorative count rots and demands upkeep; state the qualitative fact instead.
 - Cross-reference only when the reader must consult the source to understand the current surface.
 - Never enumerate content from a linked source — parenthetical summaries are redundant, cherry-picked, and prone to drift.
 
-### Context leverage
+## Context leverage
 
-- Assume a capable reader — lean on the vocabulary and general knowledge they already hold (e.g. concepts established upstream in this surface, anything a generalist would recognize), and spend words only on non-obvious, domain- or project-specific facts. Cutting a "what is X" explanation of a well-known concept is almost always right.
-- Siblings carry context — items in a complementary set (e.g. failure modes, axes, angles) compact further than items read alone. Each only describes what it covers; the surrounding siblings clarify what it excludes. A gap that persists across all siblings together is a legitimate hole to address.
-- Dedup within a surface, not across surfaces — e.g. frontmatter, body, metadata, docstring, error codes, error messages are distinct mechanical surfaces with distinct readers and triggers; the same content appearing in two is not duplication.
+- Assume a capable reader — lean on the vocabulary and general knowledge they hold (e.g. concepts established upstream in this surface, anything a generalist would recognize), and spend words only on non-obvious, domain- or project-specific facts.
+- Compact sibling items against each other — in a complementary set (e.g. failure modes, axes, angles), each item describes only what it covers; the surrounding siblings clarify what it excludes. A gap that persists across all siblings is a legitimate hole to address.
+- Eliminate duplication within a surface (e.g. a point stated twice, examples making the same point, parallel sections that hedge each other), not across surfaces (e.g. frontmatter, body, metadata, docstring, error codes, error messages) — each surface has distinct readers and triggers; the same content appearing in two is not duplication.
 
-### Anti-staleness
+## Anti-staleness
 
-- No commentary on prior states the artifact no longer reflects — the artifact represents current reality only.
-- No references to temporary phases, processes, or labels that may not exist when the artifact is read.
+- Cut commentary on prior states the artifact no longer reflects — the artifact represents current reality only.
+- Cut dependence on context that may be absent when the artifact is read (e.g. temporary phases, position labels, pointers to removed siblings) — state each fact directly rather than by reference.
 
-### Correction
+## Correction
 
-- **Correct by reduction, not accretion.** When a passage reads wrong, sharpen or cut the offending line rather than layer a clarifying sentence over it. A passage that passed review is not proven minimal: the sharper, shorter form is often still unarticulated.
+Correct by reduction, not accretion. When a passage reads wrong, sharpen or cut the offending line rather than layer a clarifying sentence over it. A passage that passed review is not proven minimal: the sharper, shorter form is often still unarticulated.
 
 ## Safety checks
 
 These bound the cut decision itself, not a separate review pass.
 
-- **Slim test** — would removing this leave meaning intact for a reader who lacks your context? If yes, the content is a candidate for removal pending the remaining checks.
-- **Lossless preservation** — safety boundaries, corrective guidance, and disambiguation survive any cut. A phrase carrying one of these loads stays.
-- **Curse of knowledge** — content that feels redundant to the author often carries the only "why" the reader has: rationale, scope-setting, anti-pattern framing that reads as preamble but makes the rule stick. If content fits a companion surface better, migrate it rather than delete and assume the other surface will catch up.
+- **Slim test** — would removing this leave meaning intact for a reader who lacks your context? If yes, it is a candidate for removal pending the remaining checks.
+- **Lossless preservation** — carry safety boundaries, corrective guidance, and disambiguation through any cut; a phrase bearing one of these loads stays.
+- **Curse of knowledge** — content that feels redundant to the author often carries the only "why" the reader has (e.g. rationale, scope-setting, anti-pattern framing that reads as preamble but makes the rule stick). If content fits a companion surface better, migrate it rather than delete and assume the other surface will catch up.
 - **Chesterton's Fence** — do not remove a fence until you know why it was built. Raise to the user when a candidate for removal has no recoverable purpose.
-
-## Exceptions
-
-Exceptions relax specific directives on specific surfaces. Identify which directive the exception modifies; apply all others normally.
-
-- **Sequence-specific artifacts** (incident reports, postmortems) — relax restraint on event ordering and timing detail; the sequence is the content.
-- **Endorsement artifacts** (recommendations, testimonials) — relax length and restraint on rationale and confidence language that substantiates the call. Voice and anti-preamble directives still apply.
-- **Narrative artifacts** (case studies, journeys, retrospectives) — relax restraint on arc and learning moments that inform future decisions.

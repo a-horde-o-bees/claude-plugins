@@ -50,27 +50,28 @@ Spawned-agent component: reads commits in `{commit-range}`, produces a Keep-a-Ch
     3. `{recommended-version}`: apply the bump to `{current-version}` per the methodology's reset rules (e.g., "y bump resets z to 0")
     4. `{bump-axis-rationale}`: one or two sentences naming which categories drove the chosen axis (e.g., "y-bump: two Added entries for new user-facing capabilities; no Removed or breaking Changed entries triggered x")
 
-7. Compose the CHANGELOG section. Apply /description-authoring and /concise-prose:
+7. Compose the CHANGELOG section, under description-authoring and concise-prose:
     1. Heading: `## [{recommended-version}] - YYYY-MM-DD`
     2. Optional one-line lead paragraph if the release has a coherent theme (e.g., "Skill-orchestrated reports + Q#/letter prompt convention")
     3. Categorized bullets per step 5
     4. Bullets concise but specific — name the thing, name the user-visible effect
     5. `{changelog-entry}`: composed markdown section
 
-8. Flag ambiguity:
+8. Flag ambiguity — surfacing uncertainty beats confidently mis-categorizing or mis-bumping:
     1. If commits suggest a change but the user-facing effect is unclear: include the bullet annotated with `(needs review: <reason>)` so the operator catches it during the review gate
     2. If the bump-axis decision is ambiguous (e.g., a Changed entry could be breaking or non-breaking): pick the more conservative axis (higher impact = larger bump) and flag the rationale with `(needs review: ...)`
 
-    > Better to surface uncertainty than to confidently mis-categorize or mis-bump.
-
-9. Return to caller:
-    - `{recommended-version}`: computed next version per methodology rules
-    - `{bump-axis-rationale}`: one-or-two-sentence justification for the chosen axis
-    - `{changelog-entry}`: composed markdown section
-    - `{commits-considered}`: count of commits in `{commit-range}`
-    - `{commits-deconflicted}`: count of pairs/chains that collapsed
-    - `{ambiguity-flags}`: count of `(needs review: ...)` entries
+9. Return to caller — see ## Report
 
 ## Report
 
-Return the recommended version, bump-axis rationale, and composed CHANGELOG section as the primary deliverables. Surface deconfliction and ambiguity counts so the caller knows how much synthesis judgment was applied.
+Return to caller:
+
+- `{recommended-version}` — computed next version per methodology rules
+- `{bump-axis-rationale}` — one-or-two-sentence justification for the chosen axis
+- `{changelog-entry}` — composed markdown section
+- `{commits-considered}` — count of commits in `{commit-range}`
+- `{commits-deconflicted}` — count of pairs/chains that collapsed
+- `{ambiguity-flags}` — count of `(needs review: ...)` entries
+
+The version, rationale, and CHANGELOG section are the primary deliverables; the counts tell the caller how much synthesis judgment was applied.

@@ -1,24 +1,25 @@
 # Annotate the corpus (description fan-out)
 
-Populate per-exchange description lines across the whole corpus, or a chosen session set, by fanning the per-session unit `_annotate-session.md` out over `/apply-over-queue`. This file is the parent orchestration; `_annotate-session.md` is the per-item unit it runs. Topic assignment is a separate global pass (`verbs/exchanges.md`), never fanned out — coherent tags need the full set in view.
+Populate per-exchange description lines across the whole corpus, or a chosen session set, by fanning the per-session unit `_annotate-session.md` out over apply-over-queue. This file is the parent orchestration; `_annotate-session.md` is the per-item unit it runs. Topic assignment is a separate global pass (`verbs/exchanges.md`), never fanned out — coherent tags need the full set in view.
 
 ## Why apply-over-queue
 
-The shared instruction — the writing disciplines plus the per-session unit — is large and identical on every spawn, so `/apply-over-queue` pays for it once and serves it from prompt cache on every later session. The per-session unit is target-shaped, reading and writing only its own session, so spawns never contend.
+The shared instruction — the writing disciplines plus the per-session unit — is large and identical on every spawn, so apply-over-queue pays for it once and serves it from prompt cache on every later session. The per-session unit is target-shaped, reading and writing only its own session, so spawns never contend.
 
-The disciplines flatten automatically. `_annotate-session.md` authors each description under two independent disciplines — `/description-authoring` for what each line must convey, `/concise-prose` to raise signal and cut filler — and references both as `/skill` calls. `/apply-over-queue` discovers and flattens every `/skill` reference in the instruction's latest version, so no `--skills` flag is needed: a well-formed instruction self-declares its disciplines. (`--skills` remains available to *supplement* a discipline the instruction doesn't name.)
+The disciplines ride the payload via `--skills`. `_annotate-session.md` authors each description under two independent disciplines — description-authoring for what each line must convey, concise-prose to raise signal and cut filler — and the fan-out inlines both bodies (each pre-materialized) after the operation, where the unit references them by anchor.
 
 ## Process
 
 1. **Build the queue** — the session ids to annotate. Take the whole corpus, or only sessions with undescribed exchanges; the unit self-skips fully-described sessions, so an over-broad queue costs only cheap no-op spawns.
-    - bash: `ls <corpus dir>/*.jsonl` → full session ids (`--items` wants full ids, not prefixes).
+    - bash: `ls <corpus dir>/*.jsonl` — each file's stem is one full session id (`--items` wants full ids, not prefixes).
 
-2. **Fan out** — invoke `/apply-over-queue` with the per-session unit as instruction:
+2. **Fan out** — invoke apply-over-queue with the per-session unit as instruction:
 
     ```
     /apply-over-queue \
       --instruction ${CLAUDE_SKILL_DIR}/_annotate-session.md \
       --items <full session ids, comma-separated> \
+      --skills description-authoring,concise-prose \
       --isolation none \
       --model opus \
       --cwd ${CLAUDE_SKILL_DIR} \

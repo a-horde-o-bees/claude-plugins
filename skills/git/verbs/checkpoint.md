@@ -14,7 +14,7 @@ Bundle the checkpoint for the current branch. The driver's preflight routes ever
 - `{branch}` — `--branch <name>`; defaults to current. Explicit `--branch` must match current (the preflight enforces this).
 - `{paths}` — optional `--paths <pathspec>...`; scopes the whole checkpoint. Empty = the whole tree.
 - `{base-mode}` — `--base-mode`: the one explicit override — land directly on the base even when detection says `pr` (the admin/direct-land exception).
-- `{auto}` — `--auto`: hands-off. Threaded verbatim to `/git pr-open` and `/git pr-merge`; the verbs own what it bypasses. Checkpoint adds no auto behavior of its own.
+- `{auto}` — `--auto`: hands-off. Threaded verbatim to the pr-open and pr-merge verbs; the verbs own what it bypasses. Checkpoint adds no auto behavior of its own.
 - `{path}` — `--path <pr | direct>`, **internal only**: a parent passes its decided integration into a recursive submodule run, so a parent `x-integration` override the submodule can't see in its own `.gitmodules` is still honored. Forwarded to the preflight.
 - `{feature-branch}` — the topic-derived `<area>/<topic>` branch auto-created when checkpointing a `pr` repo from its base branch.
 - From the preflight JSON: `{default-branch}`, `{root}`, `{effective-path}`, `{pending}`, `{needs-feature-branch}`, `{pin-only}` (submodule paths the parent only pins), `{land}` (pr-integrated submodules with work to land), `{ledger}` (per-submodule routing outcomes, surfaced in the report and on a halt), `{augmentations}` (`present` + declared step names — the machine-carried signal that the root `checkpoint.md` has steps to honor).
@@ -27,7 +27,7 @@ Bundle the checkpoint for the current branch. The driver's preflight routes ever
 - **One preflight; any gap halts.** It runs before anything is committed. Any gap — undeterminable permission, an undeclared push branch, edits to a read-only repo — halts up front with the exact native-key fix or a `/git doctor` pointer. No mid-flight bootstrap, no silent fallback, no proceeding on ambiguity.
 - **The parent pins merged shas, never unmerged ones.** A PR-governed submodule whose PR does not land halts the whole checkpoint — the ledger names what already landed (irreversibly) vs. halted, and landed submodules are skipped on re-run. After a submodule lands, `sub-reconcile` pins it to origin's merged tip (refusing over a dirty tree).
 - **Augmentations are honored, not hardcoded.** The root `checkpoint.md` may declare project steps to run *before the commit* (pre-land — e.g. a version bump) and *after content reaches the base* (on-main — e.g. a delivery sync). This verb runs them at those points and carries none of their content. The file holds augmentations only — never routing — and is optional.
-- **No optimistic merge.** Merge runs through `/git pr-merge`, whose hard gate (red or pending CI, conflicts, behind-base) exits rather than merging on unknown state. Under `--auto` the merge verb watches in-flight CI to green and merges in the same run; only a hard failure halts.
+- **No optimistic merge.** Merge runs through the pr-merge verb, whose hard gate (red or pending CI, conflicts, behind-base) exits rather than merging on unknown state. Under `--auto` the merge verb watches in-flight CI to green and merges in the same run; only a hard failure halts.
 - **Skip the commit/push portion silently when nothing is pending** — not an error. The PR/merge phase still proceeds on a feature branch.
 
 ## Process
@@ -40,7 +40,7 @@ Bundle the checkpoint for the current branch. The driver's preflight routes ever
 2. Land pr-integrated submodules — for each `{sub}` in `{land}` (each is a full lifecycle of its own):
     1. Bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py sub-prep --path {sub.path}` — normalize off detached HEAD; BLOCKED (divergence) → Exit process: `{ledger}`
     2. Bash: `cd {sub.path}` — make the submodule the working directory for the recursive run
-    3. `{sub-report}`: Call: verbs/checkpoint.md --path `{sub.integration}` + ` --auto` if `{auto}` — full lifecycle in the submodule: commit → push → CI → open PR → merge (gated) → cleanup, recursing its own sub-submodules
+    3. `{sub-report}`: run this whole verb again from the submodule, with --path `{sub.integration}` + ` --auto` if `{auto}` — full lifecycle in the submodule: commit → push → CI → open PR → merge (gated) → cleanup, recursing its own sub-submodules
     4. Bash: `cd {root}` — return to the superproject
     5. If `{sub-report}` did not land the PR (gate halt — pending/red CI, conflicts, unmet reviews): Exit process: submodule `{sub.path}`'s PR did not land. Landed this run: `{ledger}`. Resolve in `{sub.path}`, then re-invoke (landed submodules are skipped). The parent is not pinned to an unmerged sha
     6. Bash: `uv run ${CLAUDE_SKILL_DIR}/scripts/gitflow.py sub-reconcile --path {sub.path}` — pin to the merged tip; `{merged}`: its `pinned`

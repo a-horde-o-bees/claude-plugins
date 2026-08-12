@@ -12,7 +12,7 @@ uv run ${CLAUDE_SKILL_DIR}/swimlane_server.py [--db ~/.claude/engaged-time/raw.d
 
 Open `http://localhost:<port>/`.
 
-## First run
+## Quickstart
 
 From nothing to a rendered page in three commands — every flag defaults, so none are needed:
 
@@ -26,9 +26,9 @@ Then open `http://localhost:8765/`.
 
 `init` is required first: `ingest` blocks without a stored root, and `init` is what creates the `logs/` directory the backgrounded launch below redirects into. Expect the first `ingest` over a large corpus to take minutes; reruns are near-instant (incremental by size+mtime).
 
-## Process
+## Process — backgrounded launch
 
-1. Ensure the raw DB exists and is current (`verbs/ingest.md`).
+1. Ensure the raw DB exists and is current (`ingest.md`).
 2. Bash: `mkdir -p ~/.claude/engaged-time/logs` — guards the case where `init` was skipped, since the shell redirect fails before Python can create anything.
 3. Bash: `uv run ${CLAUDE_SKILL_DIR}/swimlane_server.py --db ~/.claude/engaged-time/raw.db --port 8765 > ~/.claude/engaged-time/logs/serve.log 2>&1 &` — background it and redirect to a log; the server runs minutes-plus.
 4. Note the launch **PID** — stopping the server needs it.

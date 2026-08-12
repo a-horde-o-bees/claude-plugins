@@ -148,13 +148,24 @@ def cmd_push(a):
         if rc != 0:
             print(f"{cwd}: no origin remote — skipped")
             continue
-        rc, _, _ = run(["git", "rev-parse", "--abbrev-ref", "@{u}"], cwd)
-        if rc != 0:
+        rc, u, _ = run(["git", "rev-parse", "--abbrev-ref", "@{u}"], cwd)
+        if rc != 0 or u != f"origin/{r['branch']}":
+            # No tracking, or tracking a foreign remote/name (e.g. a contribution
+            # branch cut from upstream/main): the verb's contract is origin, so
+            # re-point rather than honoring the mismatched tracking ref.
             run(["git", "push", "-u", "origin", r["branch"]], cwd, check=True)
-            print(f"{cwd}: pushed {r['branch']} (upstream set)")
+            print(f"{cwd}: pushed {r['branch']} (upstream set to origin/{r['branch']})")
             continue
         # fetch + rebase onto upstream so the push is fast-forward by construction
         run(["git", "fetch"], cwd, check=True)
+        rc_ff, _, _ = run(["git", "merge-base", "--is-ancestor", "@{u}", "HEAD"], cwd)
+        if rc_ff == 0:
+            # already fast-forward; rebasing would pointlessly linearize any
+            # merge commits the branch carries (flattening a fork's upstream
+            # merge into per-commit replays that conflict with cherry-picks)
+            _, _, err = run(["git", "push"], cwd, check=True)
+            print(f"{cwd}: pushed {r['branch']}" + (f" — {err.splitlines()[-1]}" if err else ""))
+            continue
         rc, _, err = run(["git", "rebase", "@{u}"], cwd)
         if rc != 0:
             run(["git", "rebase", "--abort"], cwd)
