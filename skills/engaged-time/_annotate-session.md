@@ -18,7 +18,7 @@ Commands reference `${CLAUDE_SKILL_DIR}`. apply-over-queue resolves it to this f
 2. If `{todo}` is empty: Exit process — TARGET is fully described; make no writes.
 3. `{descriptions}`: an empty map, accumulated below.
 4. For each `{row}` in `{todo}`:
-    1. `{description}`: Apply: /description-authoring, /concise-prose:
+    1. `{description}`: Apply [description-authoring](#description-authoring), [concise-prose](#concise-prose) (inlined in this payload) to:
         1. Read `{row}`'s `text` array in full and write a one-line summary of what the exchange did.
         2. **Past tense, always** — a completed action, since the work is done by the time it is read and the summaries feed billing reports. Lead with a past-tense verb and keep every clause past tense (`Traced the residual and patched the routing`, not `Traces…and patches…`; not the gerund `Tracing…`).
     2. Add `{row.uuid}: {description}` to `{descriptions}`.

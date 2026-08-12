@@ -2,26 +2,27 @@
 
 The mechanical reconstruction of **engaged time** from raw Claude Code transcripts — the source of truth for splitting machine time into **active** and **idle**, per-session and per-project. It reads the raw transcript DB (every JSONL line, nothing interpreted away) and derives active-processing intervals from record *signatures* alone. What a consumer does with the active/idle signal (billing, capacity, focus metrics) is the consumer's concern. The shaping rationale behind each mechanism, and the alternatives rejected, lives in `DECISIONS.md`.
 
-## The four tiers
+## The tiers
 
-A strict containment hierarchy: each tier groups the one below; time is measured on time-blocks and rolls up.
+Two layered structures. The **temporal hierarchy** is strict containment — each tier groups the one below; time is measured on time-blocks and rolls up:
 
 | Tier | Definition |
 | --- | --- |
 | **event** | One JSONL row — one record. The atom. |
 | **time-block** | A contiguous span of active processing, bounded by a START and the next END. The unit time is *measured* on. |
 | **exchange** | A run of consecutive time-blocks anchored by one typed prompt — the work that prompt set in motion, across any mid-exchange idle. The unit time is *attributed* to. |
-| **topic** | A set of related exchanges sharing a focus — the report filter key. |
+
+The **annotation lineage** `exchange → thread → topic` rides above it, persisted in `annotations.db` (§ Descriptions and topics): a **thread** coalesces one root's exchanges around a single objective — the unit of narrative and billing membership — and a **topic** is a focus tag carried by threads, the report filter key. The lineage groups the temporal tiers; it never changes their times: an exchange bills through its thread or not at all.
 
 ## Engaged time — active vs idle
 
-Engaged time is the model's quantity: the intervals the machine is provably **active**, separated from **idle** by record signature alone — machine-evidenced, reproducible, deliberately conservative. Active is a time-block (a START→END pairing); idle is everything else. Three kinds of idle are excluded *because they are not foreground-active machine time*, not by any downstream policy:
+Engaged time is the model's quantity: the intervals the machine is provably **active**, separated from **idle** by record signature alone — **machine-evidenced and wait-free**, every call evidence-derived per instance, never guessed, deliberately conservative. Active is a time-block (a START→END pairing); idle is everything else. Three kinds of idle are excluded *because they are not foreground-active machine time*, not by any downstream policy:
 
 - **wait / suspend** — gaps where nothing runs (between turns, parked on a prompt).
 - **operator reading / thinking / composing** — real human time, but not machine-evidenced; indistinguishable from idle by signature, so uncounted.
 - **background machine runtime** — work completing outside the foreground turn (backgrounded deploys/audits) — a distinct, separately-identifiable category, not foreground-active.
 
-The measure is **machine-evidenced and wait-free**, every active/idle call **evidence-derived per instance**, never guessed. How a consuming project *leverages* the signal — billing engaged time at a rate, capacity planning, focus metrics — is the consumer's policy, not the model's. Rejected alternatives (estimating operator compose time; the measure choice): `DECISIONS.md`.
+Rejected alternatives (estimating operator compose time; the measure choice): `DECISIONS.md`.
 
 ## Line detection — the mechanism under time-blocks
 
@@ -77,7 +78,7 @@ An **exchange** is the run of consecutive time-blocks from one `prompt`-START up
 
 Each exchange carries a persistent **description** — a per-exchange line (scope + role, no mechanics) authored via description-authoring, keyed by its opening typed prompt's canonical UUID (stable across ceiling changes, turn boundaries, and rebuilds). Its input is the opening prompt + every consumed-interjection text the exchange folds in + the agent's response; it regenerates when those inputs change.
 
-A **topic** groups related exchanges by shared focus (many exchanges → one topic), assigned in one global pass over the descriptions from a fixed vocabulary. It is the report filter key and the cross-session rollup unit, carrying what a consuming project bills on; the model stores no topic policy.
+A **thread** coalesces one root's described exchanges around a single objective (synthesized per root — `_synthesize-root.md`); its membership is exact, and an exchange outside every thread does not bill. A **topic** is a focus tag assigned to threads in one global pass over the synthesized thread list, from a fixed vocabulary — one or more tags per thread (replace-semantics; a single tag is the authoring norm, and the report bills a thread on any-match). The topic is the report filter key and the cross-session rollup unit, carrying what a consuming project bills on; the model stores no topic policy.
 
 Storage is a separate persistent annotation store (`annotations.db`), keyed by UUID and joined at read/report time. The raw DB is a regenerable cache, so the two are distinct files (`DECISIONS.md`).
 
@@ -118,7 +119,7 @@ A **segment** is a *structural* unit (an era of the thread), orthogonal to the *
 The model is the single source of truth; the renderers (static HTML, live server) are dumb consumers of its geometry. Read the module docstrings for the authoritative detail.
 
 - `raw_db.py` — ingest: JSONL → the raw scratch DB (every line, `is_replay`/`is_compact_summary` marked, nothing dropped).
-- `swimlane_timeline.py` — the model + geometry: `classify` (event → class), the line/role functions (`_role_of`, `_role_items`, `_sweep_points`), pairing + coverage (`_pair_points`, `segment_coverage`), exchange materialization (`materialize_exchanges`), and the ordinal segment geometry (`segment_geometry`). Also the standalone static render.
-- `branch_tree.py` — the session segments / flat rail (`session_trees`, `_node`).
+- `swimlane_timeline.py` — the model + geometry, shared by `serve`, `render`, and `report`: `classify` (event → class), the line/role functions (`_role_of`, `_role_items`, `_sweep_points`), pairing + coverage (`_pair_points`, `segment_coverage`), exchange materialization (`materialize_exchanges`), and the ordinal segment geometry (`segment_geometry`). Also carries the standalone static render.
+- `branch_tree.py` — the session segments / flat rail (`session_trees`, `_node`), consumed by `serve` and — through `exchanges.py`'s cross-file root components — by `report`.
 - `swimlane_server.py` — the interactive shared-column tree server; `swimlane_server_ui.md` documents its UI.
 - `exchanges.py` — the annotation store CLI over `annotations.db`.

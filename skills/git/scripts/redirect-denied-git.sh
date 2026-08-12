@@ -12,6 +12,6 @@ cmd=$(jq -r '.tool_input.command // empty' 2>/dev/null)
 stripped=$(printf '%s' "$cmd" | sed "s/'[^']*'//g; s/\"[^\"]*\"//g")
 if printf '%s' "$stripped" | grep -qE '(^|&&|\|\||;|\||\$\(|`)[[:space:]]*(git|gh)([[:space:]]|$)'; then
   jq -cn '{hookSpecificOutput: {hookEventName: "PreToolUse", permissionDecision: "deny", permissionDecisionReason:
-    "Raw git/gh is boxed; the /git skill driver is the only route to them. Use the /git skill instead: /git commit · push · ci · checkpoint · pr-open/status/merge/cleanup · contribute (upstream repos) · release · doctor. Read-only history: uv run ~/.claude/skills/git/scripts/gitflow.py read -- <git read verb>. Do not retry the raw command or work around the box."}}'
+    "Raw git/gh is boxed; the /git skill driver is the only route to them. Use the /git skill instead: /git commit · push · ci · sync (fetch/merge/rebase/cherry-pick/switch) · checkpoint · pr-open/status/merge/cleanup · contribute (upstream repos) · release · doctor. Read-only history: uv run ~/.claude/skills/git/scripts/gitflow.py read -- <git read verb>. Do not retry the raw command or work around the box."}}'
 fi
 exit 0

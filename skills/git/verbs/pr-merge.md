@@ -43,14 +43,14 @@ Merge the open PR for the current branch, gating on the merge check and adapting
     1. `{soft}`: blockers in `{blockers}` with severity `soft`
     2. If `{recommended-path}` is `solo-immediate`:
         1. If NOT `{auto}`:
-            1. AskUserQuestion — present `{soft}`; merge anyway / cancel. Apply /confirm-shared-intent.
+            1. AskUserQuestion — present `{soft}`; merge anyway / cancel; never merge without the explicit choice (confirm-shared-intent).
             2. If cancel: Exit process: merge cancelled — soft blockers stand
         2. `{admin-flag}`: empty (no protection to override)
     3. If `{recommended-path}` is `team-gated`:
         1. If `{has-admin}` is false: Exit process: team path; soft blockers unmet (`{soft}`) and no admin rights to override. Wait for required approvals / clear annotations.
         2. If `{auto}`: `{admin-flag}`: `--admin` — override applied automatically; surface it in the report
         3. If NOT `{auto}`:
-            1. AskUserQuestion — present `{soft}`; wait (exit) / admin-override merge. Apply /confirm-shared-intent.
+            1. AskUserQuestion — present `{soft}`; wait (exit) / admin-override merge; never override without the explicit choice (confirm-shared-intent).
             2. If wait: Exit process: waiting on `{soft}`
             3. `{admin-flag}`: `--admin`
 7. Else (merge-ready): `{admin-flag}`: empty

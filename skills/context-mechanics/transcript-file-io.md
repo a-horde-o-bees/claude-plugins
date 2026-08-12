@@ -4,7 +4,7 @@ Correctness traps and measured speed findings for code that reads `~/.claude/pro
 
 Everything here was measured against a live 3.7–4.5 MB / 1,415-line session transcript on WSL2, while building a PreToolUse hook that had to answer one question fast: *"has this already happened since the last human turn?"*
 
-The correctness traps matter more than the speed numbers. Two of them produce code that looks like it works and is silently wrong.
+The correctness traps matter more than the speed numbers — they produce code that looks like it works and is silently wrong.
 
 ## Correctness traps
 

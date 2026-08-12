@@ -41,9 +41,14 @@ def cmd_release_preflight(a):
     last_tag = next((t for t in tags.splitlines() if SEMVERISH_TAG.match(t)), "")
     commit_range = f"{last_tag}..HEAD" if last_tag else "HEAD"
     _, count, _ = run(["git", "rev-list", "--count", commit_range], cwd, check=True)
+    # Declared submodules, for the verb's opt-in recursion (--recurse-submodules);
+    # emitted unconditionally — enumeration is cheap and the caller binds it only on opt-in.
+    _, sub_out, _ = run(["git", "submodule", "status"], cwd)
+    submodules = [line.split()[1] for line in sub_out.splitlines() if len(line.split()) >= 2]
     print(json.dumps({
         "default_branch": default, "head_sha": head, "last_tag": last_tag or None,
         "commit_range": commit_range, "commits_since": int(count or "0"),
+        "submodules": submodules,
     }, indent=1))
 
 

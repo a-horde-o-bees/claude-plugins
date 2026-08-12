@@ -5,7 +5,13 @@ description: Use when authoring markdown files, or to lint existing markdown on 
 
 # markdown-authoring
 
-Open every markdown file with a level-1 heading (`#`) naming the file, then a description of the file written per `/description-authoring`.
+Use when authoring markdown files, or to lint existing markdown on demand.
+
+## Structure
+
+- Open every file with a level-1 heading (`#`) naming it, then its summary paragraph: when the file carries `description:` frontmatter, the first paragraph is that description verbatim — one owner for the summary, audited by diffing the two; otherwise write it per description-authoring.
+- Only summary-level content sits before the first section heading — the description paragraph, then support that still reads at that level. The test: content is summary-level when it governs the document as a whole (e.g. its input, its output bounds) and would misread as scoped under any one heading; content that fires at a recognizable moment or span belongs in a precise section.
+- Give a unit a heading when it is an addressable scope — cited from elsewhere or consulted independently; bind it as a bold-label bullet (`- **Label** — details`) when it is a member of a jointly-consumed set or must sit at summary level.
 
 ## Lint pass
 

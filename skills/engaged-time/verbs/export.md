@@ -15,7 +15,7 @@ uv run ${CLAUDE_SKILL_DIR}/export_md.py --session ID_OR_PREFIX --out FILE.md \
 
 ## Process
 
-1. Ensure the sessions are ingested (`verbs/ingest.md`) — into a separate `--db` if they shouldn't enter the default corpus.
+1. Ensure the sessions are ingested (`ingest.md`) — into a separate `--db` if they shouldn't enter the default corpus.
 2. Run once per session; each writes one `.md`.
 
 ## Output shape

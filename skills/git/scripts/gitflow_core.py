@@ -55,6 +55,11 @@ def repo_state(cwd, paths=None):
     _, diffstat, _ = run(["git", "diff", "--stat"] + scope, cwd)
     st["diffstat"] = diffstat
 
+    # co-author trailer opt-in — surfaced here because a boxed repo's read passthrough
+    # excludes `git config`, so inspect is the trailer condition's only sanctioned source
+    rc_ca, coauthor, _ = run(["git", "config", "--type=bool", "--get", "user.claude-coauthor"], cwd)
+    st["claude_coauthor"] = (coauthor.strip() == "true") if rc_ca == 0 else None
+
     # default branch + protection + publicness (all graceful without a remote / gh)
     _, head_ref, _ = run(["git", "symbolic-ref", "--short", "refs/remotes/origin/HEAD"], cwd)
     st["default_branch"] = head_ref.split("/", 1)[1] if "/" in head_ref else None

@@ -19,7 +19,7 @@ Report merge-readiness for the open PR on a branch. The gate classification is d
 2. Bind from `{gate}` JSON:
     - `{pr-exists}` — always present
     - When `{pr-exists}` is `false`: nothing further; emit the `no-pr` template
-    - When `true`: `{pr-number}`, `{base}`, `{url}`, `{is-draft}`, `{head-sha-short}`, `{protection}`, `{required-contexts}`, `{recommended-path}`, `{merge-ready}`, `{checks}`, `{annotation-count}`, `{review-decision}`, `{merge-state-status}`, `{mergeable}`, `{blockers}`, `{advisories}`, `{allowed-strategies}`, `{has-admin}`
+    - When `true`: `{pr-number}`, `{base}`, `{url}`, `{head-sha-short}`, `{protection}`, `{required-contexts}`, `{recommended-path}`, `{merge-ready}`, `{checks}`, `{annotation-count}`, `{review-decision}`, `{merge-state-status}`, `{mergeable}`, `{blockers}`, `{advisories}`, `{allowed-strategies}`, `{has-admin}`
 3. Emit the template matching `{pr-exists}` / `{merge-ready}` — see ## Report
 
 ## Report

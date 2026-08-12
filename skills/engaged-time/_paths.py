@@ -104,15 +104,15 @@ def transcripts_root() -> pathlib.Path:
     if root is None:
         raise SystemExit(
             "transcripts root is not set — no transcripts to read.\n"
-            f"  Set it:  uv run {pathlib.Path(__file__).parent}/raw_db.py init [PATH]\n"
-            f"  Default PATH is the conventional location ({CONVENTIONAL_ROOT}).\n"
+            f"  Set it:  uv run {pathlib.Path(__file__).parent}/raw_db.py init --root PATH\n"
+            f"  Omit --root to accept the conventional location ({CONVENTIONAL_ROOT}).\n"
             "  Or set ENGAGED_TIME_ROOT for a one-off override.")
     if not root.is_dir():
         raise SystemExit(
             f"transcripts root does not exist: {root}\n"
             "  Claude Code deletes transcripts older than `cleanupPeriodDays`\n"
             "  (settings.json) — if the corpus was pruned, the history is gone and\n"
-            "  cannot be rebuilt. Re-point the root with `raw_db.py init PATH`.")
+            "  cannot be rebuilt. Re-point the root with `raw_db.py init --root PATH`.")
     return root
 
 

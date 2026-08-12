@@ -6,9 +6,11 @@ allowed-tools:
   - Bash(uv run *)
 ---
 
-# /engaged-time
+# engaged-time
 
-Reconstruct and inspect engaged time from raw Claude Code transcripts. `ARCHITECTURE.md` defines the model and every term used here — read it before changing any verb. This file is the entry contract: how to invoke, and which verb runs what.
+Engaged time reconstructed from raw Claude Code transcripts — the machine-evidenced active/idle split per session, project, and day, feeding rollups a consumer may bill on, plus an interactive swimlane timeline for exploring a session's anatomy (exchanges, time-blocks, coverage, the prompt queue).
+
+This file is the entry contract: how to invoke, and which verb runs what. `ARCHITECTURE.md` defines the model and every term used here — read it before changing any verb.
 
 ## Invocation
 
@@ -18,7 +20,7 @@ The scripts are a self-contained stdlib package. Run any verb with `uv run` agai
 uv run ${CLAUDE_SKILL_DIR}/<script>.py <args>
 ```
 
-Two path anchors. The **transcripts root** is the corpus this skill reads — stored once by `init`, with no default, and every reading verb blocks without it. The **raw DB** (default `~/.claude/engaged-time/raw.db`, override `ENGAGED_TIME_WORK`) is the shared substrate: `ingest` builds it; every other verb reads it. Rebuild after transcripts change — the raw DB is a cache, the corpus is the source.
+Two path anchors, both stored by `init`. The **transcripts root** is the corpus this skill reads — it has no default, and every reading verb blocks without it. The **raw DB** (`~/.claude/engaged-time/raw.db`, moved by repointing the working dir via `ENGAGED_TIME_WORK` or `init --work`) is the shared substrate: `ingest` builds it, every other verb reads it. Rebuild after transcripts change — the raw DB is a cache, the corpus is the source.
 
 Claude Code prunes the corpus on the `cleanupPeriodDays` timer, so raise it to cover the window you analyze — pruned sessions are unrecoverable and shorten every rollup silently. `init` reports the live value.
 
@@ -28,22 +30,21 @@ Each verb's process lives in its own file under `verbs/`. Signatures here; open 
 
 | Verb | Signature | Does | Process |
 | --- | --- | --- | --- |
-| **init** | `init [--root PATH] [--work PATH]` | Set or confirm both path anchors: the transcripts root to read (default `~/.claude/projects`) and the working dir every artifact lands in (default `~/.claude/engaged-time`). Run once first. Re-runnable — repointing `--work` warns about artifacts left at the old location. Reports the corpus found and the live retention setting. | `verbs/ingest.md` |
-| **ingest** | `ingest [--file F \| --dir D] [--db DB]` · `reset [--db DB] [--yes]` | JSONL → raw scratch DB; every line, nothing interpreted, sub-agent dir pulled in, idempotent per file. Bare, it takes the whole stored root and blocks if unset. `reset` (gated) drops the cache for a clean rebuild. | `verbs/ingest.md` |
+| **init** | `init [--root PATH] [--work PATH]` | Set or confirm both path anchors: the transcripts root to read (default `~/.claude/projects`) and the working dir every artifact lands in (default `~/.claude/engaged-time`). Run once first; re-runnable. Reports the corpus found and the live retention setting. | `verbs/ingest.md` |
+| **ingest** | `ingest [--file F \| --dir D] [--db DB]` · `reset [--db DB] [--yes]` | JSONL → raw scratch DB; every line, nothing interpreted, sub-agent dir pulled in, idempotent per file. Bare, it takes the whole stored root. `reset` (gated) drops the cache for a clean rebuild. | `verbs/ingest.md` |
 | **serve** | `serve [--db DB] [--port 8765]` | Launch the interactive flat-rail timeline UI (sessions as segments, time-blocks, coverage). The exploration surface. | `verbs/serve.md` |
 | **render** | `render [--db DB] [--lines N] [--out HTML]` | Static single-session timeline HTML + its entity-key companion `.md`. For a fixed artifact, no server. | `verbs/render.md` |
-| **exchanges** | `exchanges (list \| describe \| topics \| roots \| threads \| thread-list \| thread-assign) [--db DB] [--anno A]` | The persistent annotation store and the thread-first lineage `exchange → thread → topic → billable`: derive prompt-anchored exchanges from the raw DB, author each one's `description`, coalesce a root's exchanges into focus-`threads`, assign each thread one `topic`. Descriptions and per-root synthesis fan out over apply-over-queue (`_annotate-corpus.md`, `_synthesize-focus.md`); topic assignment is one global pass (`thread-assign`). | `verbs/exchanges.md` |
+| **exchanges** | `exchanges (list \| describe \| topics \| roots \| threads \| thread-list \| thread-assign) [--db DB] [--anno A]` | The persistent annotation store and the thread-first lineage `exchange → thread → topic → billable`: derive prompt-anchored exchanges, author each one's description, coalesce them into focus-threads, tag the threads with topics. What `report` bills on. | `verbs/exchanges.md` |
 | **report** | `report [--topics …] [--from D --to D] [--format md\|csv]` | Roll up time-block coverage → engaged time per day and month, filtered through the thread lineage (time follows threads). The "Engaged Time Report" verb. | `verbs/report.md` |
 | **export** | `export --session ID --out FILE.md [--db DB]` | One session's dialogue as readable markdown — user/agent messages only (no tool calls or thinking), horizontal rules between messages. Content-level reader; no timeline model involved. | `verbs/export.md` |
-
-`branch_tree.py` (the segment builder) and `swimlane_timeline.py` (the geometry and accounting library, which also carries the `render` CLI) are shared by `serve`, `render`, and `report`. `ARCHITECTURE.md` documents both.
 
 ## Pipeline order
 
 ```
-ingest ──> raw DB ──┬──> serve   (interactive)
-                    ├──> render  (static HTML)
-                    └──> report  (engaged-time rollup)
+ingest ──> raw DB ──┬──> serve      (interactive)
+                    ├──> render     (static HTML)
+                    ├──> export     (session dialogue)
+                    └──> exchanges ──> annotations DB ──> report  (engaged-time rollup)
 ```
 
 ## Diagrams

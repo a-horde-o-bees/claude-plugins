@@ -5,7 +5,9 @@ description: Use when authoring a rule, principle, or directive that governs age
 
 # rule-authoring
 
-A rule that governs agent behavior is retrieved, not obeyed: it competes for attention with everything else in context and fails silently when it loses. No wording makes a rule reliable. Craft raises the rate at which it binds on the right cases and stays quiet on the wrong ones; a guarantee comes only from mechanism. Author under that ceiling: enforce what must hold, then sharpen the wording of what remains.
+Use when authoring a rule, principle, or directive that governs agent behavior — to raise the odds it binds on the right cases and stays quiet on the wrong ones.
+
+A rule that governs agent behavior is retrieved, not obeyed: it competes for attention with everything else in context and fails silently when it loses. No wording makes a rule reliable — a guarantee comes only from mechanism. Author under that ceiling: enforce what must hold, then sharpen the wording of what remains.
 
 ## Enforce before wording
 
@@ -34,11 +36,11 @@ Examples of principle vs symptom:
 - **Splitting a rule in two**: "names two distinct mechanisms" — not "covers more than one paragraph"
 - **Component reuse**: "referenced from multiple places" — not "more than three callers"
 
+## Self-carrying polarity
+
+A rule carries its own polarity — prescribe or prohibit stated in the line, never inferred from the section heading. The heading names the cluster; sibling rules may supply the clarifying context that keeps a line compact, but neither supplies direction.
+
 ## When a rule backfires
 
 - Fix a leaky or backfiring rule — one that misses the right case, or *licenses the behavior it forbids* — by sharpening its own line, never by stacking a second rule to guard the first; the stack compounds (concise-prose § Correction).
 - A carve-out that shields content from a cutting rule must gate on what *qualifies* the content, never read as "keep it" or "add it" — ungated, the exception inverts the rule into a mandate to produce the very content the rule bounds.
-
-## Self-carrying polarity
-
-A rule carries its own polarity — prescribe or prohibit stated in the line, never inferred from the section heading. The heading names the cluster; sibling rules may supply the clarifying context that keeps a line compact, but neither supplies direction.

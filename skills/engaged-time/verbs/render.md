@@ -16,7 +16,7 @@ uv run ${CLAUDE_SKILL_DIR}/swimlane_timeline.py [--db ~/.claude/engaged-time/raw
 
 ## Process
 
-1. Ensure the raw DB is current (`verbs/ingest.md`).
+1. Ensure the raw DB is current (`ingest.md`).
 2. Choose the pitch: `--compact` for sequence-focused reading (the tree view's mode), default for true-proportion timing.
 3. Run it. The HTML lands at `--out`, the companion `.md` beside it (every event class, its description, and which JSONL properties the diagram shows versus hides), and node/edge/column/height counts print.
 
