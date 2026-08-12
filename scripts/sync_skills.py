@@ -16,6 +16,11 @@ hold changes that aren't in ``~/.claude/skills/``. Sync refuses to overwrite suc
 a skill (it would destroy the newer version), flags it loudly, and continues with
 the rest. Back-port the change to the live source, or pass ``--force``.
 
+**Flatten freshness gate.** Skills may carry materialized dependency regions
+(see ``skill-authoring/scripts/flatten_skills.py``). Both modes verify every
+region in the live source is fresh before touching or judging the mirror; a
+stale region fails the run — refresh the live source first.
+
 Shared config/helpers (paths, manifest, .gitignore-derived exclusions) live in
 ``_mirror``. Run ``reconcile_manifest.py`` first to curate the manifest.
 """
@@ -23,8 +28,20 @@ from __future__ import annotations
 
 import argparse
 import shutil
+import subprocess
+import sys
 
 import _mirror as m
+
+FLATTEN = m.SRC_ROOT / "skill-authoring" / "scripts" / "flatten_skills.py"
+
+
+def flatten_fresh() -> bool:
+    """Run flatten_skills.py --check over the live source; True when fresh."""
+    if not FLATTEN.is_file():
+        print(f"flatten check skipped: {FLATTEN} not found")
+        return True
+    return subprocess.run([sys.executable, str(FLATTEN), "--check", str(m.SRC_ROOT)]).returncode == 0
 
 
 def main() -> int:
@@ -32,6 +49,11 @@ def main() -> int:
     ap.add_argument("--check", action="store_true", help="read-only drift detector")
     ap.add_argument("--force", action="store_true", help="overwrite even a project-newer mirror")
     a = ap.parse_args()
+
+    if not flatten_fresh():
+        print("stale flatten region(s) in live source — refresh before syncing:")
+        print(f"  python3 {FLATTEN} {m.SRC_ROOT}")
+        return 1
 
     names = m.manifest_load()
     declared = set(names)
