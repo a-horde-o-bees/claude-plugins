@@ -28,6 +28,7 @@ Everything else — organization, phrasing, ordering, examples, headings — is 
 Default to the unit the user named. Widen only with explicit approval, and only when the named unit can't cohere without touching neighbors — say so first.
 
 <!-- flatten-skills START {"deps": ["concise-prose"]} -->
+
 ## Dependencies
 
 ### concise-prose
@@ -82,4 +83,5 @@ These bound the cut decision itself, not a separate review pass.
 - **Lossless preservation** — carry safety boundaries, corrective guidance, and disambiguation through any cut; a phrase bearing one of these loads stays.
 - **Curse of knowledge** — content that feels redundant to the author often carries the only "why" the reader has (e.g. rationale, scope-setting, anti-pattern framing that reads as preamble but makes the rule stick). If content fits a companion surface better, migrate it rather than delete and assume the other surface will catch up.
 - **Chesterton's Fence** — do not remove a fence until you know why it was built. Raise to the user when a candidate for removal has no recoverable purpose.
+
 <!-- flatten-skills STOP -->

@@ -237,7 +237,11 @@ def main(argv):
             bfs.extend(graph[k])
         units = [build_unit(cache[k], errors) for k in order]
         content = "\n\n".join(["## Dependencies"] + units)
-        new_lines = s.lines[: s.start + 1] + content.split("\n") + s.lines[s.stop:]
+        # blank lines inside the boundary keep the generated markdown valid:
+        # a heading or list item butted against a marker comment trips
+        # blanks-around / one-line-items in the suite's markdown linter
+        new_lines = (s.lines[: s.start + 1] + [""] + content.split("\n")
+                     + [""] + s.lines[s.stop:])
         results.append((s, "\n".join(new_lines)))
     if errors:
         for e in errors:

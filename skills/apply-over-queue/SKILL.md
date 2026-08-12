@@ -129,6 +129,7 @@ The raw instruction may carry `${CLAUDE_SKILL_DIR}` — the skill-dir binding a 
 - **Pool by home repo only as a fallback.** For an operation that genuinely needs in-repo execution context (e.g. running tests against the live tree) and so can't be staged, group the targets by repo and run one queue per repo, paying a cold cache per pool. The staged workspace is the default and is location-independent.
 
 <!-- flatten-skills START {"deps": ["procedure-authoring", "concise-prose"]} -->
+
 ## Dependencies
 
 ### procedure-authoring
@@ -310,4 +311,5 @@ These bound the cut decision itself, not a separate review pass.
 - **Lossless preservation** — carry safety boundaries, corrective guidance, and disambiguation through any cut; a phrase bearing one of these loads stays.
 - **Curse of knowledge** — content that feels redundant to the author often carries the only "why" the reader has (e.g. rationale, scope-setting, anti-pattern framing that reads as preamble but makes the rule stick). If content fits a companion surface better, migrate it rather than delete and assume the other surface will catch up.
 - **Chesterton's Fence** — do not remove a fence until you know why it was built. Raise to the user when a candidate for removal has no recoverable purpose.
+
 <!-- flatten-skills STOP -->
