@@ -73,6 +73,7 @@ A slash reference to another suite skill in source is a lint error; the flatten 
 For every process step, ask: judgment or mechanism? A step whose outcome is fully determined by its inputs — parse, count, walk, diff, rename — belongs in a script the step invokes; prose walking an agent through mechanical work drifts and re-bills every invocation (rule-authoring: route load-bearing behavior to mechanical enforcement rather than wording).
 
 <!-- flatten-skills START {"deps": ["markdown-authoring", "description-authoring", "concise-prose"]} -->
+
 ## Dependencies
 
 ### markdown-authoring
@@ -190,4 +191,5 @@ These bound the cut decision itself, not a separate review pass.
 - **Lossless preservation** — carry safety boundaries, corrective guidance, and disambiguation through any cut; a phrase bearing one of these loads stays.
 - **Curse of knowledge** — content that feels redundant to the author often carries the only "why" the reader has (e.g. rationale, scope-setting, anti-pattern framing that reads as preamble but makes the rule stick). If content fits a companion surface better, migrate it rather than delete and assume the other surface will catch up.
 - **Chesterton's Fence** — do not remove a fence until you know why it was built. Raise to the user when a candidate for removal has no recoverable purpose.
+
 <!-- flatten-skills STOP -->
