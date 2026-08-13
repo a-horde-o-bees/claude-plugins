@@ -163,7 +163,7 @@ After computing a file, the tool SHALL verify that every rewritten anchor resolv
 
 ### Requirement: Non-skill host files
 
-Any markdown file MAY be a flatten host. Hosts are declared in `settings.skill-authoring.json` under a `hosts` list, read from the user scope (`~/.claude/`) and the project scope (the nearest `.claude/` directory at or above the working directory), unioned and deduplicated by resolved path; relative project entries resolve against the project root. Declared hosts SHALL join every invocation that targets the running tool's own suite root, with no per-invocation naming; invocations targeting other paths process only what they name. An explicit host argument or `--skills-root` override remains available. For a host that is not a sibling skill of its suite, `${CLAUDE_SKILL_DIR}` occurrences in inlined units SHALL be rewritten to the absolute path of the dependency's folder, since no dispatcher binds the variable outside a skill invocation. All other behavior — reference verification and linking, section placement, topological ordering, the link check, and freshness checking — applies to hosts unchanged.
+Any markdown file MAY be a flatten host. Hosts are declared in `settings.skill-authoring.json` under a `hosts` list, read from the user scope (`~/.claude/`) and the project scope (the nearest `.claude/` directory at or above the working directory), unioned and deduplicated by resolved path; relative project entries resolve against the project root. Declared hosts SHALL join every invocation that targets the running tool's own suite root, with no per-invocation naming; invocations targeting other paths process only what they name. An explicit host argument or `--skills-root` override remains available. A host that is not a sibling skill of its suite is durable and dispatcher-less: no runtime binds `${CLAUDE_SKILL_DIR}` there, and an absolute path baked at build time rots when a plugin install is superseded. The tool SHALL therefore refuse to inline a unit containing `${CLAUDE_SKILL_DIR}` into a non-skill host, erroring with the dependency's name and writing nothing. All other behavior — reference verification and linking, section placement, topological ordering, the link check, and freshness checking — applies to hosts unchanged.
 
 #### Scenario: User CLAUDE.md as host
 
@@ -188,5 +188,5 @@ Any markdown file MAY be a flatten host. Hosts are declared in `settings.skill-a
 #### Scenario: Bundled-file reference in a unit inlined outside the suite
 
 - WHEN a dependency's body references `${CLAUDE_SKILL_DIR}/scripts/tool.py` and the host is not a skill
-- THEN the materialized unit references the absolute path `<skills-root>/<dependency>/scripts/tool.py`
+- THEN the tool exits with an error naming the dependency and the host, and writes nothing
 
