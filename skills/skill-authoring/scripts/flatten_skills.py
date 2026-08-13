@@ -43,9 +43,12 @@ and ${CLAUDE_SKILL_DIR} rewritten to ${CLAUDE_SKILL_DIR}/../<dep> so
 bundled-file references resolve to the sibling-installed dependency
 from inside the host.
 
-Any markdown file can be a host, and in a non-skill host
-${CLAUDE_SKILL_DIR} rewrites to the dependency's absolute folder — no
-dispatcher binds the variable outside a skill invocation. Hosts are
+Any markdown file can be a host. A non-skill host is durable and
+dispatcher-less — nothing ever binds ${CLAUDE_SKILL_DIR} there, and an
+absolute path baked at build time rots when a plugin install is
+superseded — so a unit that references its bundled files via the
+variable is refused into such a host: cite that skill instead of
+flattening it. Hosts are
 declared in settings.skill-authoring.json under a "hosts" list, read
 from the user scope (~/.claude/) and the project scope (the nearest
 .claude/ at or above cwd; relative entries resolve against the project
@@ -286,9 +289,13 @@ def demote(md: str) -> str:
 
 def build_unit(dep: Skill, targets, errors, host: Skill) -> str:
     unit = demote(dep.component())
-    sub = "${CLAUDE_SKILL_DIR}/../" + dep.name if host.in_suite \
-        else str(dep.root / dep.name)
-    unit = unit.replace("${CLAUDE_SKILL_DIR}", sub)
+    if host.in_suite:
+        unit = unit.replace("${CLAUDE_SKILL_DIR}", "${CLAUDE_SKILL_DIR}/../" + dep.name)
+    elif "${CLAUDE_SKILL_DIR}" in unit:
+        errors.append(
+            f"{host.path}: unit '{dep.name}' references bundled files via"
+            " ${CLAUDE_SKILL_DIR}; a durable non-skill host cannot carry"
+            " install-dependent paths — cite the skill instead")
     out = []
     for _, ln, fenced in iter_lines(unit.split("\n")):
         if fenced:
