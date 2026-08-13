@@ -43,6 +43,12 @@ and ${CLAUDE_SKILL_DIR} rewritten to ${CLAUDE_SKILL_DIR}/../<dep> so
 bundled-file references resolve to the sibling-installed dependency
 from inside the host.
 
+Any markdown file can be a host: --skills-root sets reference
+resolution for hosts outside the suite (e.g. the user CLAUDE.md), and
+in such hosts ${CLAUDE_SKILL_DIR} rewrites to the dependency's absolute
+folder instead — no dispatcher binds the variable outside a skill
+invocation.
+
 After computing a file, every in-file anchor link must resolve to a
 heading in the materialized text.
 
@@ -55,7 +61,7 @@ Errors (nothing is written if any occurs):
   - a unit would emit `-->` or a marker-shaped line outside a fence
   - an anchor link that resolves to no heading in the materialized file
 
-Usage: flatten_skills.py [--check] <skills-root|skill-dir|SKILL.md> ...
+Usage: flatten_skills.py [--check] [--skills-root DIR] <skills-root|skill-dir|SKILL.md|host.md> ...
   refresh (default): rewrite every file to its normalized form; idempotent
   --check: recompute and byte-compare; exit nonzero naming each stale or
            malformed skill, writing nothing
@@ -125,10 +131,13 @@ def slug(heading: str) -> str:
 
 
 class Skill:
-    def __init__(self, path: Path):
+    def __init__(self, path: Path, root: Path | None = None):
         self.path = path
+        self.root = (root or path.resolve().parent.parent).resolve()
         self.name = path.resolve().parent.name
-        self.siblings = {d.name for d in path.resolve().parent.parent.iterdir()
+        self.in_suite = path.name == "SKILL.md" \
+            and path.resolve().parent.parent == self.root
+        self.siblings = {d.name for d in self.root.iterdir()
                          if (d / "SKILL.md").exists()}
         self.text = path.read_text(encoding="utf-8")
         self.lines = self.text.split("\n")
@@ -229,9 +238,11 @@ def demote(md: str) -> str:
     return "\n".join(out)
 
 
-def build_unit(dep: Skill, targets, errors) -> str:
+def build_unit(dep: Skill, targets, errors, host: Skill) -> str:
     unit = demote(dep.component())
-    unit = unit.replace("${CLAUDE_SKILL_DIR}", "${CLAUDE_SKILL_DIR}/../" + dep.name)
+    sub = "${CLAUDE_SKILL_DIR}/../" + dep.name if host.in_suite \
+        else str(dep.root / dep.name)
+    unit = unit.replace("${CLAUDE_SKILL_DIR}", sub)
     out = []
     for _, ln, fenced in iter_lines(unit.split("\n")):
         if fenced:
@@ -353,6 +364,11 @@ def check_links(text: str, path: Path, errors):
 def main(argv):
     check = "--check" in argv
     args = [a for a in argv if a != "--check"]
+    root = None
+    if "--skills-root" in args:
+        i = args.index("--skills-root")
+        root = Path(args[i + 1]).expanduser().resolve()
+        del args[i:i + 2]
     files = []
     for a in args:
         p = Path(a)
@@ -368,21 +384,21 @@ def main(argv):
     errors, cache = [], {}
 
     def load(path: Path) -> Skill:
-        s = Skill(path)
+        s = Skill(path, root)
         errors.extend(f"{s.path}: {e}" for e in s.errors)
         return s
 
     targets = []
     for f in files:
         s = load(f)
-        cache[s.name] = s
+        cache.setdefault(s.name, s)
         targets.append(s)
     queue = [d for s in targets for d in s.deps]
     while queue:
         n = queue.pop(0)
         if n in cache:
             continue
-        s = load(targets[0].path.resolve().parent.parent / n / "SKILL.md")
+        s = load(targets[0].root / n / "SKILL.md")
         cache[n] = s
         queue.extend(s.deps)
     if errors:
@@ -400,7 +416,7 @@ def main(argv):
     for s in targets:
         order = closure_of(s, cache)
         closure = set(order) | {s.name}
-        units = [build_unit(cache[n], closure, errors) for n in order]
+        units = [build_unit(cache[n], closure, errors, s) for n in order]
         new_text = assemble(s, units, closure)
         check_links(new_text, s.path, errors)
         results.append((s, new_text))

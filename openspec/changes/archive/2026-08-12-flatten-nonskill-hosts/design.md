@@ -1,0 +1,3 @@
+# Design — flatten non-skill hosts
+
+One extension, no new machinery: `--skills-root <dir>` sets sibling resolution for hosts outside the suite; per-host, the substitution string for `${CLAUDE_SKILL_DIR}` is the existing relative form (`${CLAUDE_SKILL_DIR}/../<dep>`) when the host is a skill under the root, and the absolute folder path otherwise — the same dispatcher-less semantics apply-over-queue's payload assembly already uses. The tool stays single-pass and reauthored-clean; no host-type flags, the host's location decides. Automation rides existing gates: sync_skills.py's freshness check adds the user CLAUDE.md when present, and skill-authoring's lint-pass doctrine names non-skill hosts so authoring passes refresh them.
