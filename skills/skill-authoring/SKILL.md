@@ -9,7 +9,7 @@ Use when creating or refining a skill (e.g. drafting a new one, sharpening its t
 
 ## Applied disciplines
 
-The disciplines every authoring pass exercises — markdown-authoring, description-authoring, concise-prose — are materialized under ## Dependencies below; apply them from there. The rest bite only for certain skill shapes and are applied by name as they do: procedure-authoring (a process with control flow beyond a linear sequence), rule-authoring (a directive that must bind on the right cases), file-decomposition (whether a unit belongs in this file at all).
+The disciplines every authoring pass exercises — [/markdown-authoring](#markdown-authoring), [/description-authoring](#description-authoring), [/concise-prose](#concise-prose) — are materialized under ## Dependencies below; apply them from there. The rest bite only for certain skill shapes and are applied by name as they do: procedure-authoring (a process with control flow beyond a linear sequence), rule-authoring (a directive that must bind on the right cases), file-decomposition (whether a unit belongs in this file at all).
 
 ## The trigger frontmatter
 
@@ -29,21 +29,25 @@ markdown-authoring's identity and summary rules do the general work; what makes 
 
 ## Skill layout
 
-`SKILL.md` holds the whole invocation: the trigger, the process, and — materialized in its flatten region — the sibling disciplines the process depends on. Keep the process in the body. A component file the model must choose to open mid-run is a hop that silently misses under load (file-decomposition § Reliability precedence); token relief for a long process comes from mechanizing deterministic steps into scripts, never from splitting the prose behind a hop. Component files remain for text consumed outside the invocation load: a directive a spawned agent reads fresh, assets and templates a step copies, reference material cited but never required to run.
+`SKILL.md` holds the whole invocation: the trigger, the process, and — materialized under its ## Dependencies section — the sibling disciplines the process depends on. Keep the process in the body. A component file the model must choose to open mid-run is a hop that silently misses under load (file-decomposition § Reliability precedence); token relief for a long process comes from mechanizing deterministic steps into scripts, never from splitting the prose behind a hop. Component files remain for text consumed outside the invocation load: a directive a spawned agent reads fresh, assets and templates a step copies, reference material cited but never required to run.
 
-## Declared dependencies
+## Referenced dependencies
 
-Cross-skill content dependence is declared, and the build materializes it — never left to runtime dispatch or a model-mediated hop. A SKILL.md carries at most one flatten region:
+Cross-skill content dependence is declared by referencing the skill where the process uses it — `Apply /concise-prose to the summary` — and the build materializes every referenced skill's body into the file; nothing is left to runtime dispatch or a model-mediated hop. A reference is a `/skill-name` token naming a sibling skill: in prose at the point of use when the host dictates how the dependency applies, or as a list item under `## Dependencies` when it stacks on the whole process without scoping.
 
 ```markdown
-<!-- flatten-skills START {"deps": ["concise-prose"]} -->
-...generated: ## Dependencies + the flat transitive closure...
+## Dependencies
+
+- /markdown-authoring
+
+<!-- flatten-skills START -->
+...generated: the flat closure, one demoted unit per referenced skill...
 <!-- flatten-skills STOP -->
 ```
 
-`flatten_skills.py <skills-root>` rewrites every region from source: the deduplicated transitive closure of the declared deps, each unit once — its frontmatter and own region stripped, headings demoted (H1 → H3), `${CLAUDE_SKILL_DIR}` rewritten so the unit's bundled-file references resolve to its sibling-installed folder. `--check` recomputes and byte-compares; it runs in the lint pass and gates the mirror sync, so a stale region cannot ship. Refresh after editing any skill that others declare.
+`flatten_skills.py <skills-root>` rewrites every file to this normalized form: each reference linked to its flattened copy — `/concise-prose` becomes `[/concise-prose](#concise-prose)`, still reading as a skill call while resolving in-file, and a hand-written link may target any section of the unit — and the region regenerated as the deduplicated closure of every referenced skill, ordered so referenced content always sits further down, each unit's frontmatter and Dependencies section stripped, headings demoted (H1 → H3), `${CLAUDE_SKILL_DIR}` rewritten to resolve to the sibling-installed folder. Everything must compile: a reference naming no sibling skill, or an anchor resolving to no heading, is an error and nothing is written. `--check` recomputes and byte-compares the whole file — an unlinked reference, a misplaced section, and a stale region all read as stale; it runs in the lint pass and gates the mirror sync. Refresh after editing any skill that others reference.
 
-**Declare against the cost.** A declaration buys deterministic presence and pays the dep's whole closure into every invocation — the region's byte size is the per-invocation price, visible in the file, and a dep's own declarations compound transitively. Declare a discipline the process exercises every run; prefer a leaf dep (one with no declarations of its own); cite everything else.
+**Reference against the cost.** A reference buys deterministic presence and pays the dep's whole closure into every invocation — the region's byte size is the per-invocation price, visible in the file, and a dep's own references compound transitively. Reference a discipline the process exercises every run; prefer a leaf dep (one with no references of its own); cite everything else.
 
 ## Lint pass
 
@@ -62,19 +66,19 @@ Any skill whose own rules are mechanically checkable ships a linter the same way
 
 Close an authoring pass by classifying every cross-skill reference, judged by reading the affected files whole — the conventions that make a snippet legible cannot be assumed from match-line context:
 
-- *dependency* — the referenced discipline's text shapes execution at that point, every run: declare it in the flatten region, weighing the closure cost above.
+- *dependency* — the referenced discipline's text shapes execution at that point, every run: reference it as `/skill-name`, scoped in prose where the host dictates how it applies or listed under `## Dependencies` where it stacks obviously, weighing the closure cost above.
 - *citation* — provenance, comparison, rationale, or a discipline that bites only sometimes: bare name, no slash. A citation's miss must be cheap — the executor falls back on general competence, not on the cited text.
-- *definitional example* — the reference syntax is itself the content: inside a fenced block, where lint and the flatten tool treat it as literal.
+- *definitional example* — the reference syntax is itself the content: inside a fenced block or code span, where lint and the flatten tool treat it as literal.
 
-A slash reference to another suite skill in source is a lint error; the flatten declaration is the only dependence mechanism.
+Every slash reference must compile — name a sibling skill and link to its flattened copy. An unresolved reference is a lint error; a bare resolved one is stale until a refresh links it.
 
 ## Mechanization audit
 
 For every process step, ask: judgment or mechanism? A step whose outcome is fully determined by its inputs — parse, count, walk, diff, rename — belongs in a script the step invokes; prose walking an agent through mechanical work drifts and re-bills every invocation (rule-authoring: route load-bearing behavior to mechanical enforcement rather than wording).
 
-<!-- flatten-skills START {"deps": ["markdown-authoring", "description-authoring", "concise-prose"]} -->
-
 ## Dependencies
+
+<!-- flatten-skills START -->
 
 ### markdown-authoring
 

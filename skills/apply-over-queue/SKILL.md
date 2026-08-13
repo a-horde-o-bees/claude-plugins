@@ -13,7 +13,7 @@ The queue is **static** (`--items`, a fixed list, each target yielded once) or *
 
 The saving holds only if **everything in the prompt before the target is byte-identical across spawns**. Three mechanisms guarantee that:
 
-- **Payload assembly** (`flatten.py`) joins the normalized operation with the `--skills` it names, normalized to the **deduplicated union closure**: each named skill's materialized region is stripped, its declaration read, and every unit — named skill or transitive dependency — is emitted exactly once as a `## <name>` section. One self-contained instruction, no runtime skill dispatch to vary or re-pay for, and no duplicate copies when named skills overlap. There is no reference discovery: the operation cites an inlined skill by bare name or its `## <name>` anchor (which resolves to the single copy), and the orchestrator passes the names via `--skills`.
+- **Payload assembly** (`flatten.py`) joins the normalized operation with the `--skills` it names, normalized to the **deduplicated union closure**: each named skill's materialized region is stripped, its skill references read, and every unit — named skill or transitive dependency — is emitted exactly once as a `## <name>` section. One self-contained instruction, no runtime skill dispatch to vary or re-pay for, and no duplicate copies when named skills overlap. There is no reference discovery: the operation cites an inlined skill by bare name or its `## <name>` anchor (which resolves to the single copy), and the orchestrator passes the names via `--skills`.
 - **Cache-safe ordering.** Every spawn reads that identical payload **before** claiming its varying target from the queue. The target enters as tool output, after the cached prefix — so the prefix stays byte-identical and cache-reuses across separate `claude -p` processes. A target read ahead of the payload would diverge the prefix and bust the cache.
 - **Fixed location.** cwd and the `--add-dir` set are part of the prefix, so they too must not vary per target. Under `staged` (default) the driver **copies every file/dir target into one run-local workspace** and runs every spawn with cwd fixed to that workspace — targets from different repos no longer diverge the prefix. Under `none` the cwd is the operation's own fixed home, not the target's.
 
@@ -106,7 +106,7 @@ The raw instruction may carry `${CLAUDE_SKILL_DIR}` — the skill-dir binding a 
 2. **Normalize the instruction** — `{raw}`: the `--instruction` file:
     1. Read `{raw}` and inspect the queue's target tokens to identify the **varying target** and its kind.
     2. Judge each reshapeability criterion pass / reshapeable / irreducible-fail. On any irreducible fail: **Exit process** — `cannot normalize: {criterion} — {what about {raw} violates it} — {how to adjust}`.
-    3. Apply [procedure-authoring](#procedure-authoring), [concise-prose](#concise-prose) to:
+    3. Apply [/procedure-authoring](#procedure-authoring), [/concise-prose](#concise-prose) to:
         1. Rewrite `{raw}` into the operation contract, abstracting every concrete target reference to the TARGET role.
         2. Preserve the procedure and any disciplines or criteria verbatim in intent.
         3. State the output as a function of TARGET: a path derived from it, DB rows keyed by it, a file in a named output dir.
@@ -128,9 +128,9 @@ The raw instruction may carry `${CLAUDE_SKILL_DIR}` — the skill-dir binding a 
 - **Amortize the warmup.** The warmup spawn pays near-full price to fill the cache; it is worth it only when the shared payload is large and the queue long enough that the warmup plus the per-spawn reads beat paying cold each time.
 - **Pool by home repo only as a fallback.** For an operation that genuinely needs in-repo execution context (e.g. running tests against the live tree) and so can't be staged, group the targets by repo and run one queue per repo, paying a cold cache per pool. The staged workspace is the default and is location-independent.
 
-<!-- flatten-skills START {"deps": ["procedure-authoring", "concise-prose"]} -->
-
 ## Dependencies
+
+<!-- flatten-skills START -->
 
 ### procedure-authoring
 
@@ -188,11 +188,11 @@ A variable is written `` `{curly-dashes}` `` — braces inside backticks, a code
 A step delegates only to text already in context. The document is loaded whole, so its own `##` sections are reliable targets; text outside it is not — an un-opened file is invisible, its steps get improvised from the call site instead of run, and the miss appears under real orchestration load even though cold single-task tests pass every wording. No verb choice fixes an absent target.
 
 - **`Call: [label](#anchor)`** — *procedural*: follow the section as steps within the current context.
-- **`Apply [label](#anchor) to:`** — *behavioral*: run the indented block **through** the section as a lens — a discipline that shapes *how* the steps execute, not steps themselves. Opens a block; binds when assigned (`{x}: Apply [lens](#anchor) to: <block>`). Listed targets combine into a single lens over the block, interpreted together rather than as successive passes: `Apply [a](#a), [b](#b) to:`.
+- **`Apply [label](#anchor) to:`** — *behavioral*: run the indented block **through** the section as a lens — a discipline that shapes *how* the steps execute, not steps themselves. Opens a block; binds when assigned (`{x}: Apply [lens](#anchor) to: <block>`). Listed targets combine into a single lens over the block, interpreted together rather than as successive passes: `Apply [a](#a), [b](#b) to:`. When the lens is a sibling skill, the label is its slash reference — `Apply [/concise-prose](#concise-prose) to:` — declaring the dependency and resolving to its flattened unit at once.
 
 Text a procedure depends on but does not own is materialized or mechanized, never fetched by the executor:
 
-- **A sibling skill's discipline** — declare it as a flatten dependency; the build inlines it under `## Dependencies`, an ordinary in-document target.
+- **A sibling skill's discipline** — reference it as `/skill-name` where the procedure uses it; the build inlines the skill under `## Dependencies` and links the reference to that unit, an ordinary in-document target.
 - **Deterministic work** — a script the step runs with `Bash:`. Token relief comes from mechanization, never from making the executor navigate to text stored elsewhere.
 - **Steps meant for a fresh context** — a spawn whose directive names the file; the spawned agent starts empty, so reading the file is its first act, not a hop it may skip (see Spawn).
 - **Provenance or background** — cite by bare name; a citation is not an invocation, and its miss costs nothing.
