@@ -117,7 +117,7 @@ The raw instruction may carry `${CLAUDE_SKILL_DIR}` — the skill-dir binding a 
     - It assembles the payload (union-closure normalized), stages the targets (under `staged`), warms the cache with one empty-target spawn, then drives the queue sequentially — a static list to exhaustion, or a feeder until it returns `DONE` — spawning one `claude -p` per target with a concurrent keepalive holding the cache hot.
     - It prints each spawn's prefix re-read fraction, and halts the chain on a spawn that falls below `--cache-floor`, hangs past `--max-spawn-minutes`, or errors (unless `--continue-on-failure` is set).
     - On completion it prints a **per-target cache breakdown** — each target's input / cache_create / cache_read / prefix-reread, by origin path under `staged` — so the realized saving is auditable at a glance.
-4. **Review gate** — never finalize without explicit approval (confirm-shared-intent):
+4. **Review gate** — never finalize without explicit approval on the record ([/confirm-shared-intent](#confirm-shared-intent)):
     - `staged`: the driver prints the per-target diff summary and writes the full patch to `{rundir}/diff.patch`. Present it with the done/claimed/pending counts. On approval run the driver's printed `apply` command (`stage.py … apply` — copies each changed copy back over its origin); on rejection run its `discard` command. Republish if the targets are published skills.
     - `none`: side effects are already live. Present the done/pending counts and point the user at the operation's output — the fresh dir it wrote, or the records it changed — for review.
 
@@ -311,5 +311,32 @@ These bound the cut decision itself, not a separate review pass.
 - **Lossless preservation** — carry safety boundaries, corrective guidance, and disambiguation through any cut; a phrase bearing one of these loads stays.
 - **Curse of knowledge** — content that feels redundant to the author often carries the only "why" the reader has (e.g. rationale, scope-setting, anti-pattern framing that reads as preamble but makes the rule stick). If content fits a companion surface better, migrate it rather than delete and assume the other surface will catch up.
 - **Chesterton's Fence** — do not remove a fence until you know why it was built. Raise to the user when a candidate for removal has no recoverable purpose.
+
+### confirm-shared-intent
+
+Use before an action whose basis isn't on the session record — the user hasn't yet picked among live interpretations or approaches, or hasn't yet seen a problem or risk the agent can see in what they directed. Surfaces the open question or the conflict, gets the user's decision on record, then proceeds. Once the record shows it surfaced and accepted, the gate is spent — no habitual checkpoints, no re-asking what the session already settled.
+
+The standard is the record, not telepathy: the agent cannot know what the user understands, only whether something has been brought to their attention and accepted in this session. A silent guess buries the question and silent compliance buries the objection; either compounds through the work that follows, and putting it on the record costs a glance. The gate is speaking up, never overriding — no license to refuse, stall, or act against an instruction.
+
+#### When to gate
+
+Each gate names what goes on the record and what releases it.
+
+**No decision on record** — the work ahead turns on a choice the session doesn't show the user making:
+
+- Ambiguous instruction — present the competing interpretations; proceed on their pick.
+- Multiple valid approaches — present them with trade-offs; proceed on their pick.
+- Missing or unreadable signal (e.g. an undeclared value, an undeterminable permission) — halt and name the fix rather than falling back to a guessed default.
+- Plan deviation — the record holds an approved plan the work no longer matches; explain what changed and why, and get the change accepted.
+
+**No acknowledgment on record** — the directive is clear, but the session doesn't show the user has seen what the agent sees:
+
+- A problem in the directive — a correctness bug, a real risk, or a conflict with the user's stated goal or with sound practice, in the directive or in an action already running under one: name the conflict and its consequences before complying.
+- A risk invisible from where the user sits — unfamiliar territory, or a consequence visible only from what the agent has just read: surface it even though the directive itself is clear.
+
+#### Released and spent
+
+- Surfaced and accepted is spent: once the user clarifies, selects, approves, or acknowledges, follow the direction — they own the call, and what the record settles is not re-gated.
+- Sound, clearly directed work with nothing unsurfaced needs no gate — never habitual mid-phase checkpoints, never manufactured objections; a negligible cost or a matter of taste doesn't qualify.
 
 <!-- flatten-skills STOP -->
