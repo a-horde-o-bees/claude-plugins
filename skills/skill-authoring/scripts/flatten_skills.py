@@ -43,11 +43,18 @@ and ${CLAUDE_SKILL_DIR} rewritten to ${CLAUDE_SKILL_DIR}/../<dep> so
 bundled-file references resolve to the sibling-installed dependency
 from inside the host.
 
-Any markdown file can be a host: --skills-root sets reference
-resolution for hosts outside the suite (e.g. the user CLAUDE.md), and
-in such hosts ${CLAUDE_SKILL_DIR} rewrites to the dependency's absolute
-folder instead — no dispatcher binds the variable outside a skill
-invocation.
+Any markdown file can be a host, and in a non-skill host
+${CLAUDE_SKILL_DIR} rewrites to the dependency's absolute folder — no
+dispatcher binds the variable outside a skill invocation. Hosts are
+declared in settings.skill-authoring.json under a "hosts" list, read
+from the user scope (~/.claude/) and the project scope (the nearest
+.claude/ at or above cwd; relative entries resolve against the project
+root), unioned and deduplicated. Declared hosts join every invocation
+that targets this script's own suite root — the gates get them with no
+flag — while invocations naming other paths process only what they
+name. A malformed settings file is an error, never a skipped read.
+--skills-root overrides sibling resolution for explicitly named
+out-of-suite hosts.
 
 After computing a file, every in-file anchor link must resolve to a
 heading in the materialized text.
@@ -66,9 +73,48 @@ Usage: flatten_skills.py [--check] [--skills-root DIR] <skills-root|skill-dir|SK
   --check: recompute and byte-compare; exit nonzero naming each stale or
            malformed skill, writing nothing
 """
+import json
+import os
 import re
 import sys
 from pathlib import Path
+
+OWN_ROOT = Path(__file__).resolve().parent.parent.parent
+SETTINGS_NAME = "settings.skill-authoring.json"
+
+
+def declared_hosts(errors) -> list:
+    """Union of hosts from the user and project settings files, deduplicated
+    by resolved path; relative project entries resolve against the project
+    root (the directory holding .claude/)."""
+    sources = [(Path.home() / ".claude" / SETTINGS_NAME, Path.home())]
+    proj = os.environ.get("CLAUDE_PROJECT_DIR")
+    candidates = [Path(proj)] if proj else [Path.cwd(), *Path.cwd().parents]
+    for p in candidates:
+        if (p / ".claude" / SETTINGS_NAME).is_file():
+            sources.append((p / ".claude" / SETTINGS_NAME, p))
+            break
+    hosts, seen = [], set()
+    for f, base in sources:
+        if not f.is_file():
+            continue
+        try:
+            decl = json.loads(f.read_text(encoding="utf-8"))
+            entries = decl.get("hosts", [])
+            assert isinstance(entries, list) \
+                and all(isinstance(h, str) for h in entries)
+        except (ValueError, AssertionError):
+            errors.append(f"{f}: malformed — expected a JSON object with a"
+                          " 'hosts' list of strings")
+            continue
+        for h in entries:
+            hp = (base / Path(h).expanduser()).resolve() \
+                if not Path(h).expanduser().is_absolute() \
+                else Path(h).expanduser().resolve()
+            if hp not in seen:
+                seen.add(hp)
+                hosts.append(hp)
+    return hosts
 
 START_RE = re.compile(r"^<!-- flatten-skills START -->\s*$")
 START_ANY_RE = re.compile(r"^\s*<!--\s*flatten-skills START\b")
@@ -369,28 +415,35 @@ def main(argv):
         i = args.index("--skills-root")
         root = Path(args[i + 1]).expanduser().resolve()
         del args[i:i + 2]
-    files = []
+    errors = []
+    files, suite_scoped = [], False
     for a in args:
         p = Path(a)
         if p.is_dir():
             own = p / "SKILL.md"
-            files.extend([own] if own.exists() else sorted(p.glob("*/SKILL.md")))
+            files.extend((f, root) for f in
+                         ([own] if own.exists() else sorted(p.glob("*/SKILL.md"))))
+            suite_scoped |= not own.exists() and p.resolve() == OWN_ROOT
         else:
-            files.append(p)
+            files.append((p, root))
+    if suite_scoped:
+        named = {f.resolve() for f, _ in files}
+        files.extend((h, root or OWN_ROOT) for h in declared_hosts(errors)
+                     if h.resolve() not in named)
     if not files:
         print("no SKILL.md files found", file=sys.stderr)
         return 2
 
-    errors, cache = [], {}
+    cache = {}
 
-    def load(path: Path) -> Skill:
-        s = Skill(path, root)
+    def load(path: Path, r=None) -> Skill:
+        s = Skill(path, r)
         errors.extend(f"{s.path}: {e}" for e in s.errors)
         return s
 
     targets = []
-    for f in files:
-        s = load(f)
+    for f, r in files:
+        s = load(f, r)
         cache.setdefault(s.name, s)
         targets.append(s)
     queue = [d for s in targets for d in s.deps]
@@ -398,7 +451,7 @@ def main(argv):
         n = queue.pop(0)
         if n in cache:
             continue
-        s = load(targets[0].root / n / "SKILL.md")
+        s = load(targets[0].root / n / "SKILL.md", targets[0].root)
         cache[n] = s
         queue.extend(s.deps)
     if errors:

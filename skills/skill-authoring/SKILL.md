@@ -55,10 +55,10 @@ Every invocation ends with a lint pass over the skills touched:
 
 ```
 python3 ${CLAUDE_SKILL_DIR}/scripts/lint_skill.py <skill-dir|SKILL.md|skills-root> ...
-python3 ${CLAUDE_SKILL_DIR}/scripts/flatten_skills.py --check --skills-root <skills-root> <skills-root> <non-skill hosts>
+python3 ${CLAUDE_SKILL_DIR}/scripts/flatten_skills.py --check <skills-root>
 ```
 
-`lint_skill.py` enforces the mechanically checkable subset of the suite's rules (e.g. description–first-paragraph identity, the listing budget, source conventions that keep flattening mechanical); `flatten_skills.py --check` verifies every materialized dependency region is fresh. Non-skill flatten hosts join every refresh and check — the user `~/.claude/CLAUDE.md` carries the shared-intent gate this way — and the mirror sync gates on their freshness too. Each script's docstring is the source of truth for what it checks. Fix every error; a warn is a judgment call — resolve it or knowingly leave it.
+`lint_skill.py` enforces the mechanically checkable subset of the suite's rules (e.g. description–first-paragraph identity, the listing budget, source conventions that keep flattening mechanical); `flatten_skills.py --check` verifies every materialized dependency region is fresh. Non-skill flatten hosts — any file listed under `hosts` in `settings.skill-authoring.json` at the user scope (`~/.claude/`) or a project's `.claude/` — join every suite-scoped refresh and check automatically, and the mirror sync gates on their freshness too; the user `~/.claude/CLAUDE.md` carries the shared-intent gate this way. Opting a file in is one settings entry, no flags. Each script's docstring is the source of truth for what it checks. Fix every error; a warn is a judgment call — resolve it or knowingly leave it.
 
 Any skill whose own rules are mechanically checkable ships a linter the same way — a script that travels with the skill and runs at the end of every pass touching its artifacts (e.g. export-diff's page linter, this skill's `lint_skill.py`).
 

@@ -163,12 +163,27 @@ After computing a file, the tool SHALL verify that every rewritten anchor resolv
 
 ### Requirement: Non-skill host files
 
-Any markdown file MAY be a flatten host when the invocation supplies an explicit skills root for reference resolution. For a host that is not itself a sibling skill of that root, `${CLAUDE_SKILL_DIR}` occurrences in inlined units SHALL be rewritten to the absolute path of the dependency's folder under the skills root, since no dispatcher binds the variable outside a skill invocation. All other behavior — reference verification and linking, section placement, topological ordering, the link check, and freshness checking — applies to non-skill hosts unchanged.
+Any markdown file MAY be a flatten host. Hosts are declared in `settings.skill-authoring.json` under a `hosts` list, read from the user scope (`~/.claude/`) and the project scope (the nearest `.claude/` directory at or above the working directory), unioned and deduplicated by resolved path; relative project entries resolve against the project root. Declared hosts SHALL join every invocation that targets the running tool's own suite root, with no per-invocation naming; invocations targeting other paths process only what they name. An explicit host argument or `--skills-root` override remains available. For a host that is not a sibling skill of its suite, `${CLAUDE_SKILL_DIR}` occurrences in inlined units SHALL be rewritten to the absolute path of the dependency's folder, since no dispatcher binds the variable outside a skill invocation. All other behavior — reference verification and linking, section placement, topological ordering, the link check, and freshness checking — applies to hosts unchanged.
 
 #### Scenario: User CLAUDE.md as host
 
-- WHEN `~/.claude/CLAUDE.md` references /confirm-shared-intent and the tool runs with the skills root supplied
+- WHEN `~/.claude/CLAUDE.md` references /confirm-shared-intent and a suite-scoped invocation runs
 - THEN the reference is linked, the unit is materialized under a `## Dependencies` section at end of file, and check mode reports the file stale when the skill's source changes
+
+#### Scenario: Registered host rides every suite gate
+
+- WHEN `~/.claude/settings.skill-authoring.json` lists the user CLAUDE.md under `hosts` and any gate runs refresh or check against the suite root
+- THEN the CLAUDE.md is processed with the suite's skills as reference targets, and a stale copy fails check with no flag passed
+
+#### Scenario: Targeted invocation stays targeted
+
+- WHEN the tool runs against a fixture directory or a single named file
+- THEN no settings-declared host is touched
+
+#### Scenario: Duplicate declarations collapse
+
+- WHEN the same host appears in both the user and project settings files
+- THEN it is processed exactly once
 
 #### Scenario: Bundled-file reference in a unit inlined outside the suite
 
