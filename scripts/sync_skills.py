@@ -37,16 +37,12 @@ FLATTEN = m.SRC_ROOT / "skill-authoring" / "scripts" / "flatten_skills.py"
 
 
 def flatten_fresh() -> bool:
-    """Run flatten_skills.py --check over the live source and every non-skill
-    flatten host (the user CLAUDE.md); True when all fresh."""
+    """Run flatten_skills.py --check over the live source; a suite-scoped
+    check also covers every settings-declared flatten host. True when fresh."""
     if not FLATTEN.is_file():
         print(f"flatten check skipped: {FLATTEN} not found")
         return True
-    args = [sys.executable, str(FLATTEN), "--check", str(m.SRC_ROOT)]
-    claude_md = m.SRC_ROOT.parent / "CLAUDE.md"
-    if claude_md.is_file():
-        args += ["--skills-root", str(m.SRC_ROOT), str(claude_md)]
-    return subprocess.run(args).returncode == 0
+    return subprocess.run([sys.executable, str(FLATTEN), "--check", str(m.SRC_ROOT)]).returncode == 0
 
 
 def main() -> int:
