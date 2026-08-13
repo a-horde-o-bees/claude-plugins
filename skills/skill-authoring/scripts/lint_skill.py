@@ -18,14 +18,16 @@ and fenced code blocks exempt throughout):
   - no absolute path into the skill's own folder: bundled files are
     referenced as ${CLAUDE_SKILL_DIR}/...
   - marker hygiene: a `<!-- flatten-skills ... -->`-shaped line only as a
-    delimiter of the file's single well-formed region
-  - cross-skill slash reference (`/other-skill` naming a sibling suite skill):
-    content dependence belongs in the flatten declaration, citation uses the
-    bare name; a skill's own invocation surface and fenced examples are exempt
+    bare delimiter of the file's single well-formed region
+  - cross-skill references compile: a reference-shaped token (`/name`
+    outside fences and code spans) must name a sibling suite skill; a
+    skill's own invocation surface is exempt
 
 Warnings (judgment calls — resolve or knowingly leave):
   - deviation fields set (when_to_use, disable-model-invocation, user-invocable):
     the suite leaves these unset; deviate only as a deliberate, recorded exception
+  - a resolved but unlinked reference (bare `/name`): stale — a flatten
+    refresh links it to the in-file unit anchor
   - `e.g.` outside the `(e.g. ...)` form, in prose (code spans and fences exempt)
 
 Usage: lint_skill.py <skill-dir|SKILL.md|skills-root> ...
@@ -37,10 +39,15 @@ from pathlib import Path
 
 LISTING_BUDGET = 1536
 DEVIATION_FIELDS = ("when_to_use", "disable-model-invocation", "user-invocable")
-START_RE = re.compile(r"^<!-- flatten-skills START (.*) -->\s*$")
+START_RE = re.compile(r"^<!-- flatten-skills START -->\s*$")
 STOP_RE = re.compile(r"^<!-- flatten-skills STOP -->\s*$")
 MARKER_RE = re.compile(r"^\s*<!--\s*flatten-skills\b")
 FENCE_RE = re.compile(r"^ {0,3}(`{3,}|~{3,})(.*)$")
+SPAN_RE = re.compile(r"`[^`\n]+`")
+# linked form first so the bare alternative never fires inside a link;
+# shape shared with flatten_skills.py so tool and lint agree
+REF_RE = re.compile(
+    r"\[/([\w][\w-]*)\]\(#([\w-]+)\)|(?<![\w./}-])/([\w][\w-]*)\b(?!/)")
 
 
 def blank_code(md: str) -> str:
@@ -108,11 +115,15 @@ def lint_conventions(text: str, skill_dir: str, siblings, errors, warns, offset=
             errors.append(
                 f"line {ln_no}: bundled file by absolute path — use "
                 f"${{CLAUDE_SKILL_DIR}}/{hit.group(1).rstrip('`)],.;:')}")
-        for hit in re.finditer(r"(?<![\w./-])/([\w][\w-]*)\b", line):
-            name = hit.group(1)
-            if name in siblings and name != skill_dir:
-                errors.append(f"line {ln_no}: cross-skill slash reference /{name} — "
-                              "declare as flatten dep or cite by bare name")
+        for hit in REF_RE.finditer(SPAN_RE.sub(lambda m: " " * len(m.group()), line)):
+            name = hit.group(1) or hit.group(3)
+            if name == skill_dir:
+                continue
+            if name not in siblings:
+                errors.append(f"line {ln_no}: unresolved reference /{name}")
+            elif hit.group(3):
+                warns.append(f"line {ln_no}: bare reference /{name} — "
+                             "stale; a flatten refresh links it")
     if h1s != 1:
         errors.append(f"{h1s} H1 headings — exactly one (the skill title)")
     if starts > 1 or stops > 1 or starts != stops:

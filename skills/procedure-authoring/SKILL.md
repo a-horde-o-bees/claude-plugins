@@ -59,11 +59,11 @@ A variable is written `` `{curly-dashes}` `` — braces inside backticks, a code
 A step delegates only to text already in context. The document is loaded whole, so its own `##` sections are reliable targets; text outside it is not — an un-opened file is invisible, its steps get improvised from the call site instead of run, and the miss appears under real orchestration load even though cold single-task tests pass every wording. No verb choice fixes an absent target.
 
 - **`Call: [label](#anchor)`** — *procedural*: follow the section as steps within the current context.
-- **`Apply [label](#anchor) to:`** — *behavioral*: run the indented block **through** the section as a lens — a discipline that shapes *how* the steps execute, not steps themselves. Opens a block; binds when assigned (`{x}: Apply [lens](#anchor) to: <block>`). Listed targets combine into a single lens over the block, interpreted together rather than as successive passes: `Apply [a](#a), [b](#b) to:`.
+- **`Apply [label](#anchor) to:`** — *behavioral*: run the indented block **through** the section as a lens — a discipline that shapes *how* the steps execute, not steps themselves. Opens a block; binds when assigned (`{x}: Apply [lens](#anchor) to: <block>`). Listed targets combine into a single lens over the block, interpreted together rather than as successive passes: `Apply [a](#a), [b](#b) to:`. When the lens is a sibling skill, the label is its slash reference — `Apply [/concise-prose](#concise-prose) to:` — declaring the dependency and resolving to its flattened unit at once.
 
 Text a procedure depends on but does not own is materialized or mechanized, never fetched by the executor:
 
-- **A sibling skill's discipline** — declare it as a flatten dependency; the build inlines it under `## Dependencies`, an ordinary in-document target.
+- **A sibling skill's discipline** — reference it as `/skill-name` where the procedure uses it; the build inlines the skill under `## Dependencies` and links the reference to that unit, an ordinary in-document target.
 - **Deterministic work** — a script the step runs with `Bash:`. Token relief comes from mechanization, never from making the executor navigate to text stored elsewhere.
 - **Steps meant for a fresh context** — a spawn whose directive names the file; the spawned agent starts empty, so reading the file is its first act, not a hop it may skip (see Spawn).
 - **Provenance or background** — cite by bare name; a citation is not an invocation, and its miss costs nothing.

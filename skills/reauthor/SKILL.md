@@ -21,15 +21,15 @@ Everything else — organization, phrasing, ordering, examples, headings — is 
 - Read the current artifact along with every rule, convention, and skill in context, plus the surrounding conversation. Let all of them shape the new version at once.
 - Don't anchor on the existing organization or phrasing — both solved a problem set that may no longer apply. Build the structure from what the artifact must do now.
 - Work the artifact in one pass, not section by section — local fixes accumulate as patches, and only an end-to-end pass restores coherence. Output it whole: no `...`, no `[unchanged]`, no implied continuation.
-- Leave no residue of the prior version — a reader picking the artifact up cold should see no trace of it and need nothing absent to understand what's here; concise-prose § Anti-staleness names the forms, applied here to the version being replaced.
+- Leave no residue of the prior version — a reader picking the artifact up cold should see no trace of it and need nothing absent to understand what's here; [/concise-prose](#concise-prose) § Anti-staleness names the forms, applied here to the version being replaced.
 
 ## Scope
 
 Default to the unit the user named. Widen only with explicit approval, and only when the named unit can't cohere without touching neighbors — say so first.
 
-<!-- flatten-skills START {"deps": ["concise-prose"]} -->
-
 ## Dependencies
+
+<!-- flatten-skills START -->
 
 ### concise-prose
 

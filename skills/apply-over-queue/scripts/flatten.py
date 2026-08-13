@@ -2,18 +2,20 @@
 """Assemble the flattened instruction payload: the normalized operation file
 plus the named skills, normalized to the deduplicated union closure.
 
-Skills arrive pre-materialized: a SKILL.md's flatten region (see
-skill-authoring/scripts/flatten_skills.py) carries the closure of its declared
-dependencies. Concatenating those files verbatim would duplicate any unit two
-named skills share — or a named skill already inside another's closure — so
-assembly re-normalizes from source layers instead: each named skill's region
-is stripped, its `deps` declaration read, and every unit in the union closure
-(named skills first, then their deps breadth-first) is emitted exactly once as
-a `## <name>` section. An anchor reference like `[x](#x)` in an operation or a
-host body resolves to that single copy.
+A skill declares its dependencies as /skill-name references in its SKILL.md
+source (see skill-authoring/scripts/flatten_skills.py); its materialized
+flatten region carries the closure. Concatenating SKILL.mds verbatim would
+duplicate any unit two named skills share — or a named skill already inside
+another's closure — so assembly re-normalizes from source layers instead:
+each skill's region and ## Dependencies section are stripped, its references
+are read, and every unit in the union closure (named skills first, then
+their references breadth-first) is emitted exactly once as a `## <name>`
+section. A reference like [/x](#x) then resolves to that single copy; any
+bare /x reference is linked the same way at assembly time. Fenced blocks
+and inline code spans are literal text, never references.
 
 Each unit's headings are demoted (fence-aware) so nothing collides with the
-sibling section anchors, and `${CLAUDE_SKILL_DIR}` is substituted with the
+sibling section anchors, and ${CLAUDE_SKILL_DIR} is substituted with the
 unit's own folder — the spawns reading the payload have no dispatcher to bind
 it, and a payload where the variable survives anywhere is refused.
 
@@ -21,17 +23,22 @@ it, and a payload where the variable survives anywhere is refused.
              --skills-root ~/.claude/skills --out instruction.md
 """
 import argparse
-import json
 import re
 from pathlib import Path
 
 # the dispatcher-resolved skill-dir variable; spawns reading the payload can't bind it
 SKILL_DIR_VAR = "${CLAUDE_SKILL_DIR}"
 
-START_RE = re.compile(r'^<!-- flatten-skills START (.*) -->\s*$')
+START_RE = re.compile(r'^<!-- flatten-skills START -->\s*$')
 STOP_RE = re.compile(r'^<!-- flatten-skills STOP -->\s*$')
 FENCE_RE = re.compile(r'^ {0,3}(`{3,}|~{3,})(.*)$')
 LEVEL = re.compile(r'^(#{1,6})(\s)')
+DEPS_HEAD_RE = re.compile(r'^## Dependencies\s*$')
+SPAN_RE = re.compile(r'`[^`\n]+`')
+# linked form first so the bare alternative never fires inside a link;
+# shape shared with flatten_skills.py so the tools agree
+REF_RE = re.compile(
+    r'\[/([\w][\w-]*)\]\(#([\w-]+)\)|(?<![\w./}-])/([\w][\w-]*)\b(?!/)')
 
 
 def body_of(text: str) -> str:
@@ -43,35 +50,82 @@ def body_of(text: str) -> str:
     return text
 
 
-def split_region(text: str):
-    """(source_text, deps): the text minus its flatten region (marker lines
-    included), and the region's declared deps ([] when no region). Marker
-    lines inside fenced code blocks are literal text."""
-    lines = text.split("\n")
-    fence, start, stop, deps = None, None, None, []
-    for i, ln in enumerate(lines):
+def fence_flags(lines):
+    """[bool per line]: inside (or delimiting) a fenced code block."""
+    flags, fence = [], None
+    for ln in lines:
         m = FENCE_RE.match(ln)
         if fence:
+            flags.append(True)
             if m and m.group(1)[0] == fence[0] and len(m.group(1)) >= fence[1] \
                     and not m.group(2).strip():
                 fence = None
-            continue
-        if m:
+        elif m:
             fence = (m.group(1)[0], len(m.group(1)))
+            flags.append(True)
+        else:
+            flags.append(False)
+    return flags
+
+
+def link_refs(line: str, targets) -> str:
+    """Rewrite bare /name -> [/name](#name) for names in targets;
+    code spans are blanked for matching only, so positions survive."""
+    blanked = SPAN_RE.sub(lambda m: " " * len(m.group()), line)
+    out, last = [], 0
+    for m in REF_RE.finditer(blanked):
+        name = m.group(3)
+        if name and name in targets:
+            out.append(line[last:m.start()])
+            out.append(f"[/{name}](#{name})")
+            last = m.end()
+    out.append(line[last:])
+    return "".join(out)
+
+
+def parse(text: str, own: str, known):
+    """(body, refs): the source body minus its ## Dependencies section, and
+    the sibling skills its source layer references, in appearance order."""
+    lines = text.split("\n")
+    flags = fence_flags(lines)
+    head = start = stop = None
+    h2s = []
+    for i, ln in enumerate(lines):
+        if flags[i]:
             continue
-        sm = START_RE.match(ln)
-        if sm and start is None:
+        if START_RE.match(ln) and start is None:
             start = i
-            decl = json.loads(sm.group(1))
-            deps = [d for d in decl.get("deps", []) if isinstance(d, str)]
         elif STOP_RE.match(ln) and start is not None and stop is None:
             stop = i
-    if start is not None and stop is not None:
-        lines = lines[:start] + lines[stop + 1:]
-    return "\n".join(lines), deps
+        elif DEPS_HEAD_RE.match(ln) and head is None:
+            head = i
+        elif ln.startswith("## "):
+            h2s.append(i)
+    end = len(lines)
+    if head is not None:
+        after = [j for j in h2s if j > head]
+        end = after[0] if after else len(lines)
+
+    generated = range(start + 1, stop) if start is not None and stop is not None \
+        else range(0)
+    refs, seen = [], set()
+    for i, ln in enumerate(lines):
+        if flags[i] or i in generated:
+            continue
+        for m in REF_RE.finditer(SPAN_RE.sub(lambda s: " " * len(s.group()), ln)):
+            name = m.group(1) or m.group(3)
+            if name != own and name in known and name not in seen:
+                seen.add(name)
+                refs.append(name)
+
+    section = range(head, end) if head is not None else generated
+    body = [ln for i, ln in enumerate(lines)
+            if i not in section and i not in generated
+            and not (start is not None and i in (start, stop))]
+    return "\n".join(body), refs
 
 
-def section(anchor: str, body: str) -> str:
+def section(anchor: str, body: str, targets) -> str:
     """Emit a body under a unique `## <anchor>`: drop its title H1, then shift ALL its
     headings (fence-aware) so the shallowest lands at `###`. This guarantees nothing in
     a body sits at `##`, so body headings — including stray H1s in example output —
@@ -83,35 +137,29 @@ def section(anchor: str, body: str) -> str:
     if i < len(lines) and re.match(r'#\s', lines[i]):   # the unit's own title H1
         i += 1
     content = lines[i:]
+    flags = fence_flags(content)
 
-    levels, in_fence = [], False
-    for line in content:
-        if line.lstrip().startswith("```"):
-            in_fence = not in_fence
-        elif not in_fence:
-            m = LEVEL.match(line)
-            if m:
-                levels.append(len(m.group(1)))
+    levels = [len(m.group(1)) for line, f in zip(content, flags)
+              if not f and (m := LEVEL.match(line))]
     shift = max(0, 3 - min(levels)) if levels else 0
 
-    out, in_fence = [], False
-    for line in content:
-        if line.lstrip().startswith("```"):
-            in_fence = not in_fence
-            out.append(line)
-            continue
-        m = None if in_fence else LEVEL.match(line)
+    out = []
+    for line, f in zip(content, flags):
+        m = None if f else LEVEL.match(line)
         if m:
             new = min(6, len(m.group(1)) + shift)
             out.append("#" * new + line[len(m.group(1)):])
-        else:
+        elif f:
             out.append(line)
+        else:
+            out.append(link_refs(line, targets))
     return f"## {anchor}\n\n" + "\n".join(out).strip() + "\n"
 
 
 def closure(names, root: Path):
     """Union closure over source layers: [(name, source_body)] — the named
-    skills in given order, then their declared deps breadth-first, each once."""
+    skills in given order, then their references breadth-first, each once."""
+    known = {d.name for d in root.iterdir() if (d / "SKILL.md").exists()}
     order, seen, queue = [], set(), list(names)
     while queue:
         n = queue.pop(0)
@@ -121,9 +169,9 @@ def closure(names, root: Path):
         path = root / n / "SKILL.md"
         if not path.is_file():
             raise SystemExit(f"no SKILL.md under {root} for: {n}")
-        src, deps = split_region(body_of(path.read_text()))
-        order.append((n, src.rstrip()))
-        queue.extend(deps)
+        body, refs = parse(body_of(path.read_text()), n, known)
+        order.append((n, body.strip()))
+        queue.extend(refs)
     return order
 
 
@@ -143,12 +191,13 @@ def main():
     op = Path(a.operation_file).expanduser().read_text().rstrip()
     names = list(dict.fromkeys(s for s in a.skills.split(",") if s))
     units = closure(names, root)
+    targets = {n for n, _ in units}
 
     parts = [op]
     if units:
         parts.append("\n\n---\n\n# Inlined skills (each a `## section` below)\n")
     for n, src in units:
-        parts.append(section(n, src.replace(SKILL_DIR_VAR, str(root / n))))
+        parts.append(section(n, src.replace(SKILL_DIR_VAR, str(root / n)), targets))
 
     payload = "\n".join(parts) + "\n"
     if SKILL_DIR_VAR in payload:
